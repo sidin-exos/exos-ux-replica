@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DataRequirementsAlert from "@/components/consolidation/DataRequirementsAlert";
+import StrategySelector, { StrategyType, strategyPresets } from "./StrategySelector";
 import {
   Scenario,
   ScenarioRequiredField,
@@ -29,6 +30,7 @@ type Step = "input" | "review" | "analyzing" | "results";
 const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [step, setStep] = useState<Step>("input");
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [strategyValue, setStrategyValue] = useState<StrategyType>("balanced");
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const handleFieldChange = (fieldId: string, value: string) => {
@@ -80,11 +82,24 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       );
     }
 
+    if (field.type === "textarea") {
+      return (
+        <Textarea
+          ref={(el) => (fieldRefs.current[field.id] = el)}
+          placeholder={field.placeholder || field.description}
+          value={formData[field.id] || ""}
+          onChange={(e) => handleFieldChange(field.id, e.target.value)}
+          className={`${commonClasses} min-h-[120px]`}
+          rows={5}
+        />
+      );
+    }
+
     if (field.type === "text" && field.label.toLowerCase().includes("text")) {
       return (
         <Textarea
           ref={(el) => (fieldRefs.current[field.id] = el)}
-          placeholder={field.description}
+          placeholder={field.placeholder || field.description}
           value={formData[field.id] || ""}
           onChange={(e) => handleFieldChange(field.id, e.target.value)}
           className={commonClasses}
@@ -156,6 +171,19 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </p>
             </div>
 
+            {/* Strategy Selector */}
+            {scenario.strategySelector && (
+              <div className="mb-6">
+                <StrategySelector
+                  value={strategyValue}
+                  onChange={setStrategyValue}
+                  title={strategyPresets[scenario.strategySelector].title}
+                  description={strategyPresets[scenario.strategySelector].description}
+                  options={strategyPresets[scenario.strategySelector].options}
+                />
+              </div>
+            )}
+
             {/* Required Fields */}
             <div className="space-y-4">
               <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -165,7 +193,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 {scenario.requiredFields
                   .filter((f) => f.required)
                   .map((field) => (
-                    <div key={field.id} className="space-y-2">
+                    <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
                       <Label className="flex items-center gap-1">
                         {field.label}
                         <span className="text-destructive">*</span>

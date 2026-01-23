@@ -20,10 +20,13 @@ export interface ScenarioRequiredField {
   id: string;
   label: string;
   description: string;
-  type: "text" | "number" | "percentage" | "select" | "currency";
+  type: "text" | "number" | "percentage" | "select" | "currency" | "textarea";
   required: boolean;
   options?: string[]; // For select type
+  placeholder?: string; // For textarea hints
 }
+
+export type StrategyPresetType = "riskAppetite" | "speedVsQuality" | "costVsRisk" | "thoroughness";
 
 export interface Scenario {
   id: string;
@@ -34,6 +37,7 @@ export interface Scenario {
   category: "analysis" | "planning" | "risk" | "documentation";
   requiredFields: ScenarioRequiredField[];
   outputs: string[];
+  strategySelector?: StrategyPresetType; // Optional strategy preference selector
 }
 
 export const scenarios: Scenario[] = [
@@ -46,7 +50,9 @@ export const scenarios: Scenario[] = [
     icon: Scale,
     status: "available",
     category: "analysis",
+    strategySelector: "speedVsQuality",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, business model, competitive landscape, and any specific constraints the AI should consider", type: "textarea", required: true, placeholder: "E.g., 'We are a mid-size pharmaceutical company in Germany. Regulatory compliance is critical. We have limited in-house manufacturing capacity but strong R&D...'" },
       { id: "internalSalary", label: "Internal Salary (Loaded)", description: "Fully loaded annual salary cost per employee", type: "currency", required: true },
       { id: "recruitingCost", label: "Recruiting Cost", description: "Cost to recruit and hire new staff", type: "currency", required: true },
       { id: "managementTime", label: "Management Time", description: "Hours per month for oversight", type: "number", required: true },
@@ -68,7 +74,9 @@ export const scenarios: Scenario[] = [
     icon: ShoppingCart,
     status: "available",
     category: "planning",
+    strategySelector: "speedVsQuality",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, compliance requirements, and procurement policies the AI should consider", type: "textarea", required: true, placeholder: "E.g., 'Financial services company with strict vendor approval process. Most purchases under €5k can use P-card...'" },
       { id: "purchaseAmount", label: "Purchase Amount", description: "Total cost of the purchase", type: "currency", required: true },
       { id: "urgency", label: "Urgency (Days)", description: "How many days until you need this", type: "number", required: true },
       { id: "catalogAvailable", label: "Available in Catalog", description: "Is this item in your approved catalog?", type: "select", required: true, options: ["Yes", "No"] },
@@ -90,7 +98,9 @@ export const scenarios: Scenario[] = [
     icon: ClipboardCheck,
     status: "available",
     category: "analysis",
+    strategySelector: "thoroughness",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry standards, quality expectations, and relationship priorities", type: "textarea", required: true, placeholder: "E.g., 'Automotive tier-1 supplier. Zero-defect culture, IATF 16949 compliance required. Long-term partnerships valued...'" },
       { id: "qualityScore", label: "Quality Score (0-10)", description: "Overall quality rating", type: "number", required: true },
       { id: "onTimeDelivery", label: "On-Time Delivery %", description: "Percentage of orders delivered on time", type: "percentage", required: true },
       { id: "incidentCount", label: "Number of Incidents", description: "Quality or delivery incidents this period", type: "number", required: true },
@@ -112,7 +122,9 @@ export const scenarios: Scenario[] = [
     icon: AlertTriangle,
     status: "available",
     category: "risk",
+    strategySelector: "speedVsQuality",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, supply chain complexity, and critical dependencies", type: "textarea", required: true, placeholder: "E.g., 'Electronics manufacturer with JIT production. Single source for key chips. 2-week inventory buffer typical...'" },
       { id: "deficitSku", label: "Deficit SKU Name", description: "Name of the product/service at risk", type: "text", required: true },
       { id: "stockDays", label: "Stock (Days)", description: "Current inventory in days of supply", type: "number", required: true },
       { id: "altSuppliers", label: "Alternative Suppliers", description: "Number of backup suppliers available", type: "number", required: true },
@@ -134,7 +146,9 @@ export const scenarios: Scenario[] = [
     icon: Shield,
     status: "available",
     category: "risk",
+    strategySelector: "costVsRisk",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, regulatory environment, and risk tolerance culture", type: "textarea", required: true, placeholder: "E.g., 'Healthcare sector with HIPAA requirements. We process patient data and require SOC2 compliance from all vendors...'" },
       { id: "legalStatus", label: "Legal Status", description: "Business registration and legal standing", type: "select", required: true, options: ["Verified", "Pending", "Issues Found"] },
       { id: "lawsuits", label: "Active Lawsuits", description: "Any pending litigation?", type: "select", required: true, options: ["None", "Minor", "Significant"] },
       { id: "dataAccess", label: "Data Access Level", description: "What company data do they access?", type: "select", required: true, options: ["None", "Limited", "Sensitive", "Critical"] },
@@ -158,8 +172,10 @@ export const scenarios: Scenario[] = [
     icon: FileText,
     status: "available",
     category: "documentation",
+    strategySelector: "thoroughness",
     requiredFields: [
-      { id: "sowText", label: "SOW Text", description: "Paste the Statement of Work text", type: "text", required: true },
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, typical contract risks, and protection priorities", type: "textarea", required: true, placeholder: "E.g., 'IT consulting services. IP ownership and liability caps are critical. We typically push back on unlimited liability...'" },
+      { id: "sowText", label: "SOW Text", description: "Paste the Statement of Work text", type: "textarea", required: true, placeholder: "Paste the full SOW document here..." },
       { id: "deliverables", label: "Deliverables", description: "List of expected outputs", type: "text", required: true },
       { id: "acceptanceCriteria", label: "Acceptance Criteria", description: "How will deliverables be accepted?", type: "text", required: true },
       { id: "timeline", label: "Timeline/Milestones", description: "Key dates and deadlines", type: "text", required: true },
@@ -180,8 +196,9 @@ export const scenarios: Scenario[] = [
     icon: Clock,
     status: "available",
     category: "documentation",
+    strategySelector: "costVsRisk",
     requiredFields: [
-      { id: "industry", label: "Industry", description: "Your business sector", type: "text", required: true },
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry standards, typical SLA expectations, and service criticality", type: "textarea", required: true, placeholder: "E.g., 'E-commerce platform. 99.9% uptime is industry standard. Peak traffic during holidays requires special provisions...'" },
       { id: "operatingHours", label: "Operating Hours", description: "Service availability requirement", type: "select", required: true, options: ["24/7", "Business Hours (8/5)", "Extended (12/6)"] },
       { id: "responseTime", label: "Response Time Target", description: "Expected initial response time", type: "text", required: true },
       { id: "resolutionTime", label: "Resolution Time Target", description: "Expected issue resolution time", type: "text", required: true },
@@ -202,7 +219,9 @@ export const scenarios: Scenario[] = [
     icon: FileSpreadsheet,
     status: "available",
     category: "documentation",
+    strategySelector: "speedVsQuality",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, typical vendor landscape, and procurement standards", type: "textarea", required: true, placeholder: "E.g., 'Government contractor with FAR compliance requirements. Prefer local suppliers where possible. Formal bid process required above $25k...'" },
       { id: "procurementSubject", label: "Procurement Subject", description: "What are you buying?", type: "text", required: true },
       { id: "volume", label: "Volume/Quantity", description: "Expected purchase volume", type: "text", required: true },
       { id: "technicalRequirements", label: "Technical Requirements", description: "Key specifications needed", type: "text", required: true },
@@ -224,7 +243,9 @@ export const scenarios: Scenario[] = [
     icon: ListChecks,
     status: "available",
     category: "planning",
+    strategySelector: "thoroughness",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, technology maturity, and organizational constraints", type: "textarea", required: true, placeholder: "E.g., 'Retail chain with 200 stores. Legacy POS system. Limited IT staff. Need cloud-first solutions with strong vendor support...'" },
       { id: "businessGoal", label: "Business Goal", description: "What problem are you solving?", type: "text", required: true },
       { id: "budget", label: "Budget Range", description: "Available funding", type: "currency", required: true },
       { id: "userCount", label: "Number of Users", description: "How many people will use this?", type: "number", required: true },
@@ -248,7 +269,9 @@ export const scenarios: Scenario[] = [
     icon: Layers,
     status: "available",
     category: "analysis",
+    strategySelector: "riskAppetite",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, supply chain characteristics, and consolidation constraints", type: "textarea", required: true, placeholder: "E.g., 'Manufacturing with 50+ suppliers for MRO. Regional delivery requirements. Some suppliers are sole-source for specialized parts...'" },
       { id: "spendPerVendor", label: "Spend Per Vendor (Annual)", description: "Annual spend breakdown by supplier", type: "currency", required: true },
       { id: "skuOverlap", label: "SKU Overlap %", description: "Percentage of overlapping products", type: "percentage", required: true },
       { id: "unitOfMeasure", label: "Unit of Measure", description: "Standard units (kg/pcs/hours)", type: "text", required: true },
@@ -270,7 +293,9 @@ export const scenarios: Scenario[] = [
     icon: Building,
     status: "available",
     category: "analysis",
+    strategySelector: "costVsRisk",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, capital constraints, and asset utilization patterns", type: "textarea", required: true, placeholder: "E.g., 'Logistics company expanding fleet. Capital is constrained. Assets typically obsolete in 5 years. Prefer operational flexibility...'" },
       { id: "purchasePrice", label: "Purchase Price", description: "Asset purchase cost", type: "currency", required: true },
       { id: "leaseRate", label: "Lease Rate %", description: "Annual lease rate", type: "percentage", required: true },
       { id: "leaseTerm", label: "Lease Term (Years)", description: "Duration of lease", type: "number", required: true },
@@ -292,7 +317,9 @@ export const scenarios: Scenario[] = [
     icon: Calculator,
     status: "available",
     category: "analysis",
+    strategySelector: "thoroughness",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, savings reporting standards, and audit requirements", type: "textarea", required: true, placeholder: "E.g., 'Fortune 500 with strict procurement savings targets. Finance requires documented baseline and auditable methodology...'" },
       { id: "baselinePrice", label: "Baseline Price", description: "Original price before negotiation", type: "currency", required: true },
       { id: "newPrice", label: "New Price", description: "Negotiated price", type: "currency", required: true },
       { id: "volume", label: "Annual Volume", description: "Expected purchase quantity", type: "number", required: true },
@@ -314,7 +341,9 @@ export const scenarios: Scenario[] = [
     icon: Cloud,
     status: "available",
     category: "analysis",
+    strategySelector: "costVsRisk",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, IT governance model, and software management practices", type: "textarea", required: true, placeholder: "E.g., 'Tech startup with 500 employees. Decentralized software purchasing. Many shadow IT tools. Need to consolidate before audit...'" },
       { id: "totalSeats", label: "Total Seats/Licenses", description: "Number of licenses owned", type: "number", required: true },
       { id: "pricePerSeat", label: "Price Per Seat", description: "Cost per license", type: "currency", required: true },
       { id: "lastLoginDate", label: "Last Login Date", description: "Most recent user activity", type: "text", required: true },
@@ -336,7 +365,9 @@ export const scenarios: Scenario[] = [
     icon: Wallet,
     status: "available",
     category: "planning",
+    strategySelector: "costVsRisk",
     requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, budget cycles, and financial planning culture", type: "textarea", required: true, placeholder: "E.g., 'Consumer goods company with seasonal demand peaks. CFO requires bottom-up budgeting. Procurement expected to deliver 3% YoY savings...'" },
       { id: "historicalSpend", label: "Historical Spend", description: "Previous period spending", type: "currency", required: true },
       { id: "growthForecast", label: "Growth Forecast %", description: "Expected business growth", type: "percentage", required: true },
       { id: "headcountPlan", label: "Headcount Plan", description: "Staffing changes expected", type: "number", required: true },
