@@ -31,15 +31,15 @@ export function IndustrySelector({
         {label}
       </Label>
       <Select
-        value={value || ""}
-        onValueChange={(v) => onChange(v || null)}
+        value={value || "__none__"}
+        onValueChange={(v) => onChange(v === "__none__" ? null : v)}
         disabled={isLoading}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder={isLoading ? "Loading..." : placeholder} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">No specific industry</SelectItem>
+          <SelectItem value="__none__">No specific industry</SelectItem>
           {industries?.map((industry) => (
             <SelectItem key={industry.id} value={industry.slug}>
               {industry.name}

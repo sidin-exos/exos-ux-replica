@@ -31,15 +31,15 @@ export function CategorySelector({
         {label}
       </Label>
       <Select
-        value={value || ""}
-        onValueChange={(v) => onChange(v || null)}
+        value={value || "__none__"}
+        onValueChange={(v) => onChange(v === "__none__" ? null : v)}
         disabled={isLoading}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder={isLoading ? "Loading..." : placeholder} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">No specific category</SelectItem>
+          <SelectItem value="__none__">No specific category</SelectItem>
           {categories?.map((category) => (
             <SelectItem key={category.id} value={category.slug}>
               {category.name}
