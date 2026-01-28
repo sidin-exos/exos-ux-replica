@@ -8,7 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Code, Eye } from "lucide-react";
+import { ChevronDown, ChevronUp, Code, Eye, Lock } from "lucide-react";
 import {
   useIndustryContext,
   useProcurementCategory,
@@ -17,6 +17,7 @@ import {
   generateIndustryContextXML,
   generateCategoryContextXML,
 } from "@/lib/ai-context-templates";
+import { useShareableMode } from "@/hooks/useShareableMode";
 
 interface ContextPreviewProps {
   industrySlug: string | null;
@@ -31,9 +32,13 @@ export function ContextPreview({
 }: ContextPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"preview" | "xml">("preview");
+  const { showTechnicalDetails } = useShareableMode();
 
   const { data: industry } = useIndustryContext(industrySlug);
   const { data: category } = useProcurementCategory(categorySlug);
+
+  // Hide XML option in shareable mode
+  const canShowXML = showXML && showTechnicalDetails;
 
   if (!industry && !category) {
     return null;
@@ -72,7 +77,7 @@ export function ContextPreview({
 
         <CollapsibleContent>
           <CardContent className="pt-0">
-            {showXML && (
+            {canShowXML && (
               <div className="flex gap-2 mb-3">
                 <Button
                   variant={viewMode === "preview" ? "default" : "outline"}
@@ -92,8 +97,16 @@ export function ContextPreview({
                 </Button>
               </div>
             )}
+            
+            {/* Show notice in shareable mode when XML would normally be available */}
+            {showXML && !showTechnicalDetails && (
+              <div className="flex items-center gap-2 mb-3 p-2 rounded-md bg-muted text-xs text-muted-foreground">
+                <Lock className="h-3 w-3" />
+                Technical details hidden in shared view
+              </div>
+            )}
 
-            {viewMode === "preview" ? (
+            {viewMode === "preview" || !canShowXML ? (
               <div className="space-y-4">
                 {industry && (
                   <div className="space-y-2">
