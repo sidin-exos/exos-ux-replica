@@ -42,6 +42,13 @@ const Header = () => {
           >
             Reports
           </NavLink>
+          <NavLink 
+            to="/pricing" 
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            activeClassName="text-foreground"
+          >
+            Pricing
+          </NavLink>
         </nav>
 
         <div className="flex items-center gap-2">
