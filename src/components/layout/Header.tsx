@@ -11,10 +11,10 @@ const Header = () => {
           </div>
           <div>
             <h1 className="font-display text-lg font-semibold text-foreground">
-              ProcureAI
+              EXOS
             </h1>
             <p className="text-xs text-muted-foreground">
-              Intelligent Procurement Analytics
+              Your procurement exoskeleton
             </p>
           </div>
         </div>
