@@ -1,11 +1,12 @@
 import { Brain, Settings, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NavLink } from "@/components/NavLink";
 
 const Header = () => {
   return (
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-3">
+        <NavLink to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg gradient-primary">
             <Brain className="w-5 h-5 text-primary-foreground" />
           </div>
@@ -17,15 +18,23 @@ const Header = () => {
               Your procurement exoskeleton
             </p>
           </div>
-        </div>
+        </NavLink>
         
         <nav className="hidden md:flex items-center gap-6">
-          <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <NavLink 
+            to="/" 
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            activeClassName="text-foreground"
+          >
             Dashboard
-          </a>
-          <a href="#" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-            Scenarios
-          </a>
+          </NavLink>
+          <NavLink 
+            to="/features" 
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            activeClassName="text-foreground"
+          >
+            Features
+          </NavLink>
           <a href="#" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
             Reports
           </a>
