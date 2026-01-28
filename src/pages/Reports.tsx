@@ -1,5 +1,5 @@
 import Header from "@/components/layout/Header";
-import SavingsTrackerDashboard from "@/components/reports/SavingsTrackerDashboard";
+import NegotiationPrepDashboard from "@/components/reports/NegotiationPrepDashboard";
 import RiskMatrixDashboard from "@/components/reports/RiskMatrixDashboard";
 import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
 import ScenarioComparisonDashboard from "@/components/reports/ScenarioComparisonDashboard";
@@ -29,9 +29,9 @@ const Reports = () => {
 
         {/* Dashboard Grid */}
         <div className="space-y-8">
-          {/* Row 1: Savings Tracker (full width) */}
+          {/* Row 1: Negotiation Prep (full width) */}
           <section className="animate-fade-up" style={{ animationDelay: "100ms" }}>
-            <SavingsTrackerDashboard />
+            <NegotiationPrepDashboard />
           </section>
 
           {/* Row 2: Risk Matrix + Data Quality */}
