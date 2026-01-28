@@ -3,6 +3,7 @@ import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import exosLogo from "@/assets/logo-concept-layers.png";
 
 const pricingTiers = [
   {
@@ -77,6 +78,9 @@ const Pricing = () => {
       <main className="container py-8 relative">
         {/* Hero Section */}
         <section className="mb-12 text-center animate-fade-up">
+          <div className="flex justify-center mb-6">
+            <img src={exosLogo} alt="EXOS" className="w-24 h-24 md:w-32 md:h-32 object-contain" />
+          </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
             Simple, Transparent <span className="text-gradient">Pricing</span>
           </h1>

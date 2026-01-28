@@ -3,6 +3,7 @@ import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
+import exosLogo from "@/assets/logo-concept-layers.png";
 
 const Features = () => {
   const valuePropositions = [
@@ -53,6 +54,9 @@ const Features = () => {
       <main className="container py-8 relative">
         {/* Hero Section */}
         <section className="mb-16 animate-fade-up text-center">
+          <div className="flex justify-center mb-6">
+            <img src={exosLogo} alt="EXOS" className="w-24 h-24 md:w-32 md:h-32 object-contain" />
+          </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">
             How <span className="text-gradient">EXOS</span> Works
           </h1>
