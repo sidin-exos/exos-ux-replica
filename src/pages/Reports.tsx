@@ -1,4 +1,5 @@
 import Header from "@/components/layout/Header";
+import SOWAnalysisDashboard from "@/components/reports/SOWAnalysisDashboard";
 import NegotiationPrepDashboard from "@/components/reports/NegotiationPrepDashboard";
 import RiskMatrixDashboard from "@/components/reports/RiskMatrixDashboard";
 import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
@@ -17,22 +18,26 @@ const Reports = () => {
 
       <main className="container py-8 relative">
         {/* Hero Section */}
-        <section className="mb-10 animate-fade-up">
+        <section className="mb-12 animate-fade-up">
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
             Analysis <span className="text-gradient">Reports</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Interactive dashboards that transform complex procurement data into actionable insights. 
-            Each report type is optimized for different analysis scenarios and decision-making contexts.
+            Interactive dashboards that transform procurement data into actionable insights.
           </p>
         </section>
 
         {/* Dashboard Grid */}
-        <div className="space-y-8">
-          {/* Row 1: Negotiation Prep (full width) */}
-          <section className="animate-fade-up" style={{ animationDelay: "100ms" }}>
-            <NegotiationPrepDashboard />
-          </section>
+        <div className="space-y-10">
+          {/* Row 1: SOW Analysis + Negotiation Prep */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section className="animate-fade-up" style={{ animationDelay: "100ms" }}>
+              <SOWAnalysisDashboard />
+            </section>
+            <section className="animate-fade-up" style={{ animationDelay: "150ms" }}>
+              <NegotiationPrepDashboard />
+            </section>
+          </div>
 
           {/* Row 2: Risk Matrix + Data Quality */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

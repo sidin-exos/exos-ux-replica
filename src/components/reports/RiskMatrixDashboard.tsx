@@ -1,6 +1,5 @@
-import { AlertTriangle, Shield, TrendingDown } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const riskData = [
   { id: 1, supplier: "Alpha Corp", impact: "high", probability: "medium", category: "Strategic" },
@@ -10,63 +9,55 @@ const riskData = [
   { id: 5, supplier: "Epsilon Materials", impact: "medium", probability: "low", category: "Leverage" },
 ];
 
-const getPositionClass = (impact: string, probability: string) => {
-  const impactMap = { low: 0, medium: 1, high: 2 };
-  const probMap = { low: 0, medium: 1, high: 2 };
-  return { x: probMap[probability as keyof typeof probMap], y: impactMap[impact as keyof typeof impactMap] };
-};
-
 const getRiskColor = (impact: string, probability: string) => {
-  if (impact === "high" && probability === "high") return "bg-destructive/80";
-  if (impact === "high" || probability === "high") return "bg-warning/80";
-  if (impact === "medium" && probability === "medium") return "bg-warning/60";
-  return "bg-success/60";
+  if (impact === "high" && probability === "high") return "bg-destructive/60";
+  if (impact === "high" || probability === "high") return "bg-warning/60";
+  if (impact === "medium" && probability === "medium") return "bg-warning/40";
+  return "bg-muted";
 };
 
 const RiskMatrixDashboard = () => {
+  const criticalCount = riskData.filter(r => r.impact === "high" && r.probability === "high").length;
+
   return (
     <Card className="card-elevated h-full">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-destructive/20 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
+            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-foreground" />
             </div>
             <div>
-              <CardTitle className="font-display text-lg">Risk Matrix</CardTitle>
-              <p className="text-sm text-muted-foreground">Supplier Risk Assessment</p>
+              <CardTitle className="font-display text-base">Risk Matrix</CardTitle>
+              <p className="text-xs text-muted-foreground">Supplier risk assessment</p>
             </div>
           </div>
-          <Badge variant="destructive">
-            2 Critical
-          </Badge>
+          {criticalCount > 0 && (
+            <span className="text-xs text-muted-foreground">{criticalCount} critical</span>
+          )}
         </div>
       </CardHeader>
       <CardContent>
-        {/* 3x3 Risk Matrix Grid */}
-        <div className="relative">
-          {/* Y-axis label */}
-          <div className="absolute -left-2 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-muted-foreground font-medium">
-            IMPACT
+        {/* Matrix Grid */}
+        <div className="relative mb-4">
+          <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-muted-foreground">
+            Impact
           </div>
           
-          {/* Matrix Grid */}
-          <div className="ml-6">
-            <div className="grid grid-cols-3 gap-1 mb-2">
+          <div className="ml-5">
+            <div className="grid grid-cols-3 gap-1 mb-1.5">
               {/* High Impact Row */}
               {["low", "medium", "high"].map((prob) => (
                 <div
                   key={`high-${prob}`}
-                  className={`h-16 rounded border border-border/30 flex flex-col items-center justify-center gap-1 ${
-                    prob === "high" ? "bg-destructive/20" : prob === "medium" ? "bg-warning/20" : "bg-warning/10"
-                  }`}
+                  className="h-14 rounded bg-secondary/30 flex flex-wrap items-center justify-center gap-1 p-1"
                 >
                   {riskData
                     .filter((r) => r.impact === "high" && r.probability === prob)
                     .map((r) => (
                       <div
                         key={r.id}
-                        className={`w-6 h-6 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-xs font-bold text-foreground cursor-pointer hover:scale-110 transition-transform`}
+                        className={`w-5 h-5 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[10px] font-medium text-foreground`}
                         title={r.supplier}
                       >
                         {r.id}
@@ -79,16 +70,14 @@ const RiskMatrixDashboard = () => {
               {["low", "medium", "high"].map((prob) => (
                 <div
                   key={`medium-${prob}`}
-                  className={`h-16 rounded border border-border/30 flex flex-col items-center justify-center gap-1 ${
-                    prob === "high" ? "bg-warning/20" : prob === "medium" ? "bg-warning/10" : "bg-success/10"
-                  }`}
+                  className="h-14 rounded bg-secondary/30 flex flex-wrap items-center justify-center gap-1 p-1"
                 >
                   {riskData
                     .filter((r) => r.impact === "medium" && r.probability === prob)
                     .map((r) => (
                       <div
                         key={r.id}
-                        className={`w-6 h-6 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-xs font-bold text-foreground cursor-pointer hover:scale-110 transition-transform`}
+                        className={`w-5 h-5 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[10px] font-medium text-foreground`}
                         title={r.supplier}
                       >
                         {r.id}
@@ -101,16 +90,14 @@ const RiskMatrixDashboard = () => {
               {["low", "medium", "high"].map((prob) => (
                 <div
                   key={`low-${prob}`}
-                  className={`h-16 rounded border border-border/30 flex flex-col items-center justify-center gap-1 ${
-                    prob === "high" ? "bg-warning/10" : "bg-success/10"
-                  }`}
+                  className="h-14 rounded bg-secondary/30 flex flex-wrap items-center justify-center gap-1 p-1"
                 >
                   {riskData
                     .filter((r) => r.impact === "low" && r.probability === prob)
                     .map((r) => (
                       <div
                         key={r.id}
-                        className={`w-6 h-6 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-xs font-bold text-foreground cursor-pointer hover:scale-110 transition-transform`}
+                        className={`w-5 h-5 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[10px] font-medium text-foreground`}
                         title={r.supplier}
                       >
                         {r.id}
@@ -120,24 +107,24 @@ const RiskMatrixDashboard = () => {
               ))}
             </div>
             
-            {/* X-axis labels */}
-            <div className="grid grid-cols-3 gap-1 text-center text-xs text-muted-foreground">
+            <div className="grid grid-cols-3 gap-1 text-center text-[10px] text-muted-foreground">
               <span>Low</span>
               <span>Medium</span>
               <span>High</span>
             </div>
-            <p className="text-xs text-muted-foreground text-center mt-1 font-medium">PROBABILITY</p>
+            <p className="text-[10px] text-muted-foreground text-center mt-0.5">Probability</p>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="space-y-1.5 pt-2 border-t border-border/30">
           {riskData.map((r) => (
-            <div key={r.id} className="flex items-center gap-1 text-xs">
-              <div className={`w-4 h-4 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[10px] font-bold`}>
+            <div key={r.id} className="flex items-center gap-2 text-xs">
+              <div className={`w-4 h-4 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[9px] font-medium`}>
                 {r.id}
               </div>
-              <span className="text-muted-foreground truncate max-w-[80px]">{r.supplier}</span>
+              <span className="text-foreground">{r.supplier}</span>
+              <span className="text-muted-foreground ml-auto">{r.category}</span>
             </div>
           ))}
         </div>

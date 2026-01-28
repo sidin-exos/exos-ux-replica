@@ -1,202 +1,83 @@
-import { FileText, Target, Shield, AlertTriangle, CheckCircle2, Lightbulb } from "lucide-react";
+import { Target, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-
-const sowAnalysis = {
-  clarity: 72,
-  riskAreas: [
-    { area: "Scope Creep Risk", severity: "high", detail: "Vague deliverable definitions in sections 3.2, 4.1" },
-    { area: "Payment Terms", severity: "medium", detail: "No milestone-based payment structure defined" },
-    { area: "IP Ownership", severity: "low", detail: "Clear assignment clause present" },
-    { area: "SLA Gaps", severity: "high", detail: "No uptime guarantees or penalty clauses" },
-  ],
-  missingClauses: ["Termination for Convenience", "Change Order Process", "Dispute Resolution"],
-};
 
 const negotiationFramework = {
   batna: {
-    strength: "Medium",
-    description: "2 alternative suppliers identified, 6-week switching timeline",
-    score: 65,
+    strength: 65,
+    description: "2 alternative suppliers identified with 6-week switching timeline",
   },
   leveragePoints: [
-    { point: "Volume Commitment", impact: "high", tactic: "Offer 2-year contract for 12% discount" },
-    { point: "Payment Terms", impact: "medium", tactic: "Propose net-60 for 3% reduction" },
-    { point: "Bundling", impact: "high", tactic: "Combine maintenance + support for package deal" },
-    { point: "Competitor Pricing", impact: "medium", tactic: "Reference Beta Corp quote at 8% lower" },
+    { point: "Volume Commitment", tactic: "Offer 2-year contract for 12% discount" },
+    { point: "Payment Terms", tactic: "Propose net-60 for 3% reduction" },
+    { point: "Service Bundling", tactic: "Combine maintenance + support for package pricing" },
+    { point: "Competitive Pressure", tactic: "Reference alternative quote at 8% lower" },
   ],
-  tactics: [
-    { name: "Anchor High", priority: 1, description: "Open with 20% discount request" },
-    { name: "Silence", priority: 2, description: "Pause after counter-offer" },
-    { name: "Walk-Away Point", priority: 3, description: "Below 8% savings, escalate to BATNA" },
+  sequence: [
+    { step: "Open Position", detail: "Request 20% discount based on volume commitment" },
+    { step: "Value Exchange", detail: "Offer longer contract term for better pricing" },
+    { step: "Walk-Away Point", detail: "Below 8% savings, proceed with BATNA" },
   ],
 };
 
 const NegotiationPrepDashboard = () => {
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "high":
-        return "text-destructive bg-destructive/10 border-destructive/30";
-      case "medium":
-        return "text-warning bg-warning/10 border-warning/30";
-      case "low":
-        return "text-success bg-success/10 border-success/30";
-      default:
-        return "text-muted-foreground bg-muted";
-    }
-  };
-
-  const getImpactBadge = (impact: string) => {
-    switch (impact) {
-      case "high":
-        return "default";
-      case "medium":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
-
   return (
     <Card className="card-elevated">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="font-display text-lg">SOW Analysis & Negotiation Prep</CardTitle>
-              <p className="text-sm text-muted-foreground">Contract Review & Tactical Framework</p>
-            </div>
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+            <Target className="w-4 h-4 text-foreground" />
           </div>
-          <Badge variant="outline" className="text-primary border-primary/30">
-            Ready for Review
-          </Badge>
+          <div>
+            <CardTitle className="font-display text-base">Negotiation Preparation</CardTitle>
+            <p className="text-xs text-muted-foreground">Strategic framework and tactics</p>
+          </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* SOW Analysis Panel */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="w-4 h-4 text-muted-foreground" />
-              <h3 className="font-semibold text-foreground">Statement of Work Analysis</h3>
-            </div>
-
-            {/* Clarity Score */}
-            <div className="p-4 rounded-lg bg-secondary/50 border border-border/50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">SOW Clarity Score</span>
-                <span className="font-display text-xl font-bold text-warning">{sowAnalysis.clarity}%</span>
-              </div>
-              <Progress value={sowAnalysis.clarity} className="h-2 [&>div]:bg-warning" />
-              <p className="text-xs text-muted-foreground mt-2">
-                Above 85% recommended before signing
-              </p>
-            </div>
-
-            {/* Risk Areas */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Identified Risks
-              </p>
-              {sowAnalysis.riskAreas.map((risk, index) => (
-                <div
-                  key={index}
-                  className={`p-2 rounded border ${getSeverityColor(risk.severity)}`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">{risk.area}</span>
-                    <Badge
-                      variant={risk.severity === "high" ? "destructive" : risk.severity === "medium" ? "secondary" : "outline"}
-                      className="text-[10px] px-1.5"
-                    >
-                      {risk.severity.toUpperCase()}
-                    </Badge>
-                  </div>
-                  <p className="text-xs opacity-80">{risk.detail}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Missing Clauses */}
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-destructive" />
-                <span className="text-sm font-medium text-destructive">Missing Clauses</span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {sowAnalysis.missingClauses.map((clause) => (
-                  <Badge key={clause} variant="outline" className="text-xs border-destructive/30 text-destructive">
-                    {clause}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+      <CardContent className="space-y-5">
+        {/* BATNA Strength */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">BATNA Strength</span>
+            <span className="text-sm font-medium text-foreground">{negotiationFramework.batna.strength}%</span>
           </div>
+          <Progress value={negotiationFramework.batna.strength} className="h-1.5" />
+          <p className="text-xs text-muted-foreground mt-1.5">
+            {negotiationFramework.batna.description}
+          </p>
+        </div>
 
-          {/* Negotiation Framework Panel */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="w-4 h-4 text-muted-foreground" />
-              <h3 className="font-semibold text-foreground">Negotiation Framework</h3>
-            </div>
-
-            {/* BATNA Assessment */}
-            <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-medium text-foreground">BATNA Strength</span>
-                </div>
-                <Badge variant="secondary">{negotiationFramework.batna.strength}</Badge>
+        {/* Leverage Points */}
+        <div>
+          <p className="text-xs text-muted-foreground mb-3">Leverage Points</p>
+          <div className="space-y-2">
+            {negotiationFramework.leveragePoints.map((lp, index) => (
+              <div key={index} className="py-2 border-b border-border/30 last:border-0">
+                <p className="text-sm font-medium text-foreground">{lp.point}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{lp.tactic}</p>
               </div>
-              <Progress value={negotiationFramework.batna.score} className="h-2 [&>div]:bg-accent mb-2" />
-              <p className="text-xs text-muted-foreground">{negotiationFramework.batna.description}</p>
-            </div>
+            ))}
+          </div>
+        </div>
 
-            {/* Leverage Points */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Leverage Points
-              </p>
-              {negotiationFramework.leveragePoints.map((lp, index) => (
-                <div key={index} className="p-2 rounded bg-secondary/30 border border-border/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-foreground">{lp.point}</span>
-                    <Badge variant={getImpactBadge(lp.impact)} className="text-[10px]">
-                      {lp.impact} impact
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Lightbulb className="w-3 h-3" />
-                    {lp.tactic}
-                  </p>
+        {/* Tactical Sequence */}
+        <div className="pt-2">
+          <p className="text-xs text-muted-foreground mb-3">Tactical Sequence</p>
+          <div className="flex items-start gap-2">
+            {negotiationFramework.sequence.map((item, index) => (
+              <div key={index} className="flex-1 relative">
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                    {index + 1}
+                  </span>
+                  {index < negotiationFramework.sequence.length - 1 && (
+                    <ArrowRight className="w-3 h-3 text-muted-foreground/50 absolute right-0 top-1" />
+                  )}
                 </div>
-              ))}
-            </div>
-
-            {/* Tactical Sequence */}
-            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Tactical Sequence
-              </p>
-              <div className="space-y-2">
-                {negotiationFramework.tactics.map((tactic) => (
-                  <div key={tactic.priority} className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-primary">{tactic.priority}</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{tactic.name}</p>
-                      <p className="text-xs text-muted-foreground">{tactic.description}</p>
-                    </div>
-                  </div>
-                ))}
+                <p className="text-sm font-medium text-foreground">{item.step}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.detail}</p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </CardContent>
