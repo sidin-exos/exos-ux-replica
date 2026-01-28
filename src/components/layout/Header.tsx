@@ -1,10 +1,11 @@
 import { Brain, Settings, Bell } from "lucide-react";
+import { forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 
-const Header = () => {
+const Header = forwardRef<HTMLElement>((_, ref) => {
   return (
-    <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
+    <header ref={ref} className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
         <NavLink to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg gradient-primary">
@@ -55,6 +56,8 @@ const Header = () => {
       </div>
     </header>
   );
-};
+});
+
+Header.displayName = "Header";
 
 export default Header;
