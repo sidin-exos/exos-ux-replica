@@ -26,18 +26,22 @@ const Header = () => {
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             activeClassName="text-foreground"
           >
-            Dashboard
+            Scenarios
           </NavLink>
           <NavLink 
             to="/features" 
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             activeClassName="text-foreground"
           >
-            Features
+            Technology
           </NavLink>
-          <a href="#" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+          <NavLink 
+            to="/reports" 
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            activeClassName="text-foreground"
+          >
             Reports
-          </a>
+          </NavLink>
         </nav>
 
         <div className="flex items-center gap-2">
