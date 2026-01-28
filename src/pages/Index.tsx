@@ -53,12 +53,16 @@ const Index = () => {
             {/* Hero Section */}
             <section className="mb-10 animate-fade-up">
               <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-                AI Procurement{" "}
-                <span className="text-gradient">Assistant</span>
+                Do More With Less.{" "}
+                <span className="text-gradient">Decide With Confidence.</span>
               </h1>
-              <p className="text-muted-foreground text-lg max-w-2xl">
-                Select an analysis scenario below. Upload your data manually and get 
-                AI-powered recommendations tailored to your specific situation.
+              <p className="text-muted-foreground text-lg max-w-2xl mb-4">
+                Critical procurement decisions are often made unprepared due to lack of time, 
+                knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes—cost 
+                breakdowns, negotiation scenarios, make-or-buy simulations—all tailored to your business case.
+              </p>
+              <p className="text-sm text-muted-foreground/80 max-w-xl">
+                Distilled best practices. Fine-tuned AI logic. Your procurement exoskeleton.
               </p>
             </section>
 
