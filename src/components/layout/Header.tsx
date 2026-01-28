@@ -1,14 +1,15 @@
-import { Brain, Settings, Bell } from "lucide-react";
+import { Settings, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
+import exosLogo from "@/assets/logo-concept-layers.png";
 
 const Header = () => {
   return (
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
         <NavLink to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg gradient-primary">
-            <Brain className="w-5 h-5 text-primary-foreground" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden">
+            <img src={exosLogo} alt="EXOS Logo" className="w-10 h-10 object-contain" />
           </div>
           <div>
             <h1 className="font-display text-lg font-semibold text-foreground">
