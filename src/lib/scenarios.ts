@@ -17,6 +17,7 @@ import {
   Target,
   Handshake,
   FolderKanban,
+  KeyRound,
   LucideIcon,
 } from "lucide-react";
 
@@ -238,6 +239,60 @@ export const scenarios: Scenario[] = [
       "Market Scenario Modeling: Best/worst case projections",
       "Break-even Analysis: When does ownership become cost-effective",
       "Decision Recommendation: AI-powered buy/lease/defer guidance",
+    ],
+  },
+  {
+    id: "software-licensing",
+    title: "Software Licensing Structure",
+    description:
+      "Evaluate different software licensing models, multi-tier user needs, contract terms, and vendor lock-in to optimize software investments.",
+    icon: KeyRound,
+    status: "available",
+    category: "analysis",
+    strategySelector: "costVsRisk",
+    requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, compliance requirements, and software usage patterns", type: "textarea", required: true, placeholder: "E.g., 'Financial services firm with 500 employees. SOC2 compliance required. Mix of power users and occasional users. Preference for cloud-based solutions...'" },
+      { id: "softwareName", label: "Software Product", description: "Name of the software being evaluated", type: "text", required: true },
+      { id: "softwareCategory", label: "Software Category", description: "Type of software", type: "select", required: true, options: ["Productivity Suite", "CRM/Sales", "ERP", "Development Tools", "Design/Creative", "Analytics/BI", "Security", "Communication", "Other"] },
+      // User Tier Analysis
+      { id: "totalUsers", label: "Total User Count", description: "Total number of users needing access", type: "number", required: true },
+      { id: "powerUsers", label: "Power Users", description: "Users needing full features daily", type: "number", required: true },
+      { id: "regularUsers", label: "Regular Users", description: "Users needing standard features frequently", type: "number", required: true },
+      { id: "occasionalUsers", label: "Occasional Users", description: "Users needing basic/view-only access occasionally", type: "number", required: true },
+      { id: "externalUsers", label: "External Users", description: "Contractors, partners, or customers needing access", type: "number", required: false },
+      { id: "userGrowthRate", label: "Expected User Growth Rate %", description: "Annual growth in user base", type: "percentage", required: false },
+      // Pricing Scenarios
+      { id: "perUserMonthly", label: "Per-User Monthly Cost", description: "Standard per-seat monthly rate", type: "currency", required: true },
+      { id: "enterpriseTierCost", label: "Enterprise Tier Annual Cost", description: "Flat enterprise license cost (if offered)", type: "currency", required: false },
+      { id: "usageBasedRate", label: "Usage-Based Rate", description: "Per-transaction or consumption rate (if applicable)", type: "currency", required: false },
+      { id: "implementationCost", label: "Implementation Cost", description: "One-time setup, migration, training costs", type: "currency", required: true },
+      // Contract Terms
+      { id: "contractLength", label: "Proposed Contract Length", description: "Vendor's proposed commitment period", type: "select", required: true, options: ["Month-to-Month", "1 Year", "2 Years", "3 Years", "5 Years"] },
+      { id: "longTermDiscount", label: "Long-Term Discount %", description: "Discount offered for multi-year commitment", type: "percentage", required: true },
+      { id: "annualEscalation", label: "Annual Price Escalation %", description: "Expected or contractual annual price increase", type: "percentage", required: true },
+      { id: "paymentTerms", label: "Payment Terms", description: "Payment frequency and timing", type: "select", required: false, options: ["Monthly", "Quarterly", "Annual Upfront", "Multi-Year Upfront"] },
+      { id: "terminationClause", label: "Early Termination Clause", description: "Can you exit early? At what cost?", type: "select", required: true, options: ["Free Exit", "Prorated Refund", "No Refund", "Penalty Fee"] },
+      // Vendor Lock-in Assessment
+      { id: "dataExportability", label: "Data Exportability", description: "Ease of extracting your data", type: "select", required: true, options: ["Full Export (Standard Formats)", "Export with Limitations", "Difficult Export", "Proprietary Format Only"] },
+      { id: "integrationDependency", label: "Integration Dependency", description: "How deeply integrated with other systems?", type: "select", required: true, options: ["Standalone", "Light Integration", "Moderate Integration", "Deep Integration"] },
+      { id: "switchingCostEstimate", label: "Estimated Switching Cost", description: "Cost to migrate to alternative solution", type: "currency", required: true },
+      { id: "alternativeProducts", label: "Viable Alternatives", description: "Number of credible alternative products", type: "select", required: true, options: ["Many (5+)", "Some (2-4)", "Few (1-2)", "None"] },
+      { id: "proprietaryFeatures", label: "Proprietary Feature Dependency", description: "Reliance on unique vendor features", type: "select", required: false, options: ["None", "Low", "Moderate", "High"] },
+      // Strategic Factors
+      { id: "vendorStability", label: "Vendor Stability", description: "Vendor's market position and financial health", type: "select", required: true, options: ["Market Leader", "Established", "Growing", "Startup/At Risk"] },
+      { id: "complianceRequirements", label: "Compliance Requirements", description: "Required certifications or compliance", type: "text", required: false },
+      { id: "currentSolution", label: "Current Solution", description: "Existing software (if replacing)", type: "text", required: false },
+      { id: "currentAnnualCost", label: "Current Annual Cost", description: "Annual cost of current solution", type: "currency", required: false },
+    ],
+    outputs: [
+      "License Tier Optimization: Recommended user distribution across license tiers",
+      "TCO Comparison: Multi-year cost under different scenarios (monthly vs annual vs enterprise)",
+      "Contract Term Analysis: Short-term flexibility vs long-term savings trade-off",
+      "Vendor Lock-in Score: Assessment with risk mitigation strategies",
+      "Negotiation Playbook: Key leverage points and counter-proposals",
+      "Break-even Analysis: When does commitment become cost-effective",
+      "Scenario Comparison Table: Side-by-side financial projections",
+      "Risk-adjusted Recommendation: AI-powered optimal licensing strategy",
     ],
   },
   {
