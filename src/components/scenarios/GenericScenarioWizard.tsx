@@ -17,6 +17,16 @@ import StrategySelector, { StrategyType, strategyPresets } from "./StrategySelec
 import { IndustrySelector } from "@/components/context/IndustrySelector";
 import { CategorySelector } from "@/components/context/CategorySelector";
 import { ContextPreview } from "@/components/context/ContextPreview";
+import { 
+  IndustryContextEditor, 
+  IndustryContextOverrides,
+  getDefaultOverrides 
+} from "@/components/context/IndustryContextEditor";
+import { 
+  CategoryContextEditor, 
+  CategoryContextOverrides,
+  getDefaultCategoryOverrides 
+} from "@/components/context/CategoryContextEditor";
 import {
   Scenario,
   ScenarioRequiredField,
@@ -36,7 +46,20 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [strategyValue, setStrategyValue] = useState<StrategyType>("balanced");
   const [industrySlug, setIndustrySlug] = useState<string | null>(null);
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
+  const [industryOverrides, setIndustryOverrides] = useState<IndustryContextOverrides>(getDefaultOverrides());
+  const [categoryOverrides, setCategoryOverrides] = useState<CategoryContextOverrides>(getDefaultCategoryOverrides());
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  // Reset overrides when context selection changes
+  const handleIndustryChange = (slug: string | null) => {
+    setIndustrySlug(slug);
+    setIndustryOverrides(getDefaultOverrides());
+  };
+
+  const handleCategoryChange = (slug: string | null) => {
+    setCategorySlug(slug);
+    setCategoryOverrides(getDefaultCategoryOverrides());
+  };
 
   const handleFieldChange = (fieldId: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }));
@@ -180,15 +203,32 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-border bg-card/50">
               <IndustrySelector
                 value={industrySlug}
-                onChange={setIndustrySlug}
+                onChange={handleIndustryChange}
               />
               <CategorySelector
                 value={categorySlug}
-                onChange={setCategorySlug}
+                onChange={handleCategoryChange}
               />
             </div>
 
-            {/* Context Preview */}
+            {/* Interactive Context Editors */}
+            {industrySlug && (
+              <IndustryContextEditor
+                industrySlug={industrySlug}
+                overrides={industryOverrides}
+                onOverridesChange={setIndustryOverrides}
+              />
+            )}
+            
+            {categorySlug && (
+              <CategoryContextEditor
+                categorySlug={categorySlug}
+                overrides={categoryOverrides}
+                onOverridesChange={setCategoryOverrides}
+              />
+            )}
+
+            {/* Context Preview (collapsed by default, XML hidden in shared mode) */}
             {(industrySlug || categorySlug) && (
               <ContextPreview
                 industrySlug={industrySlug}
