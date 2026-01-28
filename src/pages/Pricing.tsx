@@ -31,7 +31,7 @@ const pricingTiers = [
     price: "199",
     period: "month",
     icon: Shield,
-    featured: true,
+    featured: false,
     features: [
       "Everything in SMB, plus:",
       "Unlimited simulations & scenarios",

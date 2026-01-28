@@ -1,5 +1,6 @@
-import { EyeOff, Database, ShieldCheck, RotateCcw, Brain, Layers } from "lucide-react";
+import { EyeOff, Database, ShieldCheck, RotateCcw, Brain } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import exosLogo from "@/assets/logo-concept-layers.png";
 
 const SentinelCapabilities = () => {
   const capabilities = [
@@ -82,8 +83,8 @@ const SentinelCapabilities = () => {
       {/* Architecture Note - Sales Oriented */}
       <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
-            <Layers className="w-6 h-6 text-primary-foreground" />
+          <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+            <img src={exosLogo} alt="EXOS" className="w-full h-full object-contain scale-[1.8]" />
           </div>
           <div>
             <h4 className="font-display font-semibold text-foreground mb-2 text-lg">
