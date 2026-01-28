@@ -8,8 +8,8 @@ const Header = () => {
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
         <NavLink to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden">
-            <img src={exosLogo} alt="EXOS Logo" className="w-10 h-10 object-contain" />
+          <div className="flex items-center justify-center w-12 h-12 rounded-lg overflow-hidden">
+            <img src={exosLogo} alt="EXOS Logo" className="w-12 h-12 object-contain" />
           </div>
           <div>
             <h1 className="font-display text-lg font-semibold text-foreground">
