@@ -33,6 +33,9 @@ import {
   getMissingRequiredFields,
   getMissingOptionalFields,
 } from "@/lib/scenarios";
+import { useSentinel } from "@/hooks/useSentinel";
+import { useIndustryContext, useProcurementCategory } from "@/hooks/useContextData";
+import { toast } from "sonner";
 
 interface GenericScenarioWizardProps {
   scenario: Scenario;
@@ -48,7 +51,22 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [industryOverrides, setIndustryOverrides] = useState<IndustryContextOverrides>(getDefaultOverrides());
   const [categoryOverrides, setCategoryOverrides] = useState<CategoryContextOverrides>(getDefaultCategoryOverrides());
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  // Fetch context data for AI grounding
+  const { data: industryContext } = useIndustryContext(industrySlug);
+  const { data: categoryContext } = useProcurementCategory(categorySlug);
+
+  // Sentinel AI pipeline
+  const { analyze, isProcessing, currentStage, error: sentinelError } = useSentinel({
+    onProgress: (stage, status) => {
+      console.log(`[Sentinel] ${stage}: ${status}`);
+    },
+    onError: (error) => {
+      toast.error(`Analysis failed: ${error.message}`);
+    },
+  });
 
   // Reset overrides when context selection changes
   const handleIndustryChange = (slug: string | null) => {
@@ -80,8 +98,28 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   const handleAnalyze = async () => {
     setStep("analyzing");
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    setStep("results");
+    
+    // Include strategy in form data for AI grounding
+    const enrichedData = {
+      ...formData,
+      strategy: strategyValue,
+    };
+
+    const result = await analyze(
+      scenario.id,
+      enrichedData,
+      industryContext || null,
+      categoryContext || null
+    );
+
+    if (result?.success) {
+      setAnalysisResult(result.result);
+      setStep("results");
+      toast.success("Analysis complete!");
+    } else {
+      setStep("review");
+      toast.error(sentinelError?.message || "Analysis failed. Please try again.");
+    }
   };
 
   const renderField = (field: ScenarioRequiredField) => {
@@ -395,9 +433,14 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             <h3 className="font-display text-xl font-semibold mb-2">
               Analyzing Your Data
             </h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-2">
               Running {scenario.title} analysis and generating recommendations...
             </p>
+            {currentStage && (
+              <p className="text-sm text-primary">
+                Stage: {currentStage.replace('_', ' ')}
+              </p>
+            )}
           </motion.div>
         )}
 
@@ -408,16 +451,27 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            <div className="rounded-lg border border-primary/30 bg-primary/10 p-6 text-center">
-              <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-display text-xl font-semibold mb-2">
-                Analysis Complete
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Your {scenario.title} analysis is ready. Connect to Lovable Cloud 
-                to enable AI-powered recommendations.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
+            <div className="rounded-lg border border-primary/30 bg-primary/10 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Sparkles className="w-8 h-8 text-primary" />
+                <h3 className="font-display text-xl font-semibold">
+                  Analysis Complete
+                </h3>
+              </div>
+              
+              {analysisResult ? (
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <div className="whitespace-pre-wrap text-foreground bg-card rounded-lg p-4 border border-border max-h-[500px] overflow-y-auto">
+                    {analysisResult}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">
+                  Your {scenario.title} analysis is ready.
+                </p>
+              )}
+              
+              <div className="flex flex-wrap gap-2 mt-4">
                 {scenario.outputs.map((output, i) => (
                   <span
                     key={i}
