@@ -50,6 +50,13 @@ const Header = () => {
           >
             Pricing
           </NavLink>
+          <NavLink 
+            to="/faq" 
+            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            activeClassName="text-foreground"
+          >
+            FAQ
+          </NavLink>
         </nav>
 
         <div className="flex items-center gap-2">
