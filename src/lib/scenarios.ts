@@ -31,7 +31,7 @@ export interface ScenarioRequiredField {
   placeholder?: string; // For textarea hints
 }
 
-export type StrategyPresetType = "riskAppetite" | "speedVsQuality" | "costVsRisk" | "thoroughness";
+export type StrategyPresetType = "riskAppetite" | "speedVsQuality" | "costVsRisk" | "skepticism";
 
 export interface Scenario {
   id: string;
@@ -103,7 +103,7 @@ export const scenarios: Scenario[] = [
     icon: ClipboardCheck,
     status: "available",
     category: "analysis",
-    strategySelector: "thoroughness",
+    strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry standards, quality expectations, and relationship priorities", type: "textarea", required: true, placeholder: "E.g., 'Automotive tier-1 supplier. Zero-defect culture, IATF 16949 compliance required. Long-term partnerships valued...'" },
       { id: "qualityScore", label: "Quality Score (0-10)", description: "Overall quality rating", type: "number", required: true },
@@ -193,7 +193,7 @@ export const scenarios: Scenario[] = [
     icon: Calculator,
     status: "available",
     category: "analysis",
-    strategySelector: "thoroughness",
+    strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, asset management practices, and typical ownership periods", type: "textarea", required: true, placeholder: "E.g., 'Manufacturing plant modernization. Assets typically 10-15 year lifecycle. Strong focus on OEE and uptime. Limited in-house maintenance capability...'" },
       { id: "assetDescription", label: "Asset/Purchase Description", description: "What are you evaluating?", type: "text", required: true },
@@ -329,7 +329,7 @@ export const scenarios: Scenario[] = [
     icon: FileText,
     status: "available",
     category: "documentation",
-    strategySelector: "thoroughness",
+    strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, typical contract risks, and protection priorities", type: "textarea", required: true, placeholder: "E.g., 'IT consulting services. IP ownership and liability caps are critical. We typically push back on unlimited liability...'" },
       { id: "sowText", label: "SOW Text", description: "Paste the Statement of Work text", type: "textarea", required: true, placeholder: "Paste the full SOW document here..." },
@@ -400,7 +400,7 @@ export const scenarios: Scenario[] = [
     icon: ListChecks,
     status: "available",
     category: "planning",
-    strategySelector: "thoroughness",
+    strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, technology maturity, and organizational constraints", type: "textarea", required: true, placeholder: "E.g., 'Retail chain with 200 stores. Legacy POS system. Limited IT staff. Need cloud-first solutions with strong vendor support...'" },
       { id: "businessGoal", label: "Business Goal", description: "What problem are you solving?", type: "text", required: true },
@@ -474,7 +474,7 @@ export const scenarios: Scenario[] = [
     icon: Calculator,
     status: "available",
     category: "analysis",
-    strategySelector: "thoroughness",
+    strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, savings reporting standards, and audit requirements", type: "textarea", required: true, placeholder: "E.g., 'Fortune 500 with strict procurement savings targets. Finance requires documented baseline and auditable methodology...'" },
       { id: "baselinePrice", label: "Baseline Price", description: "Original price before negotiation", type: "currency", required: true },
@@ -546,7 +546,7 @@ export const scenarios: Scenario[] = [
     icon: PieChart,
     status: "available",
     category: "analysis",
-    strategySelector: "thoroughness",
+    strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, typical cost structures, and benchmarking sources you use", type: "textarea", required: true, placeholder: "E.g., 'Aerospace manufacturing. Complex assemblies with 60% material cost, 25% labor, 15% overhead. We use AAMC benchmarks for cost validation...'" },
       { id: "productDescription", label: "Product/Service Description", description: "What goods or services are you analyzing?", type: "text", required: true },
@@ -572,7 +572,7 @@ export const scenarios: Scenario[] = [
     icon: FolderKanban,
     status: "available",
     category: "analysis",
-    strategySelector: "thoroughness",
+    strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, market dynamics, and category management maturity", type: "textarea", required: true, placeholder: "E.g., 'Global pharma company. Category management is centralized. We use Kraljic matrix for portfolio segmentation. Key focus on API suppliers...'" },
       { id: "categoryName", label: "Category Name", description: "Name of the category being analyzed", type: "text", required: true },
