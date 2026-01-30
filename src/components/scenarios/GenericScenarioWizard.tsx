@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
   CategoryContextOverrides,
   getDefaultCategoryOverrides 
 } from "@/components/context/CategoryContextEditor";
+import OutputFeedback from "@/components/feedback/OutputFeedback";
 import {
   Scenario,
   ScenarioRequiredField,
@@ -44,6 +46,7 @@ interface GenericScenarioWizardProps {
 type Step = "input" | "review" | "analyzing" | "results";
 
 const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>("input");
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [strategyValue, setStrategyValue] = useState<StrategyType>("balanced");
@@ -52,6 +55,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [industryOverrides, setIndustryOverrides] = useState<IndustryContextOverrides>(getDefaultOverrides());
   const [categoryOverrides, setCategoryOverrides] = useState<CategoryContextOverrides>(getDefaultCategoryOverrides());
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [analysisTimestamp, setAnalysisTimestamp] = useState<string | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
   // Fetch context data for AI grounding
@@ -114,12 +118,29 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
     if (result?.success) {
       setAnalysisResult(result.result);
+      setAnalysisTimestamp(new Date().toISOString());
       setStep("results");
       toast.success("Analysis complete!");
     } else {
       setStep("review");
       toast.error(sentinelError?.message || "Analysis failed. Please try again.");
     }
+  };
+
+  const handleFeedbackSubmit = (rating: number, feedback: string) => {
+    console.log("Feedback submitted:", { rating, feedback, scenario: scenario.id });
+    // Could be stored in database in future
+  };
+
+  const handleGenerateReport = () => {
+    navigate("/report", {
+      state: {
+        scenarioTitle: scenario.title,
+        analysisResult: analysisResult,
+        formData: formData,
+        timestamp: analysisTimestamp,
+      },
+    });
   };
 
   const renderField = (field: ScenarioRequiredField) => {
@@ -483,7 +504,13 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </div>
             </div>
 
-            <div className="flex justify-between">
+            {/* Output Feedback */}
+            <OutputFeedback
+              onFeedbackSubmit={handleFeedbackSubmit}
+              onGenerateReport={handleGenerateReport}
+            />
+
+            <div className="flex justify-start">
               <Button
                 variant="outline"
                 size="lg"
@@ -492,10 +519,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               >
                 <ArrowLeft className="w-4 h-4" />
                 Start Over
-              </Button>
-              <Button variant="hero" size="lg" className="gap-2">
-                Export Report
-                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </motion.div>
