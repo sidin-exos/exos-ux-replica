@@ -173,8 +173,34 @@ const GeneratedReport = () => {
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <div className="whitespace-pre-wrap text-foreground bg-secondary/30 rounded-lg p-5 border border-border">
-                    {analysisResult}
+                  <div className="text-foreground bg-secondary/30 rounded-lg p-5 border border-border space-y-4">
+                    {analysisResult.split('\n').map((line, i) => {
+                      // Remove ** markdown formatting
+                      const cleanLine = line.replace(/\*\*/g, '');
+                      
+                      // Check if line looks like a section header (ends with colon or is all caps/title case short line)
+                      const isSectionHeader = 
+                        (cleanLine.trim().endsWith(':') && cleanLine.trim().length < 80) ||
+                        (cleanLine.trim().length > 0 && cleanLine.trim().length < 60 && /^[A-Z]/.test(cleanLine.trim()) && !cleanLine.includes('.'));
+                      
+                      if (!cleanLine.trim()) {
+                        return <div key={i} className="h-2" />;
+                      }
+                      
+                      if (isSectionHeader) {
+                        return (
+                          <p key={i} className="font-semibold text-foreground">
+                            {cleanLine}
+                          </p>
+                        );
+                      }
+                      
+                      return (
+                        <p key={i} className="text-foreground/90">
+                          {cleanLine}
+                        </p>
+                      );
+                    })}
                   </div>
                 </div>
               </CardContent>
