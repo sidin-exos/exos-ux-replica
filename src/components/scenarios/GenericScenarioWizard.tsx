@@ -31,6 +31,7 @@ import {
 import OutputFeedback from "@/components/feedback/OutputFeedback";
 import { MasterXMLPreview } from "@/components/sentinel/MasterXMLPreview";
 import { FinalXMLPreview } from "@/components/sentinel/FinalXMLPreview";
+import { BusinessContextField } from "./BusinessContextField";
 import {
   Scenario,
   ScenarioRequiredField,
@@ -145,8 +146,19 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     });
   };
 
-  const renderField = (field: ScenarioRequiredField) => {
+  const renderField = (field: ScenarioRequiredField, skipBusinessContextField = false) => {
     const commonClasses = "bg-background";
+
+    // Special handling for industryContext field - use BusinessContextField component
+    if (field.id === "industryContext" && !skipBusinessContextField) {
+      return (
+        <BusinessContextField
+          value={formData[field.id] || ""}
+          onChange={(value) => handleFieldChange(field.id, value)}
+          placeholder={field.placeholder || field.description}
+        />
+      );
+    }
 
     if (field.type === "select" && field.options) {
       return (
@@ -322,21 +334,32 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {scenario.requiredFields
                   .filter((f) => f.required)
-                  .map((field) => (
-                    <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
-                      <Label className="flex items-center gap-1">
-                        {field.label}
-                        <span className="text-destructive">*</span>
-                        {field.type === "percentage" && (
-                          <span className="text-muted-foreground text-xs">(%)</span>
-                        )}
-                        {field.type === "currency" && (
-                          <span className="text-muted-foreground text-xs">($)</span>
-                        )}
-                      </Label>
-                      {renderField(field)}
-                    </div>
-                  ))}
+                  .map((field) => {
+                    // BusinessContextField renders its own label
+                    if (field.id === "industryContext") {
+                      return (
+                        <div key={field.id} className="md:col-span-2">
+                          {renderField(field)}
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
+                        <Label className="flex items-center gap-1">
+                          {field.label}
+                          <span className="text-destructive">*</span>
+                          {field.type === "percentage" && (
+                            <span className="text-muted-foreground text-xs">(%)</span>
+                          )}
+                          {field.type === "currency" && (
+                            <span className="text-muted-foreground text-xs">($)</span>
+                          )}
+                        </Label>
+                        {renderField(field)}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
 
