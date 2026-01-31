@@ -29,6 +29,8 @@ import {
   getDefaultCategoryOverrides 
 } from "@/components/context/CategoryContextEditor";
 import OutputFeedback from "@/components/feedback/OutputFeedback";
+import { MasterXMLPreview } from "@/components/sentinel/MasterXMLPreview";
+import { FinalXMLPreview } from "@/components/sentinel/FinalXMLPreview";
 import {
   Scenario,
   ScenarioRequiredField,
@@ -258,6 +260,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </p>
             </div>
 
+            {/* Master XML Template Preview (hidden in shareable mode) */}
+            <MasterXMLPreview scenarioType={scenario.id} />
+
             {/* Context Selectors for AI Grounding */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-border bg-card/50">
               <IndustrySelector
@@ -361,6 +366,15 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 </div>
               </div>
             )}
+
+            {/* Final XML Preview - shows complete XML after form is filled (hidden in shareable mode) */}
+            <FinalXMLPreview
+              scenarioType={scenario.id}
+              scenarioData={formData}
+              industry={industryContext || null}
+              category={categoryContext || null}
+              strategyValue={strategyValue}
+            />
 
             <div className="flex justify-end">
               <Button
