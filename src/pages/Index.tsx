@@ -61,6 +61,10 @@ const Index = () => {
                 knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes—cost 
                 breakdowns, negotiation scenarios, make-or-buy simulations—all tailored to your business case.
               </p>
+              <p className="text-muted-foreground text-base max-w-2xl mb-4">
+                Your sensitive commercial data is masked before reaching external APIs—then grounded 
+                and validated on the way back.
+              </p>
               <p className="text-sm text-muted-foreground/80 max-w-xl">
                 Distilled best practices. Fine-tuned AI logic. Your procurement exoskeleton.
               </p>
