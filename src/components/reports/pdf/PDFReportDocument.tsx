@@ -5,27 +5,11 @@ import {
   View,
   StyleSheet,
   Font,
-  Image,
 } from "@react-pdf/renderer";
 
-// Register fonts for professional look
-Font.register({
-  family: "Inter",
-  fonts: [
-    {
-      src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2",
-      fontWeight: 400,
-    },
-    {
-      src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hjp-Ek-_EeA.woff2",
-      fontWeight: 600,
-    },
-    {
-      src: "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hjp-Ek-_EeA.woff2",
-      fontWeight: 700,
-    },
-  ],
-});
+// Register Helvetica-like fonts (using system fonts that @react-pdf supports)
+// @react-pdf/renderer has built-in support for Helvetica, Times-Roman, Courier
+// No custom font registration needed - we'll use the built-in Helvetica
 
 // EXOS Corporate Colors
 const colors = {
@@ -45,7 +29,7 @@ const styles = StyleSheet.create({
   page: {
     backgroundColor: colors.background,
     padding: 40,
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     color: colors.text,
   },
   // Header
