@@ -43,7 +43,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       scenarioData: Record<string, string>,
       industry: IndustryContext | null,
       category: ProcurementCategory | null,
-      config?: Partial<PipelineConfig>
+      config?: Partial<PipelineConfig>,
+      model: string = "google/gemini-3-flash-preview"
     ): Promise<OrchestratorResponse | null> => {
       setState({
         isProcessing: true,
@@ -92,7 +93,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
             body: {
               systemPrompt: inferencePayload.systemPrompt,
               userPrompt: inferencePayload.userPrompt,
-              model: "google/gemini-3-flash-preview", // Use Gemini 3 Flash for testing
+              model, // Use passed model or default
               useLocalModel: inferencePayload.useLocal,
               stream: false,
               // Testing metadata for database logging

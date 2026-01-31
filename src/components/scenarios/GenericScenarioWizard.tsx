@@ -32,6 +32,7 @@ import OutputFeedback from "@/components/feedback/OutputFeedback";
 import { MasterXMLPreview } from "@/components/sentinel/MasterXMLPreview";
 import { FinalXMLPreview } from "@/components/sentinel/FinalXMLPreview";
 import { BusinessContextField } from "./BusinessContextField";
+import { ModelSelector, DEFAULT_MODEL, type AIModel } from "./ModelSelector";
 import {
   Scenario,
   ScenarioRequiredField,
@@ -57,6 +58,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [industryOverrides, setIndustryOverrides] = useState<IndustryContextOverrides>(getDefaultOverrides());
   const [categoryOverrides, setCategoryOverrides] = useState<CategoryContextOverrides>(getDefaultCategoryOverrides());
+  const [selectedModel, setSelectedModel] = useState<AIModel>(DEFAULT_MODEL);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [analysisTimestamp, setAnalysisTimestamp] = useState<string | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -116,7 +118,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       scenario.id,
       enrichedData,
       industryContext || null,
-      categoryContext || null
+      categoryContext || null,
+      undefined, // config
+      selectedModel // pass the selected model
     );
 
     if (result?.success) {
@@ -389,6 +393,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 </div>
               </div>
             )}
+
+            {/* AI Model Selector - hidden in shareable mode */}
+            <ModelSelector value={selectedModel} onChange={setSelectedModel} />
 
             {/* Final XML Preview - shows complete XML after form is filled (hidden in shareable mode) */}
             <FinalXMLPreview
