@@ -16,16 +16,6 @@ const faqData = [
 Pick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 best-in-class support.`,
   },
   {
-    id: "limited-requests",
-    question: "Why is the number of requests limited in the SMB option?",
-    answer: `EXOS is not designed to be creative but to provide best-in-class expertise. Each of your requests is enhanced with business knowledge, scenario fine-tuning, structured XML prompts, grounding, and validation after receiving an API response. This means your request goes through multiple checks before it returns to you. EXOS gives you straightforward answers, pointing out its limitations if it doesn't have sufficient data.`,
-  },
-  {
-    id: "price-comparison",
-    question: "Why is the price higher than ChatGPT or Gemini?",
-    answer: `EXOS is not a mass product—it's designed for professionals seeking the best possible quality. For each request you make, we've run dozens of scenario simulations to improve quality, reduce hallucinations, and empower EXOS with best business practices.`,
-  },
-  {
     id: "data-privacy",
     question: "How do you ensure commercial data privacy?",
     answer: `Our internal engine is fine-tuned to identify and encrypt commercial data before sending it to external APIs. For the Enterprise tariff, we can deploy our engine on your server, giving you full visibility and control over all outgoing API requests.`,
@@ -34,6 +24,16 @@ Pick the Pro option if you're a full-time procurement professional who needs to 
     id: "fine-tuned-scenarios",
     question: "What do you mean by fine-tuned procurement scenarios?",
     answer: `To ensure the best possible quality, our system uses industry and category context along with specific rules to prevent external APIs from hallucinating. The request EXOS sends is not a typical text prompt—it's a structured XML prompt with all parameters refined and validated against industry-specific business cases. The system also provides feedback when information is insufficient, clearly pointing out its limitations.`,
+  },
+  {
+    id: "limited-requests",
+    question: "Why is the number of requests limited in the SMB option?",
+    answer: `EXOS is not designed to be creative but to provide best-in-class expertise. Each of your requests is enhanced with business knowledge, scenario fine-tuning, structured XML prompts, grounding, and validation after receiving an API response. This means your request goes through multiple checks before it returns to you. EXOS gives you straightforward answers, pointing out its limitations if it doesn't have sufficient data.`,
+  },
+  {
+    id: "price-comparison",
+    question: "Why is the price higher than ChatGPT or Gemini?",
+    answer: `EXOS is not a mass product—it's designed for professionals seeking the best possible quality. For each request you make, we've run dozens of scenario simulations to improve quality, reduce hallucinations, and empower EXOS with best business practices.`,
   },
 ];
 
