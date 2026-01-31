@@ -134,7 +134,12 @@ const GeneratedReport = () => {
             </div>
 
             {/* Export Actions */}
-            <ReportExportButtons />
+            <ReportExportButtons
+              scenarioTitle={scenarioTitle}
+              analysisResult={analysisResult}
+              formData={formData}
+              timestamp={timestamp}
+            />
           </div>
         </motion.div>
 

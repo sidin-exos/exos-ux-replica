@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   FileDown,
@@ -16,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import PDFPreviewModal from "./pdf/PDFPreviewModal";
 
 // Custom Jira icon component
 const JiraIcon = () => (
@@ -39,73 +41,101 @@ const NotionIcon = () => (
   </svg>
 );
 
-const ReportExportButtons = () => {
+interface ReportExportButtonsProps {
+  scenarioTitle?: string;
+  analysisResult?: string;
+  formData?: Record<string, string>;
+  timestamp?: string;
+}
+
+const ReportExportButtons = ({
+  scenarioTitle = "Analysis",
+  analysisResult = "",
+  formData = {},
+  timestamp = new Date().toISOString(),
+}: ReportExportButtonsProps) => {
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+
   const handleExport = (type: string) => {
     toast.info(`${type} export will be available soon`, {
       description: "This integration is coming in a future update.",
     });
   };
 
+  const hasPdfData = analysisResult.length > 0;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.2 }}
-      className="flex flex-wrap gap-2"
-    >
-      {/* Primary Export - PDF */}
-      <Button
-        onClick={() => handleExport("PDF")}
-        variant="hero"
-        className="gap-2"
+    <>
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2 }}
+        className="flex flex-wrap gap-2"
       >
-        <FileDown className="w-4 h-4" />
-        Export to PDF
-      </Button>
+        {/* Primary Export - PDF */}
+        <Button
+          onClick={() => hasPdfData ? setPdfPreviewOpen(true) : handleExport("PDF")}
+          variant="hero"
+          className="gap-2"
+        >
+          <FileDown className="w-4 h-4" />
+          Export to PDF
+        </Button>
 
-      {/* Jira Integration */}
-      <Button
-        onClick={() => handleExport("Jira")}
-        variant="outline"
-        className="gap-2"
-      >
-        <JiraIcon />
-        Export to Jira
-      </Button>
+        {/* Jira Integration */}
+        <Button
+          onClick={() => handleExport("Jira")}
+          variant="outline"
+          className="gap-2"
+        >
+          <JiraIcon />
+          Export to Jira
+        </Button>
 
-      {/* More Integrations Dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="gap-2">
-            <Send className="w-4 h-4" />
-            More Integrations
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onClick={() => handleExport("Notion")}>
-            <NotionIcon />
-            <span className="ml-2">Export to Notion</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleExport("Confluence")}>
-            <FileText className="w-4 h-4" />
-            <span className="ml-2">Export to Confluence</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleExport("Trello")}>
-            <Trello className="w-4 h-4" />
-            <span className="ml-2">Export to Trello</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => handleExport("Slack")}>
-            <Slack className="w-4 h-4" />
-            <span className="ml-2">Share to Slack</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleExport("Excel")}>
-            <FileSpreadsheet className="w-4 h-4" />
-            <span className="ml-2">Export to Excel</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </motion.div>
+        {/* More Integrations Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Send className="w-4 h-4" />
+              More Integrations
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => handleExport("Notion")}>
+              <NotionIcon />
+              <span className="ml-2">Export to Notion</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport("Confluence")}>
+              <FileText className="w-4 h-4" />
+              <span className="ml-2">Export to Confluence</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport("Trello")}>
+              <Trello className="w-4 h-4" />
+              <span className="ml-2">Export to Trello</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleExport("Slack")}>
+              <Slack className="w-4 h-4" />
+              <span className="ml-2">Share to Slack</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport("Excel")}>
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="ml-2">Export to Excel</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </motion.div>
+
+      {/* PDF Preview Modal */}
+      <PDFPreviewModal
+        open={pdfPreviewOpen}
+        onOpenChange={setPdfPreviewOpen}
+        scenarioTitle={scenarioTitle}
+        analysisResult={analysisResult}
+        formData={formData}
+        timestamp={timestamp}
+      />
+    </>
   );
 };
 
