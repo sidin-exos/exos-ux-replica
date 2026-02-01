@@ -5,27 +5,12 @@ import {
   View,
   StyleSheet,
   Image,
-  Font,
 } from "@react-pdf/renderer";
 import exosLogo from "@/assets/logo-concept-layers.png";
 
-// Register IBM Plex fonts
-Font.register({
-  family: "IBM Plex Sans",
-  fonts: [
-    { src: "https://fonts.gstatic.com/s/ibmplexsans/v19/zYXgKVElMYYaJe8bpLHnCwDKhdHeFQ.ttf", fontWeight: 400 },
-    { src: "https://fonts.gstatic.com/s/ibmplexsans/v19/zYX9KVElMYYaJe8bpLHnCwDKjSL9AIFsdA.ttf", fontWeight: 600 },
-    { src: "https://fonts.gstatic.com/s/ibmplexsans/v19/zYX9KVElMYYaJe8bpLHnCwDKjWr8AIFsdA.ttf", fontWeight: 700 },
-  ],
-});
-
-Font.register({
-  family: "IBM Plex Mono",
-  fonts: [
-    { src: "https://fonts.gstatic.com/s/ibmplexmono/v19/-F63fjptAgt5VM-kVkqdyU8n5ig.ttf", fontWeight: 400 },
-    { src: "https://fonts.gstatic.com/s/ibmplexmono/v19/-F6qfjptAgt5VM-kVkqdyU8n3twJwl0F.ttf", fontWeight: 600 },
-  ],
-});
+// Note: Avoid remote font registration in the browser PDF renderer.
+// Using built-in PDF fonts prevents "Unknown font format" failures when remote font URLs 404
+// or return unsupported formats.
 
 // EXOS Corporate Colors
 const colors = {
@@ -46,7 +31,7 @@ const styles = StyleSheet.create({
   page: {
     backgroundColor: colors.background,
     padding: 40,
-    fontFamily: "IBM Plex Mono",
+    fontFamily: "Courier",
     color: colors.text,
   },
   // Header
@@ -70,7 +55,7 @@ const styles = StyleSheet.create({
   },
   brandName: {
     fontSize: 20,
-    fontFamily: "IBM Plex Sans",
+    fontFamily: "Helvetica",
     fontWeight: 700,
     color: colors.text,
     letterSpacing: 1,
@@ -105,7 +90,7 @@ const styles = StyleSheet.create({
   },
   reportTitle: {
     fontSize: 24,
-    fontFamily: "IBM Plex Sans",
+    fontFamily: "Helvetica",
     fontWeight: 700,
     color: colors.primary,
     marginBottom: 8,
@@ -130,7 +115,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontFamily: "IBM Plex Sans",
+    fontFamily: "Helvetica",
     fontWeight: 600,
     color: colors.text,
   },
@@ -177,7 +162,7 @@ const styles = StyleSheet.create({
   },
   analysisHeader: {
     fontSize: 12,
-    fontFamily: "IBM Plex Sans",
+    fontFamily: "Helvetica",
     fontWeight: 700,
     color: colors.text,
     marginTop: 14,
@@ -185,7 +170,7 @@ const styles = StyleSheet.create({
   },
   analysisSubHeader: {
     fontSize: 11,
-    fontFamily: "IBM Plex Sans",
+    fontFamily: "Helvetica",
     fontWeight: 600,
     color: colors.text,
     marginTop: 10,
@@ -246,7 +231,7 @@ const styles = StyleSheet.create({
   },
   footerBrand: {
     fontSize: 8,
-    fontFamily: "IBM Plex Mono",
+    fontFamily: "Courier",
     color: "rgba(249, 250, 251, 0.35)",
     fontWeight: 400,
     marginBottom: 8,
