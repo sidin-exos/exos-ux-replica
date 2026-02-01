@@ -41,7 +41,7 @@ const Header = () => {
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             activeClassName="text-foreground"
           >
-            Reports
+            Dashboards
           </NavLink>
           <NavLink 
             to="/pricing" 
