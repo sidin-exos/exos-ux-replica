@@ -2,42 +2,106 @@ import { View, Text } from "@react-pdf/renderer";
 import { colors, styles } from "./theme";
 
 const clauses = [
-  { name: "IP Ownership", value: 80 },
-  { name: "Limitation of Liability", value: 55 },
-  { name: "Termination", value: 72 },
-  { name: "Data Protection", value: 66 },
-  { name: "SLAs", value: 61 },
+  { name: "IP Ownership", score: 80, status: "Strong", risk: "Low", color: colors.success },
+  { name: "Limitation of Liability", score: 55, status: "Weak", risk: "High", color: colors.destructive },
+  { name: "Termination", score: 72, status: "Adequate", risk: "Medium", color: colors.warning },
+  { name: "Data Protection", score: 66, status: "Adequate", risk: "Medium", color: colors.warning },
+  { name: "SLAs", score: 61, status: "Weak", risk: "High", color: colors.destructive },
+  { name: "Payment Terms", score: 78, status: "Strong", risk: "Low", color: colors.success },
 ];
+
+const avgScore = Math.round(clauses.reduce((sum, c) => sum + c.score, 0) / clauses.length);
+const highRiskCount = clauses.filter(c => c.risk === "High").length;
+
+const getScoreColor = (score: number): string => {
+  if (score >= 70) return colors.success;
+  if (score >= 60) return colors.warning;
+  return colors.destructive;
+};
 
 export const PDFSOWAnalysis = () => (
   <View style={styles.dashboardCard}>
     <View style={styles.dashboardHeader}>
       <View style={styles.dashboardIcon} />
-      <View>
+      <View style={{ flex: 1 }}>
         <Text style={styles.dashboardTitle}>SOW Analysis</Text>
         <Text style={styles.dashboardSubtitle}>Clause coverage score (0–100)</Text>
       </View>
+      <View style={{ alignItems: "flex-end" }}>
+        <Text style={{ fontSize: 12, fontWeight: 700, color: getScoreColor(avgScore) }}>{avgScore}</Text>
+        <Text style={{ fontSize: 6, color: colors.textMuted }}>avg score</Text>
+      </View>
     </View>
 
+    {/* Summary stats */}
+    <View style={styles.statsRow}>
+      <View style={styles.statItem}>
+        <Text style={styles.statLabel}>Clauses Reviewed</Text>
+        <Text style={styles.statValue}>{clauses.length}</Text>
+      </View>
+      <View style={styles.statItem}>
+        <Text style={styles.statLabel}>High Risk Items</Text>
+        <Text style={[styles.statValue, { color: colors.destructive }]}>{highRiskCount}</Text>
+      </View>
+      <View style={styles.statItem}>
+        <Text style={styles.statLabel}>Overall Status</Text>
+        <Text style={[styles.statValue, { color: avgScore >= 70 ? colors.success : colors.warning }]}>
+          {avgScore >= 70 ? "Good" : "Needs Review"}
+        </Text>
+      </View>
+    </View>
+
+    {/* Clause breakdown */}
     <View style={styles.barContainer}>
       {clauses.map((item, i) => (
-        <View key={i} style={styles.barRow}>
-          <Text style={styles.barLabel}>{item.name}</Text>
-          <View style={styles.barTrack}>
-            <View
-              style={[
-                styles.barFill,
-                {
-                  flex: item.value,
-                  backgroundColor: item.value >= 70 ? colors.success : item.value >= 60 ? colors.warning : colors.destructive,
-                },
-              ]}
-            />
-            <View style={{ flex: Math.max(0, 100 - item.value) }} />
+        <View key={i} style={{ marginBottom: 6 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: item.color, marginRight: 4 }} />
+              <Text style={{ fontSize: 8, color: colors.text }}>{item.name}</Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ 
+                paddingHorizontal: 3, 
+                paddingVertical: 1, 
+                backgroundColor: item.color + "20", 
+                borderRadius: 2,
+                marginRight: 6
+              }}>
+                <Text style={{ fontSize: 6, color: item.color }}>{item.status}</Text>
+              </View>
+              <Text style={{ fontSize: 8, fontWeight: 600, color: item.color }}>{item.score}</Text>
+            </View>
           </View>
-          <Text style={styles.barValue}>{item.value}</Text>
+          <View style={styles.barTrack}>
+            <View style={[styles.barFill, { flex: item.score, backgroundColor: item.color }]} />
+            <View style={{ flex: Math.max(0, 100 - item.score) }} />
+          </View>
         </View>
       ))}
+    </View>
+
+    {/* Recommendations */}
+    <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
+      <Text style={{ fontSize: 7, color: colors.textMuted }}>
+        <Text style={{ color: colors.destructive, fontWeight: 600 }}>Action Required: </Text>
+        Review Limitation of Liability and SLA clauses before signing. Consider legal consultation for high-risk items.
+      </Text>
+    </View>
+
+    <View style={styles.legend}>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
+        <Text style={styles.legendText}>≥70 Strong</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
+        <Text style={styles.legendText}>60-69 Adequate</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: colors.destructive }]} />
+        <Text style={styles.legendText}>&lt;60 Weak</Text>
+      </View>
     </View>
   </View>
 );

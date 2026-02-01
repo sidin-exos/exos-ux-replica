@@ -252,12 +252,12 @@ export const styles = StyleSheet.create({
   },
   quadrantCell: {
     flex: 1,
-    height: 54,
+    height: 70,
     borderRightWidth: 1,
     borderRightColor: colors.border,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     padding: 6,
   },
   quadrantCellLastCol: {
