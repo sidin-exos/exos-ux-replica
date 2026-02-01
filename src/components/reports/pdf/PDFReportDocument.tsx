@@ -5,8 +5,27 @@ import {
   View,
   StyleSheet,
   Image,
+  Font,
 } from "@react-pdf/renderer";
-import exosLogo from "@/assets/logo-exo-layers-v2.png";
+import exosLogo from "@/assets/logo-concept-layers.png";
+
+// Register IBM Plex fonts
+Font.register({
+  family: "IBM Plex Sans",
+  fonts: [
+    { src: "https://fonts.gstatic.com/s/ibmplexsans/v19/zYXgKVElMYYaJe8bpLHnCwDKhdHeFQ.ttf", fontWeight: 400 },
+    { src: "https://fonts.gstatic.com/s/ibmplexsans/v19/zYX9KVElMYYaJe8bpLHnCwDKjSL9AIFsdA.ttf", fontWeight: 600 },
+    { src: "https://fonts.gstatic.com/s/ibmplexsans/v19/zYX9KVElMYYaJe8bpLHnCwDKjWr8AIFsdA.ttf", fontWeight: 700 },
+  ],
+});
+
+Font.register({
+  family: "IBM Plex Mono",
+  fonts: [
+    { src: "https://fonts.gstatic.com/s/ibmplexmono/v19/-F63fjptAgt5VM-kVkqdyU8n5ig.ttf", fontWeight: 400 },
+    { src: "https://fonts.gstatic.com/s/ibmplexmono/v19/-F6qfjptAgt5VM-kVkqdyU8n3twJwl0F.ttf", fontWeight: 600 },
+  ],
+});
 
 // EXOS Corporate Colors
 const colors = {
@@ -27,7 +46,7 @@ const styles = StyleSheet.create({
   page: {
     backgroundColor: colors.background,
     padding: 40,
-    fontFamily: "Helvetica",
+    fontFamily: "IBM Plex Mono",
     color: colors.text,
   },
   // Header
@@ -51,6 +70,7 @@ const styles = StyleSheet.create({
   },
   brandName: {
     fontSize: 20,
+    fontFamily: "IBM Plex Sans",
     fontWeight: 700,
     color: colors.text,
     letterSpacing: 1,
@@ -85,6 +105,7 @@ const styles = StyleSheet.create({
   },
   reportTitle: {
     fontSize: 24,
+    fontFamily: "IBM Plex Sans",
     fontWeight: 700,
     color: colors.primary,
     marginBottom: 8,
@@ -109,6 +130,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
+    fontFamily: "IBM Plex Sans",
     fontWeight: 600,
     color: colors.text,
   },
@@ -155,6 +177,7 @@ const styles = StyleSheet.create({
   },
   analysisHeader: {
     fontSize: 12,
+    fontFamily: "IBM Plex Sans",
     fontWeight: 700,
     color: colors.text,
     marginTop: 14,
@@ -162,10 +185,31 @@ const styles = StyleSheet.create({
   },
   analysisSubHeader: {
     fontSize: 11,
+    fontFamily: "IBM Plex Sans",
     fontWeight: 600,
     color: colors.text,
     marginTop: 10,
     marginBottom: 6,
+  },
+  // Limitations Section
+  limitationItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 8,
+    gap: 8,
+  },
+  limitationBullet: {
+    width: 6,
+    height: 6,
+    backgroundColor: colors.textMuted,
+    borderRadius: 3,
+    marginTop: 5,
+  },
+  limitationText: {
+    flex: 1,
+    fontSize: 9,
+    color: colors.textMuted,
+    lineHeight: 1.5,
   },
   // Inputs Summary
   inputsGrid: {
@@ -201,9 +245,10 @@ const styles = StyleSheet.create({
     paddingTop: 15,
   },
   footerBrand: {
-    fontSize: 11,
-    color: colors.textSemiTransparent,
-    fontWeight: 600,
+    fontSize: 8,
+    fontFamily: "IBM Plex Mono",
+    color: "rgba(249, 250, 251, 0.35)",
+    fontWeight: 400,
     marginBottom: 8,
   },
   footerRow: {
@@ -339,33 +384,6 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {/* Analysis Inputs */}
-        {Object.keys(formData).length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Image src={exosLogo} style={styles.sectionLogoImage} />
-              <Text style={styles.sectionTitle}>Analysis Inputs</Text>
-            </View>
-            <View style={styles.sectionContent}>
-              <View style={styles.inputsGrid}>
-                {Object.entries(formData)
-                  .filter(([_, value]) => value)
-                  .slice(0, 6)
-                  .map(([key, value]) => (
-                    <View key={key} style={styles.inputItem}>
-                      <Text style={styles.inputLabel}>
-                        {key.replace(/([A-Z])/g, " $1").replace(/_/g, " ")}
-                      </Text>
-                      <Text style={styles.inputValue}>
-                        {value.length > 40 ? `${value.slice(0, 40)}...` : value}
-                      </Text>
-                    </View>
-                  ))}
-              </View>
-            </View>
-          </View>
-        )}
-
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
@@ -440,6 +458,67 @@ const PDFReportDocument = ({
             })}
           </View>
         </View>
+
+        {/* Analysis Limitations */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Image src={exosLogo} style={styles.sectionLogoImage} />
+            <Text style={styles.sectionTitle}>Analysis Limitations</Text>
+          </View>
+          <View style={styles.sectionContent}>
+            <View style={styles.limitationItem}>
+              <View style={styles.limitationBullet} />
+              <Text style={styles.limitationText}>
+                This analysis is based on the information provided and may not reflect all market conditions, supplier capabilities, or internal constraints.
+              </Text>
+            </View>
+            <View style={styles.limitationItem}>
+              <View style={styles.limitationBullet} />
+              <Text style={styles.limitationText}>
+                AI-generated recommendations should be validated against current market data and organizational policies before implementation.
+              </Text>
+            </View>
+            <View style={styles.limitationItem}>
+              <View style={styles.limitationBullet} />
+              <Text style={styles.limitationText}>
+                Financial projections and savings estimates are indicative and subject to negotiation outcomes and external factors.
+              </Text>
+            </View>
+            <View style={styles.limitationItem}>
+              <View style={styles.limitationBullet} />
+              <Text style={styles.limitationText}>
+                Historical data patterns may not accurately predict future supplier behavior or market dynamics.
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Analysis Inputs - Now last */}
+        {Object.keys(formData).length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Image src={exosLogo} style={styles.sectionLogoImage} />
+              <Text style={styles.sectionTitle}>Analysis Inputs</Text>
+            </View>
+            <View style={styles.sectionContent}>
+              <View style={styles.inputsGrid}>
+                {Object.entries(formData)
+                  .filter(([_, value]) => value)
+                  .slice(0, 6)
+                  .map(([key, value]) => (
+                    <View key={key} style={styles.inputItem}>
+                      <Text style={styles.inputLabel}>
+                        {key.replace(/([A-Z])/g, " $1").replace(/_/g, " ")}
+                      </Text>
+                      <Text style={styles.inputValue}>
+                        {value.length > 40 ? `${value.slice(0, 40)}...` : value}
+                      </Text>
+                    </View>
+                  ))}
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Footer */}
         <View style={styles.footer} fixed>
