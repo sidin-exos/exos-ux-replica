@@ -9,6 +9,7 @@ import Reports from "./pages/Reports";
 import Pricing from "./pages/Pricing";
 import FAQ from "./pages/FAQ";
 import GeneratedReport from "./pages/GeneratedReport";
+import DashboardShowcase from "./pages/DashboardShowcase";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/report" element={<GeneratedReport />} />
+          <Route path="/dashboards" element={<DashboardShowcase />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
