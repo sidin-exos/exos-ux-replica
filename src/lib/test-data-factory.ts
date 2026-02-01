@@ -1,9 +1,11 @@
 /**
  * Test Data Factory
- * 
+ *
  * Generates realistic business case data for scenario testing.
  * Each generator returns data that fills all required fields with
  * plausible values for the given scenario type.
+ * 
+ * @module test-data-factory
  */
 
 type TestDataGenerator = () => Record<string, string>;
