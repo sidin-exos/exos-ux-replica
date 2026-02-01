@@ -22,11 +22,19 @@ interface UseSentinelOptions {
   onError?: (error: Error) => void;
 }
 
+export interface TokenUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
 interface SentinelState {
   isProcessing: boolean;
   currentStage: string | null;
   result: OrchestratorResponse | null;
   error: Error | null;
+  tokenUsage: TokenUsage | null;
+  processingTimeMs: number | null;
 }
 
 export function useSentinel(options: UseSentinelOptions = {}) {
@@ -35,6 +43,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
     currentStage: null,
     result: null,
     error: null,
+    tokenUsage: null,
+    processingTimeMs: null,
   });
 
   const analyze = useCallback(
@@ -51,6 +61,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
         currentStage: "anonymization",
         result: null,
         error: null,
+        tokenUsage: null,
+        processingTimeMs: null,
       });
 
       try {
@@ -145,6 +157,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           currentStage: null,
           result,
           error: null,
+          tokenUsage: data.usage || null,
+          processingTimeMs: data.processingTimeMs || null,
         });
 
         return result;
@@ -156,6 +170,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           currentStage: null,
           result: null,
           error: err,
+          tokenUsage: null,
+          processingTimeMs: null,
         });
         return null;
       }
@@ -169,6 +185,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       currentStage: null,
       result: null,
       error: null,
+      tokenUsage: null,
+      processingTimeMs: null,
     });
   }, []);
 

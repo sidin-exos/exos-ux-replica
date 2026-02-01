@@ -91,7 +91,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const { data: categoryContext } = useProcurementCategory(categorySlug);
 
   // Sentinel AI pipeline
-  const { analyze, isProcessing, currentStage, error: sentinelError } = useSentinel({
+  const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs } = useSentinel({
     onProgress: (stage, status) => {
       console.log(`[Sentinel] ${stage}: ${status}`);
     },
@@ -700,6 +700,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             <OutputFeedback
               onFeedbackSubmit={handleFeedbackSubmit}
               onGenerateReport={handleGenerateReport}
+              tokenUsage={tokenUsage}
+              processingTimeMs={processingTimeMs}
+              model={selectedModel}
             />
 
             <div className="flex justify-start">
