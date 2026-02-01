@@ -130,7 +130,7 @@ const Reports = () => {
             <span className="text-gradient">Dashboards</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Dashboards library — Tableau-inspired visualization components for procurement analysis.
+            EXOS dashboards — empowering your decision-making with transparency.
           </p>
         </section>
 
