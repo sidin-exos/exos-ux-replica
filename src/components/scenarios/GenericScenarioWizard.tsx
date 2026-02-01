@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Brain } from "lucide-react";
 import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelineAnimation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,7 @@ import { useSentinel } from "@/hooks/useSentinel";
 import { useIndustryContext, useProcurementCategory } from "@/hooks/useContextData";
 import { useShareableMode } from "@/hooks/useShareableMode";
 import { generateTestData } from "@/lib/test-data-factory";
+import { generateTestDataHybrid } from "@/lib/ai-test-data-generator";
 import { toast } from "sonner";
 
 interface GenericScenarioWizardProps {
@@ -68,6 +69,12 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [selectedDashboards, setSelectedDashboards] = useState<DashboardType[]>([]);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [analysisTimestamp, setAnalysisTimestamp] = useState<string | null>(null);
+  const [isGeneratingTestData, setIsGeneratingTestData] = useState(false);
+  const [testDataMetadata, setTestDataMetadata] = useState<{
+    source: "ai" | "static";
+    score?: number;
+    reasoning?: string;
+  } | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
   // Fetch context data for AI grounding
@@ -84,13 +91,55 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     },
   });
 
-  // Test data generation (hidden feature for internal testing)
-  const handleGenerateTestData = () => {
-    const testData = generateTestData(scenario.id);
-    setFormData(testData);
-    toast.success("Test data generated", {
-      description: "Review the form and click again to regenerate",
-    });
+  // AI-powered test data generation with MCTS sampling (hidden feature for internal testing)
+  const handleGenerateTestData = async (useAI: boolean = true) => {
+    if (useAI) {
+      setIsGeneratingTestData(true);
+      setTestDataMetadata(null);
+      
+      try {
+        const result = await generateTestDataHybrid(scenario.id, {
+          preferAI: true,
+          industry: industrySlug || undefined,
+          category: categorySlug || undefined,
+          mctsIterations: 3, // 3 exploration iterations for good quality
+        });
+        
+        setFormData(result.data);
+        setTestDataMetadata({
+          source: result.source,
+          score: result.metadata?.score,
+          reasoning: result.metadata?.reasoning,
+        });
+        
+        if (result.source === "ai") {
+          toast.success("AI Test Data Generated", {
+            description: `Score: ${result.metadata?.score}/100 • ${result.metadata?.industry} industry`,
+          });
+        } else {
+          toast.success("Static Test Data Generated", {
+            description: "AI unavailable, used fallback generator",
+          });
+        }
+      } catch (err) {
+        console.error("[TestDataGen] Error:", err);
+        // Fallback to static generation
+        const testData = generateTestData(scenario.id);
+        setFormData(testData);
+        setTestDataMetadata({ source: "static" });
+        toast.success("Test data generated (fallback)", {
+          description: "Using static generator due to AI error",
+        });
+      } finally {
+        setIsGeneratingTestData(false);
+      }
+    } else {
+      // Quick static generation
+      const testData = generateTestData(scenario.id);
+      setFormData(testData);
+      setTestDataMetadata({ source: "static" });
+      toast.success("Static test data generated");
+    }
   };
 
   // Reset overrides when context selection changes
@@ -295,17 +344,46 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 </p>
               </div>
               
-              {/* Hidden test data generator button (only visible in non-shared mode) */}
+              {/* Hidden test data generator buttons (only visible in non-shared mode) */}
               {showTechnicalDetails && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateTestData}
-                  className="gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <FlaskConical className="w-4 h-4" />
-                  Generate Test Data
-                </Button>
+                <div className="flex items-center gap-2">
+                  {testDataMetadata && (
+                    <span className="text-xs text-muted-foreground">
+                      {testDataMetadata.source === "ai" ? (
+                        <>
+                          <Brain className="w-3 h-3 inline mr-1" />
+                          Score: {testDataMetadata.score}/100
+                        </>
+                      ) : (
+                        "Static"
+                      )}
+                    </span>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleGenerateTestData(true)}
+                    disabled={isGeneratingTestData}
+                    className="gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    {isGeneratingTestData ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Brain className="w-4 h-4" />
+                    )}
+                    {isGeneratingTestData ? "Generating..." : "AI Test Data"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleGenerateTestData(false)}
+                    disabled={isGeneratingTestData}
+                    className="gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <FlaskConical className="w-4 h-4" />
+                    Static
+                  </Button>
+                </div>
               )}
             </div>
 
