@@ -117,7 +117,7 @@ serve(async (req) => {
       );
     }
 
-    // Call Lovable AI Gateway
+    // Call Lovable AI Gateway with retry logic for transient errors
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("[Sentinel] LOVABLE_API_KEY not configured");
@@ -131,23 +131,64 @@ serve(async (req) => {
     console.log(`[Sentinel] System prompt length: ${systemPrompt.length} chars`);
     console.log(`[Sentinel] User prompt length: ${userPrompt.length} chars`);
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.4,
-        max_tokens: 4096,
-        stream
-      }),
-    });
+    // Retry logic for transient errors (503, connection resets)
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff
+    let aiResponse: Response | null = null;
+    let lastError: string | null = null;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(`[Sentinel] Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
+        }
+
+        aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt }
+            ],
+            temperature: 0.4,
+            max_tokens: 4096,
+            stream
+          }),
+        });
+
+        // If we get a 503 (service unavailable), retry
+        if (aiResponse.status === 503) {
+          lastError = await aiResponse.text();
+          console.warn(`[Sentinel] Got 503 on attempt ${attempt + 1}: ${lastError}`);
+          if (attempt < MAX_RETRIES - 1) continue;
+        }
+
+        // Success or non-retryable error, break out
+        break;
+      } catch (fetchError) {
+        lastError = fetchError instanceof Error ? fetchError.message : "Network error";
+        console.warn(`[Sentinel] Fetch error on attempt ${attempt + 1}: ${lastError}`);
+        if (attempt === MAX_RETRIES - 1) {
+          return new Response(
+            JSON.stringify({ error: "AI gateway connection failed after retries", details: lastError }),
+            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    }
+
+    if (!aiResponse) {
+      return new Response(
+        JSON.stringify({ error: "AI gateway unavailable", details: lastError }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const processingTime = Math.round(performance.now() - startTime);
 
