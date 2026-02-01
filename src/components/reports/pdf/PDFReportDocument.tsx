@@ -396,7 +396,7 @@ const PDFReportDocument = ({
               ))}
               <View style={{ height: 8 }} />
               <Text style={styles.limitationText}>
-                Note: Interactive dashboards are available in the web report. This PDF contains the analysis summary and recommendations.
+                Note: The interactive dashboards above are fully rendered in the web report. PDF exports contain the analysis summary, recommendations, and a list of available visualizations. For the complete interactive experience, use the "Share Report Link" feature.
               </Text>
             </View>
           </View>

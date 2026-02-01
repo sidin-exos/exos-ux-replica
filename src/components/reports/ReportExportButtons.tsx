@@ -7,6 +7,9 @@ import {
   Send,
   Slack,
   Trello,
+  Link2,
+  Check,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,8 +19,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import PDFPreviewModal from "./pdf/PDFPreviewModal";
+import { useShareableReport } from "@/hooks/useShareableReport";
 
 // Custom Jira icon component
 const JiraIcon = () => (
@@ -59,11 +71,46 @@ const ReportExportButtons = ({
   selectedDashboards = [],
 }: ReportExportButtonsProps) => {
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  
+  const { generateShareLink, isLoading: isGeneratingLink } = useShareableReport();
 
   const handleExport = (type: string) => {
     toast.info(`${type} export will be available soon`, {
       description: "This integration is coming in a future update.",
     });
+  };
+
+  const handleShare = async () => {
+    const url = await generateShareLink({
+      scenarioTitle,
+      analysisResult,
+      formData,
+      timestamp,
+      selectedDashboards,
+    });
+    
+    if (url) {
+      setShareUrl(url);
+      setShareDialogOpen(true);
+    } else {
+      toast.error("Failed to generate share link");
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (shareUrl) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        toast.success("Link copied to clipboard!");
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        toast.error("Failed to copy link");
+      }
+    }
   };
 
   const hasPdfData = analysisResult.length > 0;
@@ -76,7 +123,18 @@ const ReportExportButtons = ({
         transition={{ delay: 0.2 }}
         className="flex flex-wrap gap-2"
       >
-        {/* Primary Export - PDF */}
+        {/* Share Report Link - Primary Action */}
+        <Button
+          onClick={handleShare}
+          variant="hero"
+          className="gap-2"
+          disabled={isGeneratingLink}
+        >
+          <Link2 className="w-4 h-4" />
+          {isGeneratingLink ? "Generating..." : "Share Report Link"}
+        </Button>
+
+        {/* Export to PDF - Primary Action */}
         <Button
           onClick={() => hasPdfData ? setPdfPreviewOpen(true) : handleExport("PDF")}
           variant="hero"
@@ -140,8 +198,46 @@ const ReportExportButtons = ({
         timestamp={timestamp}
         selectedDashboards={selectedDashboards}
       />
+
+      {/* Share Link Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" />
+              Share Report
+            </DialogTitle>
+            <DialogDescription>
+              Anyone with this link can view your report. The link expires in 30 days.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2 mt-4">
+            <Input
+              value={shareUrl || ""}
+              readOnly
+              className="font-mono text-sm"
+            />
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={handleCopyLink}
+              className="shrink-0"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-success" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Note: Shared reports include all visualizations and analysis data.
+          </p>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
 
 export default ReportExportButtons;
+

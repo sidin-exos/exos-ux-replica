@@ -1,4 +1,5 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -10,6 +11,8 @@ import {
   Building2,
   Target,
   BarChart3,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
@@ -19,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import DashboardRenderer from "@/components/reports/DashboardRenderer";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
+import { useShareableReport } from "@/hooks/useShareableReport";
 
 interface ReportState {
   scenarioTitle: string;
@@ -32,7 +36,61 @@ interface ReportState {
 const GeneratedReport = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as ReportState | null;
+  const [searchParams] = useSearchParams();
+  const locationState = location.state as ReportState | null;
+  
+  const shareId = searchParams.get("share");
+  const { loadSharedReport, isLoading: isLoadingShare } = useShareableReport();
+  
+  const [sharedData, setSharedData] = useState<ReportState | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [isSharedView, setIsSharedView] = useState(false);
+
+  // Load shared report if share ID is present
+  useEffect(() => {
+    if (shareId && !locationState) {
+      setIsSharedView(true);
+      loadSharedReport(shareId).then((data) => {
+        if (data) {
+          setSharedData(data);
+        } else {
+          setShareError("This shared report has expired or doesn't exist.");
+        }
+      });
+    }
+  }, [shareId, locationState, loadSharedReport]);
+
+  // Use shared data or location state
+  const state = sharedData || locationState;
+
+  // Loading state for shared reports
+  if (isSharedView && isLoadingShare && !sharedData) {
+    return (
+      <div className="min-h-screen gradient-hero flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <h1 className="text-xl font-semibold mb-2">Loading Shared Report</h1>
+          <p className="text-muted-foreground">Please wait...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state for shared reports
+  if (shareError) {
+    return (
+      <div className="min-h-screen gradient-hero flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-4">Report Not Found</h1>
+          <p className="text-muted-foreground mb-6">{shareError}</p>
+          <Button onClick={() => navigate("/")} variant="hero">
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Redirect if no state
   if (!state) {
@@ -131,9 +189,14 @@ const GeneratedReport = () => {
                   <FileText className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <Badge variant="outline" className="mb-1">
-                    AI-Generated Report
-                  </Badge>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline">AI-Generated Report</Badge>
+                    {isSharedView && (
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                        Shared View
+                      </Badge>
+                    )}
+                  </div>
                   <h1 className="font-display text-2xl md:text-3xl font-bold">
                     <span className="text-gradient">{scenarioTitle}</span> Analysis Report
                   </h1>
@@ -162,39 +225,6 @@ const GeneratedReport = () => {
           </div>
         </motion.div>
 
-        {/* Dashboards Section */}
-        {selectedDashboards.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="mb-8"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              <h2 className="font-display text-lg font-semibold">Analysis Dashboards</h2>
-              <Badge variant="secondary">{selectedDashboards.length}</Badge>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {selectedDashboards.map((dashboardType, index) => (
-                <motion.div
-                  key={dashboardType}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + index * 0.05 }}
-                >
-                  <DashboardRenderer
-                    dashboardType={dashboardType}
-                    scenarioTitle={scenarioTitle}
-                    analysisResult={analysisResult}
-                    formData={formData}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Report Content */}
@@ -223,6 +253,35 @@ const GeneratedReport = () => {
                 </ul>
               </CardContent>
             </Card>
+
+            {/* Analysis Dashboards - After Executive Summary */}
+            {selectedDashboards.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  <h2 className="font-display text-lg font-semibold">Analysis Dashboards</h2>
+                  <Badge variant="secondary">{selectedDashboards.length}</Badge>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  {selectedDashboards.map((dashboardType, index) => (
+                    <motion.div
+                      key={dashboardType}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + index * 0.05 }}
+                    >
+                      <DashboardRenderer
+                        dashboardType={dashboardType}
+                        scenarioTitle={scenarioTitle}
+                        analysisResult={analysisResult}
+                        formData={formData}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Full Analysis */}
             <Card className="card-elevated">
@@ -335,10 +394,6 @@ const GeneratedReport = () => {
                 <CardTitle className="font-display text-base">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <Share2 className="w-4 h-4" />
-                  Share Report Link
-                </Button>
                 <Button variant="outline" className="w-full justify-start gap-2">
                   <Download className="w-4 h-4" />
                   Download as Word
