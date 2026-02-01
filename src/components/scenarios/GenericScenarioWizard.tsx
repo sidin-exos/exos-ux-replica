@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, AlertTriangle, FlaskConical } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical } from "lucide-react";
+import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelineAnimation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -514,25 +515,24 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         {step === "analyzing" && (
           <motion.div
             key="analyzing"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="py-16 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="py-10"
           >
-            <div className="w-20 h-20 rounded-2xl gradient-primary mx-auto mb-6 flex items-center justify-center animate-pulse-glow">
-              <Loader2 className="w-10 h-10 text-primary-foreground animate-spin" />
-            </div>
-            <h3 className="font-display text-xl font-semibold mb-2">
-              Analyzing Your Data
-            </h3>
-            <p className="text-muted-foreground mb-2">
-              Running {scenario.title} analysis and generating recommendations...
-            </p>
-            {currentStage && (
-              <p className="text-sm text-primary">
-                Stage: {currentStage.replace('_', ' ')}
+            <div className="text-center mb-8">
+              <h3 className="font-display text-xl font-semibold mb-2">
+                Analyzing Your Data
+              </h3>
+              <p className="text-muted-foreground">
+                Running {scenario.title} analysis through EXOS Sentinel pipeline...
               </p>
-            )}
+            </div>
+
+            <AnalysisPipelineAnimation
+              isProcessing={isProcessing}
+              currentApiStage={currentStage}
+            />
           </motion.div>
         )}
 
