@@ -38,19 +38,35 @@ const PDFPreviewModal = ({
 
   const fileName = `EXOS_${scenarioTitle.replace(/\s+/g, "_")}_${new Date(timestamp).toISOString().split("T")[0]}.pdf`;
 
-  // Generate PDF blob when modal opens
+  // Generate (or re-generate) the PDF blob whenever the modal opens or inputs change.
+  // This fixes cases where dashboards load asynchronously (shared reports) and the
+  // previously generated blob was missing visuals.
   useEffect(() => {
-    if (open && !pdfBlobUrl) {
-      generatePdfBlob();
-    }
-    
-    // Cleanup blob URL when modal closes
-    return () => {
+    if (!open) {
       if (pdfBlobUrl) {
         URL.revokeObjectURL(pdfBlobUrl);
       }
-    };
-  }, [open]);
+      setPdfBlobUrl(null);
+      setPreviewError(false);
+      return;
+    }
+
+    // Revoke any prior blob before regenerating
+    if (pdfBlobUrl) {
+      URL.revokeObjectURL(pdfBlobUrl);
+      setPdfBlobUrl(null);
+    }
+
+    generatePdfBlob();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    open,
+    scenarioTitle,
+    analysisResult,
+    timestamp,
+    selectedDashboards,
+    formData,
+  ]);
 
   const generatePdfBlob = async () => {
     setIsGenerating(true);

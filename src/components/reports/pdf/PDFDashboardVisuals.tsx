@@ -76,9 +76,10 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     overflow: "hidden",
     marginHorizontal: 8,
+    flexDirection: "row",
   },
   barFill: {
-    height: "100%",
+    height: 12,
     borderRadius: 3,
   },
   barValue: {
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: "auto",
+    alignSelf: "center",
   },
   scoreCellText: {
     fontSize: 7,
@@ -235,15 +236,8 @@ export const PDFCostWaterfall = () => (
         <View key={i} style={styles.barRow}>
           <Text style={styles.barLabel}>{item.name}</Text>
           <View style={styles.barTrack}>
-            <View
-              style={[
-                styles.barFill,
-                {
-                  width: `${item.value}%`,
-                  backgroundColor: item.color,
-                },
-              ]}
-            />
+            <View style={[styles.barFill, { flex: item.value, backgroundColor: item.color }]} />
+            <View style={{ flex: Math.max(0, 100 - item.value) }} />
           </View>
           <Text style={styles.barValue}>{item.value}%</Text>
         </View>
@@ -362,27 +356,33 @@ export const PDFSensitivityAnalysis = () => (
           <Text style={styles.tornadoLabel}>{item.name}</Text>
           <View style={styles.tornadoChart}>
             <View style={styles.tornadoLeft}>
-              <View
-                style={[
-                  styles.tornadoBar,
-                  {
-                    width: `${item.lowPct}%`,
-                    backgroundColor: item.lowPct > 20 ? colors.destructive : colors.primary,
-                  },
-                ]}
-              />
+              <View style={{ width: "100%", flexDirection: "row" }}>
+                <View style={{ flex: Math.max(0, 100 - item.lowPct) }} />
+                <View
+                  style={[
+                    styles.tornadoBar,
+                    {
+                      flex: item.lowPct,
+                      backgroundColor: item.lowPct > 20 ? colors.destructive : colors.primary,
+                    },
+                  ]}
+                />
+              </View>
             </View>
             <View style={styles.tornadoCenter} />
             <View style={styles.tornadoRight}>
-              <View
-                style={[
-                  styles.tornadoBar,
-                  {
-                    width: `${item.highPct}%`,
-                    backgroundColor: item.highPct > 20 ? colors.destructive : colors.primary,
-                  },
-                ]}
-              />
+              <View style={{ width: "100%", flexDirection: "row" }}>
+                <View
+                  style={[
+                    styles.tornadoBar,
+                    {
+                      flex: item.highPct,
+                      backgroundColor: item.highPct > 20 ? colors.destructive : colors.primary,
+                    },
+                  ]}
+                />
+                <View style={{ flex: Math.max(0, 100 - item.highPct) }} />
+              </View>
             </View>
           </View>
           <Text style={styles.tornadoValue}>{item.impact}</Text>
