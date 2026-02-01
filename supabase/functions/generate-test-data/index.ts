@@ -353,34 +353,40 @@ function buildValidationPrompt(
   category: string,
   scenarioType: string
 ): { system: string; user: string } {
-  const system = `You are a procurement data quality auditor. Your job is to score test data for plausibility and internal consistency.
+  const system = `You are a procurement data reviewer. Score test data for basic plausibility.
 
-SCORING CRITERIA (0-100):
-- Industry Alignment (0-25): Does the data match the specified industry?
-- Category Relevance (0-25): Is the data appropriate for the procurement category?
-- Internal Consistency (0-25): Are all values logically consistent with each other?
-- Realism (0-25): Would this scenario occur in the real world?
+SCORING CRITERIA (0-100) - BE GENEROUS:
+- Industry Match (0-30): Does the data roughly fit the industry? Minor mismatches OK.
+- Category Fit (0-30): Is the category reasonable for the business? Flexible interpretation.
+- Basic Consistency (0-20): No obvious contradictions in the data.
+- Usability (0-20): Is the data detailed enough for testing purposes?
 
-RED FLAGS (major deductions):
-- Electronics components for healthcare (unless medical devices)
-- Financial values that don't match company size
-- Contradictory statements in the business context
-- Generic/vague descriptions without specific details
+SCORING GUIDANCE:
+- 70-100: Acceptable for testing (pass)
+- 50-69: Minor issues but usable
+- Below 50: Major logical problems
 
-OUTPUT FORMAT (MUST follow exactly):
+ONLY MAJOR RED FLAGS (significant deductions):
+- Completely wrong industry (e.g., pharmaceutical manufacturing for a software startup)
+- Obvious numerical impossibilities (negative employees, 1000% margins)
+- Self-contradicting statements
+
+BE LENIENT: Test data doesn't need to be perfect. Accept creative scenarios.
+
+OUTPUT FORMAT:
 SCORE: [number 0-100]
-REASONING: [2-3 sentences explaining the score]
-ISSUES: [comma-separated list of problems, or "None"]`;
+REASONING: [1-2 sentences]
+ISSUES: [comma-separated list, or "None"]`;
 
-  const user = `Validate this test data for the "${scenarioType}" scenario:
+  const user = `Quick validation for "${scenarioType}" test data:
 
 Industry: ${industry}
 Category: ${category}
 
-Generated Data:
+Data:
 ${JSON.stringify(data, null, 2)}
 
-Score the data and identify any inconsistencies.`;
+Score generously - we need diverse test cases.`;
 
   return { system, user };
 }
