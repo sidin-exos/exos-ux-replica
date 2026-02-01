@@ -6,18 +6,35 @@ const corsHeaders = {
 };
 
 /**
- * AI-Powered Test Data Generation with MCTS-Inspired Sampling
+ * AI-Powered Test Data Generation with Drafter-Validator Pattern
  * 
- * Uses Gemini 3 Flash to generate realistic, consistent procurement
- * test cases with multi-step reasoning:
- * 
- * 1. Industry-Category Validation: Ensures logical combinations
- * 2. MCTS Exploration: Samples diverse but plausible scenarios
- * 3. Consistency Checking: AI validates generated data coherence
+ * Supports three modes:
+ * 1. "draft" - Fast parameter proposal (1 AI call)
+ * 2. "generate" - Single-pass data generation with pre-approved params (1 AI call)
+ * 3. "full" - Legacy MCTS-inspired multi-call approach
  */
 
+// Parameter types for drafter
+type CompanySize = "startup" | "smb" | "mid-market" | "enterprise" | "large-enterprise";
+type Complexity = "simple" | "standard" | "complex" | "edge-case";
+type FinancialPressure = "comfortable" | "moderate" | "tight" | "crisis";
+type StrategicPriority = "cost" | "risk" | "speed" | "quality" | "innovation" | "sustainability";
+type MarketConditions = "stable" | "growing" | "volatile" | "disrupted";
+type DataQuality = "excellent" | "good" | "partial" | "poor";
+
+interface DraftedParameters {
+  industry: string;
+  category: string;
+  companySize: CompanySize;
+  complexity: Complexity;
+  financialPressure: FinancialPressure;
+  strategicPriority: StrategicPriority;
+  marketConditions: MarketConditions;
+  dataQuality: DataQuality;
+  reasoning: string;
+}
+
 // Industry-Category compatibility matrix
-// Prevents illogical combinations like "electronics" for "healthcare"
 const COMPATIBILITY_MATRIX: Record<string, string[]> = {
   manufacturing: [
     "raw-materials", "components", "mro", "packaging", "logistics",
@@ -100,10 +117,13 @@ const SCENARIO_SCHEMAS: Record<string, string[]> = {
 };
 
 interface GenerateRequest {
+  mode?: "draft" | "generate" | "full"; // New mode parameter
   scenarioType: string;
   industry?: string;
   category?: string;
-  mctsIterations?: number; // Number of MCTS exploration iterations (default: 3)
+  parameters?: DraftedParameters; // Pre-approved parameters for "generate" mode
+  mctsIterations?: number;
+  temperature?: number;
 }
 
 interface MCTSNode {
@@ -118,12 +138,16 @@ serve(async (req) => {
   }
 
   try {
+    const request: GenerateRequest = await req.json();
     const { 
+      mode = "full",
       scenarioType, 
       industry,
       category,
-      mctsIterations = 3 
-    }: GenerateRequest = await req.json();
+      parameters,
+      mctsIterations = 1, // Default to 1 for faster generation
+      temperature = 0.7,
+    } = request;
 
     if (!scenarioType) {
       return new Response(
@@ -140,10 +164,35 @@ serve(async (req) => {
       );
     }
 
+    console.log(`[TestDataGen] Mode: ${mode}, Scenario: ${scenarioType}`);
+
+    // === DRAFT MODE: Propose random consistent parameters ===
+    if (mode === "draft") {
+      const draftResult = await handleDraftMode(LOVABLE_API_KEY, scenarioType, temperature);
+      return new Response(
+        JSON.stringify(draftResult),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // === GENERATE MODE: Single-pass with pre-approved parameters ===
+    if (mode === "generate" && parameters) {
+      const generateResult = await handleGenerateMode(
+        LOVABLE_API_KEY, 
+        scenarioType, 
+        parameters,
+        temperature
+      );
+      return new Response(
+        JSON.stringify(generateResult),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // === FULL MODE: Legacy MCTS approach ===
     const fields = SCENARIO_SCHEMAS[scenarioType] || ["industryContext"];
     const industries = Object.keys(COMPATIBILITY_MATRIX);
     
-    // Select valid industry-category combination
     const selectedIndustry = industry && industries.includes(industry) 
       ? industry 
       : industries[Math.floor(Math.random() * industries.length)];
@@ -153,35 +202,31 @@ serve(async (req) => {
       ? category
       : validCategories[Math.floor(Math.random() * validCategories.length)];
 
-    console.log(`[TestDataGen] Industry: ${selectedIndustry}, Category: ${selectedCategory}`);
+    console.log(`[TestDataGen] Full mode - Industry: ${selectedIndustry}, Category: ${selectedCategory}`);
     console.log(`[TestDataGen] MCTS iterations: ${mctsIterations}`);
 
-    // MCTS-Inspired Generation: Generate multiple candidates and score them
     const candidates: MCTSNode[] = [];
     
     for (let iteration = 0; iteration < mctsIterations; iteration++) {
       console.log(`[TestDataGen] MCTS iteration ${iteration + 1}/${mctsIterations}`);
       
-      // Phase 1: Generate candidate test case
       const generationPrompt = buildGenerationPrompt(
         scenarioType, 
         selectedIndustry, 
         selectedCategory, 
         fields,
-        iteration // Seed for diversity
+        iteration
       );
       
-      const generationResponse = await callAI(LOVABLE_API_KEY, generationPrompt.system, generationPrompt.user);
+      const generationResponse = await callAI(LOVABLE_API_KEY, generationPrompt.system, generationPrompt.user, temperature);
       
       if (!generationResponse.success) {
         console.warn(`[TestDataGen] Generation failed on iteration ${iteration + 1}`);
         continue;
       }
 
-      // Parse generated data
       const parsedData = parseGeneratedData(generationResponse.content, fields);
       
-      // Phase 2: Validate and score the generated case
       const validationPrompt = buildValidationPrompt(
         parsedData, 
         selectedIndustry, 
@@ -189,8 +234,7 @@ serve(async (req) => {
         scenarioType
       );
       
-      const validationResponse = await callAI(LOVABLE_API_KEY, validationPrompt.system, validationPrompt.user);
-      
+      const validationResponse = await callAI(LOVABLE_API_KEY, validationPrompt.system, validationPrompt.user, 0.3);
       const scoreResult = parseValidationScore(validationResponse.content);
       
       candidates.push({
@@ -209,34 +253,15 @@ serve(async (req) => {
       );
     }
 
-    // Select best candidate (MCTS selection phase)
     candidates.sort((a, b) => b.score - a.score);
     const bestCandidate = candidates[0];
     
     console.log(`[TestDataGen] Selected best candidate with score: ${bestCandidate.score}/100`);
 
-    // Phase 3: Final consistency check and enhancement
-    const enhancementPrompt = buildEnhancementPrompt(
-      bestCandidate.data,
-      selectedIndustry,
-      selectedCategory,
-      scenarioType,
-      bestCandidate.reasoning
-    );
-    
-    const enhancedResponse = await callAI(LOVABLE_API_KEY, enhancementPrompt.system, enhancementPrompt.user);
-    const finalData = parseGeneratedData(enhancedResponse.content, fields);
-    
-    // Merge enhanced data with original (keep original if enhancement fails)
-    const outputData = {
-      ...bestCandidate.data,
-      ...finalData
-    };
-
     return new Response(
       JSON.stringify({
         success: true,
-        data: outputData,
+        data: bestCandidate.data,
         metadata: {
           industry: selectedIndustry,
           category: selectedCategory,
@@ -259,10 +284,151 @@ serve(async (req) => {
   }
 });
 
+// === DRAFT MODE HANDLER ===
+async function handleDraftMode(
+  apiKey: string, 
+  scenarioType: string,
+  temperature: number
+): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
+  const industries = Object.keys(COMPATIBILITY_MATRIX);
+  
+  const system = `You are a procurement test case designer. Generate a random but internally-consistent set of parameters for a test case.
+
+AVAILABLE OPTIONS:
+- Industries: ${industries.join(", ")}
+- Company Sizes: startup, smb, mid-market, enterprise, large-enterprise
+- Complexity: simple, standard, complex, edge-case
+- Financial Pressure: comfortable, moderate, tight, crisis
+- Strategic Priority: cost, risk, speed, quality, innovation, sustainability
+- Market Conditions: stable, growing, volatile, disrupted
+- Data Quality: excellent, good, partial, poor
+
+RULES:
+1. Pick a RANDOM industry and a COMPATIBLE category from that industry
+2. All parameters should form a COHERENT business scenario
+3. Write a 1-2 sentence "reasoning" explaining the case
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with these exact keys:
+{
+  "industry": "...",
+  "category": "...",
+  "companySize": "...",
+  "complexity": "...",
+  "financialPressure": "...",
+  "strategicPriority": "...",
+  "marketConditions": "...",
+  "dataQuality": "...",
+  "reasoning": "..."
+}`;
+
+  const user = `Generate random parameters for a "${scenarioType}" procurement test case. Be creative but consistent.`;
+
+  const response = await callAI(apiKey, system, user, temperature);
+  
+  if (!response.success) {
+    return { success: false, error: "Failed to generate draft parameters" };
+  }
+
+  try {
+    let jsonStr = response.content.trim();
+    if (jsonStr.startsWith("```json")) jsonStr = jsonStr.slice(7);
+    if (jsonStr.startsWith("```")) jsonStr = jsonStr.slice(3);
+    if (jsonStr.endsWith("```")) jsonStr = jsonStr.slice(0, -3);
+    
+    const parsed = JSON.parse(jsonStr.trim()) as DraftedParameters;
+    
+    // Validate the category is compatible with industry
+    const validCategories = COMPATIBILITY_MATRIX[parsed.industry] || [];
+    if (!validCategories.includes(parsed.category)) {
+      parsed.category = validCategories[0] || "professional-services";
+    }
+    
+    return { success: true, parameters: parsed };
+  } catch (error) {
+    console.error("[TestDataGen] Failed to parse draft:", error);
+    return { success: false, error: "Failed to parse draft parameters" };
+  }
+}
+
+// === GENERATE MODE HANDLER ===
+async function handleGenerateMode(
+  apiKey: string,
+  scenarioType: string,
+  parameters: DraftedParameters,
+  temperature: number
+): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
+  const fields = SCENARIO_SCHEMAS[scenarioType] || ["industryContext"];
+  
+  const companySizeDescriptions: Record<CompanySize, string> = {
+    "startup": "10-50 employees, Series A/B stage, limited procurement maturity",
+    "smb": "50-500 employees, established business, growing procurement needs",
+    "mid-market": "500-2,000 employees, regional presence, structured procurement",
+    "enterprise": "2,000-10,000 employees, multi-national, mature procurement",
+    "large-enterprise": "10,000+ employees, global operations, complex procurement"
+  };
+
+  const system = `You are an expert procurement consultant generating realistic test data.
+
+STRICT CONTEXT:
+- Industry: ${parameters.industry}
+- Procurement Category: ${parameters.category}
+- Company Size: ${parameters.companySize} (${companySizeDescriptions[parameters.companySize]})
+- Complexity Level: ${parameters.complexity}
+- Financial Pressure: ${parameters.financialPressure}
+- Strategic Priority: ${parameters.strategicPriority}
+- Market Conditions: ${parameters.marketConditions}
+- Data Quality: ${parameters.dataQuality}
+
+CRITICAL RULES:
+1. ALL data must be consistent with the above context
+2. "industryContext" field MUST be 100+ words describing a specific company matching ALL parameters
+3. All numeric values must be plausible for the company scale
+4. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.`;
+
+  const user = `Generate test data for "${scenarioType}" scenario.
+
+REQUIRED FIELDS:
+${fields.map(f => `- ${f}`).join('\n')}
+
+Context: ${parameters.reasoning}
+
+Return ONLY the JSON object.`;
+
+  const response = await callAI(apiKey, system, user, temperature);
+  
+  if (!response.success) {
+    return { success: false, error: "Failed to generate test data" };
+  }
+
+  const data = parseGeneratedData(response.content, fields);
+  
+  if (Object.keys(data).length === 0) {
+    return { success: false, error: "Failed to parse generated data" };
+  }
+
+  return {
+    success: true,
+    data,
+    metadata: {
+      industry: parameters.industry,
+      category: parameters.category,
+      score: 75, // Single-pass score estimate
+      iterations: 1,
+      reasoning: parameters.reasoning,
+      parameters: parameters
+    }
+  };
+}
+
 async function callAI(
   apiKey: string, 
   systemPrompt: string, 
-  userPrompt: string
+  userPrompt: string,
+  temperature: number = 0.7
 ): Promise<{ success: boolean; content: string }> {
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -277,7 +443,7 @@ async function callAI(
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.7, // Higher for diversity
+        temperature,
         max_tokens: 2048,
       }),
     });

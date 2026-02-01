@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Brain } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2 } from "lucide-react";
 import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelineAnimation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,7 @@ import { MasterXMLPreview } from "@/components/sentinel/MasterXMLPreview";
 import { FinalXMLPreview } from "@/components/sentinel/FinalXMLPreview";
 import { BusinessContextField } from "./BusinessContextField";
 import { ModelSelector, DEFAULT_MODEL, type AIModel } from "./ModelSelector";
+import { DraftedParametersCard } from "./DraftedParametersCard";
 import {
   Scenario,
   ScenarioRequiredField,
@@ -46,7 +47,11 @@ import { useSentinel } from "@/hooks/useSentinel";
 import { useIndustryContext, useProcurementCategory } from "@/hooks/useContextData";
 import { useShareableMode } from "@/hooks/useShareableMode";
 import { generateTestData } from "@/lib/test-data-factory";
-import { generateTestDataHybrid } from "@/lib/ai-test-data-generator";
+import {
+  DraftedParameters,
+  draftParameters,
+  generateWithParameters,
+} from "@/lib/drafted-parameters";
 import { toast } from "sonner";
 
 interface GenericScenarioWizardProps {
@@ -69,7 +74,11 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [selectedDashboards, setSelectedDashboards] = useState<DashboardType[]>([]);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [analysisTimestamp, setAnalysisTimestamp] = useState<string | null>(null);
-  const [isGeneratingTestData, setIsGeneratingTestData] = useState(false);
+  
+  // Drafter-Validator state
+  const [draftedParams, setDraftedParams] = useState<DraftedParameters | null>(null);
+  const [isDrafting, setIsDrafting] = useState(false);
+  const [isGeneratingFromDraft, setIsGeneratingFromDraft] = useState(false);
   const [testDataMetadata, setTestDataMetadata] = useState<{
     source: "ai" | "static";
     score?: number;
@@ -91,55 +100,69 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     },
   });
 
-  // AI-powered test data generation with MCTS sampling (hidden feature for internal testing)
-  const handleGenerateTestData = async (useAI: boolean = true) => {
-    if (useAI) {
-      setIsGeneratingTestData(true);
-      setTestDataMetadata(null);
+  // === DRAFTER-VALIDATOR WORKFLOW ===
+  
+  // Step 1: Draft parameters (1 AI call)
+  const handleDraftTestCase = async () => {
+    setIsDrafting(true);
+    setDraftedParams(null);
+    setTestDataMetadata(null);
+    
+    try {
+      const result = await draftParameters(scenario.id, 0.8);
       
-      try {
-        const result = await generateTestDataHybrid(scenario.id, {
-          preferAI: true,
-          industry: industrySlug || undefined,
-          category: categorySlug || undefined,
-          mctsIterations: 3, // 3 exploration iterations for good quality
+      if (result.success && result.parameters) {
+        setDraftedParams(result.parameters);
+        toast.success("Draft ready", {
+          description: `${result.parameters.industry} • ${result.parameters.companySize}`,
         });
-        
+      } else {
+        toast.error("Draft failed", { description: result.error });
+      }
+    } catch (err) {
+      console.error("[Draft] Error:", err);
+      toast.error("Failed to draft parameters");
+    } finally {
+      setIsDrafting(false);
+    }
+  };
+
+  // Step 2: Generate with approved parameters (1 AI call)
+  const handleApproveAndGenerate = async (params: DraftedParameters) => {
+    setIsGeneratingFromDraft(true);
+    
+    try {
+      const result = await generateWithParameters(scenario.id, params, 0.7);
+      
+      if (result.success && result.data) {
         setFormData(result.data);
         setTestDataMetadata({
-          source: result.source,
+          source: "ai",
           score: result.metadata?.score,
           reasoning: result.metadata?.reasoning,
         });
-        
-        if (result.source === "ai") {
-          toast.success("AI Test Data Generated", {
-            description: `Score: ${result.metadata?.score}/100 • ${result.metadata?.industry} industry`,
-          });
-        } else {
-          toast.success("Static Test Data Generated", {
-            description: "AI unavailable, used fallback generator",
-          });
-        }
-      } catch (err) {
-        console.error("[TestDataGen] Error:", err);
-        // Fallback to static generation
-        const testData = generateTestData(scenario.id);
-        setFormData(testData);
-        setTestDataMetadata({ source: "static" });
-        toast.success("Test data generated (fallback)", {
-          description: "Using static generator due to AI error",
+        setDraftedParams(null); // Clear draft after success
+        toast.success("Test Data Generated", {
+          description: `Score: ${result.metadata?.score}/100`,
         });
-      } finally {
-        setIsGeneratingTestData(false);
+      } else {
+        toast.error("Generation failed", { description: result.error });
       }
-    } else {
-      // Quick static generation
-      const testData = generateTestData(scenario.id);
-      setFormData(testData);
-      setTestDataMetadata({ source: "static" });
-      toast.success("Static test data generated");
+    } catch (err) {
+      console.error("[Generate] Error:", err);
+      toast.error("Failed to generate test data");
+    } finally {
+      setIsGeneratingFromDraft(false);
     }
+  };
+
+  // Static fallback
+  const handleStaticGenerate = () => {
+    const testData = generateTestData(scenario.id);
+    setFormData(testData);
+    setDraftedParams(null);
+    setTestDataMetadata({ source: "static" });
+    toast.success("Static test data generated");
   };
 
   // Reset overrides when context selection changes
@@ -344,16 +367,13 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 </p>
               </div>
               
-              {/* Hidden test data generator buttons (only visible in non-shared mode) */}
+              {/* Drafter-Validator test data generator (only visible in non-shared mode) */}
               {showTechnicalDetails && (
                 <div className="flex items-center gap-2">
                   {testDataMetadata && (
                     <span className="text-xs text-muted-foreground">
                       {testDataMetadata.source === "ai" ? (
-                        <>
-                          <Brain className="w-3 h-3 inline mr-1" />
-                          Score: {testDataMetadata.score}/100
-                        </>
+                        <>Score: {testDataMetadata.score}/100</>
                       ) : (
                         "Static"
                       )}
@@ -362,22 +382,22 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleGenerateTestData(true)}
-                    disabled={isGeneratingTestData}
+                    onClick={handleDraftTestCase}
+                    disabled={isDrafting || isGeneratingFromDraft}
                     className="gap-2 text-muted-foreground hover:text-foreground"
                   >
-                    {isGeneratingTestData ? (
+                    {isDrafting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <Brain className="w-4 h-4" />
+                      <Wand2 className="w-4 h-4" />
                     )}
-                    {isGeneratingTestData ? "Generating..." : "AI Test Data"}
+                    {isDrafting ? "Drafting..." : "Draft Test Case"}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleGenerateTestData(false)}
-                    disabled={isGeneratingTestData}
+                    onClick={handleStaticGenerate}
+                    disabled={isDrafting || isGeneratingFromDraft}
                     className="gap-2 text-muted-foreground hover:text-foreground"
                   >
                     <FlaskConical className="w-4 h-4" />
@@ -386,6 +406,17 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 </div>
               )}
             </div>
+
+            {/* Drafted Parameters Card (shown when draft is ready) */}
+            {showTechnicalDetails && draftedParams && (
+              <DraftedParametersCard
+                parameters={draftedParams}
+                onApprove={handleApproveAndGenerate}
+                onRedraft={handleDraftTestCase}
+                isGenerating={isGeneratingFromDraft}
+                isRedrafting={isDrafting}
+              />
+            )}
 
             {/* Master XML Template Preview (hidden in shareable mode) */}
             <MasterXMLPreview scenarioType={scenario.id} />
