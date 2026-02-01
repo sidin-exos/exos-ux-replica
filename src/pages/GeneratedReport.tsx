@@ -58,25 +58,38 @@ const GeneratedReport = () => {
     });
   };
 
+  // Clean markdown formatting from text
+  const cleanMarkdown = (text: string): string => {
+    return text
+      .replace(/\*\*\*/g, '') // Remove triple stars
+      .replace(/\*\*/g, '')   // Remove double stars (bold)
+      .replace(/^\s*\*\s+/gm, '') // Remove bullet points (* at start of line)
+      .replace(/^#{1,4}\s*/gm, '') // Remove hash headers
+      .trim();
+  };
+
   // Parse key metrics from analysis (simple extraction)
   const extractKeyPoints = (text: string): string[] => {
     const lines = text.split("\n").filter((line) => line.trim());
     const keyPoints: string[] = [];
     
     for (const line of lines) {
+      const cleanLine = cleanMarkdown(line);
+      if (!cleanLine) continue;
+      
       if (
-        line.includes("recommend") ||
-        line.includes("suggest") ||
-        line.includes("should") ||
-        line.includes("%") ||
-        line.includes("$")
+        cleanLine.includes("recommend") ||
+        cleanLine.includes("suggest") ||
+        cleanLine.includes("should") ||
+        cleanLine.includes("%") ||
+        cleanLine.includes("$")
       ) {
-        keyPoints.push(line.trim());
+        keyPoints.push(cleanLine);
         if (keyPoints.length >= 5) break;
       }
     }
     
-    return keyPoints.length > 0 ? keyPoints : lines.slice(0, 5);
+    return keyPoints.length > 0 ? keyPoints : lines.slice(0, 5).map(cleanMarkdown).filter(Boolean);
   };
 
   const keyPoints = extractKeyPoints(analysisResult);
@@ -180,21 +193,36 @@ const GeneratedReport = () => {
                 <div className="prose prose-sm max-w-none dark:prose-invert">
                   <div className="text-foreground bg-secondary/30 rounded-lg p-5 border border-border space-y-4">
                     {analysisResult.split('\n').map((line, i) => {
-                      // Remove ** markdown formatting
-                      const cleanLine = line.replace(/\*\*/g, '');
+                      // Check if line starts with hash headers (###, ####, etc.)
+                      const hashMatch = line.match(/^(#{1,4})\s*(.*)$/);
+                      const isHashHeader = !!hashMatch;
                       
-                      // Check if line looks like a section header (ends with colon or is all caps/title case short line)
-                      const isSectionHeader = 
-                        (cleanLine.trim().endsWith(':') && cleanLine.trim().length < 80) ||
-                        (cleanLine.trim().length > 0 && cleanLine.trim().length < 60 && /^[A-Z]/.test(cleanLine.trim()) && !cleanLine.includes('.'));
+                      // Clean all markdown formatting
+                      const cleanLine = cleanMarkdown(line);
                       
-                      if (!cleanLine.trim()) {
+                      if (!cleanLine) {
                         return <div key={i} className="h-2" />;
                       }
                       
+                      // Hash headers get largest styling
+                      if (isHashHeader) {
+                        const headerLevel = hashMatch[1].length;
+                        const fontSize = headerLevel <= 2 ? 'text-lg' : 'text-base';
+                        return (
+                          <h3 key={i} className={`${fontSize} font-bold text-foreground mt-4 first:mt-0`}>
+                            {cleanLine}
+                          </h3>
+                        );
+                      }
+                      
+                      // Check if line looks like a section header (ends with colon or is all caps/title case short line)
+                      const isSectionHeader = 
+                        (cleanLine.endsWith(':') && cleanLine.length < 80) ||
+                        (cleanLine.length > 0 && cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes('.'));
+                      
                       if (isSectionHeader) {
                         return (
-                          <p key={i} className="font-semibold text-foreground">
+                          <p key={i} className="font-semibold text-foreground text-base mt-3">
                             {cleanLine}
                           </p>
                         );
