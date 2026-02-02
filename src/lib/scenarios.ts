@@ -31,6 +31,16 @@ export interface ScenarioRequiredField {
   placeholder?: string; // For textarea hints
 }
 
+// Shared field definitions for consistency across all scenarios
+export const MAIN_FOCUS_FIELD: ScenarioRequiredField = {
+  id: "mainFocus",
+  label: "Main Focus / Challenge",
+  description: "What is your primary objective or challenge for this analysis?",
+  type: "textarea",
+  required: true,
+  placeholder: "E.g., 'We need to reduce costs by 10% this year while maintaining quality. Management is pushing for quick wins. Our main concern is ensuring supply continuity during the transition...'"
+};
+
 export type StrategyPresetType = "riskAppetite" | "speedVsQuality" | "costVsRisk" | "skepticism";
 
 export interface Scenario {
@@ -58,6 +68,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "speedVsQuality",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, business model, competitive landscape, and any specific constraints the AI should consider", type: "textarea", required: true, placeholder: "E.g., 'We are a mid-size pharmaceutical company in Germany. Regulatory compliance is critical. We have limited in-house manufacturing capacity but strong R&D...'" },
+      MAIN_FOCUS_FIELD,
       { id: "internalSalary", label: "Internal Salary (Loaded)", description: "Fully loaded annual salary cost per employee", type: "currency", required: true },
       { id: "recruitingCost", label: "Recruiting Cost", description: "Cost to recruit and hire new staff", type: "currency", required: true },
       { id: "managementTime", label: "Management Time", description: "Hours per month for oversight", type: "number", required: true },
@@ -82,6 +93,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "speedVsQuality",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, compliance requirements, and procurement policies the AI should consider", type: "textarea", required: true, placeholder: "E.g., 'Financial services company with strict vendor approval process. Most purchases under €5k can use P-card...'" },
+      MAIN_FOCUS_FIELD,
       { id: "purchaseAmount", label: "Purchase Amount", description: "Total cost of the purchase", type: "currency", required: true },
       { id: "urgency", label: "Urgency (Days)", description: "How many days until you need this", type: "number", required: true },
       { id: "catalogAvailable", label: "Available in Catalog", description: "Is this item in your approved catalog?", type: "select", required: true, options: ["Yes", "No"] },
@@ -106,6 +118,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry standards, quality expectations, and relationship priorities", type: "textarea", required: true, placeholder: "E.g., 'Automotive tier-1 supplier. Zero-defect culture, IATF 16949 compliance required. Long-term partnerships valued...'" },
+      MAIN_FOCUS_FIELD,
       { id: "qualityScore", label: "Quality Score (0-10)", description: "Overall quality rating", type: "number", required: true },
       { id: "onTimeDelivery", label: "On-Time Delivery %", description: "Percentage of orders delivered on time", type: "percentage", required: true },
       { id: "incidentCount", label: "Number of Incidents", description: "Quality or delivery incidents this period", type: "number", required: true },
@@ -130,6 +143,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "speedVsQuality",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, supply chain complexity, and critical dependencies", type: "textarea", required: true, placeholder: "E.g., 'Electronics manufacturer with JIT production. Single source for key chips. 2-week inventory buffer typical...'" },
+      MAIN_FOCUS_FIELD,
       { id: "deficitSku", label: "Deficit SKU Name", description: "Name of the product/service at risk", type: "text", required: true },
       { id: "stockDays", label: "Stock (Days)", description: "Current inventory in days of supply", type: "number", required: true },
       { id: "altSuppliers", label: "Alternative Suppliers", description: "Number of backup suppliers available", type: "number", required: true },
@@ -154,6 +168,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "costVsRisk",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, regulatory environment, and risk management maturity", type: "textarea", required: true, placeholder: "E.g., 'Pharmaceutical manufacturing in EU. Strict GMP requirements. Multi-tier supply chains with API suppliers in Asia...'" },
+      MAIN_FOCUS_FIELD,
       { id: "assessmentSubject", label: "Assessment Subject", description: "What supplier, category, or project are you assessing?", type: "text", required: true },
       { id: "annualValue", label: "Annual Value at Risk", description: "Total annual spend or value exposed", type: "currency", required: true },
       // Industry Analysis
@@ -196,6 +211,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, asset management practices, and typical ownership periods", type: "textarea", required: true, placeholder: "E.g., 'Manufacturing plant modernization. Assets typically 10-15 year lifecycle. Strong focus on OEE and uptime. Limited in-house maintenance capability...'" },
+      MAIN_FOCUS_FIELD,
       { id: "assetDescription", label: "Asset/Purchase Description", description: "What are you evaluating?", type: "text", required: true },
       { id: "ownershipPeriod", label: "Ownership Period (Years)", description: "Expected useful life or evaluation period", type: "number", required: true },
       // Acquisition Costs
@@ -252,6 +268,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "costVsRisk",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, compliance requirements, and software usage patterns", type: "textarea", required: true, placeholder: "E.g., 'Financial services firm with 500 employees. SOC2 compliance required. Mix of power users and occasional users. Preference for cloud-based solutions...'" },
+      MAIN_FOCUS_FIELD,
       { id: "softwareName", label: "Software Product", description: "Name of the software being evaluated", type: "text", required: true },
       { id: "softwareCategory", label: "Software Category", description: "Type of software", type: "select", required: true, options: ["Productivity Suite", "CRM/Sales", "ERP", "Development Tools", "Design/Creative", "Analytics/BI", "Security", "Communication", "Other"] },
       // User Tier Analysis
@@ -306,6 +323,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "costVsRisk",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, regulatory environment, and risk tolerance culture", type: "textarea", required: true, placeholder: "E.g., 'Healthcare sector with HIPAA requirements. We process patient data and require SOC2 compliance from all vendors...'" },
+      MAIN_FOCUS_FIELD,
       { id: "legalStatus", label: "Legal Status", description: "Business registration and legal standing", type: "select", required: true, options: ["Verified", "Pending", "Issues Found"] },
       { id: "lawsuits", label: "Active Lawsuits", description: "Any pending litigation?", type: "select", required: true, options: ["None", "Minor", "Significant"] },
       { id: "dataAccess", label: "Data Access Level", description: "What company data do they access?", type: "select", required: true, options: ["None", "Limited", "Sensitive", "Critical"] },
@@ -332,6 +350,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, typical contract risks, and protection priorities", type: "textarea", required: true, placeholder: "E.g., 'IT consulting services. IP ownership and liability caps are critical. We typically push back on unlimited liability...'" },
+      MAIN_FOCUS_FIELD,
       { id: "sowText", label: "SOW Text", description: "Paste the Statement of Work text", type: "textarea", required: true, placeholder: "Paste the full SOW document here..." },
       { id: "deliverables", label: "Deliverables", description: "List of expected outputs", type: "text", required: true },
       { id: "acceptanceCriteria", label: "Acceptance Criteria", description: "How will deliverables be accepted?", type: "text", required: true },
@@ -356,6 +375,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "costVsRisk",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry standards, typical SLA expectations, and service criticality", type: "textarea", required: true, placeholder: "E.g., 'E-commerce platform. 99.9% uptime is industry standard. Peak traffic during holidays requires special provisions...'" },
+      MAIN_FOCUS_FIELD,
       { id: "operatingHours", label: "Operating Hours", description: "Service availability requirement", type: "select", required: true, options: ["24/7", "Business Hours (8/5)", "Extended (12/6)"] },
       { id: "responseTime", label: "Response Time Target", description: "Expected initial response time", type: "text", required: true },
       { id: "resolutionTime", label: "Resolution Time Target", description: "Expected issue resolution time", type: "text", required: true },
@@ -379,6 +399,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "speedVsQuality",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, typical vendor landscape, and procurement standards", type: "textarea", required: true, placeholder: "E.g., 'Government contractor with FAR compliance requirements. Prefer local suppliers where possible. Formal bid process required above $25k...'" },
+      MAIN_FOCUS_FIELD,
       { id: "procurementSubject", label: "Procurement Subject", description: "What are you buying?", type: "text", required: true },
       { id: "volume", label: "Volume/Quantity", description: "Expected purchase volume", type: "text", required: true },
       { id: "technicalRequirements", label: "Technical Requirements", description: "Key specifications needed", type: "text", required: true },
@@ -403,6 +424,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, technology maturity, and organizational constraints", type: "textarea", required: true, placeholder: "E.g., 'Retail chain with 200 stores. Legacy POS system. Limited IT staff. Need cloud-first solutions with strong vendor support...'" },
+      MAIN_FOCUS_FIELD,
       { id: "businessGoal", label: "Business Goal", description: "What problem are you solving?", type: "text", required: true },
       { id: "budget", label: "Budget Range", description: "Available funding", type: "currency", required: true },
       { id: "userCount", label: "Number of Users", description: "How many people will use this?", type: "number", required: true },
@@ -429,6 +451,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "riskAppetite",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, supply chain characteristics, and consolidation constraints", type: "textarea", required: true, placeholder: "E.g., 'Manufacturing with 50+ suppliers for MRO. Regional delivery requirements. Some suppliers are sole-source for specialized parts...'" },
+      MAIN_FOCUS_FIELD,
       { id: "spendPerVendor", label: "Spend Per Vendor (Annual)", description: "Annual spend breakdown by supplier", type: "currency", required: true },
       { id: "skuOverlap", label: "SKU Overlap %", description: "Percentage of overlapping products", type: "percentage", required: true },
       { id: "unitOfMeasure", label: "Unit of Measure", description: "Standard units (kg/pcs/hours)", type: "text", required: true },
@@ -453,6 +476,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "costVsRisk",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, capital constraints, and asset utilization patterns", type: "textarea", required: true, placeholder: "E.g., 'Logistics company expanding fleet. Capital is constrained. Assets typically obsolete in 5 years. Prefer operational flexibility...'" },
+      MAIN_FOCUS_FIELD,
       { id: "purchasePrice", label: "Purchase Price", description: "Asset purchase cost", type: "currency", required: true },
       { id: "leaseRate", label: "Lease Rate %", description: "Annual lease rate", type: "percentage", required: true },
       { id: "leaseTerm", label: "Lease Term (Years)", description: "Duration of lease", type: "number", required: true },
@@ -477,6 +501,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, savings reporting standards, and audit requirements", type: "textarea", required: true, placeholder: "E.g., 'Fortune 500 with strict procurement savings targets. Finance requires documented baseline and auditable methodology...'" },
+      MAIN_FOCUS_FIELD,
       { id: "baselinePrice", label: "Baseline Price", description: "Original price before negotiation", type: "currency", required: true },
       { id: "newPrice", label: "New Price", description: "Negotiated price", type: "currency", required: true },
       { id: "volume", label: "Annual Volume", description: "Expected purchase quantity", type: "number", required: true },
@@ -501,6 +526,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "costVsRisk",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, IT governance model, and software management practices", type: "textarea", required: true, placeholder: "E.g., 'Tech startup with 500 employees. Decentralized software purchasing. Many shadow IT tools. Need to consolidate before audit...'" },
+      MAIN_FOCUS_FIELD,
       { id: "totalSeats", label: "Total Seats/Licenses", description: "Number of licenses owned", type: "number", required: true },
       { id: "pricePerSeat", label: "Price Per Seat", description: "Cost per license", type: "currency", required: true },
       { id: "lastLoginDate", label: "Last Login Date", description: "Most recent user activity", type: "text", required: true },
@@ -525,6 +551,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "costVsRisk",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, budget cycles, and financial planning culture", type: "textarea", required: true, placeholder: "E.g., 'Consumer goods company with seasonal demand peaks. CFO requires bottom-up budgeting. Procurement expected to deliver 3% YoY savings...'" },
+      MAIN_FOCUS_FIELD,
       { id: "historicalSpend", label: "Historical Spend", description: "Previous period spending", type: "currency", required: true },
       { id: "growthForecast", label: "Growth Forecast %", description: "Expected business growth", type: "percentage", required: true },
       { id: "headcountPlan", label: "Headcount Plan", description: "Staffing changes expected", type: "number", required: true },
@@ -549,6 +576,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, typical cost structures, and benchmarking sources you use", type: "textarea", required: true, placeholder: "E.g., 'Aerospace manufacturing. Complex assemblies with 60% material cost, 25% labor, 15% overhead. We use AAMC benchmarks for cost validation...'" },
+      MAIN_FOCUS_FIELD,
       { id: "productDescription", label: "Product/Service Description", description: "What goods or services are you analyzing?", type: "text", required: true },
       { id: "totalCost", label: "Total Cost", description: "Current total cost of the item/service", type: "currency", required: true },
       { id: "materialCost", label: "Material/Direct Cost", description: "Raw materials or direct input costs", type: "currency", required: true },
@@ -575,6 +603,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, market dynamics, and category management maturity", type: "textarea", required: true, placeholder: "E.g., 'Global pharma company. Category management is centralized. We use Kraljic matrix for portfolio segmentation. Key focus on API suppliers...'" },
+      MAIN_FOCUS_FIELD,
       { id: "categoryName", label: "Category Name", description: "Name of the category being analyzed", type: "text", required: true },
       { id: "annualSpend", label: "Annual Category Spend", description: "Total yearly spend in this category", type: "currency", required: true },
       { id: "supplierCount", label: "Number of Suppliers", description: "Current supplier base size", type: "number", required: true },
@@ -610,6 +639,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "riskAppetite",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, typical supplier relationships, and negotiation culture", type: "textarea", required: true, placeholder: "E.g., 'Automotive OEM. Long-term supplier relationships valued. Negotiations typically annual. German Mittelstand suppliers prefer partnership approach...'" },
+      MAIN_FOCUS_FIELD,
       { id: "negotiationSubject", label: "Negotiation Subject", description: "What are you negotiating?", type: "text", required: true },
       { id: "currentSpend", label: "Current/Expected Spend", description: "Annual value of the deal", type: "currency", required: true },
       { id: "supplierName", label: "Supplier Name", description: "Who are you negotiating with?", type: "text", required: true },
@@ -648,6 +678,7 @@ export const scenarios: Scenario[] = [
     strategySelector: "speedVsQuality",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, organizational structure, and strategic planning culture", type: "textarea", required: true, placeholder: "E.g., 'Global FMCG company. Matrix organization with regional procurement. Central category management for key spend areas. Strong focus on sustainability goals...'" },
+      MAIN_FOCUS_FIELD,
       { id: "projectTitle", label: "Project Title", description: "Name of the procurement project", type: "text", required: true },
       { id: "projectObjective", label: "Project Objective", description: "Primary goal of the project", type: "textarea", required: true, placeholder: "E.g., 'Reduce packaging costs by 15% while transitioning to sustainable materials within 18 months'" },
       { id: "projectScope", label: "Scope & Boundaries", description: "What is in scope and out of scope?", type: "textarea", required: true, placeholder: "In scope: All primary packaging for EU markets. Out of scope: Secondary packaging, US operations..." },

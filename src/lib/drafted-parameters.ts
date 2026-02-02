@@ -58,6 +58,7 @@ export interface GenerateWithParamsResult {
     iterations: number;
     reasoning: string;
     parameters: DraftedParameters;
+    mainFocusGenerated?: string; // The AI-generated main focus/challenge
   };
   error?: string;
 }

@@ -97,39 +97,100 @@ const CATEGORY_KPIS: Record<string, string[]> = {
 };
 
 // Scenario-specific field schemas for AI generation
+// Note: "mainFocus" is automatically included for ALL scenarios and should be generated
 const SCENARIO_SCHEMAS: Record<string, string[]> = {
   "make-vs-buy": [
-    "industryContext", "internalSalary", "recruitingCost", "managementTime",
+    "industryContext", "mainFocus", "internalSalary", "recruitingCost", "managementTime",
     "officeItPerHead", "agencyFee", "agencyOnboardingSpeed", "knowledgeRetentionRisk",
     "qualityBenchmark", "peakLoadCapacity", "strategicImportance"
   ],
   "supplier-review": [
-    "industryContext", "qualityScore", "onTimeDelivery", "incidentCount",
+    "industryContext", "mainFocus", "qualityScore", "onTimeDelivery", "incidentCount",
     "communicationScore", "innovationScore", "financialStability",
     "socialResponsibility", "priceVsMarket", "crisisSupport", "spendVolume"
   ],
   "software-licensing": [
-    "industryContext", "softwareName", "softwareCategory", "totalUsers",
+    "industryContext", "mainFocus", "softwareName", "softwareCategory", "totalUsers",
     "powerUsers", "regularUsers", "occasionalUsers", "externalUsers",
     "userGrowthRate", "perUserMonthly", "enterpriseTierCost", "contractLength"
   ],
   "tco-analysis": [
-    "industryContext", "assetDescription", "ownershipPeriod", "purchasePrice",
+    "industryContext", "mainFocus", "assetDescription", "ownershipPeriod", "purchasePrice",
     "installationCost", "trainingCost", "annualMaintenance", "energyConsumption",
     "vendorLockInRisk", "residualValue"
   ],
   "risk-assessment": [
-    "industryContext", "assessmentSubject", "annualValue", "marketVolatility",
+    "industryContext", "mainFocus", "assessmentSubject", "annualValue", "marketVolatility",
     "regulatoryExposure", "geopoliticalRisk", "businessCriticality",
     "supplierFinancialHealth", "recoveryTime"
   ],
   "disruption-management": [
-    "industryContext", "deficitSku", "stockDays", "altSuppliers", "altProducts",
+    "industryContext", "mainFocus", "deficitSku", "stockDays", "altSuppliers", "altProducts",
     "substitutePrice", "switchingTime", "lostRevenuePerDay", "forceMajeureClause"
   ],
   "negotiation-prep": [
-    "industryContext", "supplierName", "annualSpend", "contractEndDate",
+    "industryContext", "mainFocus", "supplierName", "annualSpend", "contractEndDate",
     "relationshipYears", "switchingCost", "alternativeCount", "spendTrend", "leverage"
+  ],
+  "sow-critic": [
+    "industryContext", "mainFocus", "sowText", "deliverables", "acceptanceCriteria",
+    "timeline", "responsibilities"
+  ],
+  "category-strategy": [
+    "industryContext", "mainFocus", "categoryName", "annualSpend", "supplierCount",
+    "marketStructure", "supplyRisk", "businessImpact", "currentStrategy", "painPoints"
+  ],
+  "volume-consolidation": [
+    "industryContext", "mainFocus", "spendPerVendor", "skuOverlap", "unitOfMeasure",
+    "paymentTerms", "orderFrequency", "reliabilityIndex"
+  ],
+  "cost-breakdown": [
+    "industryContext", "mainFocus", "productDescription", "totalCost", "materialCost",
+    "laborCost", "overheadCost", "volumePerYear"
+  ],
+  "budgeting-assistant": [
+    "industryContext", "mainFocus", "historicalSpend", "growthForecast", "headcountPlan",
+    "marketPriceTrend", "contingencyBuffer"
+  ],
+  "saas-optimization": [
+    "industryContext", "mainFocus", "totalSeats", "pricePerSeat", "lastLoginDate",
+    "featureUsage", "contractEndDate", "noticePeriod", "autoRenewal"
+  ],
+  "capex-vs-opex": [
+    "industryContext", "mainFocus", "purchasePrice", "leaseRate", "leaseTerm",
+    "maintenanceCost", "residualValue", "wacc"
+  ],
+  "savings-calculation": [
+    "industryContext", "mainFocus", "baselinePrice", "newPrice", "volume",
+    "inflationIndex", "contractTerm"
+  ],
+  "risk-matrix": [
+    "industryContext", "mainFocus", "legalStatus", "lawsuits", "dataAccess",
+    "financialHealth", "concentration", "cyberSecurity"
+  ],
+  "sla-definition": [
+    "industryContext", "mainFocus", "operatingHours", "responseTime", "resolutionTime",
+    "allowedDowntime", "serviceCriticality", "escalationProcess"
+  ],
+  "rfp-generator": [
+    "industryContext", "mainFocus", "procurementSubject", "volume", "technicalRequirements",
+    "supplierQualifications", "location", "submissionDeadline", "evaluationWeights"
+  ],
+  "requirements-gathering": [
+    "industryContext", "mainFocus", "businessGoal", "budget", "userCount",
+    "dataSecurityLevel", "urgency", "mustHaveFeatures"
+  ],
+  "negotiation-preparation": [
+    "industryContext", "mainFocus", "negotiationSubject", "currentSpend", "supplierName",
+    "relationshipHistory", "buyingPower", "marketAlternatives", "switchingCost", "batna"
+  ],
+  "procurement-project-planning": [
+    "industryContext", "mainFocus", "projectTitle", "projectObjective", "projectScope",
+    "keyInputs", "expectedOutputs", "budgetConstraint", "timelineConstraint"
+  ],
+  "tail-spend-sourcing": [
+    "industryContext", "mainFocus", "purchaseAmount", "urgency", "catalogAvailable",
+    "paymentTerms", "approvalRequired"
   ],
 };
 
@@ -763,9 +824,15 @@ STRICT CONTEXT:
 CRITICAL RULES:
 1. ALL data must be consistent with the above context
 2. "industryContext" field MUST be 100+ words describing a specific company matching ALL parameters
-3. All numeric values must be plausible for the company scale
-4. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
+3. "mainFocus" field MUST describe the user's primary objective or challenge for this analysis (50-100 words). This represents what the user is focused on - it may or may NOT align with hidden issues. Examples: cost reduction goals, quality improvement, risk mitigation, speed optimization.
+4. All numeric values must be plausible for the company scale
+5. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
 ${trickInstructions}
+
+IMPORTANT: "mainFocus" is the user's stated priority. It may be DIFFERENT from the hidden trick. For example:
+- mainFocus might be "reduce costs by 15%" while the trick is a hidden quality decline
+- mainFocus might be "ensure supply continuity" while the trick is a contract auto-renewal trap
+This creates realistic training scenarios where the AI must detect issues the user isn't focused on.
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.`;
