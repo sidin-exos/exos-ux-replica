@@ -21,6 +21,22 @@ type FinancialPressure = "comfortable" | "moderate" | "tight" | "crisis";
 type StrategicPriority = "cost" | "risk" | "speed" | "quality" | "innovation" | "sustainability";
 type MarketConditions = "stable" | "growing" | "volatile" | "disrupted";
 type DataQuality = "excellent" | "good" | "partial" | "poor";
+type TrickSubtlety = "obvious" | "moderate" | "subtle" | "expert-level";
+
+interface TrickDefinition {
+  category: string;
+  description: string;
+  targetField: string;
+  expectedDetection: string;
+  subtlety: TrickSubtlety;
+}
+
+interface TrickTemplate {
+  category: string;
+  templates: string[];
+  targetFields: string[];
+  subtlety: TrickSubtlety;
+}
 
 interface DraftedParameters {
   industry: string;
@@ -32,6 +48,7 @@ interface DraftedParameters {
   marketConditions: MarketConditions;
   dataQuality: DataQuality;
   reasoning: string;
+  trick?: TrickDefinition;
 }
 
 // Industry-Category compatibility matrix
@@ -116,12 +133,342 @@ const SCENARIO_SCHEMAS: Record<string, string[]> = {
   ],
 };
 
+// Trick Library - scenario-specific training traps
+const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
+  "supplier-review": [
+    {
+      category: "performance-masking",
+      templates: [
+        "High communication and innovation scores, but recent delivery reliability declining with explanations buried in context",
+        "Excellent quality metrics from samples, but production batch consistency issues mentioned casually",
+        "Strong overall ratings, but crisis response time has degraded over past quarters with blame on external factors"
+      ],
+      targetFields: ["industryContext", "crisisSupport"],
+      subtlety: "moderate"
+    },
+    {
+      category: "financial-warning-signs",
+      templates: [
+        "Supplier appears stable but recently lost major customer representing significant portion of their revenue",
+        "Good payment terms offered, but context mentions extended payment requests to their suppliers"
+      ],
+      targetFields: ["industryContext", "financialStability"],
+      subtlety: "subtle"
+    },
+    {
+      category: "dependency-trap",
+      templates: [
+        "Only qualified supplier for critical component, mentioned positively as 'exclusive partnership'",
+        "Proprietary technology integration that would require 18-month transition mentioned as 'seamless integration'"
+      ],
+      targetFields: ["industryContext", "strategicImportance"],
+      subtlety: "moderate"
+    },
+    {
+      category: "esg-greenwashing",
+      templates: [
+        "Prominent sustainability certifications displayed, but audit scope limited to headquarters only",
+        "Carbon neutral claims for operations, but supply chain emissions not included in scope"
+      ],
+      targetFields: ["socialResponsibility", "industryContext"],
+      subtlety: "subtle"
+    }
+  ],
+  "software-licensing": [
+    {
+      category: "lock-in-trap",
+      templates: [
+        "Generous discount for 3-year term, but data export only available in proprietary format",
+        "Low per-user cost, but API access requires separate enterprise license at significant premium"
+      ],
+      targetFields: ["industryContext", "contractLength"],
+      subtlety: "moderate"
+    },
+    {
+      category: "escalation-clause",
+      templates: [
+        "Competitive Year 1 pricing with standard 'cost of living adjustments' - actually 8-12% annual increases",
+        "Base price locked, but 'usage fees' have uncapped growth tied to company metrics"
+      ],
+      targetFields: ["industryContext", "perUserMonthly"],
+      subtlety: "subtle"
+    },
+    {
+      category: "user-tier-mismatch",
+      templates: [
+        "Enterprise tier purchased for full workforce, but only 20% are power users needing those features",
+        "All-in licensing when actual usage pattern is 60% light users who could use cheaper tier"
+      ],
+      targetFields: ["powerUsers", "regularUsers", "occasionalUsers"],
+      subtlety: "moderate"
+    },
+    {
+      category: "exit-penalty",
+      templates: [
+        "Early termination requires payment of remaining term plus 6-month penalty",
+        "Data extraction services priced at $500/hour for assisted migration mentioned in fine print"
+      ],
+      targetFields: ["industryContext", "contractLength"],
+      subtlety: "subtle"
+    }
+  ],
+  "tco-analysis": [
+    {
+      category: "iceberg-costs",
+      templates: [
+        "Competitive purchase price but annual maintenance at 22% of purchase price vs industry standard 15%",
+        "Low base cost but consumables only available from vendor at 3x market rates"
+      ],
+      targetFields: ["purchasePrice", "annualMaintenance", "industryContext"],
+      subtlety: "moderate"
+    },
+    {
+      category: "obsolescence-trap",
+      templates: [
+        "Current generation equipment offered at discount, with new version launching in 6 months",
+        "Technology approaching end-of-support but positioned as 'proven and stable'"
+      ],
+      targetFields: ["industryContext", "assetDescription"],
+      subtlety: "subtle"
+    },
+    {
+      category: "vendor-dependency",
+      templates: [
+        "Proprietary spare parts with single-source availability and extended lead times",
+        "Specialized technician certification required that only vendor provides"
+      ],
+      targetFields: ["industryContext", "vendorLockInRisk"],
+      subtlety: "moderate"
+    },
+    {
+      category: "decommissioning-surprise",
+      templates: [
+        "Hazardous materials requiring specialized disposal not mentioned in ownership cost",
+        "Asset contains regulated substances requiring certified decommissioning"
+      ],
+      targetFields: ["residualValue", "industryContext"],
+      subtlety: "expert-level"
+    }
+  ],
+  "negotiation-prep": [
+    {
+      category: "leverage-illusion",
+      templates: [
+        "Three alternative suppliers identified but all have 12+ month qualification lead times",
+        "Multiple options available but incumbent has exclusive access to required certifications"
+      ],
+      targetFields: ["alternativeCount", "switchingCost", "industryContext"],
+      subtlety: "moderate"
+    },
+    {
+      category: "relationship-complacency",
+      templates: [
+        "15-year partnership celebrated as 'strategic' while pricing drifted 25% above market",
+        "Strong relationship scores mask gradual erosion of service levels over past 3 years"
+      ],
+      targetFields: ["relationshipYears", "industryContext"],
+      subtlety: "subtle"
+    },
+    {
+      category: "contract-auto-renewal",
+      templates: [
+        "Auto-renewal clause with 90-day notice window, current contract expires in 45 days",
+        "Evergreen contract with renewal pricing 20% above initial term"
+      ],
+      targetFields: ["contractEndDate", "industryContext"],
+      subtlety: "moderate"
+    },
+    {
+      category: "benchmark-gap",
+      templates: [
+        "Current pricing 30% above market but internal comparison limited to historical rates",
+        "Supplier-provided 'competitive analysis' used as benchmark reference"
+      ],
+      targetFields: ["annualSpend", "spendTrend", "industryContext"],
+      subtlety: "subtle"
+    }
+  ],
+  "risk-assessment": [
+    {
+      category: "hidden-concentration",
+      templates: [
+        "Tier-1 supplier appears diversified but all Tier-2 sources share single raw material supplier",
+        "Multiple manufacturing sites listed but all in same regulatory jurisdiction"
+      ],
+      targetFields: ["industryContext", "geopoliticalRisk"],
+      subtlety: "expert-level"
+    },
+    {
+      category: "false-diversification",
+      templates: [
+        "Three approved suppliers all located within same 50km radius disaster zone",
+        "Alternative sources identified but all dependent on same regional infrastructure"
+      ],
+      targetFields: ["industryContext", "businessCriticality"],
+      subtlety: "subtle"
+    },
+    {
+      category: "contract-gap",
+      templates: [
+        "Business continuity requirements mentioned but no contractual SLAs for recovery time",
+        "Force majeure clause excludes the most likely disruption scenarios for this category"
+      ],
+      targetFields: ["industryContext", "recoveryTime"],
+      subtlety: "moderate"
+    },
+    {
+      category: "near-miss-ignored",
+      templates: [
+        "Previous quality incident resolved without root cause analysis mentioned casually",
+        "Past delivery disruption attributed to one-time event that could easily recur"
+      ],
+      targetFields: ["industryContext", "supplierFinancialHealth"],
+      subtlety: "subtle"
+    }
+  ],
+  "make-vs-buy": [
+    {
+      category: "capability-overestimate",
+      templates: [
+        "Internal team 'could' develop capability but current capacity fully allocated for 18 months",
+        "Technical skills exist but not at scale required for production workload"
+      ],
+      targetFields: ["industryContext", "knowledgeRetentionRisk"],
+      subtlety: "moderate"
+    },
+    {
+      category: "hidden-management-cost",
+      templates: [
+        "Direct labor costs compared but management overhead for internal option not included",
+        "Quality control requirements would need additional headcount not reflected in analysis"
+      ],
+      targetFields: ["managementTime", "industryContext"],
+      subtlety: "subtle"
+    },
+    {
+      category: "knowledge-loss-downplayed",
+      templates: [
+        "External provider gains proprietary process knowledge that becomes competitive advantage",
+        "IP developed jointly but ownership defaults to vendor per standard contract terms"
+      ],
+      targetFields: ["knowledgeRetentionRisk", "strategicImportance"],
+      subtlety: "moderate"
+    },
+    {
+      category: "scale-mismatch",
+      templates: [
+        "Build option based on current volume but demand volatility requires 3x peak capacity",
+        "Agency model attractive at current scale but economics invert at projected growth"
+      ],
+      targetFields: ["peakLoadCapacity", "industryContext"],
+      subtlety: "subtle"
+    }
+  ],
+  "disruption-management": [
+    {
+      category: "alternatives-mirage",
+      templates: [
+        "Three alternative suppliers listed but none have required certifications or capacity",
+        "Backup sources identified but lead time for qualification exceeds crisis timeline"
+      ],
+      targetFields: ["altSuppliers", "altProducts", "industryContext"],
+      subtlety: "moderate"
+    },
+    {
+      category: "lead-time-underestimate",
+      templates: [
+        "Switching time quoted for normal conditions but crisis creates industry-wide demand surge",
+        "Recovery timeline assumes immediate capacity availability that doesn't exist"
+      ],
+      targetFields: ["switchingTime", "stockDays"],
+      subtlety: "subtle"
+    },
+    {
+      category: "cost-of-inaction-hidden",
+      templates: [
+        "Revenue impact calculated for single product line but downstream dependencies not included",
+        "Daily loss estimate excludes customer penalty clauses triggered at day 7"
+      ],
+      targetFields: ["lostRevenuePerDay", "industryContext"],
+      subtlety: "moderate"
+    },
+    {
+      category: "single-point-failure",
+      templates: [
+        "All alternatives route through same port or logistics hub as primary",
+        "Backup power/IT infrastructure shares same grid or data center dependency"
+      ],
+      targetFields: ["industryContext", "altSuppliers"],
+      subtlety: "expert-level"
+    }
+  ],
+  "sow-critic": [
+    {
+      category: "scope-ambiguity",
+      templates: [
+        "Deliverables described as 'industry standard' without specific metrics or requirements",
+        "Performance standards reference 'best efforts' rather than measurable outcomes"
+      ],
+      targetFields: ["industryContext"],
+      subtlety: "moderate"
+    },
+    {
+      category: "acceptance-loophole",
+      templates: [
+        "Acceptance deemed granted if client doesn't respond within 5 business days",
+        "Partial delivery triggers proportional payment even if unusable without remaining scope"
+      ],
+      targetFields: ["industryContext"],
+      subtlety: "subtle"
+    },
+    {
+      category: "responsibility-shift",
+      templates: [
+        "Supplier performance contingent on 'timely client inputs' with undefined timeline",
+        "Risk of third-party delays explicitly transferred to client"
+      ],
+      targetFields: ["industryContext"],
+      subtlety: "subtle"
+    },
+    {
+      category: "penalty-asymmetry",
+      templates: [
+        "Client late payments incur 2%/month penalty but supplier delays have no consequences",
+        "Force majeure protects supplier from delays but not client from supplier non-performance"
+      ],
+      targetFields: ["industryContext"],
+      subtlety: "moderate"
+    }
+  ]
+};
+
+// Helper to get random trick for scenario
+function selectRandomTrick(scenarioType: string): { trick: TrickDefinition; template: TrickTemplate } | null {
+  const tricks = TRICK_LIBRARY[scenarioType];
+  if (!tricks || tricks.length === 0) return null;
+  
+  const template = tricks[Math.floor(Math.random() * tricks.length)];
+  const description = template.templates[Math.floor(Math.random() * template.templates.length)];
+  const targetField = template.targetFields[Math.floor(Math.random() * template.targetFields.length)];
+  
+  return {
+    template,
+    trick: {
+      category: template.category,
+      description,
+      targetField,
+      expectedDetection: `AI should identify and flag the ${template.category.replace(/-/g, ' ')} issue despite neutral/positive framing`,
+      subtlety: template.subtlety
+    }
+  };
+}
+
 interface GenerateRequest {
-  mode?: "draft" | "generate" | "full"; // New mode parameter
+  mode?: "draft" | "generate" | "full";
   scenarioType: string;
   industry?: string;
   category?: string;
-  parameters?: DraftedParameters; // Pre-approved parameters for "generate" mode
+  parameters?: DraftedParameters;
   mctsIterations?: number;
   temperature?: number;
 }
@@ -292,6 +639,12 @@ async function handleDraftMode(
 ): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
   const industries = Object.keys(COMPATIBILITY_MATRIX);
   
+  // Select a random trick for this scenario type
+  const trickResult = selectRandomTrick(scenarioType);
+  const trick = trickResult?.trick || null;
+  
+  console.log(`[TestDataGen] Draft mode - Selected trick: ${trick?.category || 'none'}`);
+  
   const system = `You are a procurement test case designer. Generate a random but internally-consistent set of parameters for a test case.
 
 AVAILABLE OPTIONS:
@@ -344,6 +697,11 @@ Return ONLY a valid JSON object with these exact keys:
       parsed.category = validCategories[0] || "professional-services";
     }
     
+    // Attach the selected trick
+    if (trick) {
+      parsed.trick = trick;
+    }
+    
     return { success: true, parameters: parsed };
   } catch (error) {
     console.error("[TestDataGen] Failed to parse draft:", error);
@@ -368,6 +726,28 @@ async function handleGenerateMode(
     "large-enterprise": "10,000+ employees, global operations, complex procurement"
   };
 
+  // Build trick embedding instructions if trick is present
+  const trick = parameters.trick;
+  const trickInstructions = trick ? `
+
+CRITICAL TRAINING INSTRUCTION:
+You must embed a specific challenge in this test case for AI training purposes.
+
+TRICK TO EMBED:
+- Category: ${trick.category}
+- Description: ${trick.description}
+- Target Field: ${trick.targetField}
+- Subtlety Level: ${trick.subtlety}
+
+EMBEDDING RULES:
+1. The trick must be LOGICALLY embedded - it should be a realistic business situation
+2. Do NOT use obvious warning words like "risk", "concern", "warning", "issue", "problem", "fail", "danger"
+3. Bury the concerning detail in otherwise NEUTRAL or POSITIVE language
+4. The trick should require careful reading to detect - don't make it the focus
+5. An experienced procurement professional should be able to spot it
+6. Embed the trick primarily in the "${trick.targetField}" field
+7. The rest of the data should appear normal and professional` : '';
+
   const system = `You are an expert procurement consultant generating realistic test data.
 
 STRICT CONTEXT:
@@ -385,6 +765,7 @@ CRITICAL RULES:
 2. "industryContext" field MUST be 100+ words describing a specific company matching ALL parameters
 3. All numeric values must be plausible for the company scale
 4. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
+${trickInstructions}
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.`;
@@ -395,8 +776,11 @@ REQUIRED FIELDS:
 ${fields.map(f => `- ${f}`).join('\n')}
 
 Context: ${parameters.reasoning}
+${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
 
 Return ONLY the JSON object.`;
+
+  console.log(`[TestDataGen] Generate mode - Trick: ${trick?.category || 'none'}, Target: ${trick?.targetField || 'N/A'}`);
 
   const response = await callAI(apiKey, system, user, temperature);
   
@@ -410,17 +794,75 @@ Return ONLY the JSON object.`;
     return { success: false, error: "Failed to parse generated data" };
   }
 
+  // Validate trick embedding if trick was specified
+  let trickScore = null;
+  if (trick && data[trick.targetField]) {
+    trickScore = scoreTrickEmbedding(data, trick);
+    console.log(`[TestDataGen] Trick embedding score: ${trickScore.subtletyScore}/100 - ${trickScore.feedback}`);
+  }
+
   return {
     success: true,
     data,
     metadata: {
       industry: parameters.industry,
       category: parameters.category,
-      score: 75, // Single-pass score estimate
+      score: 75,
       iterations: 1,
       reasoning: parameters.reasoning,
-      parameters: parameters
+      parameters: parameters,
+      trickValidation: trickScore
     }
+  };
+}
+
+// Validate trick embedding quality
+function scoreTrickEmbedding(
+  data: Record<string, string>, 
+  trick: TrickDefinition
+): { embedded: boolean; subtletyScore: number; feedback: string } {
+  const targetContent = data[trick.targetField] || "";
+  
+  if (!targetContent) {
+    return { embedded: false, subtletyScore: 0, feedback: "Target field is empty" };
+  }
+  
+  // Check for obvious warning words (bad - reduces subtlety)
+  const warningWords = /\b(risk|concern|warning|issue|problem|fail|danger|threat|vulnerability|weakness|flaw|defect|critical)\b/gi;
+  const hasWarningWords = warningWords.test(targetContent);
+  
+  // Check if trick topic keywords are present (good - means it's embedded)
+  const trickKeywords = trick.category.split('-').join('|');
+  const categoryTerms = new RegExp(`(${trickKeywords}|decline|delay|hidden|buried|quietly|casually|mentioned|attributed)`, 'i');
+  const hasTrickIndicators = categoryTerms.test(targetContent);
+  
+  // Check content length (longer is better for hiding tricks)
+  const contentLength = targetContent.length;
+  const lengthScore = Math.min(30, Math.floor(contentLength / 20));
+  
+  // Calculate subtlety score
+  let subtletyScore = 50; // Base score
+  if (hasTrickIndicators) subtletyScore += 20;
+  if (!hasWarningWords) subtletyScore += 20;
+  subtletyScore += lengthScore;
+  subtletyScore = Math.min(100, subtletyScore);
+  
+  // Generate feedback
+  let feedback = "";
+  if (hasWarningWords) {
+    feedback = "Contains obvious warning words - trick may be too easy to spot";
+  } else if (!hasTrickIndicators) {
+    feedback = "Trick indicators not clearly present - may need stronger embedding";
+  } else if (subtletyScore >= 80) {
+    feedback = "Well-embedded trick with good subtlety";
+  } else {
+    feedback = "Trick embedded but could be more subtle";
+  }
+  
+  return {
+    embedded: hasTrickIndicators,
+    subtletyScore,
+    feedback
   };
 }
 

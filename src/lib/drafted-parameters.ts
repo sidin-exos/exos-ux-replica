@@ -15,6 +15,19 @@ export type FinancialPressure = "comfortable" | "moderate" | "tight" | "crisis";
 export type StrategicPriority = "cost" | "risk" | "speed" | "quality" | "innovation" | "sustainability";
 export type MarketConditions = "stable" | "growing" | "volatile" | "disrupted";
 export type DataQuality = "excellent" | "good" | "partial" | "poor";
+export type TrickSubtlety = "obvious" | "moderate" | "subtle" | "expert-level";
+
+/**
+ * Training Trick Definition
+ * A logical procurement trap embedded in test cases for AI training
+ */
+export interface TrickDefinition {
+  category: string;           // e.g., "performance-masking"
+  description: string;        // Human-readable explanation
+  targetField: string;        // Primary field where trick is embedded
+  expectedDetection: string;  // What the AI should flag
+  subtlety: TrickSubtlety;
+}
 
 export interface DraftedParameters {
   industry: string;
@@ -26,6 +39,7 @@ export interface DraftedParameters {
   marketConditions: MarketConditions;
   dataQuality: DataQuality;
   reasoning: string;
+  trick?: TrickDefinition;    // Optional training trick
 }
 
 export interface DraftResult {
@@ -89,6 +103,48 @@ export const PARAMETER_LABELS: Record<string, Record<string, string>> = {
     "partial": "Partial",
     "poor": "Poor",
   },
+  trickSubtlety: {
+    "obvious": "Obvious (Easy to spot)",
+    "moderate": "Moderate (Requires attention)",
+    "subtle": "Subtle (Careful reading needed)",
+    "expert-level": "Expert-Level (Deep analysis required)",
+  },
+};
+
+// Human-readable labels for trick categories
+export const TRICK_CATEGORY_LABELS: Record<string, string> = {
+  "performance-masking": "Performance Masking",
+  "financial-warning-signs": "Financial Warning Signs",
+  "dependency-trap": "Dependency Trap",
+  "esg-greenwashing": "ESG Greenwashing",
+  "lock-in-trap": "Lock-In Trap",
+  "escalation-clause": "Escalation Clause",
+  "user-tier-mismatch": "User Tier Mismatch",
+  "exit-penalty": "Exit Penalty",
+  "iceberg-costs": "Iceberg Costs",
+  "obsolescence-trap": "Obsolescence Trap",
+  "vendor-dependency": "Vendor Dependency",
+  "decommissioning-surprise": "Decommissioning Surprise",
+  "leverage-illusion": "Leverage Illusion",
+  "relationship-complacency": "Relationship Complacency",
+  "contract-auto-renewal": "Contract Auto-Renewal",
+  "benchmark-gap": "Benchmark Gap",
+  "hidden-concentration": "Hidden Concentration",
+  "false-diversification": "False Diversification",
+  "contract-gap": "Contract Gap",
+  "near-miss-ignored": "Near Miss Ignored",
+  "capability-overestimate": "Capability Overestimate",
+  "hidden-management-cost": "Hidden Management Cost",
+  "knowledge-loss-downplayed": "Knowledge Loss Downplayed",
+  "scale-mismatch": "Scale Mismatch",
+  "alternatives-mirage": "Alternatives Mirage",
+  "lead-time-underestimate": "Lead Time Underestimate",
+  "cost-of-inaction-hidden": "Cost of Inaction Hidden",
+  "single-point-failure": "Single Point Failure",
+  "scope-ambiguity": "Scope Ambiguity",
+  "acceptance-loophole": "Acceptance Loophole",
+  "responsibility-shift": "Responsibility Shift",
+  "penalty-asymmetry": "Penalty Asymmetry",
 };
 
 /**

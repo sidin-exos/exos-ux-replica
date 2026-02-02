@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { RefreshCw, Check, Pencil, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { RefreshCw, Check, Pencil, ChevronUp, Loader2, Target, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +17,15 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   DraftedParameters,
   PARAMETER_LABELS,
+  TRICK_CATEGORY_LABELS,
   formatSlug,
   CompanySize,
   Complexity,
@@ -165,6 +172,51 @@ export function DraftedParametersCard({
               ) : undefined}
             />
           </div>
+
+          {/* Training Trick Display */}
+          {displayParams.trick && (
+            <div className="pt-3 border-t border-border/50">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                  Training Focus
+                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {PARAMETER_LABELS.trickSubtlety?.[displayParams.trick.subtlety] || displayParams.trick.subtlety}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <p className="text-xs">
+                        Subtlety level affects how hidden the trick is in the generated data
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="pl-6 space-y-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {TRICK_CATEGORY_LABELS[displayParams.trick.category] || formatSlug(displayParams.trick.category)}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    → {formatSlug(displayParams.trick.targetField)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {displayParams.trick.description}
+                </p>
+                <div className="flex items-start gap-1.5 mt-2 pt-2 border-t border-border/30">
+                  <Eye className="w-3 h-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground italic">
+                    {displayParams.trick.expectedDetection}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 pt-2">
