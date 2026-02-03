@@ -1,336 +1,249 @@
 
 
-# Training Trick Embedding for AI Test Data Generation
+# Market Intelligence Module with Perplexity API Integration
 
 ## Overview
 
-Enhance the test data generation system to embed a **logical "trick"** or **trap** in each generated scenario. These tricks are designed to test whether the AI analysis engine can detect subtle but impactful procurement issues - not formatting errors or typos, but substantive business/contractual problems.
+Add a dedicated Market Intelligence feature to EXOS that leverages Perplexity's Sonar API for real-time analysis of market events, supplier news, commodity trends, and competitive intelligence. This will be accessible via a new navigation tab and powered by a dedicated Edge Function.
 
-## What is a Training Trick?
+## Why Perplexity Sonar API?
 
-A training trick is a deliberate, realistic flaw embedded in the test case that the AI analysis should identify and flag. Examples:
+Perplexity Sonar is ideal for this use case because:
 
-| Scenario Type | Trick Category | Example |
-|---------------|----------------|---------|
-| supplier-review | Hidden Poor Performance | High communication score but pattern of missed deliveries hidden in context |
-| software-licensing | Contract Trap | 3-year commitment with "auto-renewal" clause but no termination rights |
-| tco-analysis | Cost Obfuscation | Low purchase price but extreme maintenance costs hidden in optional fields |
-| negotiation-prep | Leverage Blindspot | Single-source dependency but user thinks they have alternatives |
-| risk-assessment | Risk Understatement | "Strong" supplier financial health but context mentions recent layoffs |
-| sow-critic | Scope Ambiguity | Deliverables defined vaguely with acceptance criteria at "supplier discretion" |
-| disruption-management | False Security | Alternative suppliers listed but all in same geographic risk zone |
-| make-vs-buy | Hidden Costs | Low agency fee but high "onboarding speed" hiding recurring setup costs |
+| Feature | Benefit for EXOS |
+|---------|------------------|
+| **Grounded Search** | Real-time web search with source citations |
+| **Academic Mode** | Access to research papers for regulatory/compliance topics |
+| **Domain Filtering** | Focus on industry publications, news sites, financial reports |
+| **Recency Filtering** | Get latest news (last day/week/month) |
+| **Structured Outputs** | Extract data in consistent JSON schemas |
 
-## Trick Categories by Scenario Type
+**Recommended Model**: `sonar-pro` for multi-step reasoning with 2x more citations (ideal for comprehensive market analysis)
 
-Each scenario type will have a curated set of applicable trick categories:
+## Architecture
 
 ```text
-SCENARIO-SPECIFIC TRICK LIBRARY
-
-supplier-review:
-  - performance-masking: Good scores but poor underlying metrics
-  - financial-warning-signs: Subtle indicators of supplier distress
-  - dependency-trap: Over-reliance hidden in positive language
-  - esg-greenwashing: Claimed compliance without substance
-
-software-licensing:
-  - lock-in-trap: High switching costs hidden in contract terms
-  - escalation-clause: Aggressive price increases buried in details
-  - user-tier-mismatch: License structure doesn't match actual usage
-  - exit-penalty: Termination penalties hidden in boilerplate
-
-tco-analysis:
-  - iceberg-costs: Low acquisition but extreme operational costs
-  - obsolescence-trap: Technology at end of life
-  - vendor-dependency: Proprietary parts with no alternatives
-  - decommissioning-surprise: High hidden exit costs
-
-negotiation-prep:
-  - leverage-illusion: Perceived alternatives that aren't viable
-  - relationship-complacency: Long tenure hiding poor value
-  - contract-auto-renewal: Missing renewal deadlines
-  - benchmark-gap: Pricing far above market without awareness
-
-risk-assessment:
-  - hidden-concentration: Single point of failure in supply chain
-  - false-diversification: Multiple suppliers in same risk zone
-  - contract-gap: Missing protections for identified risks
-  - near-miss-ignored: Recent incidents downplayed
-
-make-vs-buy:
-  - capability-overestimate: In-house skills not actually available
-  - hidden-management-cost: Underestimated oversight burden
-  - knowledge-loss-downplayed: IP risks not fully considered
-  - scale-mismatch: Volume doesn't justify approach
-
-disruption-management:
-  - alternatives-mirage: Listed alternatives not truly viable
-  - lead-time-underestimate: Recovery time optimistically low
-  - cost-of-inaction-hidden: Revenue impact buried in details
-  - single-point-failure: All options share same dependency
++------------------+     +----------------------+     +-------------------+
+|                  |     |                      |     |                   |
+|   Market Intel   |---->|  market-intelligence |---->|   Perplexity API  |
+|   Page/Tab       |     |  Edge Function       |     |   (Sonar Pro)     |
+|                  |<----|                      |<----|                   |
++------------------+     +----------------------+     +-------------------+
+         |                        |
+         |                        v
+         |               +-------------------+
+         |               |   intel_queries   |
+         +-------------->|   (Database)      |
+                         +-------------------+
 ```
 
-## Implementation Approach
+## Feature Scope
 
-### Phase 1: Draft Mode Enhancement
+### Intelligence Query Types
 
-The draft phase will now also select a random trick from the applicable pool:
+| Query Type | Purpose | Example Query |
+|------------|---------|---------------|
+| **Supplier News** | Monitor specific supplier developments | "Recent news about [Supplier X] financial health, acquisitions, or operational issues" |
+| **Commodity Watch** | Track raw material price movements | "Steel price trends Q1 2026, supply constraints, outlook" |
+| **Industry Trends** | Market dynamics and competitive moves | "Cloud infrastructure pricing trends, AWS vs Azure vs GCP" |
+| **Regulatory Updates** | Compliance and policy changes | "EU CBAM carbon border adjustments impact on importers" |
+| **M&A Activity** | Track supplier/competitor consolidation | "Recent acquisitions in logistics sector, impact on capacity" |
+| **Risk Signals** | Early warning for supply chain risks | "Port congestion reports, labor strikes affecting manufacturing" |
 
-**Request:**
-```typescript
-{ mode: "draft", scenarioType: "supplier-review" }
-```
+### User Interface
 
-**Response (enhanced):**
-```typescript
-{
-  parameters: {
-    industry: "healthcare",
-    category: "medical-devices",
-    companySize: "mid-market",
-    complexity: "complex",
-    financialPressure: "moderate",
-    strategicPriority: "quality",
-    marketConditions: "stable",
-    dataQuality: "good",
-    reasoning: "Healthcare mid-market company evaluating medical device supplier..."
-  },
-  trick: {
-    category: "performance-masking",
-    description: "Supplier shows high communication and innovation scores, but delivery reliability is quietly declining over recent months with excuses buried in context",
-    targetField: "industryContext",
-    expectedDetection: "AI should flag the delivery trend concern despite positive headline metrics"
-  }
-}
-```
+New page `/market-intelligence` with:
 
-### Phase 2: Generate Mode Enhancement
+1. **Query Builder**
+   - Query type selector (supplier, commodity, industry, regulatory, M&A, risk)
+   - Freeform query input with AI-enhanced suggestions
+   - Recency filter (past day/week/month/year)
+   - Source domain filter (news, financial, academic)
 
-When generating test data, the trick is woven into the content:
+2. **Results Display**
+   - AI-synthesized summary with key insights
+   - Source citations with clickable links
+   - Relevance indicators
+   - Save to collection/share functionality
 
-**Request:**
-```typescript
-{
-  mode: "generate",
-  scenarioType: "supplier-review",
-  parameters: { ... },
-  trick: {
-    category: "performance-masking",
-    description: "High scores but declining delivery pattern",
-    targetField: "industryContext"
-  }
-}
-```
+3. **Intelligence Feed** (stretch goal)
+   - Saved queries that auto-refresh
+   - Alert configuration for keyword matches
 
-**Generated Output:**
-The `industryContext` field will include the trick embedded naturally - e.g., mentioning "while Q4 saw 3 delayed shipments attributed to logistics partner issues..." buried in otherwise positive narrative.
+## Implementation Details
 
-### Phase 3: Trick Validation
+### 1. Perplexity Connector Setup
 
-After generation, a validation step ensures the trick was properly embedded:
+Perplexity is available as a standard connector. Connection flow:
+1. Use `connect` tool with `connector_id: "perplexity"` 
+2. User selects/creates connection with their API key
+3. `PERPLEXITY_API_KEY` becomes available in Edge Functions
 
-1. Check if target field mentions the trick topic
-2. Verify trick isn't too obvious (shouldn't use warning words like "risk", "concern")
-3. Score the subtlety (good tricks are hidden in neutral language)
+### 2. Database Schema
 
-## Schema Changes
+New table to track intelligence queries:
 
-### DraftedParameters Extension
-
-```typescript
-interface TrickDefinition {
-  category: string;           // e.g., "performance-masking"
-  description: string;        // Human-readable explanation
-  targetField: string;        // Primary field where trick is embedded
-  expectedDetection: string;  // What the AI should flag
-  subtlety: "obvious" | "moderate" | "subtle" | "expert-level";
-}
-
-interface DraftedParameters {
-  // Existing fields...
-  industry: string;
-  category: string;
-  companySize: CompanySize;
-  // ...
+```sql
+CREATE TABLE intel_queries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT now(),
   
-  // NEW: Trick embedding
-  trick: TrickDefinition;
+  -- Query details
+  query_type TEXT NOT NULL,  -- supplier, commodity, industry, regulatory, m&a, risk
+  query_text TEXT NOT NULL,
+  recency_filter TEXT,       -- day, week, month, year
+  domain_filter TEXT[],      -- news, financial, academic
+  
+  -- Response
+  summary TEXT,
+  citations JSONB,           -- [{url, title, snippet}]
+  raw_response JSONB,
+  
+  -- Metadata
+  model_used TEXT,
+  processing_time_ms INT,
+  success BOOLEAN DEFAULT true,
+  error_message TEXT
+);
+```
+
+### 3. Edge Function: `market-intelligence`
+
+```typescript
+// supabase/functions/market-intelligence/index.ts
+
+interface IntelRequest {
+  queryType: 'supplier' | 'commodity' | 'industry' | 'regulatory' | 'm&a' | 'risk';
+  query: string;
+  recencyFilter?: 'day' | 'week' | 'month' | 'year';
+  domainFilter?: string[];
+  context?: string;  // Optional industry/company context
+}
+
+// Build system prompts per query type
+const QUERY_TYPE_PROMPTS = {
+  supplier: "Analyze supplier-related developments focusing on financial health, operational issues, and strategic moves...",
+  commodity: "Analyze commodity market trends including pricing, supply/demand dynamics...",
+  industry: "Analyze industry trends, competitive dynamics, and market structure changes...",
+  regulatory: "Analyze regulatory developments, compliance requirements, and policy changes...",
+  "m&a": "Analyze merger and acquisition activity, consolidation trends...",
+  risk: "Identify supply chain risk signals, disruption indicators..."
+};
+
+// Call Perplexity API with appropriate parameters
+const response = await fetch('https://api.perplexity.ai/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    model: 'sonar-pro',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: enrichedQuery }
+    ],
+    search_recency_filter: recencyFilter,
+    search_domain_filter: domainFilter,
+  }),
+});
+```
+
+### 4. React Hook: `useMarketIntelligence`
+
+```typescript
+// src/hooks/useMarketIntelligence.ts
+
+interface UseMarketIntelligenceReturn {
+  query: (params: IntelQueryParams) => Promise<IntelResult | null>;
+  isLoading: boolean;
+  error: string | null;
+  recentQueries: IntelQuery[];
 }
 ```
 
-### Client-Side Display
+### 5. Page Component: `MarketIntelligence.tsx`
 
-The DraftedParametersCard will show the trick (admin-only):
+New page following existing patterns with:
+- Header component
+- Query builder card
+- Results display with citations
+- Recent queries sidebar
 
-```text
-+--------------------------------------------------+
-| Proposed Test Case                    [Refresh]  |
-+--------------------------------------------------+
-| Industry:     Healthcare                         |
-| Category:     Medical Devices                    |
-| Company:      Mid-Market                         |
-| ...                                              |
-| ----------------------------------------         |
-| Training Focus:                                  |
-| [performance-masking] Hidden declining           |
-| delivery pattern in positive supplier narrative  |
-| Target: industryContext                          |
-+--------------------------------------------------+
+### 6. Navigation Update
+
+Add new nav link in Header:
+
+```tsx
+<NavLink 
+  to="/market-intelligence" 
+  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+  activeClassName="text-foreground"
+>
+  Intelligence
+</NavLink>
 ```
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/pages/MarketIntelligence.tsx` | Main page component |
+| `src/hooks/useMarketIntelligence.ts` | React hook for API calls |
+| `src/components/intelligence/QueryBuilder.tsx` | Query input form |
+| `src/components/intelligence/IntelResults.tsx` | Results display with citations |
+| `src/components/intelligence/SourceCard.tsx` | Individual citation card |
+| `supabase/functions/market-intelligence/index.ts` | Edge function for Perplexity API |
 
 ## Files to Modify
 
-### 1. `supabase/functions/generate-test-data/index.ts`
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add route for `/market-intelligence` |
+| `src/components/layout/Header.tsx` | Add "Intelligence" nav link |
 
-- Add `TRICK_LIBRARY` constant mapping scenario types to applicable tricks
-- Modify `handleDraftMode()` to randomly select and include a trick
-- Modify `handleGenerateMode()` to inject trick instructions into AI prompt
-- Add trick subtlety validation in response parsing
+## Query Type Examples
 
-### 2. `src/lib/drafted-parameters.ts`
+### Supplier News Query
 
-- Add `TrickDefinition` interface
-- Update `DraftedParameters` to include optional `trick` field
-- Add trick category labels for display
+**Input**: "TechCorp Inc" + type: supplier + recency: week
+**System Prompt**: "Analyze recent news about TechCorp Inc focusing on: financial health indicators, operational challenges, strategic initiatives, leadership changes, customer wins/losses. Flag any concerns for a procurement professional."
+**Output**: Structured summary with risk indicators + 5-10 cited sources
 
-### 3. `src/components/scenarios/DraftedParametersCard.tsx`
+### Commodity Watch Query
 
-- Add trick display section (admin-only visibility)
-- Allow editing trick category (advanced mode)
-- Show expected detection hint
+**Input**: "Lithium battery materials" + type: commodity + recency: month
+**System Prompt**: "Analyze lithium and battery materials market: price trends, supply constraints, major producer news, demand forecasts. Focus on procurement timing implications."
+**Output**: Price trend analysis, supply risk assessment, procurement recommendations
 
-### 4. `src/components/scenarios/GenericScenarioWizard.tsx`
+### Regulatory Update Query
 
-- Pass trick through the generation flow
-- Store trick metadata for later analysis
+**Input**: "EU sustainability reporting" + type: regulatory + search_mode: academic
+**System Prompt**: "Analyze EU Corporate Sustainability Reporting Directive (CSRD) requirements: compliance timelines, supply chain implications, required disclosures."
+**Output**: Compliance checklist, timeline, affected suppliers
 
----
+## Security Considerations
 
-## Technical Details
+- Perplexity API key stored securely via connector
+- No sensitive company data sent to Perplexity (only market queries)
+- Query history stored for audit/improvement
+- Rate limiting via connector infrastructure
 
-### Trick Library Structure
+## Future Enhancements
 
-```typescript
-const TRICK_LIBRARY: Record<string, TrickCategory[]> = {
-  "supplier-review": [
-    {
-      category: "performance-masking",
-      templates: [
-        "High communication and innovation scores, but recent delivery reliability declining with explanations buried in context",
-        "Excellent quality metrics from samples, but production batch consistency issues mentioned casually",
-        "Strong financial rating from agency, but context reveals recent credit line reduction"
-      ],
-      targetFields: ["industryContext", "crisisSupport"],
-      subtlety: "moderate"
-    },
-    {
-      category: "financial-warning-signs",
-      templates: [
-        "Supplier appears stable but recently lost major customer representing 30% of their revenue",
-        "Good payment terms offered, but context mentions extended payment requests to their suppliers"
-      ],
-      targetFields: ["industryContext", "financialStability"],
-      subtlety: "subtle"
-    }
-  ],
-  "software-licensing": [
-    {
-      category: "lock-in-trap",
-      templates: [
-        "Generous discount for 3-year term, but data export only available in proprietary format",
-        "Low per-user cost, but API access requires separate enterprise license"
-      ],
-      targetFields: ["industryContext", "dataExportability"],
-      subtlety: "moderate"
-    }
-  ]
-  // ... more scenarios
-};
-```
-
-### Prompt Engineering for Trick Embedding
-
-The generate mode prompt will include:
-
-```text
-CRITICAL TRAINING INSTRUCTION:
-You must embed a specific challenge in this test case.
-
-TRICK TO EMBED:
-- Category: {trick.category}
-- Description: {trick.description}
-- Target Field: {trick.targetField}
-- Subtlety Level: {trick.subtlety}
-
-EMBEDDING RULES:
-1. The trick must be LOGICALLY embedded - it should be a realistic business situation
-2. Do NOT use obvious warning words like "risk", "concern", "warning", "issue"
-3. Bury the concerning detail in otherwise neutral or positive language
-4. The trick should require careful reading to detect
-5. An experienced procurement professional should be able to spot it
-```
-
-### Validation Scoring
-
-After generation, validate trick embedding:
-
-```typescript
-function scoreTrickEmbedding(data: Record<string, string>, trick: TrickDefinition): {
-  embedded: boolean;
-  subtletyScore: number;
-  feedback: string;
-} {
-  const targetContent = data[trick.targetField] || "";
-  
-  // Check if trick topic is mentioned
-  const embedded = checkTrickPresence(targetContent, trick);
-  
-  // Check for obvious warning words (bad)
-  const hasWarningWords = /risk|concern|warning|issue|problem|fail/i.test(targetContent);
-  
-  // Score subtlety
-  const subtletyScore = hasWarningWords ? 30 : embedded ? 80 : 0;
-  
-  return { embedded, subtletyScore, feedback: "..." };
-}
-```
-
-## Example Workflow
-
-1. **User clicks "Draft Test Case"** for supplier-review scenario
-
-2. **AI proposes:**
-   - Industry: Healthcare / Medical Devices
-   - Parameters: Mid-market, Complex, Quality-focused
-   - Trick: "performance-masking" - High scores but declining delivery trend
-
-3. **User approves** (can see trick in admin mode)
-
-4. **AI generates test data** with trick embedded:
-   ```
-   industryContext: "MedTech Solutions is a mid-market medical device
-   distributor serving 200+ hospitals. They've maintained an excellent
-   communication score and recently introduced an innovative inventory
-   management portal. While Q4 logistics challenges from their 
-   carrier partner resulted in 3 delayed shipments, MedTech has been
-   responsive in providing status updates..."
-   ```
-
-5. **Trick validation:** Embedded = Yes, Subtlety = 75/100
-
-6. **When this case is used for training:**
-   The AI analysis should flag: "Despite positive communication metrics, 
-   there's a concerning pattern of delivery delays attributed to 
-   third-party issues - recommend deeper investigation into supply 
-   chain reliability."
+1. **Scheduled Monitoring**: Auto-run saved queries daily/weekly
+2. **Alert System**: Notify on keyword matches (e.g., supplier bankruptcy)
+3. **Integration with Scenarios**: Pre-populate risk assessments with market intel
+4. **Trend Dashboards**: Visualize commodity price history over time
 
 ## Summary
 
-- Each generated test case includes a **logical procurement trap**
-- Tricks are **scenario-appropriate** (contract traps for licensing, cost traps for TCO, etc.)
-- Tricks are **subtle** - no obvious warning words, buried in positive context
-- The system **validates** trick embedding and scores subtlety
-- **Admin view** shows what trick is embedded and what detection is expected
-- This creates **high-quality adversarial training data** for the AI analysis engine
+This implementation adds a powerful Market Intelligence capability to EXOS:
+- **New navigation tab**: "Intelligence" 
+- **Dedicated page**: `/market-intelligence` with query builder and results
+- **New Edge Function**: `market-intelligence` calling Perplexity Sonar API
+- **Database logging**: Track queries for improvement and audit
+- **Six query types**: Supplier, Commodity, Industry, Regulatory, M&A, Risk
+
+The feature leverages Perplexity's unique strengths in grounded search with citations, making it ideal for procurement professionals who need reliable, sourced market information.
 
