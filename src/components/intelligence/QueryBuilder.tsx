@@ -55,7 +55,7 @@ interface QueryBuilderProps {
 export function QueryBuilder({ onSubmit, isLoading }: QueryBuilderProps) {
   const [queryType, setQueryType] = useState<QueryType>("supplier");
   const [queryText, setQueryText] = useState("");
-  const [recencyFilter, setRecencyFilter] = useState<RecencyFilter | undefined>(undefined);
+  const [recencyFilter, setRecencyFilter] = useState<string>("__none__");
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [context, setContext] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -67,7 +67,7 @@ export function QueryBuilder({ onSubmit, isLoading }: QueryBuilderProps) {
     onSubmit({
       queryType,
       query: queryText.trim(),
-      recencyFilter,
+      recencyFilter: recencyFilter === "__none__" ? undefined : recencyFilter as RecencyFilter,
       domainFilter: selectedDomains.length > 0 ? selectedDomains : undefined,
       context: context.trim() || undefined,
     });
@@ -83,7 +83,6 @@ export function QueryBuilder({ onSubmit, isLoading }: QueryBuilderProps) {
 
   const currentType = QUERY_TYPE_LABELS[queryType];
   const IconComponent = ICONS[currentType.icon];
-
   return (
     <Card className="glass-effect">
       <CardHeader>
@@ -149,14 +148,14 @@ export function QueryBuilder({ onSubmit, isLoading }: QueryBuilderProps) {
           <div className="space-y-2">
             <Label>Time Range</Label>
             <Select
-              value={recencyFilter || ""}
-              onValueChange={(value) => setRecencyFilter(value as RecencyFilter || undefined)}
+              value={recencyFilter}
+              onValueChange={setRecencyFilter}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Any time" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any time</SelectItem>
+                <SelectItem value="__none__">Any time</SelectItem>
                 {RECENCY_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
