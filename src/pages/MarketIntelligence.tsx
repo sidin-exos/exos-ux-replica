@@ -1,12 +1,16 @@
+import { useState } from "react";
 import Header from "@/components/layout/Header";
 import { QueryBuilder } from "@/components/intelligence/QueryBuilder";
 import { IntelResults } from "@/components/intelligence/IntelResults";
 import { RecentQueries } from "@/components/intelligence/RecentQueries";
+import { IntelScenarioSelector, type IntelScenario } from "@/components/intelligence/IntelScenarioSelector";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, Sparkles } from "lucide-react";
 
 const MarketIntelligence = () => {
+  const [selectedScenario, setSelectedScenario] = useState<IntelScenario>("adhoc");
+  
   const {
     query,
     isLoading,
@@ -36,6 +40,12 @@ const MarketIntelligence = () => {
             Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations.
           </p>
         </div>
+
+        {/* Scenario Selector */}
+        <IntelScenarioSelector
+          selected={selectedScenario}
+          onSelect={setSelectedScenario}
+        />
 
         {/* Error Alert */}
         {error && (
