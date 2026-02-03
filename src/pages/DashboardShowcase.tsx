@@ -182,7 +182,7 @@ const DashboardShowcase = () => {
             All Dashboard Templates
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Complete library of 11 visualization components
+            Complete library of 14 visualization components
           </p>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6">

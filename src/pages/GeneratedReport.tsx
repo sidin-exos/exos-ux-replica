@@ -416,7 +416,7 @@ const GeneratedReport = () => {
                     Report Generated Successfully
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Powered by EXOS Sentinel AI Pipeline
+                    Powered by EXOS Procurement Intelligence
                   </p>
                 </div>
               </CardContent>
