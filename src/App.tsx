@@ -11,6 +11,7 @@ import FAQ from "./pages/FAQ";
 import GeneratedReport from "./pages/GeneratedReport";
 import DashboardShowcase from "./pages/DashboardShowcase";
 import MarketIntelligence from "./pages/MarketIntelligence";
+import ArchitectureDiagram from "./pages/ArchitectureDiagram";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/report" element={<GeneratedReport />} />
           <Route path="/dashboards" element={<DashboardShowcase />} />
           <Route path="/market-intelligence" element={<MarketIntelligence />} />
+          <Route path="/architecture" element={<ArchitectureDiagram />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
