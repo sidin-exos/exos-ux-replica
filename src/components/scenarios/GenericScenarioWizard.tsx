@@ -36,6 +36,7 @@ import { FinalXMLPreview } from "@/components/sentinel/FinalXMLPreview";
 import { BusinessContextField } from "./BusinessContextField";
 import { ModelSelector, DEFAULT_MODEL, type AIModel } from "./ModelSelector";
 import { DraftedParametersCard } from "./DraftedParametersCard";
+import { MarketInsightsBanner } from "@/components/insights/MarketInsightsBanner";
 import {
   Scenario,
   ScenarioRequiredField,
@@ -46,6 +47,7 @@ import { DashboardType, getDashboardsForScenario } from "@/lib/dashboard-mapping
 import { useSentinel } from "@/hooks/useSentinel";
 import { useIndustryContext, useProcurementCategory } from "@/hooks/useContextData";
 import { useShareableMode } from "@/hooks/useShareableMode";
+import { useMarketInsightsAvailability } from "@/hooks/useMarketInsights";
 import { generateTestData } from "@/lib/test-data-factory";
 import {
   DraftedParameters,
@@ -86,9 +88,15 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   } | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
+  // Market insights state
+  const [isMarketInsightsActive, setIsMarketInsightsActive] = useState(false);
+
   // Fetch context data for AI grounding
   const { data: industryContext } = useIndustryContext(industrySlug);
   const { data: categoryContext } = useProcurementCategory(categorySlug);
+  
+  // Check for available market insights
+  const { isAvailable: hasMarketInsights, insight: marketInsight } = useMarketInsightsAvailability(industrySlug, categorySlug);
 
   // Sentinel AI pipeline
   const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs } = useSentinel({
@@ -196,10 +204,20 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const handleAnalyze = async () => {
     setStep("analyzing");
     
-    // Include strategy in form data for AI grounding
+    // Include strategy and market insights in form data for AI grounding
     const enrichedData = {
       ...formData,
       strategy: strategyValue,
+      // Include market insights if activated
+      ...(isMarketInsightsActive && marketInsight ? {
+        _marketInsights: JSON.stringify({
+          content: marketInsight.content,
+          keyTrends: marketInsight.key_trends,
+          riskSignals: marketInsight.risk_signals,
+          opportunities: marketInsight.opportunities,
+          updatedAt: marketInsight.created_at,
+        }),
+      } : {}),
     };
 
     const result = await analyze(
@@ -447,6 +465,20 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 categorySlug={categorySlug}
                 overrides={categoryOverrides}
                 onOverridesChange={setCategoryOverrides}
+              />
+            )}
+
+            {/* Market Insights Banner - shown when insights are available for this combination */}
+            {hasMarketInsights && marketInsight && (
+              <MarketInsightsBanner
+                insight={marketInsight}
+                onActivate={() => {
+                  setIsMarketInsightsActive(true);
+                  toast.success("Market insights activated", {
+                    description: "Real-time market intelligence will be included in your analysis.",
+                  });
+                }}
+                isActivated={isMarketInsightsActive}
               />
             )}
 

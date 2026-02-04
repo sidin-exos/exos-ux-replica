@@ -2,6 +2,29 @@
 
 # Market Intelligence Module with Perplexity API Integration
 
+## Status: ✅ Implemented
+
+### Market Insights Knowledge Base (NEW - Feb 2026)
+The Market Intelligence module now includes a **Market Insights Knowledge Base** that pre-generates and stores industry+category-specific intelligence for grounding AI reports.
+
+| Feature | Status |
+|---------|--------|
+| `market_insights` database table | ✅ Implemented |
+| `generate-market-insights` edge function | ✅ Deployed |
+| Confidence scoring for combinations | ✅ Working |
+| MarketInsightsBanner component | ✅ Integrated |
+| Scenario wizard integration | ✅ Active |
+| 5 initial insights generated | ✅ Complete |
+
+**Generated Insights:**
+- Pharma & Life Sciences + Lab Supplies (100% confidence)
+- Automotive (OEM) + Raw Materials (Steel) (98% confidence)
+- Retail + Logistics (Small Parcel) (90% confidence)
+- SaaS (Enterprise) + IT Software (SaaS) (95% confidence)
+- Healthcare + MRO (Maintenance) (85% confidence)
+
+**Perplexity API Pricing:** ~$0.005 per report (sonar-pro model)
+
 ## Overview
 
 Add a dedicated Market Intelligence feature to EXOS that leverages Perplexity's Sonar API for real-time analysis of market events, supplier news, commodity trends, and competitive intelligence. This will be accessible via a new navigation tab and powered by a dedicated Edge Function.
