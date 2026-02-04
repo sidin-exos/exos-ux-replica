@@ -65,55 +65,52 @@ flowchart TB
 
 const ArchitectureDiagram = () => {
   const mermaidRef = useRef<HTMLDivElement>(null);
-  const [isRendered, setIsRendered] = useState(false);
+  const [svgContent, setSvgContent] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [renderKey] = useState(() => `exos-arch-${Date.now()}`);
 
   useEffect(() => {
-    const renderDiagram = async () => {
-      if (mermaidRef.current) {
-        mermaidRef.current.innerHTML = "";
-        
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: "dark",
-          securityLevel: "loose",
-          fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
-          flowchart: {
-            htmlLabels: true,
-            curve: "basis",
-            padding: 20,
-            nodeSpacing: 50,
-            rankSpacing: 80,
-          },
-        });
+    let isMounted = true;
 
-        try {
-          const { svg } = await mermaid.render("exos-architecture", diagramDefinition);
-          if (mermaidRef.current) {
-            mermaidRef.current.innerHTML = svg;
-            
-            // Apply additional styling to the SVG
-            const svgElement = mermaidRef.current.querySelector("svg");
-            if (svgElement) {
-              svgElement.style.maxWidth = "100%";
-              svgElement.style.height = "auto";
-              svgElement.style.background = "#0f1419";
-              svgElement.style.borderRadius = "12px";
-              svgElement.style.padding = "24px";
-            }
-            setIsRendered(true);
-          }
-        } catch (error) {
-          console.error("Mermaid rendering error:", error);
+    const renderDiagram = async () => {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "dark",
+        securityLevel: "loose",
+        fontFamily: "Space Grotesk, Inter, system-ui, sans-serif",
+        flowchart: {
+          htmlLabels: true,
+          curve: "basis",
+          padding: 20,
+          nodeSpacing: 50,
+          rankSpacing: 80,
+        },
+      });
+
+      try {
+        const { svg } = await mermaid.render(renderKey, diagramDefinition);
+        if (isMounted) {
+          // Add inline styles to the SVG string
+          const styledSvg = svg.replace(
+            '<svg ',
+            '<svg style="max-width: 100%; height: auto; background: #0f1419; border-radius: 12px; padding: 24px;" '
+          );
+          setSvgContent(styledSvg);
         }
+      } catch (error) {
+        console.error("Mermaid rendering error:", error);
       }
     };
 
     renderDiagram();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [renderKey]);
 
   const downloadAsPNG = async () => {
-    if (!mermaidRef.current || !isRendered) return;
+    if (!mermaidRef.current || !svgContent) return;
     
     setIsDownloading(true);
     try {
@@ -138,7 +135,7 @@ const ArchitectureDiagram = () => {
   };
 
   const downloadAsSVG = async () => {
-    if (!mermaidRef.current || !isRendered) return;
+    if (!mermaidRef.current || !svgContent) return;
 
     setIsDownloading(true);
     try {
@@ -183,7 +180,7 @@ const ArchitectureDiagram = () => {
           <Button 
             variant="hero" 
             onClick={downloadAsPNG}
-            disabled={!isRendered || isDownloading}
+            disabled={!svgContent || isDownloading}
             className="gap-2"
           >
             <Image className="w-4 h-4" />
@@ -193,7 +190,7 @@ const ArchitectureDiagram = () => {
           <Button 
             variant="outline" 
             onClick={downloadAsSVG}
-            disabled={!isRendered || isDownloading}
+            disabled={!svgContent || isDownloading}
             className="gap-2"
           >
             <FileCode className="w-4 h-4" />
@@ -208,7 +205,9 @@ const ArchitectureDiagram = () => {
             className="min-w-[600px] flex justify-center items-center"
             style={{ minHeight: "500px" }}
           >
-            {!isRendered && (
+            {svgContent ? (
+              <div dangerouslySetInnerHTML={{ __html: svgContent }} />
+            ) : (
               <div className="flex items-center gap-3 text-muted-foreground">
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 Loading diagram...
