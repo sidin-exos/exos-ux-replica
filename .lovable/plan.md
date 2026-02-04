@@ -1,110 +1,177 @@
 
-# Beautify the Data Flow Diagram
+# Create Downloadable EXOS Architecture Mermaid Diagram
 
 ## Overview
-Transform the current `DataFlowDiagram` component from a basic schematic layout into a polished, enterprise-grade visualization that matches your high-end corporate dark mode aesthetic. The new design will feature animated flow lines, glassmorphism effects, and better visual hierarchy.
+Create a dedicated page or component that renders a beautifully styled Mermaid diagram of the full EXOS data flow architecture, with a download button to export it as a high-quality PNG/SVG image.
 
-## Current State Analysis
-The existing diagram shows 4 layers in a horizontal flow but lacks:
-- Visual polish and premium feel
-- Animated data flow indicators
-- Better distinction between the EXOS core engine and external layers
-- The Market Intel component (recently added to architecture)
-- Engaging micro-interactions
+## Implementation Approach
 
-## Design Direction
+### New File: `src/pages/ArchitectureDiagram.tsx`
+A standalone page at `/architecture` that:
+- Renders the full EXOS architecture as a Mermaid diagram
+- Includes download buttons (PNG & SVG formats)
+- Uses custom Mermaid theming to match your dark mode aesthetic
 
-### Visual Enhancements
-- **Glassmorphism cards** with subtle backdrop blur
-- **Animated pulse lines** showing data flow direction
-- **Gradient borders** on the EXOS core layer
-- **Floating particles/dots** indicating live processing
-- **Staggered entrance animations** for each layer
+### Mermaid Diagram Content
+The diagram will illustrate the complete data flow:
 
-### Architecture Accuracy
-Update the diagram to reflect the full 5-stage pipeline:
-1. **Anonymizer** - Privacy shield
-2. **Grounding** - Context injection  
-3. **Market Intel** - Live data enrichment (NEW)
-4. **Validator** - Anti-hallucination
-5. **Restorer** - Context restoration
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         EXOS PROCUREMENT INTELLIGENCE                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   USER INPUT                    EXOS CORE                      CLOUD AI      │
+│  ┌──────────┐               ┌──────────────┐               ┌──────────┐     │
+│  │ Scenario │──────────────▶│  Anonymizer  │               │  Auditor │     │
+│  │   Data   │               │      ▼       │               ├──────────┤     │
+│  ├──────────┤               │  Grounding   │──────────────▶│ Optimizer│     │
+│  │Documents │               │      ▼       │               ├──────────┤     │
+│  ├──────────┤               │ Market Intel │               │Strategist│     │
+│  │ Supplier │               │      ▼       │◀──────────────├──────────┤     │
+│  │   Info   │               │  Validator   │               │ Validator│     │
+│  └──────────┘               │      ▼       │               └──────────┘     │
+│                             │  Restorer    │                                 │
+│                             └──────┬───────┘                                 │
+│                                    ▼                                         │
+│                            ┌──────────────┐                                  │
+│                            │    OUTPUT    │                                  │
+│                            │  ┌────────┐  │                                  │
+│                            │  │Reports │  │                                  │
+│                            │  ├────────┤  │                                  │
+│                            │  │Dashbds │  │                                  │
+│                            │  ├────────┤  │                                  │
+│                            │  │Roadmaps│  │                                  │
+│                            │  └────────┘  │                                  │
+│                            └──────────────┘                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-### Mobile Experience
-- Vertical flow with animated connectors
-- Touch-friendly card interactions
-- Collapsible layer details
+### Dependencies
+Install `mermaid` library for rendering diagrams in React.
+
+### Custom Mermaid Theme
+Configure Mermaid with a custom theme matching your design system:
+- **Background**: Deep navy (#0f1419)
+- **Primary nodes**: Teal gradient (#2dd4bf → #00d4ff)
+- **Secondary nodes**: Slate (#1e293b)
+- **Text**: Light (#e2e8f0)
+- **Lines**: Gradient teal with glow effect
+
+### Download Functionality
+- Use `html-to-image` or Mermaid's native SVG export
+- Provide both PNG (for presentations) and SVG (for scalability) options
+- High-resolution export (2x scale for crisp images)
 
 ---
 
-## Technical Implementation
+## Technical Details
 
-### Files to Modify
+### Files to Create/Modify
 
-**`src/components/features/DataFlowDiagram.tsx`** (complete rewrite)
-- Create new premium layout with centered EXOS hub
-- Add animated SVG flow lines between layers
-- Implement hover states with glow effects
-- Add pulse animations for "live" data flow feeling
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/pages/ArchitectureDiagram.tsx` | Create | Main diagram page with download |
+| `src/App.tsx` | Modify | Add route `/architecture` |
+| `package.json` | Modify | Add `mermaid` dependency |
 
-### New Visual Structure
+### Mermaid Diagram Code
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 
+  'primaryColor': '#2dd4bf',
+  'primaryTextColor': '#0f1419',
+  'primaryBorderColor': '#00d4ff',
+  'lineColor': '#2dd4bf',
+  'secondaryColor': '#1e293b',
+  'tertiaryColor': '#0f172a',
+  'background': '#0f1419',
+  'mainBkg': '#1e293b',
+  'nodeBorder': '#2dd4bf'
+}}}%%
 
-```text
-Desktop Layout:
-+---------------+     +-----------------------------------+     +---------------+
-|   USER INPUT  | --> |        EXOS INTELLIGENCE          | --> |   CLOUD AI    |
-|   (Layer 1)   |     |   [Anon] [Ground] [Intel]         |     |   (Layer 3)   |
-|               |     |   [Validate] [Restore]            |     |               |
-+---------------+     +-----------------------------------+     +---------------+
-                                     |
-                                     v
-                            +---------------+
-                            |    OUTPUT     |
-                            |   (Layer 4)   |
-                            +---------------+
+flowchart TB
+    subgraph INPUT["📥 USER INPUT"]
+        A1[Scenario Data]
+        A2[Documents]
+        A3[Supplier Info]
+    end
+    
+    subgraph EXOS["🛡️ EXOS INTELLIGENCE"]
+        direction TB
+        B1[🔒 Anonymizer]
+        B2[🧭 Grounding]
+        B3[🌐 Market Intel]
+        B4[✅ Validator]
+        B5[🔓 Restorer]
+        B1 --> B2 --> B3 --> B4 --> B5
+    end
+    
+    subgraph CLOUD["☁️ CLOUD AI"]
+        C1[Auditor Agent]
+        C2[Optimizer Agent]
+        C3[Strategist Agent]
+        C4[Validator Agent]
+    end
+    
+    subgraph OUTPUT["📊 OUTPUT"]
+        D1[Executive Reports]
+        D2[Interactive Dashboards]
+        D3[Action Roadmaps]
+    end
+    
+    INPUT --> EXOS
+    EXOS <--> CLOUD
+    EXOS --> OUTPUT
 ```
 
-### Key Features
-
-1. **Animated Flow Lines**
-   - SVG paths with gradient stroke
-   - Moving dash animation indicating data direction
-   - Pulse at connection points
-
-2. **Layer Cards**
-   - Glass effect background
-   - Primary gradient border for EXOS layer
-   - Icon badges with hover glow
-
-3. **Pipeline Steps (EXOS Layer)**
-   - Horizontal step indicators with connecting lines
-   - Step numbers with pulse animation
-   - Brief description on hover
-
-4. **Interactive Elements**
-   - Hover to highlight data path
-   - Click to expand details (mobile)
-
-### CSS Additions
-Add new keyframe animations to support the flow visualization:
-- `flow-line` - Animated dashed line movement
-- `pulse-dot` - Connection point pulse
-- `float-up` - Subtle floating effect
+### Component Structure
+```tsx
+// ArchitectureDiagram.tsx structure
+const ArchitectureDiagram = () => {
+  const mermaidRef = useRef<HTMLDivElement>(null);
+  
+  // Initialize Mermaid with custom dark theme
+  useEffect(() => {
+    mermaid.initialize({
+      theme: 'dark',
+      themeVariables: { /* custom colors */ }
+    });
+  }, []);
+  
+  // Download handlers
+  const downloadAsPNG = async () => { /* html-to-image */ };
+  const downloadAsSVG = () => { /* native SVG export */ };
+  
+  return (
+    <div className="gradient-hero min-h-screen">
+      <Header />
+      <main className="container py-8">
+        <h1>EXOS Architecture</h1>
+        <div ref={mermaidRef} className="mermaid">
+          {/* diagram code */}
+        </div>
+        <div className="flex gap-4">
+          <Button onClick={downloadAsPNG}>Download PNG</Button>
+          <Button onClick={downloadAsSVG}>Download SVG</Button>
+        </div>
+      </main>
+    </div>
+  );
+};
+```
 
 ---
 
 ## Implementation Steps
 
-1. Restructure the component with new visual layout
-2. Add animated SVG connectors between layers  
-3. Implement glassmorphism card styles
-4. Create hover interactions with glow effects
-5. Add staggered entrance animations
-6. Optimize mobile vertical layout with touch interactions
-7. Test responsive behavior across breakpoints
+1. **Install dependencies**: Add `mermaid` and `html-to-image` packages
+2. **Create diagram page**: Build `ArchitectureDiagram.tsx` with styled Mermaid diagram
+3. **Configure theme**: Apply custom dark theme matching design system
+4. **Add download functionality**: Implement PNG/SVG export with high resolution
+5. **Add route**: Register `/architecture` route in App.tsx
+6. **Add navigation link**: Optional link from Features page
 
 ## Expected Outcome
-A visually stunning, enterprise-grade data flow visualization that:
-- Immediately conveys the EXOS value proposition
-- Shows the privacy-first architecture at a glance
-- Feels premium and modern with subtle animations
-- Works beautifully on all screen sizes
+- A dedicated `/architecture` page with a polished, dark-themed Mermaid diagram
+- One-click download as PNG or SVG
+- Diagram accurately reflects the 5-stage EXOS pipeline with Cloud AI integration
+- Matches the enterprise dark mode aesthetic of the rest of the platform
