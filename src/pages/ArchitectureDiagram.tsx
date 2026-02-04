@@ -9,92 +9,128 @@ import { NavLink } from "@/components/NavLink";
 const diagramDefinition = `%%{init: {
   'theme': 'dark',
   'themeVariables': { 
-    'primaryColor': '#2dd4bf',
-    'primaryTextColor': '#0f1419',
-    'primaryBorderColor': '#00d4ff',
-    'lineColor': '#2dd4bf',
-    'secondaryColor': '#1e293b',
-    'tertiaryColor': '#0f172a',
-    'background': '#0f1419',
-    'mainBkg': '#1e293b',
-    'nodeBorder': '#2dd4bf',
-    'clusterBkg': '#1e293b',
-    'clusterBorder': '#2dd4bf',
-    'titleColor': '#e2e8f0',
-    'edgeLabelBackground': '#1e293b',
-    'nodeTextColor': '#e2e8f0'
+    'primaryColor': '#3b82f6',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#60a5fa',
+    'lineColor': '#94a3b8',
+    'secondaryColor': '#374151',
+    'tertiaryColor': '#1f2937',
+    'background': '#111827',
+    'mainBkg': '#1f2937',
+    'nodeBorder': '#60a5fa',
+    'clusterBkg': '#1f2937',
+    'clusterBorder': '#374151',
+    'titleColor': '#f3f4f6',
+    'edgeLabelBackground': '#374151',
+    'nodeTextColor': '#f3f4f6'
   },
   'flowchart': {
     'curve': 'basis',
-    'padding': 20
+    'padding': 15,
+    'nodeSpacing': 30,
+    'rankSpacing': 40
   }
 }}%%
 
-flowchart LR
-    subgraph INPUT["📥 USER INPUT LAYER"]
-        direction TB
-        A1["📋 Scenario Parameters<br/><i>Make vs Buy, TCO, Consolidation</i>"]
-        A2["📄 Documents & Contracts<br/><i>SOWs, RFPs, Agreements</i>"]
-        A3["🏢 Supplier Data<br/><i>Pricing, Performance, Terms</i>"]
-        A4["🎯 Business Context<br/><i>Industry, Category, Constraints</i>"]
+flowchart TB
+    subgraph LAYER1["🔷 LAYER 1: USER INPUT"]
+        direction LR
+        A1["📋 Scenario Wizard<br/>Make vs Buy · TCO · Consolidation"]
+        A2["🏢 Industry + Category<br/>Healthcare · IT Services"]
+        A3["📄 Business Context<br/>Constraints · Objectives"]
     end
 
-    subgraph EXOS["🛡️ EXOS PROCUREMENT INTELLIGENCE"]
+    subgraph LAYER2["🔷 LAYER 2: EXOS INTELLIGENCE"]
         direction TB
         
-        subgraph STAGE1["Stage 1: Privacy"]
-            B1["🔒 ANONYMIZER<br/><i>Mask sensitive commercial data</i><br/><i>Replace names, values, terms</i>"]
+        subgraph STAGE1["Stage 1 · Anonymizer"]
+            B1a["🔒 Sensitive Data Masking"]
+            B1b["🏷️ Entity Replacement<br/>SUPPLIER_A · CONTRACT_1"]
         end
         
-        subgraph STAGE2["Stage 2: Context"]
-            B2["🧭 GROUNDING ENGINE<br/><i>Inject industry context</i><br/><i>Apply category KPIs</i><br/><i>Add regulatory constraints</i>"]
+        subgraph STAGE2["Stage 2 · Grounding Engine"]
+            B2a["🧭 Industry Context<br/>Regulations · Standards"]
+            B2b["📊 Category KPIs<br/>Benchmarks · Metrics"]
+            B2c["🎯 XML Prompt Factory<br/>Chain-of-Experts Protocol"]
         end
         
-        subgraph STAGE3["Stage 3: Intelligence"]
-            B3["🌐 MARKET INTEL<br/><i>Real-time supplier news</i><br/><i>Commodity price trends</i><br/><i>M&A activity signals</i>"]
+        subgraph STAGE3["Stage 3 · Local Reasoning"]
+            B3a["🔍 Anonymized XML<br/>Structured Analysis"]
+            B3b["📝 Chain-of-Experts Protocol"]
         end
-        
-        subgraph STAGE4["Stage 4: Quality"]
-            B4["✅ VALIDATOR<br/><i>Cross-check accuracy</i><br/><i>Detect hallucinations</i><br/><i>Verify calculations</i>"]
-        end
-        
-        subgraph STAGE5["Stage 5: Restore"]
-            B5["🔓 RESTORER<br/><i>De-anonymize results</i><br/><i>Map back to real entities</i>"]
-        end
-        
-        B1 --> B2 --> B3 --> B4 --> B5
     end
 
-    subgraph CLOUD["☁️ CLOUD AI AGENTS"]
+    subgraph LAYER3["🔷 LAYER 3: CLOUD AI"]
         direction TB
-        C1["🔍 AUDITOR<br/><i>Verify data integrity</i><br/><i>Flag inconsistencies</i>"]
-        C2["⚡ OPTIMIZER<br/><i>Calculate savings</i><br/><i>Model scenarios</i>"]
-        C3["📊 STRATEGIST<br/><i>Generate recommendations</i><br/><i>Risk assessment</i>"]
-        C4["✔️ VALIDATOR<br/><i>Cross-check outputs</i><br/><i>Quality assurance</i>"]
-        C1 --> C2 --> C3 --> C4
+        
+        subgraph AGENTS["AI Agent Pipeline"]
+            direction LR
+            C1["🔍 Auditor<br/>Data Integrity"]
+            C2["⚡ Optimizer<br/>Savings Analysis"]
+            C3["📊 Strategist<br/>Recommendations"]
+            C4["✅ Validator<br/>Quality Check"]
+        end
+        
+        subgraph MARKET["Market Intelligence"]
+            direction LR
+            M1["📰 Supplier News<br/>Real-time Signals"]
+            M2["📈 Price Trends<br/>Commodity Data"]
+            M3["🔔 Risk Alerts<br/>M&A · Disruptions"]
+        end
     end
 
-    subgraph OUTPUT["📊 OUTPUT LAYER"]
-        direction TB
-        D1["📑 Executive Reports<br/><i>PDF summaries with citations</i>"]
-        D2["📈 Interactive Dashboards<br/><i>Kraljic, Risk Matrix, TCO</i>"]
-        D3["🗺️ Action Roadmaps<br/><i>Negotiation prep, timelines</i>"]
-        D4["💡 Strategic Insights<br/><i>Market opportunities, risks</i>"]
+    subgraph LAYER4["🔷 LAYER 4: VALIDATION"]
+        direction LR
+        V1["✓ Hallucination Check"]
+        V2["✓ Calculation Verify"]
+        V3["✓ Citation Validation"]
     end
 
-    INPUT -->|"Raw Data"| EXOS
-    B3 <-->|"Anonymized Query"| CLOUD
-    EXOS -->|"Enriched Analysis"| OUTPUT
+    subgraph LAYER5["🔷 LAYER 5: DE-ANONYMIZATION"]
+        direction LR
+        D1["🔓 Entity Restoration<br/>SUPPLIER_A → Acme Corp"]
+        D2["📋 Real Values Mapped"]
+    end
 
-    style INPUT fill:#1e293b,stroke:#2dd4bf,stroke-width:2px,color:#e2e8f0
-    style EXOS fill:#0f172a,stroke:#00d4ff,stroke-width:3px,color:#e2e8f0
-    style CLOUD fill:#1e293b,stroke:#2dd4bf,stroke-width:2px,color:#e2e8f0
-    style OUTPUT fill:#1e293b,stroke:#2dd4bf,stroke-width:2px,color:#e2e8f0
-    style STAGE1 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
-    style STAGE2 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
-    style STAGE3 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
-    style STAGE4 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
-    style STAGE5 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
+    subgraph LAYER6["🔷 LAYER 6: OUTPUT"]
+        direction LR
+        O1["📑 Executive Reports<br/>PDF with Citations"]
+        O2["📊 Dashboards<br/>Kraljic · TCO · Risk"]
+        O3["🗺️ Roadmaps<br/>Negotiation Prep"]
+        O4["💡 Insights<br/>Opportunities"]
+    end
+
+    LAYER1 --> LAYER2
+    B1a --> B1b
+    B1b --> STAGE2
+    B2a --> B2c
+    B2b --> B2c
+    B2c --> STAGE3
+    B3a --> B3b
+    STAGE3 --> LAYER3
+    C1 --> C2 --> C3 --> C4
+    M1 --> C3
+    M2 --> C2
+    M3 --> C3
+    LAYER3 --> LAYER4
+    V1 --> V2 --> V3
+    LAYER4 --> LAYER5
+    D1 --> D2
+    LAYER5 --> LAYER6
+
+    classDef inputNode fill:#3b82f6,stroke:#60a5fa,stroke-width:2px,color:#fff
+    classDef processNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff
+    classDef aiNode fill:#8b5cf6,stroke:#a78bfa,stroke-width:2px,color:#fff
+    classDef marketNode fill:#f59e0b,stroke:#fbbf24,stroke-width:2px,color:#fff
+    classDef validateNode fill:#ec4899,stroke:#f472b6,stroke-width:2px,color:#fff
+    classDef outputNode fill:#06b6d4,stroke:#22d3ee,stroke-width:2px,color:#fff
+
+    class A1,A2,A3 inputNode
+    class B1a,B1b,B2a,B2b,B2c,B3a,B3b,D1,D2 processNode
+    class C1,C2,C3,C4 aiNode
+    class M1,M2,M3 marketNode
+    class V1,V2,V3 validateNode
+    class O1,O2,O3,O4 outputNode
 `;
 
 const ArchitectureDiagram = () => {
