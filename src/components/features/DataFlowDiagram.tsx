@@ -1,205 +1,352 @@
-import { FileText, Shield, Cloud, FileCheck, ArrowRight, ChevronRight } from "lucide-react";
+import { FileText, Shield, Cloud, FileCheck, Lock, Compass, Globe, CheckCircle, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const DataFlowDiagram = () => {
-  const layers = [
-    {
-      id: 1,
-      label: "Layer 1",
+  const pipelineSteps = [
+    { id: 1, name: "Anonymizer", icon: Lock, desc: "Masks sensitive data" },
+    { id: 2, name: "Grounding", icon: Compass, desc: "Injects context" },
+    { id: 3, name: "Market Intel", icon: Globe, desc: "Live enrichment" },
+    { id: 4, name: "Validator", icon: CheckCircle, desc: "Anti-hallucination" },
+    { id: 5, name: "Restorer", icon: RefreshCw, desc: "De-anonymizes" },
+  ];
+
+  const layers = {
+    input: {
       title: "User Input",
+      subtitle: "Layer 1",
       icon: FileText,
       items: ["Scenario Data", "Documents", "Supplier Info"],
     },
-    {
-      id: 2,
-      label: "Layer 2",
-      title: "EXOS Procurement Intelligence",
-      subtitle: "Core Engine",
-      icon: Shield,
-      isHighlighted: true,
-      items: [
-        { step: "1", name: "Anonymizer", desc: "Masks company names, prices & volumes before external processing" },
-        { step: "2", name: "Grounding", desc: "Injects 30+ industry profiles & category strategies into analysis" },
-        { step: "3", name: "Market Intel", desc: "Enriches with live supplier news, M&A, and commodity trends" },
-        { step: "4", name: "Validator", desc: "Cross-checks AI output for consistency and factual accuracy" },
-        { step: "5", name: "Restorer", desc: "Replaces tokens with original data for actionable insights" },
-      ],
-    },
-    {
-      id: 3,
-      label: "Layer 3",
+    cloud: {
       title: "Cloud AI",
-      subtitle: "Expert Reasoning",
+      subtitle: "Layer 3",
       icon: Cloud,
       items: ["Auditor Agent", "Optimizer Agent", "Strategist Agent"],
     },
-    {
-      id: 4,
-      label: "Layer 4",
+    output: {
       title: "Output",
+      subtitle: "Layer 4",
       icon: FileCheck,
       items: ["Validated Report", "Interactive Dashboards", "Action Roadmaps"],
     },
-  ];
+  };
 
   return (
     <div className="relative">
-      {/* Desktop Schematic Flow */}
+      {/* Desktop Layout */}
       <div className="hidden lg:block">
-        <div className="relative bg-muted/20 border border-border/50 rounded-2xl p-8">
+        <div className="relative">
           {/* Header */}
           <div className="text-center mb-8">
-            <span className="text-sm font-mono text-muted-foreground tracking-wider">
-              EXOS ARCHITECTURE v3.0
+            <span className="text-xs font-mono text-muted-foreground tracking-[0.2em] uppercase">
+              EXOS Architecture v3.0
             </span>
           </div>
 
-          {/* Flow Diagram */}
-          <div className="flex items-stretch justify-between gap-3">
-            {layers.map((layer, index) => (
-              <div key={layer.id} className="flex items-center flex-1">
-                {/* Layer Box */}
-                <div
-                  className={`flex-1 rounded-xl border-2 p-5 transition-all ${
-                    layer.isHighlighted
-                      ? "border-primary bg-primary/5"
-                      : "border-border/60 bg-background/50"
-                  }`}
-                >
-                  {/* Layer Label */}
-                  <div className="text-center mb-4">
-                    <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                      {layer.label}
-                    </span>
-                    <h4 className="font-display font-semibold text-foreground text-base">
-                      {layer.title}
-                    </h4>
-                    {layer.subtitle && (
-                      <span className="text-xs text-muted-foreground">
-                        ({layer.subtitle})
-                      </span>
-                    )}
-                  </div>
+          {/* Main Flow - Three Column Layout */}
+          <div className="grid grid-cols-[1fr_2fr_1fr] gap-0 items-center relative">
+            {/* Layer 1: User Input */}
+            <LayerCard layer={layers.input} />
 
-                  {/* Layer Content */}
-                  <div className="space-y-2">
-                    {layer.isHighlighted
-                      ? (layer.items as Array<{ step: string; name: string; desc: string }>).map(
-                          (item) => (
-                            <div
-                              key={item.step}
-                              className="flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 border border-primary/20"
-                            >
-                              <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center flex-shrink-0">
-                                {item.step}
-                              </span>
-                              <div className="min-w-0">
-                                <span className="text-xs font-medium text-foreground block truncate">
-                                  {item.name}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground block truncate">
-                                  {item.desc}
-                                </span>
-                              </div>
-                            </div>
-                          )
-                        )
-                      : (layer.items as string[]).map((item) => (
-                          <div
-                            key={item}
-                            className="px-3 py-1.5 rounded bg-muted/50 border border-border/30"
-                          >
-                            <span className="text-xs text-foreground/80">{item}</span>
-                          </div>
-                        ))}
+            {/* Animated Connector: Input → EXOS */}
+            <AnimatedConnector direction="right" className="absolute left-[calc(33.33%-40px)] top-1/2 -translate-y-1/2 z-10" />
+
+            {/* Layer 2: EXOS Intelligence (Center) */}
+            <div className="relative z-20">
+              <div className="relative rounded-2xl border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 backdrop-blur-sm">
+                {/* Glow Effect */}
+                <div className="absolute inset-0 rounded-2xl bg-primary/5 blur-xl -z-10" />
+                
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 mb-2">
+                    <Shield className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-mono text-primary uppercase tracking-wider">Core Engine</span>
                   </div>
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    EXOS Procurement Intelligence
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">Privacy-Preserving Analysis Pipeline</p>
                 </div>
 
-                {/* Arrow Connector */}
-                {index < layers.length - 1 && (
-                  <div className="flex-shrink-0 px-2">
-                    <ChevronRight className="w-6 h-6 text-muted-foreground/40" />
-                  </div>
-                )}
+                {/* 5-Stage Pipeline */}
+                <div className="flex items-center justify-between gap-2">
+                  {pipelineSteps.map((step, index) => (
+                    <div key={step.id} className="flex items-center">
+                      {/* Step Node */}
+                      <div className="group relative flex flex-col items-center">
+                        <div className="relative">
+                          {/* Pulse Ring */}
+                          <div className="absolute inset-0 rounded-full bg-primary/30 animate-pulse-dot" />
+                          {/* Step Circle */}
+                          <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow">
+                            <step.icon className="w-4 h-4 text-primary-foreground" />
+                          </div>
+                          {/* Step Number */}
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-background border border-primary text-[10px] font-bold text-primary flex items-center justify-center">
+                            {step.id}
+                          </div>
+                        </div>
+                        {/* Label */}
+                        <span className="text-[10px] font-medium text-foreground mt-2 text-center whitespace-nowrap">
+                          {step.name}
+                        </span>
+                        {/* Tooltip on hover */}
+                        <div className="absolute -bottom-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                            {step.desc}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Connector Line */}
+                      {index < pipelineSteps.length - 1 && (
+                        <div className="w-6 h-px bg-gradient-to-r from-primary/60 to-primary/30 mx-1" />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Animated Connector: EXOS → Cloud */}
+            <AnimatedConnector direction="right" className="absolute right-[calc(33.33%-40px)] top-1/2 -translate-y-1/2 z-10" />
+
+            {/* Layer 3: Cloud AI */}
+            <LayerCard layer={layers.cloud} />
           </div>
 
-          {/* Flow Lines Decoration */}
-          <div className="absolute top-1/2 left-8 right-8 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent -z-10" />
+          {/* Output Layer - Below Center */}
+          <div className="flex flex-col items-center mt-8">
+            {/* Animated Vertical Connector */}
+            <div className="relative h-12 w-px">
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/60 to-primary/20" />
+              <svg className="absolute -left-2 top-0 w-5 h-12" viewBox="0 0 20 48">
+                <path
+                  d="M10 0 L10 48"
+                  fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="2"
+                  strokeDasharray="6 6"
+                  className="animate-flow-line"
+                  style={{ animationDirection: "reverse" }}
+                />
+              </svg>
+              {/* Pulse Dot at bottom */}
+              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary animate-pulse-dot" />
+            </div>
+
+            {/* Output Card */}
+            <div className="w-80 mt-2">
+              <LayerCard layer={layers.output} centered />
+            </div>
+          </div>
+
+          {/* Decorative Background Grid */}
+          <div className="absolute inset-0 -z-20 opacity-[0.03]">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
+              backgroundSize: "40px 40px"
+            }} />
+          </div>
         </div>
       </div>
 
-      {/* Mobile Schematic Flow */}
+      {/* Mobile Layout */}
       <div className="lg:hidden">
-        <div className="bg-muted/20 border border-border/50 rounded-xl p-5">
-          <div className="text-center mb-5">
-            <span className="text-sm font-mono text-muted-foreground tracking-wider">
-              EXOS ARCHITECTURE v3.0
-            </span>
-          </div>
+        <div className="text-center mb-6">
+          <span className="text-xs font-mono text-muted-foreground tracking-[0.2em] uppercase">
+            EXOS Architecture v3.0
+          </span>
+        </div>
 
-          <div className="space-y-4">
-            {layers.map((layer, index) => (
-              <div key={layer.id}>
-                <div
-                  className={`rounded-lg border-2 p-4 ${
-                    layer.isHighlighted
-                      ? "border-primary bg-primary/5"
-                      : "border-border/60 bg-background/50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-xs font-mono text-muted-foreground uppercase">
-                      {layer.label}
-                    </span>
-                    <span className="font-display font-semibold text-foreground text-base">
-                      {layer.title}
-                    </span>
-                    {layer.subtitle && (
-                      <span className="text-xs text-muted-foreground">
-                        ({layer.subtitle})
-                      </span>
-                    )}
-                  </div>
+        <div className="space-y-4">
+          {/* Layer 1: Input */}
+          <MobileLayerCard layer={layers.input} />
+          <MobileConnector />
 
-                  <div className="flex flex-wrap gap-2">
-                    {layer.isHighlighted
-                      ? (layer.items as Array<{ step: string; name: string; desc: string }>).map(
-                          (item) => (
-                            <span
-                              key={item.step}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary/10 border border-primary/20"
-                            >
-                              <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                                {item.step}
-                              </span>
-                              <span className="text-xs text-foreground">{item.name}</span>
-                            </span>
-                          )
-                        )
-                      : (layer.items as string[]).map((item) => (
-                          <span
-                            key={item}
-                            className="px-2.5 py-1 rounded bg-muted/50 border border-border/30 text-xs text-foreground/80"
-                          >
-                            {item}
-                          </span>
-                        ))}
-                  </div>
-                </div>
-
-                {index < layers.length - 1 && (
-                  <div className="flex justify-center py-2">
-                    <ArrowRight className="w-5 h-5 text-muted-foreground/40 rotate-90" />
-                  </div>
-                )}
+          {/* Layer 2: EXOS Core */}
+          <div className="rounded-xl border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-1.5 rounded-lg bg-primary/20">
+                <Shield className="w-4 h-4 text-primary" />
               </div>
-            ))}
+              <div>
+                <span className="text-xs text-muted-foreground">Layer 2 • Core Engine</span>
+                <h4 className="font-display font-semibold text-foreground text-sm">EXOS Intelligence</h4>
+              </div>
+            </div>
+
+            {/* Mobile Pipeline Steps */}
+            <div className="grid grid-cols-5 gap-1">
+              {pipelineSteps.map((step) => (
+                <div key={step.id} className="flex flex-col items-center">
+                  <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                    <step.icon className="w-3 h-3 text-primary-foreground" />
+                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-background border border-primary text-[8px] font-bold text-primary flex items-center justify-center">
+                      {step.id}
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-foreground mt-1.5 text-center leading-tight">
+                    {step.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
+          <MobileConnector />
+
+          {/* Layer 3: Cloud AI */}
+          <MobileLayerCard layer={layers.cloud} />
+          <MobileConnector />
+
+          {/* Layer 4: Output */}
+          <MobileLayerCard layer={layers.output} />
         </div>
       </div>
     </div>
   );
 };
+
+/* Layer Card Component */
+interface LayerCardProps {
+  layer: {
+    title: string;
+    subtitle: string;
+    icon: React.ComponentType<{ className?: string }>;
+    items: string[];
+  };
+  centered?: boolean;
+}
+
+const LayerCard = ({ layer, centered }: LayerCardProps) => {
+  const Icon = layer.icon;
+  return (
+    <div className={cn(
+      "glass-effect rounded-xl p-5 animate-float-subtle",
+      centered && "mx-auto"
+    )} style={{ animationDelay: "0.5s" }}>
+      <div className={cn("mb-4", centered && "text-center")}>
+        <div className={cn("inline-flex items-center gap-2", centered && "justify-center w-full")}>
+          <div className="p-1.5 rounded-lg bg-muted">
+            <Icon className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground">{layer.subtitle}</span>
+            <h4 className="font-display font-semibold text-foreground text-base leading-tight">{layer.title}</h4>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {layer.items.map((item) => (
+          <div
+            key={item}
+            className="px-3 py-1.5 rounded-lg bg-muted/50 border border-border/30 text-xs text-foreground/80"
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* Mobile Layer Card */
+const MobileLayerCard = ({ layer }: { layer: LayerCardProps["layer"] }) => {
+  const Icon = layer.icon;
+  return (
+    <div className="glass-effect rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="p-1.5 rounded-lg bg-muted">
+          <Icon className="w-4 h-4 text-primary" />
+        </div>
+        <div>
+          <span className="text-xs text-muted-foreground">{layer.subtitle}</span>
+          <h4 className="font-display font-semibold text-foreground text-sm">{layer.title}</h4>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {layer.items.map((item) => (
+          <span
+            key={item}
+            className="px-2.5 py-1 rounded-lg bg-muted/50 border border-border/30 text-xs text-foreground/80"
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* Animated Horizontal Connector */
+const AnimatedConnector = ({ direction, className }: { direction: "left" | "right"; className?: string }) => {
+  return (
+    <div className={cn("w-16 h-8 flex items-center", className)}>
+      <svg className="w-full h-full" viewBox="0 0 64 32">
+        {/* Gradient Definition */}
+        <defs>
+          <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+            <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+          </linearGradient>
+        </defs>
+        {/* Static Line */}
+        <path
+          d="M0 16 L64 16"
+          fill="none"
+          stroke="url(#flowGradient)"
+          strokeWidth="2"
+        />
+        {/* Animated Dashes */}
+        <path
+          d="M0 16 L64 16"
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="2"
+          strokeDasharray="8 8"
+          className="animate-flow-line"
+        />
+        {/* Arrow */}
+        <path
+          d={direction === "right" ? "M56 12 L64 16 L56 20" : "M8 12 L0 16 L8 20"}
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+};
+
+/* Mobile Vertical Connector */
+const MobileConnector = () => (
+  <div className="flex justify-center py-1">
+    <div className="relative w-6 h-6">
+      <svg className="w-full h-full" viewBox="0 0 24 24">
+        <path
+          d="M12 0 L12 24"
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="2"
+          strokeDasharray="4 4"
+          className="animate-flow-line"
+          style={{ animationDirection: "reverse" }}
+        />
+        <path
+          d="M8 18 L12 24 L16 18"
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  </div>
+);
 
 export default DataFlowDiagram;
