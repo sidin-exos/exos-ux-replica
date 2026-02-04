@@ -1,9 +1,26 @@
-import { Settings, Bell } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Settings, Bell, LogIn, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
+import { supabase } from "@/integrations/supabase/client";
 import exosLogo from "@/assets/logo-concept-layers.png";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const Header = () => {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
@@ -74,9 +91,21 @@ const Header = () => {
           <Button variant="ghost" size="icon">
             <Settings className="w-5 h-5" />
           </Button>
-          <div className="ml-2 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-semibold text-primary-foreground">
-            JD
-          </div>
+          
+          {user ? (
+            <NavLink to="/account">
+              <div className="ml-2 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-semibold text-primary-foreground cursor-pointer hover:opacity-90 transition-opacity">
+                {user.email?.charAt(0).toUpperCase() || "U"}
+              </div>
+            </NavLink>
+          ) : (
+            <NavLink to="/auth">
+              <Button variant="default" size="sm" className="ml-2 gap-2">
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </Button>
+            </NavLink>
+          )}
         </div>
       </div>
     </header>
