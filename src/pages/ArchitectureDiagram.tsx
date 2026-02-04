@@ -6,61 +6,95 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import { NavLink } from "@/components/NavLink";
 
-const diagramDefinition = `%%{init: {'theme': 'dark', 'themeVariables': { 
-  'primaryColor': '#2dd4bf',
-  'primaryTextColor': '#0f1419',
-  'primaryBorderColor': '#00d4ff',
-  'lineColor': '#2dd4bf',
-  'secondaryColor': '#1e293b',
-  'tertiaryColor': '#0f172a',
-  'background': '#0f1419',
-  'mainBkg': '#1e293b',
-  'nodeBorder': '#2dd4bf',
-  'clusterBkg': '#1e293b',
-  'clusterBorder': '#2dd4bf',
-  'titleColor': '#e2e8f0',
-  'edgeLabelBackground': '#1e293b',
-  'nodeTextColor': '#e2e8f0'
-}}}%%
+const diagramDefinition = `%%{init: {
+  'theme': 'dark',
+  'themeVariables': { 
+    'primaryColor': '#2dd4bf',
+    'primaryTextColor': '#0f1419',
+    'primaryBorderColor': '#00d4ff',
+    'lineColor': '#2dd4bf',
+    'secondaryColor': '#1e293b',
+    'tertiaryColor': '#0f172a',
+    'background': '#0f1419',
+    'mainBkg': '#1e293b',
+    'nodeBorder': '#2dd4bf',
+    'clusterBkg': '#1e293b',
+    'clusterBorder': '#2dd4bf',
+    'titleColor': '#e2e8f0',
+    'edgeLabelBackground': '#1e293b',
+    'nodeTextColor': '#e2e8f0'
+  },
+  'flowchart': {
+    'curve': 'basis',
+    'padding': 20
+  }
+}}%%
 
-flowchart TB
-    subgraph INPUT["📥 USER INPUT"]
-        A1["📋 Scenario Data"]
-        A2["📄 Documents"]
-        A3["🏢 Supplier Info"]
-    end
-    
-    subgraph EXOS["🛡️ EXOS INTELLIGENCE"]
+flowchart LR
+    subgraph INPUT["📥 USER INPUT LAYER"]
         direction TB
-        B1["🔒 Anonymizer"]
-        B2["🧭 Grounding"]
-        B3["🌐 Market Intel"]
-        B4["✅ Validator"]
-        B5["🔓 Restorer"]
+        A1["📋 Scenario Parameters<br/><i>Make vs Buy, TCO, Consolidation</i>"]
+        A2["📄 Documents & Contracts<br/><i>SOWs, RFPs, Agreements</i>"]
+        A3["🏢 Supplier Data<br/><i>Pricing, Performance, Terms</i>"]
+        A4["🎯 Business Context<br/><i>Industry, Category, Constraints</i>"]
+    end
+
+    subgraph EXOS["🛡️ EXOS PROCUREMENT INTELLIGENCE"]
+        direction TB
+        
+        subgraph STAGE1["Stage 1: Privacy"]
+            B1["🔒 ANONYMIZER<br/><i>Mask sensitive commercial data</i><br/><i>Replace names, values, terms</i>"]
+        end
+        
+        subgraph STAGE2["Stage 2: Context"]
+            B2["🧭 GROUNDING ENGINE<br/><i>Inject industry context</i><br/><i>Apply category KPIs</i><br/><i>Add regulatory constraints</i>"]
+        end
+        
+        subgraph STAGE3["Stage 3: Intelligence"]
+            B3["🌐 MARKET INTEL<br/><i>Real-time supplier news</i><br/><i>Commodity price trends</i><br/><i>M&A activity signals</i>"]
+        end
+        
+        subgraph STAGE4["Stage 4: Quality"]
+            B4["✅ VALIDATOR<br/><i>Cross-check accuracy</i><br/><i>Detect hallucinations</i><br/><i>Verify calculations</i>"]
+        end
+        
+        subgraph STAGE5["Stage 5: Restore"]
+            B5["🔓 RESTORER<br/><i>De-anonymize results</i><br/><i>Map back to real entities</i>"]
+        end
+        
         B1 --> B2 --> B3 --> B4 --> B5
     end
-    
-    subgraph CLOUD["☁️ CLOUD AI"]
-        C1["🔍 Auditor Agent"]
-        C2["⚡ Optimizer Agent"]
-        C3["📊 Strategist Agent"]
-        C4["✔️ Validator Agent"]
+
+    subgraph CLOUD["☁️ CLOUD AI AGENTS"]
+        direction TB
+        C1["🔍 AUDITOR<br/><i>Verify data integrity</i><br/><i>Flag inconsistencies</i>"]
+        C2["⚡ OPTIMIZER<br/><i>Calculate savings</i><br/><i>Model scenarios</i>"]
+        C3["📊 STRATEGIST<br/><i>Generate recommendations</i><br/><i>Risk assessment</i>"]
+        C4["✔️ VALIDATOR<br/><i>Cross-check outputs</i><br/><i>Quality assurance</i>"]
+        C1 --> C2 --> C3 --> C4
     end
-    
-    subgraph OUTPUT["📊 OUTPUT"]
-        D1["📑 Executive Reports"]
-        D2["📈 Interactive Dashboards"]
-        D3["🗺️ Action Roadmaps"]
+
+    subgraph OUTPUT["📊 OUTPUT LAYER"]
+        direction TB
+        D1["📑 Executive Reports<br/><i>PDF summaries with citations</i>"]
+        D2["📈 Interactive Dashboards<br/><i>Kraljic, Risk Matrix, TCO</i>"]
+        D3["🗺️ Action Roadmaps<br/><i>Negotiation prep, timelines</i>"]
+        D4["💡 Strategic Insights<br/><i>Market opportunities, risks</i>"]
     end
-    
-    INPUT --> EXOS
-    EXOS <--> CLOUD
-    EXOS --> OUTPUT
+
+    INPUT -->|"Raw Data"| EXOS
+    B3 <-->|"Anonymized Query"| CLOUD
+    EXOS -->|"Enriched Analysis"| OUTPUT
 
     style INPUT fill:#1e293b,stroke:#2dd4bf,stroke-width:2px,color:#e2e8f0
     style EXOS fill:#0f172a,stroke:#00d4ff,stroke-width:3px,color:#e2e8f0
     style CLOUD fill:#1e293b,stroke:#2dd4bf,stroke-width:2px,color:#e2e8f0
     style OUTPUT fill:#1e293b,stroke:#2dd4bf,stroke-width:2px,color:#e2e8f0
+    style STAGE1 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
+    style STAGE2 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
+    style STAGE3 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
+    style STAGE4 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
+    style STAGE5 fill:#0f172a,stroke:#2dd4bf,stroke-width:1px
 `;
 
 const ArchitectureDiagram = () => {
