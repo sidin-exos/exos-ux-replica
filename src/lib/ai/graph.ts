@@ -4,7 +4,8 @@
  * Stateful graph for the decision pipeline with:
  * - Self-correction loops for validation failures
  * - Managed state for anonymization context
- * - LangSmith visualization support
+ * - Dynamic model configuration (Lovable Gateway / Google AI Studio)
+ * - Secure API key handling via edge function proxy
  */
 
 import { StateGraph, START, END, Annotation } from '@langchain/langgraph';
@@ -13,6 +14,15 @@ import { anonymize, DEFAULT_ANONYMIZATION_CONFIG } from '../sentinel/anonymizer'
 import { deanonymize } from '../sentinel/deanonymizer';
 import { validateResponse } from '../sentinel/validator';
 import type { SensitiveEntity } from '../sentinel/types';
+import { supabase } from '@/integrations/supabase/client';
+
+/**
+ * Model configuration type for provider selection
+ */
+export type ModelConfigType = {
+  provider: 'lovable' | 'google_ai_studio';
+  model: string;
+};
 
 /**
  * State Annotation for LangGraph
@@ -23,6 +33,12 @@ const ExosStateAnnotation = Annotation.Root({
   userQuery: Annotation<string>({
     reducer: (_, next) => next,
     default: () => '',
+  }),
+  
+  // Model Configuration
+  config: Annotation<ModelConfigType>({
+    reducer: (_, next) => next,
+    default: () => ({ provider: 'lovable', model: 'gemini-2.0-flash' }),
   }),
   
   // Security Layer
@@ -102,29 +118,68 @@ async function nodeAnonymize(state: ExosState): Promise<Partial<ExosState>> {
 }
 
 /**
- * Node 2: Reasoning (Placeholder)
- * Simulates AI processing - will be replaced with actual AI call
+ * System prompt for EXOS procurement analysis
+ */
+const EXOS_SYSTEM_PROMPT = `You are EXOS, an expert procurement analyst AI. Your role is to analyze procurement scenarios with precision and provide actionable recommendations.
+
+Guidelines:
+- Provide structured analysis with clear sections
+- Include quantitative insights where possible
+- Suggest negotiation strategies based on the context
+- Identify risks and mitigation approaches
+- Be concise but comprehensive
+
+Format your response with markdown headers for clarity.`;
+
+/**
+ * Node 2: Reasoning
+ * Routes AI inference through the sentinel-analysis edge function
+ * Supports both Lovable Gateway and Google AI Studio (BYOK)
  */
 async function nodeReasoning(state: ExosState): Promise<Partial<ExosState>> {
-  // Placeholder: In production, this calls the edge function or Lovable AI
-  // For now, generate a mock response based on the anonymized input
-  const mockResponse = `Based on the analysis of the provided context:
+  const { provider, model } = state.config;
+  const useGoogleAIStudio = provider === 'google_ai_studio';
+  
+  // Get the anonymized query from the last message
+  const lastMessage = state.messages[state.messages.length - 1];
+  const userPrompt = typeof lastMessage.content === 'string' 
+    ? lastMessage.content 
+    : JSON.stringify(lastMessage.content);
 
-## Key Findings
-- The scenario involves ${state.anonymizedQuery.includes('[SUPPLIER_') ? 'supplier evaluation' : 'procurement analysis'}
-- Confidence level: ${(state.confidenceScore * 100).toFixed(0)}%
+  console.log(`🤖 LangGraph: Routing via Edge Function (provider: ${provider}, model: ${model})`);
 
-## Recommendations
-1. Review the masked entities for accuracy
-2. Consider market benchmarks for validation
-3. Proceed with structured negotiation approach
+  // Route through edge function (secure proxy for both providers)
+  const { data, error } = await supabase.functions.invoke('sentinel-analysis', {
+    body: {
+      systemPrompt: EXOS_SYSTEM_PROMPT,
+      userPrompt,
+      model: useGoogleAIStudio ? undefined : model,
+      useGoogleAIStudio,
+      googleModel: useGoogleAIStudio ? model : undefined,
+      enableTestLogging: false,
+    },
+  });
 
-## Next Steps
-- Validate findings against industry standards
-- Prepare stakeholder communication`;
+  if (error) {
+    console.error('🚨 LangGraph: Edge function error', error);
+    throw new Error(error.message || 'AI inference failed');
+  }
+
+  if (data?.error) {
+    console.error('🚨 LangGraph: AI response error', data.error);
+    throw new Error(data.error);
+  }
+
+  const responseContent = data?.content || data?.result || '';
+  
+  if (!responseContent) {
+    throw new Error('Empty response from AI');
+  }
+
+  console.log('✅ LangGraph: Received AI response');
 
   return {
-    messages: [new AIMessage(mockResponse)],
+    messages: [new AIMessage(responseContent)],
   };
 }
 
@@ -246,16 +301,26 @@ export const exosGraph = workflow.compile();
 
 /**
  * Helper: Run a query through the graph
+ * @param userQuery - The user's input query
+ * @param config - Model configuration (provider and model name)
  */
-export async function runExosGraph(userQuery: string): Promise<{
+export async function runExosGraph(
+  userQuery: string,
+  config: ModelConfigType
+): Promise<{
   finalAnswer: string;
   confidenceScore: number;
   validationStatus: 'pending' | 'approved' | 'rejected';
   retryCount: number;
 }> {
+  console.log(`🚀 LangGraph: Starting pipeline with config`, config);
+  
   const result = await exosGraph.invoke({
     userQuery,
+    config,
   });
+
+  console.log(`🏁 LangGraph: Pipeline complete (status: ${result.validationStatus}, retries: ${result.retryCount})`);
 
   return {
     finalAnswer: result.finalAnswer,
