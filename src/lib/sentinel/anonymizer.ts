@@ -44,6 +44,21 @@ const ENTITY_PATTERNS: Record<SensitiveEntity['type'], RegExp[]> = {
   percentage: [
     /\b\d+(?:\.\d+)?%/g,
   ],
+  // Email addresses (RFC-5322 compatible, practical variant)
+  // Catches: john.doe@company.com, support+id@service.co.uk
+  email: [
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
+  ],
+  // Phone numbers - EU-focused formats
+  // Catches: +49 30 1234567, +33 1 23 45 67 89, +44 20 7123 4567
+  // Also: 0049 30 1234567, 030/1234567, 030-1234567
+  // Negative lookahead excludes ISO dates (2024-01-01)
+  phone: [
+    // International EU format: +XX or 00XX followed by digits with various separators
+    /(?!\d{4}-\d{2}-\d{2})\+?\d{2,3}[\s.-]?\d{1,4}[\s.-]?\d{2,4}[\s.-]?\d{2,4}[\s.-]?\d{0,4}\b/g,
+    // Local EU format with leading 0: 030 1234567, 030/1234567
+    /\b0\d{2,4}[\s./-]?\d{3,8}\b/g,
+  ],
   custom: [],
 };
 
@@ -56,6 +71,8 @@ const TOKEN_PREFIXES: Record<SensitiveEntity['type'], string> = {
   location: 'LOCATION',
   date: 'DATE_REF',
   percentage: 'PERCENT',
+  email: 'CONTACT_EMAIL',
+  phone: 'PHONE',
   custom: 'ENTITY',
 };
 
@@ -85,7 +102,7 @@ function extractContext(text: string, matchIndex: number, matchLength: number): 
 export const DEFAULT_ANONYMIZATION_CONFIG: AnonymizationConfig = {
   preserveStructure: true,
   maskingStrategy: 'semantic',
-  entityTypes: ['company', 'person', 'price', 'contract'],
+  entityTypes: ['company', 'person', 'price', 'contract', 'email', 'phone'],
   customPatterns: [],
 };
 
