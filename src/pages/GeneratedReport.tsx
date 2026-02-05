@@ -132,7 +132,9 @@ const GeneratedReport = () => {
   };
 
   // Parse key metrics from analysis (simple extraction)
-  const extractKeyPoints = (text: string): string[] => {
+  const extractKeyPoints = (text: string | null | undefined): string[] => {
+    if (!text) return [];
+    
     const lines = text.split("\n").filter((line) => line.trim());
     const keyPoints: string[] = [];
     
