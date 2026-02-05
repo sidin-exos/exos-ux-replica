@@ -65,6 +65,23 @@ const ENTITY_PATTERNS: Record<SensitiveEntity['type'], RegExp[]> = {
     // Local EU format with leading 0: 030 1234567, 030/1234567
     /\b0\d{2,4}[\s./-]?\d{3,8}\b/g,
   ],
+  // IBAN (International Bank Account Number)
+  // Catches: DE89 3704 0044 0532 0130 00 (space-separated) and GB82WEST12345698765432 (continuous)
+  iban: [
+    /[A-Z]{2}\d{2}[ ]\d{4}[ ]\d{4}[ ]\d{4}[ ]\d{4}[ ]?\d{0,8}/g, // Space-separated format
+    /[A-Z]{2}\d{2}[A-Z0-9]{10,30}/g, // Continuous format
+  ],
+  // Credit Card Numbers - Visa, MC, Amex, Discover
+  // Simplified pattern without separators for maximum safety
+  credit_card: [
+    /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})/g,
+  ],
+  // Tax IDs - EU VAT and US EIN formats
+  // Catches: GB123456789 (EU VAT), 12-3456789 (US EIN)
+  tax_id: [
+    /\b[A-Z]{2}[0-9A-Z]{8,12}\b/g, // EU VAT format
+    /\b[1-9]\d?-\d{7}\b/g, // US EIN format
+  ],
   custom: [],
 };
 
@@ -79,8 +96,26 @@ const TOKEN_PREFIXES: Record<SensitiveEntity['type'], string> = {
   percentage: 'PERCENT',
   email: 'CONTACT_EMAIL',
   phone: 'PHONE',
+  iban: 'BANK_ACCT',
+  credit_card: 'CC_NUM',
+  tax_id: 'TAX_ID',
   custom: 'ENTITY',
 };
+
+// Common business terms that should never be masked (false positive protection)
+const COMMON_BUSINESS_TERMS = new Set([
+  'invoice', 'contract', 'agreement', 'total', 'subtotal',
+  'date', 'vendor', 'supplier', 'client', 'manager',
+  'director', 'chief', 'officer', 'bank', 'swift',
+  'iban', 'payment', 'due', 'amount', 'reference',
+  'purchase', 'order', 'quote', 'proposal', 'estimate',
+  'receipt', 'statement', 'balance', 'credit', 'debit',
+  'tax', 'vat', 'net', 'gross', 'fee', 'charge',
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday',
+  'saturday', 'sunday'
+]);
 
 /**
  * Calculate dynamic confidence score based on analysis quality
@@ -101,7 +136,7 @@ function calculateConfidence(
   }
   
   // Missing Actor Penalty: transactions without identifiable parties
-  const hasTransaction = types.has('contract') || types.has('price');
+  const hasTransaction = types.has('contract') || types.has('price') || types.has('iban') || types.has('credit_card');
   const hasActor = types.has('company') || types.has('person');
   if (hasTransaction && !hasActor) {
     confidence -= 0.20;
@@ -142,7 +177,7 @@ function extractContext(text: string, matchIndex: number, matchLength: number): 
 export const DEFAULT_ANONYMIZATION_CONFIG: AnonymizationConfig = {
   preserveStructure: true,
   maskingStrategy: 'semantic',
-  entityTypes: ['company', 'person', 'price', 'contract', 'email', 'phone'],
+  entityTypes: ['company', 'person', 'price', 'contract', 'email', 'phone', 'iban', 'credit_card', 'tax_id'],
   customPatterns: [],
 };
 
@@ -184,6 +219,9 @@ export function anonymize(
       while ((match = pattern.exec(text)) !== null) {
         // Avoid duplicates and very short matches
         if (match[0].length < 3) continue;
+        
+        // Skip common business terms (false positive protection)
+        if (COMMON_BUSINESS_TERMS.has(match[0].toLowerCase())) continue;
         
         allMatches.push({
           type: entityType,
