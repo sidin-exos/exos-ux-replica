@@ -22,6 +22,8 @@ interface AnalysisRequest {
   model?: string;
   useLocalModel?: boolean;
   localModelEndpoint?: string;
+  useGoogleAIStudio?: boolean;
+  googleModel?: string;
   stream?: boolean;
   // Testing metadata
   scenarioType?: string;
@@ -46,6 +48,8 @@ serve(async (req) => {
       model = "google/gemini-3-flash-preview", // Default to Gemini 3 Flash
       useLocalModel = false,
       localModelEndpoint,
+      useGoogleAIStudio = false,
+      googleModel = "gemini-2.0-flash",
       stream = false,
       // Testing metadata
       scenarioType,
@@ -115,6 +119,106 @@ serve(async (req) => {
         }),
         { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Route to Google AI Studio (BYOK mode)
+    if (useGoogleAIStudio) {
+      const GOOGLE_AI_STUDIO_KEY = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
+      
+      if (!GOOGLE_AI_STUDIO_KEY) {
+        console.error("[Sentinel] GOOGLE_AI_STUDIO_KEY not configured, falling back to Lovable AI");
+        // Fall through to Lovable AI Gateway
+      } else {
+        console.log(`[Sentinel] Routing to Google AI Studio with model: ${googleModel}`);
+        
+        const googleEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${googleModel}:generateContent?key=${GOOGLE_AI_STUDIO_KEY}`;
+        
+        try {
+          const googleResponse = await fetch(googleEndpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents: [
+                { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
+              ],
+              generationConfig: {
+                temperature: 0.4,
+                maxOutputTokens: 4096,
+              },
+            }),
+          });
+
+          const processingTime = Math.round(performance.now() - startTime);
+
+          if (!googleResponse.ok) {
+            const errorText = await googleResponse.text();
+            console.error(`[Sentinel] Google AI Studio error: ${googleResponse.status}`, errorText);
+            
+            if (enableTestLogging && supabase && promptId) {
+              await supabase.from("test_reports").insert({
+                prompt_id: promptId,
+                model: googleModel,
+                raw_response: errorText,
+                processing_time_ms: processingTime,
+                success: false,
+                error_message: `Google AI Studio error: ${googleResponse.status}`
+              });
+            }
+            
+            return new Response(
+              JSON.stringify({ error: "Google AI Studio error", details: errorText }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          const googleData = await googleResponse.json();
+          const content = googleData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          
+          // Extract token usage from Google's format
+          const usage = googleData.usageMetadata ? {
+            prompt_tokens: googleData.usageMetadata.promptTokenCount || 0,
+            completion_tokens: googleData.usageMetadata.candidatesTokenCount || 0,
+            total_tokens: googleData.usageMetadata.totalTokenCount || 0,
+          } : null;
+
+          console.log(`[Sentinel] Google AI Studio response: ${content.length} chars`);
+          console.log(`[Sentinel] Processing time: ${processingTime}ms`);
+
+          // Log successful response
+          if (enableTestLogging && supabase && promptId) {
+            try {
+              await supabase.from("test_reports").insert({
+                prompt_id: promptId,
+                model: googleModel,
+                raw_response: content,
+                processing_time_ms: processingTime,
+                token_usage: usage,
+                success: true
+              });
+              console.log(`[Sentinel] Logged report for prompt: ${promptId}`);
+            } catch (reportError) {
+              console.error("[Sentinel] Failed to log report:", reportError);
+            }
+          }
+
+          return new Response(
+            JSON.stringify({
+              content,
+              model: googleModel,
+              source: "google_ai_studio",
+              usage,
+              promptId,
+              processingTimeMs: processingTime
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } catch (googleError) {
+          console.error("[Sentinel] Google AI Studio fetch error:", googleError);
+          // Fall through to Lovable AI Gateway
+        }
+      }
     }
 
     // Call Lovable AI Gateway with retry logic for transient errors

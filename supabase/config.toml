@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-market-insights]
 verify_jwt = false
+
+[functions.sentinel-analysis]
+verify_jwt = false

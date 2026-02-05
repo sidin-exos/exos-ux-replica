@@ -54,7 +54,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       industry: IndustryContext | null,
       category: ProcurementCategory | null,
       config?: Partial<PipelineConfig>,
-      model: string = "google/gemini-3-flash-preview"
+      model: string = "google/gemini-3-flash-preview",
+      useGoogleAIStudio: boolean = false
     ): Promise<OrchestratorResponse | null> => {
       setState({
         isProcessing: true,
@@ -107,6 +108,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
               userPrompt: inferencePayload.userPrompt,
               model, // Use passed model or default
               useLocalModel: inferencePayload.useLocal,
+              useGoogleAIStudio, // BYOK mode for Google AI Studio
+              googleModel: useGoogleAIStudio ? model.replace("google/", "") : undefined,
               stream: false,
               // Testing metadata for database logging
               scenarioType,
