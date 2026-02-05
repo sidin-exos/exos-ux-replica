@@ -15,8 +15,14 @@ import type {
 // Default entity patterns for procurement context
 const ENTITY_PATTERNS: Record<SensitiveEntity['type'], RegExp[]> = {
   company: [
+    // Existing: Capitalized words with legal suffixes (highest precision)
     /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Inc|LLC|Ltd|Corp|GmbH|SA|AG|PLC|Co)\.?))\b/g,
-    /\b([A-Z]{2,}(?:\s+[A-Z]{2,})*)\b/g, // All-caps company names
+    // Existing: All-caps company names
+    /\b([A-Z]{2,}(?:\s+[A-Z]{2,})*)\b/g,
+    // New: Case-insensitive legal suffixes (catches lowercase like "acme ltd", "nvidia gmbh")
+    /\b[\w]+(?:\s+[\w]+)*\s+(?:Inc|LLC|Ltd|GmbH|Corp|Co|S\.A\.|NV|Pty|AG|PLC)\.?\b/gi,
+    // New: B2B contextual keyword anchors (catches "Vendor: TechSolutions", "Supplier: Acme")
+    /(?<=(?:Vendor|Supplier|Client|Partner|Counterparty|Customer|Contractor|Subcontractor):\s*)[\w]+(?:\s+[\w]+)*/gi,
   ],
   person: [
     /\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/g, // First Last
@@ -75,6 +81,40 @@ const TOKEN_PREFIXES: Record<SensitiveEntity['type'], string> = {
   phone: 'PHONE',
   custom: 'ENTITY',
 };
+
+/**
+ * Calculate dynamic confidence score based on analysis quality
+ * Applies penalties for potential gaps in entity detection
+ */
+function calculateConfidence(
+  text: string,
+  entityMap: Map<string, SensitiveEntity>
+): number {
+  let confidence = 1.0;
+  
+  // Extract entity types present
+  const types = new Set([...entityMap.values()].map(e => e.type));
+  
+  // Low Density Penalty: long text with few entities suggests missed detections
+  if (text.length > 500 && entityMap.size < 2) {
+    confidence -= 0.15;
+  }
+  
+  // Missing Actor Penalty: transactions without identifiable parties
+  const hasTransaction = types.has('contract') || types.has('price');
+  const hasActor = types.has('company') || types.has('person');
+  if (hasTransaction && !hasActor) {
+    confidence -= 0.20;
+  }
+  
+  // PII Mismatch Penalty: email without associated person
+  if (types.has('email') && !types.has('person')) {
+    confidence -= 0.05;
+  }
+  
+  // Clamp between 0.1 and 1.0
+  return Math.max(0.1, Math.min(1.0, confidence));
+}
 
 /**
  * Generate a unique masked token for an entity
@@ -228,7 +268,7 @@ export function anonymize(
     metadata: {
       entitiesFound: entityMap.size,
       processingTimeMs: endTime - startTime,
-      confidence: entityMap.size > 0 ? 0.85 : 1.0, // Lower confidence if entities found (might have missed some)
+      confidence: calculateConfidence(text, entityMap),
     },
   };
 }
