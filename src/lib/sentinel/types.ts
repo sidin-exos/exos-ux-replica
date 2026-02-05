@@ -11,7 +11,7 @@
 
 export interface SensitiveEntity {
   id: string;
-  type: 'company' | 'person' | 'price' | 'contract' | 'location' | 'date' | 'percentage' | 'custom';
+  type: 'company' | 'person' | 'price' | 'contract' | 'location' | 'date' | 'percentage' | 'email' | 'phone' | 'custom';
   originalValue: string;
   maskedToken: string;
   context?: string; // surrounding context for better restoration
