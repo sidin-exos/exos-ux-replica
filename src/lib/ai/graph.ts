@@ -6,16 +6,13 @@
  * - Routes AI inference through the sentinel-analysis edge function
  * - Implements self-correction loop for validation failures
  * - Supports both Lovable Gateway and Google AI Studio (BYOK)
- * - Optionally traces execution to LangSmith for observability
  */
 
-import { traceable } from "langsmith/traceable";
 import { anonymize, DEFAULT_ANONYMIZATION_CONFIG } from '../sentinel/anonymizer';
 import { deanonymize } from '../sentinel/deanonymizer';
 import { validateResponse } from '../sentinel/validator';
 import type { SensitiveEntity } from '../sentinel/types';
 import { supabase } from '@/integrations/supabase/client';
-import { isTracingEnabled, getProjectName, logTracingConfig } from './tracing-config';
 
 /**
  * Model configuration type for provider selection
@@ -168,41 +165,12 @@ function stepDeanonymize(state: PipelineState): PipelineState {
 }
 
 /**
- * Create traced wrapper functions for LangSmith observability
- * Note: traceable makes sync functions return Promise, so we handle all as async
+ * Run the complete EXOS decision pipeline
+ * 
+ * @param userQuery - The user's input query
+ * @param config - Model configuration (provider and model name)
  */
-const createTracedAnonymize = () =>
-  traceable(stepAnonymize, {
-    name: "Sentinel_Anonymize",
-    run_type: "chain",
-    project_name: getProjectName(),
-  });
-
-const createTracedReasoning = () =>
-  traceable(stepReasoning, {
-    name: "AI_Reasoning",
-    run_type: "llm",
-    project_name: getProjectName(),
-  });
-
-const createTracedValidate = () =>
-  traceable(stepValidate, {
-    name: "Validation_Check",
-    run_type: "chain",
-    project_name: getProjectName(),
-  });
-
-const createTracedDeanonymize = () =>
-  traceable(stepDeanonymize, {
-    name: "Deanonymize",
-    run_type: "chain",
-    project_name: getProjectName(),
-  });
-
-/**
- * Core pipeline execution logic
- */
-async function executePipeline(
+export async function runExosGraph(
   userQuery: string,
   config: ModelConfigType
 ): Promise<{
@@ -211,10 +179,7 @@ async function executePipeline(
   validationStatus: 'pending' | 'approved' | 'rejected';
   retryCount: number;
 }> {
-  logTracingConfig();
   console.log(`🚀 Pipeline: Starting with config`, config);
-
-  const useTracing = isTracingEnabled();
 
   // Initialize state
   let state: PipelineState = {
@@ -230,28 +195,15 @@ async function executePipeline(
   };
 
   // Step 1: Anonymize
-  // traceable wraps sync functions to return Promise, so we await all traced calls
-  if (useTracing) {
-    state = await createTracedAnonymize()(state);
-  } else {
-    state = stepAnonymize(state);
-  }
+  state = stepAnonymize(state);
 
   // Retry loop for reasoning + validation
   while (state.retryCount <= MAX_RETRIES) {
     // Step 2: AI Reasoning
-    if (useTracing) {
-      state = await createTracedReasoning()(state);
-    } else {
-      state = await stepReasoning(state);
-    }
+    state = await stepReasoning(state);
 
     // Step 3: Validate
-    if (useTracing) {
-      state = await createTracedValidate()(state);
-    } else {
-      state = stepValidate(state);
-    }
+    state = stepValidate(state);
 
     if (state.validationStatus === 'approved') {
       break;
@@ -266,11 +218,7 @@ async function executePipeline(
   }
 
   // Step 4: Deanonymize
-  if (useTracing) {
-    state = await createTracedDeanonymize()(state);
-  } else {
-    state = stepDeanonymize(state);
-  }
+  state = stepDeanonymize(state);
 
   console.log(`🏁 Pipeline: Complete (status: ${state.validationStatus}, retries: ${state.retryCount})`);
 
@@ -281,17 +229,3 @@ async function executePipeline(
     retryCount: state.retryCount,
   };
 }
-
-/**
- * Run the complete EXOS decision pipeline
- * 
- * Wrapped with traceable to create a parent span in LangSmith
- * 
- * @param userQuery - The user's input query
- * @param config - Model configuration (provider and model name)
- */
-export const runExosGraph = traceable(executePipeline, {
-  name: "EXOS_Deep_Analysis",
-  run_type: "chain",
-  project_name: getProjectName(),
-});
