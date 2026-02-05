@@ -2,48 +2,86 @@
 
 # Client-Side LangSmith Tracing Implementation
 
-## Overview
+## Problem Statement
 
-Add client-side LangSmith tracing to the EXOS pipeline (`src/lib/ai/graph.ts`) to enable visualization of the 4-step execution flow in the LangSmith EU dashboard. This uses the `langsmith` SDK's `traceable` function to wrap each pipeline step.
+The `langsmith` SDK's `traceable` function cannot run in browsers because it depends on `AsyncLocalStorage` from `node:async_hooks` - a Node.js-only module. This is a **known limitation** confirmed by the LangChain team (GitHub issue #81, #879).
+
+**Error encountered:**
+```
+"AsyncLocalStorage" is not exported by "__vite-browser-external", 
+imported by "node_modules/langsmith/dist/traceable.js"
+```
 
 ---
 
-## Prerequisites (User Action Required)
+## Solution: Use LangSmith REST API Directly
 
-Before this feature will work, you need to add these secrets in Lovable Cloud:
+Instead of using the `traceable` wrapper, we can manually send trace data to LangSmith using their REST API, which is fully browser-compatible.
 
-| Secret Name | Value | Purpose |
-|-------------|-------|---------|
-| `VITE_LANGCHAIN_TRACING_V2` | `true` | Enable tracing |
-| `VITE_LANGCHAIN_API_KEY` | `lsv2_...` | Your LangSmith API key |
-| `VITE_LANGCHAIN_PROJECT` | `exos-mvp` | Project name in LangSmith |
-| `VITE_LANGCHAIN_ENDPOINT` | `https://eu.api.smith.langchain.com` | EU endpoint |
+LangSmith provides two endpoints:
+- `POST /runs` - Create a new run (span)
+- `PATCH /runs/{id}` - Complete a run with outputs
 
-**Security Note:** Exposing the API key to the browser is acceptable for internal/development use. For production, tracing should move server-side.
+---
+
+## Implementation Overview
+
+### Architecture
+
+```text
+Browser (graph.ts)                    LangSmith EU API
+      │                                    │
+      ├── Start Parent Run ───────────────►│ POST /runs (EXOS_Deep_Analysis)
+      │                                    │
+      ├── Start Child: Anonymize ─────────►│ POST /runs (parent_run_id)
+      ├── End Child: Anonymize ───────────►│ PATCH /runs/{id}
+      │                                    │
+      ├── Start Child: Reasoning ─────────►│ POST /runs
+      ├── End Child: Reasoning ───────────►│ PATCH /runs/{id}
+      │                                    │
+      ├── ... (Validate, Deanonymize) ...  │
+      │                                    │
+      └── End Parent Run ─────────────────►│ PATCH /runs/{id}
+```
 
 ---
 
 ## Files to Create
 
-### 1. Tracing Configuration Module
-**File:** `src/lib/ai/tracing-config.ts`
+### 1. LangSmith REST Client
+**File:** `src/lib/ai/langsmith-client.ts`
 
-Creates a centralized module for:
-- Reading Vite environment variables
-- Checking if tracing is enabled
-- Providing project name for trace spans
-- Logging configuration on initialization
+A lightweight browser-compatible client that:
+- Reads `VITE_LANGCHAIN_*` environment variables
+- Creates runs via `POST /runs`
+- Patches runs via `PATCH /runs/{id}`
+- Generates unique run IDs using `crypto.randomUUID()`
+- Handles parent-child relationships with `parent_run_id`
 
 ```typescript
-// Read config from Vite env vars
-const TRACING_ENABLED = import.meta.env.VITE_LANGCHAIN_TRACING_V2 === "true";
-const API_KEY = import.meta.env.VITE_LANGCHAIN_API_KEY || "";
-const PROJECT = import.meta.env.VITE_LANGCHAIN_PROJECT || "default";
-const ENDPOINT = import.meta.env.VITE_LANGCHAIN_ENDPOINT || "https://api.smith.langchain.com";
+// Key functions
+export function isTracingEnabled(): boolean;
+export function logTracingConfig(): void;
+export async function createRun(options: CreateRunOptions): Promise<string>;
+export async function patchRun(runId: string, outputs: object): Promise<void>;
+```
 
-export function isTracingEnabled(): boolean { ... }
-export function getProjectName(): string { ... }
-export function logTracingConfig(): void { ... }
+---
+
+### 2. Tracing Wrapper for Graph
+**File:** `src/lib/ai/trace-utils.ts`
+
+Helper functions to wrap step execution with tracing:
+
+```typescript
+// Wraps a step function with before/after tracing
+export async function traceStep<T>(
+  stepName: string,
+  runType: "chain" | "llm",
+  inputs: object,
+  stepFn: () => T | Promise<T>,
+  parentRunId?: string
+): Promise<{ result: T; runId: string }>;
 ```
 
 ---
@@ -53,7 +91,7 @@ export function logTracingConfig(): void { ... }
 ### 1. Type Definitions
 **File:** `src/vite-env.d.ts`
 
-Add TypeScript declarations for the new environment variables:
+Add TypeScript declarations for LangSmith environment variables:
 
 ```typescript
 interface ImportMetaEnv {
@@ -74,34 +112,30 @@ interface ImportMeta {
 ### 2. Pipeline Orchestrator
 **File:** `src/lib/ai/graph.ts`
 
-Wrap each pipeline step with `traceable` to create hierarchical traces:
-
-| Step Function | Trace Name | Run Type |
-|---------------|------------|----------|
-| `stepAnonymize` | `Sentinel_Anonymize` | chain |
-| `stepReasoning` | `AI_Reasoning` | llm |
-| `stepValidate` | `Validation_Check` | chain |
-| `stepDeanonymize` | `Deanonymize` | chain |
-| `runExosGraph` | `EXOS_Deep_Analysis` | chain (parent) |
-
-**Changes:**
-1. Import `traceable` from `langsmith/traceable`
-2. Import helpers from `./tracing-config`
-3. Create wrapped versions of each step function
-4. Conditionally use traced vs raw functions based on `isTracingEnabled()`
-
-### 3. Package Dependencies
-**File:** `package.json`
-
-Add the `langsmith` package to dependencies:
-
-```json
-"langsmith": "^0.2.0"
-```
+Instrument the `runExosGraph` function to:
+1. Check if tracing is enabled
+2. Create a parent run at start
+3. Create child runs for each step (Anonymize, Reasoning, Validate, Deanonymize)
+4. Patch runs with outputs when steps complete
 
 ---
 
-## Expected Trace Structure in LangSmith
+## Prerequisites (User Action Required)
+
+Before this feature will work, add these secrets in Lovable Cloud:
+
+| Secret Name | Value | Purpose |
+|-------------|-------|---------|
+| `VITE_LANGCHAIN_TRACING_V2` | `true` | Enable tracing |
+| `VITE_LANGCHAIN_API_KEY` | `lsv2_...` | Your LangSmith API key |
+| `VITE_LANGCHAIN_PROJECT` | `exos-mvp` | Project name in LangSmith |
+| `VITE_LANGCHAIN_ENDPOINT` | `https://eu.api.smith.langchain.com` | EU endpoint |
+
+**Security Note:** Exposing the API key to the browser is acceptable for internal/development use. For production, tracing should move server-side.
+
+---
+
+## Expected LangSmith Trace Structure
 
 ```text
 EXOS_Deep_Analysis (parent chain)
@@ -115,96 +149,48 @@ EXOS_Deep_Analysis (parent chain)
 
 ---
 
-## Implementation Details
+## Technical Details
 
-### Tracing Config Module
+### LangSmith REST API Format
 
-```typescript
-// src/lib/ai/tracing-config.ts
-
-const TRACING_ENABLED = import.meta.env.VITE_LANGCHAIN_TRACING_V2 === "true";
-const API_KEY = import.meta.env.VITE_LANGCHAIN_API_KEY || "";
-const PROJECT = import.meta.env.VITE_LANGCHAIN_PROJECT || "default";
-const ENDPOINT = import.meta.env.VITE_LANGCHAIN_ENDPOINT || "https://api.smith.langchain.com";
-
-export function isTracingEnabled(): boolean {
-  return TRACING_ENABLED && !!API_KEY;
-}
-
-export function getProjectName(): string {
-  return PROJECT;
-}
-
-export function logTracingConfig(): void {
-  console.log("LangSmith Tracing Config:", {
-    enabled: TRACING_ENABLED,
-    project: PROJECT,
-    endpoint: ENDPOINT,
-    hasApiKey: !!API_KEY,
-  });
-}
-
-// Log on module load for debugging
-if (TRACING_ENABLED) {
-  logTracingConfig();
+**POST /runs:**
+```json
+{
+  "id": "uuid",
+  "name": "Sentinel_Anonymize",
+  "run_type": "chain",
+  "inputs": { "query": "..." },
+  "start_time": "2026-02-05T10:00:00Z",
+  "session_name": "exos-mvp",
+  "parent_run_id": "parent-uuid"
 }
 ```
 
-### Graph Instrumentation Pattern
-
-```typescript
-// src/lib/ai/graph.ts (additions)
-
-import { traceable } from "langsmith/traceable";
-import { isTracingEnabled, getProjectName, logTracingConfig } from "./tracing-config";
-
-// Create traced wrappers (lazy evaluation)
-const createTracedAnonymize = () => traceable(stepAnonymize, {
-  name: "Sentinel_Anonymize",
-  run_type: "chain",
-  project_name: getProjectName(),
-});
-
-const createTracedReasoning = () => traceable(stepReasoning, {
-  name: "AI_Reasoning", 
-  run_type: "llm",
-  project_name: getProjectName(),
-});
-
-const createTracedValidate = () => traceable(stepValidate, {
-  name: "Validation_Check",
-  run_type: "chain",
-  project_name: getProjectName(),
-});
-
-const createTracedDeanonymize = () => traceable(stepDeanonymize, {
-  name: "Deanonymize",
-  run_type: "chain",
-  project_name: getProjectName(),
-});
-
-// In runExosGraph:
-export async function runExosGraph(...) {
-  logTracingConfig();
-  
-  const useTracing = isTracingEnabled();
-  
-  // Select function versions
-  const doAnonymize = useTracing ? createTracedAnonymize() : stepAnonymize;
-  const doReasoning = useTracing ? createTracedReasoning() : stepReasoning;
-  const doValidate = useTracing ? createTracedValidate() : stepValidate;
-  const doDeanonymize = useTracing ? createTracedDeanonymize() : stepDeanonymize;
-  
-  // Use these in the pipeline...
+**PATCH /runs/{id}:**
+```json
+{
+  "outputs": { "result": "..." },
+  "end_time": "2026-02-05T10:00:05Z"
 }
-
-// Optionally wrap the entire function
-export const runExosGraph = traceable(async (...) => { ... }, {
-  name: "EXOS_Deep_Analysis",
-  run_type: "chain",
-  project_name: getProjectName(),
-});
 ```
+
+### Key Implementation Points
+
+1. **No External Dependencies**: Uses native `fetch()` API
+2. **Background Sends**: Fire-and-forget pattern to not block pipeline
+3. **Error Tolerance**: Tracing failures don't break the main pipeline
+4. **Hierarchical Traces**: Uses `parent_run_id` to link child runs
+
+---
+
+## Files Summary
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/lib/ai/langsmith-client.ts` | Create | Browser-compatible LangSmith REST client |
+| `src/lib/ai/trace-utils.ts` | Create | Tracing wrapper utilities |
+| `src/vite-env.d.ts` | Modify | Add TypeScript types for env vars |
+| `src/lib/ai/graph.ts` | Modify | Integrate tracing into pipeline |
 
 ---
 
@@ -216,16 +202,4 @@ export const runExosGraph = traceable(async (...) => { ... }, {
 4. Trigger a "Deep Analysis" run from the scenario wizard
 5. Navigate to [eu.smith.langchain.com](https://eu.smith.langchain.com)
 6. View the `exos-mvp` project to see traces
-
----
-
-## Technical Summary
-
-| Item | Details |
-|------|---------|
-| New dependency | `langsmith` |
-| New file | 1 (`src/lib/ai/tracing-config.ts`) |
-| Modified files | 3 (`graph.ts`, `vite-env.d.ts`, `package.json`) |
-| Trace spans | 5 (1 parent + 4 steps) |
-| Run types | `chain` (orchestration), `llm` (AI reasoning) |
 
