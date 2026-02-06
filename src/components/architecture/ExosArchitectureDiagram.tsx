@@ -25,6 +25,7 @@ import {
   Cpu,
   Cloud,
   Server,
+  ArrowUp,
 } from "lucide-react";
 
 // Color palette matching the Miro style
@@ -54,14 +55,16 @@ const ExosArchitectureDiagram: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-6">
-        {/* Customer Premises Boundary */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* SECTION A: CUSTOMER PREMISES (PRE-FLIGHT) */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
         <ArchitectureContainer
-          title="Customer Premises"
-          titleColor={COLORS.security}
+          title="Customer Premises (Pre-Flight)"
+          titleColor={COLORS.green}
           variant="security"
           badge="Enterprise"
           badgeIcon={<Lock size={12} />}
-          className="bg-red-50/30"
+          className="bg-green-50/30"
         >
           <div className="flex flex-col gap-6">
             {/* Row 1: User Input */}
@@ -104,7 +107,7 @@ const ExosArchitectureDiagram: React.FC = () => {
 
             {/* Row 2: Context Preparation (Pre-Pipeline) */}
             <ArchitectureContainer
-              title="Context Preparation (Pre-Pipeline)"
+              title="Context Preparation"
               titleColor={COLORS.orange}
             >
               <div className="flex items-center justify-center gap-8">
@@ -134,84 +137,26 @@ const ExosArchitectureDiagram: React.FC = () => {
               <ArchitectureArrow direction="down" length={30} />
             </div>
 
-            {/* Row 3: EXOS Decision Pipeline (graph.ts) */}
+            {/* Row 3: Sentinel Anonymize */}
             <ArchitectureContainer
-              title="EXOS Decision Pipeline (graph.ts)"
+              title="Sentinel Layer"
               titleColor={COLORS.green}
             >
-              <div className="flex items-center justify-between gap-4">
-                {/* Stage 1: Sentinel Anonymize */}
+              <div className="flex justify-center">
                 <div className="flex flex-col items-center gap-2 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <span className="text-[10px] font-semibold text-green-700 uppercase">
-                    Stage 1
-                  </span>
                   <ArchitectureNode
                     icon={<Shield size={28} />}
                     label="Sentinel Anonymize"
-                    sublabel="stepAnonymize()"
+                    sublabel="stepAnonymize() - Mask PII"
                     color={COLORS.green}
                     number={7}
-                  />
-                </div>
-
-                <ArchitectureArrow direction="right" length={30} />
-
-                {/* Stage 2: AI Reasoning with Retry Loop */}
-                <div className="flex flex-col items-center gap-2 p-4 bg-purple-50 rounded-lg border border-purple-200 relative">
-                  <span className="text-[10px] font-semibold text-purple-700 uppercase">
-                    Stage 2
-                  </span>
-                  <div className="flex items-center gap-4">
-                    <ArchitectureNode
-                      icon={<Brain size={28} />}
-                      label="AI Reasoning"
-                      sublabel="via Edge Function"
-                      color={COLORS.purple}
-                      number={8}
-                    />
-                    <ArchitectureArrow direction="right" length={30} />
-                    <ArchitectureNode
-                      icon={<CheckCircle size={28} />}
-                      label="Validation"
-                      sublabel="Anti-Hallucination"
-                      color={COLORS.pink}
-                      number={9}
-                    />
-                  </div>
-                  {/* Retry Loop Indicator */}
-                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-orange-100 px-2 py-1 rounded-full border border-orange-300">
-                    <RotateCcw size={12} className="text-orange-600" />
-                    <span className="text-[9px] font-semibold text-orange-700">
-                      Retry Loop (up to 3x)
-                    </span>
-                  </div>
-                </div>
-
-                <ArchitectureArrow direction="right" length={30} />
-
-                {/* Stage 3: Deanonymize */}
-                <div className="flex flex-col items-center gap-2 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                  <span className="text-[10px] font-semibold text-indigo-700 uppercase">
-                    Stage 3
-                  </span>
-                  <ArchitectureNode
-                    icon={<Unlock size={28} />}
-                    label="Deanonymize"
-                    sublabel="Entity Restoration"
-                    color={COLORS.indigo}
-                    number={10}
                   />
                 </div>
               </div>
             </ArchitectureContainer>
 
             <div className="flex justify-center">
-              <ArchitectureArrow
-                direction="down"
-                length={30}
-                label="Masked Request"
-                labelPosition="right"
-              />
+              <ArchitectureArrow direction="down" length={30} />
             </div>
 
             {/* InfoSec Gate */}
@@ -236,19 +181,21 @@ const ExosArchitectureDiagram: React.FC = () => {
           </div>
         </ArchitectureContainer>
 
-        {/* Arrow crossing security boundary */}
+        {/* Arrow crossing security boundary - DOWN to Cloud */}
         <div className="flex justify-center">
           <ArchitectureArrow
             direction="down"
             length={40}
-            label="Anonymized Only"
+            label="Anonymized Request"
             labelPosition="right"
             color={COLORS.security}
             dashed
           />
         </div>
 
-        {/* Cloud Services (External) */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* SECTION B: CLOUD SERVICES (EXTERNAL) */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
         <ArchitectureContainer
           title="Cloud Services (External)"
           titleColor={COLORS.purple}
@@ -257,7 +204,7 @@ const ExosArchitectureDiagram: React.FC = () => {
           <div className="flex flex-col gap-6">
             {/* AI Gateway */}
             <ArchitectureContainer
-              title="AI Gateway"
+              title="AI Gateway (stepReasoning)"
               titleColor={COLORS.purple}
               className="bg-purple-50/50"
             >
@@ -268,7 +215,7 @@ const ExosArchitectureDiagram: React.FC = () => {
                     label="Lovable Gateway"
                     sublabel="Managed Service"
                     color={COLORS.purple}
-                    number={11}
+                    number={8}
                   />
                 </div>
 
@@ -286,7 +233,6 @@ const ExosArchitectureDiagram: React.FC = () => {
                     label="Google AI Studio"
                     sublabel="BYOK"
                     color={COLORS.purple}
-                    number={12}
                   />
                 </div>
               </div>
@@ -314,7 +260,7 @@ const ExosArchitectureDiagram: React.FC = () => {
                   label="LangSmith Client"
                   sublabel="REST API Tracing"
                   color={COLORS.cyan}
-                  number={13}
+                  number={9}
                 />
                 <div className="flex flex-col gap-1 text-[10px] text-cyan-700 bg-cyan-100 px-3 py-2 rounded-lg">
                   <span className="font-semibold">Fire-and-Forget:</span>
@@ -327,8 +273,8 @@ const ExosArchitectureDiagram: React.FC = () => {
           </div>
         </ArchitectureContainer>
 
-        {/* Arrow returning to security boundary */}
-        <div className="flex justify-center">
+        {/* Arrow from Cloud back to Customer Premises */}
+        <div className="flex justify-center items-center gap-4">
           <ArchitectureArrow
             direction="down"
             length={40}
@@ -336,16 +282,100 @@ const ExosArchitectureDiagram: React.FC = () => {
             labelPosition="right"
             color={COLORS.purple}
           />
+          {/* Retry Loop Indicator - pointing UP */}
+          <div className="flex flex-col items-center gap-1 bg-orange-100 px-3 py-2 rounded-lg border border-orange-300">
+            <ArrowUp size={20} className="text-orange-600" />
+            <div className="flex items-center gap-1">
+              <RotateCcw size={12} className="text-orange-600" />
+              <span className="text-[9px] font-semibold text-orange-700">
+                Retry Loop
+              </span>
+            </div>
+            <span className="text-[8px] text-orange-600">(up to 3x)</span>
+          </div>
         </div>
 
-        {/* Customer Premises Boundary - Output */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* SECTION C: CUSTOMER PREMISES (POST-FLIGHT) */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
         <ArchitectureContainer
-          title="Customer Premises (Output)"
-          titleColor={COLORS.security}
+          title="Customer Premises (Post-Flight)"
+          titleColor={COLORS.indigo}
           variant="security"
+          badge="Secure"
           badgeIcon={<Lock size={12} />}
+          className="bg-indigo-50/30"
         >
           <div className="flex flex-col gap-6">
+            {/* Response Validation */}
+            <ArchitectureContainer
+              title="Response Validation (stepValidate)"
+              titleColor={COLORS.pink}
+            >
+              <div className="flex items-center justify-center gap-6">
+                <div className="flex flex-col items-center gap-2 p-4 bg-pink-50 rounded-lg border border-pink-200">
+                  <ArchitectureNode
+                    icon={<CheckCircle size={28} />}
+                    label="Validation Check"
+                    sublabel="Anti-Hallucination"
+                    color={COLORS.pink}
+                    number={10}
+                  />
+                </div>
+                <div className="flex flex-col gap-1 text-[10px] text-pink-700 bg-pink-100 px-3 py-2 rounded-lg">
+                  <span className="font-semibold">Validation Checks:</span>
+                  <span>• Token Integrity (checkTokenIntegrity)</span>
+                  <span>• Hallucination Detection</span>
+                  <span>• Unsafe Content Detection</span>
+                  <span>• Golden Case Matching</span>
+                </div>
+              </div>
+              {/* Pass/Fail indicator */}
+              <div className="flex justify-center mt-4 gap-4">
+                <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full border border-green-300">
+                  <span className="text-[10px] font-semibold text-green-700">
+                    ✓ PASS → Continue
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-orange-100 px-3 py-1 rounded-full border border-orange-300">
+                  <span className="text-[10px] font-semibold text-orange-700">
+                    ✗ FAIL → Retry (up to 3x)
+                  </span>
+                </div>
+              </div>
+            </ArchitectureContainer>
+
+            <div className="flex justify-center">
+              <ArchitectureArrow
+                direction="down"
+                length={30}
+                label="If Validation Passes"
+                labelPosition="right"
+              />
+            </div>
+
+            {/* Deanonymize */}
+            <ArchitectureContainer
+              title="Entity Restoration"
+              titleColor={COLORS.indigo}
+            >
+              <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-2 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                  <ArchitectureNode
+                    icon={<Unlock size={28} />}
+                    label="Deanonymize"
+                    sublabel="stepDeanonymize() - Restore Entities"
+                    color={COLORS.indigo}
+                    number={11}
+                  />
+                </div>
+              </div>
+            </ArchitectureContainer>
+
+            <div className="flex justify-center">
+              <ArchitectureArrow direction="down" length={30} />
+            </div>
+
             {/* Output */}
             <ArchitectureContainer title="Output" titleColor={COLORS.cyan}>
               <div className="flex items-center justify-center gap-8">
@@ -354,28 +384,28 @@ const ExosArchitectureDiagram: React.FC = () => {
                   label="Executive Reports"
                   sublabel="PDF with Citations"
                   color={COLORS.cyan}
-                  number={14}
+                  number={12}
                 />
                 <ArchitectureNode
                   icon={<LayoutDashboard size={28} />}
                   label="Dashboards"
                   sublabel="Kraljic · TCO · Risk"
                   color={COLORS.cyan}
-                  number={15}
+                  number={13}
                 />
                 <ArchitectureNode
                   icon={<Map size={28} />}
                   label="Roadmaps"
                   sublabel="Action Plans"
                   color={COLORS.cyan}
-                  number={16}
+                  number={14}
                 />
                 <ArchitectureNode
                   icon={<Lightbulb size={28} />}
                   label="Insights"
                   sublabel="Opportunities"
                   color={COLORS.cyan}
-                  number={17}
+                  number={15}
                 />
               </div>
             </ArchitectureContainer>
@@ -390,6 +420,36 @@ const ExosArchitectureDiagram: React.FC = () => {
             <div
               className="w-4 h-4 rounded border-2"
               style={{
+                borderColor: COLORS.green,
+                backgroundColor: "#f0fdf4",
+              }}
+            />
+            <span className="text-gray-600">Pre-Flight (On-Premises)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-4 h-4 rounded border-2 border-dashed"
+              style={{
+                borderColor: COLORS.purple,
+                backgroundColor: "#faf5ff",
+              }}
+            />
+            <span className="text-gray-600">Cloud Services (External)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-4 h-4 rounded border-2"
+              style={{
+                borderColor: COLORS.indigo,
+                backgroundColor: "#eef2ff",
+              }}
+            />
+            <span className="text-gray-600">Post-Flight (On-Premises)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-4 h-4 rounded border-2"
+              style={{
                 borderColor: COLORS.security,
                 backgroundColor: "#fef2f2",
               }}
@@ -397,43 +457,8 @@ const ExosArchitectureDiagram: React.FC = () => {
             <span className="text-gray-600">Security Perimeter</span>
           </div>
           <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: COLORS.blue }}
-            />
-            <span className="text-gray-600">User Input</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: COLORS.orange }}
-            />
-            <span className="text-gray-600">Context Preparation</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: COLORS.green }}
-            />
-            <span className="text-gray-600">Sentinel Pipeline</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: COLORS.purple }}
-            />
-            <span className="text-gray-600">AI Gateway</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: COLORS.cyan }}
-            />
-            <span className="text-gray-600">Observability / Output</span>
-          </div>
-          <div className="flex items-center gap-2">
             <RotateCcw size={14} className="text-orange-500" />
-            <span className="text-gray-600">Retry Loop</span>
+            <span className="text-gray-600">Retry Loop (3x max)</span>
           </div>
         </div>
       </div>
