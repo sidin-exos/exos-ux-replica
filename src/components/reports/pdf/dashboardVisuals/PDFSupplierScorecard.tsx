@@ -2,111 +2,197 @@ import { View, Text } from "@react-pdf/renderer";
 import { colors, styles } from "./theme";
 
 const suppliers = [
-  { name: "Alpha Corp", score: 92, trend: "up", spend: "$450K", color: colors.primary },
-  { name: "Beta Industries", score: 78, trend: "down", spend: "$320K", color: colors.warning },
-  { name: "Gamma Tech", score: 85, trend: "stable", spend: "$180K", color: colors.primary },
-  { name: "Delta Services", score: 61, trend: "down", spend: "$275K", color: colors.textMuted },
-  { name: "Epsilon Materials", score: 88, trend: "up", spend: "$210K", color: colors.primary },
+  { name: "Alpha Corp", score: 92, trend: "up", spend: "$450K", category: "Strategic" },
+  { name: "Beta Industries", score: 78, trend: "down", spend: "$320K", category: "Leverage" },
+  { name: "Gamma Tech", score: 85, trend: "stable", spend: "$180K", category: "Strategic" },
+  { name: "Delta Services", score: 61, trend: "down", spend: "$275K", category: "Bottleneck" },
+  { name: "Epsilon Materials", score: 88, trend: "up", spend: "$210K", category: "Strategic" },
 ];
 
 const getScoreColor = (score: number): string => {
-  if (score >= 85) return colors.primary;
+  if (score >= 85) return colors.success;
   if (score >= 70) return colors.warning;
-  return colors.textMuted;
+  return colors.destructive;
 };
 
 const getTrendSymbol = (trend: string): string => {
   switch (trend) {
-    case "up": return "↑";
-    case "down": return "↓";
-    default: return "→";
+    case "up": return "▲";
+    case "down": return "▼";
+    default: return "►";
   }
 };
 
 const getTrendColor = (trend: string): string => {
   switch (trend) {
     case "up": return colors.success;
-    case "down": return colors.textMuted;
+    case "down": return colors.destructive;
     default: return colors.textMuted;
   }
 };
 
+// Table-specific styles for proper alignment
+const tableStyles = {
+  tableContainer: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 4,
+    overflow: "hidden" as const,
+  },
+  headerRow: {
+    flexDirection: "row" as const,
+    backgroundColor: colors.surfaceLight,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  dataRow: {
+    flexDirection: "row" as const,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    alignItems: "center" as const,
+  },
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+  // Column widths - must total 100%
+  colSupplier: { width: "35%" as const },
+  colScore: { width: "15%" as const, alignItems: "center" as const },
+  colTrend: { width: "12%" as const, alignItems: "center" as const },
+  colSpend: { width: "18%" as const, alignItems: "flex-end" as const },
+  colCategory: { width: "20%" as const, alignItems: "flex-end" as const },
+  headerText: {
+    fontSize: 7,
+    fontWeight: 700 as const,
+    color: colors.textMuted,
+    textTransform: "uppercase" as const,
+  },
+  cellText: {
+    fontSize: 8,
+    color: colors.text,
+  },
+};
+
 export const PDFSupplierScorecard = () => (
   <View style={styles.dashboardCard}>
+    {/* Header */}
     <View style={styles.dashboardHeader}>
       <View style={styles.dashboardIcon} />
       <View style={{ flex: 1 }}>
         <Text style={styles.dashboardTitle}>Supplier Scorecard</Text>
-        <Text style={styles.dashboardSubtitle}>Performance rankings</Text>
+        <Text style={styles.dashboardSubtitle}>Performance rankings & spend analysis</Text>
       </View>
       <Text style={{ fontSize: 7, color: colors.textMuted }}>{suppliers.length} suppliers</Text>
     </View>
 
-    {/* Score bars visualization */}
-    <View style={{ marginTop: 8, marginBottom: 8 }}>
-      {suppliers.map((supplier, i) => (
-        <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-          <View style={{ 
-            flex: 1, 
-            height: 10, 
-            backgroundColor: colors.surfaceLight, 
-            borderRadius: 2,
-            overflow: "hidden",
-            marginRight: 6
-          }}>
-            <View style={{ 
-              height: 10, 
-              backgroundColor: getScoreColor(supplier.score), 
-              width: `${supplier.score}%`,
-              borderRadius: 2
-            }} />
-          </View>
+    {/* Data Table */}
+    <View style={tableStyles.tableContainer}>
+      {/* Table Header Row */}
+      <View style={tableStyles.headerRow}>
+        <View style={tableStyles.colSupplier}>
+          <Text style={tableStyles.headerText}>Supplier</Text>
         </View>
-      ))}
-      {/* Reference line indicator */}
-      <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
-        <View style={{ flex: 0.75, borderRightWidth: 1, borderRightColor: colors.border, borderStyle: "dashed" }} />
-        <Text style={{ fontSize: 6, color: colors.textMuted, marginLeft: 4 }}>Target: 75</Text>
+        <View style={tableStyles.colScore}>
+          <Text style={tableStyles.headerText}>Score</Text>
+        </View>
+        <View style={tableStyles.colTrend}>
+          <Text style={tableStyles.headerText}>Trend</Text>
+        </View>
+        <View style={tableStyles.colSpend}>
+          <Text style={tableStyles.headerText}>Spend</Text>
+        </View>
+        <View style={tableStyles.colCategory}>
+          <Text style={tableStyles.headerText}>Category</Text>
+        </View>
       </View>
-    </View>
 
-    {/* Supplier list */}
-    <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 }}>
+      {/* Table Data Rows */}
       {suppliers.map((supplier, i) => (
-        <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
-          {/* Score badge */}
-          <View style={{ 
-            width: 22, 
-            height: 22, 
-            borderRadius: 11, 
-            backgroundColor: getScoreColor(supplier.score) + "30",
-            justifyContent: "center",
-            alignItems: "center",
-            marginRight: 8
-          }}>
-            <Text style={{ fontSize: 7, fontWeight: 700, color: getScoreColor(supplier.score) }}>
-              {supplier.score}
+        <View 
+          key={i} 
+          style={[
+            tableStyles.dataRow, 
+            i === suppliers.length - 1 && tableStyles.lastRow
+          ]}
+        >
+          {/* Supplier Name */}
+          <View style={tableStyles.colSupplier}>
+            <Text style={tableStyles.cellText}>{supplier.name}</Text>
+          </View>
+          
+          {/* Score Badge */}
+          <View style={[tableStyles.colScore, { flexDirection: "row", justifyContent: "center" }]}>
+            <View style={{
+              backgroundColor: getScoreColor(supplier.score) + "30",
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 3,
+            }}>
+              <Text style={{ 
+                fontSize: 8, 
+                fontWeight: 700, 
+                color: getScoreColor(supplier.score) 
+              }}>
+                {supplier.score}
+              </Text>
+            </View>
+          </View>
+          
+          {/* Trend Indicator */}
+          <View style={tableStyles.colTrend}>
+            <Text style={{ 
+              fontSize: 9, 
+              color: getTrendColor(supplier.trend) 
+            }}>
+              {getTrendSymbol(supplier.trend)}
             </Text>
           </View>
           
-          {/* Supplier info */}
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 8, color: colors.text }}>{supplier.name}</Text>
-            <Text style={{ fontSize: 6, color: colors.textMuted }}>{supplier.spend}</Text>
+          {/* Spend */}
+          <View style={tableStyles.colSpend}>
+            <Text style={[tableStyles.cellText, { textAlign: "right" }]}>
+              {supplier.spend}
+            </Text>
           </View>
           
-          {/* Trend indicator */}
-          <Text style={{ fontSize: 10, color: getTrendColor(supplier.trend) }}>
-            {getTrendSymbol(supplier.trend)}
-          </Text>
+          {/* Category */}
+          <View style={tableStyles.colCategory}>
+            <Text style={[tableStyles.cellText, { fontSize: 7, color: colors.textMuted }]}>
+              {supplier.category}
+            </Text>
+          </View>
         </View>
       ))}
+    </View>
+
+    {/* Summary Stats */}
+    <View style={styles.statsRow}>
+      <View style={styles.statItem}>
+        <Text style={styles.statLabel}>Avg Score</Text>
+        <Text style={[styles.statValue, { color: colors.success }]}>
+          {Math.round(suppliers.reduce((sum, s) => sum + s.score, 0) / suppliers.length)}
+        </Text>
+      </View>
+      <View style={styles.statItem}>
+        <Text style={styles.statLabel}>Above Target</Text>
+        <Text style={[styles.statValue, { color: colors.primary }]}>
+          {suppliers.filter(s => s.score >= 75).length}/{suppliers.length}
+        </Text>
+      </View>
+      <View style={styles.statItem}>
+        <Text style={styles.statLabel}>Total Spend</Text>
+        <Text style={styles.statValue}>$1.43M</Text>
+      </View>
     </View>
 
     {/* Legend */}
     <View style={styles.legend}>
       <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+        <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
         <Text style={styles.legendText}>≥85 Excellent</Text>
       </View>
       <View style={styles.legendItem}>
@@ -114,8 +200,8 @@ export const PDFSupplierScorecard = () => (
         <Text style={styles.legendText}>≥70 Good</Text>
       </View>
       <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: colors.textMuted }]} />
-        <Text style={styles.legendText}>&lt;70 Needs Improvement</Text>
+        <View style={[styles.legendDot, { backgroundColor: colors.destructive }]} />
+        <Text style={styles.legendText}>&lt;70 At Risk</Text>
       </View>
     </View>
   </View>

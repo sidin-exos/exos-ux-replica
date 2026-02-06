@@ -1,134 +1,247 @@
 import { View, Text } from "@react-pdf/renderer";
 import { colors, styles } from "./theme";
 
-// 5x5 grid with specific risks placed
-const size = 5;
+// Risk items with calculated risk scores
 const risks = [
-  { id: "R1", impact: 5, prob: 2, name: "Supply Disruption" },
-  { id: "R2", impact: 4, prob: 4, name: "Price Volatility" },
-  { id: "R3", impact: 3, prob: 5, name: "Quality Issues" },
-  { id: "R4", impact: 2, prob: 4, name: "Delivery Delays" },
+  { id: "R1", name: "Supply Chain Disruption", impact: 5, probability: 4, category: "Operations" },
+  { id: "R2", name: "Price Volatility", impact: 4, probability: 4, category: "Financial" },
+  { id: "R3", name: "Quality Non-Conformance", impact: 4, probability: 3, category: "Quality" },
+  { id: "R4", name: "Regulatory Compliance Gap", impact: 5, probability: 2, category: "Compliance" },
+  { id: "R5", name: "Single Supplier Dependency", impact: 4, probability: 3, category: "Strategic" },
+  { id: "R6", name: "Delivery Delays", impact: 3, probability: 4, category: "Operations" },
 ];
 
-const getRiskColor = (impact: number, prob: number): string => {
-  const score = impact * prob;
-  if (score >= 16) return colors.destructive;
-  if (score >= 10) return colors.warning;
-  return colors.primary;
+// Calculate risk score and severity
+const getRiskScore = (impact: number, probability: number): number => impact * probability;
+
+const getRiskSeverity = (score: number): { label: string; color: string; bgColor: string } => {
+  if (score >= 16) return { label: "Critical", color: colors.background, bgColor: colors.destructive };
+  if (score >= 10) return { label: "High", color: colors.background, bgColor: colors.warning };
+  if (score >= 6) return { label: "Medium", color: colors.text, bgColor: colors.surfaceLight };
+  return { label: "Low", color: colors.text, bgColor: colors.surfaceLight };
 };
 
-const getRiskAtCell = (impact: number, prob: number) => {
-  return risks.find(r => r.impact === impact && r.prob === prob);
+// Sort risks by score (highest first)
+const sortedRisks = [...risks].sort((a, b) => 
+  getRiskScore(b.impact, b.probability) - getRiskScore(a.impact, a.probability)
+);
+
+// Table-specific styles
+const tableStyles = {
+  tableContainer: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 4,
+    overflow: "hidden" as const,
+  },
+  headerRow: {
+    flexDirection: "row" as const,
+    backgroundColor: colors.surfaceLight,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  dataRow: {
+    flexDirection: "row" as const,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    alignItems: "center" as const,
+  },
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+  // Column widths - must total 100%
+  colSeverity: { width: "18%" as const, alignItems: "center" as const },
+  colRisk: { width: "38%" as const },
+  colImpact: { width: "14%" as const, alignItems: "center" as const },
+  colProb: { width: "14%" as const, alignItems: "center" as const },
+  colScore: { width: "16%" as const, alignItems: "center" as const },
+  headerText: {
+    fontSize: 7,
+    fontWeight: 700 as const,
+    color: colors.textMuted,
+    textTransform: "uppercase" as const,
+  },
+  cellText: {
+    fontSize: 8,
+    color: colors.text,
+  },
 };
 
-export const PDFRiskMatrix = () => (
-  <View style={styles.dashboardCard}>
-    <View style={styles.dashboardHeader}>
-      <View style={styles.dashboardIcon} />
-      <View style={{ flex: 1 }}>
-        <Text style={styles.dashboardTitle}>Risk Matrix</Text>
-        <Text style={styles.dashboardSubtitle}>Probability × Impact assessment</Text>
-      </View>
-      <View style={{ alignItems: "flex-end" }}>
-        <Text style={{ fontSize: 10, fontWeight: 700, color: colors.destructive }}>{risks.filter(r => r.impact * r.prob >= 16).length}</Text>
-        <Text style={{ fontSize: 6, color: colors.textMuted }}>critical risks</Text>
-      </View>
-    </View>
+export const PDFRiskMatrix = () => {
+  const criticalCount = sortedRisks.filter(r => getRiskScore(r.impact, r.probability) >= 16).length;
+  const highCount = sortedRisks.filter(r => {
+    const score = getRiskScore(r.impact, r.probability);
+    return score >= 10 && score < 16;
+  }).length;
 
-    {/* Matrix Grid */}
-    <View style={{ marginTop: 8, flexDirection: "row" }}>
-      {/* Y-axis label */}
-      <View style={{ width: 16, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ fontSize: 6, color: colors.textMuted, transform: "rotate(-90deg)" }}>Impact</Text>
-      </View>
-      
-      <View style={{ flex: 1 }}>
-        <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 4, overflow: "hidden" }}>
-          {Array.from({ length: size }).map((_, r) => {
-            const impact = size - r;
-            return (
-              <View
-                key={r}
-                style={{ 
-                  flexDirection: "row", 
-                  borderBottomWidth: r === size - 1 ? 0 : 1, 
-                  borderBottomColor: colors.border 
-                }}
-              >
-                {Array.from({ length: size }).map((__, c) => {
-                  const prob = c + 1;
-                  const risk = getRiskAtCell(impact, prob);
-                  const bgColor = risk ? getRiskColor(impact, prob) : colors.surfaceLight;
-                  
-                  return (
-                    <View
-                      key={c}
-                      style={{
-                        flex: 1,
-                        height: 20,
-                        backgroundColor: bgColor,
-                        borderRightWidth: c === size - 1 ? 0 : 1,
-                        borderRightColor: colors.border,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      {risk && (
-                        <Text style={{ fontSize: 6, fontWeight: 700, color: colors.background }}>
-                          {risk.id}
-                        </Text>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
-            );
-          })}
+  return (
+    <View style={styles.dashboardCard}>
+      {/* Header */}
+      <View style={styles.dashboardHeader}>
+        <View style={styles.dashboardIcon} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.dashboardTitle}>Risk Assessment Matrix</Text>
+          <Text style={styles.dashboardSubtitle}>Impact × Probability analysis</Text>
         </View>
-        
-        {/* X-axis label */}
-        <Text style={{ fontSize: 6, color: colors.textMuted, textAlign: "center", marginTop: 4 }}>
-          Probability →
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {criticalCount > 0 && (
+            <View style={{ 
+              backgroundColor: colors.destructive, 
+              paddingHorizontal: 6, 
+              paddingVertical: 2, 
+              borderRadius: 3,
+              marginRight: 4
+            }}>
+              <Text style={{ fontSize: 7, fontWeight: 700, color: colors.background }}>
+                {criticalCount} Critical
+              </Text>
+            </View>
+          )}
+          {highCount > 0 && (
+            <View style={{ 
+              backgroundColor: colors.warning, 
+              paddingHorizontal: 6, 
+              paddingVertical: 2, 
+              borderRadius: 3 
+            }}>
+              <Text style={{ fontSize: 7, fontWeight: 700, color: colors.background }}>
+                {highCount} High
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
 
-    {/* Risk Legend */}
-    <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-      {risks.map((risk, i) => (
-        <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-          <View style={{ 
-            width: 16, 
-            height: 12, 
-            backgroundColor: getRiskColor(risk.impact, risk.prob), 
-            borderRadius: 2,
-            justifyContent: "center",
-            alignItems: "center",
-            marginRight: 6
-          }}>
-            <Text style={{ fontSize: 6, fontWeight: 700, color: colors.background }}>{risk.id}</Text>
+      {/* Risk Table */}
+      <View style={tableStyles.tableContainer}>
+        {/* Table Header Row */}
+        <View style={tableStyles.headerRow}>
+          <View style={tableStyles.colSeverity}>
+            <Text style={tableStyles.headerText}>Severity</Text>
           </View>
-          <Text style={{ fontSize: 7, color: colors.text, flex: 1 }}>{risk.name}</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>
-            Impact: {risk.impact} × Prob: {risk.prob} = {risk.impact * risk.prob}
+          <View style={tableStyles.colRisk}>
+            <Text style={tableStyles.headerText}>Risk Item</Text>
+          </View>
+          <View style={tableStyles.colImpact}>
+            <Text style={tableStyles.headerText}>Impact</Text>
+          </View>
+          <View style={tableStyles.colProb}>
+            <Text style={tableStyles.headerText}>Prob</Text>
+          </View>
+          <View style={tableStyles.colScore}>
+            <Text style={tableStyles.headerText}>Score</Text>
+          </View>
+        </View>
+
+        {/* Table Data Rows */}
+        {sortedRisks.map((risk, i) => {
+          const score = getRiskScore(risk.impact, risk.probability);
+          const severity = getRiskSeverity(score);
+          
+          return (
+            <View 
+              key={risk.id} 
+              style={[
+                tableStyles.dataRow, 
+                i === sortedRisks.length - 1 && tableStyles.lastRow
+              ]}
+            >
+              {/* Severity Badge */}
+              <View style={tableStyles.colSeverity}>
+                <View style={{
+                  backgroundColor: severity.bgColor,
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  borderRadius: 3,
+                  minWidth: 48,
+                  alignItems: "center",
+                }}>
+                  <Text style={{ 
+                    fontSize: 7, 
+                    fontWeight: 700, 
+                    color: severity.color 
+                  }}>
+                    {severity.label}
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Risk Name & Category */}
+              <View style={tableStyles.colRisk}>
+                <Text style={tableStyles.cellText}>{risk.name}</Text>
+                <Text style={{ fontSize: 6, color: colors.textMuted, marginTop: 1 }}>
+                  {risk.category}
+                </Text>
+              </View>
+              
+              {/* Impact */}
+              <View style={tableStyles.colImpact}>
+                <Text style={[tableStyles.cellText, { fontWeight: 600 }]}>
+                  {risk.impact}
+                </Text>
+              </View>
+              
+              {/* Probability */}
+              <View style={tableStyles.colProb}>
+                <Text style={[tableStyles.cellText, { fontWeight: 600 }]}>
+                  {risk.probability}
+                </Text>
+              </View>
+              
+              {/* Score */}
+              <View style={tableStyles.colScore}>
+                <Text style={[
+                  tableStyles.cellText, 
+                  { fontWeight: 700, color: severity.bgColor === colors.surfaceLight ? colors.text : severity.bgColor }
+                ]}>
+                  {score}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Summary Stats */}
+      <View style={styles.statsRow}>
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>Total Risks</Text>
+          <Text style={styles.statValue}>{sortedRisks.length}</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>Avg Score</Text>
+          <Text style={[styles.statValue, { color: colors.warning }]}>
+            {Math.round(sortedRisks.reduce((sum, r) => sum + getRiskScore(r.impact, r.probability), 0) / sortedRisks.length)}
           </Text>
         </View>
-      ))}
-    </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>Max Score</Text>
+          <Text style={[styles.statValue, { color: colors.destructive }]}>
+            {Math.max(...sortedRisks.map(r => getRiskScore(r.impact, r.probability)))}
+          </Text>
+        </View>
+      </View>
 
-    <View style={styles.legend}>
-      <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-        <Text style={styles.legendText}>Low (&lt;10)</Text>
-      </View>
-      <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
-        <Text style={styles.legendText}>Medium (10-15)</Text>
-      </View>
-      <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: colors.destructive }]} />
-        <Text style={styles.legendText}>High (≥16)</Text>
+      {/* Legend */}
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.destructive }]} />
+          <Text style={styles.legendText}>Critical (≥16)</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
+          <Text style={styles.legendText}>High (10-15)</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.surfaceLight }]} />
+          <Text style={styles.legendText}>Medium/Low (&lt;10)</Text>
+        </View>
       </View>
     </View>
-  </View>
-);
+  );
+};
