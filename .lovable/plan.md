@@ -1,108 +1,77 @@
 
 
-# Server-Side LangSmith Tracing Implementation
+# RLS Hardening Migration
 
 ## Summary
 
-Create a shared `LangSmithTracer` class for Deno Edge Functions and instrument `sentinel-analysis` and `market-intelligence` with hierarchical parent/child trace spans. All tracing is fire-and-forget -- zero impact on response latency.
+Replace overly permissive RLS policies on `test_prompts`, `test_reports`, `market_insights`, and `intel_queries` with least-privilege policies. Edge Functions use the **service role key** which bypasses RLS entirely, so we only need to restrict direct client (anon/authenticated) access.
 
 ---
 
-## File 1: Create `supabase/functions/_shared/langsmith.ts`
-
-A lightweight, Deno-compatible tracing utility (~90 lines):
-
-- **`LangSmithTracer` class**
-  - Constructor reads `VITE_LANGCHAIN_API_KEY`, `VITE_LANGCHAIN_PROJECT`, `VITE_LANGCHAIN_ENDPOINT` from `Deno.env`
-  - Accepts `env` and `feature` constructor params for automatic tag injection
-  - `isEnabled()` -- returns false if API key missing or tracing not `"true"`
-  - `createRun(name, runType, inputs, opts?)` -- POST to `/runs`, returns UUID immediately, fetch is fire-and-forget
-  - `patchRun(runId, outputs?, error?)` -- PATCH to `/runs/{id}`, fire-and-forget
-- **No retries** (unlike browser client) -- edge function lifetime is limited, fire-and-forget is sufficient
-- **No external deps** -- pure `fetch` + `crypto.randomUUID()`
-- All calls wrapped in try/catch with `console.error` on failure
-
----
-
-## File 2: Modify `supabase/functions/sentinel-analysis/index.ts`
-
-### Changes:
-1. Add `import { LangSmithTracer } from "../_shared/langsmith.ts"` at top
-2. Add `env?: string` to `AnalysisRequest` interface
-3. After parsing request body, instantiate tracer and create parent run:
+## Current State vs Target
 
 ```text
-const tracer = new LangSmithTracer({ env: body.env, feature: "sentinel_analysis" });
-const parentRunId = tracer.createRun("sentinel-analysis", "chain", {
-  model, scenarioType, industrySlug, categorySlug,
-  systemPromptLength: systemPrompt.length,
-  userPromptLength: userPrompt.length,
-});
+Table               Current                         Target
+-----------------   ----------------------------    ----------------------------
+test_prompts        ALL for everyone                SELECT public, INSERT auth only, no UPDATE/DELETE
+test_reports        ALL for everyone                SELECT public, INSERT auth only, no UPDATE/DELETE
+market_insights     SELECT/INSERT/UPDATE public     SELECT public only (edge fn handles writes)
+intel_queries       SELECT/INSERT/UPDATE public     SELECT public only (edge fn handles writes)
+industry_contexts   SELECT only                     No change (already correct)
+procurement_cats    SELECT only                     No change (already correct)
 ```
 
-4. Before each AI call (Google AI Studio path + Lovable Gateway path), create child LLM run:
-
-```text
-const llmRunId = tracer.createRun("ai-gateway-call", "llm",
-  { model, promptLengths: { system: systemPrompt.length, user: userPrompt.length } },
-  { parentRunId }
-);
-```
-
-5. After AI response, patch child run with outputs (content length, token usage, latency)
-6. Before returning final response, patch parent run with success/error status
-7. On error paths, patch parent run with error string
-
-**No prompt content is sent to LangSmith** -- only metadata (lengths, model, scenario type, slugs).
+**Key insight**: Service role bypasses RLS, so we do NOT need explicit policies for edge functions. We just remove write access from anon/authenticated roles.
 
 ---
 
-## File 3: Modify `supabase/functions/market-intelligence/index.ts`
+## SQL Migration
 
-### Changes:
-1. Add `import { LangSmithTracer } from "../_shared/langsmith.ts"`
-2. Add `env?: string` to `IntelRequest` interface
-3. After parsing body, create parent run:
+The migration will:
 
-```text
-const tracer = new LangSmithTracer({ env: body.env, feature: "market_intelligence" });
-const parentRunId = tracer.createRun("market-intelligence", "chain", {
-  queryType, queryLength: query.length, recencyFilter, domainFilter,
-});
-```
+1. **Drop** all existing overly-permissive policies on the 4 target tables
+2. **Create** new restrictive policies:
+   - `test_prompts` / `test_reports`: SELECT for `public` (anon + auth), INSERT for `authenticated` only
+   - `market_insights` / `intel_queries`: SELECT only for `public`
+3. No UPDATE or DELETE policies = denied by default for non-service-role clients
 
-4. After Perplexity response, create + patch child LLM run:
+### Detailed SQL
 
-```text
-const llmRunId = tracer.createRun("perplexity-sonar-pro", "llm",
-  { model: "sonar-pro", queryType },
-  { parentRunId }
-);
-tracer.patchRun(llmRunId, {
-  summaryLength: summary.length, citationCount: citations.length, tokenUsage, processingTimeMs,
-});
-```
+**test_prompts:**
+- Drop: "Test prompts are publicly accessible" (ALL)
+- Add: SELECT policy for `public` role
+- Add: INSERT policy for `authenticated` role
 
-5. Patch parent run before returning response
-6. On error catch block, patch parent with error
+**test_reports:**
+- Drop: "Test reports are publicly accessible" (ALL)
+- Add: SELECT policy for `public` role
+- Add: INSERT policy for `authenticated` role
+
+**market_insights:**
+- Drop: "Allow service role insert on market_insights" (INSERT)
+- Drop: "Allow service role update on market_insights" (UPDATE)
+- Keep: "Market insights are publicly readable" (SELECT) -- already correct
+
+**intel_queries:**
+- Drop: "Allow public insert access to intel_queries" (INSERT)
+- Drop: "Allow public update access to intel_queries" (UPDATE)
+- Keep: "Allow public read access to intel_queries" (SELECT) -- already correct
+
+### No Code Changes Required
+
+Edge Functions (`sentinel-analysis`, `market-intelligence`, `generate-market-insights`) all use `SUPABASE_SERVICE_ROLE_KEY` via `createClient(url, serviceKey)`, which bypasses RLS. No code changes needed.
+
+### industry_contexts and procurement_categories
+
+Already locked to SELECT-only. Confirmed no INSERT/UPDATE/DELETE policies exist. No changes needed.
 
 ---
 
-## What This Does NOT Touch
+## Risk Assessment
 
-- Client-side `src/lib/ai/langsmith-client.ts` -- unchanged
-- `generate-market-insights` and `generate-test-data` -- deferred to a follow-up
-- Database schema -- no changes
-- UI -- no changes
-- Existing request/response contracts -- unchanged (the `env` field is optional, defaults to `"production"`)
-
----
-
-## Expected Result in LangSmith
-
-The "EXOS" project will show:
-- **Hierarchical traces**: parent "chain" runs with child "llm" runs
-- **Tags**: `env:production` / `env:dev`, `feature:sentinel_analysis` / `feature:market_intelligence`, model name
-- **Metadata**: scenario type, industry/category slugs, query type, processing time
-- **No PII**: only lengths, model names, and slugs
+- **Zero downtime**: Dropping + recreating policies is instantaneous
+- **No data loss**: Only policy changes, no schema changes
+- **Edge Functions unaffected**: Service role bypasses RLS
+- **Client reads unaffected**: SELECT policies remain public
+- **Client writes to test tables**: INSERT still allowed for authenticated users (needed for the Sentinel pipeline UI flow)
 
