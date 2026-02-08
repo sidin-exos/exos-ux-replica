@@ -13,6 +13,7 @@ import GeneratedReport from "./pages/GeneratedReport";
 import DashboardShowcase from "./pages/DashboardShowcase";
 import MarketIntelligence from "./pages/MarketIntelligence";
 import ArchitectureDiagram from "./pages/ArchitectureDiagram";
+import DevWorkflow from "./pages/DevWorkflow";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/dashboards" element={<DashboardShowcase />} />
             <Route path="/market-intelligence" element={<MarketIntelligence />} />
             <Route path="/architecture" element={<ArchitectureDiagram />} />
+            <Route path="/dev-workflow" element={<DevWorkflow />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/account" element={<Account />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
