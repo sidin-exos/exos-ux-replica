@@ -1,77 +1,124 @@
 
 
-# RLS Hardening Migration
+# Recreate Full Database Schema + Redeploy Edge Functions
 
 ## Summary
 
-Replace overly permissive RLS policies on `test_prompts`, `test_reports`, `market_insights`, and `intel_queries` with least-privilege policies. Edge Functions use the **service role key** which bypasses RLS entirely, so we only need to restrict direct client (anon/authenticated) access.
+Generate a single SQL migration that recreates all 7 tables, 3 database functions, 2 triggers, and all hardened RLS policies from scratch, plus redeploy all 4 edge functions to the new instance.
 
 ---
 
-## Current State vs Target
+## SQL Migration -- Single Script
 
+The migration consolidates all 7 existing migrations into one idempotent script:
+
+### Tables (6 total)
+
+1. **industry_contexts** -- Industry definitions with KPIs/constraints
+2. **procurement_categories** -- Procurement category reference data
+3. **test_prompts** -- Sentinel pipeline prompt archive
+4. **test_reports** -- AI response logs (FK to test_prompts)
+5. **shared_reports** -- Shareable report payloads with expiration
+6. **intel_queries** -- Market intelligence query logs
+7. **market_insights** -- AI-generated market intelligence
+
+### Database Functions (3)
+
+1. `update_updated_at_column()` -- Trigger function for timestamp management
+2. `create_shared_report(text, jsonb, timestamptz)` -- Security definer upsert
+3. `get_shared_report(text)` -- Security definer fetch with auto-cleanup
+
+### Triggers (2)
+
+1. `update_industry_contexts_updated_at` on industry_contexts
+2. `update_procurement_categories_updated_at` on procurement_categories
+
+### RLS Policies (Hardened)
+
+| Table | SELECT | INSERT | UPDATE | DELETE |
+|-------|--------|--------|--------|--------|
+| industry_contexts | public | denied | denied | denied |
+| procurement_categories | public | denied | denied | denied |
+| test_prompts | public | authenticated | denied | denied |
+| test_reports | public | authenticated | denied | denied |
+| market_insights | public | denied (service role only) | denied | denied |
+| intel_queries | public | denied (service role only) | denied | denied |
+| shared_reports | denied (all) | denied (all) | denied (all) | denied (all) |
+
+shared_reports access is exclusively through security definer functions.
+
+### Indexes (10)
+
+- `idx_test_prompts_scenario`, `idx_test_prompts_created`
+- `idx_test_reports_prompt`, `idx_test_reports_created`
+- `idx_shared_reports_expires_at`
+- `idx_intel_queries_type_created`, `idx_intel_queries_success`
+- `idx_market_insights_combo`, `idx_market_insights_active` (partial), `idx_market_insights_created`
+- `idx_unique_active_insight` (partial unique)
+
+### Grants
+
+- `REVOKE ALL ON shared_reports FROM anon, authenticated`
+- `GRANT EXECUTE ON create_shared_report TO anon, authenticated`
+- `GRANT EXECUTE ON get_shared_report TO anon, authenticated`
+
+---
+
+## Edge Functions (4) -- Redeploy
+
+All 4 functions plus the shared utility will be redeployed:
+
+1. **sentinel-analysis** -- AI procurement analysis pipeline (Gemini / Lovable AI Gateway with retry + fallback)
+2. **market-intelligence** -- Perplexity-powered market intelligence queries
+3. **generate-market-insights** -- Batch market insights generation with validation
+4. **generate-test-data** -- AI test data generation with trick library
+
+Config (all `verify_jwt = false`):
 ```text
-Table               Current                         Target
------------------   ----------------------------    ----------------------------
-test_prompts        ALL for everyone                SELECT public, INSERT auth only, no UPDATE/DELETE
-test_reports        ALL for everyone                SELECT public, INSERT auth only, no UPDATE/DELETE
-market_insights     SELECT/INSERT/UPDATE public     SELECT public only (edge fn handles writes)
-intel_queries       SELECT/INSERT/UPDATE public     SELECT public only (edge fn handles writes)
-industry_contexts   SELECT only                     No change (already correct)
-procurement_cats    SELECT only                     No change (already correct)
+[functions.market-intelligence]
+verify_jwt = false
+
+[functions.generate-market-insights]
+verify_jwt = false
+
+[functions.sentinel-analysis]
+verify_jwt = false
 ```
 
-**Key insight**: Service role bypasses RLS, so we do NOT need explicit policies for edge functions. We just remove write access from anon/authenticated roles.
+---
+
+## Required Secrets
+
+Verify these secrets are configured on the new instance:
+
+| Secret | Used By |
+|--------|---------|
+| PERPLEXITY_API_KEY | market-intelligence, generate-market-insights |
+| GOOGLE_AI_STUDIO_KEY | sentinel-analysis (BYOK mode) |
+| LOVABLE_API_KEY | sentinel-analysis (gateway fallback) |
+| VITE_LANGCHAIN_API_KEY | _shared/langsmith.ts (tracing) |
+| VITE_LANGCHAIN_PROJECT | _shared/langsmith.ts |
+| VITE_LANGCHAIN_ENDPOINT | _shared/langsmith.ts |
+| VITE_LANGCHAIN_TRACING_V2 | _shared/langsmith.ts |
+| SUPABASE_URL | Auto-provided |
+| SUPABASE_SERVICE_ROLE_KEY | Auto-provided |
+| SUPABASE_ANON_KEY | Auto-provided |
 
 ---
 
-## SQL Migration
+## Implementation Steps
 
-The migration will:
-
-1. **Drop** all existing overly-permissive policies on the 4 target tables
-2. **Create** new restrictive policies:
-   - `test_prompts` / `test_reports`: SELECT for `public` (anon + auth), INSERT for `authenticated` only
-   - `market_insights` / `intel_queries`: SELECT only for `public`
-3. No UPDATE or DELETE policies = denied by default for non-service-role clients
-
-### Detailed SQL
-
-**test_prompts:**
-- Drop: "Test prompts are publicly accessible" (ALL)
-- Add: SELECT policy for `public` role
-- Add: INSERT policy for `authenticated` role
-
-**test_reports:**
-- Drop: "Test reports are publicly accessible" (ALL)
-- Add: SELECT policy for `public` role
-- Add: INSERT policy for `authenticated` role
-
-**market_insights:**
-- Drop: "Allow service role insert on market_insights" (INSERT)
-- Drop: "Allow service role update on market_insights" (UPDATE)
-- Keep: "Market insights are publicly readable" (SELECT) -- already correct
-
-**intel_queries:**
-- Drop: "Allow public insert access to intel_queries" (INSERT)
-- Drop: "Allow public update access to intel_queries" (UPDATE)
-- Keep: "Allow public read access to intel_queries" (SELECT) -- already correct
-
-### No Code Changes Required
-
-Edge Functions (`sentinel-analysis`, `market-intelligence`, `generate-market-insights`) all use `SUPABASE_SERVICE_ROLE_KEY` via `createClient(url, serviceKey)`, which bypasses RLS. No code changes needed.
-
-### industry_contexts and procurement_categories
-
-Already locked to SELECT-only. Confirmed no INSERT/UPDATE/DELETE policies exist. No changes needed.
+1. Run the consolidated SQL migration (creates all tables, functions, triggers, indexes, RLS policies, and grants)
+2. Redeploy all 4 edge functions
+3. Verify secrets are present on the new instance
+4. Test end-to-end: run a Sentinel analysis and a market intelligence query to confirm writes succeed via service role
 
 ---
 
-## Risk Assessment
+## Technical Notes
 
-- **Zero downtime**: Dropping + recreating policies is instantaneous
-- **No data loss**: Only policy changes, no schema changes
-- **Edge Functions unaffected**: Service role bypasses RLS
-- **Client reads unaffected**: SELECT policies remain public
-- **Client writes to test tables**: INSERT still allowed for authenticated users (needed for the Sentinel pipeline UI flow)
+- The `market_insights` table uses a partial unique index (`idx_unique_active_insight`) instead of a table constraint, to allow multiple inactive rows per industry/category combination
+- `shared_reports` uses `REVOKE ALL` + deny-all RLS policies, with access only through `SECURITY DEFINER` functions
+- The `generate-test-data` function has no `verify_jwt` entry in config.toml (defaults handled by the platform)
+- No data migration is included -- this is schema-only. If you need to preserve existing data, export it from the old instance first.
 
