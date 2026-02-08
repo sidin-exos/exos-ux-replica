@@ -188,6 +188,13 @@ serve(async (req) => {
               });
             }
             
+            // On rate limit (429) or server error (5xx), fall through to Lovable AI Gateway
+            if (googleResponse.status === 429 || googleResponse.status >= 500) {
+              console.warn(`[Sentinel] Google AI Studio ${googleResponse.status}, falling back to Lovable AI Gateway`);
+              // Fall through by throwing to the catch block below
+              throw new Error(`Google AI Studio ${googleResponse.status}: fallback to gateway`);
+            }
+            
             return new Response(
               JSON.stringify({ error: "Google AI Studio error", details: errorText }),
               { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
