@@ -1,7 +1,6 @@
 /**
  * Lightweight LangSmith REST client for Deno Edge Functions.
- * Fire-and-forget tracing — never blocks the response pipeline.
- * No external dependencies; uses native fetch + crypto.randomUUID().
+ * VERBOSE LOGGING enabled for debugging trace delivery.
  */
 
 interface CreateRunOptions {
@@ -30,16 +29,21 @@ export class LangSmithTracer {
     const feature = opts?.feature || "unknown";
     this.baseTags = [`env:${env}`, `feature:${feature}`];
     this.baseMetadata = { env, feature };
+
+    console.log("[LangSmith] Config:", {
+      project: this.project,
+      endpoint: this.endpoint,
+      hasKey: !!this.apiKey,
+      tracingEnabled,
+      enabled: this.enabled,
+      baseTags: this.baseTags,
+    });
   }
 
   isEnabled(): boolean {
     return this.enabled;
   }
 
-  /**
-   * Create a new LangSmith run. Returns the run ID synchronously.
-   * The actual POST is fire-and-forget.
-   */
   createRun(
     name: string,
     runType: "chain" | "llm" | "tool",
@@ -47,7 +51,12 @@ export class LangSmithTracer {
     opts?: CreateRunOptions
   ): string {
     const id = crypto.randomUUID();
-    if (!this.enabled) return id;
+    if (!this.enabled) {
+      console.log("[LangSmith] createRun SKIPPED (disabled), id:", id);
+      return id;
+    }
+
+    console.log("[LangSmith] createRun:", { id, name, runType, parentRunId: opts?.parentRunId });
 
     const body = {
       id,
@@ -63,23 +72,22 @@ export class LangSmithTracer {
       ...(opts?.parentRunId ? { parent_run_id: opts.parentRunId } : {}),
     };
 
-    // Fire-and-forget — do NOT await
-    this.postRun(body).catch((err) =>
-      console.error("[LangSmith] createRun failed:", err)
-    );
+    this.postRun(body).catch(() => {/* already logged inside */});
 
     return id;
   }
 
-  /**
-   * Patch an existing run with outputs or error. Fire-and-forget.
-   */
   patchRun(
     runId: string,
     outputs?: Record<string, unknown>,
     error?: string
   ): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      console.log("[LangSmith] patchRun SKIPPED (disabled)");
+      return;
+    }
+
+    console.log("[LangSmith] patchRun:", { runId, hasOutputs: !!outputs, hasError: !!error });
 
     const body: Record<string, unknown> = {
       end_time: new Date().toISOString(),
@@ -87,25 +95,29 @@ export class LangSmithTracer {
     if (outputs) body.outputs = outputs;
     if (error) body.error = error;
 
-    this.patchRunRequest(runId, body).catch((err) =>
-      console.error("[LangSmith] patchRun failed:", err)
-    );
+    this.patchRunRequest(runId, body).catch(() => {/* already logged inside */});
   }
 
   // --- private helpers ---
 
   private async postRun(body: Record<string, unknown>): Promise<void> {
-    const res = await fetch(`${this.endpoint}/runs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": this.apiKey!,
-      },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(`[LangSmith] POST /runs ${res.status}: ${text}`);
+    try {
+      const res = await fetch(`${this.endpoint}/runs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": this.apiKey!,
+        },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        console.log("[LangSmith] POST /runs SUCCESS:", res.status);
+      } else {
+        const text = await res.text();
+        console.error("[LangSmith] POST /runs ERROR:", res.status, text);
+      }
+    } catch (err) {
+      console.error("[LangSmith] POST /runs NETWORK ERROR:", err);
     }
   }
 
@@ -113,17 +125,23 @@ export class LangSmithTracer {
     runId: string,
     body: Record<string, unknown>
   ): Promise<void> {
-    const res = await fetch(`${this.endpoint}/runs/${runId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": this.apiKey!,
-      },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(`[LangSmith] PATCH /runs/${runId} ${res.status}: ${text}`);
+    try {
+      const res = await fetch(`${this.endpoint}/runs/${runId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": this.apiKey!,
+        },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        console.log(`[LangSmith] PATCH /runs/${runId} SUCCESS:`, res.status);
+      } else {
+        const text = await res.text();
+        console.error(`[LangSmith] PATCH /runs/${runId} ERROR:`, res.status, text);
+      }
+    } catch (err) {
+      console.error(`[LangSmith] PATCH /runs/${runId} NETWORK ERROR:`, err);
     }
   }
 }
