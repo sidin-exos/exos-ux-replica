@@ -1,6 +1,6 @@
 # EXOS Project Context - Critical AI Infrastructure Files
 
-> **Generated:** 2026-02-06  
+> **Generated:** 2026-02-09  
 > **Purpose:** Concatenated source files for LangSmith integration and AI pipeline development
 
 ---
@@ -2109,6 +2109,7 @@ export default GenericScenarioWizard;
 ```typescript
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { LangSmithTracer } from "../_shared/langsmith.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2118,15 +2119,16 @@ const corsHeaders = {
 /**
  * EXOS Sentinel Analysis Edge Function
  * 
- * Processes procurement analysis requests through the full pipeline:
- * 1. Receives pre-processed (anonymized + grounded) context from client
- * 2. Calls AI gateway with grounded prompt (Gemini 3 Flash)
- * 3. Logs prompts and responses to testing database
- * 4. Returns response for client-side validation and de-anonymization
+ * Processes procurement analysis requests:
+ * 1. Optionally fetches industry/category context from DB (server-side grounding)
+ * 2. Builds grounding XML and system prompt server-side when slugs are provided
+ * 3. Calls AI gateway with grounded prompt
+ * 4. Logs prompts and responses to testing database
+ * 5. Returns response for client-side validation and de-anonymization
  */
 
 interface AnalysisRequest {
-  systemPrompt: string;
+  systemPrompt?: string;
   userPrompt: string;
   model?: string;
   useLocalModel?: boolean;
@@ -2134,56 +2136,225 @@ interface AnalysisRequest {
   useGoogleAIStudio?: boolean;
   googleModel?: string;
   stream?: boolean;
-  // Testing metadata
+  // Server-side grounding inputs
+  serverSideGrounding?: boolean;
   scenarioType?: string;
   scenarioData?: Record<string, unknown>;
   industrySlug?: string | null;
   categorySlug?: string | null;
+  // Legacy metadata (kept for backward compat, no longer used for grounding)
   groundingContext?: Record<string, unknown>;
   anonymizationMetadata?: Record<string, unknown>;
   enableTestLogging?: boolean;
+  // Tracing
+  env?: string;
 }
 
+// ============================================
+// SERVER-SIDE GROUNDING HELPERS
+// ============================================
+
+function escapeXML(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+interface IndustryRow {
+  name: string;
+  slug: string;
+  constraints: string[];
+  kpis: string[];
+}
+
+interface CategoryRow {
+  name: string;
+  slug: string;
+  characteristics: string;
+  kpis: string[];
+}
+
+function buildIndustryXML(industry: IndustryRow): string {
+  return `<industry-context>
+  <industry-name>${escapeXML(industry.name)}</industry-name>
+  <industry-id>${escapeXML(industry.slug)}</industry-id>
+  <regulatory-constraints>
+    <description>Critical regulatory and operational constraints. All recommendations must account for these.</description>
+    <constraints>
+${industry.constraints.map((c, i) => `      <constraint priority="${i + 1}">${escapeXML(c)}</constraint>`).join('\n')}
+    </constraints>
+  </regulatory-constraints>
+  <performance-kpis>
+    <description>Standard performance metrics for this industry.</description>
+    <kpis>
+${industry.kpis.map((k, i) => `      <kpi index="${i + 1}">${escapeXML(k)}</kpi>`).join('\n')}
+    </kpis>
+  </performance-kpis>
+</industry-context>`;
+}
+
+function buildCategoryXML(category: CategoryRow): string {
+  return `<category-context>
+  <category-name>${escapeXML(category.name)}</category-name>
+  <category-id>${escapeXML(category.slug)}</category-id>
+  <category-characteristics>
+    <description>Key characteristics defining this procurement category.</description>
+    <characteristics>${escapeXML(category.characteristics)}</characteristics>
+  </category-characteristics>
+  <category-kpis>
+    <description>Standard performance metrics for this category.</description>
+    <kpis>
+${category.kpis.map((k, i) => `      <kpi index="${i + 1}">${escapeXML(k)}</kpi>`).join('\n')}
+    </kpis>
+  </category-kpis>
+</category-context>`;
+}
+
+function buildServerGroundedPrompts(
+  industry: IndustryRow | null,
+  category: CategoryRow | null,
+  scenarioType: string,
+  scenarioData: Record<string, unknown>,
+  userInput: string
+): { systemPrompt: string; userPrompt: string } {
+  // Build system prompt with injected context
+  const contextParts: string[] = [];
+
+  if (industry) contextParts.push(buildIndustryXML(industry));
+  if (category) contextParts.push(buildCategoryXML(category));
+
+  const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
+
+IMPORTANT RULES:
+1. Maintain all masked tokens exactly as provided (e.g., [SUPPLIER_A], [AMOUNT_B])
+2. Do not attempt to guess or reveal masked information
+3. Base recommendations on the provided industry/category context
+4. Structure your response with clear sections: Analysis, Recommendations, Risks, Next Steps
+5. Quantify recommendations with specific percentages or ranges when possible
+6. Only cite specific data points from provided context
+7. Flag uncertainty explicitly with confidence levels
+8. Err on cautious side for savings projections
+
+${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}`;
+
+  // Build lean user prompt with scenario data + anonymized input
+  const scenarioFields = Object.entries(scenarioData)
+    .filter(([, v]) => v && String(v).trim())
+    .map(([k, v]) => `<field name="${escapeXML(k)}">${escapeXML(String(v))}</field>`)
+    .join('\n    ');
+
+  const userPrompt = `<analysis-request scenario-type="${escapeXML(scenarioType)}">
+  <user-input>
+    ${scenarioFields}
+  </user-input>
+  <anonymized-query>
+    ${escapeXML(userInput)}
+  </anonymized-query>
+</analysis-request>`;
+
+  return { systemPrompt, userPrompt };
+}
+
+// ============================================
+// MAIN HANDLER
+// ============================================
+
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Declare tracer and parentRunId at function scope for error handler
+  let tracer: LangSmithTracer | undefined;
+  let parentRunId: string | undefined;
+
   try {
-    const { 
-      systemPrompt, 
-      userPrompt, 
-      model = "google/gemini-3-flash-preview", // Default to Gemini 3 Flash
+    const body: AnalysisRequest = await req.json();
+    const {
+      userPrompt: rawUserPrompt,
+      model = "google/gemini-3-flash-preview",
       useLocalModel = false,
       localModelEndpoint,
       useGoogleAIStudio = false,
       googleModel = "gemini-2.0-flash",
       stream = false,
-      // Testing metadata
+      serverSideGrounding = false,
       scenarioType,
       scenarioData,
       industrySlug,
       categorySlug,
       groundingContext,
       anonymizationMetadata,
-      enableTestLogging = true
-    }: AnalysisRequest = await req.json();
+      enableTestLogging = true,
+      env: reqEnv,
+    } = body;
+
+    // Initialize LangSmith tracer
+    tracer = new LangSmithTracer({ env: reqEnv, feature: "sentinel_analysis" });
+    parentRunId = tracer.createRun("sentinel-analysis", "chain", {
+      model,
+      scenarioType: scenarioType || "unknown",
+      serverSideGrounding,
+    }, {
+      metadata: { industrySlug, categorySlug, useGoogleAIStudio, useLocalModel },
+      tags: [model],
+    });
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabase = supabaseUrl && supabaseKey
+      ? createClient(supabaseUrl, supabaseKey)
+      : null;
+
+    // --- Resolve prompts ---
+    let systemPrompt: string;
+    let userPrompt: string;
+
+    if (serverSideGrounding && supabase) {
+      // Server-side grounding: fetch context from DB and build prompts
+      const [industryResult, categoryResult] = await Promise.all([
+        industrySlug
+          ? supabase.from("industry_contexts").select("name, slug, constraints, kpis").eq("slug", industrySlug).single()
+          : Promise.resolve({ data: null, error: null }),
+        categorySlug
+          ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis").eq("slug", categorySlug).single()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      if (industryResult.error) console.error("[Sentinel] Failed to fetch industry context:", industryResult.error);
+      if (categoryResult.error) console.error("[Sentinel] Failed to fetch category context:", categoryResult.error);
+
+      const grounded = buildServerGroundedPrompts(
+        industryResult.data as IndustryRow | null,
+        categoryResult.data as CategoryRow | null,
+        scenarioType || "general",
+        scenarioData || {},
+        rawUserPrompt
+      );
+
+      systemPrompt = grounded.systemPrompt;
+      userPrompt = grounded.userPrompt;
+    } else if (body.systemPrompt) {
+      // Legacy path: client sent full prompts (useQuickAnalysis, ModelConfigPanel, etc.)
+      systemPrompt = body.systemPrompt;
+      userPrompt = rawUserPrompt;
+    } else {
+      // Fallback: no grounding, use a basic system prompt
+      systemPrompt = "You are an expert procurement analyst. Provide clear, actionable recommendations.";
+      userPrompt = rawUserPrompt;
+    }
 
     // Validate required fields
-    if (!systemPrompt || !userPrompt) {
+    if (!userPrompt) {
       return new Response(
-        JSON.stringify({ error: "Missing systemPrompt or userPrompt" }),
+        JSON.stringify({ error: "Missing userPrompt" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Initialize Supabase client for test logging
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const supabase = supabaseUrl && supabaseKey 
-      ? createClient(supabaseUrl, supabaseKey)
-      : null;
 
     let promptId: string | null = null;
     const startTime = performance.now();
@@ -2210,7 +2381,6 @@ serve(async (req) => {
           console.error("[Sentinel] Failed to log prompt:", promptError);
         } else {
           promptId = promptData.id;
-          console.log(`[Sentinel] Logged prompt: ${promptId}`);
         }
       } catch (logError) {
         console.error("[Sentinel] Prompt logging error:", logError);
@@ -2219,10 +2389,8 @@ serve(async (req) => {
 
     // Future: Route to local Mistral model if configured
     if (useLocalModel && localModelEndpoint) {
-      console.log(`[Sentinel] Routing to local model at ${localModelEndpoint}`);
-      
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Local model endpoint not yet implemented",
           message: "Configure your Mistral model endpoint and uncomment the local model logic"
         }),
@@ -2233,21 +2401,21 @@ serve(async (req) => {
     // Route to Google AI Studio (BYOK mode)
     if (useGoogleAIStudio) {
       const GOOGLE_AI_STUDIO_KEY = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
-      
+
       if (!GOOGLE_AI_STUDIO_KEY) {
         console.error("[Sentinel] GOOGLE_AI_STUDIO_KEY not configured, falling back to Lovable AI");
         // Fall through to Lovable AI Gateway
       } else {
-        console.log(`[Sentinel] Routing to Google AI Studio with model: ${googleModel}`);
-        
         const googleEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${googleModel}:generateContent?key=${GOOGLE_AI_STUDIO_KEY}`;
-        
+
         try {
+          const googleLlmRunId = tracer.createRun("google-ai-studio-call", "llm", {
+            model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
+          }, { parentRunId });
+
           const googleResponse = await fetch(googleEndpoint, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [
                 { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
@@ -2264,7 +2432,7 @@ serve(async (req) => {
           if (!googleResponse.ok) {
             const errorText = await googleResponse.text();
             console.error(`[Sentinel] Google AI Studio error: ${googleResponse.status}`, errorText);
-            
+
             if (enableTestLogging && supabase && promptId) {
               await supabase.from("test_reports").insert({
                 prompt_id: promptId,
@@ -2275,7 +2443,12 @@ serve(async (req) => {
                 error_message: `Google AI Studio error: ${googleResponse.status}`
               });
             }
-            
+
+            if (googleResponse.status === 429 || googleResponse.status >= 500) {
+              console.warn(`[Sentinel] Google AI Studio ${googleResponse.status}, falling back to Lovable AI Gateway`);
+              throw new Error(`Google AI Studio ${googleResponse.status}: fallback to gateway`);
+            }
+
             return new Response(
               JSON.stringify({ error: "Google AI Studio error", details: errorText }),
               { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -2284,16 +2457,12 @@ serve(async (req) => {
 
           const googleData = await googleResponse.json();
           const content = googleData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          
-          // Extract token usage from Google's format
+
           const usage = googleData.usageMetadata ? {
             prompt_tokens: googleData.usageMetadata.promptTokenCount || 0,
             completion_tokens: googleData.usageMetadata.candidatesTokenCount || 0,
             total_tokens: googleData.usageMetadata.totalTokenCount || 0,
           } : null;
-
-          console.log(`[Sentinel] Google AI Studio response: ${content.length} chars`);
-          console.log(`[Sentinel] Processing time: ${processingTime}ms`);
 
           // Log successful response
           if (enableTestLogging && supabase && promptId) {
@@ -2306,11 +2475,13 @@ serve(async (req) => {
                 token_usage: usage,
                 success: true
               });
-              console.log(`[Sentinel] Logged report for prompt: ${promptId}`);
             } catch (reportError) {
               console.error("[Sentinel] Failed to log report:", reportError);
             }
           }
+
+          tracer.patchRun(googleLlmRunId, { contentLength: content.length, usage, processingTimeMs: processingTime });
+          tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
 
           return new Response(
             JSON.stringify({
@@ -2330,7 +2501,7 @@ serve(async (req) => {
       }
     }
 
-    // Call Lovable AI Gateway with retry logic for transient errors
+    // Call Lovable AI Gateway with retry logic
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("[Sentinel] LOVABLE_API_KEY not configured");
@@ -2340,20 +2511,19 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[Sentinel] Calling AI gateway with model: ${model}`);
-    console.log(`[Sentinel] System prompt length: ${systemPrompt.length} chars`);
-    console.log(`[Sentinel] User prompt length: ${userPrompt.length} chars`);
-
-    // Retry logic for transient errors (503, connection resets)
     const MAX_RETRIES = 3;
-    const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff
+    const RETRY_DELAYS = [1000, 2000, 4000];
     let aiResponse: Response | null = null;
     let lastError: string | null = null;
+
+    const gatewayLlmRunId = tracer.createRun("ai-gateway-call", "llm", {
+      model, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
+    }, { parentRunId });
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         if (attempt > 0) {
-          console.log(`[Sentinel] Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms`);
+          console.warn(`[Sentinel] Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms`);
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
         }
 
@@ -2375,14 +2545,12 @@ serve(async (req) => {
           }),
         });
 
-        // If we get a 503 (service unavailable), retry
         if (aiResponse.status === 503) {
           lastError = await aiResponse.text();
           console.warn(`[Sentinel] Got 503 on attempt ${attempt + 1}: ${lastError}`);
           if (attempt < MAX_RETRIES - 1) continue;
         }
 
-        // Success or non-retryable error, break out
         break;
       } catch (fetchError) {
         lastError = fetchError instanceof Error ? fetchError.message : "Network error";
@@ -2405,22 +2573,14 @@ serve(async (req) => {
 
     const processingTime = Math.round(performance.now() - startTime);
 
-    // Handle rate limits and payment required
     if (aiResponse.status === 429) {
       console.warn("[Sentinel] Rate limit exceeded");
-      
-      // Log error to test reports
       if (enableTestLogging && supabase && promptId) {
         await supabase.from("test_reports").insert({
-          prompt_id: promptId,
-          model,
-          raw_response: "",
-          processing_time_ms: processingTime,
-          success: false,
-          error_message: "Rate limit exceeded"
+          prompt_id: promptId, model, raw_response: "", processing_time_ms: processingTime,
+          success: false, error_message: "Rate limit exceeded"
         });
       }
-      
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -2429,18 +2589,12 @@ serve(async (req) => {
 
     if (aiResponse.status === 402) {
       console.warn("[Sentinel] Payment required");
-      
       if (enableTestLogging && supabase && promptId) {
         await supabase.from("test_reports").insert({
-          prompt_id: promptId,
-          model,
-          raw_response: "",
-          processing_time_ms: processingTime,
-          success: false,
-          error_message: "Payment required"
+          prompt_id: promptId, model, raw_response: "", processing_time_ms: processingTime,
+          success: false, error_message: "Payment required"
         });
       }
-      
       return new Response(
         JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }),
         { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -2450,73 +2604,54 @@ serve(async (req) => {
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error(`[Sentinel] AI gateway error: ${aiResponse.status}`, errorText);
-      
       if (enableTestLogging && supabase && promptId) {
         await supabase.from("test_reports").insert({
-          prompt_id: promptId,
-          model,
-          raw_response: errorText,
-          processing_time_ms: processingTime,
-          success: false,
-          error_message: `AI gateway error: ${aiResponse.status}`
+          prompt_id: promptId, model, raw_response: errorText, processing_time_ms: processingTime,
+          success: false, error_message: `AI gateway error: ${aiResponse.status}`
         });
       }
-      
       return new Response(
         JSON.stringify({ error: "AI gateway error", details: errorText }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Handle streaming response
     if (stream) {
       return new Response(aiResponse.body, {
         headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
       });
     }
 
-    // Handle non-streaming response
     const data = await aiResponse.json();
     const content = data.choices?.[0]?.message?.content || "";
-    
-    console.log(`[Sentinel] Response received: ${content.length} chars`);
-    console.log(`[Sentinel] Processing time: ${processingTime}ms`);
 
-    // Log successful response to test reports
+    // Log successful response
     if (enableTestLogging && supabase && promptId) {
       try {
         await supabase.from("test_reports").insert({
-          prompt_id: promptId,
-          model,
-          raw_response: content,
-          processing_time_ms: processingTime,
-          token_usage: data.usage || null,
-          success: true
+          prompt_id: promptId, model, raw_response: content,
+          processing_time_ms: processingTime, token_usage: data.usage || null, success: true
         });
-        console.log(`[Sentinel] Logged report for prompt: ${promptId}`);
       } catch (reportError) {
         console.error("[Sentinel] Failed to log report:", reportError);
       }
     }
 
+    tracer.patchRun(gatewayLlmRunId, { contentLength: content.length, usage: data.usage, processingTimeMs: processingTime });
+    tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "cloud", processingTimeMs: processingTime });
+
     return new Response(
       JSON.stringify({
-        content,
-        model,
-        source: "cloud",
-        usage: data.usage,
-        promptId, // Return for client-side reference
-        processingTimeMs: processingTime
+        content, model, source: "cloud", usage: data.usage, promptId, processingTimeMs: processingTime
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
     console.error("[Sentinel] Error:", error);
+    try { tracer?.patchRun(parentRunId!, undefined, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error" 
-      }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
@@ -2967,4 +3102,4 @@ serve(async (req) => {
 ## End of PROJECT_CONTEXT.md
 
 *Total files: 9*  
-*Approximate line count: ~2,870 lines*
+*Approximate line count: ~2,840 lines*
