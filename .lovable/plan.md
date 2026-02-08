@@ -1,41 +1,65 @@
 
 
-# Create Project Context Snapshot v2
+# Create Project Context Snapshot for Feb 6th (Apples-to-Apples Comparison)
 
 ## What
 
-Create a new file `docs/PROJECT_CONTEXT_2026-02-09.md` documenting the current system state after the infrastructure migration and optimization phase. This is a standalone snapshot -- the existing `PROJECT_CONTEXT.md` (code concatenation file) remains untouched.
+Create `docs/PROJECT_CONTEXT_2026-02-06.md` using the exact same section structure as the existing `2026-02-09` snapshot, but reflecting the system state as of Feb 6th (derived from the uploaded code concatenation file).
 
 ## File
 
-`docs/PROJECT_CONTEXT_2026-02-09.md` -- new file in the existing `docs/` directory.
+`docs/PROJECT_CONTEXT_2026-02-06.md` -- new file, no existing files modified.
 
-## Content
+## Key Differences (Feb 6th vs Feb 9th)
 
-The file will contain the full markdown provided in the request, with the cut-off "Active Components" section completed based on the current codebase state:
+The Feb 6th codebase shows a system **before** the optimization phase:
+
+| Area | Feb 6th State | Feb 9th State |
+|------|--------------|--------------|
+| **Grounding** | Client-side (full XML built in browser, sent as payload) | Server-side (edge function fetches DB + builds XML) |
+| **Logging** | Verbose (`console.log` everywhere -- config dumps, routing info, response lengths) | Production Quiet (only `console.error` + retry warnings) |
+| **LangSmith** | Active, browser-side client with `logTracingConfig()` exposing endpoint/key presence | Server-side only, verbose logs stripped |
+| **Context Injection** | Full grounding XML assembled client-side via `grounding.ts` + `ai-context-templates.ts` | Surgical: edge function fetches only needed rows by slug |
+| **Token Usage** | Higher (~60% more per request due to full context in payload + mock data) | Optimized via server-side assembly + mock data removal |
+| **RecentQueries** | Eager loading (API calls on page load) | Lazy "Pull" model (load on click) |
+| **RLS** | In progress (policies being added) | Hardened (Bronze level) |
+
+## Content (Feb 6th Snapshot)
 
 ```text
-# Project EXOS: Context Snapshot (2026-02-09)
+# Project EXOS: Context Snapshot (2026-02-06)
 
-## Milestone: Infrastructure Independence & Optimization
-Status, Architecture header
+## Milestone: LangSmith Integration & Pipeline Stabilization
+- Status: BETA (Backend + Frontend)
+- Architecture: Lovable Managed Supabase + Edge Functions + Client-Side Grounding
 
 ## Security & Infrastructure
-- Database, RLS Policies (Bronze level), Secrets management
+- Database: Lovable Managed Supabase (shared infrastructure)
+- RLS Policies: In Progress (being added incrementally)
+- Secrets: API Keys managed in Supabase Edge Secrets
+  (Perplexity, Google AI Studio key via BYOK)
 
-## Performance & Cost Optimization
-- Surgical Context Injection (server-side grounding via sentinel-analysis)
-- Lazy Loading (RecentQueries refactored to pull model)
+## Performance & Cost
+- Client-Side Context Injection:
+  grounding.ts + ai-context-templates.ts build full XML in browser,
+  sent as systemPrompt/userPrompt payload to edge function
+- Includes mock historical cases and benchmarks (~500 extra tokens)
+- RecentQueries: Eager loading (API calls + traces fired on page load)
 
 ## Observability (LangSmith)
-- Production Quiet mode, parent/child run hierarchy, metadata captured
+- Status: Active (Browser-Side + Server-Side)
+- Mode: "Verbose" (console.log for config, routing, response lengths,
+  success/skip messages)
+- Browser client exposes logTracingConfig() with endpoint/key presence
+- Tracing: Parent/Child run hierarchy active
 
 ## Active Components
 1. Sentinel Pipeline:
-   - Input: Anonymized User Prompt + Slugs
-   - Processing: Edge function fetches industry/category from DB,
-     builds grounding XML server-side, calls AI gateway (Lovable or Google AI Studio)
-   - Output: Raw AI response returned for client-side validation + de-anonymization
+   - Input: User prompt anonymized client-side, full grounding XML
+     assembled client-side, both sent as payload
+   - Processing: Edge function receives pre-built prompts, routes to
+     AI gateway (Lovable or Google AI Studio)
+   - Output: Raw AI response for client-side validation + de-anonymization
    - Retry: 3 attempts with exponential backoff on 503s
 
 2. Market Intelligence:
@@ -46,10 +70,15 @@ Status, Architecture header
    - Security Definer functions for create/get
    - Time-based expiry with opportunistic cleanup
 
+4. graph.ts Pipeline:
+   - Self-contained orchestrator with own EXOS_SYSTEM_PROMPT constant
+   - Runs anonymize -> reason -> validate -> (retry or deanonymize)
+   - Browser-side LangSmith tracing with logTracingConfig()
+
 ## Edge Functions Inventory
 | Function | Purpose |
 |----------|---------|
-| sentinel-analysis | AI inference with server-side grounding |
+| sentinel-analysis | AI inference (receives pre-built prompts) |
 | market-intelligence | Perplexity-powered market research |
 | generate-market-insights | Market insights generation |
 | generate-test-data | Test data factory |
@@ -60,8 +89,8 @@ Status, Architecture header
 - LangSmith client (browser): src/lib/ai/langsmith-client.ts
 - LangSmith tracer (edge): supabase/functions/_shared/langsmith.ts
 - Anonymizer: src/lib/sentinel/anonymizer.ts
-- Grounding (client, legacy): src/lib/sentinel/grounding.ts
-- Grounding (server, active): built into sentinel-analysis/index.ts
+- Grounding (client, active): src/lib/sentinel/grounding.ts
+- Context templates: src/lib/ai-context-templates.ts
 ```
 
 ## Scope
