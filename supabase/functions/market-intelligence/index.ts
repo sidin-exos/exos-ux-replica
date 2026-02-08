@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { LangSmithTracer } from "../_shared/langsmith.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,7 @@ interface IntelRequest {
   recencyFilter?: RecencyFilter;
   domainFilter?: string[];
   context?: string;
+  env?: string;
 }
 
 const QUERY_TYPE_PROMPTS: Record<QueryType, string> = {
@@ -92,7 +94,13 @@ serve(async (req) => {
       throw new Error("PERPLEXITY_API_KEY is not configured");
     }
 
-    const { queryType, query, recencyFilter, domainFilter, context }: IntelRequest = await req.json();
+    const { queryType, query, recencyFilter, domainFilter, context, env: reqEnv }: IntelRequest = await req.json();
+
+    // Initialize LangSmith tracer (fire-and-forget)
+    const tracer = new LangSmithTracer({ env: reqEnv, feature: "market_intelligence" });
+    const parentRunId = tracer.createRun("market-intelligence", "chain", {
+      queryType, queryLength: query?.length || 0, recencyFilter, domainFilter,
+    }, { tags: ["model:sonar-pro"] });
 
     if (!queryType || !query) {
       throw new Error("queryType and query are required");
@@ -164,6 +172,14 @@ serve(async (req) => {
       totalTokens: data.usage.total_tokens || 0,
     } : null;
 
+    // Trace child LLM run (fire-and-forget)
+    const llmRunId = tracer.createRun("perplexity-sonar-pro", "llm", {
+      model: "sonar-pro", queryType,
+    }, { parentRunId });
+    tracer.patchRun(llmRunId, {
+      summaryLength: summary.length, citationCount: citations.length, tokenUsage, processingTimeMs,
+    });
+
     // Format citations as structured objects
     const formattedCitations = citations.map((url: string, index: number) => ({
       index: index + 1,
@@ -191,6 +207,11 @@ serve(async (req) => {
       });
     }
 
+    // Patch parent trace run
+    tracer.patchRun(parentRunId, {
+      success: true, summaryLength: summary.length, citationCount: formattedCitations.length, processingTimeMs,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -211,6 +232,9 @@ serve(async (req) => {
     console.error("Market intelligence error:", error);
 
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+    // Patch parent trace with error (tracer may not exist if error was in parsing)
+    try { tracer.patchRun(parentRunId, undefined, errorMessage); } catch (_) { /* noop */ }
 
     // Try to log failed query
     try {

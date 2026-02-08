@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { LangSmithTracer } from "../_shared/langsmith.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +34,8 @@ interface AnalysisRequest {
   groundingContext?: Record<string, unknown>;
   anonymizationMetadata?: Record<string, unknown>;
   enableTestLogging?: boolean;
+  // Tracing
+  env?: string;
 }
 
 serve(async (req) => {
@@ -58,8 +61,21 @@ serve(async (req) => {
       categorySlug,
       groundingContext,
       anonymizationMetadata,
-      enableTestLogging = true
+      enableTestLogging = true,
+      env: reqEnv,
     }: AnalysisRequest = await req.json();
+
+    // Initialize LangSmith tracer (fire-and-forget, never blocks response)
+    const tracer = new LangSmithTracer({ env: reqEnv, feature: "sentinel_analysis" });
+    const parentRunId = tracer.createRun("sentinel-analysis", "chain", {
+      model,
+      scenarioType: scenarioType || "unknown",
+      systemPromptLength: systemPrompt?.length || 0,
+      userPromptLength: userPrompt?.length || 0,
+    }, {
+      metadata: { industrySlug, categorySlug, useGoogleAIStudio, useLocalModel },
+      tags: [model],
+    });
 
     // Validate required fields
     if (!systemPrompt || !userPrompt) {
@@ -134,6 +150,11 @@ serve(async (req) => {
         const googleEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${googleModel}:generateContent?key=${GOOGLE_AI_STUDIO_KEY}`;
         
         try {
+          // Trace child LLM run for Google AI Studio
+          const googleLlmRunId = tracer.createRun("google-ai-studio-call", "llm", {
+            model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
+          }, { parentRunId });
+
           const googleResponse = await fetch(googleEndpoint, {
             method: "POST",
             headers: {
@@ -203,6 +224,10 @@ serve(async (req) => {
             }
           }
 
+          // Patch LangSmith traces
+          tracer.patchRun(googleLlmRunId, { contentLength: content.length, usage, processingTimeMs: processingTime });
+          tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
+
           return new Response(
             JSON.stringify({
               content,
@@ -240,6 +265,11 @@ serve(async (req) => {
     const RETRY_DELAYS = [1000, 2000, 4000]; // Exponential backoff
     let aiResponse: Response | null = null;
     let lastError: string | null = null;
+
+    // Trace child LLM run for Lovable AI Gateway
+    const gatewayLlmRunId = tracer.createRun("ai-gateway-call", "llm", {
+      model, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
+    }, { parentRunId });
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
@@ -390,13 +420,17 @@ serve(async (req) => {
       }
     }
 
+    // Patch LangSmith traces
+    tracer.patchRun(gatewayLlmRunId, { contentLength: content.length, usage: data.usage, processingTimeMs: processingTime });
+    tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "cloud", processingTimeMs: processingTime });
+
     return new Response(
       JSON.stringify({
         content,
         model,
         source: "cloud",
         usage: data.usage,
-        promptId, // Return for client-side reference
+        promptId,
         processingTimeMs: processingTime
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -404,6 +438,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("[Sentinel] Error:", error);
+    // Patch parent trace with error
+    try { tracer.patchRun(parentRunId, undefined, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : "Unknown error" 
