@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   History, 
@@ -11,7 +12,8 @@ import {
   Scale, 
   GitMerge, 
   AlertTriangle,
-  Loader2
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 import { 
   type IntelQuery, 
@@ -36,17 +38,33 @@ interface RecentQueriesProps {
 }
 
 export function RecentQueries({ queries, isLoading, onLoad }: RecentQueriesProps) {
-  useEffect(() => {
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  const handleLoad = useCallback(() => {
     onLoad();
+    setHasLoaded(true);
   }, [onLoad]);
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <History className="w-4 h-4" />
-          Recent Queries
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <History className="w-4 h-4" />
+            Recent Queries
+          </CardTitle>
+          {hasLoaded && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleLoad}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            </Button>
+          )}
+        </div>
         <CardDescription>
           Your intelligence search history
         </CardDescription>
@@ -56,9 +74,18 @@ export function RecentQueries({ queries, isLoading, onLoad }: RecentQueriesProps
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
+        ) : !hasLoaded ? (
+          <div className="text-center py-8 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Click below to load your query history.
+            </p>
+            <Button variant="outline" size="sm" onClick={handleLoad}>
+              Load Recent History
+            </Button>
+          </div>
         ) : queries.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            No queries yet. Start by searching above.
+            No queries found. Start by searching above.
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-4">
