@@ -1,66 +1,54 @@
 
 
-# New Diagram: EXOS Development Workflow
+# New Page: EXOS Org Chart (Team Structure)
 
 ## Overview
 
-Create a new visual diagram component that renders the **Development Workflow** (Gemini Virtual Committee + Lovable AI Factory + System Memory) using the same Miro-style visual components (`ArchitectureNode`, `ArchitectureContainer`, `ArchitectureArrow`) as the existing System Architecture diagram. Accessible at `/dev-workflow` with PNG/SVG export.
-
----
-
-## What We're Building
-
-A visual representation of the 6-phase development process:
-
-```text
-Phase 1: Ideation          Phase 2: Validation       Phase 3: Specification
-YOU ──► Architect ──► Auditor ──► Tech Lead ──► YOU
-
-Phase 4: Execution         Phase 5: Feedback          Phase 6: Observability
-YOU ──► Coder ──► Builder ──► YOU ──► Linear ──► Metrics
-                                        LangSmith ──┘
-```
-
----
-
-## Color Palette (Matching Existing COLORS)
-
-| Subgraph | Color | Existing COLORS key |
-|----------|-------|---------------------|
-| YOU (Product Owner) | `#f59e0b` (orange) | `orange` |
-| Gemini Virtual Committee | `#3b82f6` (blue) | `blue` |
-| Lovable AI Factory | `#f59e0b` (yellow-orange) | `orange` |
-| System Memory & Ops | `#10b981` (green) | `green` |
-| DevEx Metrics | `#8b5cf6` (purple dashed) | `purple` |
+Create a new `/org-chart` page with a dedicated `OrgChartDiagram.tsx` component that visualizes the EXOS team structure. This diagram shows the CEO at the top with three scope branches (CTO, Head of AI, Delivery), each containing functional roles filled by AI today with notes on future human hires.
 
 ---
 
 ## Layout Structure
 
-### Section 1: Central Actor
-- **YOU** node at top center (orange, large, with pilot icon)
+```text
+                    ┌──────────────────────────┐
+                    │  YOU (CEO & Product Owner)│
+                    └──────────┬───────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              ↓                ↓                ↓
+ ┌────────────────────┐ ┌─────────────────┐ ┌──────────────────┐
+ │ CTO SCOPE          │ │ HEAD OF AI SCOPE│ │ DELIVERY SCOPE   │
+ │ (Eng & Security)   │ │ (R&D & Prompts) │ │ (Execution)      │
+ │                    │ │                 │ │                  │
+ │ Role: CTO          │ │ Role: Head of AI│ │ Frontend Dev     │
+ │ Backend & DB       │ │ Prompt Eng      │ │ QA & Testing     │
+ │ InfoSec            │ │ EvalOps         │ │                  │
+ │ DevOps & CI/CD     │ │ Knowledge (RAG) │ │                  │
+ └────────────────────┘ └─────────────────┘ └──────────────────┘
+         │                      │
+         └──────────┬───────────┘
+                    ↓
+            Delivery Scope
+```
 
-### Section 2: Gemini Virtual Committee (Blue container)
-- Three nodes in a row: Architect, Auditor, Tech Lead
-- Arrow from Architect to Auditor, Auditor to Tech Lead
-- "Risk Blocked" reject arrow from Auditor back to Architect
+---
 
-### Section 3: Lovable AI Factory (Orange/Yellow container)
-- Two nodes: Coder, Builder
-- Arrow: Coder to Builder
+## Visual Design
 
-### Section 4: System Memory & Ops (Green container)
-- Three nodes: Linear, LangSmith, DevEx Metrics
-- Linear to Metrics arrow
-- LangSmith to Metrics dashed arrow
+Each function node will show three lines of info using a custom card-style layout:
+- **Function name** (bold)
+- **CURRENT**: What AI/tool fills this role today
+- **FOCUS**: Key responsibilities
 
-### Flow Connections (Between Sections)
-1. YOU --> Architect ("Feature Request")
-2. Tech Lead --> YOU ("Final Lovable Prompt")
-3. YOU --> Coder ("Paste Spec")
-4. Builder --> YOU ("Instant Preview")
-5. YOU --> Linear ("Approve & Deploy") / YOU --> Tech Lead ("Reject & Iterate")
-6. Builder --> LangSmith (dashed, "Runtime Logs")
+Color scheme:
+| Element | Color | Meaning |
+|---------|-------|---------|
+| CEO | `#e65100` (deep orange, thick border) | Human / current |
+| CTO Scope | `#1565c0` (blue) | Engineering |
+| Head of AI Scope | `#8b5cf6` (purple) | AI R&D |
+| Delivery Scope | `#f59e0b` (amber) | Factory |
+| "Future Hire" tags | `#2e7d32` (green badge) | Growth indicator |
 
 ---
 
@@ -68,88 +56,71 @@ YOU ──► Coder ──► Builder ──► YOU ──► Linear ──► M
 
 | File | Purpose |
 |------|---------|
-| `src/components/architecture/DevWorkflowDiagram.tsx` | Main diagram component using existing ArchitectureNode/Container/Arrow |
-| `src/pages/DevWorkflow.tsx` | Page wrapper with download buttons (same pattern as ArchitectureDiagram page) |
+| `src/components/architecture/OrgChartDiagram.tsx` | Diagram component using ArchitectureNode, ArchitectureContainer, ArchitectureArrow |
+| `src/pages/OrgChart.tsx` | Page wrapper with PNG/SVG export (same pattern as DevWorkflow.tsx) |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/App.tsx` | Add route: `/dev-workflow` |
+| `src/App.tsx` | Add route: `/org-chart` |
 
 ---
 
-## Component Structure: DevWorkflowDiagram.tsx
+## Component Details: OrgChartDiagram.tsx
 
-### Phase Flow Layout (Top to Bottom)
+### Row 1: CEO Node
+- Icon: `Crown` from lucide-react
+- Label: "YOU"
+- Sublabel: "CEO & Product Owner"
+- Color: deep orange, scaled up (scale-125)
 
-**Row 1: YOU** (Central actor node, orange, prominent)
+### Row 2: Three-column branch
+- Three down arrows from CEO, one to each scope container
 
-**Row 2: Gemini Virtual Committee** (Blue dashed container)
-- Horizontal: Architect --> Auditor --> Tech Lead
-- Reject arrow: Auditor --x--> Architect (red dashed)
-- Labels on arrows: "High-Level Design", "Security Review", "Risk Blocked"
+### Row 3: Three Scope Containers side-by-side
 
-**Row 3: Human-in-the-Loop** (Back to YOU)
-- Arrow up from Tech Lead to YOU: "Final Lovable Prompt (Ready-to-Paste)"
+**CTO Scope** (blue dashed container):
+- Role card: "CTO / Lead Architect" with sublabel "CURRENT: Gemini Architect + Auditor" and green "FUTURE HIRE" badge
+- Three function nodes stacked:
+  - Backend & DB (Database icon) -- "Supabase + Lovable SQL"
+  - InfoSec & Compliance (ShieldCheck icon) -- "PII Masking, GDPR"
+  - DevOps & CI/CD (Server icon) -- "Lovable Cloud"
 
-**Row 4: Lovable AI Factory** (Yellow/orange container)
-- Horizontal: Coder --> Builder
-- Arrow from YOU down to Coder: "Paste Spec"
-- Arrow from Builder back to YOU: "Instant Preview"
+**Head of AI Scope** (purple dashed container):
+- Role card: "Head of AI" with sublabel "CURRENT: Gemini Tech Lead + LangSmith" and green "FUTURE HIRE" badge
+- Three function nodes stacked:
+  - Prompt Engineering (MessageSquare icon) -- "System Prompts, Chains"
+  - Evaluation / EvalOps (LineChart icon) -- "Quality Metrics, Golden Datasets"
+  - Knowledge Base / RAG (Search icon) -- "Perplexity Integration"
 
-**Row 5: Feedback Loop**
-- YOU --> Tech Lead: "Reject & Iterate" (red dashed)
-- YOU --> Linear: "Approve & Deploy" (green)
+**Delivery Scope** (amber dashed container):
+- Two function nodes stacked:
+  - Frontend Dev (Bot icon) -- "Lovable (Fully Automated)"
+  - QA & Testing (CheckCircle icon) -- "Manual + Auto-Unit"
 
-**Row 6: System Memory & Ops** (Green container)
-- Linear --> DevEx Metrics
-- LangSmith --> DevEx Metrics (dashed)
-- Builder --> LangSmith (dashed, "Runtime Logs")
+### Row 4: Dashed arrows
+- CTO Scope and Head of AI Scope both connect down to Delivery Scope with dashed arrows labeled "Specs & Requirements"
 
 ### Legend
-- Blue: Gemini AI Roles
-- Orange: Human / Lovable Factory
-- Green: System Memory
-- Purple dashed: Metrics & Observability
-- Red dashed: Rejection / Risk paths
+- Deep Orange: Human (You)
+- Blue: Engineering & Security
+- Purple: AI R&D & Prompts
+- Amber: Delivery / Factory
+- Green badge: Future Human Hire
 
 ---
 
-## Icons (from lucide-react)
+## Page: OrgChart.tsx
 
-| Node | Icon |
-|------|------|
-| YOU | `UserCircle` |
-| Architect | `Building2` |
-| Auditor | `ShieldCheck` |
-| Tech Lead | `Wrench` |
-| Coder | `Bot` |
-| Builder | `Hammer` |
-| Linear | `ListTodo` |
-| LangSmith | `LineChart` |
-| DevEx Metrics | `BarChart3` |
-
----
-
-## Page: DevWorkflow.tsx
-
-Follows the exact same pattern as `ArchitectureDiagram.tsx`:
+Same structure as DevWorkflow.tsx:
 - Header with back link to `/features`
-- Title: "EXOS Development Workflow"
-- Subtitle: "AI-augmented development pipeline with Gemini Virtual Committee and human-in-the-loop quality gates"
+- Title: "EXOS Team Structure"
+- Subtitle: "AI-first organization with clear scope boundaries and future hire roadmap"
 - PNG/SVG download buttons
-- Diagram rendered inside `card-elevated` container
-- 3 info cards below:
-  1. "Gemini Committee" - Strategy, Security, and Specification via Chain-of-Experts
-  2. "Lovable Factory" - Code generation with instant preview
-  3. "System Memory" - Linear decisions, LangSmith traces, DevEx metrics
-
----
-
-## Route Addition
-
-```
-/dev-workflow --> DevWorkflow page
-```
+- Diagram in `card-elevated` container
+- Three info cards:
+  1. "CTO Scope" - Engineering, Security, and Infrastructure
+  2. "Head of AI" - Prompt Engineering, Evaluation, and Knowledge Management
+  3. "Delivery" - Automated code generation with human QA oversight
 
