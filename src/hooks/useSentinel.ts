@@ -2,7 +2,7 @@
  * React hook for EXOS Sentinel pipeline integration
  * 
  * Provides a clean interface for using the Sentinel pipeline
- * from React components.
+ * from React components. Sends lean payloads with server-side grounding.
  */
 
 import { useState, useCallback } from "react";
@@ -67,8 +67,6 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       });
 
       try {
-        // Build the request
-        // Merge config with defaults
         const mergedConfig = config ? { ...config } : undefined;
 
         const request: OrchestratorRequest = {
@@ -83,41 +81,36 @@ export function useSentinel(options: UseSentinelOptions = {}) {
         options.onProgress?.("anonymization", "processing");
         setState((s) => ({ ...s, currentStage: "anonymization" }));
 
-        // Execute pre-inference pipeline stages
-        const { context, inferencePayload, config: pipelineConfig } =
+        // Execute pre-inference pipeline (anonymization only matters here now;
+        // grounding still runs client-side for the PipelineContext but the
+        // grounded prompt is NOT sent to the edge function anymore)
+        const { context, config: pipelineConfig } =
           preparePipelineRequest(request, industry, category);
 
         options.onProgress?.("grounding", "processing");
         setState((s) => ({ ...s, currentStage: "grounding" }));
 
-        // Call edge function for AI inference
+        // Call edge function with lean payload — server does its own grounding
         options.onProgress?.("cloud_inference", "processing");
         setState((s) => ({ ...s, currentStage: "cloud_inference" }));
 
         const inferenceStart = performance.now();
 
-        // Extract metadata from stages for test logging
-        const anonymizationStage = context.stages.find(s => s.stage === 'anonymization');
-        const groundingStage = context.stages.find(s => s.stage === 'grounding');
-
         const { data, error: functionError } = await supabase.functions.invoke(
           "sentinel-analysis",
           {
             body: {
-              systemPrompt: inferencePayload.systemPrompt,
-              userPrompt: inferencePayload.userPrompt,
-              model, // Use passed model or default
-              useLocalModel: inferencePayload.useLocal,
-              useGoogleAIStudio, // BYOK mode for Google AI Studio
+              userPrompt: context.anonymizedInput,
+              serverSideGrounding: true,
+              model,
+              useLocalModel: false,
+              useGoogleAIStudio,
               googleModel: useGoogleAIStudio ? model.replace("google/", "") : undefined,
               stream: false,
-              // Testing metadata for database logging
               scenarioType,
               scenarioData,
               industrySlug: industry?.slug || null,
               categorySlug: category?.slug || null,
-              groundingContext: groundingStage?.details || null,
-              anonymizationMetadata: anonymizationStage?.details || null,
               enableTestLogging: true,
             },
           }
@@ -201,7 +194,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
 }
 
 /**
- * Simplified hook for quick analysis without full pipeline tracking
+ * Simplified hook for quick analysis without full pipeline tracking.
+ * Sends raw systemPrompt/userPrompt — no server-side grounding.
  */
 export function useQuickAnalysis() {
   const [isLoading, setIsLoading] = useState(false);

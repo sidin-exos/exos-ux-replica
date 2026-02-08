@@ -1,6 +1,6 @@
 /**
- * Lightweight LangSmith REST client for Deno Edge Functions.
- * VERBOSE LOGGING enabled for debugging trace delivery.
+ * Production-ready LangSmith REST client for Deno Edge Functions.
+ * Fire-and-forget tracing — only errors are logged.
  */
 
 interface CreateRunOptions {
@@ -29,15 +29,6 @@ export class LangSmithTracer {
     const feature = opts?.feature || "unknown";
     this.baseTags = [`env:${env}`, `feature:${feature}`];
     this.baseMetadata = { env, feature };
-
-    console.log("[LangSmith] Config:", {
-      project: this.project,
-      endpoint: this.endpoint,
-      hasKey: !!this.apiKey,
-      tracingEnabled,
-      enabled: this.enabled,
-      baseTags: this.baseTags,
-    });
   }
 
   isEnabled(): boolean {
@@ -51,12 +42,7 @@ export class LangSmithTracer {
     opts?: CreateRunOptions
   ): string {
     const id = crypto.randomUUID();
-    if (!this.enabled) {
-      console.log("[LangSmith] createRun SKIPPED (disabled), id:", id);
-      return id;
-    }
-
-    console.log("[LangSmith] createRun:", { id, name, runType, parentRunId: opts?.parentRunId });
+    if (!this.enabled) return id;
 
     const body = {
       id,
@@ -82,12 +68,7 @@ export class LangSmithTracer {
     outputs?: Record<string, unknown>,
     error?: string
   ): void {
-    if (!this.enabled) {
-      console.log("[LangSmith] patchRun SKIPPED (disabled)");
-      return;
-    }
-
-    console.log("[LangSmith] patchRun:", { runId, hasOutputs: !!outputs, hasError: !!error });
+    if (!this.enabled) return;
 
     const body: Record<string, unknown> = {
       end_time: new Date().toISOString(),
@@ -110,9 +91,7 @@ export class LangSmithTracer {
         },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        console.log("[LangSmith] POST /runs SUCCESS:", res.status);
-      } else {
+      if (!res.ok) {
         const text = await res.text();
         console.error("[LangSmith] POST /runs ERROR:", res.status, text);
       }
@@ -134,9 +113,7 @@ export class LangSmithTracer {
         },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        console.log(`[LangSmith] PATCH /runs/${runId} SUCCESS:`, res.status);
-      } else {
+      if (!res.ok) {
         const text = await res.text();
         console.error(`[LangSmith] PATCH /runs/${runId} ERROR:`, res.status, text);
       }
