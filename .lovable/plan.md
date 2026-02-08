@@ -1,215 +1,155 @@
 
 
-# Fix: EXOS Architecture Diagram - Correct Pipeline Flow
+# New Diagram: EXOS Development Workflow
 
 ## Overview
 
-Update the `ExosArchitectureDiagram.tsx` to accurately reflect the actual `graph.ts` execution sequence, with proper positioning of Deanonymize and Validation stages.
+Create a new visual diagram component that renders the **Development Workflow** (Gemini Virtual Committee + Lovable AI Factory + System Memory) using the same Miro-style visual components (`ArchitectureNode`, `ArchitectureContainer`, `ArchitectureArrow`) as the existing System Architecture diagram. Accessible at `/dev-workflow` with PNG/SVG export.
 
 ---
 
-## Issue Analysis
+## What We're Building
 
-| Issue | Current Diagram | Actual Code (graph.ts) |
-|-------|-----------------|------------------------|
-| 1. Deanonymize position | Shown in Stage 3 before Cloud boundary | Should be **AFTER** AI response returns (line 271-278) |
-| 2. Validation timing | Shown alongside AI Reasoning inside EXOS Pipeline | Validation runs **after** receiving AI response (line 246-256) |
-| 3. Flow direction | Appears to be one-way through pipeline | Should show: Anonymize → Cloud → Validate → (Retry?) → Deanonymize |
-
----
-
-## Corrected Flow Architecture
+A visual representation of the 6-phase development process:
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        CUSTOMER PREMISES (Pre-Flight)                        │
-│  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │ USER INPUT: [1-4] Scenario · Industry · Supplier · Business Context     ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-│                                    ↓                                         │
-│  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │ CONTEXT PREPARATION: [5-6] Grounding Engine · Market Intel              ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-│                                    ↓                                         │
-│  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │ [7] SENTINEL ANONYMIZE (stepAnonymize) - Mask Sensitive Data            ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-│                                    ↓                                         │
-│  ┌────────────────────── INFOSEC GATE ─────────────────────────────────────┐│
-│  │  API Audit · DLP · Logging                                               ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────────────────┘
-                                     │
-                     "Anonymized Request" ↓
-                                     │
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        CLOUD SERVICES (External)                            │
-│  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │ [8] AI GATEWAY (stepReasoning via sentinel-analysis Edge Function)      ││
-│  │     Lovable Gateway ←→ Toggle ←→ Google AI Studio (BYOK)                ││
-│  │     Models: Gemini 3 Flash · Gemini 2.5 Pro · GPT-5                     ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-│  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │ [9] LANGSMITH OBSERVABILITY (REST API Tracing)                          ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────────────────┘
-                                     │
-                       "AI Response" ↓
-                                     │
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        CUSTOMER PREMISES (Post-Flight)                       │
-│  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │ [10] RESPONSE VALIDATION (stepValidate) - Anti-Hallucination Check      ││
-│  │      • Token Integrity     • Golden Case Matching                        ││
-│  │      • Hallucination Check • Unsafe Content Detection                    ││
-│  │                                                                           ││
-│  │            ┌────────── RETRY LOOP (up to 3x) ──────────┐                 ││
-│  │            │  If validation fails → back to AI Gateway │                 ││
-│  │            └────────────────────────────────────────────┘                 ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-│                                    ↓ (If Validation Passes)                  │
-│  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │ [11] DEANONYMIZE (stepDeanonymize) - Entity Restoration                 ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-│                                    ↓                                         │
-│  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │ OUTPUT: [12-15] Executive Reports · Dashboards · Roadmaps · Insights    ││
-│  └─────────────────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────────────────┘
+Phase 1: Ideation          Phase 2: Validation       Phase 3: Specification
+YOU ──► Architect ──► Auditor ──► Tech Lead ──► YOU
+
+Phase 4: Execution         Phase 5: Feedback          Phase 6: Observability
+YOU ──► Coder ──► Builder ──► YOU ──► Linear ──► Metrics
+                                        LangSmith ──┘
 ```
 
 ---
 
-## Implementation Changes
+## Color Palette (Matching Existing COLORS)
 
-### 1. Split Customer Premises into Pre-Flight and Post-Flight
-
-**Before:** Single "Customer Premises" container with Deanonymize inside
-**After:** Two distinct phases:
-- **Pre-Flight:** Input → Context Prep → Anonymize → InfoSec Gate
-- **Post-Flight:** Validation → Deanonymize → Output
-
-### 2. Move Validation to Post-Flight (After Cloud Response)
-
-**Before:** Validation shown alongside AI Reasoning in "Stage 2" box
-**After:** Validation as dedicated container in "Post-Flight" section with explicit connection to:
-- Token Integrity Check (checkTokenIntegrity)
-- Hallucination Detection (checkForHallucinations)
-- Unsafe Content Detection (checkForUnsafeContent)
-- Golden Case Matching (matchGoldenCases)
-
-### 3. Correct Deanonymize Position
-
-**Before:** Shown as "Stage 3" before InfoSec Gate
-**After:** Positioned after Validation passes, before Output
-
-### 4. Add Retry Loop Arrow from Validation back to Cloud
-
-**Visual:** Curved arrow from Validation container back up to Cloud section
-**Label:** "Retry if FAIL (up to 3x)"
-**Color:** Warning orange
+| Subgraph | Color | Existing COLORS key |
+|----------|-------|---------------------|
+| YOU (Product Owner) | `#f59e0b` (orange) | `orange` |
+| Gemini Virtual Committee | `#3b82f6` (blue) | `blue` |
+| Lovable AI Factory | `#f59e0b` (yellow-orange) | `orange` |
+| System Memory & Ops | `#10b981` (green) | `green` |
+| DevEx Metrics | `#8b5cf6` (purple dashed) | `purple` |
 
 ---
 
-## Updated Node Numbering
+## Layout Structure
 
-| # | Node | Phase | Function Reference |
-|---|------|-------|-------------------|
-| 1-4 | User Input (Scenario, Industry, Supplier, Business) | Pre-Flight | GenericScenarioWizard |
-| 5 | Grounding Engine | Pre-Flight | grounding.ts |
-| 6 | Market Intel | Pre-Flight | Perplexity API |
-| 7 | Sentinel Anonymize | Pre-Flight | stepAnonymize() |
-| 8 | AI Gateway | Cloud | stepReasoning() |
-| 9 | LangSmith | Cloud | langsmith-client.ts |
-| 10 | Response Validation | Post-Flight | stepValidate() |
-| 11 | Deanonymize | Post-Flight | stepDeanonymize() |
-| 12-15 | Output (Reports, Dashboards, Roadmaps, Insights) | Post-Flight | PDF components |
+### Section 1: Central Actor
+- **YOU** node at top center (orange, large, with pilot icon)
 
----
+### Section 2: Gemini Virtual Committee (Blue container)
+- Three nodes in a row: Architect, Auditor, Tech Lead
+- Arrow from Architect to Auditor, Auditor to Tech Lead
+- "Risk Blocked" reject arrow from Auditor back to Architect
 
-## Visual Layout Changes
+### Section 3: Lovable AI Factory (Orange/Yellow container)
+- Two nodes: Coder, Builder
+- Arrow: Coder to Builder
 
-### Section A: Pre-Flight (Green border)
-```
-┌── User Input ─────────────────────────┐
-│ [1] [2] [3] [4]                       │
-└───────────────────────────────────────┘
-              ↓
-┌── Context Preparation ────────────────┐
-│ [5] Grounding → [6] Market Intel      │
-└───────────────────────────────────────┘
-              ↓
-┌── Sentinel Anonymize ─────────────────┐
-│ [7] Mask PII/Commercial Data          │
-└───────────────────────────────────────┘
-              ↓
-┌── InfoSec Gate (Red) ─────────────────┐
-│ API Audit · DLP · Logging             │
-└───────────────────────────────────────┘
-```
+### Section 4: System Memory & Ops (Green container)
+- Three nodes: Linear, LangSmith, DevEx Metrics
+- Linear to Metrics arrow
+- LangSmith to Metrics dashed arrow
 
-### Section B: Cloud Services (Purple dashed border)
-```
-┌── AI Gateway ─────────────────────────┐
-│ [8] Lovable ↔ Toggle ↔ Google BYOK    │
-│     Models: Gemini · GPT-5            │
-└───────────────────────────────────────┘
-              ↑ (Retry)
-┌── Observability ──────────────────────┐
-│ [9] LangSmith REST Client             │
-└───────────────────────────────────────┘
-```
-
-### Section C: Post-Flight (Blue border)
-```
-          ┌────── RETRY LOOP ──────┐
-          │                        │
-          ↓                        │
-┌── Response Validation ───────────│────┐
-│ [10] Anti-Hallucination         ─┘    │
-│      Token Integrity · Golden Cases   │
-└───────────────────────────────────────┘
-              ↓ (If PASS)
-┌── Deanonymize ────────────────────────┐
-│ [11] Entity Restoration               │
-└───────────────────────────────────────┘
-              ↓
-┌── Output ─────────────────────────────┐
-│ [12] [13] [14] [15]                   │
-└───────────────────────────────────────┘
-```
+### Flow Connections (Between Sections)
+1. YOU --> Architect ("Feature Request")
+2. Tech Lead --> YOU ("Final Lovable Prompt")
+3. YOU --> Coder ("Paste Spec")
+4. Builder --> YOU ("Instant Preview")
+5. YOU --> Linear ("Approve & Deploy") / YOU --> Tech Lead ("Reject & Iterate")
+6. Builder --> LangSmith (dashed, "Runtime Logs")
 
 ---
 
-## Technical Implementation
+## Files to Create
 
-### File to Modify
-`src/components/architecture/ExosArchitectureDiagram.tsx`
+| File | Purpose |
+|------|---------|
+| `src/components/architecture/DevWorkflowDiagram.tsx` | Main diagram component using existing ArchitectureNode/Container/Arrow |
+| `src/pages/DevWorkflow.tsx` | Page wrapper with download buttons (same pattern as ArchitectureDiagram page) |
 
-### Key Changes
+## Files to Modify
 
-1. **Restructure main layout** from 2 sections to 3 sections:
-   - Customer Premises (Pre-Flight)
-   - Cloud Services (External)
-   - Customer Premises (Post-Flight)
-
-2. **Move Validation container** from inside "EXOS Decision Pipeline" to "Post-Flight"
-
-3. **Move Deanonymize** from "Stage 3" to after Validation in "Post-Flight"
-
-4. **Add Retry Loop visualization** with upward arrow from Validation back to Cloud
-
-5. **Update legend** to include "Pre-Flight" and "Post-Flight" phases
+| File | Change |
+|------|--------|
+| `src/App.tsx` | Add route: `/dev-workflow` |
 
 ---
 
-## Code References Validated
+## Component Structure: DevWorkflowDiagram.tsx
 
-| Step | File | Function | Line |
-|------|------|----------|------|
-| Anonymize | graph.ts | stepAnonymize | 69-80 |
-| AI Call | graph.ts | stepReasoning | 85-124 |
-| Validate | graph.ts | stepValidate | 129-161 |
-| Retry Loop | graph.ts | while loop | 230-268 |
-| Deanonymize | graph.ts | stepDeanonymize | 166-175 |
+### Phase Flow Layout (Top to Bottom)
+
+**Row 1: YOU** (Central actor node, orange, prominent)
+
+**Row 2: Gemini Virtual Committee** (Blue dashed container)
+- Horizontal: Architect --> Auditor --> Tech Lead
+- Reject arrow: Auditor --x--> Architect (red dashed)
+- Labels on arrows: "High-Level Design", "Security Review", "Risk Blocked"
+
+**Row 3: Human-in-the-Loop** (Back to YOU)
+- Arrow up from Tech Lead to YOU: "Final Lovable Prompt (Ready-to-Paste)"
+
+**Row 4: Lovable AI Factory** (Yellow/orange container)
+- Horizontal: Coder --> Builder
+- Arrow from YOU down to Coder: "Paste Spec"
+- Arrow from Builder back to YOU: "Instant Preview"
+
+**Row 5: Feedback Loop**
+- YOU --> Tech Lead: "Reject & Iterate" (red dashed)
+- YOU --> Linear: "Approve & Deploy" (green)
+
+**Row 6: System Memory & Ops** (Green container)
+- Linear --> DevEx Metrics
+- LangSmith --> DevEx Metrics (dashed)
+- Builder --> LangSmith (dashed, "Runtime Logs")
+
+### Legend
+- Blue: Gemini AI Roles
+- Orange: Human / Lovable Factory
+- Green: System Memory
+- Purple dashed: Metrics & Observability
+- Red dashed: Rejection / Risk paths
+
+---
+
+## Icons (from lucide-react)
+
+| Node | Icon |
+|------|------|
+| YOU | `UserCircle` |
+| Architect | `Building2` |
+| Auditor | `ShieldCheck` |
+| Tech Lead | `Wrench` |
+| Coder | `Bot` |
+| Builder | `Hammer` |
+| Linear | `ListTodo` |
+| LangSmith | `LineChart` |
+| DevEx Metrics | `BarChart3` |
+
+---
+
+## Page: DevWorkflow.tsx
+
+Follows the exact same pattern as `ArchitectureDiagram.tsx`:
+- Header with back link to `/features`
+- Title: "EXOS Development Workflow"
+- Subtitle: "AI-augmented development pipeline with Gemini Virtual Committee and human-in-the-loop quality gates"
+- PNG/SVG download buttons
+- Diagram rendered inside `card-elevated` container
+- 3 info cards below:
+  1. "Gemini Committee" - Strategy, Security, and Specification via Chain-of-Experts
+  2. "Lovable Factory" - Code generation with instant preview
+  3. "System Memory" - Linear decisions, LangSmith traces, DevEx metrics
+
+---
+
+## Route Addition
+
+```
+/dev-workflow --> DevWorkflow page
+```
 
