@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import ScenarioCard from "@/components/dashboard/ScenarioCard";
 import ConsolidationWizard from "@/components/consolidation/ConsolidationWizard";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard";
 import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
 
@@ -69,6 +70,9 @@ const Index = () => {
                 Distilled best practices. Fine-tuned AI logic. Your procurement exoskeleton.
               </p>
             </section>
+
+            {/* AI Guide */}
+            <ChatWidget />
 
             {/* Scenarios by Category */}
             {categoryOrder.map((category) => (

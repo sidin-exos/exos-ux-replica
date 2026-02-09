@@ -19,7 +19,6 @@ import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import FounderDashboard from "./pages/admin/FounderDashboard";
 import NotFound from "./pages/NotFound";
-import { ChatWidget } from "./components/chat/ChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -29,7 +28,6 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <ChatWidget />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />

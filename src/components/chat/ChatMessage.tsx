@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Bot } from 'lucide-react';
 import type { Message } from '@/hooks/use-exos-chat';
 
-const timeFormatter = new Intl.DateTimeFormat('ru-RU', {
+const timeFormatter = new Intl.DateTimeFormat('en-US', {
   hour: '2-digit',
   minute: '2-digit',
 });
@@ -48,7 +48,7 @@ export function ChatMessage({ message, isLatest, onTextReveal }: ChatMessageProp
           <Bot className="w-3.5 h-3.5 text-primary" />
         </div>
       )}
-      <div className={`max-w-[80%] space-y-1`}>
+      <div className="max-w-[80%] space-y-1">
         <div
           className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
             isUser
