@@ -40,7 +40,7 @@ const SentinelCapabilities = () => {
       <div className="hidden lg:flex justify-center mb-8">
         <div className="relative">
           <div className="w-24 h-24 rounded-2xl gradient-primary flex items-center justify-center overflow-hidden">
-            <img src={exosLogo} alt="EXOS" className="w-full h-full object-contain scale-[1.8]" />
+            <img src={exosLogo} alt="EXOS" className="w-full h-full object-cover" />
           </div>
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-background border border-border rounded-full">
             <span className="text-xs font-medium text-foreground">EXOS Procurement Intelligence</span>
@@ -84,7 +84,7 @@ const SentinelCapabilities = () => {
       <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-            <img src={exosLogo} alt="EXOS" className="w-full h-full object-contain scale-[1.8]" />
+            <img src={exosLogo} alt="EXOS" className="w-full h-full object-cover" />
           </div>
           <div>
             <h4 className="font-display font-semibold text-foreground mb-2 text-lg">
