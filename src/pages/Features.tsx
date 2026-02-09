@@ -56,7 +56,7 @@ const Features = () => {
         <section className="mb-16 animate-fade-up text-center">
           <div className="flex justify-center mb-6">
             <div className="w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-xl">
-              <img src={exosLogo} alt="EXOS" className="w-full h-full object-contain scale-[1.8]" />
+              <img src={exosLogo} alt="EXOS" className="w-full h-full object-cover" />
             </div>
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">
