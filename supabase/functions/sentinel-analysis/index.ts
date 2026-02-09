@@ -206,29 +206,58 @@ serve(async (req) => {
     let userPrompt: string;
 
     if (serverSideGrounding && supabase) {
-      // Server-side grounding: fetch context from DB and build prompts
-      const [industryResult, categoryResult] = await Promise.all([
-        industrySlug
-          ? supabase.from("industry_contexts").select("name, slug, constraints, kpis").eq("slug", industrySlug).single()
-          : Promise.resolve({ data: null, error: null }),
-        categorySlug
-          ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis").eq("slug", categorySlug).single()
-          : Promise.resolve({ data: null, error: null }),
-      ]);
+      // --- Child Run 1: fetch-context ---
+      const fetchRunId = tracer.createRun("fetch-context", "tool", {
+        industrySlug, categorySlug,
+      }, { parentRunId });
 
-      if (industryResult.error) console.error("[Sentinel] Failed to fetch industry context:", industryResult.error);
-      if (categoryResult.error) console.error("[Sentinel] Failed to fetch category context:", categoryResult.error);
+      let industryResult: { data: IndustryRow | null; error: unknown } = { data: null, error: null };
+      let categoryResult: { data: IndustryRow | null; error: unknown } = { data: null, error: null };
+      const fetchErrors: string[] = [];
 
-      const grounded = buildServerGroundedPrompts(
-        industryResult.data as IndustryRow | null,
-        categoryResult.data as CategoryRow | null,
-        scenarioType || "general",
-        scenarioData || {},
-        rawUserPrompt
-      );
+      try {
+        [industryResult, categoryResult] = await Promise.all([
+          industrySlug
+            ? supabase.from("industry_contexts").select("name, slug, constraints, kpis").eq("slug", industrySlug).single()
+            : Promise.resolve({ data: null, error: null }),
+          categorySlug
+            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis").eq("slug", categorySlug).single()
+            : Promise.resolve({ data: null, error: null }),
+        ]);
 
-      systemPrompt = grounded.systemPrompt;
-      userPrompt = grounded.userPrompt;
+        if (industryResult.error) { console.error("[Sentinel] Failed to fetch industry context:", industryResult.error); fetchErrors.push("industry: " + String(industryResult.error)); }
+        if (categoryResult.error) { console.error("[Sentinel] Failed to fetch category context:", categoryResult.error); fetchErrors.push("category: " + String(categoryResult.error)); }
+      } finally {
+        tracer.patchRun(fetchRunId, {
+          foundIndustry: !!industryResult.data,
+          foundCategory: !!categoryResult.data,
+          errors: fetchErrors,
+        }, fetchErrors.length > 0 ? fetchErrors.join("; ") : undefined);
+      }
+
+      // --- Child Run 2: assemble-prompt ---
+      const assembleRunId = tracer.createRun("assemble-prompt", "tool", {
+        scenarioType: scenarioType || "general",
+      }, { parentRunId });
+
+      try {
+        const grounded = buildServerGroundedPrompts(
+          industryResult.data as IndustryRow | null,
+          categoryResult.data as CategoryRow | null,
+          scenarioType || "general",
+          scenarioData || {},
+          rawUserPrompt
+        );
+
+        systemPrompt = grounded.systemPrompt;
+        userPrompt = grounded.userPrompt;
+      } finally {
+        tracer.patchRun(assembleRunId, {
+          systemPromptLength: systemPrompt!?.length || 0,
+          userPromptLength: userPrompt!?.length || 0,
+          contextPartsCount: (industryResult.data ? 1 : 0) + (categoryResult.data ? 1 : 0),
+        });
+      }
     } else if (body.systemPrompt) {
       // Legacy path: client sent full prompts (useQuickAnalysis, ModelConfigPanel, etc.)
       systemPrompt = body.systemPrompt;
@@ -289,6 +318,11 @@ serve(async (req) => {
       );
     }
 
+    // --- Child Run 3: ai-inference (wraps all AI provider attempts) ---
+    const inferenceRunId = tracer.createRun("ai-inference", "chain", {
+      model, useGoogleAIStudio, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
+    }, { parentRunId });
+
     // Route to Google AI Studio (BYOK mode)
     if (useGoogleAIStudio) {
       const GOOGLE_AI_STUDIO_KEY = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
@@ -299,11 +333,11 @@ serve(async (req) => {
       } else {
         const googleEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${googleModel}:generateContent?key=${GOOGLE_AI_STUDIO_KEY}`;
 
-        try {
-          const googleLlmRunId = tracer.createRun("google-ai-studio-call", "llm", {
-            model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
-          }, { parentRunId });
+        const googleAttemptId = tracer.createRun("ai-attempt-1", "llm", {
+          model: googleModel, provider: "google_ai_studio", attempt: 1,
+        }, { parentRunId: inferenceRunId });
 
+        try {
           const googleResponse = await fetch(googleEndpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -324,6 +358,8 @@ serve(async (req) => {
             const errorText = await googleResponse.text();
             console.error(`[Sentinel] Google AI Studio error: ${googleResponse.status}`, errorText);
 
+            tracer.patchRun(googleAttemptId, undefined, `Google AI Studio ${googleResponse.status}`);
+
             if (enableTestLogging && supabase && promptId) {
               await supabase.from("test_reports").insert({
                 prompt_id: promptId,
@@ -339,6 +375,9 @@ serve(async (req) => {
               console.warn(`[Sentinel] Google AI Studio ${googleResponse.status}, falling back to Lovable AI Gateway`);
               throw new Error(`Google AI Studio ${googleResponse.status}: fallback to gateway`);
             }
+
+            tracer.patchRun(inferenceRunId, { success: false, source: "google_ai_studio" }, `Google AI Studio ${googleResponse.status}`);
+            tracer.patchRun(parentRunId, { success: false, source: "google_ai_studio" }, `Google AI Studio ${googleResponse.status}`);
 
             return new Response(
               JSON.stringify({ error: "Google AI Studio error", details: errorText }),
@@ -371,7 +410,8 @@ serve(async (req) => {
             }
           }
 
-          tracer.patchRun(googleLlmRunId, { contentLength: content.length, usage, processingTimeMs: processingTime });
+          tracer.patchRun(googleAttemptId, { contentLength: content.length, usage, processingTimeMs: processingTime });
+          tracer.patchRun(inferenceRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
           tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
 
           return new Response(
@@ -387,6 +427,7 @@ serve(async (req) => {
           );
         } catch (googleError) {
           console.error("[Sentinel] Google AI Studio fetch error:", googleError);
+          tracer.patchRun(googleAttemptId, undefined, googleError instanceof Error ? googleError.message : "Google AI Studio error");
           // Fall through to Lovable AI Gateway
         }
       }
@@ -396,6 +437,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("[Sentinel] LOVABLE_API_KEY not configured");
+      tracer.patchRun(inferenceRunId, undefined, "LOVABLE_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "AI gateway not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -406,12 +448,14 @@ serve(async (req) => {
     const RETRY_DELAYS = [1000, 2000, 4000];
     let aiResponse: Response | null = null;
     let lastError: string | null = null;
-
-    const gatewayLlmRunId = tracer.createRun("ai-gateway-call", "llm", {
-      model, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
-    }, { parentRunId });
+    // Track attempt offset: if Google was attempt 1, gateway starts at 2
+    const attemptOffset = useGoogleAIStudio ? 1 : 0;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const attemptRunId = tracer.createRun(`ai-attempt-${attempt + 1 + attemptOffset}`, "llm", {
+        model, provider: "lovable_gateway", attempt: attempt + 1 + attemptOffset,
+      }, { parentRunId: inferenceRunId });
+
       try {
         if (attempt > 0) {
           console.warn(`[Sentinel] Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms`);
@@ -439,14 +483,20 @@ serve(async (req) => {
         if (aiResponse.status === 503) {
           lastError = await aiResponse.text();
           console.warn(`[Sentinel] Got 503 on attempt ${attempt + 1}: ${lastError}`);
+          tracer.patchRun(attemptRunId, undefined, `503: ${lastError}`);
           if (attempt < MAX_RETRIES - 1) continue;
+        } else {
+          // Success or non-retryable error — patch this attempt as done
+          tracer.patchRun(attemptRunId, { status: aiResponse.status });
         }
 
         break;
       } catch (fetchError) {
         lastError = fetchError instanceof Error ? fetchError.message : "Network error";
         console.warn(`[Sentinel] Fetch error on attempt ${attempt + 1}: ${lastError}`);
+        tracer.patchRun(attemptRunId, undefined, lastError);
         if (attempt === MAX_RETRIES - 1) {
+          tracer.patchRun(inferenceRunId, undefined, `All ${MAX_RETRIES} attempts failed: ${lastError}`);
           return new Response(
             JSON.stringify({ error: "AI gateway connection failed after retries", details: lastError }),
             { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -456,6 +506,7 @@ serve(async (req) => {
     }
 
     if (!aiResponse) {
+      tracer.patchRun(inferenceRunId, undefined, `AI gateway unavailable: ${lastError}`);
       return new Response(
         JSON.stringify({ error: "AI gateway unavailable", details: lastError }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -472,6 +523,7 @@ serve(async (req) => {
           success: false, error_message: "Rate limit exceeded"
         });
       }
+      tracer.patchRun(inferenceRunId, undefined, "Rate limit exceeded (429)");
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -486,6 +538,7 @@ serve(async (req) => {
           success: false, error_message: "Payment required"
         });
       }
+      tracer.patchRun(inferenceRunId, undefined, "Payment required (402)");
       return new Response(
         JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }),
         { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -501,6 +554,7 @@ serve(async (req) => {
           success: false, error_message: `AI gateway error: ${aiResponse.status}`
         });
       }
+      tracer.patchRun(inferenceRunId, undefined, `AI gateway error: ${aiResponse.status}`);
       return new Response(
         JSON.stringify({ error: "AI gateway error", details: errorText }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -508,6 +562,8 @@ serve(async (req) => {
     }
 
     if (stream) {
+      tracer.patchRun(inferenceRunId, { success: true, source: "cloud", streaming: true });
+      tracer.patchRun(parentRunId, { success: true, source: "cloud", streaming: true });
       return new Response(aiResponse.body, {
         headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
       });
@@ -528,7 +584,7 @@ serve(async (req) => {
       }
     }
 
-    tracer.patchRun(gatewayLlmRunId, { contentLength: content.length, usage: data.usage, processingTimeMs: processingTime });
+    tracer.patchRun(inferenceRunId, { success: true, contentLength: content.length, usage: data.usage, source: "cloud", processingTimeMs: processingTime });
     tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "cloud", processingTimeMs: processingTime });
 
     return new Response(
