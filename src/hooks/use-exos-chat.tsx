@@ -24,7 +24,11 @@ export function useExosChat() {
     setIsTyping(true);
 
     try {
-      const response = await getMockAIResponse(content);
+      const allMessages = [...messages, userMsg].map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+      const response = await getMockAIResponse(allMessages);
       const assistantMsg: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -35,7 +39,7 @@ export function useExosChat() {
     } finally {
       setIsTyping(false);
     }
-  }, []);
+  }, [messages]);
 
   const toggleChat = useCallback(() => setIsOpen((v) => !v), []);
   const closeChat = useCallback(() => setIsOpen(false), []);

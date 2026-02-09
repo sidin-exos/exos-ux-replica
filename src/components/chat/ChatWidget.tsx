@@ -9,10 +9,10 @@ import { useExosChat } from '@/hooks/use-exos-chat';
 import { ChatMessage } from './ChatMessage';
 
 const SUGGESTIONS = [
+  { label: '🧭 How to use EXOS?', text: 'How to use EXOS?' },
   { label: '💰 Reduce costs', text: 'How can I reduce procurement costs?' },
   { label: '🔍 Evaluate suppliers', text: 'I need to evaluate my suppliers' },
   { label: '📋 Review a contract', text: 'I need help reviewing a contract' },
-  { label: '⚡ Help me choose', text: 'Help me pick the right scenario' },
 ];
 
 export function ChatWidget() {
