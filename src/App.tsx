@@ -17,6 +17,7 @@ import DevWorkflow from "./pages/DevWorkflow";
 import OrgChart from "./pages/OrgChart";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
+import FounderDashboard from "./pages/admin/FounderDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/org-chart" element={<OrgChart />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/account" element={<Account />} />
+            <Route path="/admin/dashboard" element={<FounderDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
