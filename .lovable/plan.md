@@ -1,79 +1,112 @@
 
 
-# Refactor: Hierarchical LangSmith Tracing for Sentinel Analysis
+# Founder's Commercial Dashboard + RBAC System
 
-## Summary
+## Overview
 
-Add 3 child trace spans to the existing `sentinel-analysis` root run, turning the flat trace into a collapsible tree in LangSmith.
+Create a private admin dashboard at `/admin/dashboard` with role-based access control, North Star metric cards with manual editing, and an editable strategic hypothesis. Section 3 (Recent Signups) is deferred.
 
-## Current State
+## Database Changes
 
-```text
-sentinel-analysis (chain)
-  +-- google-ai-studio-call (llm)   OR   ai-gateway-call (llm)
+### Migration 1: RBAC Foundation
+
+Creates the role system that will gate all admin features going forward.
+
+- `app_role` enum with values `admin` and `user`
+- `user_roles` table (`id`, `user_id` FK to `auth.users`, `role`)
+- RLS enabled -- only admins can SELECT (using `has_role()` security definer function)
+- Seed: user `5e31324d-ae8d-4abc-91dd-dd493138bc25` gets `admin` role
+- Skip recreating `update_updated_at_column` (already exists)
+
+### Migration 2: Founder Metrics Table
+
+- `founder_metrics` table with columns: `id`, `mrr` (numeric), `active_users` (int), `burn_rate` (numeric), `runway_months` (int), `strategic_hypothesis` (text), `updated_at`, `created_at`
+- RLS: admin-only SELECT, INSERT, UPDATE (all using `has_role()`)
+- Trigger: auto-update `updated_at` using existing function
+- Seed: one row with defaults (0, 0, 0, 12, placeholder hypothesis text)
+
+## New Files
+
+### `src/hooks/useAdminAuth.ts`
+
+- Uses `supabase.auth.getSession()` to get current user ID
+- Queries `user_roles` table filtering by `user_id` and `role = 'admin'`
+- Returns `{ isAdmin: boolean, isLoading: boolean }`
+- Uses TanStack Query with `enabled: !!userId`
+- No redirect logic inside the hook (handled by the page component)
+
+### `src/hooks/useFounderMetrics.ts`
+
+- `useFounderMetrics()` -- `useQuery` fetching the single row from `founder_metrics` (`.single()`)
+- `useUpdateMetrics()` -- `useMutation` accepting `{ mrr, active_users, burn_rate, runway_months }`
+- `useUpdateHypothesis()` -- `useMutation` accepting `{ strategic_hypothesis: string }`
+- Both mutations invalidate the `founder-metrics` query key on success
+- Toast notifications on success/error
+
+### `src/pages/admin/FounderDashboard.tsx`
+
+**Auth Guard:**
+- Calls `useAdminAuth()`
+- While loading: full-screen spinner (matches existing `gradient-hero` + `Loader2` pattern from Auth.tsx)
+- If not admin after loading: `useEffect` redirects to `/` via `useNavigate()`
+
+**Layout:**
+- `gradient-hero` background with `Header` component (same pattern as Account.tsx)
+- Page title: "Command Center" with `font-display`
+- `container` with `max-w-6xl`
+
+**Section 1 -- North Star Metrics:**
+- 4 cards in a `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4` layout
+- Each card uses the existing `card-elevated` class pattern
+- Card details:
+
+| Metric | Icon | Format |
+|--------|------|--------|
+| MRR | `TrendingUp` | EUR {mrr} |
+| Active Users | `Users` | {active_users} |
+| Burn Rate | `AlertTriangle` | EUR {burn_rate}/mo |
+| Runway | `Clock` | {runway_months} months |
+
+- "Edit Metrics" button opens a Shadcn `Dialog` with 4 `Input` fields (type="number") and a Save button
+- Dialog submit calls `useUpdateMetrics` mutation
+
+**Section 2 -- Strategic Hypothesis:**
+- `Card` with `card-elevated` class
+- View mode: displays hypothesis text with a small "Edit" button (pencil icon)
+- Edit mode: `Textarea` replaces the text, with "Save" and "Cancel" buttons
+- Save calls `useUpdateHypothesis` mutation
+
+## Modified Files
+
+### `src/App.tsx`
+
+Add one route before the catch-all:
+
+```
+<Route path="/admin/dashboard" element={<FounderDashboard />} />
 ```
 
-## Target State
+## Security Model
 
-```text
-sentinel-analysis (chain)
-  +-- fetch-context (tool)
-  +-- assemble-prompt (tool)
-  +-- ai-inference (chain)
-  |     +-- ai-attempt-1 (llm)
-  |     +-- ai-attempt-2 (llm)   [only if retry]
-  |     +-- ai-attempt-3 (llm)   [only if retry]
-```
+- All data queries are gated by RLS (`has_role(auth.uid(), 'admin')`)
+- Even if someone navigates to `/admin/dashboard` without admin role, queries return empty/error
+- Frontend guard provides UX-level protection (redirect), but RLS is the real security layer
+- `has_role()` is `SECURITY DEFINER` to avoid recursive RLS on `user_roles`
+- No client-side role caching or localStorage
 
-## Changes
+## Patterns Reused from Existing Code
 
-**Single file:** `supabase/functions/sentinel-analysis/index.ts`
+- Auth check pattern from `Account.tsx` (onAuthStateChange + getSession)
+- `gradient-hero` + `Header` layout from Auth.tsx / Account.tsx
+- `card-elevated` styling class
+- `font-display` for headings
+- TanStack Query patterns from existing hooks (e.g., `useMarketInsights.ts`)
+- Lucide icons throughout
 
-No changes to `_shared/langsmith.ts`, no new files, no DB changes.
+## Not Included (Deferred)
 
-### 1. Child Run: `fetch-context` (lines ~208-220)
+- Section 3: Recent Signups (needs profiles table)
+- Stripe MRR automation
+- PostHog deep links
+- Nav link to admin dashboard in Header (admin-only nav item can be added later)
 
-Wrap the `Promise.all` DB fetch block:
-
-- Create run **before** the fetch with inputs `{ industrySlug, categorySlug }`
-- Execute the existing fetch logic unchanged
-- Patch run with outputs `{ foundIndustry: boolean, foundCategory: boolean, errors: string[] }`
-- Use `try/finally` so the run is always patched, even on throw
-
-### 2. Child Run: `assemble-prompt` (lines ~222-240)
-
-Wrap the `buildServerGroundedPrompts` call:
-
-- Create run before assembly (no sensitive inputs logged)
-- Patch with metadata-only outputs: `{ systemPromptLength, userPromptLength, contextPartsCount }` (no prompt text)
-
-### 3. Child Run: `ai-inference` (replaces current flat LLM runs)
-
-**Google AI Studio path (lines ~293-393):**
-- Wrap the entire Google block in an `ai-inference` chain run
-- The existing `google-ai-studio-call` LLM run becomes a child of `ai-inference` instead of the root
-- On fallback to gateway, patch with error and let the gateway path continue under the same `ai-inference` parent
-
-**Lovable Gateway path (lines ~405-456):**
-- Wrap the retry loop in the `ai-inference` chain run (reuse the same run if it was already created by the Google path fallback)
-- Replace the single `ai-gateway-call` LLM run with per-attempt runs: `ai-attempt-1`, `ai-attempt-2`, `ai-attempt-3`
-- Each attempt run is patched with either success outputs or error on failure
-- The parent `ai-inference` run is patched after the loop completes
-
-### 4. Error Handling
-
-- All child runs use `try/catch` or `try/finally` to guarantee `patchRun` is called with error details
-- The existing top-level `catch` block (line 541) continues to patch the root run on unhandled errors
-- No changes to the fire-and-forget semantics of `LangSmithTracer`
-
-## Non-Goals
-
-- No changes to `LangSmithTracer` class (it already supports `parentRunId`)
-- No logging of full prompt text in any child run (metadata only)
-- No changes to business logic, retry delays, or response format
-
-## Estimated Impact
-
-- ~40 new lines of tracing instrumentation
-- Zero changes to request/response contract
-- LangSmith will show a 4-level collapsible tree with timing and error attribution per step
