@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
-import { getMockAIResponse } from '@/lib/chat-service';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { getAIResponse, type ChatRole } from '@/lib/chat-service';
 
 export interface Message {
   id: string;
@@ -9,6 +11,8 @@ export interface Message {
 }
 
 export function useExosChat() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -24,22 +28,32 @@ export function useExosChat() {
     setIsTyping(true);
 
     try {
-      const allMessages = [...messages, userMsg].map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-      const response = await getMockAIResponse(allMessages);
+      // Sanitize & Slice: strip id/timestamp, keep only { role, content }, last 10
+      const payload = [...messages, userMsg]
+        .slice(-10)
+        .map(({ role, content }) => ({ role: role as ChatRole, content }));
+
+      const response = await getAIResponse(payload, location.pathname);
+
       const assistantMsg: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: response,
+        content: response.content,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
+
+      if (response.action?.type === 'NAVIGATE') {
+        toast.info('Navigating...', { duration: 2000 });
+        navigate(response.action.payload);
+      }
+    } catch (err) {
+      console.error('Chat send error:', err);
+      toast.error('Failed to send message');
     } finally {
       setIsTyping(false);
     }
-  }, [messages]);
+  }, [messages, location.pathname, navigate]);
 
   const toggleChat = useCallback(() => setIsOpen((v) => !v), []);
   const closeChat = useCallback(() => setIsOpen(false), []);
