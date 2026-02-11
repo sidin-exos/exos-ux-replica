@@ -80,36 +80,6 @@ const SentinelCapabilities = () => {
         ))}
       </div>
 
-      {/* Architecture Note - Sales Oriented */}
-      <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-            <img src={exosLogo} alt="EXOS" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <h4 className="font-display font-semibold text-foreground mb-2 text-lg">
-              One Fine-Tuned Model. World-Class Cloud AI. Total Control.
-            </h4>
-            <p className="text-sm text-muted-foreground mb-3">
-              EXOS Sentinel is a purpose-built AI model, fine-tuned on thousands of procurement scenarios to act as your 
-              intelligent gateway. It orchestrates leading cloud AI engines—validating their outputs, injecting your 
-              private context, and filtering hallucinations—so you get <span className="text-foreground font-medium">enterprise-grade reasoning</span> without 
-              sacrificing data control.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <span className="px-3 py-1 text-xs font-medium bg-primary/20 text-primary rounded-full">
-                Fine-tuned for Procurement
-              </span>
-              <span className="px-3 py-1 text-xs font-medium bg-accent/20 text-accent rounded-full">
-                Cloud AI Orchestration
-              </span>
-              <span className="px-3 py-1 text-xs font-medium bg-emerald-500/20 text-emerald-400 rounded-full">
-                Anti-Hallucination Validation
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
