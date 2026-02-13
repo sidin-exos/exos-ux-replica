@@ -9,6 +9,9 @@ import {
   Search,
   Bot,
   CheckCircle,
+  TrendingUp,
+  Target,
+  Users,
 } from "lucide-react";
 import ArchitectureNode from "./ArchitectureNode";
 import ArchitectureContainer from "./ArchitectureContainer";
@@ -19,7 +22,9 @@ const COLORS = {
   cto: "#1565c0",
   ai: "#8b5cf6",
   delivery: "#f59e0b",
+  growth: "#ef4444",
   futureHire: "#2e7d32",
+  performanceBased: "#ef4444",
 };
 
 interface RoleCardProps {
@@ -27,27 +32,35 @@ interface RoleCardProps {
   current: string;
   color: string;
   futureHire?: boolean;
+  badgeLabel?: string;
+  badgeColor?: string;
 }
 
-const RoleCard: React.FC<RoleCardProps> = ({ title, current, color, futureHire }) => (
-  <div
-    className="relative rounded-lg border-2 px-4 py-3 mb-4 bg-white/80"
-    style={{ borderColor: color }}
-  >
-    {futureHire && (
-      <span
-        className="absolute -top-2.5 right-2 px-2 py-0.5 text-[9px] font-bold uppercase rounded text-white"
-        style={{ backgroundColor: COLORS.futureHire }}
-      >
-        Future Hire
-      </span>
-    )}
-    <div className="text-sm font-bold" style={{ color }}>
-      {title}
+const RoleCard: React.FC<RoleCardProps> = ({ title, current, color, futureHire, badgeLabel, badgeColor }) => {
+  const showBadge = futureHire || badgeLabel;
+  const label = badgeLabel || "Future Hire";
+  const bgColor = badgeColor || COLORS.futureHire;
+
+  return (
+    <div
+      className="relative rounded-lg border-2 px-4 py-3 mb-4 bg-white/80"
+      style={{ borderColor: color }}
+    >
+      {showBadge && (
+        <span
+          className="absolute -top-2.5 right-2 px-2 py-0.5 text-[9px] font-bold uppercase rounded text-white"
+          style={{ backgroundColor: bgColor }}
+        >
+          {label}
+        </span>
+      )}
+      <div className="text-sm font-bold" style={{ color }}>
+        {title}
+      </div>
+      <div className="text-[10px] text-gray-600 mt-0.5">{current}</div>
     </div>
-    <div className="text-[10px] text-gray-600 mt-0.5">{current}</div>
-  </div>
-);
+  );
+};
 
 interface FuncNodeProps {
   icon: React.ReactNode;
@@ -75,7 +88,7 @@ const FuncNode: React.FC<FuncNodeProps> = ({ icon, name, current, focus, color }
 
 const OrgChartDiagram: React.FC = () => {
   return (
-    <div className="flex flex-col items-center gap-2 min-w-[900px] py-6">
+    <div className="flex flex-col items-center gap-2 min-w-[1200px] py-6">
       {/* Row 1: CEO */}
       <div className="transform scale-125">
         <ArchitectureNode
@@ -86,11 +99,12 @@ const OrgChartDiagram: React.FC = () => {
         />
       </div>
 
-      {/* Row 2: Three arrows down */}
-      <div className="flex items-start justify-center gap-24 mt-2">
+      {/* Row 2: Four arrows down */}
+      <div className="flex items-start justify-center gap-20 mt-2">
         <ArchitectureArrow direction="down" length={40} color={COLORS.cto} />
         <ArchitectureArrow direction="down" length={40} color={COLORS.ai} />
         <ArchitectureArrow direction="down" length={40} color={COLORS.delivery} />
+        <ArchitectureArrow direction="down" length={40} color={COLORS.growth} />
       </div>
 
       {/* Row 3: Three scope containers */}
@@ -192,6 +206,44 @@ const OrgChartDiagram: React.FC = () => {
             />
           </div>
         </ArchitectureContainer>
+
+        {/* Head of Growth Scope */}
+        <ArchitectureContainer
+          title="📈 HEAD OF GROWTH (GTM & Revenue)"
+          titleColor={COLORS.growth}
+          className="w-[280px]"
+        >
+          <RoleCard
+            title="Head of Growth"
+            current="🚀 Performance-Based Hire"
+            color={COLORS.growth}
+            badgeLabel="Performance Based"
+            badgeColor={COLORS.performanceBased}
+          />
+          <div className="flex flex-col gap-2">
+            <FuncNode
+              icon={<TrendingUp size={16} />}
+              name="GTM Strategy"
+              current="Founder-led"
+              focus="Channels, Positioning"
+              color={COLORS.growth}
+            />
+            <FuncNode
+              icon={<Target size={16} />}
+              name="Revenue & Metrics"
+              current="Manual Tracking"
+              focus="MRR, CAC, Retention"
+              color={COLORS.growth}
+            />
+            <FuncNode
+              icon={<Users size={16} />}
+              name="Community & Partnerships"
+              current="Not Started"
+              focus="Outreach, Content"
+              color={COLORS.growth}
+            />
+          </div>
+        </ArchitectureContainer>
       </div>
 
       {/* Row 4: Dashed arrows from CTO & AI scopes to Delivery */}
@@ -213,7 +265,9 @@ const OrgChartDiagram: React.FC = () => {
           { color: COLORS.cto, label: "Engineering & Security" },
           { color: COLORS.ai, label: "AI R&D & Prompts" },
           { color: COLORS.delivery, label: "Delivery / Factory" },
+          { color: COLORS.growth, label: "Growth & Revenue" },
           { color: COLORS.futureHire, label: "Future Human Hire" },
+          { color: COLORS.performanceBased, label: "Performance Based", dashed: true },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-1.5">
             <div

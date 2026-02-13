@@ -13,6 +13,7 @@ graph TD
     CEO --> CTO["🛠️ CTO Scope<br/>Engineering & Security"]
     CEO --> HAI["🧠 Head of AI<br/>R&D & Prompts"]
     CEO --> DEL["🏭 Delivery Scope<br/>Automated Execution"]
+    CEO --> GRO["📈 Head of Growth<br/>GTM & Revenue"]
 
     CTO --> ARCH["Gemini Architect<br/><i>System Design & DB</i>"]
     CTO --> AUD["Gemini Auditor<br/><i>Security & QA</i>"]
@@ -27,6 +28,10 @@ graph TD
     DEL --> COD["Lovable Coder<br/><i>Code Generation</i>"]
     DEL --> BLD["Lovable Builder<br/><i>Build & Preview</i>"]
     DEL --> QA["Human QA<br/><i>Visual Review (You)</i>"]
+
+    GRO --> GTM["GTM Strategy<br/><i>Channels, Positioning</i>"]
+    GRO --> REV["Revenue & Metrics<br/><i>MRR, CAC, Retention</i>"]
+    GRO --> COM["Community<br/><i>Outreach, Content</i>"]
 
     style CEO fill:#f59e0b,color:#000
     style CTO fill:#3b82f6,color:#fff
@@ -43,6 +48,10 @@ graph TD
     style QA fill:#fbbf24,color:#000
     style HIRE1 fill:#334155,color:#94a3b8,stroke-dasharray: 5 5
     style HIRE2 fill:#334155,color:#94a3b8,stroke-dasharray: 5 5
+    style GRO fill:#ef4444,color:#fff
+    style GTM fill:#fca5a5,color:#000
+    style REV fill:#fca5a5,color:#000
+    style COM fill:#fca5a5,color:#000
 ```
 
 ---
@@ -75,6 +84,14 @@ graph TD
 | Builder | Lovable AI | Build, preview, instant deployment |
 | QA | You (the Pilot) | Visual review, functional testing, approval |
 
+### 📈 Head of Growth — GTM & Revenue *(Performance Based)*
+
+| Role | Filled By | Responsibilities |
+|------|-----------|-----------------|
+| GTM Strategy | *Performance-based hire* | Channel selection, positioning, go-to-market |
+| Revenue & Metrics | *Performance-based hire* | MRR tracking, CAC optimization, retention |
+| Community & Partnerships | *Performance-based hire* | Outreach, content marketing, partner programs |
+
 ---
 
 ## Scope Boundaries
@@ -82,6 +99,7 @@ graph TD
 - **CTO Scope** owns *what* gets built and *how* it's secured
 - **Head of AI** owns *how AI thinks* and *how we measure it*
 - **Delivery** owns *how fast we ship* and *how it looks*
+- **Head of Growth** owns *how we grow* and *how we measure traction*
 - **The Pilot** owns *what we ship* and *when*
 
 ---
