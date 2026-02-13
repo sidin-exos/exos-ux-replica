@@ -121,7 +121,7 @@ const OrgChart = () => {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="glass-effect rounded-xl p-4">
             <div className="text-primary font-semibold mb-2">
               🛠️ CTO Scope
@@ -147,6 +147,15 @@ const OrgChart = () => {
             <p className="text-sm text-muted-foreground">
               Automated code generation via Lovable with human QA oversight.
               Fully automated frontend, manual + auto-unit testing.
+            </p>
+          </div>
+          <div className="glass-effect rounded-xl p-4">
+            <div className="text-primary font-semibold mb-2">
+              📈 Head of Growth
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Go-to-market strategy, revenue metrics, and community building.
+              Performance-based role focused on traction and growth.
             </p>
           </div>
         </div>
