@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
+import { parseBody, requireString, requireStringEnum, optionalBoolean, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -564,23 +565,18 @@ serve(async (req) => {
   }
 
   try {
-    const request: GenerateRequest = await req.json();
-    const { 
-      mode = "full",
-      scenarioType, 
-      industry,
-      category,
-      parameters,
-      mctsIterations = 1, // Default to 1 for faster generation
-      temperature = 0.7,
-    } = request;
+    const body = await parseBody(req);
 
-    if (!scenarioType) {
-      return new Response(
-        JSON.stringify({ error: "Missing scenarioType" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const VALID_MODES = ["draft", "generate", "full"] as const;
+    const mode = requireStringEnum(body.mode, "mode", VALID_MODES, { optional: true }) || "full";
+    const scenarioType = requireString(body.scenarioType, "scenarioType", { minLength: 1, maxLength: 200 })!;
+    const industry = requireString(body.industry, "industry", { optional: true, maxLength: 200 });
+    const category = requireString(body.category, "category", { optional: true, maxLength: 200 });
+    const parameters = optionalRecord(body.parameters, "parameters", 30) as DraftedParameters | undefined;
+    const mctsIterations = typeof body.mctsIterations === "number" && body.mctsIterations >= 1 && body.mctsIterations <= 10
+      ? body.mctsIterations : 1;
+    const temperature = typeof body.temperature === "number" && body.temperature >= 0 && body.temperature <= 2
+      ? body.temperature : 0.7;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -700,6 +696,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error.message);
+    }
     console.error("[TestDataGen] Error:", error);
     return new Response(
       JSON.stringify({ 

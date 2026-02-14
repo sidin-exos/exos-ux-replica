@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
+import { parseBody, requireString, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +23,11 @@ serve(async (req) => {
   }
 
   try {
-    const { scenarioTitle, industryName, categoryName } = await req.json();
+    const body = await parseBody(req);
+
+    const scenarioTitle = requireString(body.scenarioTitle, "scenarioTitle", { optional: true, maxLength: 500 });
+    const industryName = requireString(body.industryName, "industryName", { optional: true, maxLength: 200 });
+    const categoryName = requireString(body.categoryName, "categoryName", { optional: true, maxLength: 200 });
 
     // Guard: no context = no AI call
     if (!industryName && !categoryName) {
@@ -92,6 +97,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof ValidationError) {
+      return validationErrorResponse(e.message);
+    }
     console.error("scenario-tutorial error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),

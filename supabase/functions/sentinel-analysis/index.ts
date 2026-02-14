@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
+import { parseBody, requireString, optionalBoolean, optionalStringOrNull, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -173,25 +174,25 @@ serve(async (req) => {
   let parentRunId: string | undefined;
 
   try {
-    const body: AnalysisRequest = await req.json();
-    const {
-      userPrompt: rawUserPrompt,
-      model = "google/gemini-3-flash-preview",
-      useLocalModel = false,
-      localModelEndpoint,
-      useGoogleAIStudio = false,
-      googleModel = "gemini-2.0-flash",
-      stream = false,
-      serverSideGrounding = false,
-      scenarioType,
-      scenarioData,
-      industrySlug,
-      categorySlug,
-      groundingContext,
-      anonymizationMetadata,
-      enableTestLogging = true,
-      env: reqEnv,
-    } = body;
+    const body = await parseBody(req);
+
+    // Validate inputs
+    const rawUserPrompt = requireString(body.userPrompt, "userPrompt", { minLength: 1, maxLength: 50000 })!;
+    const model = requireString(body.model, "model", { optional: true, maxLength: 100 }) || "google/gemini-3-flash-preview";
+    const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
+    const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
+    const useGoogleAIStudio = optionalBoolean(body.useGoogleAIStudio, "useGoogleAIStudio") ?? false;
+    const googleModel = requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 }) || "gemini-2.0-flash";
+    const stream = optionalBoolean(body.stream, "stream") ?? false;
+    const serverSideGrounding = optionalBoolean(body.serverSideGrounding, "serverSideGrounding") ?? false;
+    const scenarioType = requireString(body.scenarioType, "scenarioType", { optional: true, maxLength: 200 });
+    const scenarioData = optionalRecord(body.scenarioData, "scenarioData", 50);
+    const industrySlug = optionalStringOrNull(body.industrySlug, "industrySlug", 100);
+    const categorySlug = optionalStringOrNull(body.categorySlug, "categorySlug", 100);
+    const groundingContext = optionalRecord(body.groundingContext, "groundingContext", 50);
+    const anonymizationMetadata = optionalRecord(body.anonymizationMetadata, "anonymizationMetadata", 50);
+    const enableTestLogging = optionalBoolean(body.enableTestLogging, "enableTestLogging") ?? true;
+    const reqEnv = requireString(body.env, "env", { optional: true, maxLength: 50 });
 
     // Initialize LangSmith tracer
     tracer = new LangSmithTracer({ env: reqEnv, feature: "sentinel_analysis" });
@@ -605,6 +606,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error.message);
+    }
     console.error("[Sentinel] Error:", error);
     try { tracer?.patchRun(parentRunId!, undefined, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
+import { parseBody, requireString, requireArray, optionalBoolean, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -280,11 +281,29 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const body = await req.json().catch(() => ({}));
-    const { combinations, validateOnly, defaultGeography = "EU" } = body as GenerateRequest;
+    const body = await parseBody(req);
+    const validateOnly = optionalBoolean(body.validateOnly, "validateOnly") ?? false;
+    const defaultGeography = requireString(body.defaultGeography, "defaultGeography", { optional: true, maxLength: 100 }) || "EU";
+    const combinations = body.combinations !== undefined
+      ? (requireArray(body.combinations, "combinations", { maxLength: 50 }) as IndustryCategory[])
+      : undefined;
+
+    // Validate each combination entry
+    if (combinations) {
+      for (const c of combinations) {
+        if (typeof c !== "object" || c === null) throw new ValidationError("Each combination must be an object");
+        const combo = c as Record<string, unknown>;
+        requireString(combo.industrySlug, "industrySlug", { maxLength: 200 });
+        requireString(combo.industryName, "industryName", { maxLength: 200 });
+        requireString(combo.categorySlug, "categorySlug", { maxLength: 200 });
+        requireString(combo.categoryName, "categoryName", { maxLength: 200 });
+      }
+    }
+
+    const { combinations: _drop, validateOnly: _vd, defaultGeography: _dg, ...rest } = body as GenerateRequest;
 
     // Use provided combinations or default plausible ones
-    const targetCombinations = combinations?.length > 0 
+    const targetCombinations = combinations && combinations.length > 0 
       ? combinations 
       : PLAUSIBLE_COMBINATIONS.slice(0, 5);
     
@@ -433,6 +452,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error.message);
+    }
     console.error("Generate market insights error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
