@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
+import { parseBody, requireString, requireStringEnum, requireArray, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,17 +105,34 @@ serve(async (req) => {
       throw new Error("PERPLEXITY_API_KEY is not configured");
     }
 
-    const { queryType, query, recencyFilter, domainFilter, context, env: reqEnv }: IntelRequest = await req.json();
+    const body = await parseBody(req);
+
+    const VALID_QUERY_TYPES = ['supplier', 'commodity', 'industry', 'regulatory', 'm&a', 'risk'] as const;
+    const VALID_RECENCY = ['day', 'week', 'month', 'year'] as const;
+
+    const queryType = requireStringEnum(body.queryType, "queryType", VALID_QUERY_TYPES)! as QueryType;
+    const query = requireString(body.query, "query", { minLength: 1, maxLength: 5000 })!;
+    const recencyFilter = requireStringEnum(body.recencyFilter, "recencyFilter", VALID_RECENCY, { optional: true }) as RecencyFilter | undefined;
+    const domainFilter = body.domainFilter !== undefined
+      ? (requireArray(body.domainFilter, "domainFilter", { maxLength: 20 }) as string[])
+      : undefined;
+    const context = requireString(body.context, "context", { optional: true, maxLength: 5000 });
+    const reqEnv = requireString(body.env, "env", { optional: true, maxLength: 50 });
+
+    // Validate domain filter entries
+    if (domainFilter) {
+      for (const d of domainFilter) {
+        if (typeof d !== "string" || d.length > 200) {
+          throw new ValidationError("Each domain filter must be a string under 200 chars");
+        }
+      }
+    }
 
     // Initialize LangSmith tracer (fire-and-forget)
     const tracer = new LangSmithTracer({ env: reqEnv, feature: "market_intelligence" });
     const parentRunId = tracer.createRun("market-intelligence", "chain", {
       queryType, queryLength: query?.length || 0, recencyFilter, domainFilter,
     }, { tags: ["model:sonar-pro"] });
-
-    if (!queryType || !query) {
-      throw new Error("queryType and query are required");
-    }
 
     const systemPrompt = QUERY_TYPE_PROMPTS[queryType];
     if (!systemPrompt) {
@@ -238,6 +256,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error.message);
+    }
     const processingTimeMs = Date.now() - startTime;
     console.error("Market intelligence error:", error);
 

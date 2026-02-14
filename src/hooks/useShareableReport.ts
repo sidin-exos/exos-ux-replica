@@ -34,11 +34,11 @@ export function useShareableReport(): ShareableReportReturn {
 
   const isShared = searchParams.has("share");
 
-  // Generate a unique share ID
+  // Generate a cryptographically secure share ID
   const generateShareId = (): string => {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 8);
-    return `${timestamp}-${random}`;
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
   };
 
   /**

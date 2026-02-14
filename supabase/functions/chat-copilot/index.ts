@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
+import { parseBody, requireString, requireArray, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -95,11 +96,20 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { messages, currentPath } = await req.json();
+    const body = await parseBody(req);
 
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      throw new Error("messages array is required");
+    const messages = requireArray(body.messages, "messages", { maxLength: 50 })!;
+    if (messages.length === 0) {
+      throw new ValidationError("messages array must not be empty");
     }
+    // Validate each message has role and content strings
+    for (const msg of messages) {
+      if (typeof msg !== "object" || msg === null) throw new ValidationError("Each message must be an object");
+      const m = msg as Record<string, unknown>;
+      requireString(m.role, "message.role", { maxLength: 50 });
+      requireString(m.content, "message.content", { maxLength: 10000 });
+    }
+    const currentPath = requireString(body.currentPath, "currentPath", { optional: true, maxLength: 500 });
 
     // Enrich system prompt with current location context
     const systemWithContext = `${SYSTEM_PROMPT}\n\nThe user is currently on: ${currentPath || "/"}`;
@@ -190,6 +200,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error.message);
+    }
     console.error("chat-copilot error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
