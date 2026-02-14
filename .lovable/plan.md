@@ -1,47 +1,66 @@
 
 
-# Add "Head of Growth" Branch to Org Chart
+# Connect EXOS Chat Copilot to Lovable AI
 
-## Summary
+## Problem
 
-Add a 4th organizational branch -- **Head of Growth** -- alongside the existing CTO, Head of AI, and Delivery scopes. This new branch will carry a "Performance Based" badge to distinguish it from future full-time hires.
+The `chat-copilot` edge function doesn't exist yet, so every chat message returns "I'm having trouble connecting right now."
+
+## Solution
+
+Create the `supabase/functions/chat-copilot/index.ts` edge function powered by Lovable AI (via `LOVABLE_API_KEY`, already configured).
 
 ## Changes
 
-### 1. `src/components/architecture/OrgChartDiagram.tsx`
+### 1. Create `supabase/functions/chat-copilot/index.ts`
 
-- **New color**: Add `growth: "#ef4444"` (red tone) to the `COLORS` object to visually distinguish Growth from the other branches.
-- **New icons**: Import `TrendingUp`, `Target`, `Users` from `lucide-react` for the Growth function nodes.
-- **4th arrow**: Add a 4th `ArchitectureArrow` in Row 2 (CEO arrows) pointing down in the growth color.
-- **4th container**: Add a new `ArchitectureContainer` in Row 3 titled "📈 HEAD OF GROWTH (GTM & Revenue)" with:
-  - A `RoleCard` for "Head of Growth" with current text like "Performance-Based Hire" and tagged with a **"Performance Based"** badge (not "Future Hire").
-  - 3 `FuncNode` items covering key growth functions:
-    - **GTM Strategy** -- Current: "Founder-led", Focus: "Channels, Positioning"
-    - **Revenue & Metrics** -- Current: "Manual Tracking", Focus: "MRR, CAC, Retention"
-    - **Community & Partnerships** -- Current: "Not Started", Focus: "Outreach, Content"
-- **Layout adjustments**: Increase `min-w` from `900px` to `~1200px` to accommodate the 4th column. Adjust container widths as needed.
-- **Legend**: Add a new legend entry for "Growth & Revenue" with the growth color, and add a new entry for "Performance Based" (distinct from "Future Hire").
+- Uses `LOVABLE_API_KEY` to call `https://ai.gateway.lovable.dev/v1/chat/completions`
+- Model: `google/gemini-3-flash-preview` (fast, cost-effective for a guide chatbot)
+- **Non-streaming** (the client already uses `supabase.functions.invoke`, not SSE)
+- System prompt: EXOS procurement copilot persona -- knows the available scenarios, can recommend which to use, and can emit a `NAVIGATE` action via tool calling
+- Tool calling: defines a `navigate` tool so the AI can return `{ type: "NAVIGATE", payload: "/path" }` actions when it wants to direct the user to a scenario
+- Handles 429 (rate limit) and 402 (payment required) errors with user-friendly messages
+- Returns JSON: `{ content: string, action?: { type: "NAVIGATE", payload: string } }`
 
-### 2. `src/components/architecture/OrgChartDiagram.tsx` -- RoleCard update
+### 2. Update `supabase/config.toml`
 
-- Add an optional `badgeLabel` and `badgeColor` prop to `RoleCard` so we can show "Performance Based" in a different color (e.g., `#ef4444` red) instead of the green "Future Hire" badge. This keeps the component flexible without breaking existing cards.
+- Add `[functions.chat-copilot]` with `verify_jwt = false` (matches existing function config pattern)
 
-### 3. `src/pages/OrgChart.tsx`
+### 3. No client changes needed
 
-- Change the summary cards grid from `grid-cols-3` to `grid-cols-4` (with `md:grid-cols-2 lg:grid-cols-4` for responsiveness).
-- Add a 4th card:
-  - Title: "📈 Head of Growth"
-  - Description: "Go-to-market strategy, revenue metrics, and community building. Performance-based role focused on traction and growth."
+The existing `chat-service.ts` and `use-exos-chat.tsx` already handle the expected response shape (`{ content, action? }`), so no frontend changes are required.
 
-### 4. `docs/ORG_CHART.md`
+## Technical Details
 
-- Add a new section for **Head of Growth Scope** with the role table and update the Scope Boundaries section.
+### System Prompt (summary)
 
-## Files Modified
+The AI will be instructed that it is the "EXOS Guide" -- a procurement strategy assistant. It will know about the available scenario categories (analysis, planning, risk, documentation) and key scenarios like Volume Consolidation, Cost Breakdown, Make-or-Buy, etc. It will recommend scenarios based on the user's described challenge and use the `navigate` tool to direct them there.
 
-| File | Change |
+### Tool Calling for Navigation
+
+```typescript
+tools: [{
+  type: "function",
+  function: {
+    name: "navigate_to_scenario",
+    description: "Navigate the user to a specific page",
+    parameters: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The route path" }
+      },
+      required: ["path"]
+    }
+  }
+}]
+```
+
+When the model calls this tool, the edge function extracts the path and returns it as `action: { type: "NAVIGATE", payload: path }`.
+
+### Files
+
+| File | Action |
 |------|--------|
-| `src/components/architecture/OrgChartDiagram.tsx` | Add 4th branch (Growth), new color, icons, container, RoleCard badge flexibility |
-| `src/pages/OrgChart.tsx` | Add 4th summary card, adjust grid to 4 columns |
-| `docs/ORG_CHART.md` | Add Head of Growth section to documentation |
+| `supabase/functions/chat-copilot/index.ts` | Create |
+| `supabase/config.toml` | Add function entry (auto-managed) |
 
