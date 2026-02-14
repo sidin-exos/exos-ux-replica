@@ -3,7 +3,7 @@ import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
-import exosLogo from "@/assets/logo-concept-layers.png";
+import exosLogo from "@/assets/logo-exo-layers-v2.png";
 
 const Features = () => {
   const valuePropositions = [
