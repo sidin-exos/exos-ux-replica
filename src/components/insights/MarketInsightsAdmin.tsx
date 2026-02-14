@@ -94,7 +94,6 @@ export function MarketInsightsAdmin() {
           </CardTitle>
           <CardDescription>
             Generate and manage AI-powered market intelligence for industry+category combinations.
-            Each report costs approximately $0.005 via Perplexity Sonar Pro API.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -117,7 +116,7 @@ export function MarketInsightsAdmin() {
             </Button>
             <div className="flex-1 text-sm text-muted-foreground">
               <p>Generates EU-focused insights for 20 industry+category combinations.</p>
-              <p className="text-xs">Est. cost: ~$0.10 | Time: ~5 min (one-by-one to avoid timeouts)</p>
+              <p className="text-xs">Time: ~5 min (one-by-one to avoid timeouts)</p>
             </div>
           </div>
 
