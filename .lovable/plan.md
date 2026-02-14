@@ -1,43 +1,66 @@
 
 
-# Fix: Chatbot Navigates Too Eagerly
+# Add Feedback & Copy Actions to Chat Messages
 
-## Problem
+## Summary
 
-When clicking a suggestion like "How to use EXOS?", the AI immediately calls `navigate_to_scenario` (e.g., to `/dashboards`), redirecting the user away from their current page before the conversation even starts.
+Add two action buttons below each assistant message in the EXOS Guide chat:
+1. **Thumbs Up / Thumbs Down** -- collects feedback, stored in a new `chat_feedback` database table for analysis
+2. **Copy** -- copies the message text to clipboard with a brief confirmation
 
-## Root Cause
+## Changes
 
-1. **System prompt** tells the AI to navigate users to scenarios as soon as it identifies a match -- but general questions like "How to use EXOS?" shouldn't trigger navigation.
-2. **No user confirmation** -- the frontend blindly executes any NAVIGATE action returned by the AI.
+### 1. Database: Create `chat_feedback` table
 
-## Solution (2 changes)
+```sql
+CREATE TABLE public.chat_feedback (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id text NOT NULL,
+  conversation_messages jsonb, -- last few messages for context
+  rating text NOT NULL CHECK (rating IN ('helpful', 'not_helpful')),
+  created_at timestamptz DEFAULT now()
+);
 
-### 1. Update System Prompt in `supabase/functions/chat-copilot/index.ts`
+ALTER TABLE public.chat_feedback ENABLE ROW LEVEL SECURITY;
 
-Add explicit guardrails to the system prompt:
+-- Public insert (no auth required, chatbot is anonymous)
+CREATE POLICY "Anyone can submit chat feedback"
+  ON public.chat_feedback FOR INSERT
+  WITH CHECK (true);
 
-- "Do NOT navigate on the first message. First understand the user's specific challenge."
-- "Only use the navigate tool when the user has confirmed they want to go to a specific scenario, or when you've had at least 2 exchanges to understand their need."
-- "For general questions like 'How to use EXOS?' or 'What can you do?', explain the platform capabilities WITHOUT navigating."
-
-### 2. Add Navigation Confirmation in `src/hooks/use-exos-chat.tsx`
-
-Instead of immediately calling `navigate()`, show a toast with an action button:
-
+-- No SELECT/UPDATE/DELETE for public -- admin-only via service role
 ```
-toast('Navigate to Reports?', {
-  action: { label: 'Go', onClick: () => navigate(path) },
-  duration: 6000,
-});
+
+### 2. `src/components/chat/ChatMessage.tsx` -- Add action buttons
+
+Below each **assistant** message bubble (after the timestamp), add a small action row:
+
+- **ThumbsUp** and **ThumbsDown** icons (from lucide-react), small and subtle
+- **Copy** icon -- copies `message.content` to clipboard, shows a brief checkmark
+- Buttons only appear on assistant messages, not user messages
+- Once feedback is submitted, the selected thumb highlights and both become disabled
+- Feedback is sent to the `chat_feedback` table via Supabase client
+
+### 3. `src/hooks/use-exos-chat.tsx` -- No changes needed
+
+The existing Message interface already has `id` which we'll use as `message_id` in the feedback table.
+
+## Visual Layout
+
+```text
+[Bot icon] [Message bubble                    ]
+           10:32 AM
+           [thumbs-up] [thumbs-down] [copy]
 ```
 
-This gives the user control -- they can accept or ignore the navigation suggestion.
+- Icons are 14px, muted color, with hover highlight
+- After clicking thumbs-up/down: selected icon gets primary color, toast confirms "Thanks for your feedback!"
+- After clicking copy: icon briefly becomes a checkmark, toast confirms "Copied to clipboard"
 
 ## Files Modified
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `supabase/functions/chat-copilot/index.ts` | Add navigation guardrails to system prompt |
-| `src/hooks/use-exos-chat.tsx` | Replace auto-navigate with confirmation toast |
+| Migration SQL | Create `chat_feedback` table |
+| `src/components/chat/ChatMessage.tsx` | Add feedback + copy buttons below assistant messages |
 
