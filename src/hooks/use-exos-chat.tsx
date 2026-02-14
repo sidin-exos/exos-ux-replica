@@ -44,8 +44,11 @@ export function useExosChat() {
       setMessages((prev) => [...prev, assistantMsg]);
 
       if (response.action?.type === 'NAVIGATE') {
-        toast.info('Navigating...', { duration: 2000 });
-        navigate(response.action.payload);
+        const path = response.action.payload;
+        toast.info(`Go to ${path.replace('/', '').replace(/-/g, ' ')}?`, {
+          action: { label: 'Go', onClick: () => navigate(path) },
+          duration: 6000,
+        });
       }
     } catch (err) {
       console.error('Chat send error:', err);
