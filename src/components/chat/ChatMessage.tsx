@@ -1,6 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Bot } from 'lucide-react';
+import { Bot, ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { Message } from '@/hooks/use-exos-chat';
 
 const timeFormatter = new Intl.DateTimeFormat('en-US', {
@@ -11,6 +13,7 @@ const timeFormatter = new Intl.DateTimeFormat('en-US', {
 interface ChatMessageProps {
   message: Message;
   isLatest: boolean;
+  allMessages?: Message[];
   onTextReveal?: () => void;
 }
 
@@ -79,10 +82,12 @@ function renderInline(text: string): React.ReactNode[] {
   return nodes;
 }
 
-export function ChatMessage({ message, isLatest, onTextReveal }: ChatMessageProps) {
+export function ChatMessage({ message, isLatest, allMessages, onTextReveal }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const shouldAnimate = !isUser && isLatest;
   const [displayedText, setDisplayedText] = useState(shouldAnimate ? '' : message.content);
+  const [feedbackGiven, setFeedbackGiven] = useState<'helpful' | 'not_helpful' | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!shouldAnimate) {
@@ -102,6 +107,30 @@ export function ChatMessage({ message, isLatest, onTextReveal }: ChatMessageProp
   }, [message.content, shouldAnimate, onTextReveal]);
 
   const rendered = useMemo(() => renderMarkdown(displayedText), [displayedText]);
+
+  const handleFeedback = useCallback(async (rating: 'helpful' | 'not_helpful') => {
+    setFeedbackGiven(rating);
+    const context = (allMessages ?? []).slice(-6).map(({ role, content }) => ({ role, content }));
+    const { error } = await supabase.from('chat_feedback' as any).insert({
+      message_id: message.id,
+      rating,
+      conversation_messages: context,
+    });
+    if (error) {
+      console.error('Feedback error:', error);
+      toast.error('Failed to submit feedback');
+      setFeedbackGiven(null);
+    } else {
+      toast.success('Thanks for your feedback!');
+    }
+  }, [message.id, allMessages]);
+
+  const handleCopy = useCallback(async () => {
+    await navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    toast.success('Copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  }, [message.content]);
 
   return (
     <motion.div
@@ -125,9 +154,46 @@ export function ChatMessage({ message, isLatest, onTextReveal }: ChatMessageProp
         >
           {isUser ? displayedText : rendered}
         </div>
-        <p className={`text-[10px] text-muted-foreground ${isUser ? 'text-right' : 'text-left'}`}>
-          {timeFormatter.format(message.timestamp)}
-        </p>
+        <div className={`flex items-center gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+          <p className="text-[10px] text-muted-foreground">
+            {timeFormatter.format(message.timestamp)}
+          </p>
+          {!isUser && (
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => handleFeedback('helpful')}
+                disabled={feedbackGiven !== null}
+                className={`p-1 rounded-md transition-colors ${
+                  feedbackGiven === 'helpful'
+                    ? 'text-primary'
+                    : 'text-muted-foreground/50 hover:text-muted-foreground'
+                } disabled:cursor-default`}
+                title="Helpful"
+              >
+                <ThumbsUp className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleFeedback('not_helpful')}
+                disabled={feedbackGiven !== null}
+                className={`p-1 rounded-md transition-colors ${
+                  feedbackGiven === 'not_helpful'
+                    ? 'text-destructive'
+                    : 'text-muted-foreground/50 hover:text-muted-foreground'
+                } disabled:cursor-default`}
+                title="Not helpful"
+              >
+                <ThumbsDown className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={handleCopy}
+                className="p-1 rounded-md text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                title="Copy"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_feedback: {
+        Row: {
+          conversation_messages: Json | null
+          created_at: string | null
+          id: string
+          message_id: string
+          rating: string
+        }
+        Insert: {
+          conversation_messages?: Json | null
+          created_at?: string | null
+          id?: string
+          message_id: string
+          rating: string
+        }
+        Update: {
+          conversation_messages?: Json | null
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          rating?: string
+        }
+        Relationships: []
+      }
       founder_metrics: {
         Row: {
           active_users: number
