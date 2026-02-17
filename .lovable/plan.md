@@ -1,101 +1,212 @@
 
 
-## Shadow Logging Pipeline — Implementation Plan
+## Field Requirement Reduction — Implementation Plan
 
-### Task 1: Update Types (`src/lib/sentinel/types.ts`)
+### Summary
+Single file change: `src/lib/scenarios.ts`. Change `required: true` to `required: false` for ~124 fields across 24 scenarios. Three CEO-overridden fields remain mandatory per your corrections.
 
-Add a new `ShadowLog` interface at the end of the file:
+### CEO Overrides (fields that STAY `required: true`)
+1. **TCO Analysis** `annualMaintenance` (line 280) -- maintenance often exceeds purchase price
+2. **Software Licensing** `contractLength` (line 344) -- fundamental baseline for SaaS optimization
+3. **Savings Calculation** `contractTerm` (line 576) -- savings meaningless without temporal scope
 
-```typescript
-// Section 7: SHADOW LOGGING TYPES
-export interface ShadowLog {
-  redundant_fields: string[];
-  missing_context: string[];
-  friction_score: number; // 1 (smooth) to 10 (painful)
-  input_recommendation: string;
-  scenario_type?: string;
-  detected_input_format?: 'structured' | 'semi-structured' | 'raw_text' | 'mixed';
-}
-```
+### Changes by Scenario (field ID -> `required: false`)
 
-No existing types are modified. This is additive only.
+**1. Make vs Buy** (lines 78-89) — 10 req -> 4 req
+- `recruitingCost` (line 81)
+- `managementTime` (line 82)
+- `officeItPerHead` (line 83)
+- `agencyOnboardingSpeed` (line 85)
+- `knowledgeRetentionRisk` (line 86)
+- `strategicImportance` (line 89)
 
----
+**2. Cost Breakdown** (lines 102-116) — 8 req -> 5 req
+- `materialCost` (line 107)
+- `laborCost` (line 108)
+- `overheadCost` (line 109)
 
-### Task 2: Modify `sentinel-analysis` Edge Function
+**3. Spend Analysis** (lines 128-133) — 4 req -> 3 req
+- `timeframe` (line 132)
 
-**Changes to `supabase/functions/sentinel-analysis/index.ts`:**
+**4. Tail Spend** (lines 151-163) — 6 req -> 4 req
+- `catalogAvailable` (line 156)
+- `paymentTerms` (line 158)
+- `approvalRequired` (line 163)
 
-1. **Inject shadow analysis instruction** into the system prompt (appended after existing rules, only for non-streaming requests where `enableTestLogging` is true and `scenarioType` is present):
+**5. Supplier Review** (lines 176-188) — 8 req -> 5 req
+- `incidentCount` (line 181)
+- `communicationScore` (line 182)
+- `financialStability` (line 184)
+- `priceVsMarket` (line 186)
 
-```
-INTERNAL EVALUATION (do NOT include in your visible response):
-After your analysis, output a JSON block fenced with ```shadow_log``` containing:
-{
-  "redundant_fields": [...fields that added no analytical value],
-  "missing_context": [...context the user likely wanted to provide but couldn't],
-  "friction_score": 1-10,
-  "input_recommendation": "one sentence recommendation",
-  "detected_input_format": "structured|semi-structured|raw_text|mixed"
-}
-```
+**6. Disruption Management** (lines 201-213) — 8 req -> 5 req
+- `altSuppliers` (line 206)
+- `altProducts` (line 207)
+- `switchingTime` (line 209)
 
-2. **Parse and strip shadow_log** from the AI response content before returning to client. After `const content = data.choices?.[0]?.message?.content || ""`, extract the shadow_log JSON block using regex, then remove it from the content string.
+**7. Risk Assessment** (lines 226-248) — 13 req -> 5 req
+- `marketVolatility` (line 232)
+- `regulatoryExposure` (line 233)
+- `geopoliticalRisk` (line 234)
+- `contractType` (line 237)
+- `liabilityProtection` (line 238)
+- `terminationRights` (line 239)
+- `currentChallenges` (line 242)
+- `supplierFinancialHealth` (line 243)
+- `recoveryTime` (line 248)
 
-3. **Write shadow_log to `test_reports`** — include it in the existing `test_reports` insert call alongside `raw_response`, `processing_time_ms`, etc. This applies to both the Google AI Studio path and the Lovable Gateway path.
+**8. TCO Analysis** (lines 269-304) — 17 req -> 6 req (annualMaintenance stays required per CEO override)
+- `installationCost` (line 276)
+- `energyConsumption` (line 281)
+- `vendorLockInRisk` (line 286)
+- `proprietaryComponents` (line 287)
+- `alternativeSuppliers` (line 288)
+- `technologyObsolescence` (line 291)
+- `marketPriceTrend` (line 292)
+- `inflationAssumption` (line 295)
+- `interestRate` (line 297)
+- `residualValue` (line 299)
+- `downtimeRisk` (line 303)
+- `downtimeCostPerHour` (line 304)
 
-**Why fenced JSON instead of tool calling?** The Lovable AI Gateway's OpenAI-compatible endpoint and Google AI Studio both support text output reliably. Tool calling has format differences between providers and would complicate the dual-provider fallback logic. A fenced block is simple to parse, works identically on both providers, and is easy to strip from the response.
+**9. Software Licensing** (lines 326-359) — 18 req -> 7 req (contractLength stays required per CEO override)
+- `powerUsers` (line 333)
+- `regularUsers` (line 334)
+- `occasionalUsers` (line 335)
+- `implementationCost` (line 343)
+- `longTermDiscount` (line 345)
+- `annualEscalation` (line 346)
+- `terminationClause` (line 348)
+- `dataExportability` (line 350)
+- `integrationDependency` (line 351)
+- `switchingCostEstimate` (line 352)
+- `alternativeProducts` (line 353)
+- `vendorStability` (line 356)
 
----
+**10. Risk Matrix** (lines 381-393) — 9 req -> 3 req
+- `legalStatus` (line 384)
+- `lawsuits` (line 385)
+- `financialHealth` (line 387)
+- `concentration` (line 388)
+- `sanctionsRisk` (line 390)
+- `cyberSecurity` (line 391)
 
-### Task 3: Database Migration
+**11. SOW Critic** (lines 408-420) — 7 req -> 3 req
+- `deliverables` (line 412)
+- `acceptanceCriteria` (line 413)
+- `timeline` (line 414)
+- `responsibilities` (line 415)
+- `changeProcess` (line 418)
 
-Add `shadow_log` JSONB column to `test_reports`:
+**12. SLA Definition** (lines 433-444) — 8 req -> 5 req
+- `resolutionTime` (line 438)
+- `allowedDowntime` (line 439)
+- `escalationProcess` (line 442)
 
-```sql
-ALTER TABLE public.test_reports
-ADD COLUMN shadow_log jsonb DEFAULT NULL;
+**13. Requirements Gathering** (lines 488-500) — 7 req -> 4 req
+- `budget` (line 492)
+- `userCount` (line 493)
+- `dataSecurityLevel` (line 495)
+- `urgency` (line 496)
 
-COMMENT ON COLUMN public.test_reports.shadow_log IS
-  'Silent input quality evaluation: friction_score, redundant_fields, missing_context, input_recommendation';
-```
+**14. Volume Consolidation** (lines 515-527) — 7 req -> 3 req
+- `skuOverlap` (line 519)
+- `unitOfMeasure` (line 520)
+- `paymentTerms` (line 522)
+- `orderFrequency` (line 523)
+- `reliabilityIndex` (line 524)
 
-No RLS changes needed — `test_reports` is already admin-only for both SELECT and INSERT.
+**15. Capex vs Opex** (lines 540-552) — 8 req -> 5 req
+- `maintenanceCost` (line 546)
+- `residualValue` (line 547)
+- `wacc` (line 549)
 
----
+**16. Savings Calculation** (lines 565-577) — 7 req -> 6 req (contractTerm stays required per CEO override)
+- `inflationIndex` (line 571)
 
-### Task 4: Update `generate-test-data` Edge Function
+**17. SaaS Optimization** (lines 590-602) — 9 req -> 5 req
+- `lastLoginDate` (line 595)
+- `featureUsage` (line 596)
+- `noticePeriod` (line 598)
+- `autoRenewal` (line 599)
 
-**Changes to `supabase/functions/generate-test-data/index.ts`:**
+**18. Category Strategy** (lines 640-655) — 10 req -> 5 req
+- `supplierCount` (line 645)
+- `marketStructure` (line 646)
+- `supplyRisk` (line 647)
+- `businessImpact` (line 648)
+- `currentStrategy` (line 649)
+- `contractStatus` (line 652)
 
-1. **Add `"messy"` to valid modes** — update `VALID_MODES` from `["draft", "generate", "full"]` to `["draft", "generate", "full", "messy"]`.
+**19. Negotiation Preparation** (lines 676-693) — 12 req -> 7 req
+- `relationshipHistory` (line 682)
+- `buyingPower` (line 683)
+- `marketAlternatives` (line 684)
+- `switchingCost` (line 685)
+- `mustHaves` (line 690)
+- `timeline` (line 693)
 
-2. **Add `handleMessyMode` function** targeting high-friction scenarios (`tco-analysis`, `software-licensing`, `cost-breakdown`, `make-vs-buy`, `supplier-review`, `negotiation-prep`). Uses your exact prompt instruction:
+**20. Procurement Project Planning** (lines 715-730) — 10 req -> 5 req
+- `keyInputs` (line 721)
+- `expectedOutputs` (line 722)
+- `budgetConstraint` (line 723)
+- `timelineConstraint` (line 724)
+- `resourceConstraint` (line 725)
+- `successCriteria` (line 728)
 
-> "You are a busy, disorganized procurement manager. Generate realistic, messy corporate data for the '{scenario_id}' scenario. Do NOT provide clean, isolated numbers or perfectly formatted text. Instead, generate copy-pasted email threads from suppliers, fragmented meeting notes, or raw CSV strings where pricing, terms, and context are all mixed together in unstructured text. Force this chaotic text into the required scenario schema fields, even if it means shoving a whole email paragraph into a 'currency' or 'number' field, or leaving some fields completely blank. The goal is to simulate maximum UX friction and trigger the shadow logging evaluation."
+**21. Pre-flight Audit** (lines 744-754) — 7 req -> 4 req
+- `plannedPurchase` (line 749)
+- `existingRelationship` (line 751)
+- `researchFocus` (line 752)
 
-3. **Route messy mode** in the main handler — after the `generate` mode check, add a block for `mode === "messy"` that calls `handleMessyMode`.
+**22. Category Risk Evaluator** (lines 773-791) — 11 req -> 5 req
+- `contractType` (line 780)
+- `marketConcentration` (line 783)
+- `marketTrends` (line 784)
+- `priceVolatility` (line 785)
+- `supplyRisk` (line 786)
+- `regulatoryExposure` (line 788)
+- `substitutability` (line 790)
 
-4. **Messy mode defaults** — if no `scenarioType` is specified, randomly selects from the high-friction list. Uses higher temperature (0.9) for more creative chaos.
+**23. Supplier Dependency Planner** (lines 813-837) — 15 req -> 7 req
+- `categoryTotalSpend` (line 819)
+- `spendConcentration` (line 821)
+- `revenueShare` (line 822)
+- `uniqueCapabilities` (line 824)
+- `contractTerms` (line 826)
+- `dataPortability` (line 828)
+- `integrationDepth` (line 829)
+- `knowledgeDependency` (line 830)
+- `alternativeSuppliers` (line 832)
+- `switchingTimeEstimate` (line 833)
 
----
+**24. Specification Optimizer** (lines 860-872) — 8 req -> 5 req
+- `estimatedValue` (line 865)
+- `specSource` (line 866)
+- `competitiveMarket` (line 868)
 
-### Execution Order
+**25. Black Swan Scenario** (lines 893-915) — 12 req -> 6 req
+- `businessImpact` (line 899)
+- `singleSourceItems` (line 901)
+- `geographicConcentration` (line 902)
+- `tierVisibility` (line 903)
+- `inventoryBuffer` (line 904)
+- `alternativesReady` (line 909)
+- `responsePlaybook` (line 910)
+- `acceptableDowntime` (line 914)
 
-```text
-1. Database migration (shadow_log column)
-2. src/lib/sentinel/types.ts (ShadowLog interface)
-3. supabase/functions/sentinel-analysis/index.ts (inject, parse, strip, store)
-4. supabase/functions/generate-test-data/index.ts (messy mode)
-5. Deploy both edge functions
-```
+**26. Market Snapshot** (lines 939-949) — 3 req -> 2 req
+- `timeframe` (line 949)
 
-### Files Modified
+**No changes to:** Predictive Budgeting (already lean), RFP Generator (already lean), Contract Template Generator (already well-structured)
 
-| File | Change |
-|------|--------|
-| `src/lib/sentinel/types.ts` | Add `ShadowLog` interface |
-| `supabase/functions/sentinel-analysis/index.ts` | Shadow prompt injection, parsing, stripping, DB write |
-| `supabase/functions/generate-test-data/index.ts` | Add `"messy"` mode with high-friction scenario targeting |
-| Database migration | Add `shadow_log` JSONB column to `test_reports` |
+### Impact
+- Total required fields: ~255 -> ~131 (49% reduction)
+- Avg required per scenario: ~8.8 -> ~4.5
+- Scenarios with 10+ required: 10 -> 0
+- No DB migrations, no structural changes
+- `DataRequirementsAlert` and `GenericScenarioWizard` already handle this correctly
+
+### Risk Mitigation
+Shadow logging pipeline (just deployed) monitors `missing_context` and `friction_score` to validate these changes with real data.
 
