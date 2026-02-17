@@ -1,55 +1,47 @@
 
 
-## Four Targeted Updates
+## Bug Fixes: Chat Auto-Scroll and Published Version Connection Error
 
-### 1. Reorder Scenarios: Move "Cost Breakdown" and "Spend Analysis" Up
+### Bug 1: Auto-Scrolling Prevents Watching Answer Generation
 
-In `src/lib/scenarios.ts`, move the `cost-breakdown` and `spend-analysis-categorization` scenario objects to appear right after `make-vs-buy` in the array. This makes them the 2nd and 3rd items shown in the "Analysis & Optimization" category on the homepage.
+**Root Cause:** The typewriter effect in `ChatMessage.tsx` calls `onTextReveal` (which triggers `scrollToBottom`) on every single character (every 12ms). Since the chat panel is only 420px tall, `isNearBottom()` almost always returns `true`, so every character typed forces a scroll — the user can never scroll up to observe generation happening.
 
-New display order for Analysis category:
-1. Make vs Buy
-2. Cost Breakdown (moved from position ~6)
-3. Spend Analysis & Categorization (moved from position ~last)
-4. Supplier Review
-5. TCO Analysis
-6. ...rest unchanged
+**Fix:** Remove the `onTextReveal` callback from the typewriter loop. Instead, only auto-scroll when a new message is added (already handled by the `useEffect` on `messages.length`). The user will be able to scroll freely during generation, and the scroll will only snap when new messages appear.
 
-### 2. Update Scenario Count on Technology Page
+**Files changed:**
+- `src/components/chat/ChatMessage.tsx` — Remove `onTextReveal?.()` call from the typewriter interval
+- `src/components/chat/ChatWidget.tsx` — Remove the `onTextReveal` prop from `ChatMessage` usage
 
-In `src/pages/Features.tsx`, change `"21+ Procurement Scenarios"` to `"29 Procurement Scenarios"` (the actual count from the scenarios array).
+---
 
-### 3. Rewrite "Enterprise-Grade Risk Assessment" Card
+### Bug 2: Published Version Returns "Trouble Connecting"
 
-Replace the third value proposition card in `src/pages/Features.tsx` with a "Commercial Data Safety" card focused on the anonymization architecture:
+**Root Cause:** The `chat-copilot` edge function calls `authenticateRequest()` which validates a JWT user token. When a user is not logged in, `supabase.functions.invoke()` sends only the anon key as the Bearer token. `getClaims()` fails on this non-user token, returning a 401 error. This causes `supabase.functions.invoke` to surface an error on the client, which triggers the fallback "trouble connecting" message.
 
-- **Title:** "Commercial Data Safety"
-- **Icon:** Lock (replacing Shield)
-- **Description:** Emphasizes semantic anonymization masking sensitive commercial data (supplier names, pricing, contract terms) before it reaches external APIs, then restoring context on the way back.
-- **Highlights:**
-  - Semantic anonymization of commercial data
-  - PII and financial identifier masking
-  - Enterprise InfoSec Gate for traffic audit
-  - Full data restoration after AI processing
+This likely works in preview because you happen to be logged in there, but on the published site you (or visitors) are not authenticated.
 
-### 4. Add Architecture Link to the New Card
+The EXOS Guide chatbot is a public-facing onboarding tool — it should not require authentication.
 
-Add a "Know more about EXOS architecture and data flow" link below the highlights list in the Commercial Data Safety card, linking to `/architecture`. This will be a NavLink styled consistently with the page.
+**Fix:** Remove the `authenticateRequest` gate from the `chat-copilot` edge function so it works for all visitors. The function already has `verify_jwt = false` in config.toml, confirming the intent for public access.
+
+**Files changed:**
+- `supabase/functions/chat-copilot/index.ts` — Remove `authenticateRequest` import and auth check block (lines 2, 85-91)
+
+---
 
 ### Technical Details
 
 ```text
-Files Modified: 2
+Files Modified: 3
 
-1. src/lib/scenarios.ts
-   - Cut cost-breakdown object (~26 lines) from line 582
-   - Cut spend-analysis-categorization object (~22 lines) from line 937
-   - Paste both after make-vs-buy (after line 92)
+1. src/components/chat/ChatMessage.tsx
+   - Remove onTextReveal?.() call from typewriter setInterval (line ~101)
 
-2. src/pages/Features.tsx
-   - Import Lock icon (add to existing import line)
-   - Import NavLink component
-   - Update "21+" to "29" in scenario count title
-   - Replace 3rd valuePropositions entry (Risk Assessment -> Commercial Data Safety)
-   - Add NavLink to /architecture after highlights in 3rd card
-     (requires small JSX change in the card render loop to conditionally render the link)
+2. src/components/chat/ChatWidget.tsx
+   - Remove onTextReveal={scrollToBottom} prop from ChatMessage (line ~161)
+
+3. supabase/functions/chat-copilot/index.ts
+   - Remove authenticateRequest import (line 2)
+   - Remove auth validation block (lines 85-91)
 ```
+
