@@ -370,8 +370,8 @@ export type Database = {
     }
     Functions: {
       create_shared_report: {
-        Args: { p_expires_at: string; p_payload: Json; p_share_id: string }
-        Returns: undefined
+        Args: { p_expires_at: string; p_payload: Json }
+        Returns: string
       }
       get_shared_report: { Args: { p_share_id: string }; Returns: Json }
       has_role: {

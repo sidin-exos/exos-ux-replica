@@ -34,32 +34,24 @@ export function useShareableReport(): ShareableReportReturn {
 
   const isShared = searchParams.has("share");
 
-  // Generate a cryptographically secure share ID
-  const generateShareId = (): string => {
-    const array = new Uint8Array(16);
-    crypto.getRandomValues(array);
-    return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
-  };
-
   /**
    * Store report data and generate a shareable link.
-   * Uses published URL so share links work without Lovable auth.
+   * The share_id is now generated server-side for security.
+   * Requires authentication.
    */
   const generateShareLink = useCallback(
     async (data: ReportData): Promise<string | null> => {
       try {
         setIsLoading(true);
-        const id = generateShareId();
 
         const expiresAt = new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-        const { error } = await supabase.rpc("create_shared_report", {
-          p_share_id: id,
-          p_payload: JSON.parse(JSON.stringify(data)),
+        const { data: id, error } = await supabase.rpc("create_shared_report", {
+          p_payload: JSON.parse(JSON.stringify(data)) as unknown as import("@/integrations/supabase/types").Json,
           p_expires_at: expiresAt,
         });
 
-        if (error) {
+        if (error || !id) {
           console.error("Failed to persist shared report:", error);
           return null;
         }
