@@ -868,8 +868,9 @@ async function handleDraftMode(
 ): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
   const industries = Object.keys(COMPATIBILITY_MATRIX);
   
-  // Select a random trick for this scenario type
+  // Select a random trick and persona for this scenario type
   const trickResult = selectRandomTrick(scenarioType);
+  const persona = selectPersona();
   const trick = trickResult?.trick || null;
   
   console.log(`[TestDataGen] Draft mode - Selected trick: ${trick?.category || 'none'}`);
@@ -930,6 +931,10 @@ Return ONLY a valid JSON object with these exact keys:
     if (trick) {
       parsed.trick = trick;
     }
+    
+    // Attach the selected persona
+    parsed.persona = persona.id;
+    parsed.personaName = persona.name;
     
     return { success: true, parameters: parsed };
   } catch (error) {

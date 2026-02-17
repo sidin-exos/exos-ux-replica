@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { RefreshCw, Check, Pencil, ChevronUp, Loader2, Target, Eye } from "lucide-react";
+import { RefreshCw, Check, Pencil, ChevronUp, Loader2, Target, Eye, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -171,6 +171,23 @@ export function DraftedParametersCard({
                 />
               ) : undefined}
             />
+            {displayParams.persona && (
+              <ParameterRow
+                label="Persona"
+                value={displayParams.personaName || PARAMETER_LABELS.persona?.[displayParams.persona] || displayParams.persona}
+                editing={isEditing}
+                onEdit={isEditing ? (
+                  <ParamSelect
+                    value={displayParams.persona}
+                    options={Object.entries(PARAMETER_LABELS.persona || {})}
+                    onChange={(v) => {
+                      handleParamChange("persona", v);
+                      handleParamChange("personaName", PARAMETER_LABELS.persona?.[v] || v);
+                    }}
+                  />
+                ) : undefined}
+              />
+            )}
           </div>
 
           {/* Training Trick Display */}
