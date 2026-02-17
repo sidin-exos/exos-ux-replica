@@ -142,12 +142,10 @@ const ScenarioTutorial = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25 }}
-              className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none 
-                         prose-li:text-muted-foreground prose-p:text-muted-foreground prose-strong:text-foreground"
-              dangerouslySetInnerHTML={{
-                __html: displayContent.replace(/\n/g, "<br/>"),
-              }}
-            />
+              className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap"
+            >
+              {displayContent}
+            </motion.div>
           )}
         </AnimatePresence>
       </CardContent>
