@@ -157,7 +157,7 @@ export function ChatWidget() {
                 message={msg}
                 isLatest={i === messages.length - 1}
                 allMessages={messages}
-                onTextReveal={scrollToBottom}
+                
               />
             ))}
 

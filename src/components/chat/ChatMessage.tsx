@@ -14,7 +14,7 @@ interface ChatMessageProps {
   message: Message;
   isLatest: boolean;
   allMessages?: Message[];
-  onTextReveal?: () => void;
+  
 }
 
 /** Minimal markdown: **bold**, - lists, \n\n paragraphs */
@@ -82,7 +82,7 @@ function renderInline(text: string): React.ReactNode[] {
   return nodes;
 }
 
-export function ChatMessage({ message, isLatest, allMessages, onTextReveal }: ChatMessageProps) {
+export function ChatMessage({ message, isLatest, allMessages }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const shouldAnimate = !isUser && isLatest;
   const [displayedText, setDisplayedText] = useState(shouldAnimate ? '' : message.content);
@@ -99,12 +99,11 @@ export function ChatMessage({ message, isLatest, allMessages, onTextReveal }: Ch
     const interval = setInterval(() => {
       i++;
       setDisplayedText(message.content.slice(0, i));
-      onTextReveal?.();
       if (i >= message.content.length) clearInterval(interval);
     }, 12);
 
     return () => clearInterval(interval);
-  }, [message.content, shouldAnimate, onTextReveal]);
+  }, [message.content, shouldAnimate]);
 
   const rendered = useMemo(() => renderMarkdown(displayedText), [displayedText]);
 
