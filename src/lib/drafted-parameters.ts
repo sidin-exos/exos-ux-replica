@@ -40,6 +40,8 @@ export interface DraftedParameters {
   dataQuality: DataQuality;
   reasoning: string;
   trick?: TrickDefinition;    // Optional training trick
+  persona?: string;           // e.g. "rushed-junior"
+  personaName?: string;       // e.g. "The Rushed Junior Buyer"
 }
 
 export interface DraftResult {
@@ -103,6 +105,12 @@ export const PARAMETER_LABELS: Record<string, Record<string, string>> = {
     "good": "Good",
     "partial": "Partial",
     "poor": "Poor",
+  },
+  persona: {
+    "rushed-junior": "Rushed Junior Buyer",
+    "methodical-manager": "Methodical Category Manager",
+    "cfo-finance": "CFO / Finance Leader",
+    "frustrated-stakeholder": "Frustrated Stakeholder",
   },
   trickSubtlety: {
     "obvious": "Obvious (Easy to spot)",
