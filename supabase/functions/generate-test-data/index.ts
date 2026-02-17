@@ -14,6 +14,7 @@ const corsHeaders = {
  * 1. "draft" - Fast parameter proposal (1 AI call)
  * 2. "generate" - Single-pass data generation with pre-approved params (1 AI call)
  * 3. "full" - Legacy MCTS-inspired multi-call approach
+ * 4. "messy" - Chaotic data generation for stress testing
  */
 
 // Parameter types for drafter
@@ -51,6 +52,49 @@ interface DraftedParameters {
   dataQuality: DataQuality;
   reasoning: string;
   trick?: TrickDefinition;
+}
+
+interface ScenarioSchema {
+  required: string[];
+  optional: string[];
+}
+
+// =============================================
+// BUYER PERSONAS
+// =============================================
+const BUYER_PERSONAS = [
+  {
+    id: "rushed-junior",
+    name: "The Rushed Junior Buyer",
+    description: "A junior procurement specialist who is short on time. Provides minimal, vague context. Uses informal language, abbreviations, and often leaves optional fields blank.",
+    optionalFillRate: "30-40%"
+  },
+  {
+    id: "methodical-manager",
+    name: "The Methodical Category Manager",
+    description: "An experienced category manager. Provides highly detailed, structured, and strategic context. Fills out almost all optional fields with precise industry terminology.",
+    optionalFillRate: "85-95%"
+  },
+  {
+    id: "cfo-finance",
+    name: "The CFO / Finance Leader",
+    description: "A senior finance executive focused purely on numbers, risk, and ROI. Provides very short text context but is extremely precise with financial figures (currencies, percentages). Often ignores technical or operational optional fields.",
+    optionalFillRate: "40-60% (financial fields prioritized)"
+  },
+  {
+    id: "frustrated-stakeholder",
+    name: "The Frustrated Stakeholder (Business Unit)",
+    description: "A non-procurement user (e.g., Marketing or IT Director) forced to use the system. Complains in the text fields, provides messy narrative data instead of structured facts, and misunderstands procurement terminology.",
+    optionalFillRate: "50-70% (filled but often with wrong format)"
+  }
+];
+
+function selectPersona(requestedPersona?: string) {
+  if (requestedPersona) {
+    const found = BUYER_PERSONAS.find(p => p.id === requestedPersona);
+    if (found) return found;
+  }
+  return BUYER_PERSONAS[Math.floor(Math.random() * BUYER_PERSONAS.length)];
 }
 
 // Industry-Category compatibility matrix
@@ -98,110 +142,183 @@ const CATEGORY_KPIS: Record<string, string[]> = {
   "capital-equipment": ["Uptime (%)", "Maintenance cost ratio", "ROI period (months)"],
 };
 
-// Scenario-specific field schemas for AI generation
-// Note: "mainFocus" is automatically included for ALL scenarios and should be generated
-const SCENARIO_SCHEMAS: Record<string, string[]> = {
-  "make-vs-buy": [
-    "industryContext", "mainFocus", "internalSalary", "recruitingCost", "managementTime",
-    "officeItPerHead", "agencyFee", "agencyOnboardingSpeed", "knowledgeRetentionRisk",
-    "qualityBenchmark", "peakLoadCapacity", "strategicImportance"
-  ],
-  "supplier-review": [
-    "industryContext", "mainFocus", "qualityScore", "onTimeDelivery", "incidentCount",
-    "communicationScore", "innovationScore", "financialStability",
-    "socialResponsibility", "priceVsMarket", "crisisSupport", "spendVolume"
-  ],
-  "software-licensing": [
-    "industryContext", "mainFocus", "softwareName", "softwareCategory", "totalUsers",
-    "powerUsers", "regularUsers", "occasionalUsers", "externalUsers",
-    "userGrowthRate", "perUserMonthly", "enterpriseTierCost", "contractLength"
-  ],
-  "tco-analysis": [
-    "industryContext", "mainFocus", "assetDescription", "ownershipPeriod", "purchasePrice",
-    "installationCost", "trainingCost", "annualMaintenance", "energyConsumption",
-    "vendorLockInRisk", "residualValue"
-  ],
-  "risk-assessment": [
-    "industryContext", "mainFocus", "assessmentSubject", "annualValue", "marketVolatility",
-    "regulatoryExposure", "geopoliticalRisk", "businessCriticality",
-    "supplierFinancialHealth", "recoveryTime"
-  ],
-  "disruption-management": [
-    "industryContext", "mainFocus", "deficitSku", "stockDays", "altSuppliers", "altProducts",
-    "substitutePrice", "switchingTime", "lostRevenuePerDay", "forceMajeureClause"
-  ],
-  "negotiation-prep": [
-    "industryContext", "mainFocus", "supplierName", "annualSpend", "contractEndDate",
-    "relationshipYears", "switchingCost", "alternativeCount", "spendTrend", "leverage"
-  ],
-  "sow-critic": [
-    "industryContext", "mainFocus", "sowText", "deliverables", "acceptanceCriteria",
-    "timeline", "responsibilities"
-  ],
-  "category-strategy": [
-    "industryContext", "mainFocus", "categoryName", "annualSpend", "supplierCount",
-    "marketStructure", "supplyRisk", "businessImpact", "currentStrategy", "painPoints"
-  ],
-  "volume-consolidation": [
-    "industryContext", "mainFocus", "spendPerVendor", "skuOverlap", "unitOfMeasure",
-    "paymentTerms", "orderFrequency", "reliabilityIndex"
-  ],
-  "cost-breakdown": [
-    "industryContext", "mainFocus", "productDescription", "totalCost", "materialCost",
-    "laborCost", "overheadCost", "volumePerYear"
-  ],
-  "forecasting-budgeting": [
-    "industryContext", "categoryContext", "historicalSpendData", "knownFutureEvents",
-    "budgetConstraints", "forecastHorizon"
-  ],
-  "market-snapshot": [
-    "industryContext", "region", "analysisScope", "successCriteria", "timeframe"
-  ],
-  "saas-optimization": [
-    "industryContext", "mainFocus", "totalSeats", "pricePerSeat", "lastLoginDate",
-    "featureUsage", "contractEndDate", "noticePeriod", "autoRenewal"
-  ],
-  "capex-vs-opex": [
-    "industryContext", "mainFocus", "purchasePrice", "leaseRate", "leaseTerm",
-    "maintenanceCost", "residualValue", "wacc"
-  ],
-  "savings-calculation": [
-    "industryContext", "mainFocus", "baselinePrice", "newPrice", "volume",
-    "inflationIndex", "contractTerm"
-  ],
-  "risk-matrix": [
-    "industryContext", "mainFocus", "legalStatus", "lawsuits", "dataAccess",
-    "financialHealth", "concentration", "cyberSecurity"
-  ],
-  "sla-definition": [
-    "industryContext", "mainFocus", "operatingHours", "responseTime", "resolutionTime",
-    "allowedDowntime", "serviceCriticality", "escalationProcess"
-  ],
-  "rfp-generator": [
-    "industryContext", "rawBrief", "documentTypes", "evaluationPriorities",
-    "budgetRange", "additionalInstructions"
-  ],
-  "requirements-gathering": [
-    "industryContext", "mainFocus", "businessGoal", "budget", "userCount",
-    "dataSecurityLevel", "urgency", "mustHaveFeatures"
-  ],
-  "negotiation-preparation": [
-    "industryContext", "mainFocus", "negotiationSubject", "currentSpend", "supplierName",
-    "relationshipHistory", "buyingPower", "marketAlternatives", "switchingCost", "batna"
-  ],
-  "procurement-project-planning": [
-    "industryContext", "mainFocus", "projectTitle", "projectObjective", "projectScope",
-    "keyInputs", "expectedOutputs", "budgetConstraint", "timelineConstraint"
-  ],
-  "tail-spend-sourcing": [
-    "industryContext", "mainFocus", "purchaseAmount", "urgency", "catalogAvailable",
-    "paymentTerms", "approvalRequired"
-  ],
-  "contract-template": [
-    "industryContext", "mainFocus", "country", "timeTier",
-    "contractBrief", "contractType", "contractValue", "specialRequirements"
-  ],
+// =============================================
+// SCENARIO_SCHEMAS — required/optional split mirrors src/lib/scenarios.ts
+// Including 3 CEO overrides: annualMaintenance (tco), contractLength (sw-licensing), contractTerm (savings)
+// =============================================
+const SCENARIO_SCHEMAS: Record<string, ScenarioSchema> = {
+  "make-vs-buy": {
+    required: ["industryContext", "mainFocus", "internalSalary", "agencyFee"],
+    optional: ["recruitingCost", "managementTime", "officeItPerHead", "agencyOnboardingSpeed",
+               "knowledgeRetentionRisk", "qualityBenchmark", "peakLoadCapacity", "strategicImportance"]
+  },
+  "cost-breakdown": {
+    required: ["industryContext", "mainFocus", "productDescription", "totalCost", "volumePerYear"],
+    optional: ["materialCost", "laborCost", "overheadCost", "logisticsCost", "toolingCost",
+               "profitMargin", "commodityIndex", "laborRateReference", "currencyExposure"]
+  },
+  "spend-analysis-categorization": {
+    required: ["industryContext", "mainFocus", "spendData"],
+    optional: ["timeframe", "categoryTaxonomy"]
+  },
+  "tail-spend-sourcing": {
+    required: ["industryContext", "mainFocus", "purchaseAmount", "urgency"],
+    optional: ["catalogAvailable", "paymentTerms", "approvalRequired",
+               "quotesCount", "warranty", "deliveryCost", "returnRisk", "alternativesExist"]
+  },
+  "supplier-review": {
+    required: ["industryContext", "mainFocus", "qualityScore", "onTimeDelivery", "innovationScore"],
+    optional: ["incidentCount", "communicationScore", "financialStability",
+               "socialResponsibility", "priceVsMarket", "crisisSupport", "spendVolume"]
+  },
+  "disruption-management": {
+    required: ["industryContext", "mainFocus", "deficitSku", "stockDays", "lostRevenuePerDay"],
+    optional: ["altSuppliers", "altProducts", "switchingTime", "substitutePrice",
+               "forceMajeureClause", "inTransitStatus", "competitorResponse"]
+  },
+  "risk-assessment": {
+    required: ["industryContext", "mainFocus", "assessmentSubject", "annualValue", "businessCriticality"],
+    optional: ["marketVolatility", "regulatoryExposure", "geopoliticalRisk",
+               "contractType", "liabilityProtection", "terminationRights",
+               "currentChallenges", "supplierFinancialHealth", "recoveryTime",
+               "commodityDependency", "priceAdjustmentMechanism", "supplyChainVisibility", "recentIncidents"]
+  },
+  "tco-analysis": {
+    required: ["industryContext", "mainFocus", "assetDescription", "ownershipPeriod", "purchasePrice", "annualMaintenance"],
+    optional: ["installationCost", "trainingCost", "energyConsumption", "vendorLockInRisk", "residualValue",
+               "integrationCost", "consumablesCost", "laborCost", "insuranceCost",
+               "proprietaryComponents", "alternativeSuppliers", "dataPortability",
+               "technologyObsolescence", "marketPriceTrend", "regulatoryChanges",
+               "inflationAssumption", "currencyExposure", "interestRate",
+               "decommissioningCost", "dataMigrationCost", "downtimeRisk", "downtimeCostPerHour"]
+  },
+  "software-licensing": {
+    required: ["industryContext", "mainFocus", "softwareName", "softwareCategory", "totalUsers",
+               "externalUsers", "userGrowthRate", "perUserMonthly", "enterpriseTierCost", "contractLength"],
+    optional: ["powerUsers", "regularUsers", "occasionalUsers",
+               "usageBasedRate", "implementationCost", "longTermDiscount", "annualEscalation",
+               "paymentTerms", "terminationClause", "dataExportability",
+               "integrationDependency", "switchingCostEstimate", "alternativeProducts",
+               "proprietaryFeatures", "vendorStability", "complianceRequirements",
+               "currentSolution", "currentAnnualCost"]
+  },
+  "risk-matrix": {
+    required: ["industryContext", "mainFocus", "dataAccess"],
+    optional: ["legalStatus", "lawsuits", "financialHealth", "concentration",
+               "cyberSecurity", "environmentalRisk", "sanctionsRisk", "insurance", "siteAudits"]
+  },
+  "sow-critic": {
+    required: ["industryContext", "mainFocus", "sowText"],
+    optional: ["deliverables", "acceptanceCriteria", "timeline", "responsibilities",
+               "clientResources", "exclusions", "changeProcess", "penalties", "warrantyPeriod"]
+  },
+  "sla-definition": {
+    required: ["industryContext", "mainFocus", "operatingHours", "responseTime", "serviceCriticality"],
+    optional: ["resolutionTime", "allowedDowntime", "escalationProcess",
+               "contactMethods", "reportingFrequency", "qualityBonuses"]
+  },
+  "rfp-generator": {
+    required: ["industryContext", "rawBrief", "documentTypes", "evaluationPriorities",
+               "budgetRange", "additionalInstructions"],
+    optional: ["mainFocus"]
+  },
+  "requirements-gathering": {
+    required: ["industryContext", "mainFocus", "businessGoal", "mustHaveFeatures"],
+    optional: ["budget", "userCount", "dataSecurityLevel", "urgency",
+               "itLandscape", "niceToHaveFeatures", "scalability", "languageSupport"]
+  },
+  "negotiation-preparation": {
+    required: ["industryContext", "mainFocus", "negotiationSubject", "currentSpend",
+               "supplierName", "batna", "negotiationObjectives"],
+    optional: ["relationshipHistory", "buyingPower", "marketAlternatives", "switchingCost",
+               "supplierDependency", "supplierBatna", "mustHaves", "niceToHaves",
+               "knownConstraints", "timeline"]
+  },
+  "procurement-project-planning": {
+    required: ["industryContext", "mainFocus", "projectTitle", "projectObjective", "projectScope"],
+    optional: ["keyInputs", "expectedOutputs", "budgetConstraint", "timelineConstraint",
+               "resourceConstraint", "stakeholders", "riskFactors", "successCriteria",
+               "strategicAlignment", "dependencies"]
+  },
+  "forecasting-budgeting": {
+    required: ["industryContext", "categoryContext", "historicalSpendData",
+               "knownFutureEvents", "budgetConstraints", "forecastHorizon"],
+    optional: []
+  },
+  "market-snapshot": {
+    required: ["industryContext", "region", "analysisScope", "successCriteria"],
+    optional: ["timeframe"]
+  },
+  "contract-template": {
+    required: ["industryContext", "mainFocus", "country", "timeTier",
+               "contractBrief", "contractType", "contractValue", "specialRequirements"],
+    optional: []
+  },
+  "saas-optimization": {
+    required: ["industryContext", "mainFocus", "totalSeats", "pricePerSeat", "contractEndDate"],
+    optional: ["lastLoginDate", "featureUsage", "noticePeriod", "autoRenewal",
+               "ssoIntegration", "duplicateApps", "supportTier"]
+  },
+  "capex-vs-opex": {
+    required: ["industryContext", "mainFocus", "purchasePrice", "leaseRate", "leaseTerm"],
+    optional: ["maintenanceCost", "residualValue", "wacc",
+               "propertyTax", "partsInflation", "energyCost", "trainingCost"]
+  },
+  "savings-calculation": {
+    required: ["industryContext", "mainFocus", "baselinePrice", "newPrice", "volume", "contractTerm"],
+    optional: ["inflationIndex", "fxRate", "qualityCost", "earlyPaymentDiscount",
+               "storageCost", "switchingCosts"]
+  },
+  "volume-consolidation": {
+    required: ["industryContext", "mainFocus", "spendPerVendor"],
+    optional: ["skuOverlap", "unitOfMeasure", "paymentTerms", "orderFrequency",
+               "reliabilityIndex", "volumeGrowthForecast", "currentPenalties", "taxRate"]
+  },
+  "category-strategy": {
+    required: ["industryContext", "mainFocus", "categoryName", "annualSpend", "painPoints"],
+    optional: ["supplierCount", "marketStructure", "supplyRisk", "businessImpact",
+               "currentStrategy", "innovationNeeds", "contractStatus", "stakeholders",
+               "historicalSavings", "benchmarkData"]
+  },
+  // === 5 NEW SCENARIOS ===
+  "pre-flight-audit": {
+    required: ["industryContext", "mainFocus", "supplierWebsite", "supplierName"],
+    optional: ["plannedPurchase", "estimatedValue", "existingRelationship",
+               "researchFocus", "urgency", "redFlags"]
+  },
+  "category-risk-evaluator": {
+    required: ["industryContext", "mainFocus", "categoryName", "tenderStage", "contractValue"],
+    optional: ["sowText", "contractType", "marketConcentration", "marketTrends",
+               "priceVolatility", "supplyRisk", "regulatoryExposure",
+               "technologyChange", "substitutability", "pastIssues"]
+  },
+  "supplier-dependency-planner": {
+    required: ["industryContext", "mainFocus", "supplierName", "serviceCategory",
+               "annualSpend", "strategicImportance", "diversificationGoal"],
+    optional: ["categoryTotalSpend", "spendConcentration", "revenueShare",
+               "uniqueCapabilities", "contractTerms", "terminationPenalty",
+               "dataPortability", "integrationDepth", "knowledgeDependency",
+               "alternativeSuppliers", "switchingTimeEstimate", "switchingCostEstimate", "timeHorizon"]
+  },
+  "specification-optimizer": {
+    required: ["industryContext", "mainFocus", "specificationText", "specificationCategory", "safetyRequirements"],
+    optional: ["estimatedValue", "specSource", "lastReviewed", "competitiveMarket",
+               "performanceMargins", "certificationRequirements", "tolerances"]
+  },
+  "black-swan-scenario": {
+    required: ["industryContext", "mainFocus", "assessmentScope", "scopeDetails",
+               "annualExposure", "scenarioTypes"],
+    optional: ["businessImpact", "singleSourceItems", "geographicConcentration",
+               "tierVisibility", "inventoryBuffer", "recentNearMisses",
+               "alternativesReady", "responsePlaybook", "financialReserve",
+               "insuranceCoverage", "acceptableDowntime", "investmentWillingness"]
+  },
 };
+
+// Helper to get all fields from a schema
+function getAllFields(schema: ScenarioSchema): string[] {
+  return [...schema.required, ...schema.optional];
+}
 
 // Trick Library - scenario-specific training traps
 const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
@@ -320,14 +437,14 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
       subtlety: "expert-level"
     }
   ],
-  "negotiation-prep": [
+  "negotiation-preparation": [
     {
       category: "leverage-illusion",
       templates: [
         "Three alternative suppliers identified but all have 12+ month qualification lead times",
         "Multiple options available but incumbent has exclusive access to required certifications"
       ],
-      targetFields: ["alternativeCount", "switchingCost", "industryContext"],
+      targetFields: ["marketAlternatives", "switchingCost", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -336,7 +453,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "15-year partnership celebrated as 'strategic' while pricing drifted 25% above market",
         "Strong relationship scores mask gradual erosion of service levels over past 3 years"
       ],
-      targetFields: ["relationshipYears", "industryContext"],
+      targetFields: ["relationshipHistory", "industryContext"],
       subtlety: "subtle"
     },
     {
@@ -345,7 +462,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Auto-renewal clause with 90-day notice window, current contract expires in 45 days",
         "Evergreen contract with renewal pricing 20% above initial term"
       ],
-      targetFields: ["contractEndDate", "industryContext"],
+      targetFields: ["knownConstraints", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -354,7 +471,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Current pricing 30% above market but internal comparison limited to historical rates",
         "Supplier-provided 'competitive analysis' used as benchmark reference"
       ],
-      targetFields: ["annualSpend", "spendTrend", "industryContext"],
+      targetFields: ["currentSpend", "industryContext"],
       subtlety: "subtle"
     }
   ],
@@ -541,6 +658,7 @@ interface GenerateRequest {
   parameters?: DraftedParameters;
   mctsIterations?: number;
   temperature?: number;
+  persona?: string;
 }
 
 interface MCTSNode {
@@ -580,6 +698,7 @@ serve(async (req) => {
     const industry = requireString(body.industry, "industry", { optional: true, maxLength: 200 });
     const category = requireString(body.category, "category", { optional: true, maxLength: 200 });
     const parameters = optionalRecord(body.parameters, "parameters", 30) as DraftedParameters | undefined;
+    const persona = requireString(body.persona, "persona", { optional: true, maxLength: 100 });
     const mctsIterations = typeof body.mctsIterations === "number" && body.mctsIterations >= 1 && body.mctsIterations <= 10
       ? body.mctsIterations : 1;
     const temperature = typeof body.temperature === "number" && body.temperature >= 0 && body.temperature <= 2
@@ -604,13 +723,18 @@ serve(async (req) => {
       );
     }
 
+    // Select persona for generate/messy/full modes
+    const selectedPersona = selectPersona(persona);
+    console.log(`[TestDataGen] Persona: ${selectedPersona.id} (${selectedPersona.name})`);
+
     // === GENERATE MODE: Single-pass with pre-approved parameters ===
     if (mode === "generate" && parameters) {
       const generateResult = await handleGenerateMode(
         LOVABLE_API_KEY, 
         scenarioType, 
         parameters,
-        temperature
+        temperature,
+        selectedPersona
       );
       return new Response(
         JSON.stringify(generateResult),
@@ -623,7 +747,8 @@ serve(async (req) => {
       const messyResult = await handleMessyMode(
         LOVABLE_API_KEY,
         scenarioType,
-        temperature > 0 ? Math.max(temperature, 0.9) : 0.9
+        temperature > 0 ? Math.max(temperature, 0.9) : 0.9,
+        selectedPersona
       );
       return new Response(
         JSON.stringify(messyResult),
@@ -632,7 +757,8 @@ serve(async (req) => {
     }
 
     // === FULL MODE: Legacy MCTS approach ===
-    const fields = SCENARIO_SCHEMAS[scenarioType] || ["industryContext"];
+    const schema = SCENARIO_SCHEMAS[scenarioType] || { required: ["industryContext"], optional: [] };
+    const fields = getAllFields(schema);
     const industries = Object.keys(COMPATIBILITY_MATRIX);
     
     const selectedIndustry = industry && industries.includes(industry) 
@@ -656,8 +782,9 @@ serve(async (req) => {
         scenarioType, 
         selectedIndustry, 
         selectedCategory, 
-        fields,
-        iteration
+        schema,
+        iteration,
+        selectedPersona
       );
       
       const generationResponse = await callAI(LOVABLE_API_KEY, generationPrompt.system, generationPrompt.user, temperature);
@@ -709,7 +836,11 @@ serve(async (req) => {
           category: selectedCategory,
           score: bestCandidate.score,
           iterations: mctsIterations,
-          reasoning: bestCandidate.reasoning
+          reasoning: bestCandidate.reasoning,
+          persona: selectedPersona.id,
+          personaName: selectedPersona.name,
+          requiredFieldCount: schema.required.length,
+          optionalFieldCount: schema.optional.length,
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -812,9 +943,11 @@ async function handleGenerateMode(
   apiKey: string,
   scenarioType: string,
   parameters: DraftedParameters,
-  temperature: number
+  temperature: number,
+  selectedPersona: typeof BUYER_PERSONAS[number]
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
-  const fields = SCENARIO_SCHEMAS[scenarioType] || ["industryContext"];
+  const schema = SCENARIO_SCHEMAS[scenarioType] || { required: ["industryContext"], optional: [] };
+  const fields = getAllFields(schema);
   
   const companySizeDescriptions: Record<CompanySize, string> = {
     "startup": "10-50 employees, Series A/B stage, limited procurement maturity",
@@ -858,33 +991,50 @@ STRICT CONTEXT:
 - Market Conditions: ${parameters.marketConditions}
 - Data Quality: ${parameters.dataQuality}
 
+BUYER PERSONA:
+You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
+${selectedPersona.description}
+
+Adjust your output accordingly:
+- Tone and verbosity of text fields should match this persona
+- Optional field fill rate should be approximately ${selectedPersona.optionalFillRate}
+
+FIELD REQUIREMENTS:
+REQUIRED FIELDS (MUST always be filled):
+${schema.required.map(f => `- ${f}`).join('\n')}
+
+OPTIONAL FIELDS (fill according to persona behavior — leave some blank as empty strings):
+${schema.optional.map(f => `- ${f}`).join('\n')}
+
 CRITICAL RULES:
 1. ALL data must be consistent with the above context
 2. "industryContext" field MUST be 100+ words describing a specific company matching ALL parameters
-3. "mainFocus" field MUST describe the user's primary objective or challenge for this analysis (50-100 words). This represents what the user is focused on - it may or may NOT align with hidden issues. Examples: cost reduction goals, quality improvement, risk mitigation, speed optimization.
+3. "mainFocus" field MUST describe the user's primary objective or challenge for this analysis (50-100 words). This represents what the user is focused on - it may or may NOT align with hidden issues.
 4. All numeric values must be plausible for the company scale
 5. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
+6. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
 ${trickInstructions}
 
-IMPORTANT: "mainFocus" is the user's stated priority. It may be DIFFERENT from the hidden trick. For example:
-- mainFocus might be "reduce costs by 15%" while the trick is a hidden quality decline
-- mainFocus might be "ensure supply continuity" while the trick is a contract auto-renewal trap
-This creates realistic training scenarios where the AI must detect issues the user isn't focused on.
+IMPORTANT: "mainFocus" is the user's stated priority. It may be DIFFERENT from the hidden trick.
 
 OUTPUT FORMAT:
-Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.`;
+Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.
+Include ALL required fields and the optional fields you choose to fill. For unfilled optional fields, include them as empty strings.`;
 
   const user = `Generate test data for "${scenarioType}" scenario.
 
 REQUIRED FIELDS:
-${fields.map(f => `- ${f}`).join('\n')}
+${schema.required.map(f => `- ${f}`).join('\n')}
+
+OPTIONAL FIELDS (fill per persona behavior):
+${schema.optional.map(f => `- ${f}`).join('\n')}
 
 Context: ${parameters.reasoning}
 ${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
 
 Return ONLY the JSON object.`;
 
-  console.log(`[TestDataGen] Generate mode - Trick: ${trick?.category || 'none'}, Target: ${trick?.targetField || 'N/A'}`);
+  console.log(`[TestDataGen] Generate mode - Trick: ${trick?.category || 'none'}, Target: ${trick?.targetField || 'N/A'}, Persona: ${selectedPersona.id}`);
 
   const response = await callAI(apiKey, system, user, temperature);
   
@@ -915,7 +1065,11 @@ Return ONLY the JSON object.`;
       iterations: 1,
       reasoning: parameters.reasoning,
       parameters: parameters,
-      trickValidation: trickScore
+      trickValidation: trickScore,
+      persona: selectedPersona.id,
+      personaName: selectedPersona.name,
+      requiredFieldCount: schema.required.length,
+      optionalFieldCount: schema.optional.length,
     }
   };
 }
@@ -969,41 +1123,60 @@ function scoreTrickEmbedding(
     feedback
   };
 }
+
 // === MESSY MODE HANDLER ===
 const HIGH_FRICTION_SCENARIOS = [
   "tco-analysis", "software-licensing", "cost-breakdown",
-  "make-vs-buy", "supplier-review", "negotiation-prep"
+  "make-vs-buy", "supplier-review", "negotiation-preparation"
 ];
 
 async function handleMessyMode(
   apiKey: string,
   scenarioType: string,
-  temperature: number
+  temperature: number,
+  selectedPersona: typeof BUYER_PERSONAS[number]
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
   // Default to a random high-friction scenario if the provided one isn't in the list
   const targetScenario = HIGH_FRICTION_SCENARIOS.includes(scenarioType)
     ? scenarioType
     : HIGH_FRICTION_SCENARIOS[Math.floor(Math.random() * HIGH_FRICTION_SCENARIOS.length)];
 
-  const fields = SCENARIO_SCHEMAS[targetScenario] || ["industryContext"];
+  const schema = SCENARIO_SCHEMAS[targetScenario] || { required: ["industryContext"], optional: [] };
+  const fields = getAllFields(schema);
 
-  console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}`);
+  // Messy mode defaults to frustrated-stakeholder but can be overridden
+  const messyPersona = selectedPersona.id === "frustrated-stakeholder" || selectedPersona
+    ? selectedPersona
+    : BUYER_PERSONAS.find(p => p.id === "frustrated-stakeholder")!;
+
+  console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}, Persona: ${messyPersona.id}`);
 
   const system = `You are a busy, disorganized procurement manager. Generate realistic, messy corporate data for the '${targetScenario}' scenario. Do NOT provide clean, isolated numbers or perfectly formatted text. Instead, generate copy-pasted email threads from suppliers, fragmented meeting notes, or raw CSV strings where pricing, terms, and context are all mixed together in unstructured text. Force this chaotic text into the required scenario schema fields, even if it means shoving a whole email paragraph into a 'currency' or 'number' field, or leaving some fields completely blank. The goal is to simulate maximum UX friction and trigger the shadow logging evaluation.
 
+BUYER PERSONA:
+You are generating this messy data from the perspective of: "${messyPersona.name}"
+${messyPersona.description}
+
+FIELD REQUIREMENTS:
+REQUIRED FIELDS (MUST be filled, even if messily):
+${schema.required.map(f => `- ${f}`).join('\n')}
+
+OPTIONAL FIELDS (fill chaotically per persona, some blank):
+${schema.optional.map(f => `- ${f}`).join('\n')}
+
 OUTPUT FORMAT:
-Return ONLY a valid JSON object with the requested field names as keys. Values should be messy, realistic text — NOT clean data. Some fields may be empty strings or contain data that doesn't match the expected format at all.`;
+Return ONLY a valid JSON object with ALL field names as keys. Required fields must have messy data. Optional fields may be empty strings or contain mismatched data.`;
 
   const user = `Generate messy, chaotic procurement data for the "${targetScenario}" scenario.
 
-REQUIRED FIELDS (force messy data into these):
+ALL FIELDS (force messy data into required, optionally fill others):
 ${fields.map(f => `- ${f}`).join('\n')}
 
 Examples of messy data styles:
 - A "currency" field containing: "idk maybe around 50k? check the email from Sarah — she said between 45-55k EUR but that was before the Q3 adjustments"
 - A "number" field containing: "see attached spreadsheet row 47, col D — last time it was 12 but procurement said they're renegotiating"
 - A "text" field containing a full forwarded email thread with "FW: RE: RE: Updated pricing" 
-- Some fields left completely blank
+- Some optional fields left completely blank
 
 Return ONLY the JSON object.`;
 
@@ -1032,6 +1205,10 @@ Return ONLY the JSON object.`;
       targetScenario,
       fieldsGenerated: Object.keys(data).length,
       fieldsExpected: fields.length,
+      persona: messyPersona.id,
+      personaName: messyPersona.name,
+      requiredFieldCount: schema.required.length,
+      optionalFieldCount: schema.optional.length,
     }
   };
 }
@@ -1081,9 +1258,11 @@ function buildGenerationPrompt(
   scenarioType: string,
   industry: string,
   category: string,
-  fields: string[],
-  seed: number
+  schema: ScenarioSchema,
+  seed: number,
+  selectedPersona: typeof BUYER_PERSONAS[number]
 ): { system: string; user: string } {
+  const fields = getAllFields(schema);
   const diversityHints = [
     "Focus on a mid-size company with typical procurement challenges.",
     "Consider a large enterprise with complex supply chain requirements.",
@@ -1094,12 +1273,28 @@ function buildGenerationPrompt(
 
   const system = `You are an expert procurement consultant generating realistic test data for procurement analysis software.
 
+BUYER PERSONA:
+You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
+${selectedPersona.description}
+
+Adjust your output accordingly:
+- Tone and verbosity of text fields should match this persona
+- Optional field fill rate should be approximately ${selectedPersona.optionalFillRate}
+
+FIELD REQUIREMENTS:
+REQUIRED FIELDS (MUST always be filled):
+${schema.required.map(f => `- ${f}`).join('\n')}
+
+OPTIONAL FIELDS (fill according to persona behavior — leave some as empty strings):
+${schema.optional.length > 0 ? schema.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+
 CRITICAL RULES:
 1. All generated data MUST be consistent with the ${industry} industry
 2. All generated data MUST be relevant to the ${category} procurement category
 3. The "industryContext" field MUST be at least 100 words describing a realistic company
 4. All numeric values must be plausible for the industry scale
 5. DO NOT generate illogical combinations (e.g., pharmaceutical procurement for a software company)
+6. ALWAYS fill all REQUIRED fields. For OPTIONAL fields, follow the persona fill rate — include unfilled optional fields as empty strings.
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.`;
@@ -1111,7 +1306,7 @@ CONTEXT:
 - Procurement Category: ${category}
 - Diversity seed: ${diversityHints[seed % diversityHints.length]}
 
-REQUIRED FIELDS (return as JSON object):
+ALL FIELDS (return as JSON object):
 ${fields.map(f => `- ${f}`).join('\n')}
 
 IMPORTANT:
