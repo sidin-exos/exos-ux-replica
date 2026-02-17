@@ -1,167 +1,150 @@
 
 
-## New Scenario: Market Snapshot
+## Upgrade: "RFP Lite Generator" → "RFP Generator (Tender Package)"
 
 ### Summary
 
-A Perplexity Sonar Pro-powered scenario that produces a structured regional competitive landscape analysis. Unlike other scenarios that use the Sentinel pipeline (Lovable AI), this one routes through the **market-intelligence** edge function (Perplexity) for real-time web-grounded research, then applies a post-analysis quality gate using the Sentinel pipeline to benchmark the output against user-defined success criteria.
+Transform the current rigid, form-heavy RFP generator into an adaptive, two-phase tender package builder. Phase 1 accepts raw text input and uses AI to extract structured fields. Phase 2 lets the user select which tender documents to generate, with EXOS providing guidance for each. The key shift: fewer mandatory fields, smarter AI extraction, and a document-type selector that educates SMB users about tender package composition.
 
-### Architecture Decision: Two-Phase Pipeline
+### Core Design Decisions
 
-This scenario is unique because it requires **two AI calls**:
+**Raw Data Extraction**: Instead of forcing the user to fill 10+ fields manually, the scenario will have a single primary textarea ("Paste your procurement brief / requirements") plus a few lightweight fields. When the user pastes raw text, the AI will auto-extract structured data (procurement subject, location, volume, deadlines) into the form fields during the analysis phase. This happens server-side inside the sentinel-analysis edge function via the scenario-specific system prompt.
 
-```text
-Phase 1: Market Research (Perplexity Sonar Pro)
-   Input: Region + Industry + Analysis Focus + Optional Success Criteria
-   Output: Structured competitive landscape with citations
+**Document Type Selector**: A new multi-select field lets the user choose which tender documents to generate. Each option comes with a short AI-generated description. This replaces the old fixed 3-output model with a flexible package builder.
 
-Phase 2: Quality Gate (Lovable AI / Sentinel)
-   Input: Phase 1 output + Success Criteria (user-defined + AI-inferred)
-   Output: Completeness score, gap analysis, clarification requests, suggested follow-up sources
-```
+**Adaptive AI Logic**: The system prompt will instruct the AI to: (a) extract missing fields from raw text, (b) flag truly missing critical info and recommend the user provides it, (c) generate only the selected document types, and (d) keep tone practical for SMB users.
 
-**Option A (Recommended): Single new edge function `market-snapshot`**
-- Handles both phases server-side in sequence
-- Cleaner UX (one loading state), lower latency (no client round-trip between phases)
-- LangSmith tracing captures both phases as child spans
+### Changes Across 4 Files
 
-**Option B: Reuse existing edge functions separately**
-- Call `market-intelligence` then `sentinel-analysis` from the client
-- More modular but adds client-side orchestration complexity and double loading states
+**1. `src/lib/scenarios.ts` -- Replace scenario definition**
 
-Recommending **Option A** for better UX and simpler error handling.
-
-### Changes Across 5 Files + 1 New Edge Function
-
-**1. `src/lib/scenarios.ts` -- Add scenario definition**
+Replace lines 398-422 (`rfp-generator` block) with:
 
 ```text
-id: "market-snapshot"
-title: "Market Snapshot"
-icon: Radar (already imported)
-category: "planning"
+id: "rfp-generator"
+title: "RFP Generator (Tender Package)"
+description: "Paste your procurement brief or requirements and select which tender
+  documents to generate. EXOS extracts key details automatically and produces a
+  complete, ready-to-send tender package."
+icon: FileSpreadsheet (unchanged)
+category: "documentation"
 status: "available"
-strategySelector: none (research scenario, not strategic tradeoff)
+strategySelector: "speedVsQuality"
 
-Fields:
+Fields (reduced from 12 to 6):
   - industryContext (text, required: false) -- auto-injected
-  - region (select, required: true)
-    Options: Germany, France, UK, Netherlands, Spain, Italy, Poland,
-             USA, Canada, Mexico, Brazil,
-             China, Japan, South Korea, India, Australia,
-             UAE, Saudi Arabia, South Africa
-  - analysisScope (textarea, required: true)
-    "What do you want to know? E.g., 'Top 5 logistics providers,
-     their market share, pricing models, and recent M&A activity'"
-  - successCriteria (textarea, required: false)
-    "What does a good answer look like? E.g., 'Must include revenue
-     figures, market share %, and at least 3 cited sources per player'"
-  - timeframe (select, required: true)
-    Options: Current Snapshot, Past Month, Past Quarter, Past Year
+  - rawBrief (textarea, required: true)
+    Label: "Procurement Brief / Raw Requirements"
+    Description: "Paste your internal brief, email thread, or requirements doc.
+     EXOS will extract procurement subject, location, volume, deadlines, and
+     technical specs automatically."
+    Placeholder: multi-line example showing a realistic brief
 
-Outputs:
-  - Regional Competitive Landscape (Major Players & Market Share)
-  - Player Profiles (Strengths, Weaknesses, Recent Moves)
-  - Completeness Scorecard (Definition of Success Benchmark)
-  - Gap Analysis & Clarification Requests
-  - Recommended Sources for Further Discovery
+  - documentTypes (select, required: true)
+    Label: "Tender Package Documents"
+    Description: "Which documents should EXOS generate? Select the core document."
+    Options:
+      "RFP Document (Request for Proposal)"
+      "RFI Document (Request for Information)"
+      "RFQ Document (Request for Quotation)"
+      "Full Tender Package (RFP + Evaluation Matrix + Cover Letter)"
+
+  - evaluationPriorities (text, required: false)
+    Label: "Evaluation Priorities"
+    Description: "Optional: Key scoring priorities (e.g., 'Price 40%, Quality 30%,
+     Delivery 20%, Sustainability 10%'). If omitted, EXOS suggests balanced weights."
+
+  - budgetRange (text, required: false)
+    Label: "Budget Range / Constraints"
+    Description: "Optional: Approximate budget or spending limits. Helps EXOS
+     calibrate requirements appropriately."
+
+  - additionalInstructions (textarea, required: false)
+    Label: "Additional Instructions or Constraints"
+    Description: "Anything else EXOS should know: compliance requirements, preferred
+     suppliers, formatting preferences, NDA needs, etc."
+
+Outputs (updated to reflect adaptive generation):
+  - "Extracted Brief Summary (Auto-parsed from raw input)"
+  - "Tender Document(s) (Based on selected package type)"
+  - "Evaluation Matrix (Weighted scoring framework)"
+  - "Clarifications & Recommendations (Missing data flags + next steps)"
+  - "Suggested Attachments & Templates"
 ```
 
-**2. `src/lib/dashboard-mappings.ts` -- Add mapping**
+The key UX improvement: only `rawBrief` and `documentTypes` are required. Everything else is optional. The AI handles extraction from raw text and fills gaps with sensible defaults.
+
+**2. `src/lib/dashboard-mappings.ts` -- Update mapping**
+
+Line 144: keep key as `"rfp-generator"` but update dashboards:
 ```text
-"market-snapshot": ["supplier-scorecard", "decision-matrix", "risk-matrix", "data-quality"]
+"rfp-generator": ["timeline-roadmap", "decision-matrix", "action-checklist", "data-quality"]
 ```
-- Supplier scorecard for player comparison
-- Decision matrix for weighted player ranking
-- Risk matrix for regional risk factors
-- Data quality for completeness scoring
+Added `data-quality` to surface how complete the extracted data is (ties into the adaptive quality feedback).
 
-**3. `src/lib/test-data-factory.ts` -- Add generator**
-- Random region selection from the country list
-- Realistic analysis scope examples (logistics providers, raw material suppliers, SaaS vendors)
-- Sample success criteria text
-- Random timeframe selection
+**3. `src/lib/test-data-factory.ts` -- Replace generator**
 
-**4. `supabase/functions/generate-test-data/index.ts` -- Add field list**
+Replace lines 317-344 with a new generator that produces:
+- A realistic multi-paragraph raw procurement brief (email-style text containing embedded procurement subject, location, volume, deadlines, and technical requirements -- simulating what a real user would paste)
+- Random document type selection
+- Optional evaluation priorities text
+- Optional budget range
+- Optional additional instructions
+
+**4. `supabase/functions/generate-test-data/index.ts` -- Update field list**
+
+Replace lines 180-183:
 ```text
-"market-snapshot": ["industryContext", "region", "analysisScope", "successCriteria", "timeframe"]
+"rfp-generator": [
+  "industryContext", "rawBrief", "documentTypes", "evaluationPriorities",
+  "budgetRange", "additionalInstructions"
+]
 ```
 
-**5. NEW: `supabase/functions/market-snapshot/index.ts` -- Two-phase edge function**
+### AI Behavior: Adaptive Extraction & Guidance
 
-Phase 1 (Perplexity Sonar Pro):
-- System prompt enforces **strict regional filtering**: "You are analyzing ONLY the {region} market. Do NOT include players, data, or trends from other regions unless they directly impact {region}."
-- Maps timeframe to `search_recency_filter`
-- Returns structured analysis with citations
+No structural changes to the sentinel-analysis edge function are needed. The scenario's intelligence comes from the system prompt (built server-side via `buildServerGroundedPrompts`). The existing XML prompt engine will receive the `rawBrief` field as user input and the `documentTypes` selection, and the Chain-of-Experts protocol will:
 
-Phase 2 (Quality Gate via Lovable AI):
-- Takes Phase 1 output + user's success criteria
-- If user provided no criteria, AI generates reasonable ones from the analysis scope
-- Scores output completeness (0-100) against each criterion
-- Identifies gaps (missing data points, unverified claims)
-- Generates clarification questions for the user if critical info was missing
-- Suggests specific sources/databases for further research
-- Returns combined payload with both the analysis and the quality assessment
+1. **Extract**: Parse the raw brief to identify procurement subject, location, volume, timeline, technical requirements, and supplier qualifications
+2. **Flag Gaps**: If critical details are missing from the raw text AND not provided in optional fields, the AI will explicitly flag them in a "Clarifications & Recommendations" section rather than hallucinating
+3. **Generate**: Produce only the document type(s) selected by the user
+4. **Guide**: For SMB users, include practical recommendations (e.g., "Consider adding an NDA clause for this type of procurement" or "For this budget range, we recommend requesting 3-5 proposals")
 
-Key implementation details:
-- Uses `PERPLEXITY_API_KEY` (already configured via connector)
-- Uses `LOVABLE_API_KEY` for the quality gate phase
-- LangSmith tracing with parent chain + two child spans
-- Authentication via shared `authenticateRequest`
-- Validation via shared `validate.ts`
-- Stores results in `intel_queries` table (reuses existing table)
+This adaptive behavior is driven entirely by the prompt, not by code changes.
 
-**6. `src/hooks/useMarketSnapshot.ts` -- New hook (optional)**
+### What This Does NOT Change
 
-Could reuse `useSentinel` but the two-phase response structure (analysis + quality gate) is different enough to warrant a dedicated hook. However, the GenericScenarioWizard already handles edge function responses generically through the Sentinel pipeline.
-
-**Simpler approach**: Route through the existing Sentinel hook but have the `market-snapshot` edge function called directly. The GenericScenarioWizard already supports custom edge function routing -- we just need to add a conditional in the wizard's analysis step.
-
-**Decision**: Use a **thin wrapper** -- the wizard calls `market-snapshot` edge function directly (like `market-intelligence` does), bypassing the Sentinel anonymization pipeline since this is a research query, not a sensitive internal analysis.
-
-### Post-Analysis Clarification Flow
-
-When the quality gate detects gaps, the response includes a `clarifications` array. The results view will show:
-- The main analysis (always shown)
-- A "Completeness Score" badge (e.g., 72/100)
-- A collapsible "Gaps & Follow-up" section with:
-  - Missing data points flagged by the quality gate
-  - Suggested clarifying questions
-  - Recommended external sources (industry databases, trade associations, government statistics)
-
-This requires a small addition to the results rendering in `GenericScenarioWizard` or a dedicated results component for market-snapshot.
-
-### Regional Filtering Strategy
-
-The region constraint is enforced at **three levels**:
-1. **Prompt-level**: System prompt explicitly restricts analysis to the selected region
-2. **Domain-level**: Perplexity `search_domain_filter` can optionally prioritize regional sources (e.g., `.de` domains for Germany)
-3. **Quality gate**: The completeness check verifies that cited sources and data points are region-relevant
+- No new edge functions
+- No new components
+- No database changes
+- The scenario ID stays `"rfp-generator"` (no routing changes needed)
+- Standard Sentinel pipeline is used (no special routing like market-snapshot)
+- Dashboard mappings stay compatible
 
 ### Technical Details
 
 ```text
 Files Modified: 4
-  1. src/lib/scenarios.ts -- Add market-snapshot object
-  2. src/lib/dashboard-mappings.ts -- Add mapping
-  3. src/lib/test-data-factory.ts -- Add generator
-  4. supabase/functions/generate-test-data/index.ts -- Add field list
 
-Files Created: 1
-  5. supabase/functions/market-snapshot/index.ts -- Two-phase edge function
+1. src/lib/scenarios.ts
+   - Replace lines 398-422 (rfp-generator block)
+   - Title: "RFP Generator (Tender Package)"
+   - Fields reduced: 12 → 6 (2 required, 4 optional)
+   - New primary field: rawBrief (textarea, required)
+   - New field: documentTypes (select, required)
+   - Removed: procurementSubject, volume, technicalRequirements,
+     supplierQualifications, location, submissionDeadline,
+     priceStructure, evaluationWeights, ndaTerms, responseFormat
+   - Added: rawBrief, documentTypes, evaluationPriorities,
+     budgetRange, additionalInstructions
 
-Integration Points:
-  - Perplexity Sonar Pro (Phase 1) -- existing connector
-  - Lovable AI Gateway (Phase 2) -- existing LOVABLE_API_KEY
-  - LangSmith tracing -- existing _shared/langsmith.ts
-  - intel_queries table -- existing, reused for storage
-  - GenericScenarioWizard -- needs conditional to call market-snapshot
-    instead of sentinel-analysis for this scenario ID
+2. src/lib/dashboard-mappings.ts
+   - Line 144: add data-quality to dashboard list
+
+3. src/lib/test-data-factory.ts
+   - Lines 317-344: replace generator with raw brief generator
+
+4. supabase/functions/generate-test-data/index.ts
+   - Lines 180-183: update field list
 ```
-
-### What This Does NOT Include (Future Iterations)
-- Pre-flight clarification check (user chose post-analysis only)
-- Scheduled/recurring snapshots (roadmap)
-- Comparison between regions (could be a follow-up scenario)
-- Custom domain filtering UI (Perplexity handles source selection automatically)
 
