@@ -44,7 +44,7 @@ const Header = () => {
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             activeClassName="text-foreground"
           >
-            Analytics & Simulations
+            Scenarios & Simulations
           </NavLink>
           <NavLink 
             to="/market-intelligence" 
@@ -65,7 +65,7 @@ const Header = () => {
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             activeClassName="text-foreground"
           >
-            Dashboards
+            Dashboards & Analytics
           </NavLink>
           <NavLink 
             to="/pricing" 
