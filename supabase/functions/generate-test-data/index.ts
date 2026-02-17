@@ -178,8 +178,8 @@ const SCENARIO_SCHEMAS: Record<string, string[]> = {
     "allowedDowntime", "serviceCriticality", "escalationProcess"
   ],
   "rfp-generator": [
-    "industryContext", "mainFocus", "procurementSubject", "volume", "technicalRequirements",
-    "supplierQualifications", "location", "submissionDeadline", "evaluationWeights"
+    "industryContext", "rawBrief", "documentTypes", "evaluationPriorities",
+    "budgetRange", "additionalInstructions"
   ],
   "requirements-gathering": [
     "industryContext", "mainFocus", "businessGoal", "budget", "userCount",

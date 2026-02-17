@@ -141,7 +141,7 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   // Documentation and Contracts
   "sow-critic": ["sow-analysis", "action-checklist", "risk-matrix"],
   "sla-definition": ["decision-matrix", "action-checklist", "timeline-roadmap"],
-  "rfp-generator": ["timeline-roadmap", "decision-matrix", "action-checklist"],
+  "rfp-generator": ["timeline-roadmap", "decision-matrix", "action-checklist", "data-quality"],
 
   // Spend Analysis
   "spend-analysis-categorization": ["cost-waterfall", "kraljic-quadrant", "supplier-scorecard", "data-quality"],

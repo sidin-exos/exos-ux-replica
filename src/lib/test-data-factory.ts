@@ -316,31 +316,35 @@ Client shall review each deliverable within 10 business days. Silence constitute
 
   "rfp-generator": () => ({
     industryContext: getRandomIndustryContext(),
-    procurementSubject: randomChoice([
-      "IT Managed Services for 3-year term",
-      "Commercial cleaning services for headquarters",
-      "Employee benefits administration",
-      "Fleet management and telematics solution",
-      "Corporate travel management services",
+    rawBrief: randomChoice([
+      "Hi team,\n\nWe need to find a new logistics partner for our Berlin warehouse operations. Current contract with TransEuro expires end of June 2026.\n\nKey details:\n- Volume: approximately 500 pallets per month, mostly FMCG goods\n- Must have GDP certification and 24/7 cold chain capability\n- Budget is around €180k/year but flexible for the right partner\n- Prefer providers with existing DACH network coverage\n- Need integration with our SAP WMS module\n- Warehouse is in Berlin-Spandau industrial zone\n\nWe'd also like to explore cross-docking options for our seasonal peaks (Oct-Dec).\n\nPlease draft something we can send out to 4-5 shortlisted providers.\n\nThanks,\nMaria",
+      "Subject: IT Managed Services RFP Draft\n\nWe're looking to outsource our IT helpdesk and infrastructure management. Currently running a team of 6 in-house, supporting 450 users across 3 offices (Munich, Hamburg, remote).\n\nRequirements:\n- 24/7 L1/L2 support with 15-min response SLA for critical issues\n- Monthly patching and vulnerability management\n- Quarterly business reviews\n- Must be ISO 27001 certified\n- Budget: €350-400k annually\n- Contract term: 3 years with annual exit clause\n- Data must stay in EU (GDPR compliance)\n\nWe had issues with our last MSP around escalation transparency, so clear reporting is a must.\n\nDeadline for proposals: 6 weeks from distribution.",
+      "Need to source commercial cleaning services for our new headquarters building.\n\nBuilding: 25,000 sqm office space, 3 floors + basement parking\nLocation: Amsterdam Zuid business district\nStart date: September 2026\nEmployees: ~800\n\nScope:\n- Daily office cleaning (Mon-Fri)\n- Deep cleaning monthly\n- Window cleaning quarterly\n- Restroom supplies management\n- Green/sustainable products preferred\n\nBudget: haven't set one yet, need market pricing first. Maybe €200-300k range?\n\nPrevious vendor was unreliable with staffing. Need guaranteed minimum staffing levels and backup protocols.\n\nAlso interested in integrated facility management if the same provider can handle security and reception.",
+      "We need to procure a fleet management and telematics solution for our delivery operations.\n\n- Fleet size: 85 vehicles (60 vans, 25 trucks)\n- Operating across Benelux region\n- Need real-time GPS tracking, route optimization, driver behavior monitoring\n- Must integrate with our existing TMS (Oracle Transportation Management)\n- Fuel card integration required\n- Budget: €120k setup + €8k/month operational\n- Implementation timeline: go-live by Q3 2026\n\nWe're also evaluating EV transition — solution should support mixed fleet (ICE + EV) with charging station management.\n\nCompliance: need to meet EU tachograph regulations and sustainability reporting requirements.",
     ]),
-    volume: randomChoice([
-      "Approximately 200 employees, 3 office locations",
-      "$2M annual spend under management",
-      "50 vehicles across 5 states",
-      "Single facility, 100,000 sq ft",
+    documentTypes: randomChoice([
+      "RFP Document (Request for Proposal) — Full proposal request with scope, evaluation criteria, and response template",
+      "RFI Document (Request for Information) — Exploratory request to assess supplier capabilities before formal tendering",
+      "RFQ Document (Request for Quotation) — Price-focused request for well-defined requirements with clear specifications",
+      "Full Tender Package (RFP + Evaluation Matrix + Cover Letter) — Complete package ready for formal distribution",
     ]),
-    technicalRequirements: "See detailed specification in Attachment A. Key requirements include 24/7 support, SLA of 99.5% uptime, integration with existing systems.",
-    supplierQualifications: "Minimum 5 years in business, 3 comparable references, relevant certifications (ISO 27001, SOC2), $5M liability insurance",
-    location: randomChoice([
-      "Chicago, IL metropolitan area",
-      "Remote delivery acceptable with quarterly on-site visits",
-      "Multiple US locations - see Attachment B",
+    evaluationPriorities: randomChoice([
+      "Price 35%, Technical Capability 30%, Experience 20%, Implementation Plan 15%",
+      "Quality 40%, Price 30%, Sustainability 20%, References 10%",
+      "",
     ]),
-    submissionDeadline: "30 days from RFP issue date",
-    priceStructure: "Fixed monthly fee with usage tiers. Breakdown by: base fee, per-user costs, professional services rates",
-    evaluationWeights: "Price 35%, Technical Capability 30%, Experience 20%, Implementation Plan 15%",
-    ndaTerms: randomChoice(["Standard NDA", "Custom NDA", "None Required"]),
-    responseFormat: "Structured response following provided template. Maximum 30 pages plus attachments.",
+    budgetRange: randomChoice([
+      "€150k-200k annually",
+      "$500k total project budget",
+      "Not yet defined — need market pricing",
+      "",
+    ]),
+    additionalInstructions: randomChoice([
+      "Must include NDA clause. Prefer EU-based suppliers with GDPR compliance.",
+      "Response deadline should be 3 weeks. Include site visit option.",
+      "",
+      "Sustainability certification (EcoVadis Gold or equivalent) preferred but not mandatory.",
+    ]),
   }),
 
   "volume-consolidation": () => ({
