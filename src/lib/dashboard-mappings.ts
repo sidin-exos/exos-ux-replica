@@ -148,6 +148,9 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
 
   // Market Snapshot (Perplexity-powered research)
   "market-snapshot": ["supplier-scorecard", "decision-matrix", "risk-matrix", "data-quality"],
+
+  // Documentation & Contracts
+  "contract-template": ["action-checklist", "timeline-roadmap", "data-quality"],
 };
 
 // Get dashboards for a scenario with fallback

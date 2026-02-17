@@ -197,6 +197,10 @@ const SCENARIO_SCHEMAS: Record<string, string[]> = {
     "industryContext", "mainFocus", "purchaseAmount", "urgency", "catalogAvailable",
     "paymentTerms", "approvalRequired"
   ],
+  "contract-template": [
+    "industryContext", "mainFocus", "country", "timeTier",
+    "contractBrief", "contractType", "contractValue", "specialRequirements"
+  ],
 };
 
 // Trick Library - scenario-specific training traps

@@ -26,6 +26,7 @@ import {
   Sparkles,
   Feather,
   Zap,
+  ScrollText,
 } from "lucide-react";
 
 export interface ScenarioRequiredField {
@@ -954,6 +955,49 @@ export const scenarios: Scenario[] = [
       "Tail Spend Identification (High volume, low value)",
       "Vendor Consolidation Opportunities",
       "Quick Wins & Strategic Next Steps",
+    ],
+  },
+  {
+    id: "contract-template",
+    title: "Contract Template Generator",
+    description:
+      "Generate country-specific contract templates for EU procurement. Select your time investment tier and EXOS produces a structured template with clause-by-clause guidance. Not legal advice — a professional starting point.",
+    icon: ScrollText,
+    status: "available",
+    category: "documentation",
+    requiredFields: [
+      { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, business model, and any specific constraints the AI should consider", type: "textarea", required: false, placeholder: "E.g., 'Mid-size manufacturing company in Germany. Regulated environment, strong focus on IP protection...'" },
+      MAIN_FOCUS_FIELD,
+      { id: "country", label: "Applicable Country (EU)", description: "Select the EU member state whose commercial law should apply", type: "select", required: true, options: [
+        "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic",
+        "Denmark", "Estonia", "Finland", "France", "Germany", "Greece",
+        "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg",
+        "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia",
+        "Slovenia", "Spain", "Sweden"
+      ] },
+      { id: "timeTier", label: "Time Investment / Detail Level", description: "How much detail do you need? Quick = high-level structure (~15 min review). Standard = full clauses with guidance (~30-45 min). Thorough = detailed clauses + risk flags + alternative wording (~1h+).", type: "select", required: true, options: [
+        "Quick Draft (3 feedback sections, ~15 min review)",
+        "Standard (5-6 feedback sections, ~30-45 min review)",
+        "Thorough (7+ feedback sections, ~1 hour+ review)"
+      ] },
+      { id: "contractBrief", label: "Contract Brief", description: "Describe the contract you need. Include parties, subject, approximate value, duration, and any special terms. Paste raw notes or an email — EXOS will extract structure automatically.", type: "textarea", required: true, placeholder: "E.g., 'We need a 2-year IT support contract with Acme GmbH, Berlin. Scope: helpdesk, on-site support, quarterly reviews. Value ~€120k/year. Need GDPR clause and 90-day termination notice...'" },
+      { id: "contractType", label: "Contract Type", description: "Select the type of contract to generate", type: "select", required: true, options: [
+        "Service Agreement",
+        "Supply / Purchase Agreement",
+        "Framework Agreement",
+        "Non-Disclosure Agreement (NDA)",
+        "Consulting / Professional Services",
+        "Maintenance & Support Agreement"
+      ] },
+      { id: "contractValue", label: "Approximate Contract Value", description: "Optional. Helps calibrate clause complexity and risk provisions.", type: "text", required: false },
+      { id: "specialRequirements", label: "Special Requirements or Constraints", description: "E.g., GDPR data processing clauses, sustainability provisions, specific payment milestones, IP ownership terms.", type: "textarea", required: false },
+    ],
+    outputs: [
+      "Legal Disclaimer & Scope Statement",
+      "Contract Structure Overview (Clause Map)",
+      "Drafted Contract Template (Country-Specific)",
+      "Clause-by-Clause Guidance & Risk Flags [REVIEW WITH LEGAL COUNSEL]",
+      "Recommended Next Steps & Legal Review Checklist",
     ],
   },
 ];

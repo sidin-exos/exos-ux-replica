@@ -693,6 +693,52 @@ Client shall review each deliverable within 10 business days. Silence constitute
       "Budget overrun, timeline delays, change management failures",
     ]),
   }),
+
+  "contract-template": () => ({
+    industryContext: getRandomIndustryContext(),
+    mainFocus: randomChoice([
+      "We need a solid contract template for a new IT outsourcing arrangement. Key concern is protecting our IP while ensuring clear SLAs and penalty clauses for non-performance.",
+      "Preparing a framework agreement for recurring maintenance services across 3 facilities. Need clear scope definitions and flexible pricing mechanisms.",
+      "Setting up an NDA with a potential technology partner before sharing proprietary manufacturing processes. Must be enforceable under local law.",
+      "Drafting a consulting engagement contract for a 6-month digital transformation project. Need milestone-based payments and clear deliverable acceptance criteria.",
+      "Creating a supply agreement for critical raw materials with a new supplier. Need price adjustment clauses, quality standards, and force majeure provisions.",
+    ]),
+    country: randomChoice([
+      "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic",
+      "Denmark", "Estonia", "Finland", "France", "Germany", "Greece",
+      "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg",
+      "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia",
+      "Slovenia", "Spain", "Sweden"
+    ]),
+    timeTier: randomChoice([
+      "Quick Draft (3 feedback sections, ~15 min review)",
+      "Standard (5-6 feedback sections, ~30-45 min review)",
+      "Thorough (7+ feedback sections, ~1 hour+ review)"
+    ]),
+    contractBrief: randomChoice([
+      "We need a 2-year IT managed services contract with CloudOps GmbH, Munich. Scope includes 24/7 helpdesk, infrastructure monitoring, quarterly business reviews, and incident management. Estimated value €180k/year. Must include GDPR data processing addendum, 90-day termination notice, and SLA penalties for P1 incidents exceeding 4-hour resolution.",
+      "Framework agreement for office supplies and equipment with BüroMax AG across our 5 German locations. 3-year term with annual volume of approximately €250k. Need catalog pricing mechanism, delivery SLAs (48h standard, 4h urgent), and sustainability requirements for all paper products. Option to extend for 2 additional years.",
+      "Professional services contract with McKinsey Digital for a supply chain optimization project. 6-month engagement, 3 consultants on-site 4 days/week. Budget €450k. Milestone payments tied to deliverables: diagnostic (Month 2), design (Month 4), implementation roadmap (Month 6). Need IP assignment clause and non-compete for 12 months post-engagement.",
+      "Supply agreement with ChemTrade BV (Netherlands) for specialty adhesives used in our electronics assembly line. Annual volume ~50 tonnes, value €320k. Need price adjustment formula linked to raw material indices, quality specifications (ISO 9001 minimum), batch testing requirements, and consignment stock arrangement at our facility.",
+      "Maintenance & support agreement for our SAP S/4HANA system with Atos SE. 3-year term covering application management, basis administration, and development support. ~15 FTE equivalent. Value €1.2M/year. Need tiered SLA structure, knowledge transfer obligations, and exit management clause with 6-month transition period.",
+    ]),
+    contractType: randomChoice([
+      "Service Agreement",
+      "Supply / Purchase Agreement",
+      "Framework Agreement",
+      "Non-Disclosure Agreement (NDA)",
+      "Consulting / Professional Services",
+      "Maintenance & Support Agreement"
+    ]),
+    contractValue: randomChoice(["€120,000/year", "€250,000", "€1.2M over 3 years", "€450,000", "€80,000/year", ""]),
+    specialRequirements: randomChoice([
+      "GDPR data processing agreement required. Sustainability reporting clause per EU CSRD. Payment within 30 days of invoice.",
+      "IP ownership must remain with us. Non-disclosure obligations survive 5 years post-termination. Quarterly performance reviews mandatory.",
+      "Force majeure must explicitly cover pandemics and supply chain disruptions. Price escalation capped at 3% annually. Right to audit supplier facilities.",
+      "Must include anti-bribery and anti-corruption provisions. Subcontracting only with prior written approval. Insurance requirements: €5M professional indemnity.",
+      "",
+    ]),
+  }),
 };
 
 /**
