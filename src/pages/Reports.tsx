@@ -3,7 +3,9 @@ import Header from "@/components/layout/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { dashboardConfigs, DashboardType } from "@/lib/dashboard-mappings";
-import { getDashboardScenarioTitles, getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
+import { getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
+import DashboardContextCard from "@/components/reports/DashboardContextCard";
+import { Scale, DollarSign, ShieldAlert, CalendarClock, DatabaseZap } from "lucide-react";
 
 // Dashboard components
 import ActionChecklistDashboard from "@/components/reports/ActionChecklistDashboard";
@@ -57,7 +59,7 @@ const tcoCostBreakdown = [
 // All dashboard types for selection
 const allDashboards: DashboardType[] = [
   "action-checklist",
-  "decision-matrix", 
+  "decision-matrix",
   "cost-waterfall",
   "timeline-roadmap",
   "kraljic-quadrant",
@@ -72,47 +74,50 @@ const allDashboards: DashboardType[] = [
   "data-quality",
 ];
 
-// Component to render scenario annotation
-const ScenarioAnnotation = ({ dashboardId }: { dashboardId: DashboardType }) => {
-  const scenarioTitles = getDashboardScenarioTitles(dashboardId);
-  
-  if (scenarioTitles.length === 0) return null;
-  
-  return (
-    <div className="mt-3 pt-3 border-t border-border/50">
-      <p className="text-xs font-medium text-foreground/70 mb-2">Available for scenarios:</p>
-      <ul className="text-xs text-muted-foreground space-y-1">
-        {scenarioTitles.map((title, index) => (
-          <li key={index} className="flex items-center gap-2">
-            <span className="w-1 h-1 rounded-full bg-primary/60" />
-            {title}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
-
-// Dashboard wrapper with annotation
-const DashboardWithAnnotation = ({ 
-  dashboardId, 
-  children 
-}: { 
-  dashboardId: DashboardType; 
-  children: React.ReactNode;
-}) => {
-  return (
-    <div className="flex flex-col">
-      {children}
-      <div className="px-4 pb-4">
-        <ScenarioAnnotation dashboardId={dashboardId} />
-      </div>
-    </div>
-  );
-};
+// Guide Me categories
+const guideCategories = [
+  {
+    label: "Compare Options",
+    icon: Scale,
+    dashboards: ["decision-matrix", "scenario-comparison", "tco-comparison"] as DashboardType[],
+    description: "Evaluate vendors, make-vs-buy, or strategic alternatives",
+  },
+  {
+    label: "Understand Costs",
+    icon: DollarSign,
+    dashboards: ["cost-waterfall", "tco-comparison", "sensitivity-spider"] as DashboardType[],
+    description: "Break down spend, model TCO, and stress-test assumptions",
+  },
+  {
+    label: "Manage Risk",
+    icon: ShieldAlert,
+    dashboards: ["risk-matrix", "supplier-scorecard", "sow-analysis"] as DashboardType[],
+    description: "Assess supply risks, supplier health, and contract gaps",
+  },
+  {
+    label: "Plan & Execute",
+    icon: CalendarClock,
+    dashboards: ["timeline-roadmap", "action-checklist", "negotiation-prep"] as DashboardType[],
+    description: "Build timelines, track actions, and prepare negotiations",
+  },
+  {
+    label: "Assess Data Quality",
+    icon: DatabaseZap,
+    dashboards: ["data-quality", "kraljic-quadrant"] as DashboardType[],
+    description: "Understand analysis reliability and category positioning",
+  },
+];
 
 const Reports = () => {
   const [selectedTab, setSelectedTab] = useState<DashboardType>("action-checklist");
+  const [highlightedDashboards, setHighlightedDashboards] = useState<DashboardType[]>([]);
+
+  const handleGuideClick = (dashboards: DashboardType[]) => {
+    setHighlightedDashboards(dashboards);
+    setSelectedTab(dashboards[0]);
+    // Clear highlight after 3s
+    setTimeout(() => setHighlightedDashboards([]), 3000);
+  };
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -134,19 +139,57 @@ const Reports = () => {
           </p>
         </section>
 
-        {/* Top Dashboard Selector */}
+        {/* Guide Me Section */}
+        <section className="mb-8 animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <h2 className="text-sm font-medium text-foreground/70 uppercase tracking-wide mb-3">
+            What are you trying to decide?
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {guideCategories.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = highlightedDashboards.length > 0 &&
+                cat.dashboards.some(d => highlightedDashboards.includes(d));
+              return (
+                <button
+                  key={cat.label}
+                  onClick={() => handleGuideClick(cat.dashboards)}
+                  className={`group rounded-lg border p-3 text-left transition-all hover:border-primary/50 hover:bg-primary/5 ${
+                    isActive
+                      ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30"
+                      : "border-border/50 bg-card/40"
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 mb-2 transition-colors ${
+                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"
+                  }`} />
+                  <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                  <p className="text-xs text-muted-foreground mt-1 hidden md:block">{cat.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Dashboard Tabs */}
         <section className="mb-8">
           <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as DashboardType)} className="w-full">
             <TabsList className="mb-6 flex-wrap h-auto gap-1 bg-secondary/30 p-1">
               {allDashboards.map((dashboardId) => {
                 const config = dashboardConfigs[dashboardId];
+                const count = getDashboardScenarioCount(dashboardId);
+                const isHighlighted = highlightedDashboards.includes(dashboardId);
                 return (
-                  <TabsTrigger 
-                    key={dashboardId} 
+                  <TabsTrigger
+                    key={dashboardId}
                     value={dashboardId}
-                    className="text-xs px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className={`text-xs px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all ${
+                      isHighlighted ? "ring-2 ring-primary/50 bg-primary/10" : ""
+                    }`}
                   >
                     {config.name}
+                    {count > 0 && (
+                      <span className="ml-1.5 text-[10px] opacity-60">{count}</span>
+                    )}
                   </TabsTrigger>
                 );
               })}
@@ -154,114 +197,100 @@ const Reports = () => {
 
             {/* Action Checklist */}
             <TabsContent value="action-checklist">
-              <DashboardWithAnnotation dashboardId="action-checklist">
-                <ActionChecklistDashboard
-                  title="Volume Consolidation Actions"
-                  subtitle="Supplier rationalization roadmap"
-                  actions={volumeConsolidationActions}
-                />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="action-checklist" config={dashboardConfigs["action-checklist"]} />
+              <ActionChecklistDashboard
+                title="Volume Consolidation Actions"
+                subtitle="Supplier rationalization roadmap"
+                actions={volumeConsolidationActions}
+              />
             </TabsContent>
 
             {/* Decision Matrix */}
             <TabsContent value="decision-matrix">
-              <DashboardWithAnnotation dashboardId="decision-matrix">
-                <DecisionMatrixDashboard
-                  title="Make vs Buy Analysis"
-                  subtitle="Strategic sourcing decision"
-                  criteria={makeVsBuyCriteria}
-                  options={makeVsBuyOptions}
-                />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="decision-matrix" config={dashboardConfigs["decision-matrix"]} />
+              <DecisionMatrixDashboard
+                title="Make vs Buy Analysis"
+                subtitle="Strategic sourcing decision"
+                criteria={makeVsBuyCriteria}
+                options={makeVsBuyOptions}
+              />
             </TabsContent>
 
             {/* Cost Waterfall */}
             <TabsContent value="cost-waterfall">
-              <DashboardWithAnnotation dashboardId="cost-waterfall">
-                <CostWaterfallDashboard
-                  title="TCO Analysis: Industrial Equipment"
-                  subtitle="5-year total cost of ownership"
-                  components={tcoCostBreakdown}
-                  currency="$"
-                />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="cost-waterfall" config={dashboardConfigs["cost-waterfall"]} />
+              <CostWaterfallDashboard
+                title="TCO Analysis: Industrial Equipment"
+                subtitle="5-year total cost of ownership"
+                components={tcoCostBreakdown}
+                currency="$"
+              />
             </TabsContent>
 
             {/* Timeline Roadmap */}
             <TabsContent value="timeline-roadmap">
-              <DashboardWithAnnotation dashboardId="timeline-roadmap">
-                <TimelineRoadmapDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="timeline-roadmap" config={dashboardConfigs["timeline-roadmap"]} />
+              <TimelineRoadmapDashboard />
             </TabsContent>
 
             {/* Kraljic Quadrant */}
             <TabsContent value="kraljic-quadrant">
-              <DashboardWithAnnotation dashboardId="kraljic-quadrant">
-                <KraljicQuadrantDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="kraljic-quadrant" config={dashboardConfigs["kraljic-quadrant"]} />
+              <KraljicQuadrantDashboard />
             </TabsContent>
 
             {/* TCO Comparison */}
             <TabsContent value="tco-comparison">
-              <DashboardWithAnnotation dashboardId="tco-comparison">
-                <TCOComparisonDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="tco-comparison" config={dashboardConfigs["tco-comparison"]} />
+              <TCOComparisonDashboard />
             </TabsContent>
 
             {/* License Tier */}
             <TabsContent value="license-tier">
-              <DashboardWithAnnotation dashboardId="license-tier">
-                <LicenseTierDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="license-tier" config={dashboardConfigs["license-tier"]} />
+              <LicenseTierDashboard />
             </TabsContent>
 
             {/* Sensitivity Spider */}
             <TabsContent value="sensitivity-spider">
-              <DashboardWithAnnotation dashboardId="sensitivity-spider">
-                <SensitivitySpiderDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="sensitivity-spider" config={dashboardConfigs["sensitivity-spider"]} />
+              <SensitivitySpiderDashboard />
             </TabsContent>
 
             {/* Risk Matrix */}
             <TabsContent value="risk-matrix">
-              <DashboardWithAnnotation dashboardId="risk-matrix">
-                <RiskMatrixDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="risk-matrix" config={dashboardConfigs["risk-matrix"]} />
+              <RiskMatrixDashboard />
             </TabsContent>
 
             {/* Scenario Comparison */}
             <TabsContent value="scenario-comparison">
-              <DashboardWithAnnotation dashboardId="scenario-comparison">
-                <ScenarioComparisonDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="scenario-comparison" config={dashboardConfigs["scenario-comparison"]} />
+              <ScenarioComparisonDashboard />
             </TabsContent>
 
             {/* Supplier Scorecard */}
             <TabsContent value="supplier-scorecard">
-              <DashboardWithAnnotation dashboardId="supplier-scorecard">
-                <SupplierPerformanceDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="supplier-scorecard" config={dashboardConfigs["supplier-scorecard"]} />
+              <SupplierPerformanceDashboard />
             </TabsContent>
 
             {/* SOW Analysis */}
             <TabsContent value="sow-analysis">
-              <DashboardWithAnnotation dashboardId="sow-analysis">
-                <SOWAnalysisDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="sow-analysis" config={dashboardConfigs["sow-analysis"]} />
+              <SOWAnalysisDashboard />
             </TabsContent>
 
             {/* Negotiation Prep */}
             <TabsContent value="negotiation-prep">
-              <DashboardWithAnnotation dashboardId="negotiation-prep">
-                <NegotiationPrepDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="negotiation-prep" config={dashboardConfigs["negotiation-prep"]} />
+              <NegotiationPrepDashboard />
             </TabsContent>
 
             {/* Data Quality */}
             <TabsContent value="data-quality">
-              <DashboardWithAnnotation dashboardId="data-quality">
-                <DataQualityDashboard />
-              </DashboardWithAnnotation>
+              <DashboardContextCard dashboardId="data-quality" config={dashboardConfigs["data-quality"]} />
+              <DataQualityDashboard />
             </TabsContent>
           </Tabs>
         </section>
