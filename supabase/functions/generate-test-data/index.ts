@@ -150,9 +150,9 @@ const SCENARIO_SCHEMAS: Record<string, string[]> = {
     "industryContext", "mainFocus", "productDescription", "totalCost", "materialCost",
     "laborCost", "overheadCost", "volumePerYear"
   ],
-  "budgeting-assistant": [
-    "industryContext", "mainFocus", "historicalSpend", "growthForecast", "headcountPlan",
-    "marketPriceTrend", "contingencyBuffer"
+  "forecasting-budgeting": [
+    "industryContext", "categoryContext", "historicalSpendData", "knownFutureEvents",
+    "budgetConstraints", "forecastHorizon"
   ],
   "saas-optimization": [
     "industryContext", "mainFocus", "totalSeats", "pricePerSeat", "lastLoginDate",

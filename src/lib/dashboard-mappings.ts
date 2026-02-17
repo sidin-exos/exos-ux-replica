@@ -129,7 +129,7 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "tail-spend-sourcing": ["action-checklist", "decision-matrix", "data-quality"],
   "requirements-gathering": ["action-checklist", "timeline-roadmap", "decision-matrix"],
   "supplier-discovery": ["supplier-scorecard", "decision-matrix", "risk-matrix"],
-  "budgeting-assistant": ["cost-waterfall", "risk-matrix", "sensitivity-spider", "timeline-roadmap"],
+  "forecasting-budgeting": ["sensitivity-spider", "cost-waterfall", "timeline-roadmap", "risk-matrix"],
   "negotiation-preparation": ["negotiation-prep", "scenario-comparison", "risk-matrix", "action-checklist"],
   "project-planning": ["timeline-roadmap", "action-checklist", "risk-matrix", "sensitivity-spider"],
 

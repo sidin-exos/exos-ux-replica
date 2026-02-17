@@ -524,29 +524,45 @@ Client shall review each deliverable within 10 business days. Silence constitute
     supportTier: randomChoice(["Premium", "Standard", "Basic"]),
   }),
 
-  "budgeting-assistant": () => ({
-    industryContext: getRandomIndustryContext(),
-    historicalSpend: randomCurrency(1000000, 50000000),
-    growthForecast: randomPercentage(3, 20),
-    headcountPlan: randomNumber(-20, 100).toString(),
-    marketPriceTrend: randomPercentage(-5, 15),
-    fixedVsVariable: randomPercentage(30, 70),
-    seasonalityFactor: randomChoice(["None", "Mild", "Significant"]),
-    oneOffProjects: randomChoice([
-      "ERP implementation ($500K)",
-      "Office relocation ($300K)",
-      "New product launch marketing ($200K)",
-      "None planned",
-    ]),
-    contingencyBuffer: randomPercentage(5, 15),
-    departmentTargets: randomChoice([
-      "IT: -5%, Marketing: -10%, Operations: flat",
-      "All departments -3% YoY",
-      "Strategic investments in digital, cuts elsewhere",
-      "No specific targets set yet",
-    ]),
-    currencyVolatility: randomChoice(["Low", "Medium", "High"]),
-  }),
+  "forecasting-budgeting": () => {
+    const categories = ["IT Software", "Professional Services", "MRO Supplies", "Marketing", "Logistics", "Raw Materials"];
+    const selectedCats = categories.sort(() => Math.random() - 0.5).slice(0, randomNumber(3, 4));
+    const quarters = ["Q1 2024", "Q2 2024", "Q3 2024", "Q4 2024", "Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"];
+    const numQuarters = randomNumber(8, 12);
+    const usedQuarters = quarters.slice(0, Math.min(numQuarters, quarters.length));
+
+    let spendLines = "Category, Period, Amount\n";
+    for (const q of usedQuarters) {
+      for (const cat of selectedCats) {
+        const base = randomNumber(20000, 350000);
+        spendLines += `${cat}, ${q}, $${base.toLocaleString()}\n`;
+      }
+    }
+
+    const futureEvents = [
+      `Hiring ${randomNumber(5, 30)} engineers in Q2 2026 (~$${randomNumber(200, 800)}K impact)`,
+      `Major ERP renewal due Q3 2026 ($${randomNumber(100, 500)}K)`,
+      `New office opening Q1 2026 ($${randomNumber(150, 400)}K setup + $${randomNumber(30, 80)}K/quarter ongoing)`,
+      `Marketing campaign for product launch Q2 2026 ($${randomNumber(50, 200)}K)`,
+      `Fleet replacement program starting Q4 2025 ($${randomNumber(300, 900)}K over 18 months)`,
+    ];
+    const selectedEvents = futureEvents.sort(() => Math.random() - 0.5).slice(0, randomNumber(2, 4));
+
+    return {
+      industryContext: getRandomIndustryContext(),
+      categoryContext: "", // Populated by wizard via category selector
+      historicalSpendData: spendLines.trim(),
+      knownFutureEvents: selectedEvents.join("\n"),
+      budgetConstraints: randomChoice([
+        "Mandate to cut OPEX by 10% across all departments",
+        "Software budget capped at $500K for FY2026",
+        "No new headcount-driven spend without VP approval",
+        "Total procurement budget flat YoY despite 8% revenue growth",
+        "",
+      ]),
+      forecastHorizon: randomChoice(["Next Quarter", "Next 6 Months", "Next 12 Months", "Next 24 Months"]),
+    };
+  },
 
   "requirements-gathering": () => ({
     industryContext: getRandomIndustryContext(),
