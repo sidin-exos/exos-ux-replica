@@ -1,6 +1,7 @@
-import { Shield, Brain, Database, ArrowRight, Lock, Sparkles, FileCheck, Eye } from "lucide-react";
+import { Brain, Database, ArrowRight, Lock, Sparkles, FileCheck, Eye } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { NavLink } from "@/components/NavLink";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
 import exosLogo from "@/assets/logo-exo-layers-v2.png";
@@ -9,7 +10,7 @@ const Features = () => {
   const valuePropositions = [
     {
       icon: Brain,
-      title: "21+ Procurement Scenarios",
+      title: "29 Procurement Scenarios",
       description: "Purpose-built AI models for high-stakes procurement decisions. From cost optimization to risk simulation—each scenario is fine-tuned on proven methodologies.",
       highlights: [
         "Make-or-Buy & TCO analysis",
@@ -30,15 +31,16 @@ const Features = () => {
       ]
     },
     {
-      icon: Shield,
-      title: "Enterprise-Grade Risk Assessment",
-      description: "Proactively identify vulnerabilities before they become crises. From single-supplier dependencies to catastrophic market disruptions—EXOS builds resilience into your strategy.",
+      icon: Lock,
+      title: "Commercial Data Safety",
+      description: "Your sensitive commercial data—supplier names, pricing, contract terms—is semantically anonymized before reaching any external API. After AI processing, full context is restored on the way back.",
       highlights: [
-        "Black Swan event simulation",
-        "Category risk evaluation at tender stage",
-        "Supplier portfolio concentration analysis",
-        "Proactive mitigation roadmaps"
-      ]
+        "Semantic anonymization of commercial data",
+        "PII and financial identifier masking",
+        "Enterprise InfoSec Gate for traffic audit",
+        "Full data restoration after AI processing"
+      ],
+      link: "/architecture"
     }
   ];
 
@@ -95,6 +97,15 @@ const Features = () => {
                       </li>
                     ))}
                   </ul>
+                  {"link" in prop && prop.link && (
+                    <NavLink
+                      to={prop.link as string}
+                      className="inline-flex items-center gap-1.5 mt-4 text-sm text-primary hover:text-primary/80 transition-colors"
+                    >
+                      Know more about EXOS architecture and data flow
+                      <ArrowRight className="w-3 h-3" />
+                    </NavLink>
+                  )}
                 </CardContent>
               </Card>
             ))}
