@@ -12,7 +12,9 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
-  BarChart3,
+  SlidersHorizontal,
+  GitMerge,
+  PlusCircle,
 } from "lucide-react";
 import ArchitectureNode from "./ArchitectureNode";
 import ArchitectureContainer from "./ArchitectureContainer";
@@ -34,7 +36,7 @@ const TestingPipelineDiagram: React.FC = () => {
       {/* ── Trigger ── */}
       <ArchitectureNode
         icon={<Play size={28} />}
-        label="Admin / CI-CD"
+        label="Admin / CI-CD (Iterative Run)"
         sublabel="Triggers test batch"
         color={COLORS.orange}
       />
@@ -49,6 +51,16 @@ const TestingPipelineDiagram: React.FC = () => {
         className="w-full max-w-3xl"
       >
         <div className="flex flex-col items-center gap-4">
+          {/* Entropy Controller */}
+          <ArchitectureNode
+            icon={<SlidersHorizontal size={28} />}
+            label="Entropy Controller"
+            sublabel="L1 (80% Structured) → L3 (90% Raw Dump)"
+            color={COLORS.orange}
+          />
+
+          <ArchitectureArrow direction="down" length={28} label="Sets entropy per persona" />
+
           {/* Persona row */}
           <div className="flex items-start justify-center gap-8 flex-wrap">
             <ArchitectureNode
@@ -81,7 +93,7 @@ const TestingPipelineDiagram: React.FC = () => {
             color={COLORS.orange}
           />
 
-          <ArchitectureArrow direction="down" length={32} label="Raw Messy Prompts" />
+          <ArchitectureArrow direction="down" length={32} label="Mixed Payload (JSON + Raw Text)" />
 
           {/* test_prompts table */}
           <ArchitectureNode
@@ -103,7 +115,6 @@ const TestingPipelineDiagram: React.FC = () => {
         className="w-full max-w-3xl"
       >
         <div className="flex flex-col items-center gap-4">
-          {/* Test Runner */}
           <ArchitectureNode
             icon={<Play size={28} />}
             label="Test Runner"
@@ -113,7 +124,6 @@ const TestingPipelineDiagram: React.FC = () => {
 
           <ArchitectureArrow direction="down" length={32} />
 
-          {/* Sentinel node + retry badge */}
           <div className="relative">
             <ArchitectureNode
               icon={<Shield size={28} />}
@@ -121,7 +131,6 @@ const TestingPipelineDiagram: React.FC = () => {
               sublabel="Edge Function"
               color={COLORS.blue}
             />
-            {/* Retry badge */}
             <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5">
               <RefreshCw size={10} className="text-red-500" />
               <span className="text-[8px] font-semibold text-red-600 whitespace-nowrap">
@@ -131,7 +140,6 @@ const TestingPipelineDiagram: React.FC = () => {
           </div>
 
           <div className="flex items-start justify-center gap-12 flex-wrap">
-            {/* Output to test_reports */}
             <div className="flex flex-col items-center gap-2">
               <ArchitectureArrow direction="down" length={32} label="Extracted JSON" />
               <ArchitectureNode
@@ -141,8 +149,6 @@ const TestingPipelineDiagram: React.FC = () => {
                 color={COLORS.gray}
               />
             </div>
-
-            {/* Observability */}
             <div className="flex flex-col items-center gap-2">
               <ArchitectureArrow direction="down" length={32} label="Traces" dashed color={COLORS.purple} />
               <ArchitectureNode
@@ -158,7 +164,7 @@ const TestingPipelineDiagram: React.FC = () => {
 
       <ArchitectureArrow direction="down" length={36} />
 
-      {/* ── Phase 3: LLM Auditor ── */}
+      {/* ── Phase 3: LLM Auditor (Updated) ── */}
       <ArchitectureContainer
         title="Phase 3: LLM Auditor"
         titleColor={COLORS.purple}
@@ -166,12 +172,28 @@ const TestingPipelineDiagram: React.FC = () => {
         className="w-full max-w-3xl"
       >
         <div className="flex flex-col items-center gap-4">
-          {/* Inputs label */}
-          <div className="flex items-center gap-6 text-xs text-gray-500 font-medium">
-            <span className="bg-gray-100 px-2 py-1 rounded">Extracted JSON</span>
-            <span>+</span>
-            <span className="bg-gray-100 px-2 py-1 rounded">Target Success Criteria</span>
+          {/* Triangulation inputs */}
+          <div className="flex items-center gap-4 text-xs text-gray-500 font-medium flex-wrap justify-center">
+            <span className="bg-orange-50 border border-orange-200 px-2.5 py-1 rounded text-orange-700">
+              User Input (A)
+            </span>
+            <span className="bg-blue-50 border border-blue-200 px-2.5 py-1 rounded text-blue-700">
+              Hidden Server Context (B)
+            </span>
+            <span className="bg-purple-50 border border-purple-200 px-2.5 py-1 rounded text-purple-700">
+              AI Output (C)
+            </span>
           </div>
+
+          <ArchitectureArrow direction="down" length={24} label="Compare 3 sources" />
+
+          {/* Triangulation Engine */}
+          <ArchitectureNode
+            icon={<GitMerge size={28} />}
+            label="Triangulation Engine"
+            sublabel="Cross-validates A × B × C"
+            color={COLORS.purple}
+          />
 
           <ArchitectureArrow direction="down" length={24} />
 
@@ -185,38 +207,45 @@ const TestingPipelineDiagram: React.FC = () => {
 
           <ArchitectureArrow direction="down" length={28} label="Evaluation Splits" />
 
-          {/* 3 outcome boxes */}
+          {/* 4 outcome boxes */}
           <div className="flex items-stretch justify-center gap-4 flex-wrap">
-            {/* Green: REDUNDANT_HIDE */}
-            <div className="border-l-4 border-green-500 bg-green-50 rounded-lg px-4 py-3 w-48">
+            <div className="border-l-4 border-green-500 bg-green-50 rounded-lg px-4 py-3 w-44">
               <div className="flex items-center gap-1.5 mb-1">
                 <CheckCircle size={14} className="text-green-600" />
                 <span className="text-xs font-bold text-green-700">REDUNDANT_HIDE</span>
               </div>
               <p className="text-[10px] text-green-600 leading-snug">
-                AI always gets this right. Safe to auto-hide from wizard.
+                AI deduces perfectly from context B. Hide UI field.
               </p>
             </div>
 
-            {/* Amber: OPTIONAL_KEEP */}
-            <div className="border-l-4 border-amber-500 bg-amber-50 rounded-lg px-4 py-3 w-48">
+            <div className="border-l-4 border-amber-500 bg-amber-50 rounded-lg px-4 py-3 w-44">
               <div className="flex items-center gap-1.5 mb-1">
                 <AlertTriangle size={14} className="text-amber-600" />
                 <span className="text-xs font-bold text-amber-700">OPTIONAL_KEEP</span>
               </div>
               <p className="text-[10px] text-amber-600 leading-snug">
-                Mixed results. Keep field but make optional in UI.
+                Mixed accuracy. Keep UI field optional.
               </p>
             </div>
 
-            {/* Red: CRITICAL_REQUIRE */}
-            <div className="border-l-4 border-red-500 bg-red-50 rounded-lg px-4 py-3 w-48">
+            <div className="border-l-4 border-red-500 bg-red-50 rounded-lg px-4 py-3 w-44">
               <div className="flex items-center gap-1.5 mb-1">
                 <XCircle size={14} className="text-red-600" />
                 <span className="text-xs font-bold text-red-700">CRITICAL_REQUIRE</span>
               </div>
               <p className="text-[10px] text-red-600 leading-snug">
-                AI fails to extract or hallucinates. Must require from user.
+                AI hallucinates. Force UI field required.
+              </p>
+            </div>
+
+            <div className="border-l-4 border-blue-500 bg-blue-50 rounded-lg px-4 py-3 w-44">
+              <div className="flex items-center gap-1.5 mb-1">
+                <PlusCircle size={14} className="text-blue-600" />
+                <span className="text-xs font-bold text-blue-700">SCHEMA_GAP</span>
+              </div>
+              <p className="text-[10px] text-blue-600 leading-snug">
+                Persona asks for data not in schema. Recommend new field.
               </p>
             </div>
           </div>
@@ -228,8 +257,8 @@ const TestingPipelineDiagram: React.FC = () => {
       {/* ── Final Action ── */}
       <ArchitectureNode
         icon={<Wrench size={28} />}
-        label="UI Refactoring Backlog"
-        sublabel="GenericScenarioWizard"
+        label="Schema & UI Refactoring Backlog"
+        sublabel="Update GenericScenarioWizard OR Supabase DB Schema"
         color={COLORS.green}
       />
 
