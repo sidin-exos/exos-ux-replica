@@ -449,31 +449,61 @@ Client shall review each deliverable within 10 business days. Silence constitute
     ]),
   }),
 
-  "negotiation-prep": () => ({
+  "negotiation-preparation": () => ({
     industryContext: getRandomIndustryContext(),
-    counterparty: randomChoice([
-      "Global logistics provider with dominant market position",
-      "Regional IT services company seeking to expand relationship",
-      "Specialty chemical supplier with unique formulation capabilities",
-      "Large consulting firm for strategic transformation project",
-      "Software vendor for enterprise platform renewal",
+    mainFocus: randomChoice([
+      "Achieve minimum 8% cost reduction while preserving service levels and relationship quality",
+      "Restructure payment terms and pricing model to improve cash flow without alienating strategic supplier",
+      "Negotiate volume commitment in exchange for price protection and capacity guarantees",
+      "Push back on proposed 12% price increase using market benchmarks and competitive alternatives",
+      "Secure multi-year agreement with built-in innovation milestones and performance incentives",
     ]),
-    negotiationType: randomChoice(["Contract renewal", "New supplier", "Price increase pushback", "Scope expansion"]),
+    negotiationSubject: randomChoice([
+      "Annual IT infrastructure services renewal",
+      "Raw materials supply agreement renegotiation",
+      "Professional services rate card restructuring",
+      "Logistics and warehousing contract extension",
+      "Enterprise software license true-up negotiation",
+    ]),
     currentSpend: randomCurrency(200000, 5000000),
-    relationshipYears: randomNumber(1, 15).toString(),
-    batna: randomChoice([
-      "Qualified backup supplier at 10% premium but with better service levels",
-      "Insourcing capability exists but would require 6-month ramp-up",
-      "Limited alternatives available - this is a specialized market",
-      "Strong alternative shortlisted and ready to engage",
-      "Could unbundle services and source components separately",
+    supplierName: randomChoice([
+      "Meridian Technologies", "Atlas Supply Co.", "Pinnacle Services Group",
+      "Vanguard Solutions", "Sterling Logistics", "CoreTech Systems",
     ]),
-    targetOutcome: randomChoice([
-      "5-10% cost reduction with maintained service levels",
-      "Extended payment terms from Net 30 to Net 60",
-      "Improved SLA commitments with financial penalties",
-      "Volume flexibility with demand-based pricing",
-      "Multi-year deal with price protection clause",
+    relationshipHistory: randomChoice(["New Supplier", "1-2 Years", "3-5 Years", "Long-term Partner (5+ years)"]),
+    batna: randomChoice([
+      "Qualified backup supplier at 10% premium but with better service levels. 3-month transition timeline.",
+      "Insourcing capability exists but would require 6-month ramp-up and €120k investment.",
+      "Two alternatives shortlisted from recent RFI. Both can match specs within 90 days.",
+      "Could unbundle services and source components separately, saving ~5% but adding management overhead.",
+      "Strong alternative ready to engage. They offered 7% below current pricing in preliminary discussions.",
+    ]),
+    negotiationObjectives: randomChoice([
+      "1) 5-10% price reduction, 2) Extended payment terms to Net-60, 3) Guaranteed capacity for peak season",
+      "1) Price freeze for 2 years, 2) Improved SLA with financial penalties, 3) Quarterly business reviews",
+      "1) Volume-based tiered pricing, 2) Innovation investment commitment, 3) Flexible termination clause",
+      "1) Consolidate 3 contracts into 1, 2) Reduce total cost by 12%, 3) Add sustainability reporting",
+    ]),
+    mustHaves: randomChoice([
+      "Minimum 3% price reduction, keep same quality specs, no exclusivity clause",
+      "Net-45 payment terms minimum, annual price review cap at CPI, 90-day termination notice",
+      "Maintain current service levels, no price increase above 3%, data portability guaranteed",
+      "",
+    ]),
+    timeline: randomChoice(["Urgent (<1 month)", "Normal (1-3 months)", "Flexible (3-6 months)", "Strategic (6+ months)"]),
+    spendBreakdown: randomChoice([
+      "$340k hardware, $180k SaaS licenses, $90k professional services. Current blended rate: $165/hr for consulting.",
+      "60% recurring maintenance ($1.2M), 25% project-based work ($500k), 15% ad-hoc support ($300k). Payment: Net-30.",
+      "Top 5 SKUs represent 72% of spend. Unit prices range from $12-$450. Volume discount currently at 8%.",
+      "Annual license: $620k. Implementation services: $180k. Training: $45k. Support tier: Premium at $95k/yr.",
+      "",
+    ]),
+    leverageContext: randomChoice([
+      "Two qualified alternatives shortlisted. Switching cost moderate -- 3 month migration. We represent ~8% of their revenue.",
+      "Sole source situation but patent expires in 18 months. New entrants expected. Supplier knows this.",
+      "We are their 3rd largest account (~12% revenue). They recently lost a major client and have excess capacity.",
+      "Market is consolidating -- only 2 viable alternatives remain. However, our contract terms are below market.",
+      "",
     ]),
   }),
 
