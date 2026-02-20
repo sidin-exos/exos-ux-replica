@@ -1,4 +1,5 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toPng, toSvg } from "html-to-image";
 import { Download, Image, FileCode, ArrowLeft, Sparkles, Zap, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,16 @@ const AUDIT_THRESHOLD = 10;
 const TestingPipeline = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [scenarioId, setScenarioId] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [scenarioId, setScenarioId] = useState(() => searchParams.get("scenario") || "");
+
+  useEffect(() => {
+    if (scenarioId) {
+      setSearchParams({ scenario: scenarioId }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [scenarioId, setSearchParams]);
 
   const selectedScenario = scenarios.find((s) => s.id === scenarioId);
   const { data: stats } = useTestStats(scenarioId || undefined);

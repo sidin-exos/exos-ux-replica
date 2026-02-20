@@ -99,14 +99,9 @@ const TestSessionLog = ({ scenarioType, scenarioTitle, isThresholdReached }: Tes
         <CardTitle className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-primary" />
           Session Log
-          {scenarioTitle && (
-            <Badge variant="outline" className="ml-1 text-xs font-normal">
-              {scenarioTitle}
-            </Badge>
-          )}
         </CardTitle>
         <CardDescription>
-          Test runs for <strong>{scenarioTitle || scenarioType}</strong>, grouped by date. Export feedback JSON for external AI consultation.
+          Test runs grouped by date. Export feedback JSON for external AI consultation.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -124,12 +119,15 @@ const TestSessionLog = ({ scenarioType, scenarioTitle, isThresholdReached }: Tes
                 key={group.date}
                 className="flex items-center justify-between gap-4 p-3 rounded-lg border bg-card"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="font-mono text-sm font-medium">{group.date}</span>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {group.prompts.length} prompt{group.prompts.length !== 1 ? "s" : ""}
-                    </Badge>
+                <div className="flex items-center gap-3 min-w-0 flex-wrap">
+                   <span className="font-mono text-sm font-medium">{group.date}</span>
+                   <Badge variant="outline" className="text-[10px] font-mono">
+                     {scenarioType}
+                   </Badge>
+                   <div className="flex items-center gap-2">
+                     <Badge variant="secondary" className="text-xs">
+                       {group.prompts.length} prompt{group.prompts.length !== 1 ? "s" : ""}
+                     </Badge>
                     <span className="flex items-center gap-1 text-xs text-green-600">
                       <CheckCircle className="w-3 h-3" />
                       {group.successCount}
