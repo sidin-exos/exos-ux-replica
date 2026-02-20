@@ -1,59 +1,48 @@
 
 
-# Refactor `make-vs-buy` Scenario -- Fix HR Bias
+# Refactor `tco-analysis` Scenario -- Massive Form Simplification
 
 ## Summary
-Replace 5 hardcoded HR/outsourcing fields and `mainFocus` with 4 universal textareas that work for any Make vs. Buy dilemma (software, manufacturing, equipment, services). Keep `industryContext` and remove all `currency`/`number`/`select` fields that forced an HR-only framing.
+Replace 22 hyper-specific fields (currency, select, percentage types) with 3 universal textareas (CAPEX, OPEX, Risks) while keeping 3 core fields (`industryContext`, `assetDescription`, `ownershipPeriod`). This eliminates UX friction where 80%+ of fields are irrelevant depending on context (e.g., `dataPortability` for hardware, `energyConsumption` for software).
 
 ## Changes
 
-### 1. Update Scenario Schema (`src/lib/scenarios.ts`, lines 77-90)
+### 1. Update Scenario Schema (`src/lib/scenarios.ts`, lines 254-290)
 
-**Remove (6 fields):**
-- `MAIN_FOCUS_FIELD` (line 79)
-- `internalSalary` (line 80)
-- `recruitingCost` (line 81)
-- `managementTime` (line 82)
-- `agencyFee` (line 84)
-- `officeItPerHead` (line 83) -- also HR-biased, not listed in task but should go
-- `agencyOnboardingSpeed` (line 85)
-- `knowledgeRetentionRisk` (line 86)
-- `qualityBenchmark` (line 87)
-- `peakLoadCapacity` (line 88)
-- `strategicImportance` (line 89)
+**Remove (22 fields):** All fields between `industryContext`/`assetDescription`/`ownershipPeriod` and the end of `requiredFields`, including `mainFocus`, all currency fields (`purchasePrice`, `installationCost`, `trainingCost`, `integrationCost`, `annualMaintenance`, `energyConsumption`, `consumablesCost`, `laborCost`, `insuranceCost`, `residualValue`, `decommissioningCost`, `dataMigrationCost`, `downtimeCostPerHour`), all select fields (`vendorLockInRisk`, `alternativeSuppliers`, `dataPortability`, `technologyObsolescence`, `marketPriceTrend`, `regulatoryChanges`, `currencyExposure`, `downtimeRisk`), and all percentage fields (`proprietaryComponents`, `inflationAssumption`, `interestRate`).
 
-Effectively: remove ALL fields except `industryContext`.
-
-**Keep:**
+**Keep (3 fields):**
 - `industryContext` (textarea, required)
+- `assetDescription` (text, required)
+- `ownershipPeriod` (number, required)
 
-**Add (4 new fields):**
-1. `projectBrief` -- textarea, required. Label: "The Dilemma (Project Brief)"
-2. `makeCosts` -- textarea, optional. Label: "Estimated Internal Costs (Make)"
-3. `buyCosts` -- textarea, optional. Label: "Estimated External Costs (Buy)"
-4. `strategicFactors` -- textarea, optional. Label: "Strategic Factors & Constraints"
+**Add (3 new fields):**
+1. `capexBreakdown` -- textarea, required. Label: "Upfront Costs (CAPEX)"
+2. `opexBreakdown` -- textarea, required. Label: "Recurring/Operating Costs (OPEX)"
+3. `riskFactors` -- textarea, optional. Label: "Risks, Downtime & End-of-Life Costs"
 
-**Final field order (5 fields):**
+**Final field order (6 fields):**
 1. `industryContext`
-2. `projectBrief` (required)
-3. `makeCosts`
-4. `buyCosts`
-5. `strategicFactors`
+2. `assetDescription`
+3. `ownershipPeriod`
+4. `capexBreakdown` (NEW, required)
+5. `opexBreakdown` (NEW, required)
+6. `riskFactors` (NEW, optional)
 
-### 2. Update Test Data Factory (`src/lib/test-data-factory.ts`, lines 59-71)
+### 2. Update Test Data Factory (`src/lib/test-data-factory.ts`, lines 190-224)
 
-**Replace entire generator** with `randomChoice` arrays covering Software, Manufacturing, and Services contexts:
+Replace the entire generator block. Remove all 22 deleted field generators and add `randomChoice` arrays for the 3 new fields covering machinery, software, fleet, and warehouse contexts:
 
-- `projectBrief`: 4 diverse dilemmas (build CRM vs buy Salesforce, manufacture in-house vs outsource to Asia, build internal logistics vs use 3PL, develop custom ERP module vs license SAP add-on)
-- `makeCosts`: 4 realistic internal cost breakdowns
-- `buyCosts`: 4 realistic vendor/external cost breakdowns
-- `strategicFactors`: 4 strategic constraint descriptions
+- `capexBreakdown`: 4 realistic CAPEX breakdowns (e.g., "Purchase price: $1.2M. Installation & commissioning: $85k. Initial training for 12 operators: $25k...")
+- `opexBreakdown`: 4 realistic OPEX breakdowns (e.g., "Annual maintenance contract: $45k/yr. Energy consumption: ~$1.8k/mo. Consumables and spare parts: $12k/yr...")
+- `riskFactors`: 4 risk/end-of-life descriptions (e.g., "High vendor lock-in -- proprietary tooling with no third-party alternatives. Downtime costs approximately $8k/hr...")
 
-All values are plain strings -- no arrays, objects, or select types.
+All values are plain strings.
 
 ### Files Modified
-- `src/lib/scenarios.ts` -- make-vs-buy field definitions
-- `src/lib/test-data-factory.ts` -- make-vs-buy test data generator
+- `src/lib/scenarios.ts` -- tco-analysis field definitions (lines 254-290)
+- `src/lib/test-data-factory.ts` -- tco-analysis test data generator (lines 190-224)
 
 ### No Database or Edge Function Changes
 All changes are frontend-only schema definitions and test data generators.
+
