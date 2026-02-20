@@ -20,10 +20,11 @@ import {
 } from "@/lib/ai-test-data-generator";
 import type { BuyerPersona, EntropyLevel } from "@/lib/testing/types";
 
-const PERSONAS: { value: BuyerPersona; label: string }[] = [
-  { value: "executive_sponsor", label: "Executive Sponsor" },
-  { value: "solo_procurement_hero", label: "Solo Procurement Hero" },
-  { value: "tactical_category_manager", label: "Tactical Category Manager" },
+const PERSONAS: { value: BuyerPersona; label: string; desc: string }[] = [
+  { value: "rushed-junior", label: "Rushed Junior Buyer", desc: "Minimal context, informal language" },
+  { value: "methodical-manager", label: "Methodical Category Manager", desc: "Highly detailed, structured input" },
+  { value: "cfo-finance", label: "CFO / Finance Leader", desc: "Financial precision, high-level summaries" },
+  { value: "frustrated-stakeholder", label: "Frustrated Stakeholder", desc: "Messy narratives, ad-hoc usage" },
 ];
 
 const ENTROPY_LEVELS: { value: string; level: EntropyLevel; label: string; desc: string }[] = [
@@ -34,7 +35,7 @@ const ENTROPY_LEVELS: { value: string; level: EntropyLevel; label: string; desc:
 
 const LaunchTestBatch = () => {
   const [scenarioId, setScenarioId] = useState("");
-  const [persona, setPersona] = useState<BuyerPersona>("solo_procurement_hero");
+  const [persona, setPersona] = useState<BuyerPersona>("rushed-junior");
   const [entropy, setEntropy] = useState<string>("2");
   const [industry, setIndustry] = useState("");
   const [category, setCategory] = useState("");
@@ -123,7 +124,8 @@ const LaunchTestBatch = () => {
             <SelectContent>
               {PERSONAS.map((p) => (
                 <SelectItem key={p.value} value={p.value}>
-                  {p.label}
+                  <span>{p.label}</span>
+                  <span className="text-xs text-muted-foreground ml-2">— {p.desc}</span>
                 </SelectItem>
               ))}
             </SelectContent>
