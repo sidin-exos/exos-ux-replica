@@ -93,14 +93,22 @@ const generators: Record<string, TestDataGenerator> = {
     industryContext: getRandomIndustryContext(),
     qualityScore: randomNumber(5, 10).toString(),
     onTimeDelivery: randomPercentage(75, 99),
-    incidentCount: randomNumber(0, 8).toString(),
     communicationScore: randomNumber(5, 10).toString(),
-    innovationScore: randomNumber(3, 10).toString(),
-    financialStability: randomChoice(["Strong", "Moderate", "At Risk"]),
-    socialResponsibility: randomChoice(["Certified", "In Progress", "None"]),
     priceVsMarket: randomChoice(["Below Market", "At Market", "Above Market"]),
-    crisisSupport: randomChoice(["Excellent", "Good", "Poor"]),
     spendVolume: randomCurrency(100000, 5000000),
+    contractStatus: randomChoice([
+      "Expires Q3 2026", "Auto-renews in 6 months", "Month-to-month, no fixed term",
+      "Long-term agreement until 2028", "Under renegotiation, current terms expire in 90 days",
+      "Expired — operating on goodwill basis",
+    ]),
+    incidentLog: randomChoice([
+      "Two late deliveries in Q4 causing production line stoppage (4h total downtime). Root cause: carrier switch without notification.",
+      "Quality escape in batch #4412 — 15% rejection rate on incoming inspection. Supplier issued corrective action report.",
+      "SLA breach: response time exceeded 48h on three critical tickets in January. Escalated to account manager.",
+      "No significant incidents in the past 12 months. Minor packaging damage on one shipment, resolved immediately.",
+      "",
+      "",
+    ]),
   }),
 
   "disruption-management": () => ({
