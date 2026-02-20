@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Zap, SlidersHorizontal } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,8 +15,12 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { scenarios } from "@/lib/scenarios";
 import { generateAITestData } from "@/lib/ai-test-data-generator";
+import { supabase } from "@/integrations/supabase/client";
+import { useModelConfig } from "@/contexts/ModelConfigContext";
 import { useIndustryContexts, useProcurementCategories } from "@/hooks/useContextData";
 import type { BuyerPersona, EntropyLevel } from "@/lib/testing/types";
+
+type Phase = "idle" | "generating" | "analyzing";
 
 const PERSONAS: { value: BuyerPersona; label: string; desc: string }[] = [
   { value: "rushed-junior", label: "Rushed Junior Buyer", desc: "Minimal context, informal language" },
@@ -41,8 +46,10 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
   const [entropy, setEntropy] = useState<string>("2");
   const [industry, setIndustry] = useState("");
   const [category, setCategory] = useState("");
-  const [isRunning, setIsRunning] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
 
+  const { model } = useModelConfig();
+  const queryClient = useQueryClient();
   const availableScenarios = scenarios.filter((s) => s.status === "available");
   const { data: industries, isLoading: industriesLoading } = useIndustryContexts();
   const { data: categories, isLoading: categoriesLoading } = useProcurementCategories();
@@ -53,39 +60,92 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
       return;
     }
 
-    setIsRunning(true);
     const entropyLevel = Number(entropy) as EntropyLevel;
+
+    // --- Phase 1: Generate synthetic data ---
+    setPhase("generating");
+    let generatedData: Record<string, string>;
+    let genScore = 0;
 
     try {
       const result = await generateAITestData({
         scenarioType: scenarioId,
         industry: industry || undefined,
         category: category || undefined,
+        persona,
         mctsIterations: entropyLevel === 3 ? 1 : 3,
       });
 
-      if (result.success) {
-        toast({
-          title: "Test batch complete",
-          description: `Score: ${result.metadata.score} | ${result.metadata.iterations} iterations`,
-        });
-      } else {
+      if (!result.success) {
         toast({
           title: "Generation failed",
           description: result.error || "Unknown error",
           variant: "destructive",
         });
+        setPhase("idle");
+        return;
       }
+
+      generatedData = result.data;
+      genScore = result.metadata.score;
     } catch (err) {
       toast({
-        title: "Error",
+        title: "Generation error",
         description: err instanceof Error ? err.message : "Unexpected error",
         variant: "destructive",
       });
+      setPhase("idle");
+      return;
+    }
+
+    // --- Phase 2: Run through sentinel-analysis ---
+    setPhase("analyzing");
+
+    try {
+      const { data: analysisResult, error: analysisError } = await supabase.functions.invoke(
+        "sentinel-analysis",
+        {
+          body: {
+            scenarioType: scenarioId,
+            scenarioData: generatedData,
+            userPrompt: JSON.stringify(generatedData),
+            industrySlug: industry || undefined,
+            categorySlug: category || undefined,
+            serverSideGrounding: true,
+            enableTestLogging: true,
+            model,
+          },
+        }
+      );
+
+      if (analysisError) {
+        toast({
+          title: "Analysis failed",
+          description: `Generation succeeded (score: ${genScore}), but analysis failed: ${analysisError.message}`,
+          variant: "destructive",
+        });
+      } else {
+        const totalTokens = analysisResult?.totalTokens ?? analysisResult?.token_usage?.total ?? "—";
+        toast({
+          title: "Test complete",
+          description: `Gen score: ${genScore} | Tokens: ${totalTokens}`,
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Analysis error",
+        description: `Generation succeeded (score: ${genScore}), but analysis threw: ${err instanceof Error ? err.message : "Unknown"}`,
+        variant: "destructive",
+      });
     } finally {
-      setIsRunning(false);
+      // Invalidate session log & stats queries so they auto-refresh
+      queryClient.invalidateQueries({ queryKey: ["test-prompts"] });
+      queryClient.invalidateQueries({ queryKey: ["test-stats"] });
+      setPhase("idle");
     }
   };
+
+  const buttonLabel = phase === "generating" ? "Generating…" : phase === "analyzing" ? "Analyzing…" : "Launch Test";
 
   return (
     <Card className="card-elevated">
@@ -189,11 +249,11 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
         <Button
           variant="hero"
           onClick={handleLaunch}
-          disabled={isRunning || !scenarioId}
+          disabled={phase !== "idle" || !scenarioId}
           className="w-full gap-2"
         >
           <Zap className="w-4 h-4" />
-          {isRunning ? "Running…" : "Launch Test"}
+          {buttonLabel}
         </Button>
       </CardContent>
     </Card>

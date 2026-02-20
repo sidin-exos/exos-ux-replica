@@ -24,6 +24,7 @@ interface GenerateOptions {
   scenarioType: string;
   industry?: string;
   category?: string;
+  persona?: string;
   mctsIterations?: number;
 }
 
@@ -117,6 +118,7 @@ export async function generateAITestData(
         scenarioType: options.scenarioType,
         industry: options.industry,
         category: options.category,
+        persona: options.persona,
         mctsIterations: options.mctsIterations || 3,
       },
     });
