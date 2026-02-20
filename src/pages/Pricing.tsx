@@ -10,7 +10,7 @@ const pricingTiers = [
     id: "smb",
     name: "SMB",
     subtitle: "For companies without dedicated procurement",
-    price: "49",
+    price: "29",
     period: "month",
     icon: Zap,
     featured: false,
@@ -28,7 +28,8 @@ const pricingTiers = [
     id: "professional",
     name: "Procurement Professionals",
     subtitle: "For dedicated procurement teams",
-    price: "199",
+    price: "99",
+    annualNote: "or €66/mo billed quarterly (€197/quarter)",
     period: "month",
     icon: Shield,
     featured: false,
@@ -133,11 +134,16 @@ const Pricing = () => {
                   {/* Price */}
                   <div className="text-center mb-6">
                     {tier.price ? (
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-4xl font-display font-bold text-foreground">
-                          €{tier.price}
-                        </span>
-                        <span className="text-muted-foreground">/{tier.period}</span>
+                      <div>
+                        <div className="flex items-baseline justify-center gap-1">
+                          <span className="text-4xl font-display font-bold text-foreground">
+                            €{tier.price}
+                          </span>
+                          <span className="text-muted-foreground">/{tier.period}</span>
+                        </div>
+                        {tier.annualNote && (
+                          <p className="text-xs text-muted-foreground mt-1">{tier.annualNote}</p>
+                        )}
                       </div>
                     ) : (
                       <div className="text-2xl font-display font-semibold text-muted-foreground">
