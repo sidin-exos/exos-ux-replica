@@ -255,7 +255,7 @@ const TestingPipeline = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-1 space-y-6">
                 <LaunchTestBatch scenarioId={scenarioId} onScenarioChange={setScenarioId} />
-                {scenarioId && <TestSessionLog scenarioType={scenarioId} isThresholdReached={isThresholdReached} />}
+                {scenarioId && <TestSessionLog scenarioType={scenarioId} scenarioTitle={selectedScenario?.title} isThresholdReached={isThresholdReached} />}
               </div>
               <div className="lg:col-span-2">
                 <RefactoringBacklog scenarioType={scenarioId || undefined} />

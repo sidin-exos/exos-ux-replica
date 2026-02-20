@@ -8,6 +8,7 @@ import type { TestPromptWithReport } from "@/hooks/useTestDatabase";
 
 interface TestSessionLogProps {
   scenarioType: string;
+  scenarioTitle?: string;
   isThresholdReached?: boolean;
 }
 
@@ -85,7 +86,7 @@ function downloadJSON(data: unknown, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-const TestSessionLog = ({ scenarioType, isThresholdReached }: TestSessionLogProps) => {
+const TestSessionLog = ({ scenarioType, scenarioTitle, isThresholdReached }: TestSessionLogProps) => {
   const { data: prompts, isLoading } = useTestPromptsByScenario(scenarioType, 200);
 
   const dateGroups = useMemo(() => groupByDate(prompts || []), [prompts]);
@@ -98,9 +99,14 @@ const TestSessionLog = ({ scenarioType, isThresholdReached }: TestSessionLogProp
         <CardTitle className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-primary" />
           Session Log
+          {scenarioTitle && (
+            <Badge variant="outline" className="ml-1 text-xs font-normal">
+              {scenarioTitle}
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>
-          Test runs grouped by date. Export feedback JSON for external AI consultation.
+          Test runs for <strong>{scenarioTitle || scenarioType}</strong>, grouped by date. Export feedback JSON for external AI consultation.
         </CardDescription>
       </CardHeader>
       <CardContent>
