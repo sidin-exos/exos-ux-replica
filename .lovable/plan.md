@@ -1,85 +1,67 @@
 
+# Refactor `rfp-generator` Scenario + Fix Serialization Bug
 
-# Fix Shadow Log Schema Mismatch + Orchestrator Resilience
+## Summary
+Remove 2 redundant fields (`mainFocus`, `documentTypes`) that caused friction and a serialization bug (`[object Object]`), add 2 new contextual textareas for technical specs and incumbent data, and rebuild the test data factory to match.
 
-## Problem Analysis
+## Changes
 
-Two root causes identified:
+### 1. Update Scenario Schema (`src/lib/scenarios.ts`, lines 449-462)
 
-### Problem 1: Results Not Visible (Critical)
-The `RefactoringBacklog` component expects `shadow_log` to have this shape:
-```text
-{ field_evaluations: [{ field_name, action }], schema_gaps: [...] }
-```
+**Remove:**
+- `MAIN_FOCUS_FIELD` (line 451) -- redundant; the raw brief already captures intent
+- `documentTypes` select field (lines 453-458) -- AI ignores the select value; causes `[object Object]` serialization
 
-But the actual `shadow_log` written by `sentinel-analysis` has this shape:
-```text
-{ redundant_fields: ["mainFocus", ...], missing_context: [...], friction_score: 4, input_recommendation: "...", detected_input_format: "structured" }
-```
+**Keep (5 fields):**
+- `industryContext` (textarea, optional)
+- `rawBrief` (textarea, required) -- rename label to "Project Brief & Scope"
+- `budgetRange` (text, optional) -- confirmed as plain string type
+- `evaluationPriorities` (change from `type: "text"` to `type: "textarea"`, optional) -- allows richer input
+- `additionalInstructions` (textarea, optional)
 
-The `extractEvaluations()` function finds no `field_evaluations` array, returns empty data, and the UI shows "No field evaluations found yet" despite 10 reports existing.
+**Add (2 new fields):**
+- `technicalRequirements` -- textarea, optional. Label: "Technical Specs & Volumes". Placeholder: "E.g., 50 MacBooks (M3, 32GB RAM), 15,000 tons of rebar, or specific SKUs..."
+- `incumbentData` -- textarea, optional. Label: "Current Suppliers & Baseline Data". Placeholder: "E.g., Currently using Vendor X, paying $Y per unit, current lead time is 3 weeks..."
 
-### Problem 2: Page Reboot During Long Batch (Minor)
-A code deployment (hot reload) triggered mid-batch causes the page to refresh to `/`, losing orchestrator state. This is inherent to the dev environment but can be mitigated.
+**Final field order (7 fields):**
+1. `industryContext`
+2. `rawBrief` (renamed label)
+3. `budgetRange`
+4. `evaluationPriorities`
+5. `technicalRequirements` (NEW)
+6. `incumbentData` (NEW)
+7. `additionalInstructions`
 
-## Proposed Changes
+### 2. Fix Test Data Factory (`src/lib/test-data-factory.ts`, lines 330-361)
 
-### 1. Fix `RefactoringBacklog.tsx` -- Adapt `extractEvaluations()` to Real Schema
+**Remove generators for:** `documentTypes` (was returning a string from `randomChoice` but the select field itself caused the bug upstream)
 
-Update the parser to handle the actual shadow_log format:
+**Keep & verify as plain strings:** `rawBrief`, `evaluationPriorities`, `budgetRange`, `additionalInstructions` -- all use `randomChoice([...strings...])`, confirmed safe.
 
-- Map `redundant_fields` array entries to `{ field_name, action: "REDUNDANT_HIDE" }`
-- Map `missing_context` entries to schema gaps with `action: "SCHEMA_GAP_DETECTED"`
-- Preserve backward compatibility: if `field_evaluations` exists (future format), use it; otherwise fall back to the flat format
-- Extract `friction_score` and `input_recommendation` for display in a new summary row
+**Add generators for:**
+- `technicalRequirements` -- randomChoice of realistic specs (e.g., "50 MacBook Pro M3 (32GB RAM, 512GB SSD)..." or "15,000 tons Grade 500 rebar...")
+- `incumbentData` -- randomChoice of baseline data (e.g., "Currently using TransEuro GmbH at EUR165k/year. Lead time: 48h...")
 
-### 2. Fix `TestStatsCards.tsx` -- Verify Stats Display
-
-Confirm the stats cards correctly aggregate data for the `rfp-generator` scenario (database shows 10 prompts / 10 reports, so this should already work once the page is loaded correctly).
-
-### 3. Improve `TestPlanOrchestrator.tsx` -- Save Progress to localStorage
-
-- After each completed item, persist `{ results, currentIndex, scenarioId }` to `localStorage`
-- On mount, check for interrupted runs and offer to display the last results
-- This way, if a hot reload occurs, the user doesn't lose visibility into what completed
-
-## Technical Details
-
-### `extractEvaluations()` Rewrite (RefactoringBacklog.tsx)
+### Field Diff
 
 ```text
-INPUT (actual shadow_log):
-{
-  redundant_fields: ["mainFocus", "documentTypes"],
-  missing_context: ["Specific software stack", "Current bandwidth specs"],
-  friction_score: 4,
-  input_recommendation: "Provide historical usage data...",
-  detected_input_format: "structured"
-}
-
-OUTPUT (mapped to existing FieldAggregation types):
-fields: [
-  { field_name: "mainFocus", action: "REDUNDANT_HIDE" },
-  { field_name: "documentTypes", action: "REDUNDANT_HIDE" }
-]
-gaps: [
-  { suggested_field: "specific_software_stack", reason: "Specific software stack", frequency: 1, persona_source: "" }
-]
+BEFORE (7 fields)              AFTER (7 fields)
+-----------------              -----------------
+industryContext   [KEEP]       industryContext
+mainFocus         [REMOVE]     rawBrief (label renamed)
+rawBrief          [KEEP]       budgetRange
+documentTypes     [REMOVE]     evaluationPriorities
+evaluationPriorities [KEEP]    technicalRequirements  [NEW]
+budgetRange       [KEEP]       incumbentData          [NEW]
+additionalInstructions [KEEP]  additionalInstructions
 ```
 
-All non-redundant fields from the scenario schema that are NOT in `redundant_fields` will be inferred as `CRITICAL_REQUIRE` (the AI kept them, meaning they were useful).
+### Serialization Bug Fix
+The `[object Object]` bug was caused by `documentTypes` being a `select` field whose value could be serialized incorrectly when passed through the test data pipeline. Removing it and ensuring all remaining fields are `text`/`textarea` (plain string types) eliminates the root cause.
 
-### localStorage Recovery (TestPlanOrchestrator.tsx)
+### Files Modified
+- `src/lib/scenarios.ts` -- rfp-generator field definitions
+- `src/lib/test-data-factory.ts` -- rfp-generator test data generator
 
-- Key: `exos-orchestrator-results-{scenarioId}`
-- Saved after each iteration and on completion
-- On mount: if results exist, show them in the Results Summary section
-- Clear on new run start
-
-## Files Modified
-- `src/components/testing/RefactoringBacklog.tsx` -- fix shadow_log parser to match real data format
-- `src/components/testing/TestPlanOrchestrator.tsx` -- add localStorage persistence for batch results
-
-## No Database or Edge Function Changes
-The shadow_log format from sentinel-analysis is correct. Only the frontend parser needs to adapt to the actual schema.
-
+### No Database or Edge Function Changes
+All changes are frontend-only schema definitions and test data generators.
