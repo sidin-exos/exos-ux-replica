@@ -74,14 +74,19 @@ const generators: Record<string, TestDataGenerator> = {
     industryContext: getRandomIndustryContext(),
     purchaseAmount: randomCurrency(500, 15000),
     urgency: randomNumber(1, 30).toString(),
-    catalogAvailable: randomChoice(["Yes", "No"]),
-    quotesCount: randomNumber(0, 5).toString(),
-    paymentTerms: randomChoice(["Corporate Card", "Invoice", "Purchase Order"]),
-    warranty: randomChoice(["Yes", "No"]),
-    deliveryCost: randomCurrency(0, 500),
-    returnRisk: randomChoice(["Low", "Medium", "High"]),
     alternativesExist: randomChoice(["Yes", "No"]),
-    approvalRequired: randomChoice(["Yes", "No"]),
+    vendorHistory: randomChoice([
+      "We usually buy from Grainger for ~$2k/order but their lead times have slipped to 3 weeks. Last year we spent $18k across 12 orders in this category.",
+      "No established vendor. Previous one-off purchases from Amazon Business and Uline. Total spend last FY was under $5k.",
+      "Current supplier is a local distributor (ABC Supply). Pricing is 10-15% above market but they offer same-day delivery. Spent $8k last year.",
+      "We have a frame agreement with Würth for fasteners but this item isn't covered. Ad-hoc purchases go through whoever the engineer finds first.",
+    ]),
+    technicalSpecs: randomChoice([
+      "Need ISO 9001 certified supplier. Material must be 316L stainless steel, tolerance ±0.05mm. Compatible with existing assembly jig ref #JIG-2024-A.",
+      "Standard office-grade, no special specs. Must be compatible with HP LaserJet Pro M404 series.",
+      "API-grade valve, ANSI 300# flange, 4-inch bore. Must include material test certificates (EN 10204 3.1).",
+      "",
+    ]),
   }),
 
   "supplier-review": () => ({
