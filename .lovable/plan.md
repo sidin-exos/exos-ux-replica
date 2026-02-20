@@ -1,90 +1,59 @@
 
 
-## Scenario-Focused Testing Workflow
+## Update Testing Pipeline Diagram
 
-### What Changes
+Reflect all recent workflow changes in `TestingPipelineDiagram.tsx`. No new files needed -- single file update.
 
-The testing pipeline currently shows global stats across all scenarios. The user wants to focus testing on **one scenario at a time**, collect feedback per scenario per date, and use that feedback to gradually relax field strictness (structured -> raw).
+### Changes to the Diagram
 
-### Current State
+**1. Trigger Node -- Add Scenario Focus**
+- Change label from "Admin / CI-CD (Iterative Run)" to "Admin / CI-CD"
+- Add sublabel: "One Scenario at a Time"
+- This reflects the new workflow where testing is scoped per scenario
 
-- `TestStatsCards` and `RefactoringBacklog` query **all** test_prompts/reports globally (no scenario filter)
-- `LaunchTestBatch` generates one test case at a time but doesn't pass its selected scenario to the stats/backlog components
-- Real data exists: 44 reports across 12 scenarios (e.g., supplier-review: 19, cost-breakdown: 5)
-- Pipeline IQ tab uses mock data
+**2. Phase 1: Synthesis Engine -- Update Personas**
+- Replace the 3 old persona nodes with 4 new ones:
+  - `rushed-junior` / "Rushed Junior" / sublabel "Dump & Go"
+  - `methodical-manager` / "Methodical Mgr" / sublabel "Over-detailed"
+  - `cfo-finance` / "CFO / Finance" / sublabel "Financial precision"
+  - `frustrated-stakeholder` / "Frustrated User" / sublabel "Messy narratives"
 
-### Architecture Change
+**3. Phase 1: Add Database-Backed Context**
+- Add a small annotation/badge near the Entropy Controller or AI Generator showing "Industry & Category from DB" (replacing the old hardcoded matrix concept)
+- This reflects the switch from `INDUSTRY_CATEGORY_COMPATIBILITY` to `useIndustryContexts` / `useProcurementCategories`
 
-```text
-+---------------------------+
-|  LaunchTestBatch          |
-|  [Select Scenario] ------+-----> scenarioId (lifted to parent)
-|  [Persona] [Entropy]     |
-+---------------------------+
-             |
-             v (scenarioId prop)
-+---------------------------+       +---------------------------+
-|  TestStatsCards            |       |  RefactoringBacklog       |
-|  Filtered by scenarioId   |       |  Filtered by scenarioId   |
-|  Shows: prompts, reports, |       |  Shows: field verdicts,   |
-|  success rate, avg time   |       |  schema gaps for THIS     |
-|  for THIS scenario only   |       |  scenario only             |
-+---------------------------+       +---------------------------+
-             |
-             v
-+---------------------------+
-|  Test Session Log         |
-|  Groups runs by date      |
-|  "Export Feedback" button  |
-|  Downloads JSON per date  |
-+---------------------------+
-```
+**4. After Phase 2: Add Session Log + Export Block**
+- Add a new node between Phase 2 and Phase 3 (or alongside `test_reports`):
+  - Icon: Calendar
+  - Label: "Session Log"
+  - Sublabel: "Groups by Date"
+- Add an export node:
+  - Icon: Download
+  - Label: "Export Feedback"
+  - Sublabel: "{scenario}_{date}.json"
+  - Color: green (action output)
 
-### Files to Modify
+**5. Add External AI Consultation Step**
+- After the Export Feedback node, add a new step before the Refactoring Backlog:
+  - Icon: Bot or Sparkles
+  - Label: "External AI Consultation"
+  - Sublabel: "Field structure review"
+  - Color: purple (evaluation)
+- This represents step 3 of the user's workflow: consulting external AI on field adjustments
 
-**1. `src/pages/TestingPipeline.tsx`**
-- Lift `scenarioId` state from `LaunchTestBatch` to the page level
-- Pass `scenarioId` down to `LaunchTestBatch`, `RefactoringBacklog`, and a new `TestSessionLog` component
-- Show a scenario filter banner in the Command Center tab: "Focusing on: {scenario name}"
+**6. Update Final Action Node**
+- Change sublabel from "Update GenericScenarioWizard OR Supabase DB Schema" to "Gradual: Required -> Optional -> Raw"
+- This reflects the strategic goal of increasing input flexibility
 
-**2. `src/components/testing/LaunchTestBatch.tsx`**
-- Accept `scenarioId` and `onScenarioChange` as props instead of owning the state internally
-- Remove local `scenarioId` state; use the prop
+**7. Update Legend**
+- Add a green legend entry for "Feedback Export" alongside existing entries
 
-**3. `src/hooks/useTestDatabase.ts`**
-- Add a new hook: `useTestStatsByScenario(scenarioType: string)` that filters both `test_prompts` and `test_reports` by the selected scenario
-- Update `useTestPromptsByScenario` to be the primary data source for the command center
+**8. Update Description Cards (TestingPipeline.tsx)**
+- Update the Synthesis Engine card text from "3 buyer personas" to "4 strategic buyer personas"
+- These are the glass-effect cards below the diagram on the Diagram tab
 
-**4. `src/components/testing/TestStatsCards.tsx`**
-- Accept an optional `scenarioType` prop
-- When provided, use `useTestStatsByScenario(scenarioType)` instead of `useTestStats()`
-- Cards will show stats scoped to the selected scenario
-
-**5. `src/components/testing/RefactoringBacklog.tsx`**
-- Accept an optional `scenarioType` prop
-- When provided, use `useTestPromptsByScenario(scenarioType)` instead of `useTestPrompts(100)`
-- Field verdicts and schema gaps will be scoped to the selected scenario
-
-**6. New file: `src/components/testing/TestSessionLog.tsx`**
-- Displays test runs for the selected scenario, grouped by date (YYYY-MM-DD)
-- Each date group shows: number of runs, success/fail count, persona distribution
-- "Export Feedback" button per date group: downloads a JSON file named `{scenario}_{date}.json` containing:
-  - Scenario type and date
-  - All prompts and their reports (including shadow_log field evaluations)
-  - Aggregated field verdicts for that date
-  - Strategic context note: "Goal: gradually increase raw field flexibility"
-- This JSON file is the "one scenario, one file per date" artifact for external AI consultation
-
-### Testing Workflow (User-Facing)
-
-1. Select a scenario in the Command Center (e.g., "Supplier Review")
-2. Stats and backlog instantly filter to show only that scenario's data
-3. Launch test batches with different personas/entropy levels
-4. View the Session Log grouped by date
-5. Click "Export Feedback" to download a JSON file for that date
-6. Take the JSON to an external AI for field structure recommendations
-7. Apply recommendations gradually: move fields from "Required" to "Optional" to "Raw textarea"
-
-### No Database Changes Needed
-All data is already in `test_prompts` and `test_reports`. We just need to filter by `scenario_type`.
-
+### Technical Details
+- All changes are in `src/components/architecture/TestingPipelineDiagram.tsx` and `src/pages/TestingPipeline.tsx`
+- Uses existing `ArchitectureNode`, `ArchitectureContainer`, and `ArchitectureArrow` primitives
+- New icons needed: `Calendar`, `Download` (both already available from lucide-react)
+- No database or backend changes
