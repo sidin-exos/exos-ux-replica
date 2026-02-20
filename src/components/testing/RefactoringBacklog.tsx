@@ -46,22 +46,44 @@ const ACTION_LABELS: Record<FieldAction, string> = {
 
 /**
  * Parse shadow_log JSONB to extract field evaluations.
- * Expected shape: { field_evaluations: [{ field_name, action, ... }], schema_gaps: [...] }
+ * Supports two formats:
+ *  - Legacy: { field_evaluations: [{ field_name, action }], schema_gaps: [...] }
+ *  - Current: { redundant_fields: [...], missing_context: [...], friction_score, ... }
  */
 function extractEvaluations(shadowLog: Record<string, unknown> | null) {
-  if (!shadowLog) return { fields: [] as { field_name: string; action: FieldAction }[], gaps: [] as SchemaGapItem[] };
+  if (!shadowLog) return { fields: [] as { field_name: string; action: FieldAction }[], gaps: [] as SchemaGapItem[], frictionScore: null as number | null, inputRecommendation: null as string | null };
 
-  const fieldEvals = Array.isArray(shadowLog.field_evaluations)
-    ? (shadowLog.field_evaluations as { field_name?: string; action?: string }[])
-        .filter((f) => f.field_name && f.action)
-        .map((f) => ({ field_name: f.field_name!, action: f.action as FieldAction }))
-    : [];
+  // Legacy format — use directly if present
+  if (Array.isArray(shadowLog.field_evaluations)) {
+    const fieldEvals = (shadowLog.field_evaluations as { field_name?: string; action?: string }[])
+      .filter((f) => f.field_name && f.action)
+      .map((f) => ({ field_name: f.field_name!, action: f.action as FieldAction }));
+    const gaps = Array.isArray(shadowLog.schema_gaps) ? (shadowLog.schema_gaps as SchemaGapItem[]) : [];
+    return { fields: fieldEvals, gaps, frictionScore: null, inputRecommendation: null };
+  }
 
-  const gaps = Array.isArray(shadowLog.schema_gaps)
-    ? (shadowLog.schema_gaps as SchemaGapItem[])
-    : [];
+  // Current format — map redundant_fields → REDUNDANT_HIDE
+  const fields: { field_name: string; action: FieldAction }[] = [];
 
-  return { fields: fieldEvals, gaps };
+  if (Array.isArray(shadowLog.redundant_fields)) {
+    for (const f of shadowLog.redundant_fields as string[]) {
+      fields.push({ field_name: f, action: "REDUNDANT_HIDE" });
+    }
+  }
+
+  // Map missing_context → schema gaps
+  const gaps: SchemaGapItem[] = [];
+  if (Array.isArray(shadowLog.missing_context)) {
+    for (const ctx of shadowLog.missing_context as string[]) {
+      const slug = ctx.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+      gaps.push({ suggested_field: slug, reason: ctx, frequency: 1, persona_source: "" });
+    }
+  }
+
+  const frictionScore = typeof shadowLog.friction_score === "number" ? shadowLog.friction_score : null;
+  const inputRecommendation = typeof shadowLog.input_recommendation === "string" ? shadowLog.input_recommendation : null;
+
+  return { fields, gaps, frictionScore, inputRecommendation };
 }
 
 interface RefactoringBacklogProps {

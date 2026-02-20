@@ -40,13 +40,28 @@ interface TestPlanOrchestratorProps {
   model: string;
 }
 
+const STORAGE_KEY_PREFIX = "exos-orchestrator-results-";
+
+function getStorageKey(scenarioId: string) {
+  return `${STORAGE_KEY_PREFIX}${scenarioId}`;
+}
+
+function loadPersistedResults(scenarioId: string): ExecutionResult[] | null {
+  try {
+    const raw = localStorage.getItem(getStorageKey(scenarioId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch { return null; }
+}
+
 const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [generatedPlan, setGeneratedPlan] = useState<TestPlanItem[] | null>(null);
   const [importedJson, setImportedJson] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [results, setResults] = useState<ExecutionResult[]>([]);
+  const [results, setResults] = useState<ExecutionResult[]>(() => loadPersistedResults(scenarioId) ?? []);
   const queryClient = useQueryClient();
 
   // ── Plan Generation ──
@@ -105,6 +120,7 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
     setTotalItems(plan.length);
     setCurrentIndex(0);
     setResults([]);
+    localStorage.removeItem(getStorageKey(scenarioId));
 
     const runResults: ExecutionResult[] = [];
 
@@ -149,6 +165,9 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
       } catch (err) {
         runResults.push({ index: i, status: "error", error: err instanceof Error ? err.message : "Unknown error" });
       }
+
+      // Persist after each item so results survive page refresh
+      try { localStorage.setItem(getStorageKey(scenarioId), JSON.stringify(runResults)); } catch {}
 
       // Rate-limit protection
       if (i < plan.length - 1) await sleep(1000);
