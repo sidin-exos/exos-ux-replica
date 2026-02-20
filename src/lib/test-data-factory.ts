@@ -125,68 +125,60 @@ const generators: Record<string, TestDataGenerator> = {
     ]),
   }),
 
+  // ===== 2. DISRUPTION MANAGEMENT =====
   "disruption-management": () => ({
     industryContext: getRandomIndustryContext(),
-    deficitSku: randomChoice([
-      "High-grade aluminum alloy sheets",
-      "Custom ASIC chips",
-      "Medical-grade silicone tubing",
-      "Specialty lubricants",
-      "Carbon fiber composite panels",
-      "Pharmaceutical API compound",
+    crisisDescription: randomChoice([
+      "Our sole-source microchip supplier's factory in Taiwan was flooded. We have 14 days of inventory remaining. These chips are custom ASICs with 16-week lead time from any new supplier.",
+      "Key steel supplier declared force majeure due to energy crisis. We depend on them for 80% of our specialty alloy needs. Current stock covers 3 weeks of production.",
+      "Medical-grade silicone tubing supplier failed FDA audit and production is halted indefinitely. We use their tubing in 6 product lines. Only 10 days of buffer stock on hand.",
+      "Our primary logistics partner (40% of shipments) experienced a ransomware attack and all systems are down. No ETA for recovery. 200 containers are currently in transit with no tracking.",
     ]),
-    stockDays: randomNumber(3, 45).toString(),
-    altSuppliers: randomNumber(0, 4).toString(),
-    altProducts: randomChoice(["Yes", "No", "Partial"]),
-    substitutePrice: randomPercentage(5, 50),
-    switchingTime: randomNumber(7, 90).toString(),
-    lostRevenuePerDay: randomCurrency(10000, 500000),
-    inTransitStatus: randomChoice(["Yes", "No", "Unknown"]),
-    forceMajeureClause: randomChoice(["Yes", "No", "Unclear"]),
-    competitorResponse: randomChoice([
-      "Competitors facing similar issues",
-      "Main competitor has secured alternative supply",
-      "Industry-wide shortage reported",
-      "Unknown at this time",
+    impactAssessment: randomChoice([
+      "Production line stops in 14 days. Revenue impact: $85k/day. 3 customer contracts have penalty clauses for late delivery. Force majeure clause in our supplier contract is ambiguous about 'natural disasters'.",
+      "We lose $50k/day in lost production. Two automotive OEM customers have zero-tolerance late delivery policies. Competitor has reportedly secured alternative supply. In-transit shipments: 2 containers worth $120k.",
+      "Revenue at risk: $200k/week across affected product lines. Hospital customers cannot accept substitutes without re-validation (6-month process). Insurance claim filed but outcome uncertain.",
+      "Customer orders worth $1.2M are delayed. E-commerce platform SLA requires 48h delivery. Competitor is offering expedited shipping to capture our customers. No insurance coverage for cyber incidents at supplier.",
+    ]),
+    alternativesContext: randomChoice([
+      "2 backup suppliers identified but not qualified. Switching time: 30 days minimum. Price premium: 15-20%. One alternative requires minimum order of 50,000 units (vs our 8,000/month need).",
+      "One alternative supplier in Germany (qualified) at 25% premium. Another in South Korea (not qualified, 8-week qualification). Substitute material exists but requires customer approval and testing.",
+      "No direct substitutes available — proprietary formulation. Competitor's product could work but requires FDA re-submission. Emergency procurement from grey market possible but quality risk is high.",
+      "3 alternative carriers available. Two can absorb 60% of volume within 1 week. Full transition would take 3-4 weeks. Costs 8-12% more. Manual tracking possible as interim measure.",
     ]),
   }),
 
+  // ===== 3. RISK ASSESSMENT =====
   "risk-assessment": () => ({
     industryContext: getRandomIndustryContext(),
     assessmentSubject: randomChoice([
-      "Primary logistics provider",
-      "Critical component supplier",
-      "IT infrastructure vendor",
-      "Offshore manufacturing partner",
-      "Raw material supplier",
+      "Primary logistics provider — TransGlobal Shipping",
+      "Critical component supplier — SemiTech Industries",
+      "IT infrastructure vendor — CloudScale Solutions",
+      "Offshore manufacturing partner — Pacific Assembly Co.",
+      "Raw material supplier — NordicMetals AB",
     ]),
-    annualValue: randomCurrency(500000, 10000000),
-    marketVolatility: randomChoice(["Stable", "Moderate", "Volatile", "Highly Volatile"]),
-    regulatoryExposure: randomChoice(["Minimal", "Moderate", "High", "Critical"]),
-    geopoliticalRisk: randomChoice(["Low", "Medium", "High", "Critical"]),
-    commodityDependency: randomChoice(["None", "Low", "Moderate", "High"]),
-    contractType: randomChoice(["Spot/No Contract", "Short-term (<1yr)", "Medium-term (1-3yr)", "Long-term (3+yr)"]),
-    liabilityProtection: randomChoice(["Comprehensive", "Standard", "Limited", "None"]),
-    terminationRights: randomChoice(["Flexible", "Moderate Notice", "Restrictive", "Locked In"]),
-    priceAdjustmentMechanism: randomChoice(["Fixed", "Index-linked", "Negotiable", "Supplier Discretion"]),
-    currentChallenges: randomChoice([
-      "Supplier announced 15% price increase effective Q2. Lead times extended from 4 to 8 weeks. Quality scores stable.",
-      "Recent capacity expansion by supplier should improve availability. Currency volatility affecting landed cost. New CEO appointed.",
-      "Port congestion causing delays. Supplier's main facility in earthquake-prone zone. No recent incidents but insurance costs rising.",
-      "Raw material shortage upstream affecting supplier. Two quality escapes in past quarter. Supplier investing in automation.",
+    currentSituation: randomChoice([
+      "$5M annual spend. Market is highly volatile with 20% price swings in last quarter. Supplier had 2 late deliveries last quarter and their CFO resigned unexpectedly. Commodity dependency on rare earths is high.",
+      "$3.2M annual spend. Supplier market is consolidating — 3 major acquisitions in 12 months. Our supplier is financially stable but their key patent expires next year. Regulatory environment is tightening.",
+      "$8M annual spend. Geopolitical risk is elevated — supplier operates primarily in a sanctions-adjacent region. Quality has been excellent but supply chain visibility is limited to Tier 1 only.",
+      "$1.5M annual spend. Supplier recently lost their ISO certification (regained after 3 months). They're our sole source for a critical component. Market has few alternatives due to technical specifications.",
     ]),
-    supplierFinancialHealth: randomChoice(["Strong", "Stable", "Concerning", "At Risk"]),
-    supplyChainVisibility: randomChoice(["Full Visibility", "Tier 1 Only", "Limited", "None"]),
-    recentIncidents: randomChoice([
-      "Minor quality issue in Q3, resolved with corrective action. No delivery delays.",
-      "Two late deliveries due to logistics issues. No quality problems reported.",
-      "Clean record for past 12 months. Annual audit passed with minor findings.",
+    contractContext: randomChoice([
+      "3-year contract expiring in 8 months. Standard liability terms. Index-linked price adjustments (PPI). 90-day termination notice. No force majeure update since 2019.",
+      "Month-to-month arrangement — no formal contract. Payment terms: Net-30. No liability caps or SLA penalties. Relationship based on handshake agreements.",
+      "Long-term partnership agreement (5 years, 2 remaining). Comprehensive liability protection. Fixed pricing with annual CPI adjustment cap of 3%. Restrictive termination clause.",
       "",
     ]),
-    businessCriticality: randomChoice(["Low", "Medium", "High", "Mission Critical"]),
-    recoveryTime: randomChoice(["Hours", "Days", "Weeks", "Months"]),
+    riskTolerance: randomChoice([
+      "Mission critical — maximum tolerable downtime is 48 hours. This supplier feeds our main production line. No qualified backup exists.",
+      "High impact but not mission critical. Recovery time of 2-4 weeks is acceptable. Two partial alternatives exist but at 30% cost premium.",
+      "Medium criticality. Supply interruption would affect 3 product lines but workarounds exist. Acceptable downtime: up to 1 month.",
+      "",
+    ]),
   }),
 
+  // ===== TCO ANALYSIS (already refactored) =====
   "tco-analysis": () => ({
     industryContext: getRandomIndustryContext(),
     assetDescription: randomChoice([
@@ -216,58 +208,57 @@ const generators: Record<string, TestDataGenerator> = {
     ]),
   }),
 
+  // ===== 4. SOFTWARE LICENSING =====
   "software-licensing": () => ({
     industryContext: getRandomIndustryContext(),
-    softwareName: randomChoice([
-      "Salesforce Sales Cloud",
-      "Microsoft 365 Enterprise",
-      "SAP S/4HANA",
-      "Adobe Creative Cloud",
-      "Slack Enterprise Grid",
-      "Atlassian Suite",
-      "ServiceNow ITSM",
+    softwareDetails: randomChoice([
+      "Salesforce Sales Cloud Enterprise. Currently using a legacy on-premise CRM (ACT!) that is end-of-life. Need full migration including 5 years of customer data.",
+      "Microsoft 365 E5 suite. Replacing a mix of Google Workspace and standalone Office licenses. Need Teams, SharePoint, and advanced security features (Defender, DLP).",
+      "SAP S/4HANA Cloud. Migrating from SAP ECC 6.0 on-premise. Critical ERP for manufacturing operations. 3-year implementation roadmap.",
+      "Atlassian Suite (Jira, Confluence, Bitbucket). Currently on Server licenses being deprecated. Must move to Cloud or Data Center. 200+ engineering team depends on it daily.",
     ]),
-    softwareCategory: randomChoice(["Productivity Suite", "CRM/Sales", "ERP", "Development Tools", "Design/Creative", "Analytics/BI", "Communication"]),
-    totalUsers: randomNumber(50, 1000).toString(),
-    powerUsers: randomNumber(10, 100).toString(),
-    regularUsers: randomNumber(20, 400).toString(),
-    occasionalUsers: randomNumber(20, 500).toString(),
-    externalUsers: randomNumber(0, 100).toString(),
-    userGrowthRate: randomPercentage(5, 30),
-    perUserMonthly: randomCurrency(10, 150),
-    enterpriseTierCost: randomCurrency(50000, 500000),
-    usageBasedRate: randomCurrency(1, 10),
-    implementationCost: randomCurrency(20000, 200000),
-    contractLength: randomChoice(["Month-to-Month", "1 Year", "2 Years", "3 Years"]),
-    longTermDiscount: randomPercentage(5, 30),
-    annualEscalation: randomPercentage(3, 8),
-    paymentTerms: randomChoice(["Monthly", "Quarterly", "Annual Upfront"]),
-    terminationClause: randomChoice(["Free Exit", "Prorated Refund", "No Refund", "Penalty Fee"]),
-    dataExportability: randomChoice(["Full Export (Standard Formats)", "Export with Limitations", "Difficult Export", "Proprietary Format Only"]),
-    integrationDependency: randomChoice(["Standalone", "Light Integration", "Moderate Integration", "Deep Integration"]),
-    switchingCostEstimate: randomCurrency(30000, 300000),
-    alternativeProducts: randomChoice(["Many (5+)", "Some (2-4)", "Few (1-2)", "None"]),
-    proprietaryFeatures: randomChoice(["None", "Low", "Moderate", "High"]),
-    vendorStability: randomChoice(["Market Leader", "Established", "Growing", "Startup/At Risk"]),
-    complianceRequirements: randomChoice(["SOC2, GDPR", "HIPAA, SOC2", "ISO 27001", "PCI-DSS", ""]),
-    currentSolution: randomChoice(["Legacy on-premise system", "Competitor SaaS product", "Manual spreadsheets", ""]),
-    currentAnnualCost: randomCurrency(30000, 200000),
+    userMetrics: randomChoice([
+      "500 total users. 100 power users (sales reps, daily use), 300 regular users (marketing, support), 100 occasional users (executives, view-only). Expected 10% annual growth.",
+      "350 users across 3 offices. 50 power users needing full admin features. 200 standard users. 100 light users who just need email and basic docs. Growth: 15% next year due to acquisition.",
+      "800 users globally. 150 power users (developers, full access), 400 regular users, 250 read-only stakeholders. Also need 50 external contractor licenses. Flat growth expected.",
+      "120 users, all engineers. Everyone needs full access — no tiering possible due to workflow requirements. Planning to hire 30 more engineers in next 12 months.",
+    ]),
+    commercialTerms: randomChoice([
+      "$150/user/month for Enterprise tier. Vendor pushing for a 3-year lock-in with 5% annual escalation. Implementation quoted at $180k. Month-to-month option is $195/user.",
+      "$57/user/month for E5 (annual commitment). Volume discount of 10% available at 500+ seats. No implementation cost if self-service. Microsoft partner quoted $45k for managed migration.",
+      "On-demand pricing model: €180/user/month. 3-year contract reduces to €140. Implementation: €1.2M over 18 months with certified partner. Annual support: 22% of license fees.",
+      "$15/user/month for Standard. Premium tier: $25/user. Data Center (self-hosted): $42k/year for 500 users. Cloud migration tool provided free but manual cleanup needed.",
+    ]),
+    strategicFactors: randomChoice([
+      "Deep ERP integration required — Salesforce connects to our SAP for order management. Exporting 5 years of customer data would be extremely difficult. 2 viable alternatives: HubSpot and Dynamics 365.",
+      "Already deeply embedded in Microsoft ecosystem (Azure AD, Teams). Switching would require retraining 350 users. Data portability is good (standard formats). Google Workspace is the main alternative.",
+      "SAP is deeply integrated into every business process. Switching ERP is not realistic — this is about license optimization within SAP ecosystem. RISE with SAP is the vendor's push.",
+      "Moderate lock-in. Git repos and wikis can be exported. However, custom Jira workflows (50+) would need rebuilding. GitLab and Linear are viable alternatives for parts of the suite.",
+    ]),
   }),
 
+  // ===== 5. RISK MATRIX =====
   "risk-matrix": () => ({
     industryContext: getRandomIndustryContext(),
-    legalStatus: randomChoice(["Verified", "Pending", "Issues Found"]),
-    lawsuits: randomChoice(["None", "Minor", "Significant"]),
-    dataAccess: randomChoice(["None", "Limited", "Sensitive", "Critical"]),
-    financialHealth: randomChoice(["Strong", "Moderate", "Weak"]),
-    concentration: randomChoice(["Diversified", "Moderate", "Single Client"]),
-    environmentalRisk: randomChoice(["Low", "Medium", "High"]),
-    sanctionsRisk: randomChoice(["None", "Low", "Medium", "High"]),
-    cyberSecurity: randomChoice(["Certified", "Adequate", "Concerning"]),
-    insurance: randomChoice(["Comprehensive", "Basic", "None"]),
-    siteAudits: randomChoice(["Recent", "Outdated", "Never"]),
+    supplierName: randomChoice([
+      "Meridian Technologies", "Atlas Supply Co.", "GlobalServe Solutions",
+      "Pinnacle Data Systems", "Nordic Components AB", "SinoTech Manufacturing",
+    ]),
+    operationalRisks: randomChoice([
+      "They process sensitive patient data under our HIPAA BAA. Cybersecurity posture is adequate (SOC2 Type 1) but no penetration test in 18 months. Last site audit was 2 years ago. Environmental compliance is current.",
+      "They access our production network for remote equipment monitoring. No formal cybersecurity certification. Recent employee reported data handling concerns on Glassdoor. ISO 14001 certified for environmental.",
+      "Limited data access — only receive PO and shipping information. Strong cybersecurity (ISO 27001 certified, annual pen tests). Recent site audit passed with minor findings. Environmental risk is low.",
+      "They have admin access to our cloud infrastructure. SOC2 Type 2 certified. However, they subcontract 30% of work to a third party whose security posture is unknown. No environmental risks identified.",
+    ]),
+    commercialRisks: randomChoice([
+      "Financials look stable — publicly traded, $2B revenue. But we represent 40% of their revenue in our region, creating mutual dependency. No active lawsuits. Insurance coverage is comprehensive.",
+      "Private company, limited financial visibility. Annual revenue estimated at $50M. We are a small customer (~2% of revenue). One minor lawsuit pending (employment dispute). Basic insurance only.",
+      "Strong financial health — D&B rating of 5A1. Diversified customer base, we are <5% of revenue. Clean legal record. Comprehensive insurance including cyber and product liability.",
+      "Recently acquired by a PE firm — financial restructuring ongoing. Cash flow concerns reported in industry press. We are their 3rd largest client. Two active lawsuits (patent disputes). Insurance status unclear post-acquisition.",
+    ]),
   }),
 
+  // ===== 14. SOW CRITIC =====
   "sow-critic": () => ({
     industryContext: getRandomIndustryContext(),
     sowText: `STATEMENT OF WORK
@@ -298,42 +289,38 @@ Client shall review each deliverable within 10 business days. Silence constitute
 
 5. PAYMENT
 50% upon signing, 25% at Phase 2 completion, 25% at Go-Live.`,
-    deliverables: "Cloud environment, CRM implementation, training, documentation, 12-month support",
-    acceptanceCriteria: "Client review within 10 business days, silence = acceptance",
-    timeline: "6 months total, 4 phases as outlined in SOW",
-    responsibilities: "Provider: all technical work. Client: provide access, attend training, approve deliverables",
-    clientResources: "VPN access, sandbox environment, subject matter experts availability",
-    exclusions: "Hardware procurement, third-party license costs, data cleansing",
-    changeProcess: "Not explicitly defined in current SOW",
-    penalties: "None defined",
-    warrantyPeriod: "12-month support included",
+    reviewPriorities: randomChoice([
+      "Concerned about IP ownership — who owns the custom CRM workflows? Also, the 'silence = acceptance' clause is a red flag. Need clearer change request process and liability caps.",
+      "Main concern: no penalty for late delivery or quality failures. Also missing: data migration ownership, rollback plan, and post-go-live defect resolution SLA.",
+      "The payment structure is heavily front-loaded (50% upfront). Need milestone-based payments tied to acceptance. Also concerned about scope creep — 'comprehensive' is too vague.",
+      "",
+    ]),
   }),
 
+  // ===== 15. SLA DEFINITION =====
   "sla-definition": () => ({
     industryContext: getRandomIndustryContext(),
-    operatingHours: randomChoice(["24/7", "Business Hours (8/5)", "Extended (12/6)"]),
-    responseTime: randomChoice(["1 hour", "4 hours", "8 hours", "24 hours"]),
-    resolutionTime: randomChoice(["4 hours", "8 hours", "24 hours", "72 hours"]),
-    allowedDowntime: randomPercentage(0, 5),
-    serviceCriticality: randomChoice(["Mission Critical", "Important", "Standard"]),
-    contactMethods: randomChoice([
-      "Email, Phone, Ticketing System",
-      "Dedicated Slack channel, Phone hotline",
-      "Web portal only",
+    serviceDescription: randomChoice([
+      "Cloud hosting for our e-commerce platform. Mission critical — 99.9% uptime required. 24/7 operation. Peak traffic during Black Friday and holiday season (3x normal load). Handles payment processing.",
+      "IT helpdesk and desktop support for 450 users across 3 offices. Business hours primary, but executives need 24/7 VIP support. Currently averaging 200 tickets/month.",
+      "Managed print services across 12 office locations. 150 devices total. Includes toner supply, maintenance, and reporting. Standard business hours operation.",
+      "ERP application management for our SAP S/4HANA environment. Business critical — supports all order processing and financial reporting. 500 users globally across 3 time zones.",
     ]),
-    escalationProcess: randomChoice([
-      "Tier 1 → Tier 2 (after 2 hours) → Management (after 8 hours)",
-      "All issues directly to account manager",
-      "Standard ticketing queue with priority flags",
+    performanceTargets: randomChoice([
+      "P1 (system down): 15-minute response, 4-hour resolution. P2 (degraded): 1-hour response, 8-hour resolution. P3 (minor): 4-hour response, 3-day resolution. Monthly uptime target: 99.95%.",
+      "First call resolution target: 75%. Average response time: <30 minutes during business hours. VIP tickets: 15-minute response, 2-hour resolution. Monthly satisfaction score: >4.2/5.",
+      "Device uptime: 98%. Toner replacement: within 4 business hours of request. Break-fix: next business day. Monthly usage reports delivered by 5th of each month.",
+      "P1 response: 30 minutes (24/7). P2: 2 hours (business hours). Batch job monitoring: real-time. Monthly system availability: 99.9%. Quarterly patching windows: max 4 hours downtime.",
     ]),
-    reportingFrequency: randomChoice(["Weekly", "Monthly", "Quarterly"]),
-    qualityBonuses: randomChoice([
-      "5% rebate for >99.5% uptime",
-      "None",
-      "Free additional service month for zero incidents",
+    escalationAndPenalties: randomChoice([
+      "Tier 1 to Tier 2 after 2 hours. Tier 2 to management after 4 hours. 5% monthly credit for each SLA breach. Cap: 25% of monthly fee. Bonus: 1 free month for 6 consecutive months with zero P1s.",
+      "Automatic escalation to account manager after 1 hour for P1. Weekly performance review calls. Penalty: 2% credit per missed KPI. Three consecutive months of misses triggers contract review.",
+      "Standard escalation: helpdesk → team lead → service manager → VP. No financial penalties but quarterly performance scorecard determines contract renewal. Bonus for exceeding targets: reduced rates next year.",
+      "",
     ]),
   }),
 
+  // ===== RFP GENERATOR =====
   "rfp-generator": () => ({
     industryContext: getRandomIndustryContext(),
     rawBrief: randomChoice([
@@ -342,17 +329,8 @@ Client shall review each deliverable within 10 business days. Silence constitute
       "Need to source commercial cleaning services for our new headquarters building.\n\nBuilding: 25,000 sqm office space, 3 floors + basement parking\nLocation: Amsterdam Zuid business district\nStart date: September 2026\nEmployees: ~800\n\nScope:\n- Daily office cleaning (Mon-Fri)\n- Deep cleaning monthly\n- Window cleaning quarterly\n- Restroom supplies management\n- Green/sustainable products preferred\n\nBudget: haven't set one yet, need market pricing first. Maybe €200-300k range?\n\nPrevious vendor was unreliable with staffing. Need guaranteed minimum staffing levels and backup protocols.\n\nAlso interested in integrated facility management if the same provider can handle security and reception.",
       "We need to procure a fleet management and telematics solution for our delivery operations.\n\n- Fleet size: 85 vehicles (60 vans, 25 trucks)\n- Operating across Benelux region\n- Need real-time GPS tracking, route optimization, driver behavior monitoring\n- Must integrate with our existing TMS (Oracle Transportation Management)\n- Fuel card integration required\n- Budget: €120k setup + €8k/month operational\n- Implementation timeline: go-live by Q3 2026\n\nWe're also evaluating EV transition — solution should support mixed fleet (ICE + EV) with charging station management.\n\nCompliance: need to meet EU tachograph regulations and sustainability reporting requirements.",
     ]),
-    budgetRange: randomChoice([
-      "€150k-200k annually",
-      "$500k total project budget",
-      "Not yet defined — need market pricing",
-      "",
-    ]),
-    evaluationPriorities: randomChoice([
-      "Price 35%, Technical Capability 30%, Experience 20%, Implementation Plan 15%",
-      "Quality 40%, Price 30%, Sustainability 20%, References 10%",
-      "",
-    ]),
+    budgetRange: randomChoice(["€150k-200k annually", "$500k total project budget", "Not yet defined — need market pricing", ""]),
+    evaluationPriorities: randomChoice(["Price 35%, Technical Capability 30%, Experience 20%, Implementation Plan 15%", "Quality 40%, Price 30%, Sustainability 20%, References 10%", ""]),
     technicalRequirements: randomChoice([
       "50 MacBook Pro M3 (32GB RAM, 512GB SSD), 20 Dell U2723QE monitors, 50 USB-C docking stations. All devices must support MDM enrollment (Jamf).",
       "15,000 tons Grade 500 rebar (12mm and 16mm diameter), 8,000 m³ C30/37 ready-mix concrete. Delivery to 3 sites within Hamburg metro area.",
@@ -373,104 +351,188 @@ Client shall review each deliverable within 10 business days. Silence constitute
     ]),
   }),
 
+  // ===== 6. REQUIREMENTS GATHERING =====
+  "requirements-gathering": () => ({
+    industryContext: getRandomIndustryContext(),
+    businessGoal: randomChoice([
+      "Need to automate accounts payable processing to reduce errors and cycle time. Budget is ~$50k/year for the solution. Currently processing 500 invoices/month manually with 8% error rate.",
+      "Consolidate 5 legacy systems into a unified platform for customer service. Budget: $200k implementation + $80k/year. 150 support agents need real-time access to customer history.",
+      "Implement real-time inventory visibility across 8 warehouses. Budget is flexible but CFO wants ROI within 18 months. Currently losing $500k/year to stockouts and overstock.",
+      "Enable secure remote work for 500 employees. Zero-trust architecture preferred. Budget: $300k first year. Must pass SOC2 audit requirements.",
+    ]),
+    technicalLandscape: randomChoice([
+      "50 users initially, scaling to 200. Must integrate with SAP ERP (ECC 6.0) and Salesforce. Data security: highly restricted (financial data). On-premise data center with plans to move to Azure.",
+      "200 support agents across 3 time zones. Zendesk currently in use but being replaced. Must integrate with Shopify, Stripe, and internal CRM (custom Python). SSO via Okta required.",
+      "Mixed IT environment: SAP for ERP, custom WMS (Java), various Excel-based tools. 8 warehouses with varying connectivity (some rural, limited bandwidth). Need offline capability.",
+      "500 users, 80% non-technical. Current stack: Microsoft 365, Azure AD, Cisco networking. Need VPN replacement. Must support BYOD policy. Compliance: GDPR, SOC2, ISO 27001.",
+    ]),
+    featureRequirements: randomChoice([
+      "Must have: OCR invoice scanning, 3-way matching, multi-currency support, approval workflows. Nice to have: mobile app for approvals, AI-powered anomaly detection, vendor portal.",
+      "Must have: omnichannel support (email, chat, phone), knowledge base, SLA tracking, CSAT surveys. Nice to have: AI chatbot, sentiment analysis, predictive routing.",
+      "Must have: real-time stock levels, barcode scanning, automated reorder points, batch tracking. Nice to have: demand forecasting, supplier portal, IoT sensor integration.",
+      "",
+    ]),
+  }),
+
+  // ===== 7. VOLUME CONSOLIDATION =====
   "volume-consolidation": () => ({
     industryContext: getRandomIndustryContext(),
-    spendPerVendor: randomCurrency(100000, 2000000),
-    skuOverlap: randomPercentage(10, 60),
-    unitOfMeasure: randomChoice(["kg", "pcs", "hours", "liters", "units"]),
-    logisticsDistance: randomChoice(["Local (<50km)", "Regional (50-200km)", "National (>200km)", "International"]),
-    paymentTerms: randomNumber(30, 90).toString(),
-    orderFrequency: randomChoice(["Daily", "Weekly", "Monthly", "Quarterly"]),
-    reliabilityIndex: randomNumber(5, 10).toString(),
-    volumeGrowthForecast: randomPercentage(5, 25),
-    currentPenalties: randomCurrency(0, 50000),
-    taxRate: randomPercentage(5, 25),
+    consolidationScope: randomChoice([
+      "MRO supplies across 5 plants. Vendor A (Grainger): $1.2M/year. Vendor B (Würth): $800k. Vendor C (local distributor): $350k. Roughly 60% SKU overlap between A and B. 200+ unique part numbers.",
+      "Packaging materials. 3 suppliers: SupplierX ($2.5M, corrugated), SupplierY ($1.8M, corrugated + labels), SupplierZ ($600k, specialty packaging). 40% product overlap. Total: $4.9M annual.",
+      "IT hardware procurement. Dell ($800k), Lenovo ($450k), HP ($300k). 70% overlap in laptop and desktop categories. Currently each department chooses their own vendor. No volume leverage.",
+      "Office supplies across 12 locations. Currently using 8 different local suppliers. Total spend: $420k. Significant overlap in common items (paper, toner, cleaning). No consolidated contract exists.",
+    ]),
+    logisticsTerms: randomChoice([
+      "Vendor A is local with next-day delivery (Net-30 terms). Vendor B is 500 miles away (Net-60) but 98% delivery reliability. Vendor C offers same-day emergency delivery but at 20% premium.",
+      "All suppliers are within 200km. SupplierX: dedicated weekly truck, free delivery over $5k. SupplierY: consolidated monthly shipments, Net-45. SupplierZ: on-demand, freight extra.",
+      "Dell and Lenovo ship from central EU warehouses (3-5 day delivery). HP uses local distributors (next-day). Payment terms vary: Dell Net-30, Lenovo Net-45, HP Net-60.",
+      "",
+    ]),
+    growthForecast: randomChoice([
+      "Expecting 15% volume growth next year due to new production line. Current penalty for late delivery is 2% of order value. Considering long-term agreement (3 years) for price stability.",
+      "Flat growth expected. Two plants scheduled for equipment upgrades which will temporarily double MRO needs in Q3. No current penalties — need to introduce them in new contracts.",
+      "10% growth expected. Opening 2 new offices next year. Want to consolidate before expansion to lock in volume pricing. Current contracts expire in 6 months.",
+      "",
+    ]),
   }),
 
+  // ===== 8. CAPEX VS OPEX =====
+  "capex-vs-opex": () => ({
+    industryContext: getRandomIndustryContext(),
+    assetDetails: randomChoice([
+      "Industrial packaging line. Purchase price: $750k. Lease option: 10% annual rate over 5 years ($150k/yr). Second-hand market exists but limited for this model. Vendor offers buyback at end of lease.",
+      "Fleet of 15 delivery vans. Purchase: $45k each ($675k total). Lease: $850/mo per vehicle for 4 years. Includes maintenance in lease option. Mileage cap: 25,000 km/yr.",
+      "Server infrastructure for on-premise data center. Purchase: $320k for hardware + $80k installation. Cloud alternative (AWS): $12k/mo. Hybrid option available. 5-year evaluation period.",
+      "Office furniture for new headquarters (200 workstations). Purchase: $400k. Furniture-as-a-Service lease: $8k/month for 3 years. Includes replacement of damaged items.",
+    ]),
+    lifecycleCosts: randomChoice([
+      "$35k annual maintenance contract. Energy consumption: $6k/year. Operator training: $8k initial, $2k/year refresher. Expected residual value after 5 years: $150k. Decommissioning: $10k.",
+      "Insurance: $2k/vehicle/year. Tires and servicing: $3k/vehicle/year. Fuel/electricity: varies. Training: minimal. Residual value at end of lease: $0 (return). Purchase residual: ~$15k/vehicle.",
+      "Annual hardware maintenance: $40k (after warranty). Power and cooling: $24k/year. Dedicated IT staff (0.5 FTE): $50k/year. Cloud option includes all maintenance. Technology refresh needed at year 3.",
+      "",
+    ]),
+    financialParameters: randomChoice([
+      "WACC: 8%. Corporate tax rate: 25% (depreciation benefits favor purchase). Property tax on owned equipment: 1.5%. Inflation assumption: 3% for maintenance costs.",
+      "Discount rate: 10% (high-growth company). Interest rate on debt: 5.5%. Lease payments are 100% tax deductible. Purchase allows accelerated depreciation over 3 years.",
+      "WACC: 7%. No property tax on IT equipment. Cloud spending is OPEX (immediately deductible). CapEx requires board approval over $200k. Cash reserves: adequate.",
+      "",
+    ]),
+  }),
+
+  // ===== 13. SAVINGS CALCULATION =====
+  "savings-calculation": () => ({
+    industryContext: getRandomIndustryContext(),
+    savingsScenario: randomChoice([
+      "Negotiated widget price from $120 to $105/unit (12.5% reduction). Annual volume: 10,000 units. 3-year contract with fixed pricing. Replaces previous spot-buying arrangement.",
+      "Consolidated 3 IT service contracts into 1 managed services agreement. Old total: $850k/year. New total: $720k/year. Includes expanded scope (24/7 monitoring added).",
+      "Switched packaging supplier from EU to Turkey. Old price: €2.80/unit. New price: €2.15/unit (23% reduction). Volume: 500,000 units/year. Added 4 weeks lead time.",
+      "Renegotiated logistics rates with incumbent carrier. Old rate: $4.50/shipment. New rate: $3.90/shipment (13% reduction). Volume: 50,000 shipments/year. 2-year commitment.",
+    ]),
+    costAdjustments: randomChoice([
+      "Inflation at 4% (PPI for manufacturing). FX impact: EUR/USD hedge at 1.08 for Year 1, floating after. Switching costs: $25k one-time (tooling transfer). Quality defect rate expected to drop from 2% to 1%.",
+      "No switching costs — same vendor. Inflation clause: CPI cap at 3% annually. Hidden cost: $15k for contract migration and system reconfiguration. Payment terms improved from Net-30 to Net-45.",
+      "Shipping cost increase: $0.35/unit (longer supply chain). Customs duties: 4.5%. Currency risk: TRY/EUR volatility. Quality inspection costs: $12k/year for incoming inspection. Buffer stock needed: $40k.",
+      "No inflation adjustment needed (fixed rate). Early payment discount added: 2%/10 Net-30. Fuel surcharge eliminated (was $0.15/shipment). Storage costs unchanged.",
+    ]),
+    reportingRequirements: randomChoice([
+      "Finance requires documented baseline with timestamp. Auditable methodology for hard savings. Need hard vs soft savings split. Quarterly reporting to CPO. Year-over-year comparison format.",
+      "Board reporting: need executive summary with ROI calculation. Procurement team tracks in SAP. Distinction between cost avoidance and cost reduction is critical for our methodology.",
+      "Simple tracking sufficient — we use a savings tracker spreadsheet. Main requirement: baseline must be verifiable (use last 12 months average). No external audit planned.",
+      "",
+    ]),
+  }),
+
+  // ===== 9. SAAS OPTIMIZATION =====
+  "saas-optimization": () => ({
+    industryContext: getRandomIndustryContext(),
+    subscriptionDetails: randomChoice([
+      "Salesforce Sales Cloud: 200 seats at $150/user/month. Contract ends June 2026. 60-day cancellation notice required. Auto-renewal enabled. Annual escalation: 5%.",
+      "Slack Business+: 350 seats at $12.50/user/month. Monthly billing, no long-term contract. No cancellation notice needed. Connected to Okta SSO.",
+      "Adobe Creative Cloud for Enterprise: 80 licenses at $55/user/month. Annual commitment, renews in 3 months. 30-day notice required. Volume discount tier: 50-99.",
+      "ServiceNow ITSM: 150 seats at $100/user/month. 3-year contract, 18 months remaining. Penalty for early exit: remaining months' fees. Enterprise support included.",
+    ]),
+    usageMetrics: randomChoice([
+      "Only 120 of 200 users logged in last month. Feature utilization: 35% (mainly using contacts and opportunities, not reports/dashboards/forecasting). 15 users haven't logged in for 6+ months.",
+      "280 of 350 active daily. However, 40% only use direct messages — not channels, workflows, or integrations. SSO connected. 70 users could move to free tier without impact.",
+      "55 of 80 users active. Only 20 users use advanced tools (After Effects, Premiere). Others mainly use Acrobat and basic Photoshop — could downgrade to cheaper plan.",
+      "All 150 seats actively used but 60 users only access the self-service portal (read-only). They don't need full ITSM licenses. Could switch to customer portal licenses at $25/user.",
+    ]),
+    redundancyContext: randomChoice([
+      "We also have HubSpot ($800/month) for marketing — significant CRM overlap with Salesforce. Microsoft Dynamics considered as unified alternative. Premium support on Salesforce rarely used.",
+      "Microsoft Teams is available via our M365 license but barely adopted. Slack and Teams running in parallel creates confusion. Support tier: Standard (included). No premium support needed.",
+      "Canva Enterprise ($12k/year) covers 80% of design needs for marketing team. Adobe overlap for basic design work. Premium support not utilized.",
+      "Jira Service Management also in use ($45/user/month for 80 agents) — significant overlap with ServiceNow for IT ticketing. Could consolidate onto one platform.",
+    ]),
+  }),
+
+  // ===== FORECASTING (no changes) =====
+  "forecasting-budgeting": () => {
+    const categories = ["IT Software", "Professional Services", "MRO Supplies", "Marketing", "Logistics", "Raw Materials"];
+    const selectedCats = categories.sort(() => Math.random() - 0.5).slice(0, randomNumber(3, 4));
+    const quarters = ["Q1 2024", "Q2 2024", "Q3 2024", "Q4 2024", "Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"];
+    const numQuarters = randomNumber(8, 12);
+    const usedQuarters = quarters.slice(0, Math.min(numQuarters, quarters.length));
+
+    let spendLines = "Category, Period, Amount\n";
+    for (const q of usedQuarters) {
+      for (const cat of selectedCats) {
+        const base = randomNumber(20000, 350000);
+        spendLines += `${cat}, ${q}, $${base.toLocaleString()}\n`;
+      }
+    }
+
+    const futureEvents = [
+      `Hiring ${randomNumber(5, 30)} engineers in Q2 2026 (~$${randomNumber(200, 800)}K impact)`,
+      `Major ERP renewal due Q3 2026 ($${randomNumber(100, 500)}K)`,
+      `New office opening Q1 2026 ($${randomNumber(150, 400)}K setup + $${randomNumber(30, 80)}K/quarter ongoing)`,
+      `Marketing campaign for product launch Q2 2026 ($${randomNumber(50, 200)}K)`,
+      `Fleet replacement program starting Q4 2025 ($${randomNumber(300, 900)}K over 18 months)`,
+    ];
+    const selectedEvents = futureEvents.sort(() => Math.random() - 0.5).slice(0, randomNumber(2, 4));
+
+    return {
+      industryContext: getRandomIndustryContext(),
+      categoryContext: "",
+      historicalSpendData: spendLines.trim(),
+      knownFutureEvents: selectedEvents.join("\n"),
+      budgetConstraints: randomChoice([
+        "Mandate to cut OPEX by 10% across all departments",
+        "Software budget capped at $500K for FY2026",
+        "No new headcount-driven spend without VP approval",
+        "Total procurement budget flat YoY despite 8% revenue growth",
+        "",
+      ]),
+      forecastHorizon: randomChoice(["Next Quarter", "Next 6 Months", "Next 12 Months", "Next 24 Months"]),
+    };
+  },
+
+  // ===== 10. CATEGORY STRATEGY =====
   "category-strategy": () => ({
     industryContext: getRandomIndustryContext(),
-    categoryName: randomChoice([
-      "Packaging Materials",
-      "IT Hardware",
-      "Professional Services",
-      "Logistics and Transportation",
-      "Marketing Services",
-      "MRO Supplies",
+    categoryOverview: randomChoice([
+      "IT Hardware. $4M annual spend across 15 suppliers. Categories include laptops, monitors, servers, and networking equipment. Spend has grown 20% in 2 years due to hybrid work.",
+      "Packaging Materials. $6.5M annual spend. 8 suppliers. Mix of corrugated, flexible, and specialty packaging. 60% of spend with top 2 suppliers.",
+      "Professional Services (Consulting). $3.2M across 22 suppliers. Highly fragmented — many one-off engagements. No preferred supplier program. Rates vary from $150-$450/hr.",
+      "Logistics and Transportation. $12M annual spend. 6 carriers for domestic, 4 for international. Fuel surcharges represent 15% of total cost. Growing e-commerce channel driving small parcel volume up.",
     ]),
-    annualSpend: randomCurrency(500000, 15000000),
-    supplierCount: randomNumber(3, 25).toString(),
-    marketStructure: randomChoice(["Monopoly", "Oligopoly", "Fragmented", "Emerging"]),
-    supplyRisk: randomChoice(["Low", "Medium", "High", "Critical"]),
-    businessImpact: randomChoice(["Low", "Medium", "High", "Strategic"]),
-    currentStrategy: randomChoice([
-      "Multi-source with 3 approved suppliers. Annual tenders. Focus on cost reduction through volume leverage.",
-      "Single-source partnership with preferred supplier. 3-year framework agreement. Joint innovation projects.",
-      "Spot buying from various suppliers. No formal category strategy. Reactive purchasing approach.",
-      "Dual-source model with primary and backup supplier. Quarterly business reviews. KPI-driven management.",
+    marketDynamics: randomChoice([
+      "Oligopoly market dominated by 3 players (Dell, HP, Lenovo = 80% market share). High business impact — every employee needs equipment. Moderate supply risk due to chip shortages easing. Price deflation trend for standard configs.",
+      "Fragmented market with 50+ regional suppliers. Low supply risk — commoditized materials. Moderate business impact. Key trend: sustainability pressure driving demand for recycled content (+15% cost premium).",
+      "Highly fragmented market. Low supply risk but high price variability. High business impact when expertise is critical (M&A, digital transformation). Market trend: offshore delivery models expanding.",
+      "Consolidating market — 3 major acquisitions in 18 months. High supply risk for specialized routes. Critical business impact for customer deliveries. E-commerce logistics growing 25% annually.",
     ]),
-    painPoints: randomChoice([
-      "Price volatility linked to commodity markets. Long lead times from offshore suppliers. Quality inconsistency across batches.",
-      "Limited supplier options due to technical specifications. Supplier consolidation reducing competition. Rising raw material costs.",
-      "High transaction costs from fragmented spend. Maverick buying bypassing contracts. Poor visibility into total category spend.",
-      "Capacity constraints during peak seasons. Currency exposure on imported goods. Increasing regulatory compliance requirements.",
-    ]),
-    innovationNeeds: randomChoice([
-      "Need to reduce carbon footprint by 30% by 2030. Looking for bio-based or recycled material alternatives.",
-      "Exploring automation and digital solutions. Interest in supplier-led innovation partnerships.",
-      "Focus on circular economy and waste reduction. Seeking suppliers with sustainability certifications.",
-      "",
-    ]),
-    contractStatus: randomChoice(["Active Long-term", "Expiring Soon", "Spot Buying", "Renegotiating"]),
-    stakeholderAlignment: randomChoice(["Strong", "Moderate", "Weak", "Conflicting"]),
-  }),
-
-  "cost-breakdown": () => ({
-    industryContext: getRandomIndustryContext(),
-    productDescription: randomChoice([
-      "Custom injection-molded plastic housing for electronic components",
-      "Precision machined aluminum bracket for automotive assembly",
-      "Printed circuit board assembly with 200+ components",
-      "Specialty adhesive compound for aerospace applications",
-      "Custom packaging solution including design and production",
-    ]),
-    totalCost: randomCurrency(50000, 500000),
-    materialCost: randomCurrency(20000, 250000),
-    laborCost: randomCurrency(10000, 100000),
-    overheadCost: randomCurrency(5000, 75000),
-    logisticsCost: randomCurrency(2000, 25000),
-    toolingCost: randomCurrency(0, 100000),
-    profitMargin: randomPercentage(5, 25),
-    volumePerYear: randomNumber(1000, 100000).toString(),
-    commodityIndex: randomChoice([
-      "LME Aluminum 3-month",
-      "HDPE resin index",
-      "Steel HRC index",
-      "Copper COMEX",
-      "",
-    ]),
-    laborRateReference: randomChoice([
-      "BLS Manufacturing Wage Index",
-      "Industry average $45/hour",
-      "Regional labor market survey",
-      "",
-    ]),
-    currencyExposure: randomChoice([
-      "EUR/USD for European suppliers",
-      "CNY/USD for Asian manufacturing",
-      "No significant exposure",
-      "Multiple currencies: EUR, GBP, JPY",
+    strategicGoals: randomChoice([
+      "Current strategy is spot buying with no standard configs. Pain points: volatile pricing, long procurement cycles, inconsistent equipment across teams. Need to implement a catalog model. Historical savings: 0% (no formal program).",
+      "Multi-source strategy with annual tenders. Pain points: quality inconsistency, rising costs, sustainability compliance pressure. Need to implement circular economy recycling program. Last tender achieved 4% savings.",
+      "Ad-hoc engagement model. Pain points: no rate benchmarking, scope creep on most projects, no performance evaluation. Need preferred supplier panel with agreed rate cards. No historical savings data available.",
+      "Incumbent-heavy model — 70% of spend with 2 carriers. Pain points: fuel surcharge opacity, poor visibility, capacity constraints during peak season. Need to add carriers and implement dynamic pricing.",
     ]),
   }),
 
+  // ===== NEGOTIATION PREPARATION (remove mainFocus only) =====
   "negotiation-preparation": () => ({
     industryContext: getRandomIndustryContext(),
-    mainFocus: randomChoice([
-      "Achieve minimum 8% cost reduction while preserving service levels and relationship quality",
-      "Restructure payment terms and pricing model to improve cash flow without alienating strategic supplier",
-      "Negotiate volume commitment in exchange for price protection and capacity guarantees",
-      "Push back on proposed 12% price increase using market benchmarks and competitive alternatives",
-      "Secure multi-year agreement with built-in innovation milestones and performance incentives",
-    ]),
     negotiationSubject: randomChoice([
       "Annual IT infrastructure services renewal",
       "Raw materials supply agreement renegotiation",
@@ -520,110 +582,145 @@ Client shall review each deliverable within 10 business days. Silence constitute
     ]),
   }),
 
-  // NEW GENERATORS FOR MISSING SCENARIOS
-
-  "capex-vs-opex": () => ({
+  // ===== 16. PROCUREMENT PROJECT PLANNING =====
+  "project-planning": () => ({
     industryContext: getRandomIndustryContext(),
-    purchasePrice: randomCurrency(100000, 2000000),
-    leaseRate: randomPercentage(8, 18),
-    leaseTerm: randomNumber(3, 7).toString(),
-    maintenanceCost: randomCurrency(5000, 50000),
-    residualValue: randomCurrency(20000, 400000),
-    propertyTax: randomPercentage(1, 4),
-    wacc: randomPercentage(6, 15),
-    partsInflation: randomPercentage(2, 8),
-    energyCost: randomCurrency(3000, 30000),
-    trainingCost: randomCurrency(2000, 25000),
+    projectBrief: randomChoice([
+      "'Strategic Sourcing Transformation' — Reduce procurement costs by 15% over 3 years through strategic sourcing across all indirect spend in North America. Scope includes 12 categories totaling $45M annual spend.",
+      "'Supplier Consolidation Initiative' — Reduce supplier base from 500 to 200 qualified vendors within 18 months. Focus on tail spend elimination and preferred supplier adoption. Scope: all non-production categories.",
+      "'Procurement Technology Upgrade' — Implement new P2P system (Coupa or Ariba) to replace manual PO processes. Scope: full procure-to-pay cycle for 3 business units. Budget: $1.2M including implementation.",
+      "'Category Management Excellence Program' — Develop category strategies for top 10 spend categories. Establish cross-functional category teams. Build internal capability for strategic sourcing. 24-month program.",
+    ]),
+    constraintsAndResources: randomChoice([
+      "Budget: $500k for consulting and tools. Team: 3 FTEs dedicated + 5 part-time from business units. Timeline: 12 months with quarterly milestones. Key stakeholders: CPO (sponsor), CFO, regional procurement leads, business unit VPs.",
+      "Budget: $200k operational + headcount cost. Team: 2 dedicated procurement analysts. Timeline: 18 months phased rollout. Stakeholders: Procurement Director, Category Managers, Finance Controller, IT (for system access).",
+      "Budget: $1.2M total (software $400k, implementation $600k, change management $200k). Team: PM + 2 procurement, supported by vendor's implementation team (6 consultants). Timeline: 9 months. Stakeholders: CIO, CPO, all department heads.",
+      "Budget: $350k for external consultants + internal resource costs. Team: Category Manager leads each workstream, supported by 1 analyst. Timeline: 24 months. Stakeholders: CEO (sponsor), CPO, business unit leaders.",
+    ]),
+    risksAndSuccess: randomChoice([
+      "Risks: scope creep (departments adding requirements), change resistance from business units, data quality issues in spend analysis. Success criteria: 15% savings achieved and documented, 80% stakeholder adoption of new processes.",
+      "Risks: supplier pushback during consolidation, loss of preferred local suppliers, internal politics protecting incumbent vendors. Success: supplier count reduced to target, no supply disruptions, contract compliance >90%.",
+      "Risks: integration complexity with existing ERP, user adoption challenges, data migration errors. Success: 95% PO compliance through system, 50% reduction in cycle time, positive user satisfaction scores (>4/5).",
+      "",
+    ]),
   }),
 
-  "savings-calculation": () => ({
+  // ===== 17. PRE-FLIGHT AUDIT =====
+  "pre-flight-audit": () => ({
     industryContext: getRandomIndustryContext(),
-    baselinePrice: randomCurrency(50, 500),
-    newPrice: randomCurrency(40, 450),
-    volume: randomNumber(1000, 100000).toString(),
-    inflationIndex: randomPercentage(2, 8),
-    fxRate: randomChoice([
-      "EUR/USD at 1.08, stable",
-      "GBP/USD volatile, hedged",
-      "No FX impact - domestic",
-      "CNY exposure, 5% depreciation expected",
+    supplierIdentity: randomChoice([
+      "Acme Corp (www.acmecorp.com). New supplier — no prior relationship. Planning to purchase IT managed services, estimated $500k/year. Headquarters in Dublin, Ireland. Founded 2015.",
+      "NordicTech Solutions (www.nordictech.se). Recommended by our engineering team. Planning to purchase precision sensor components, ~€300k/year. Swedish company, 120 employees.",
+      "Pacific Assembly Ltd (www.pacificassembly.com). Found through industry directory. Considering for contract manufacturing of electronic assemblies. Potential: $1.2M/year. Based in Shenzhen, China.",
+      "GreenLogistics GmbH (www.greenlogistics.de). Competitor's former logistics partner. Evaluating for sustainable fleet management services, ~€200k/year. Berlin-based startup, founded 2020.",
     ]),
-    qualityCost: randomCurrency(0, 50000),
-    earlyPaymentDiscount: randomPercentage(1, 3),
-    storageCost: randomCurrency(0, 25000),
-    contractTerm: randomNumber(1, 5).toString(),
-    switchingCosts: randomCurrency(5000, 100000),
+    researchScope: randomChoice([
+      "Focus on financial health and legal history. Heard rumors of cash flow issues from an industry contact. CEO changed 6 months ago. Need to understand ownership structure and any pending litigation.",
+      "Priority: technical capability and quality certifications. Need to verify ISO 13485 and IATF 16949 claims. Also want to check environmental compliance history and any safety incidents.",
+      "Comprehensive audit needed — this would be our largest contract manufacturer. Focus areas: financial stability (D&B report), production capacity, existing client references, IP protection practices, labor practices.",
+      "Quick check needed — mainly financial health and reputation. They're a startup so limited history. Check founder backgrounds, funding status, customer reviews, and any news about the company.",
+    ]),
+    decisionContext: randomChoice([
+      "Need intelligence within 2 weeks — RFP responses due at month-end. Currently no relationship. If positive, would pursue strategic partnership. Board decision required for contracts over $300k.",
+      "Medium-term evaluation — decision expected in 2 months. This would replace our current supplier whose contract expires in 6 months. Need enough information for a shortlist recommendation.",
+      "Urgent — production team wants to place first order within 3 weeks. Need rapid assessment of critical risks only. If major red flags found, we'll delay and continue with current supplier.",
+      "",
+    ]),
   }),
 
-  "saas-optimization": () => ({
+  // ===== 18. CATEGORY RISK EVALUATOR =====
+  "category-risk-evaluator": () => ({
     industryContext: getRandomIndustryContext(),
-    totalSeats: randomNumber(50, 500).toString(),
-    pricePerSeat: randomCurrency(10, 150),
-    lastLoginDate: randomChoice([
-      "2024-01-15 (45 days ago)",
-      "2023-11-20 (90 days ago)",
-      "2024-02-01 (current)",
-      "2023-09-01 (150+ days ago)",
+    categoryAndTender: randomChoice([
+      "IT Services for banking digital transformation. RFP active — 5 vendors shortlisted. Estimated value: $2M over 2 years. Fixed price contract preferred. Evaluation closing in 4 weeks.",
+      "Facilities management for new corporate campus. Pre-tender planning phase. Estimated value: €5M/year for 5-year contract. Integrated FM model (cleaning, security, maintenance). RFP drafting in progress.",
+      "Raw materials (specialty polymers) for medical device manufacturing. RFI stage — market sounding. Estimated value: $800k/year. Framework agreement. 3 potential suppliers identified globally.",
+      "Cloud infrastructure migration services. Negotiation phase with 2 finalists. Estimated value: $1.5M project + $200k/year managed services. T&M with capped ceiling. Decision needed in 2 weeks.",
     ]),
-    featureUsage: randomNumber(2, 10).toString(),
-    contractEndDate: randomChoice([
-      "2024-06-30",
-      "2024-12-31",
-      "2025-03-15",
-      "2024-09-01",
+    sowAndMarket: randomChoice([
+      "Scope includes cloud migration (200 applications), app modernization (50 apps), and 12-month managed services. Market is consolidating — Accenture acquired a mid-size competitor last quarter. Skills shortage in cloud architects driving day rates up 15%.",
+      "Scope: building management systems, cleaning, landscaping, security (60 guards), and catering for 2,000 employees. Market is fragmented locally but global FM players (ISS, Sodexo, CBRE) dominate for this contract size.",
+      "Scope: supply of 12 specialty polymer compounds meeting ISO 10993 biocompatibility requirements. Market is oligopolistic — 4 global manufacturers control 85% of medical-grade supply. Lead times: 8-12 weeks standard.",
+      "Scope: lift-and-shift migration of on-premise infrastructure to AWS/Azure, including networking, security, and CI/CD pipeline. Market is competitive with 10+ qualified system integrators. Price pressure on standard migrations.",
     ]),
-    noticePeriod: randomNumber(30, 90).toString(),
-    autoRenewal: randomChoice(["Yes", "No"]),
-    ssoIntegration: randomChoice(["Yes", "No", "Partial"]),
-    duplicateApps: randomChoice([
-      "Slack and Teams both in use",
-      "Multiple project management tools (Asana, Monday, Jira)",
-      "Overlapping design tools (Figma, Sketch, Adobe XD)",
-      "None identified",
+    historicalRisks: randomChoice([
+      "Previous IT vendor went bankrupt mid-project (2023) — $400k write-off. Similar digital transformation project in another business unit experienced 60% scope creep and 18-month delay. High regulatory exposure (banking regulations).",
+      "Last FM contract had significant scope creep — 25% cost overrun in Year 2. Previous vendor's staff turnover was 80%, affecting service quality. Building is LEED certified, requiring specific cleaning products and procedures.",
+      "Supply disruption in 2022 — one manufacturer's facility fire caused 6-month shortage. We had to accept a 35% spot price premium. No qualified alternatives at the time. Regulatory exposure: FDA audit every 2 years.",
+      "",
     ]),
-    supportTier: randomChoice(["Premium", "Standard", "Basic"]),
   }),
 
-  "forecasting-budgeting": () => {
-    const categories = ["IT Software", "Professional Services", "MRO Supplies", "Marketing", "Logistics", "Raw Materials"];
-    const selectedCats = categories.sort(() => Math.random() - 0.5).slice(0, randomNumber(3, 4));
-    const quarters = ["Q1 2024", "Q2 2024", "Q3 2024", "Q4 2024", "Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"];
-    const numQuarters = randomNumber(8, 12);
-    const usedQuarters = quarters.slice(0, Math.min(numQuarters, quarters.length));
+  // ===== 19. SPECIFICATION OPTIMIZER =====
+  "specification-optimizer": () => ({
+    industryContext: getRandomIndustryContext(),
+    specificationText: randomChoice([
+      "Material: AISI 316L stainless steel, surface finish Ra ≤ 0.4 μm. Dimensional tolerance: ±0.01mm. Hardness: 170-220 HB. Heat treatment: solution annealed per ASTM A269. Certification: EN 10204 3.2 required. Weld inspection: 100% radiographic per ASME IX. Operating temperature: -40°C to +200°C.",
+      "Server requirements: Intel Xeon Gold 6348 or equivalent, minimum 28 cores per CPU, dual CPU configuration. RAM: 512GB DDR4-3200 ECC registered. Storage: 8x 1.92TB NVMe SSD in RAID-10. Network: 4x 25GbE SFP28. Redundant 1600W platinum PSU. Rack depth: max 750mm. Operating temperature: 10-35°C.",
+      "Cleaning chemical requirements: pH neutral (6.5-7.5). VOC content: <5g/L. Biodegradable within 28 days per OECD 301B. Must hold EU Ecolabel or Nordic Swan certification. Fragrance-free. Compatible with all common floor finishes (polyurethane, epoxy, vinyl). MSDS must confirm no classified hazardous substances.",
+      "Packaging specification: 350gsm SBS board with C1S coating. Print: 6-color offset lithography, 175 LPI minimum. Varnish: spot UV + matte lamination. Die-cut tolerance: ±0.5mm. Glue flap: minimum 15mm. FDA-compliant food contact inks required. Shelf life stability: 24 months under tropical conditions.",
+    ]),
+    specContext: randomChoice([
+      "Equipment spec from engineering team, last reviewed 4 years ago. This is for pharmaceutical processing equipment — safety critical application. Currently only 2 suppliers worldwide can meet the full spec. Estimated purchase value: $500k.",
+      "Server spec written by IT architect based on peak load analysis from 2022. We've since moved 40% of workload to cloud. Only Dell and Lenovo can meet exact CPU model requirement. Estimated procurement: $180k for 6 servers.",
+      "Cleaning spec inherited from previous FM contract (2019). Originally written for a healthcare facility — we're an office building. Current spec limits us to 3 premium-priced suppliers. Annual spend on chemicals: €45k.",
+      "Packaging spec designed by marketing team for premium product line. Current spec requires a specific board weight and finish that only 2 approved suppliers can produce. Annual packaging spend: $320k.",
+    ]),
+    optimizationGoals: randomChoice([
+      "Want to open spec to more suppliers (target: 4-5 qualified) without compromising safety. The 0.01mm tolerance and 100% radiographic weld inspection may be over-specified for our application. Looking for 15-20% cost reduction.",
+      "Reduce hardware costs by allowing equivalent CPUs (AMD EPYC acceptable?). Question whether 512GB RAM is needed per server given cloud offload. Want to reduce from single-source to 3+ qualified vendors.",
+      "Simplify spec to open market to 5+ suppliers. Healthcare-grade cleaning is overkill for our office environment. EU Ecolabel requirement may be limiting — is Nordic Swan equivalent? Target: 25% cost reduction.",
+      "",
+    ]),
+  }),
 
-    let spendLines = "Category, Period, Amount\n";
-    for (const q of usedQuarters) {
-      for (const cat of selectedCats) {
-        const base = randomNumber(20000, 350000);
-        spendLines += `${cat}, ${q}, $${base.toLocaleString()}\n`;
-      }
-    }
+  // ===== 11. SUPPLIER DEPENDENCY PLANNER =====
+  "supplier-dependency-planner": () => ({
+    industryContext: getRandomIndustryContext(),
+    dependencyContext: randomChoice([
+      "VendorX provides our core API infrastructure and data processing pipeline. $2M annual spend. We represent approximately 25% of their revenue. Rated as 'highly strategic' internally. They serve 3 of our 5 product lines.",
+      "SteelCorp is our sole supplier for aerospace-grade titanium alloy components. $4.5M annual spend. They are a $200M company — we are ~2% of revenue. Only supplier with required AS9100 certification for our applications.",
+      "CloudHosting Inc. provides all our production infrastructure (AWS managed services). $1.8M annual spend. Deep expertise in our specific tech stack (Kubernetes, Terraform). 3 of their engineers have institutional knowledge of our architecture.",
+      "LogiPartner handles 100% of our European distribution. $3.2M annual spend. They operate dedicated warehouse space for us. We are their largest client (~30% of revenue). 15-year relationship.",
+    ]),
+    lockInFactors: randomChoice([
+      "3-year contract with 12-month termination notice and $500k early exit penalty. Deep system integration — their APIs are embedded in 200+ microservices. They hold significant institutional knowledge about our data models and business logic.",
+      "Annual renewable contract, no exit penalty. But the titanium alloy formulation is proprietary to SteelCorp — no other supplier produces this exact grade. Qualification of a new supplier would take 18-24 months and require FAA re-certification.",
+      "Month-to-month managed services agreement. Data portability is technically feasible but would require 6-month migration project (~$400k). Their 3 engineers know our infrastructure intimately — losing that knowledge is the biggest risk.",
+      "5-year contract, 3 years remaining. Penalty for early exit: €800k. Custom warehouse infrastructure built for our products (€1.2M investment by LogiPartner, amortized over contract term). They handle customs clearance for 15 countries.",
+    ]),
+    diversificationGoals: randomChoice([
+      "Goal: Add a backup API provider within 12 months. 2 viable alternatives identified (CompanyA and CompanyB). Estimated switching cost: $350k for initial integration. Want to split traffic 70/30 eventually.",
+      "Goal: Qualify at least 1 alternative titanium supplier. Only 1 realistic candidate identified (JapanMetals). Switching cost: $800k for qualification and testing. Timeline: 24 months. Not looking to fully replace, just reduce single-source risk.",
+      "Goal: Evaluate options before current contract renewal. Considering bringing some capabilities in-house (hire 2 DevOps engineers). Also evaluating 2 alternative MSPs. Decision needed within 6 months.",
+      "",
+    ]),
+  }),
 
-    const futureEvents = [
-      `Hiring ${randomNumber(5, 30)} engineers in Q2 2026 (~$${randomNumber(200, 800)}K impact)`,
-      `Major ERP renewal due Q3 2026 ($${randomNumber(100, 500)}K)`,
-      `New office opening Q1 2026 ($${randomNumber(150, 400)}K setup + $${randomNumber(30, 80)}K/quarter ongoing)`,
-      `Marketing campaign for product launch Q2 2026 ($${randomNumber(50, 200)}K)`,
-      `Fleet replacement program starting Q4 2025 ($${randomNumber(300, 900)}K over 18 months)`,
-    ];
-    const selectedEvents = futureEvents.sort(() => Math.random() - 0.5).slice(0, randomNumber(2, 4));
+  // ===== 12. BLACK SWAN SCENARIO =====
+  "black-swan-scenario": () => ({
+    industryContext: getRandomIndustryContext(),
+    assessmentScope: randomChoice([
+      "Assessing our Asian PCB and semiconductor suppliers — 8 suppliers across Taiwan, South Korea, and Japan. $18M annual exposure across these suppliers. Catastrophic business impact if disrupted — feeds all 4 production lines.",
+      "Evaluating single-source risk for our specialty chemicals supply. 3 chemicals from 1 supplier in Germany ($4.5M). If this supplier fails, our entire pharmaceutical production stops within 2 weeks.",
+      "Assessing geographic concentration risk in our logistics network. 60% of inbound shipments route through 2 ports (Rotterdam and Hamburg). $30M annual goods value passes through these chokepoints.",
+      "Evaluating our IT infrastructure dependency on 2 cloud providers (AWS and Azure). $5M combined annual spend. 100% of our SaaS platform runs on these services. RPO: 0, RTO: 4 hours.",
+    ]),
+    riskPosture: randomChoice([
+      "14 single-sourced components in scope. Safety stock: 3 weeks average (varies by component). No visibility past Tier 1 — we don't know who our suppliers' suppliers are. Last supply chain mapping exercise: 2019.",
+      "Complete single-source dependency for all 3 chemicals. Safety stock: 2 months (unusual for our industry). Good visibility into this supplier's operations but no knowledge of their upstream. Annual supplier audit conducted.",
+      "No alternative routes pre-qualified for port disruption scenarios. 5 days average inventory buffer. Insurance covers cargo in transit but not business interruption. No crisis response plan for logistics disruption.",
+      "Multi-region deployment (US-East and EU-West) for primary services. DR site in US-West with 4-hour failover. Monthly DR tests conducted. However, no plan for simultaneous multi-cloud outage. No alternative to these 2 providers evaluated.",
+    ]),
+    scenarioSimulation: randomChoice([
+      "Simulate: (1) Major earthquake in Taiwan affecting TSMC and related fabs, (2) China-Taiwan geopolitical escalation with trade restrictions, (3) Simultaneous pandemic-style lockdowns across all 3 source countries. We have no pre-qualified backups and minimal crisis budget ($100k).",
+      "Simulate: (1) Factory explosion at supplier's main site, (2) Regulatory shutdown of supplier (environmental violation), (3) Supplier acquisition by our competitor. Response readiness: basic crisis guidelines exist but never tested. Budget for alternatives: not allocated.",
+      "Simulate: (1) Rotterdam port strike lasting 4+ weeks, (2) Suez Canal blockage redux, (3) Regional natural disaster (North Sea flooding). Current response capability: manual rerouting takes 2-3 weeks. No pre-negotiated alternative port agreements.",
+      "",
+    ]),
+  }),
 
-    return {
-      industryContext: getRandomIndustryContext(),
-      categoryContext: "", // Populated by wizard via category selector
-      historicalSpendData: spendLines.trim(),
-      knownFutureEvents: selectedEvents.join("\n"),
-      budgetConstraints: randomChoice([
-        "Mandate to cut OPEX by 10% across all departments",
-        "Software budget capped at $500K for FY2026",
-        "No new headcount-driven spend without VP approval",
-        "Total procurement budget flat YoY despite 8% revenue growth",
-        "",
-      ]),
-      forecastHorizon: randomChoice(["Next Quarter", "Next 6 Months", "Next 12 Months", "Next 24 Months"]),
-    };
-  },
-
+  // ===== MARKET SNAPSHOT (no changes) =====
   "market-snapshot": () => {
     const regions = [
       "Germany", "France", "UK", "Netherlands", "Spain", "Italy", "Poland",
@@ -655,110 +752,9 @@ Client shall review each deliverable within 10 business days. Silence constitute
     };
   },
 
-  "requirements-gathering": () => ({
-    industryContext: getRandomIndustryContext(),
-    businessGoal: randomChoice([
-      "Improve customer service response time by 50%",
-      "Automate manual procurement processes to reduce errors",
-      "Enable remote work capabilities for 500 employees",
-      "Consolidate 5 legacy systems into unified platform",
-      "Implement real-time inventory visibility across warehouses",
-    ]),
-    budget: randomCurrency(100000, 2000000),
-    userCount: randomNumber(20, 500).toString(),
-    itLandscape: randomChoice([
-      "SAP ERP, Salesforce CRM, custom legacy applications",
-      "Microsoft 365, Azure cloud infrastructure, various SaaS tools",
-      "Oracle EBS, on-premise data center, limited cloud adoption",
-      "Mixed environment with significant technical debt",
-    ]),
-    dataSecurityLevel: randomChoice(["Public", "Internal", "Confidential", "Highly Restricted"]),
-    urgency: randomChoice(["Immediate", "3-6 Months", "6-12 Months", "Flexible"]),
-    mustHaveFeatures: randomChoice([
-      "Mobile access, real-time reporting, SSO integration",
-      "Automated workflows, approval routing, audit trail",
-      "Multi-language support, API integrations, offline capability",
-      "Role-based access, document management, collaboration tools",
-    ]),
-    niceToHaveFeatures: randomChoice([
-      "AI-powered recommendations, predictive analytics",
-      "Custom dashboards, advanced reporting, data visualization",
-      "Chatbot integration, self-service portal",
-      "Integration with IoT devices, real-time alerts",
-    ]),
-    scalability: randomChoice(["No Growth", "Moderate Growth", "High Growth"]),
-    languageSupport: randomChoice([
-      "English only",
-      "English, German, French",
-      "All major European languages",
-      "Global - 10+ languages required",
-    ]),
-  }),
-
-  "project-planning": () => ({
-    industryContext: getRandomIndustryContext(),
-    projectName: randomChoice([
-      "Strategic Sourcing Transformation",
-      "Supplier Consolidation Initiative",
-      "Procurement Technology Upgrade",
-      "Category Management Excellence Program",
-      "Supply Chain Risk Mitigation Project",
-    ]),
-    projectObjective: randomChoice([
-      "Reduce procurement costs by 15% over 3 years through strategic sourcing",
-      "Implement new P2P system to improve process efficiency and compliance",
-      "Develop category strategies for top 10 spend categories",
-      "Establish supplier risk management framework and monitoring capabilities",
-      "Consolidate supplier base from 500 to 200 qualified vendors",
-    ]),
-    projectScope: randomChoice([
-      "All indirect spend categories across North American operations",
-      "IT and professional services categories globally",
-      "Direct materials for manufacturing plants in Europe",
-      "Facilities management and MRO across all locations",
-    ]),
-    projectBudget: randomCurrency(100000, 2000000),
-    projectTimeline: randomChoice([
-      "12 months with quarterly milestones",
-      "6 months fast-track implementation",
-      "18-month phased rollout",
-      "24 months including change management",
-    ]),
-    stakeholders: randomChoice([
-      "CPO (sponsor), Category Managers, Finance, Operations, IT",
-      "Procurement Director, Business Unit Leaders, CFO, Legal",
-      "VP Supply Chain, Plant Managers, Quality, Sustainability",
-      "CEO (sponsor), CHRO, CIO, Procurement Team",
-    ]),
-    constraints: randomChoice([
-      "Limited internal resources, competing priorities, budget freeze in Q3",
-      "Change resistance from business units, legacy system dependencies",
-      "Tight timeline due to contract expirations, resource constraints",
-      "Regulatory requirements, union considerations, seasonal business impact",
-    ]),
-    successMetrics: randomChoice([
-      "Cost savings achieved, process cycle time, user adoption rate",
-      "Supplier consolidation ratio, contract compliance, stakeholder satisfaction",
-      "Risk exposure reduction, supplier performance improvement, audit findings",
-      "ROI, payback period, efficiency gains, error reduction",
-    ]),
-    risks: randomChoice([
-      "Scope creep, resource availability, technology integration challenges",
-      "Stakeholder resistance, supplier pushback, data quality issues",
-      "Market volatility, regulatory changes, key personnel turnover",
-      "Budget overrun, timeline delays, change management failures",
-    ]),
-  }),
-
+  // ===== CONTRACT TEMPLATE (remove mainFocus only) =====
   "contract-template": () => ({
     industryContext: getRandomIndustryContext(),
-    mainFocus: randomChoice([
-      "We need a solid contract template for a new IT outsourcing arrangement. Key concern is protecting our IP while ensuring clear SLAs and penalty clauses for non-performance.",
-      "Preparing a framework agreement for recurring maintenance services across 3 facilities. Need clear scope definitions and flexible pricing mechanisms.",
-      "Setting up an NDA with a potential technology partner before sharing proprietary manufacturing processes. Must be enforceable under local law.",
-      "Drafting a consulting engagement contract for a 6-month digital transformation project. Need milestone-based payments and clear deliverable acceptance criteria.",
-      "Creating a supply agreement for critical raw materials with a new supplier. Need price adjustment clauses, quality standards, and force majeure provisions.",
-    ]),
     country: randomChoice([
       "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic",
       "Denmark", "Estonia", "Finland", "France", "Germany", "Greece",
@@ -792,6 +788,22 @@ Client shall review each deliverable within 10 business days. Silence constitute
       "IP ownership must remain with us. Non-disclosure obligations survive 5 years post-termination. Quarterly performance reviews mandatory.",
       "Force majeure must explicitly cover pandemics and supply chain disruptions. Price escalation capped at 3% annually. Right to audit supplier facilities.",
       "Must include anti-bribery and anti-corruption provisions. Subcontracting only with prior written approval. Insurance requirements: €5M professional indemnity.",
+      "",
+    ]),
+  }),
+
+  // ===== SPEND ANALYSIS (remove mainFocus only) =====
+  "spend-analysis-categorization": () => ({
+    industryContext: getRandomIndustryContext(),
+    rawSpendData: randomChoice([
+      "Supplier | Description | Amount\nAWS | Cloud hosting | 45000\nHubSpot | Marketing CRM | 18000\nOffice Depot | Supplies | 3200\nDHL | Shipping | 28000\nPwC | Audit services | 95000\nSalesforce | CRM licenses | 72000\nGoogle | Ads & workspace | 34000\nRandstad | Temp staff | 120000\nSecureworks | Cybersecurity | 45000\nWerk | Cleaning | 18000",
+      "Vendor, Category, Q1, Q2, Q3, Q4\nGrainger, MRO, 45000, 52000, 48000, 61000\nWürth, Fasteners, 18000, 19000, 17000, 22000\nABC Supply, Electrical, 32000, 28000, 35000, 30000\nFastenal, Safety, 12000, 14000, 11000, 15000\nMSC Industrial, Cutting Tools, 28000, 31000, 26000, 34000",
+    ]),
+    timeframe: randomChoice(["Last 12 Months", "Q3 2025", "FY 2025", ""]),
+    businessGoal: randomChoice([
+      "Need to cut OPEX by 10%",
+      "Looking for vendor consolidation opportunities",
+      "Preparing for board audit — need clean taxonomy",
       "",
     ]),
   }),
