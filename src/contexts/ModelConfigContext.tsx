@@ -22,14 +22,23 @@ const DEFAULT_CONFIG: ModelConfig = {
 
 const ModelConfigContext = createContext<ModelConfigContextType | null>(null);
 
+const VALID_LOVABLE_MODELS = [
+  "google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite",
+  "google/gemini-3-pro-preview", "google/gemini-3-flash-preview",
+  "openai/gpt-5", "openai/gpt-5-mini", "openai/gpt-5-nano", "openai/gpt-5.2",
+];
+
 function loadConfig(): ModelConfig {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
+      const model = parsed.model || DEFAULT_CONFIG.model;
+      // Auto-migrate invalid cached models
+      const isValid = parsed.provider === "google_ai_studio" || VALID_LOVABLE_MODELS.includes(model);
       return {
         provider: parsed.provider || DEFAULT_CONFIG.provider,
-        model: parsed.model || DEFAULT_CONFIG.model,
+        model: isValid ? model : DEFAULT_CONFIG.model,
         lastTested: parsed.lastTested || null,
       };
     }
