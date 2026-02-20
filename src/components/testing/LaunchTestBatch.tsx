@@ -13,11 +13,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { scenarios } from "@/lib/scenarios";
-import {
-  generateAITestData,
-  getIndustries,
-  getCompatibleCategories,
-} from "@/lib/ai-test-data-generator";
+import { generateAITestData } from "@/lib/ai-test-data-generator";
+import { useIndustryContexts, useProcurementCategories } from "@/hooks/useContextData";
 import type { BuyerPersona, EntropyLevel } from "@/lib/testing/types";
 
 const PERSONAS: { value: BuyerPersona; label: string; desc: string }[] = [
@@ -42,8 +39,8 @@ const LaunchTestBatch = () => {
   const [isRunning, setIsRunning] = useState(false);
 
   const availableScenarios = scenarios.filter((s) => s.status === "available");
-  const industries = getIndustries();
-  const compatibleCategories = industry ? getCompatibleCategories(industry) : [];
+  const { data: industries, isLoading: industriesLoading } = useIndustryContexts();
+  const { data: categories, isLoading: categoriesLoading } = useProcurementCategories();
 
   const handleLaunch = async () => {
     if (!scenarioId) {
@@ -152,14 +149,15 @@ const LaunchTestBatch = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Industry (optional)</Label>
-            <Select value={industry} onValueChange={(v) => { setIndustry(v); setCategory(""); }}>
+            <Select value={industry} onValueChange={(v) => { setIndustry(v === "__none__" ? "" : v); }} disabled={industriesLoading}>
               <SelectTrigger>
-                <SelectValue placeholder="Any industry" />
+                <SelectValue placeholder={industriesLoading ? "Loading..." : "Any industry"} />
               </SelectTrigger>
               <SelectContent>
-                {industries.map((i) => (
-                  <SelectItem key={i} value={i}>
-                    {i.charAt(0).toUpperCase() + i.slice(1)}
+                <SelectItem value="__none__">Any industry</SelectItem>
+                {industries?.map((i) => (
+                  <SelectItem key={i.id} value={i.slug}>
+                    {i.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -167,14 +165,15 @@ const LaunchTestBatch = () => {
           </div>
           <div className="space-y-2">
             <Label>Category (optional)</Label>
-            <Select value={category} onValueChange={setCategory} disabled={!industry}>
+            <Select value={category} onValueChange={(v) => { setCategory(v === "__none__" ? "" : v); }} disabled={categoriesLoading}>
               <SelectTrigger>
-                <SelectValue placeholder={industry ? "Select category" : "Select industry first"} />
+                <SelectValue placeholder={categoriesLoading ? "Loading..." : "Any category"} />
               </SelectTrigger>
               <SelectContent>
-                {compatibleCategories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                <SelectItem value="__none__">Any category</SelectItem>
+                {categories?.map((c) => (
+                  <SelectItem key={c.id} value={c.slug}>
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
