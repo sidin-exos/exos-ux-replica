@@ -1,70 +1,57 @@
 
-# Refactor `tail-spend-sourcing` Scenario (AI Audit Results)
+
+# Refactor `supplier-review` Scenario (AI Audit Results)
 
 ## Summary
-Apply the AI Auditor's findings to the `tail-spend-sourcing` scenario: remove 7 redundant fields that add friction, keep the 4 core fields, and add 2 new contextual textarea fields for unstructured vendor/technical data.
+Apply the AI Auditor's findings to the `supplier-review` scenario: remove 5 low-value rating fields that create friction, keep the 7 core performance fields, and add 2 new contextual fields for contract lifecycle and incident details.
 
 ## Changes
 
 ### 1. Update Scenario Schema (`src/lib/scenarios.ts`)
 
-**Remove these 7 fields** from the `requiredFields` array (lines 156-163):
-- `warranty`
-- `deliveryCost`
-- `paymentTerms`
-- `returnRisk`
-- `catalogAvailable`
-- `quotesCount`
-- `approvalRequired`
+**Remove these 5 fields** from the `requiredFields` array:
+- `socialResponsibility` (line 180)
+- `financialStability` (line 179)
+- `innovationScore` (line 178)
+- `crisisSupport` (line 182)
+- `incidentCount` (line 176)
 
-**Keep these existing fields** (unchanged):
+**Keep these 7 fields** (unchanged):
 - `industryContext` (required textarea)
 - `mainFocus` (MAIN_FOCUS_FIELD constant)
-- `purchaseAmount` (required currency)
-- `urgency` (required number)
-- `alternativesExist` (optional select -- retained as it has analytical value)
+- `qualityScore` (required number)
+- `onTimeDelivery` (required percentage)
+- `communicationScore` (optional number)
+- `priceVsMarket` (optional select)
+- `spendVolume` (required currency)
 
-**Add 2 new textarea fields** after the core fields:
+**Add 2 new fields** after the core fields:
 
-```
-vendorHistory:
-  label: "Current Vendor Landscape & Historical Spend"
-  type: textarea
-  required: false
-  placeholder: "E.g., We usually buy this from Vendor X for $Y, but they are out of stock. Last year we spent $10k on this category..."
-  description: "Context about who you buy this from today and historical pricing."
-
-technicalSpecs:
-  label: "Technical Specifications / Requirements"
-  type: textarea
-  required: false
-  placeholder: "Any specific technical details, specs, or compatibility requirements for the items you are sourcing..."
-  description: "Paste any technical requirements, SKUs, or performance criteria."
-```
+- `contractStatus` -- text, optional. Label: "Contract Status & Expiration". Placeholder: "E.g., Expires in 3 months, Auto-renews next year..."
+- `incidentLog` -- textarea, optional. Label: "Critical Incidents & Performance Issues". Placeholder: "Describe specific failures, downtime events, or SLA breaches..."
 
 ### 2. Update Test Data Factory (`src/lib/test-data-factory.ts`)
 
-Update the `tail-spend-sourcing` generator to match the new schema:
-- Remove references to deleted fields (`warranty`, `deliveryCost`, `paymentTerms`, `returnRisk`, `catalogAvailable`, `quotesCount`, `approvalRequired`).
-- Add sample data generators for the two new fields using randomized realistic text snippets.
+- Remove generators for 5 deleted fields (`socialResponsibility`, `financialStability`, `innovationScore`, `crisisSupport`, `incidentCount`).
+- Add `randomChoice` arrays for `contractStatus` (e.g., "Expires Q3 2026", "Auto-renews in 6 months") and `incidentLog` (e.g., short failure descriptions, empty strings for "clean" suppliers).
 
 ### Field Diff Summary
 
 ```text
-BEFORE (11 fields)                 AFTER (8 fields)
+BEFORE (12 fields)                 AFTER (9 fields)
 ---------------------              ---------------------
 industryContext  [KEEP]            industryContext
 mainFocus        [KEEP]            mainFocus
-purchaseAmount   [KEEP]            purchaseAmount
-urgency          [KEEP]            urgency
-catalogAvailable [REMOVE]          alternativesExist
-quotesCount      [REMOVE]          vendorHistory      [NEW]
-paymentTerms     [REMOVE]          technicalSpecs     [NEW]
-warranty         [REMOVE]
-deliveryCost     [REMOVE]
-returnRisk       [REMOVE]
-alternativesExist[KEEP]
-approvalRequired [REMOVE]
+qualityScore     [KEEP]            qualityScore
+onTimeDelivery   [KEEP]            onTimeDelivery
+incidentCount    [REMOVE]          communicationScore
+communicationScore [KEEP]          priceVsMarket
+innovationScore  [REMOVE]          spendVolume
+financialStability [REMOVE]        contractStatus     [NEW]
+socialResponsibility [REMOVE]      incidentLog        [NEW]
+priceVsMarket    [KEEP]
+crisisSupport    [REMOVE]
+spendVolume      [KEEP]
 ```
 
 ### Files Modified
