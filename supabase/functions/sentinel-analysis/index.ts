@@ -207,7 +207,14 @@ serve(async (req) => {
 
     // Validate inputs
     const rawUserPrompt = requireString(body.userPrompt, "userPrompt", { minLength: 1, maxLength: 50000 })!;
-    const model = requireString(body.model, "model", { optional: true, maxLength: 100 }) || "google/gemini-3-flash-preview";
+    const VALID_GATEWAY_MODELS = [
+      "google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite",
+      "google/gemini-3-pro-preview", "google/gemini-3-flash-preview",
+      "openai/gpt-5", "openai/gpt-5-mini", "openai/gpt-5-nano", "openai/gpt-5.2",
+    ];
+    const DEFAULT_GATEWAY_MODEL = "google/gemini-3-flash-preview";
+    const rawModel = requireString(body.model, "model", { optional: true, maxLength: 100 }) || DEFAULT_GATEWAY_MODEL;
+    const model = VALID_GATEWAY_MODELS.includes(rawModel) ? rawModel : DEFAULT_GATEWAY_MODEL;
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     const useGoogleAIStudio = optionalBoolean(body.useGoogleAIStudio, "useGoogleAIStudio") ?? false;
