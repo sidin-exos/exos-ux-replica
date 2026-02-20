@@ -58,16 +58,30 @@ const getRandomIndustryContext = (): string => {
 const generators: Record<string, TestDataGenerator> = {
   "make-vs-buy": () => ({
     industryContext: getRandomIndustryContext(),
-    internalSalary: randomCurrency(65000, 120000),
-    recruitingCost: randomCurrency(8000, 25000),
-    managementTime: randomNumber(8, 40).toString(),
-    officeItPerHead: randomCurrency(5000, 15000),
-    agencyFee: randomCurrency(80000, 250000),
-    agencyOnboardingSpeed: randomNumber(5, 30).toString(),
-    knowledgeRetentionRisk: randomChoice(["Low", "Medium", "High"]),
-    qualityBenchmark: randomNumber(6, 10).toString(),
-    peakLoadCapacity: randomChoice(["Yes", "No", "Partial"]),
-    strategicImportance: randomNumber(4, 10).toString(),
+    projectBrief: randomChoice([
+      "Should we build a custom CRM system in-house or purchase Salesforce Enterprise licenses? Our sales team (45 reps) currently uses spreadsheets and a legacy Access database. We need pipeline tracking, forecasting, and integration with our ERP.",
+      "We currently outsource PCB assembly to a contract manufacturer in Shenzhen. Volume is 8,000 units/month. Should we bring this in-house by investing in a pick-and-place line, or renew the outsourcing contract?",
+      "Our warehouse fulfillment is handled by a 3PL (DHL Supply Chain). As we scale from 2,000 to 10,000 orders/day, should we build our own fulfillment center or renegotiate with the 3PL?",
+      "We need a custom ERP module for production scheduling. Options: develop internally with our 3-person dev team, or license a SAP add-on (PP/DS module) at ~€80k/year. Current scheduling is done in Excel.",
+    ]),
+    makeCosts: randomChoice([
+      "Estimated dev team: 3 engineers x $140k/year = $420k. Infrastructure (AWS): ~$30k/year. Timeline: 9-12 months to MVP. Ongoing maintenance: ~$80k/year.",
+      "Pick-and-place line: $650k CapEx. Facility retrofit: $120k. Hiring 4 technicians at $55k each = $220k/year. Ramp-up time: 6 months. Yield loss during ramp: ~8%.",
+      "Warehouse lease (40,000 sqft): $480k/year. WMS software: $45k/year. Staff (25 FTEs): $1.1M/year. Racking and conveyors: $350k CapEx. Build-out timeline: 8 months.",
+      "Internal dev: 3 devs x 6 months = ~€250k fully loaded. Integration with existing SAP ECC: additional €40k consulting. Risk: team has no PP/DS domain expertise.",
+    ]),
+    buyCosts: randomChoice([
+      "Salesforce Enterprise: $150/user/month x 45 users = $81k/year. Implementation partner: $120k one-time. Data migration: $25k. Training: $15k. Total Year 1: ~$241k.",
+      "Current CM quote for renewal: $4.20/unit x 8,000/month = $403k/year. New CM quote (Vietnam): $3.60/unit but MOQ 12,000. Tooling transfer fee: $35k.",
+      "DHL renegotiated rate: $4.80/order (down from $5.50). At 10,000 orders/day = $17.5M/year. Includes WMS, labor, and facility. SLA: 99.2% same-day ship.",
+      "SAP PP/DS license: €80k/year. Implementation: €150k (3-month project with partner). Annual support: €16k. Includes 2 days of training. Go-live in 4 months.",
+    ]),
+    strategicFactors: randomChoice([
+      "We need full control over customer data (GDPR). Sales process is our core differentiator. Vendor lock-in risk is high with Salesforce. However, time-to-value matters -- we're losing deals without proper pipeline visibility.",
+      "IP protection is not a concern (standard PCBs). But supply chain resilience is critical after 2024 disruptions. We also want to reduce lead time from 6 weeks to 2 weeks. Quality must stay above 99.7% first-pass yield.",
+      "Logistics is not our core competency. But the 3PL's error rate (1.8%) is hurting our brand. We need same-day shipping capability for Prime-like experience. Capital is available ($2M approved) but management bandwidth is limited.",
+      "ERP scheduling is becoming a bottleneck as we scale. The SAP module is proven but expensive and rigid. Internal build gives flexibility but our dev team is already at capacity with other projects. Must decide within 6 weeks.",
+    ]),
   }),
 
   "tail-spend-sourcing": () => ({
