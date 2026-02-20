@@ -16,9 +16,10 @@ export type EntropyLevel = 1 | 2 | 3;
 
 /** Buyer persona archetypes used by the Synthesis Engine */
 export type BuyerPersona =
-  | 'executive_sponsor'
-  | 'solo_procurement_hero'
-  | 'tactical_category_manager';
+  | 'rushed-junior'
+  | 'methodical-manager'
+  | 'cfo-finance'
+  | 'frustrated-stakeholder';
 
 /** Field-level verdict produced by the AI Judge */
 export type FieldAction =

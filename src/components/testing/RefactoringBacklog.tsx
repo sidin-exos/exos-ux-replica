@@ -223,7 +223,7 @@ const RefactoringBacklog = () => {
                     </Badge>
                     {gap.persona_source && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        {gap.persona_source.replace(/_/g, " ")}
+                        {gap.persona_source.replace(/-/g, " ")}
                       </p>
                     )}
                   </div>
