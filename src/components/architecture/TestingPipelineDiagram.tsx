@@ -15,6 +15,8 @@ import {
   SlidersHorizontal,
   GitMerge,
   PlusCircle,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 import ArchitectureNode from "./ArchitectureNode";
 import ArchitectureContainer from "./ArchitectureContainer";
@@ -51,13 +53,21 @@ const TestingPipelineDiagram: React.FC = () => {
         className="w-full max-w-3xl"
       >
         <div className="flex flex-col items-center gap-4">
-          {/* Entropy Controller */}
-          <ArchitectureNode
-            icon={<SlidersHorizontal size={28} />}
-            label="Entropy Controller"
-            sublabel="L1 (80% Structured) → L3 (90% Raw Dump)"
-            color={COLORS.orange}
-          />
+          {/* Entropy Controller — AI-Steered */}
+          <div className="relative">
+            <ArchitectureNode
+              icon={<Sparkles size={28} />}
+              label="Entropy Controller (AI-Steered)"
+              sublabel="L1 (80% Structured) → L3 (90% Raw Dump)"
+              color={COLORS.orange}
+            />
+            <div className="absolute -top-2 -left-2 flex items-center gap-1 rounded-full bg-purple-50 border border-purple-200 px-2 py-0.5">
+              <RefreshCw size={10} className="text-purple-500" />
+              <span className="text-[8px] font-semibold text-purple-600 whitespace-nowrap">
+                GEA Directives
+              </span>
+            </div>
+          </div>
 
           <ArchitectureArrow direction="down" length={28} label="Sets entropy per persona" />
 
@@ -107,64 +117,108 @@ const TestingPipelineDiagram: React.FC = () => {
 
       <ArchitectureArrow direction="down" length={36} />
 
-      {/* ── Phase 2: Execution Pipeline ── */}
-      <ArchitectureContainer
-        title="Phase 2: Execution Pipeline"
-        titleColor={COLORS.blue}
-        variant="dashed"
-        className="w-full max-w-3xl"
-      >
-        <div className="flex flex-col items-center gap-4">
-          <ArchitectureNode
-            icon={<Play size={28} />}
-            label="Test Runner"
-            sublabel="Fetches prompts"
-            color={COLORS.blue}
-          />
-
-          <ArchitectureArrow direction="down" length={32} />
-
-          <div className="relative">
+      {/* ── Phase 2 + GEA Side Panel row ── */}
+      <div className="flex items-start gap-6 w-full max-w-4xl">
+        {/* Phase 2: Execution Pipeline */}
+        <ArchitectureContainer
+          title="Phase 2: Execution Pipeline"
+          titleColor={COLORS.blue}
+          variant="dashed"
+          className="flex-1"
+        >
+          <div className="flex flex-col items-center gap-4">
             <ArchitectureNode
-              icon={<Shield size={28} />}
-              label="sentinel-analysis"
-              sublabel="Edge Function"
+              icon={<Play size={28} />}
+              label="Test Runner"
+              sublabel="Fetches prompts"
               color={COLORS.blue}
             />
-            <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5">
-              <RefreshCw size={10} className="text-red-500" />
-              <span className="text-[8px] font-semibold text-red-600 whitespace-nowrap">
-                Retry 503 / Fallback
-              </span>
-            </div>
-          </div>
 
-          <div className="flex items-start justify-center gap-12 flex-wrap">
-            <div className="flex flex-col items-center gap-2">
-              <ArchitectureArrow direction="down" length={32} label="Extracted JSON" />
+            <ArchitectureArrow direction="down" length={32} />
+
+            <div className="relative">
               <ArchitectureNode
-                icon={<Database size={28} />}
-                label="test_reports"
-                sublabel="DB Table"
-                color={COLORS.gray}
+                icon={<Shield size={28} />}
+                label="sentinel-analysis"
+                sublabel="Edge Function"
+                color={COLORS.blue}
               />
+              <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5">
+                <RefreshCw size={10} className="text-red-500" />
+                <span className="text-[8px] font-semibold text-red-600 whitespace-nowrap">
+                  Retry 503 / Fallback
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col items-center gap-2">
-              <ArchitectureArrow direction="down" length={32} label="Traces" dashed color={COLORS.purple} />
-              <ArchitectureNode
-                icon={<Eye size={28} />}
-                label="LangSmith"
-                sublabel="Observability"
-                color={COLORS.purple}
-              />
+
+            <div className="flex items-start justify-center gap-12 flex-wrap">
+              <div className="flex flex-col items-center gap-2">
+                <ArchitectureArrow direction="down" length={32} label="Extracted JSON" />
+                <ArchitectureNode
+                  icon={<Database size={28} />}
+                  label="test_reports"
+                  sublabel="DB Table"
+                  color={COLORS.gray}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <ArchitectureArrow direction="down" length={32} label="Traces" dashed color={COLORS.purple} />
+                <ArchitectureNode
+                  icon={<Eye size={28} />}
+                  label="LangSmith"
+                  sublabel="Observability"
+                  color={COLORS.purple}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </ArchitectureContainer>
+        </ArchitectureContainer>
+
+        {/* GEA Module Side Panel */}
+        <ArchitectureContainer
+          title="Shared Experience Pool (GEA)"
+          titleColor={COLORS.purple}
+          variant="dashed"
+          className="w-64"
+        >
+          <div className="flex flex-col items-center gap-3">
+            <ArchitectureNode
+              icon={<Layers size={28} />}
+              label="Experience Pool"
+              sublabel="Aggregates patterns"
+              color={COLORS.purple}
+            />
+            <div className="text-[10px] text-center text-muted-foreground leading-snug px-2">
+              Collects success/failure patterns across all test runs to generate evolutionary directives.
+            </div>
+            <div className="flex flex-col gap-1.5 w-full px-2">
+              <div className="flex items-center gap-1.5 text-[10px]">
+                <CheckCircle size={10} className="text-green-500 shrink-0" />
+                <span className="text-muted-foreground">Solved cases tracked</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px]">
+                <AlertTriangle size={10} className="text-amber-500 shrink-0" />
+                <span className="text-muted-foreground">Top failure patterns</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px]">
+                <Sparkles size={10} className="text-purple-500 shrink-0" />
+                <span className="text-muted-foreground">Inference accuracy trend</span>
+              </div>
+            </div>
+          </div>
+        </ArchitectureContainer>
+      </div>
+
+      {/* Bi-directional labels */}
+      <div className="flex items-center gap-4 text-[9px] text-purple-600 font-medium">
+        <span>← Feeds patterns to GEA</span>
+        <span>|</span>
+        <span>Directives from GEA →</span>
+      </div>
 
       <ArchitectureArrow direction="down" length={36} />
 
-      {/* ── Phase 3: LLM Auditor (Updated) ── */}
+      {/* ── Phase 3: LLM Auditor ── */}
       <ArchitectureContainer
         title="Phase 3: LLM Auditor"
         titleColor={COLORS.purple}
@@ -187,7 +241,6 @@ const TestingPipelineDiagram: React.FC = () => {
 
           <ArchitectureArrow direction="down" length={24} label="Compare 3 sources" />
 
-          {/* Triangulation Engine */}
           <ArchitectureNode
             icon={<GitMerge size={28} />}
             label="Triangulation Engine"
@@ -197,7 +250,6 @@ const TestingPipelineDiagram: React.FC = () => {
 
           <ArchitectureArrow direction="down" length={24} />
 
-          {/* AI Judge */}
           <ArchitectureNode
             icon={<Scale size={28} />}
             label="AI Judge"
@@ -252,7 +304,24 @@ const TestingPipelineDiagram: React.FC = () => {
         </div>
       </ArchitectureContainer>
 
-      <ArchitectureArrow direction="down" length={36} />
+      {/* ── Evolutionary Feedback Loop ── */}
+      <div className="relative w-full max-w-3xl flex justify-center">
+        <ArchitectureArrow direction="down" length={36} />
+        {/* Dashed evolutionary loop label */}
+        <div className="absolute -right-4 top-0 flex flex-col items-center gap-1">
+          <div className="w-px h-8 border-l-2 border-dashed border-orange-400" />
+          <div className="bg-orange-50 border border-orange-300 rounded-full px-3 py-1">
+            <span className="text-[9px] font-bold text-orange-700 whitespace-nowrap flex items-center gap-1">
+              <RefreshCw size={10} />
+              Evolutionary Loop
+            </span>
+          </div>
+          <div className="text-[8px] text-orange-600 text-center max-w-[120px]">
+            Directives for Next Generation → Phase 1
+          </div>
+          <div className="w-px h-8 border-l-2 border-dashed border-orange-400" />
+        </div>
+      </div>
 
       {/* ── Final Action ── */}
       <ArchitectureNode
@@ -274,7 +343,11 @@ const TestingPipelineDiagram: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded" style={{ backgroundColor: COLORS.purple }} />
-          <span className="text-xs text-gray-600">Evaluation Logic</span>
+          <span className="text-xs text-gray-600">GEA / Evaluation</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-3 rounded border-2 border-dashed border-orange-400" />
+          <span className="text-xs text-gray-600">Evolutionary Loop</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-3 rounded border-2 border-dashed border-red-400" />

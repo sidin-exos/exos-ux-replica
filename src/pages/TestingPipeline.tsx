@@ -1,13 +1,74 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { toPng, toSvg } from "html-to-image";
-import { Download, Image, FileCode, ArrowLeft } from "lucide-react";
+import { Download, Image, FileCode, ArrowLeft, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Header from "@/components/layout/Header";
 import { NavLink } from "@/components/NavLink";
 import TestingPipelineDiagram from "@/components/architecture/TestingPipelineDiagram";
 import LaunchTestBatch from "@/components/testing/LaunchTestBatch";
 import RefactoringBacklog from "@/components/testing/RefactoringBacklog";
+import { useTestPrompts } from "@/hooks/useTestDatabase";
+import type { EvolutionaryDirective, ExperiencePoolSummary } from "@/lib/testing/types";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+
+// Mock data for Pipeline IQ — will be replaced with real aggregation
+const MOCK_ACCURACY_TREND = [
+  { batch: 1, accuracy: 0.42 },
+  { batch: 2, accuracy: 0.51 },
+  { batch: 3, accuracy: 0.58 },
+  { batch: 4, accuracy: 0.63 },
+  { batch: 5, accuracy: 0.71 },
+  { batch: 6, accuracy: 0.74 },
+  { batch: 7, accuracy: 0.79 },
+];
+
+const MOCK_DIRECTIVES: EvolutionaryDirective[] = [
+  {
+    id: "d1",
+    target_scenario: "contract_renewal",
+    directive_text: "Increase structured fields for payment_terms — AI hallucinates 40% of the time without explicit user input.",
+    confidence_gain_projected: 0.12,
+    source_field_action: "CRITICAL_REQUIRE",
+    generated_at: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: "d2",
+    target_scenario: "vendor_consolidation",
+    directive_text: "Hide vendor_risk_score field — server context provides this with 95% accuracy from grounding data.",
+    confidence_gain_projected: 0.08,
+    source_field_action: "REDUNDANT_HIDE",
+    generated_at: new Date(Date.now() - 172800000).toISOString(),
+  },
+  {
+    id: "d3",
+    target_scenario: "cost_reduction",
+    directive_text: "Add new field: baseline_unit_cost — detected as schema gap by 3 personas across 12 runs.",
+    confidence_gain_projected: 0.15,
+    source_field_action: "SCHEMA_GAP_DETECTED",
+    generated_at: new Date(Date.now() - 259200000).toISOString(),
+  },
+];
+
+const CHART_CONFIG = {
+  accuracy: {
+    label: "Inference Accuracy",
+    color: "hsl(var(--primary))",
+  },
+};
+
+const ACTION_COLORS: Record<string, string> = {
+  CRITICAL_REQUIRE: "text-red-600 bg-red-50 border-red-200",
+  REDUNDANT_HIDE: "text-green-600 bg-green-50 border-green-200",
+  SCHEMA_GAP_DETECTED: "text-blue-600 bg-blue-50 border-blue-200",
+  OPTIONAL_KEEP: "text-amber-600 bg-amber-50 border-amber-200",
+};
 
 const TestingPipeline = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -98,6 +159,10 @@ const TestingPipeline = () => {
           <TabsList>
             <TabsTrigger value="diagram">Pipeline Diagram</TabsTrigger>
             <TabsTrigger value="command-center">Command Center</TabsTrigger>
+            <TabsTrigger value="pipeline-iq" className="gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              Pipeline IQ
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab 1: Diagram */}
@@ -168,6 +233,125 @@ const TestingPipeline = () => {
               <div className="lg:col-span-2">
                 <RefactoringBacklog />
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Tab 3: Pipeline IQ (GEA) */}
+          <TabsContent value="pipeline-iq" className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Inference Accuracy Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Sparkles className="w-5 h-5 text-purple-500" />
+                    Inference Accuracy Over Time
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    SWE-bench-like metric tracking how well the AI extracts structured data from chaotic inputs.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={CHART_CONFIG} className="h-[280px] w-full">
+                    <LineChart data={MOCK_ACCURACY_TREND}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis
+                        dataKey="batch"
+                        label={{ value: "Test Batch", position: "insideBottom", offset: -5 }}
+                        className="text-muted-foreground"
+                      />
+                      <YAxis
+                        domain={[0, 1]}
+                        tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
+                        className="text-muted-foreground"
+                      />
+                      <ChartTooltip
+                        content={
+                          <ChartTooltipContent
+                            formatter={(value: number) => `${(value * 100).toFixed(1)}%`}
+                          />
+                        }
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="accuracy"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2.5}
+                        dot={{ r: 4, fill: "hsl(var(--primary))" }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                  <div className="mt-4 flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-primary" />
+                      <span className="text-muted-foreground">Current: <strong className="text-foreground">79%</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-green-500" />
+                      <span className="text-muted-foreground">Δ from batch 1: <strong className="text-green-600">+37pp</strong></span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Evolution Log */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Zap className="w-5 h-5 text-amber-500" />
+                    Evolution Log
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    AI-generated directives from detected weaknesses — auto-fed back into the Entropy Controller.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {MOCK_DIRECTIVES.map((d) => (
+                      <div
+                        key={d.id}
+                        className="border rounded-lg p-3 space-y-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-foreground">
+                            {d.target_scenario.replace(/_/g, " ")}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              ACTION_COLORS[d.source_field_action] || ""
+                            }`}
+                          >
+                            {d.source_field_action}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {d.directive_text}
+                        </p>
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span>
+                            Projected gain: <strong className="text-green-600">+{(d.confidence_gain_projected * 100).toFixed(0)}%</strong>
+                          </span>
+                          <span>{new Date(d.generated_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* GEA Explainer */}
+            <div className="glass-effect rounded-xl p-5">
+              <div className="flex items-center gap-2 text-primary font-semibold mb-2">
+                <Sparkles className="w-4 h-4" />
+                Group-Evolving Agents (GEA) Framework
+              </div>
+              <p className="text-sm text-muted-foreground">
+                The pipeline implements GEA principles: after each batch, the AI Judge generates Evolutionary Directives 
+                from failure patterns (CRITICAL_REQUIRE, SCHEMA_GAP). These directives are fed back into the Entropy Controller 
+                to steer the next generation of test prompts — creating a self-improving loop where the system learns 
+                from its own weaknesses. The Shared Experience Pool aggregates patterns across all runs.
+              </p>
             </div>
           </TabsContent>
         </Tabs>

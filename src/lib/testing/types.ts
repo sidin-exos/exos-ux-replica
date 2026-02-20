@@ -121,3 +121,32 @@ export interface PipelineRunSummary {
   schema_gaps: SchemaGap[];
   created_at: string;
 }
+
+// ============================================
+// GEA – GROUP-EVOLVING AGENTS
+// ============================================
+
+/** Directive generated from past failures to steer future test synthesis */
+export interface EvolutionaryDirective {
+  id: string;
+  target_scenario: string;
+  directive_text: string;
+  /** Projected improvement in inference accuracy (0-1) */
+  confidence_gain_projected: number;
+  source_field_action: FieldAction;
+  generated_at: string;
+}
+
+/** Aggregated view of the Shared Experience Pool */
+export interface ExperiencePoolSummary {
+  /** Most frequent failure patterns across test runs */
+  top_failure_patterns: string[];
+  /** Number of previously-failing cases now passing */
+  solved_cases: number;
+  /** Total test runs contributing to this pool */
+  total_runs: number;
+  /** 0-1 overall inference accuracy (SWE-bench-like) */
+  inference_accuracy: number;
+  /** Accuracy trend per batch: [batch_index, accuracy] */
+  accuracy_trend: Array<{ batch: number; accuracy: number }>;
+}
