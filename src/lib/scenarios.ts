@@ -253,40 +253,11 @@ export const scenarios: Scenario[] = [
     strategySelector: "skepticism",
     requiredFields: [
       { id: "industryContext", label: "Industry & Business Context", description: "Describe your industry, asset management practices, and typical ownership periods", type: "textarea", required: true, placeholder: "E.g., 'Manufacturing plant modernization. Assets typically 10-15 year lifecycle. Strong focus on OEE and uptime. Limited in-house maintenance capability...'" },
-      MAIN_FOCUS_FIELD,
       { id: "assetDescription", label: "Asset/Purchase Description", description: "What are you evaluating?", type: "text", required: true },
       { id: "ownershipPeriod", label: "Ownership Period (Years)", description: "Expected useful life or evaluation period", type: "number", required: true },
-      // Acquisition Costs
-      { id: "purchasePrice", label: "Purchase/Acquisition Price", description: "Base purchase cost", type: "currency", required: true },
-      { id: "installationCost", label: "Installation & Setup Cost", description: "Delivery, installation, commissioning", type: "currency", required: false },
-      { id: "trainingCost", label: "Training Cost", description: "Staff training and certification", type: "currency", required: false },
-      { id: "integrationCost", label: "Integration Cost", description: "Systems integration, customization", type: "currency", required: false },
-      // Operating Costs
-      { id: "annualMaintenance", label: "Annual Maintenance Cost", description: "Regular maintenance and service contracts", type: "currency", required: true },
-      { id: "energyConsumption", label: "Annual Energy Cost", description: "Power, fuel, utilities consumption", type: "currency", required: false },
-      { id: "consumablesCost", label: "Annual Consumables Cost", description: "Spare parts, supplies, materials", type: "currency", required: false },
-      { id: "laborCost", label: "Annual Operating Labor Cost", description: "Staff time to operate", type: "currency", required: false },
-      { id: "insuranceCost", label: "Annual Insurance Cost", description: "Asset insurance premiums", type: "currency", required: false },
-      // Vendor Lock-in Analysis
-      { id: "vendorLockInRisk", label: "Vendor Lock-in Risk", description: "Dependency on single vendor for support/parts", type: "select", required: false, options: ["None", "Low", "Moderate", "High", "Critical"] },
-      { id: "proprietaryComponents", label: "Proprietary Components %", description: "Percentage of proprietary vs standard parts", type: "percentage", required: false },
-      { id: "alternativeSuppliers", label: "Alternative Service Providers", description: "Availability of third-party maintenance", type: "select", required: false, options: ["Many", "Some", "Few", "None"] },
-      { id: "dataPortability", label: "Data Portability", description: "Ease of migrating data/configurations", type: "select", required: false, options: ["Full Export", "Partial", "Difficult", "Locked In"] },
-      // Long-term Market Factors
-      { id: "technologyObsolescence", label: "Technology Obsolescence Risk", description: "Risk of technology becoming outdated", type: "select", required: false, options: ["Low", "Medium", "High", "Imminent"] },
-      { id: "marketPriceTrend", label: "Market Price Trend", description: "Expected future price direction for this category", type: "select", required: false, options: ["Decreasing", "Stable", "Increasing", "Volatile"] },
-      { id: "regulatoryChanges", label: "Regulatory Change Risk", description: "Risk of new regulations affecting asset", type: "select", required: false, options: ["Minimal", "Possible", "Likely", "Certain"] },
-      // Macroeconomic Factors
-      { id: "inflationAssumption", label: "Inflation Assumption %", description: "Expected annual inflation rate", type: "percentage", required: false },
-      { id: "currencyExposure", label: "Currency Exposure", description: "Foreign currency risk for ongoing costs", type: "select", required: false, options: ["None", "Low", "Moderate", "High"] },
-      { id: "interestRate", label: "Financing Rate %", description: "Cost of capital or financing rate", type: "percentage", required: false },
-      // Exit Costs
-      { id: "residualValue", label: "Expected Residual Value", description: "Asset value at end of ownership", type: "currency", required: false },
-      { id: "decommissioningCost", label: "Decommissioning Cost", description: "Removal, disposal, remediation costs", type: "currency", required: false },
-      { id: "dataMigrationCost", label: "Data Migration Cost", description: "Cost to transfer data to new system", type: "currency", required: false },
-      // Risk Factors
-      { id: "downtimeRisk", label: "Downtime Risk", description: "Expected reliability and uptime", type: "select", required: false, options: ["Very High (99%+)", "High (97-99%)", "Moderate (95-97%)", "Low (<95%)"] },
-      { id: "downtimeCostPerHour", label: "Downtime Cost Per Hour", description: "Business impact of unplanned downtime", type: "currency", required: false },
+      { id: "capexBreakdown", label: "Upfront Costs (CAPEX)", description: "List all one-time acquisition costs in free text", type: "textarea", required: true, placeholder: "E.g., Purchase price: $125k. Installation: $15k. One-time training: $5k..." },
+      { id: "opexBreakdown", label: "Recurring/Operating Costs (OPEX)", description: "List all ongoing costs in free text", type: "textarea", required: true, placeholder: "E.g., Annual maintenance: $25k/yr. Energy consumption: ~$1.2k/mo. Consumables: $4k/yr..." },
+      { id: "riskFactors", label: "Risks, Downtime & End-of-Life Costs", description: "Describe vendor lock-in, downtime impact, residual value, and other risk factors", type: "textarea", required: false, placeholder: "E.g., High vendor lock-in risk. Hourly downtime costs $5k. Estimated salvage value in 5 years is $10k..." },
     ],
     outputs: [
       "TCO Waterfall Chart: Visual breakdown of all cost components",
