@@ -207,7 +207,7 @@ const TestingPipeline = () => {
                   🎲 Synthesis Engine
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Generates realistic, messy procurement prompts from 3 buyer personas with varying data quality — from "dump &amp; go" to over-detailed inputs.
+                  Generates realistic, messy procurement prompts from 4 strategic buyer personas with varying data quality — from "dump &amp; go" to over-detailed inputs.
                 </p>
               </div>
               <div className="glass-effect rounded-xl p-4">

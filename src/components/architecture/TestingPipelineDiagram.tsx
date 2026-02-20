@@ -17,6 +17,8 @@ import {
   PlusCircle,
   Sparkles,
   Layers,
+  Calendar,
+  Download,
 } from "lucide-react";
 import ArchitectureNode from "./ArchitectureNode";
 import ArchitectureContainer from "./ArchitectureContainer";
@@ -38,8 +40,8 @@ const TestingPipelineDiagram: React.FC = () => {
       {/* ── Trigger ── */}
       <ArchitectureNode
         icon={<Play size={28} />}
-        label="Admin / CI-CD (Iterative Run)"
-        sublabel="Triggers test batch"
+        label="Admin / CI-CD"
+        sublabel="One Scenario at a Time"
         color={COLORS.orange}
       />
 
@@ -71,37 +73,51 @@ const TestingPipelineDiagram: React.FC = () => {
 
           <ArchitectureArrow direction="down" length={28} label="Sets entropy per persona" />
 
-          {/* Persona row */}
-          <div className="flex items-start justify-center gap-8 flex-wrap">
+          {/* 4 Persona row */}
+          <div className="flex items-start justify-center gap-6 flex-wrap">
             <ArchitectureNode
               icon={<UserCircle size={28} />}
-              label="executive_sponsor"
+              label="Rushed Junior"
               sublabel="Dump & Go"
               color={COLORS.orange}
             />
             <ArchitectureNode
               icon={<UserCircle size={28} />}
-              label="solo_procurement_hero"
-              sublabel="Mixed"
+              label="Methodical Mgr"
+              sublabel="Over-detailed"
               color={COLORS.orange}
             />
             <ArchitectureNode
               icon={<UserCircle size={28} />}
-              label="tactical_category_mgr"
-              sublabel="Over-detailed"
+              label="CFO / Finance"
+              sublabel="Financial precision"
+              color={COLORS.orange}
+            />
+            <ArchitectureNode
+              icon={<UserCircle size={28} />}
+              label="Frustrated User"
+              sublabel="Messy narratives"
               color={COLORS.orange}
             />
           </div>
 
           <ArchitectureArrow direction="down" length={32} label="Feed personas" />
 
-          {/* AI Generator */}
-          <ArchitectureNode
-            icon={<Bot size={28} />}
-            label="AI Data Generator"
-            sublabel="Gemini 3.1"
-            color={COLORS.orange}
-          />
+          {/* AI Generator with DB context badge */}
+          <div className="relative">
+            <ArchitectureNode
+              icon={<Bot size={28} />}
+              label="AI Data Generator"
+              sublabel="Gemini 3.1"
+              color={COLORS.orange}
+            />
+            <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5">
+              <Database size={10} className="text-green-600" />
+              <span className="text-[8px] font-semibold text-green-700 whitespace-nowrap">
+                Industry & Category from DB
+              </span>
+            </div>
+          </div>
 
           <ArchitectureArrow direction="down" length={32} label="Mixed Payload (JSON + Raw Text)" />
 
@@ -218,6 +234,25 @@ const TestingPipelineDiagram: React.FC = () => {
 
       <ArchitectureArrow direction="down" length={36} />
 
+      {/* ── Session Log + Export Feedback ── */}
+      <div className="flex items-center justify-center gap-8">
+        <ArchitectureNode
+          icon={<Calendar size={28} />}
+          label="Session Log"
+          sublabel="Groups by Date"
+          color={COLORS.blue}
+        />
+        <ArchitectureArrow direction="right" length={48} label="Per date" />
+        <ArchitectureNode
+          icon={<Download size={28} />}
+          label="Export Feedback"
+          sublabel="{scenario}_{date}.json"
+          color={COLORS.green}
+        />
+      </div>
+
+      <ArchitectureArrow direction="down" length={36} />
+
       {/* ── Phase 3: LLM Auditor ── */}
       <ArchitectureContainer
         title="Phase 3: LLM Auditor"
@@ -323,11 +358,21 @@ const TestingPipelineDiagram: React.FC = () => {
         </div>
       </div>
 
+      {/* ── External AI Consultation ── */}
+      <ArchitectureNode
+        icon={<Bot size={28} />}
+        label="External AI Consultation"
+        sublabel="Field structure review"
+        color={COLORS.purple}
+      />
+
+      <ArchitectureArrow direction="down" length={36} />
+
       {/* ── Final Action ── */}
       <ArchitectureNode
         icon={<Wrench size={28} />}
         label="Schema & UI Refactoring Backlog"
-        sublabel="Update GenericScenarioWizard OR Supabase DB Schema"
+        sublabel="Gradual: Required → Optional → Raw"
         color={COLORS.green}
       />
 
@@ -344,6 +389,10 @@ const TestingPipelineDiagram: React.FC = () => {
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded" style={{ backgroundColor: COLORS.purple }} />
           <span className="text-xs text-gray-600">GEA / Evaluation</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: COLORS.green }} />
+          <span className="text-xs text-gray-600">Feedback Export</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-3 rounded border-2 border-dashed border-orange-400" />
