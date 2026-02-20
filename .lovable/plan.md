@@ -1,67 +1,59 @@
 
-# Refactor `rfp-generator` Scenario + Fix Serialization Bug
+
+# Refactor `make-vs-buy` Scenario -- Fix HR Bias
 
 ## Summary
-Remove 2 redundant fields (`mainFocus`, `documentTypes`) that caused friction and a serialization bug (`[object Object]`), add 2 new contextual textareas for technical specs and incumbent data, and rebuild the test data factory to match.
+Replace 5 hardcoded HR/outsourcing fields and `mainFocus` with 4 universal textareas that work for any Make vs. Buy dilemma (software, manufacturing, equipment, services). Keep `industryContext` and remove all `currency`/`number`/`select` fields that forced an HR-only framing.
 
 ## Changes
 
-### 1. Update Scenario Schema (`src/lib/scenarios.ts`, lines 449-462)
+### 1. Update Scenario Schema (`src/lib/scenarios.ts`, lines 77-90)
 
-**Remove:**
-- `MAIN_FOCUS_FIELD` (line 451) -- redundant; the raw brief already captures intent
-- `documentTypes` select field (lines 453-458) -- AI ignores the select value; causes `[object Object]` serialization
+**Remove (6 fields):**
+- `MAIN_FOCUS_FIELD` (line 79)
+- `internalSalary` (line 80)
+- `recruitingCost` (line 81)
+- `managementTime` (line 82)
+- `agencyFee` (line 84)
+- `officeItPerHead` (line 83) -- also HR-biased, not listed in task but should go
+- `agencyOnboardingSpeed` (line 85)
+- `knowledgeRetentionRisk` (line 86)
+- `qualityBenchmark` (line 87)
+- `peakLoadCapacity` (line 88)
+- `strategicImportance` (line 89)
 
-**Keep (5 fields):**
-- `industryContext` (textarea, optional)
-- `rawBrief` (textarea, required) -- rename label to "Project Brief & Scope"
-- `budgetRange` (text, optional) -- confirmed as plain string type
-- `evaluationPriorities` (change from `type: "text"` to `type: "textarea"`, optional) -- allows richer input
-- `additionalInstructions` (textarea, optional)
+Effectively: remove ALL fields except `industryContext`.
 
-**Add (2 new fields):**
-- `technicalRequirements` -- textarea, optional. Label: "Technical Specs & Volumes". Placeholder: "E.g., 50 MacBooks (M3, 32GB RAM), 15,000 tons of rebar, or specific SKUs..."
-- `incumbentData` -- textarea, optional. Label: "Current Suppliers & Baseline Data". Placeholder: "E.g., Currently using Vendor X, paying $Y per unit, current lead time is 3 weeks..."
+**Keep:**
+- `industryContext` (textarea, required)
 
-**Final field order (7 fields):**
+**Add (4 new fields):**
+1. `projectBrief` -- textarea, required. Label: "The Dilemma (Project Brief)"
+2. `makeCosts` -- textarea, optional. Label: "Estimated Internal Costs (Make)"
+3. `buyCosts` -- textarea, optional. Label: "Estimated External Costs (Buy)"
+4. `strategicFactors` -- textarea, optional. Label: "Strategic Factors & Constraints"
+
+**Final field order (5 fields):**
 1. `industryContext`
-2. `rawBrief` (renamed label)
-3. `budgetRange`
-4. `evaluationPriorities`
-5. `technicalRequirements` (NEW)
-6. `incumbentData` (NEW)
-7. `additionalInstructions`
+2. `projectBrief` (required)
+3. `makeCosts`
+4. `buyCosts`
+5. `strategicFactors`
 
-### 2. Fix Test Data Factory (`src/lib/test-data-factory.ts`, lines 330-361)
+### 2. Update Test Data Factory (`src/lib/test-data-factory.ts`, lines 59-71)
 
-**Remove generators for:** `documentTypes` (was returning a string from `randomChoice` but the select field itself caused the bug upstream)
+**Replace entire generator** with `randomChoice` arrays covering Software, Manufacturing, and Services contexts:
 
-**Keep & verify as plain strings:** `rawBrief`, `evaluationPriorities`, `budgetRange`, `additionalInstructions` -- all use `randomChoice([...strings...])`, confirmed safe.
+- `projectBrief`: 4 diverse dilemmas (build CRM vs buy Salesforce, manufacture in-house vs outsource to Asia, build internal logistics vs use 3PL, develop custom ERP module vs license SAP add-on)
+- `makeCosts`: 4 realistic internal cost breakdowns
+- `buyCosts`: 4 realistic vendor/external cost breakdowns
+- `strategicFactors`: 4 strategic constraint descriptions
 
-**Add generators for:**
-- `technicalRequirements` -- randomChoice of realistic specs (e.g., "50 MacBook Pro M3 (32GB RAM, 512GB SSD)..." or "15,000 tons Grade 500 rebar...")
-- `incumbentData` -- randomChoice of baseline data (e.g., "Currently using TransEuro GmbH at EUR165k/year. Lead time: 48h...")
-
-### Field Diff
-
-```text
-BEFORE (7 fields)              AFTER (7 fields)
------------------              -----------------
-industryContext   [KEEP]       industryContext
-mainFocus         [REMOVE]     rawBrief (label renamed)
-rawBrief          [KEEP]       budgetRange
-documentTypes     [REMOVE]     evaluationPriorities
-evaluationPriorities [KEEP]    technicalRequirements  [NEW]
-budgetRange       [KEEP]       incumbentData          [NEW]
-additionalInstructions [KEEP]  additionalInstructions
-```
-
-### Serialization Bug Fix
-The `[object Object]` bug was caused by `documentTypes` being a `select` field whose value could be serialized incorrectly when passed through the test data pipeline. Removing it and ensuring all remaining fields are `text`/`textarea` (plain string types) eliminates the root cause.
+All values are plain strings -- no arrays, objects, or select types.
 
 ### Files Modified
-- `src/lib/scenarios.ts` -- rfp-generator field definitions
-- `src/lib/test-data-factory.ts` -- rfp-generator test data generator
+- `src/lib/scenarios.ts` -- make-vs-buy field definitions
+- `src/lib/test-data-factory.ts` -- make-vs-buy test data generator
 
 ### No Database or Edge Function Changes
 All changes are frontend-only schema definitions and test data generators.
