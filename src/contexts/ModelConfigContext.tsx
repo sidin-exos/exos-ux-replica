@@ -16,7 +16,7 @@ const STORAGE_KEY = "exos_model_config";
 
 const DEFAULT_CONFIG: ModelConfig = {
   provider: "lovable",
-  model: "gemini-2.0-flash",
+  model: "google/gemini-3-flash-preview",
   lastTested: null,
 };
 
