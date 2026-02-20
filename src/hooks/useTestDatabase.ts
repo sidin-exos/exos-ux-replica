@@ -33,6 +33,9 @@ export interface TestReport {
   success: boolean;
   error_message: string | null;
   shadow_log: Record<string, unknown> | null;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
   created_at: string;
 }
 
@@ -142,7 +145,7 @@ export function useTestStats(scenarioType?: string) {
       // Get prompt IDs for this scenario to filter reports
       let reportQuery = supabase
         .from("test_reports")
-        .select("success, processing_time_ms, prompt_id");
+        .select("success, processing_time_ms, prompt_id, total_tokens");
 
       if (scenarioType) {
         const { data: promptIds } = await supabase
@@ -166,6 +169,13 @@ export function useTestStats(scenarioType?: string) {
           )
         : 0;
 
+      const successReports = reports?.filter(r => r.success && (r as any).total_tokens > 0) || [];
+      const avgTotalTokens = successReports.length
+        ? Math.round(
+            successReports.reduce((sum, r) => sum + ((r as any).total_tokens || 0), 0) / successReports.length
+          )
+        : 0;
+
       return {
         totalPrompts: promptCount || 0,
         totalReports: reports?.length || 0,
@@ -173,6 +183,7 @@ export function useTestStats(scenarioType?: string) {
           ? Math.round((successCount / reports.length) * 100) 
           : 0,
         avgProcessingTimeMs: avgProcessingTime,
+        avgTotalTokens,
       };
     },
   });

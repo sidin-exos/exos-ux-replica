@@ -66,6 +66,9 @@ function buildFeedbackJSON(scenarioType: string, date: string, prompts: TestProm
         validation_result: r.validation_result,
         shadow_log: r.shadow_log,
         token_usage: r.token_usage,
+        prompt_tokens: r.prompt_tokens,
+        completion_tokens: r.completion_tokens,
+        total_tokens: r.total_tokens,
       })),
     })),
   };

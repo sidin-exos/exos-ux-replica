@@ -298,6 +298,7 @@ export type Database = {
       }
       test_reports: {
         Row: {
+          completion_tokens: number | null
           created_at: string
           deanonymized_response: string | null
           error_message: string | null
@@ -305,13 +306,16 @@ export type Database = {
           model: string
           processing_time_ms: number | null
           prompt_id: string
+          prompt_tokens: number | null
           raw_response: string
           shadow_log: Json | null
           success: boolean
           token_usage: Json | null
+          total_tokens: number | null
           validation_result: Json | null
         }
         Insert: {
+          completion_tokens?: number | null
           created_at?: string
           deanonymized_response?: string | null
           error_message?: string | null
@@ -319,13 +323,16 @@ export type Database = {
           model: string
           processing_time_ms?: number | null
           prompt_id: string
+          prompt_tokens?: number | null
           raw_response: string
           shadow_log?: Json | null
           success?: boolean
           token_usage?: Json | null
+          total_tokens?: number | null
           validation_result?: Json | null
         }
         Update: {
+          completion_tokens?: number | null
           created_at?: string
           deanonymized_response?: string | null
           error_message?: string | null
@@ -333,10 +340,12 @@ export type Database = {
           model?: string
           processing_time_ms?: number | null
           prompt_id?: string
+          prompt_tokens?: number | null
           raw_response?: string
           shadow_log?: Json | null
           success?: boolean
           token_usage?: Json | null
+          total_tokens?: number | null
           validation_result?: Json | null
         }
         Relationships: [

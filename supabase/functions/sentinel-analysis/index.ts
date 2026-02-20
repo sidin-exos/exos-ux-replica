@@ -459,7 +459,10 @@ serve(async (req) => {
                 processing_time_ms: processingTime,
                 token_usage: usage,
                 success: true,
-                shadow_log: shadowLog
+                shadow_log: shadowLog,
+                prompt_tokens: usage?.prompt_tokens || 0,
+                completion_tokens: usage?.completion_tokens || 0,
+                total_tokens: usage?.total_tokens || 0,
               });
             } catch (reportError) {
               console.error("[Sentinel] Failed to log report:", reportError);
@@ -640,7 +643,10 @@ serve(async (req) => {
         await supabase.from("test_reports").insert({
           prompt_id: promptId, model, raw_response: content,
           processing_time_ms: processingTime, token_usage: data.usage || null, success: true,
-          shadow_log: shadowLog
+          shadow_log: shadowLog,
+          prompt_tokens: data.usage?.prompt_tokens || 0,
+          completion_tokens: data.usage?.completion_tokens || 0,
+          total_tokens: data.usage?.total_tokens || 0,
         });
       } catch (reportError) {
         console.error("[Sentinel] Failed to log report:", reportError);

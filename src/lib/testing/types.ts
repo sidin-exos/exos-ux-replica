@@ -62,6 +62,9 @@ export interface ExecutionReport {
   token_usage: Record<string, unknown> | null;
   error_message: string | null;
   shadow_log: Record<string, unknown> | null;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
   created_at: string;
 }
 
