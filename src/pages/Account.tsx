@@ -16,7 +16,7 @@ const subscriptionPlans = [
   {
     id: "smb",
     name: "SMB",
-    price: "€49",
+    price: "€29",
     period: "/month",
     icon: Zap,
     features: ["AI-powered analysis", "SOW review tools", "Email support"],
@@ -25,7 +25,7 @@ const subscriptionPlans = [
   {
     id: "professional",
     name: "Professional",
-    price: "€199",
+    price: "€99",
     period: "/month",
     icon: Shield,
     features: ["Unlimited simulations", "Full dashboard access", "Priority support"],
