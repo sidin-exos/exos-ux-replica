@@ -31,12 +31,12 @@ const TestStatsCards = ({ scenarioType }: TestStatsCardsProps) => {
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
-          title="Total Prompts"
+          title={scenarioType ? "Scenario Prompts" : "Total Prompts"}
           value={String(stats?.totalPrompts ?? 0)}
           icon={FileText}
         />
         <StatCard
-          title="Total Reports"
+          title={scenarioType ? "Scenario Reports" : "Total Reports"}
           value={String(stats?.totalReports ?? 0)}
           icon={BarChart3}
         />
@@ -62,7 +62,7 @@ const TestStatsCards = ({ scenarioType }: TestStatsCardsProps) => {
           <div className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-1.5 font-medium text-foreground">
               <Target className="w-4 h-4 text-primary" />
-              Audit Readiness
+              Scenario Audit Readiness
             </span>
             <span className={`font-mono text-xs ${isReady ? "text-green-600 font-bold" : "text-muted-foreground"}`}>
               {totalReports} / {AUDIT_THRESHOLD} runs
