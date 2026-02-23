@@ -6,6 +6,7 @@
 import { View, Text } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
+import type { DashboardData } from "@/lib/dashboard-data-parser";
 
 import { styles, colors } from "./dashboardVisuals/theme";
 import { PDFCostWaterfall } from "./dashboardVisuals/PDFCostWaterfall";
@@ -34,7 +35,7 @@ export const PDFDashboardPlaceholder = ({ name }: { name: string }) => (
     </View>
     <View style={{ padding: 12, alignItems: "center" }}>
       <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "center" }}>
-        This dashboard doesn’t have a PDF visual yet.
+        This dashboard doesn't have a PDF visual yet.
       </Text>
     </View>
   </View>
@@ -42,9 +43,10 @@ export const PDFDashboardPlaceholder = ({ name }: { name: string }) => (
 
 interface PDFDashboardVisualsProps {
   selectedDashboards: DashboardType[];
+  parsedData?: DashboardData | null;
 }
 
-export const PDFDashboardVisuals = ({ selectedDashboards }: PDFDashboardVisualsProps) => {
+export const PDFDashboardVisuals = ({ selectedDashboards, parsedData }: PDFDashboardVisualsProps) => {
   if (!selectedDashboards || selectedDashboards.length === 0) return null;
 
   return (
@@ -60,33 +62,33 @@ export const PDFDashboardVisuals = ({ selectedDashboards }: PDFDashboardVisualsP
 
         switch (dashboardType) {
           case "action-checklist":
-            return wrap(<PDFActionChecklist />);
+            return wrap(<PDFActionChecklist data={parsedData?.actionChecklist} />);
           case "decision-matrix":
-            return wrap(<PDFDecisionMatrix />);
+            return wrap(<PDFDecisionMatrix data={parsedData?.decisionMatrix} />);
           case "cost-waterfall":
-            return wrap(<PDFCostWaterfall />);
+            return wrap(<PDFCostWaterfall data={parsedData?.costWaterfall} />);
           case "timeline-roadmap":
-            return wrap(<PDFTimelineRoadmap />);
+            return wrap(<PDFTimelineRoadmap data={parsedData?.timelineRoadmap} />);
           case "kraljic-quadrant":
-            return wrap(<PDFKraljicQuadrant />);
+            return wrap(<PDFKraljicQuadrant data={parsedData?.kraljicQuadrant} />);
           case "tco-comparison":
-            return wrap(<PDFTCOComparison />);
+            return wrap(<PDFTCOComparison data={parsedData?.tcoComparison} />);
           case "license-tier":
-            return wrap(<PDFLicenseTier />);
+            return wrap(<PDFLicenseTier data={parsedData?.licenseTier} />);
           case "sensitivity-spider":
-            return wrap(<PDFSensitivityAnalysis />);
+            return wrap(<PDFSensitivityAnalysis data={parsedData?.sensitivitySpider} />);
           case "risk-matrix":
-            return wrap(<PDFRiskMatrix />);
+            return wrap(<PDFRiskMatrix data={parsedData?.riskMatrix} />);
           case "scenario-comparison":
-            return wrap(<PDFScenarioComparison />);
+            return wrap(<PDFScenarioComparison data={parsedData?.scenarioComparison} />);
           case "supplier-scorecard":
-            return wrap(<PDFSupplierScorecard />);
+            return wrap(<PDFSupplierScorecard data={parsedData?.supplierScorecard} />);
           case "sow-analysis":
-            return wrap(<PDFSOWAnalysis />);
+            return wrap(<PDFSOWAnalysis data={parsedData?.sowAnalysis} />);
           case "negotiation-prep":
-            return wrap(<PDFNegotiationPrep />);
+            return wrap(<PDFNegotiationPrep data={parsedData?.negotiationPrep} />);
           case "data-quality":
-            return wrap(<PDFDataQuality />);
+            return wrap(<PDFDataQuality data={parsedData?.dataQuality} />);
           default:
             return wrap(<PDFDashboardPlaceholder name={config?.name || dashboardType} />);
         }

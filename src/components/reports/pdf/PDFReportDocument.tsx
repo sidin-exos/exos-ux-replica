@@ -8,6 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import exosLogo from "@/assets/logo-concept-layers.png";
 import { PDFDashboardVisuals } from "./PDFDashboardVisuals";
+import { extractDashboardData, stripDashboardData } from "@/lib/dashboard-data-parser";
 
 // EXOS Corporate Colors
 const colors = {
@@ -318,8 +319,10 @@ const PDFReportDocument = ({
   timestamp,
   selectedDashboards = [],
 }: PDFReportDocumentProps) => {
-  const keyPoints = extractKeyPoints(analysisResult);
-  const analysisLines = analysisResult.split("\n").filter((line) => line.trim());
+  const parsedData = extractDashboardData(analysisResult);
+  const strippedAnalysis = stripDashboardData(analysisResult);
+  const keyPoints = extractKeyPoints(strippedAnalysis);
+  const analysisLines = strippedAnalysis.split("\n").filter((line) => line.trim());
 
   return (
     <Document>
@@ -377,7 +380,7 @@ const PDFReportDocument = ({
               <Image src={exosLogo} style={styles.sectionLogoImage} />
               <Text style={styles.sectionTitle}>Analysis Visualizations</Text>
             </View>
-            <PDFDashboardVisuals selectedDashboards={selectedDashboards} />
+            <PDFDashboardVisuals selectedDashboards={selectedDashboards} parsedData={parsedData} />
           </View>
         )}
 
