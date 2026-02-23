@@ -110,7 +110,9 @@ Output ONLY the final polished analysis. Do NOT include:
 - References to the audit process
 - Meta-commentary about corrections made
 
-The output should read as a clean, professional procurement analysis as if it were correct from the start.`;
+The output should read as a clean, professional procurement analysis as if it were correct from the start.
+
+IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON with structured visualization data extracted from your analysis. Do NOT wrap the JSON in markdown code blocks. Include only dashboard keys relevant to the scenario.`;
 
 // ============================================
 // SERVER-SIDE GROUNDING HELPERS
@@ -228,6 +230,9 @@ IMPORTANT RULES:
 6. Only cite specific data points from provided context
 7. Flag uncertainty explicitly with confidence levels
 8. Err on cautious side for savings projections
+9. At the VERY END of your response, append a <dashboard-data> XML block containing valid JSON with structured data for relevant dashboards. Example:
+<dashboard-data>{"actionChecklist":{"actions":[{"action":"...","priority":"high","status":"pending","owner":"..."}]},"riskMatrix":{"risks":[{"supplier":"...","impact":"high","probability":"medium","category":"..."}]}}</dashboard-data>
+Only include dashboard keys relevant to the scenario analysis. Use REAL values from your analysis. Do NOT wrap the JSON in markdown code blocks inside the XML tags.
 
 ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
 

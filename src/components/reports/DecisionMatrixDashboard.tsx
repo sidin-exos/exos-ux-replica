@@ -1,17 +1,18 @@
 import { Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { DecisionMatrixData } from "@/lib/dashboard-data-parser";
 
 interface Option {
   id: string;
   name: string;
-  scores: number[]; // 0-5 scale for each criterion
+  scores: number[];
   totalScore?: number;
 }
 
 interface Criterion {
   name: string;
-  weight: number; // percentage, should sum to 100
+  weight: number;
 }
 
 interface DecisionMatrixDashboardProps {
@@ -19,6 +20,7 @@ interface DecisionMatrixDashboardProps {
   subtitle?: string;
   criteria?: Criterion[];
   options?: Option[];
+  parsedData?: DecisionMatrixData;
 }
 
 const defaultCriteria: Criterion[] = [
@@ -63,13 +65,18 @@ const DecisionMatrixDashboard = ({
   subtitle = "Weighted multi-criteria analysis",
   criteria = defaultCriteria,
   options = defaultOptions,
+  parsedData,
 }: DecisionMatrixDashboardProps) => {
+  const effectiveCriteria = parsedData?.criteria || criteria;
+  const effectiveOptions: Option[] = parsedData?.options
+    ? parsedData.options.map((o, i) => ({ id: String.fromCharCode(65 + i), ...o }))
+    : options;
   // Calculate weighted scores
-  const optionsWithScores = options.map((option) => {
+  const optionsWithScores = effectiveOptions.map((option) => {
     const weightedScore = option.scores.reduce((total, score, idx) => {
-      return total + (score * criteria[idx].weight) / 100;
+      return total + (score * (effectiveCriteria[idx]?.weight || 0)) / 100;
     }, 0);
-    return { ...option, totalScore: Math.round(weightedScore * 20) }; // Scale to 100
+    return { ...option, totalScore: Math.round(weightedScore * 20) };
   });
 
   const maxScore = Math.max(...optionsWithScores.map((o) => o.totalScore || 0));
@@ -121,7 +128,7 @@ const DecisionMatrixDashboard = ({
               </tr>
             </thead>
             <tbody>
-              {criteria.map((criterion, idx) => (
+              {effectiveCriteria.map((criterion, idx) => (
                 <tr key={criterion.name} className="border-b border-border/30">
                   <td className="py-2.5 pr-4 text-foreground">{criterion.name}</td>
                   <td className="py-2.5 px-2 text-center">

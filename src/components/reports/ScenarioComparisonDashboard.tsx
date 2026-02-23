@@ -8,14 +8,19 @@ import {
   Radar,
   ResponsiveContainer,
 } from "recharts";
+import type { ScenarioComparisonData } from "@/lib/dashboard-data-parser";
 
-const scenarios = [
+interface ScenarioComparisonDashboardProps {
+  parsedData?: ScenarioComparisonData;
+}
+
+const defaultScenarios = [
   { id: "A", name: "Conservative", color: "hsl(174, 72%, 50%)" },
   { id: "B", name: "Aggressive", color: "hsl(220, 70%, 60%)" },
   { id: "C", name: "Hybrid", color: "hsl(280, 60%, 55%)" },
 ];
 
-const radarData = [
+const defaultRadarData = [
   { metric: "Savings", A: 65, B: 90, C: 78 },
   { metric: "Risk", A: 90, B: 45, C: 70 },
   { metric: "Speed", A: 70, B: 85, C: 75 },
@@ -23,13 +28,16 @@ const radarData = [
   { metric: "Flexibility", A: 55, B: 80, C: 88 },
 ];
 
-const summary = [
+const defaultSummary = [
   { criteria: "Est. Savings", A: "$320K", B: "$480K", C: "$395K" },
   { criteria: "Timeline", A: "3 mo", B: "6 mo", C: "4 mo" },
   { criteria: "Risk Level", A: "Low", B: "High", C: "Medium" },
 ];
 
-const ScenarioComparisonDashboard = () => {
+const ScenarioComparisonDashboard = ({ parsedData }: ScenarioComparisonDashboardProps) => {
+  const scenarios = parsedData?.scenarios || defaultScenarios;
+  const radarData = parsedData?.radarData || defaultRadarData;
+  const summary = parsedData?.summary || defaultSummary;
   return (
     <Card className="card-elevated h-full">
       <CardHeader className="pb-4">

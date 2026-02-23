@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { DashboardType } from "@/lib/dashboard-mappings";
+import { extractDashboardData } from "@/lib/dashboard-data-parser";
 
 // Dashboard components
 import ActionChecklistDashboard from "./ActionChecklistDashboard";
@@ -23,61 +25,59 @@ interface DashboardRendererProps {
   formData?: Record<string, string>;
 }
 
-/**
- * Renders the appropriate dashboard component based on type.
- * In the future, this can be enhanced to parse analysisResult
- * and extract data specific to each dashboard type.
- */
 const DashboardRenderer = ({
   dashboardType,
   scenarioTitle,
   analysisResult,
   formData,
 }: DashboardRendererProps) => {
-  // Map dashboard types to their components
-  // Currently uses default data; can be enhanced to parse analysisResult
+  const parsedData = useMemo(
+    () => extractDashboardData(analysisResult || ''),
+    [analysisResult]
+  );
+
   switch (dashboardType) {
     case "action-checklist":
-      return <ActionChecklistDashboard />;
+      return <ActionChecklistDashboard parsedData={parsedData?.actionChecklist} />;
     
     case "decision-matrix":
-      return <DecisionMatrixDashboard />;
+      return <DecisionMatrixDashboard parsedData={parsedData?.decisionMatrix} />;
     
     case "cost-waterfall":
-      return <CostWaterfallDashboard />;
+      return <CostWaterfallDashboard parsedData={parsedData?.costWaterfall} />;
     
     case "timeline-roadmap":
-      return <TimelineRoadmapDashboard />;
+      return <TimelineRoadmapDashboard parsedData={parsedData?.timelineRoadmap} />;
     
     case "kraljic-quadrant":
-      return <KraljicQuadrantDashboard />;
+      return <KraljicQuadrantDashboard parsedData={parsedData?.kraljicQuadrant} />;
     
     case "tco-comparison":
-      return <TCOComparisonDashboard />;
+      return <TCOComparisonDashboard parsedData={parsedData?.tcoComparison} />;
     
     case "license-tier":
-      return <LicenseTierDashboard />;
+      return <LicenseTierDashboard parsedData={parsedData?.licenseTier} />;
     
     case "sensitivity-spider":
-      return <SensitivitySpiderDashboard />;
+      return <SensitivitySpiderDashboard parsedData={parsedData?.sensitivitySpider} />;
     
     case "risk-matrix":
-      return <RiskMatrixDashboard />;
+      return <RiskMatrixDashboard parsedData={parsedData?.riskMatrix} />;
     
     case "scenario-comparison":
-      return <ScenarioComparisonDashboard />;
+      return <ScenarioComparisonDashboard parsedData={parsedData?.scenarioComparison} />;
     
     case "supplier-scorecard":
-      return <SupplierPerformanceDashboard />;
+      return <SupplierPerformanceDashboard parsedData={parsedData?.supplierScorecard} />;
     
     case "sow-analysis":
-      return <SOWAnalysisDashboard />;
+      return <SOWAnalysisDashboard parsedData={parsedData?.sowAnalysis} />;
     
     case "negotiation-prep":
-      return <NegotiationPrepDashboard />;
+      return <NegotiationPrepDashboard parsedData={parsedData?.negotiationPrep} />;
     
     case "data-quality":
-      return <DataQualityDashboard />;
+      return <DataQualityDashboard parsedData={parsedData?.dataQuality} />;
     
     default:
       return (

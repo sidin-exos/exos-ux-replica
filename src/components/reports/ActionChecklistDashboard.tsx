@@ -1,6 +1,7 @@
 import { CheckCircle2, Circle, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { ActionChecklistData } from "@/lib/dashboard-data-parser";
 
 type Priority = "critical" | "high" | "medium" | "low";
 type Status = "done" | "in-progress" | "pending" | "blocked";
@@ -18,6 +19,7 @@ interface ActionChecklistDashboardProps {
   title?: string;
   subtitle?: string;
   actions?: ActionItem[];
+  parsedData?: ActionChecklistData;
 }
 
 const defaultActions: ActionItem[] = [
@@ -48,16 +50,21 @@ const ActionChecklistDashboard = ({
   title = "Action Checklist",
   subtitle = "Prioritized next steps",
   actions = defaultActions,
+  parsedData,
 }: ActionChecklistDashboardProps) => {
-  const completedCount = actions.filter((a) => a.status === "done").length;
-  const totalCount = actions.length;
+  // Use parsed AI data if available, otherwise fall back to props/defaults
+  const effectiveActions: ActionItem[] = parsedData?.actions
+    ? parsedData.actions.map((a, i) => ({ id: i + 1, ...a }))
+    : actions;
+  const completedCount = effectiveActions.filter((a) => a.status === "done").length;
+  const totalCount = effectiveActions.length;
   const progressPercent = Math.round((completedCount / totalCount) * 100);
 
   const groupedActions = {
-    critical: actions.filter((a) => a.priority === "critical"),
-    high: actions.filter((a) => a.priority === "high"),
-    medium: actions.filter((a) => a.priority === "medium"),
-    low: actions.filter((a) => a.priority === "low"),
+    critical: effectiveActions.filter((a) => a.priority === "critical"),
+    high: effectiveActions.filter((a) => a.priority === "high"),
+    medium: effectiveActions.filter((a) => a.priority === "medium"),
+    low: effectiveActions.filter((a) => a.priority === "low"),
   };
 
   return (

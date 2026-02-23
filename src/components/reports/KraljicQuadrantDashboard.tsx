@@ -1,6 +1,7 @@
 import { Grid3X3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { KraljicData } from "@/lib/dashboard-data-parser";
 
 type Quadrant = "strategic" | "leverage" | "bottleneck" | "non-critical";
 
@@ -16,6 +17,7 @@ interface KraljicQuadrantDashboardProps {
   title?: string;
   subtitle?: string;
   items?: PositionedItem[];
+  parsedData?: KraljicData;
 }
 
 const defaultItems: PositionedItem[] = [
@@ -45,9 +47,11 @@ const KraljicQuadrantDashboard = ({
   title = "Kraljic Matrix",
   subtitle = "Strategic positioning",
   items = defaultItems,
+  parsedData,
 }: KraljicQuadrantDashboardProps) => {
+  const effectiveItems = parsedData?.items || items;
   // Group items by quadrant
-  const groupedItems = items.reduce((acc, item) => {
+  const groupedItems = effectiveItems.reduce((acc, item) => {
     const quadrant = getQuadrant(item.supplyRisk, item.businessImpact);
     if (!acc[quadrant]) acc[quadrant] = [];
     acc[quadrant].push(item);
@@ -130,7 +134,7 @@ const KraljicQuadrantDashboard = ({
         {/* Item Legend */}
         <div className="pt-3 border-t border-border/30">
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {items.map((item) => (
+            {effectiveItems.map((item) => (
               <div key={item.id} className="flex items-center gap-2">
                 <Badge variant="outline" className="w-6 h-6 rounded-full justify-center p-0">
                   {item.id}

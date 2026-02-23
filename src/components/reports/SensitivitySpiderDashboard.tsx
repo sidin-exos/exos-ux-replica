@@ -1,5 +1,6 @@
 import { Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { SensitivityData } from "@/lib/dashboard-data-parser";
 
 interface SensitivityVariable {
   name: string;
@@ -15,6 +16,7 @@ interface SensitivitySpiderDashboardProps {
   variables?: SensitivityVariable[];
   baseCaseTotal?: number;
   currency?: string;
+  parsedData?: SensitivityData;
 }
 
 const defaultVariables: SensitivityVariable[] = [
@@ -48,9 +50,13 @@ const SensitivitySpiderDashboard = ({
   variables = defaultVariables,
   baseCaseTotal = 1200000,
   currency = "$",
+  parsedData,
 }: SensitivitySpiderDashboardProps) => {
+  const effectiveVars = parsedData?.variables || variables;
+  const effectiveBaseCaseTotal = parsedData?.baseCaseTotal || baseCaseTotal;
+  const effectiveCurrency = parsedData?.currency || currency;
   // Calculate impact for each variable
-  const impacts = variables.map((v) => {
+  const impacts = effectiveVars.map((v) => {
     const lowImpact = v.lowCase - v.baseCase;
     const highImpact = v.highCase - v.baseCase;
     const maxImpact = Math.max(Math.abs(lowImpact), Math.abs(highImpact));
@@ -76,7 +82,7 @@ const SensitivitySpiderDashboard = ({
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold text-foreground">
-              {formatCurrency(baseCaseTotal, currency)}
+              {formatCurrency(effectiveBaseCaseTotal, effectiveCurrency)}
             </p>
             <p className="text-xs text-muted-foreground">base case</p>
           </div>
@@ -95,7 +101,7 @@ const SensitivitySpiderDashboard = ({
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-foreground">{variable.name}</span>
                   <span className="text-muted-foreground">
-                    ±{formatCurrency(variable.maxImpact, currency)}
+                    ±{formatCurrency(variable.maxImpact, effectiveCurrency)}
                   </span>
                 </div>
 
@@ -152,7 +158,7 @@ const SensitivitySpiderDashboard = ({
         {/* Key Insight */}
         <div className="pt-3 border-t border-border/30">
           <p className="text-xs text-muted-foreground">
-            <span className="text-warning font-medium">Key Risk:</span> {sortedImpacts[0]?.name} has the highest impact (±{formatCurrency(sortedImpacts[0]?.maxImpact || 0, currency)}) on total cost
+            <span className="text-warning font-medium">Key Risk:</span> {sortedImpacts[0]?.name} has the highest impact (±{formatCurrency(sortedImpacts[0]?.maxImpact || 0, effectiveCurrency)}) on total cost
           </p>
         </div>
 
@@ -161,19 +167,19 @@ const SensitivitySpiderDashboard = ({
           <div>
             <p className="text-xs text-muted-foreground mb-1">Best Case</p>
             <p className="text-sm font-semibold text-primary">
-              {formatCurrency(baseCaseTotal - sortedImpacts.reduce((sum, v) => sum + Math.abs(v.lowImpact < 0 ? v.lowImpact : 0), 0), currency)}
+              {formatCurrency(effectiveBaseCaseTotal - sortedImpacts.reduce((sum, v) => sum + Math.abs(v.lowImpact < 0 ? v.lowImpact : 0), 0), effectiveCurrency)}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Base Case</p>
             <p className="text-sm font-semibold text-foreground">
-              {formatCurrency(baseCaseTotal, currency)}
+              {formatCurrency(effectiveBaseCaseTotal, effectiveCurrency)}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Worst Case</p>
             <p className="text-sm font-semibold text-destructive">
-              {formatCurrency(baseCaseTotal + sortedImpacts.reduce((sum, v) => sum + Math.abs(v.highImpact > 0 ? v.highImpact : 0), 0), currency)}
+              {formatCurrency(effectiveBaseCaseTotal + sortedImpacts.reduce((sum, v) => sum + Math.abs(v.highImpact > 0 ? v.highImpact : 0), 0), effectiveCurrency)}
             </p>
           </div>
         </div>

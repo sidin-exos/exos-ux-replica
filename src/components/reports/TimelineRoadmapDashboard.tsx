@@ -1,6 +1,7 @@
 import { Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { TimelineRoadmapData } from "@/lib/dashboard-data-parser";
 
 type PhaseStatus = "completed" | "in-progress" | "upcoming";
 
@@ -18,6 +19,7 @@ interface TimelineRoadmapDashboardProps {
   subtitle?: string;
   phases?: Phase[];
   totalWeeks?: number;
+  parsedData?: TimelineRoadmapData;
 }
 
 const defaultPhases: Phase[] = [
@@ -39,12 +41,16 @@ const TimelineRoadmapDashboard = ({
   subtitle = "Implementation roadmap",
   phases = defaultPhases,
   totalWeeks = 24,
+  parsedData,
 }: TimelineRoadmapDashboardProps) => {
-  const completedPhases = phases.filter((p) => p.status === "completed").length;
-  const activePhase = phases.find((p) => p.status === "in-progress");
+  const effectivePhases: Phase[] = parsedData?.phases
+    ? parsedData.phases.map((p, i) => ({ id: i + 1, ...p }))
+    : phases;
+  const effectiveTotalWeeks = parsedData?.totalWeeks || totalWeeks;
+  const completedPhases = effectivePhases.filter((p) => p.status === "completed").length;
+  const activePhase = effectivePhases.find((p) => p.status === "in-progress");
 
-  // Calculate week markers for the header
-  const weekMarkers = [1, Math.floor(totalWeeks / 4), Math.floor(totalWeeks / 2), Math.floor((3 * totalWeeks) / 4), totalWeeks];
+  const weekMarkers = [1, Math.floor(effectiveTotalWeeks / 4), Math.floor(effectiveTotalWeeks / 2), Math.floor((3 * effectiveTotalWeeks) / 4), effectiveTotalWeeks];
 
   return (
     <Card className="card-elevated h-full">
@@ -60,7 +66,7 @@ const TimelineRoadmapDashboard = ({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-lg font-semibold text-foreground">{completedPhases}/{phases.length}</p>
+            <p className="text-lg font-semibold text-foreground">{completedPhases}/{effectivePhases.length}</p>
             <p className="text-xs text-muted-foreground">phases complete</p>
           </div>
         </div>
@@ -74,7 +80,7 @@ const TimelineRoadmapDashboard = ({
             <div
               key={week}
               className="absolute flex flex-col items-center"
-              style={{ left: `${((week - 1) / (totalWeeks - 1)) * 100}%`, transform: "translateX(-50%)" }}
+              style={{ left: `${((week - 1) / (effectiveTotalWeeks - 1)) * 100}%`, transform: "translateX(-50%)" }}
             >
               <span className="text-xs text-muted-foreground">W{week}</span>
               <div className="w-px h-2 bg-border mt-1" />
@@ -84,9 +90,9 @@ const TimelineRoadmapDashboard = ({
 
         {/* Phase bars */}
         <div className="space-y-3">
-          {phases.map((phase) => {
-            const startPercent = ((phase.startWeek - 1) / (totalWeeks - 1)) * 100;
-            const widthPercent = ((phase.endWeek - phase.startWeek) / (totalWeeks - 1)) * 100;
+          {effectivePhases.map((phase) => {
+            const startPercent = ((phase.startWeek - 1) / (effectiveTotalWeeks - 1)) * 100;
+            const widthPercent = ((phase.endWeek - phase.startWeek) / (effectiveTotalWeeks - 1)) * 100;
 
             return (
               <div key={phase.id} className="relative">

@@ -1,7 +1,12 @@
 import { AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { RiskMatrixData } from "@/lib/dashboard-data-parser";
 
-const riskData = [
+interface RiskMatrixDashboardProps {
+  parsedData?: RiskMatrixData;
+}
+
+const defaultRiskData = [
   { id: 1, supplier: "Alpha Corp", impact: "high", probability: "medium", category: "Strategic" },
   { id: 2, supplier: "Beta Industries", impact: "medium", probability: "high", category: "Leverage" },
   { id: 3, supplier: "Gamma Tech", impact: "low", probability: "low", category: "Non-Critical" },
@@ -16,7 +21,10 @@ const getRiskColor = (impact: string, probability: string) => {
   return "bg-muted";
 };
 
-const RiskMatrixDashboard = () => {
+const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
+  const riskData = parsedData?.risks
+    ? parsedData.risks.map((r, i) => ({ id: i + 1, ...r }))
+    : defaultRiskData;
   const criticalCount = riskData.filter(r => r.impact === "high" && r.probability === "high").length;
 
   return (

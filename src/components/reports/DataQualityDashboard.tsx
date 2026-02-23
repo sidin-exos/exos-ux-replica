@@ -1,8 +1,13 @@
 import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import type { DataQualityData } from "@/lib/dashboard-data-parser";
 
-const dataFields = [
+interface DataQualityDashboardProps {
+  parsedData?: DataQualityData;
+}
+
+const defaultDataFields = [
   { field: "Supplier Spend Data", status: "complete", coverage: 100 },
   { field: "Contract Terms", status: "partial", coverage: 65 },
   { field: "Historical Pricing", status: "complete", coverage: 95 },
@@ -11,12 +16,15 @@ const dataFields = [
   { field: "Lead Time Data", status: "complete", coverage: 88 },
 ];
 
-const limitations = [
+const defaultLimitations = [
   { title: "Volume Forecast Missing", impact: "Savings estimates may be ±25% less accurate" },
   { title: "Incomplete Contract Terms", impact: "Exit cost analysis partially affected" },
 ];
 
-const DataQualityDashboard = () => {
+const DataQualityDashboard = ({ parsedData }: DataQualityDashboardProps) => {
+  const dataFields = parsedData?.fields || defaultDataFields;
+  const limitations = parsedData?.limitations || defaultLimitations;
+
   const overallScore = Math.round(
     dataFields.reduce((acc, f) => acc + f.coverage, 0) / dataFields.length
   );

@@ -9,6 +9,7 @@ import {
   Cell,
   LabelList,
 } from "recharts";
+import type { CostWaterfallData } from "@/lib/dashboard-data-parser";
 
 interface CostComponent {
   name: string;
@@ -21,6 +22,7 @@ interface CostWaterfallDashboardProps {
   subtitle?: string;
   components?: CostComponent[];
   currency?: string;
+  parsedData?: CostWaterfallData;
 }
 
 const defaultComponents: CostComponent[] = [
@@ -49,10 +51,13 @@ const CostWaterfallDashboard = ({
   subtitle = "Component analysis",
   components = defaultComponents,
   currency = "$",
+  parsedData,
 }: CostWaterfallDashboardProps) => {
+  const effectiveComponents = parsedData?.components || components;
+  const effectiveCurrency = parsedData?.currency || currency;
   // Calculate running totals for waterfall effect
   let runningTotal = 0;
-  const waterfallData = components.map((comp) => {
+  const waterfallData = effectiveComponents.map((comp) => {
     const start = runningTotal;
     runningTotal += comp.value;
     return {
@@ -75,8 +80,8 @@ const CostWaterfallDashboard = ({
   });
 
   const maxValue = Math.max(...waterfallData.map((d) => d.end));
-  const totalCosts = components.filter((c) => c.type === "cost").reduce((sum, c) => sum + c.value, 0);
-  const totalReductions = Math.abs(components.filter((c) => c.type === "reduction").reduce((sum, c) => sum + c.value, 0));
+  const totalCosts = effectiveComponents.filter((c) => c.type === "cost").reduce((sum, c) => sum + c.value, 0);
+  const totalReductions = Math.abs(effectiveComponents.filter((c) => c.type === "reduction").reduce((sum, c) => sum + c.value, 0));
   const reductionPercent = Math.round((totalReductions / totalCosts) * 100);
 
   return (
@@ -94,10 +99,10 @@ const CostWaterfallDashboard = ({
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold text-foreground">
-              {formatCurrency(totalValue, currency)}
+              {formatCurrency(totalValue, effectiveCurrency)}
             </p>
             <p className="text-xs text-primary">
-              {formatCurrency(totalReductions, currency)} saved ({reductionPercent}%)
+              {formatCurrency(totalReductions, effectiveCurrency)} saved ({reductionPercent}%)
             </p>
           </div>
         </div>
@@ -115,7 +120,7 @@ const CostWaterfallDashboard = ({
               <XAxis
                 type="number"
                 domain={[0, maxValue * 1.1]}
-                tickFormatter={(v) => formatCurrency(v, currency)}
+                tickFormatter={(v) => formatCurrency(v, effectiveCurrency)}
                 tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
                 axisLine={{ stroke: "hsl(var(--border))" }}
               />
@@ -143,7 +148,7 @@ const CostWaterfallDashboard = ({
                 <LabelList
                   dataKey="displayValue"
                   position="right"
-                  formatter={(value: number) => formatCurrency(value, currency)}
+                  formatter={(value: number) => formatCurrency(value, effectiveCurrency)}
                   style={{
                     fill: "hsl(var(--muted-foreground))",
                     fontSize: 10,
@@ -160,19 +165,19 @@ const CostWaterfallDashboard = ({
             <div>
               <p className="text-xs text-muted-foreground mb-1">Gross Costs</p>
               <p className="text-sm font-semibold text-foreground">
-                {formatCurrency(totalCosts, currency)}
+                {formatCurrency(totalCosts, effectiveCurrency)}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Reductions</p>
               <p className="text-sm font-semibold text-primary">
-                -{formatCurrency(totalReductions, currency)}
+                -{formatCurrency(totalReductions, effectiveCurrency)}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Net Total</p>
               <p className="text-sm font-semibold text-foreground">
-                {formatCurrency(totalValue, currency)}
+                {formatCurrency(totalValue, effectiveCurrency)}
               </p>
             </div>
           </div>

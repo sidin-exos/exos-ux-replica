@@ -9,8 +9,13 @@ import {
   Cell,
   ReferenceLine,
 } from "recharts";
+import type { SupplierScorecardData } from "@/lib/dashboard-data-parser";
 
-const supplierData = [
+interface SupplierPerformanceDashboardProps {
+  parsedData?: SupplierScorecardData;
+}
+
+const defaultSupplierData = [
   { name: "Alpha Corp", score: 92, trend: "up", spend: "$450K" },
   { name: "Beta Industries", score: 78, trend: "down", spend: "$320K" },
   { name: "Gamma Tech", score: 85, trend: "stable", spend: "$180K" },
@@ -18,7 +23,8 @@ const supplierData = [
   { name: "Epsilon Materials", score: 88, trend: "up", spend: "$210K" },
 ];
 
-const SupplierPerformanceDashboard = () => {
+const SupplierPerformanceDashboard = ({ parsedData }: SupplierPerformanceDashboardProps) => {
+  const supplierData = parsedData?.suppliers || defaultSupplierData;
   const getScoreColor = (score: number) => {
     if (score >= 85) return "hsl(174, 72%, 50%)";
     if (score >= 70) return "hsl(38, 92%, 50%)";

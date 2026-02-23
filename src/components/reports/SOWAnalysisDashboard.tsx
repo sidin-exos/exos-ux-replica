@@ -2,8 +2,13 @@ import { FileText, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import type { SOWAnalysisData } from "@/lib/dashboard-data-parser";
 
-const sowAnalysis = {
+interface SOWAnalysisDashboardProps {
+  parsedData?: SOWAnalysisData;
+}
+
+const defaultSowAnalysis = {
   clarity: 72,
   sections: [
     { name: "Scope Definition", status: "partial", note: "Vague deliverables in 3.2, 4.1" },
@@ -20,7 +25,10 @@ const sowAnalysis = {
   ],
 };
 
-const SOWAnalysisDashboard = () => {
+const SOWAnalysisDashboard = ({ parsedData }: SOWAnalysisDashboardProps) => {
+  const sowAnalysis = parsedData
+    ? { clarity: parsedData.clarity, sections: parsedData.sections, recommendations: parsedData.recommendations || [] }
+    : defaultSowAnalysis;
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "complete":

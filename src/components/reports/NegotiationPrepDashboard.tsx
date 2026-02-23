@@ -1,8 +1,13 @@
 import { Target, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import type { NegotiationPrepData } from "@/lib/dashboard-data-parser";
 
-const negotiationFramework = {
+interface NegotiationPrepDashboardProps {
+  parsedData?: NegotiationPrepData;
+}
+
+const defaultNegotiationFramework = {
   batna: {
     strength: 65,
     description: "2 alternative suppliers identified with 6-week switching timeline",
@@ -20,7 +25,10 @@ const negotiationFramework = {
   ],
 };
 
-const NegotiationPrepDashboard = () => {
+const NegotiationPrepDashboard = ({ parsedData }: NegotiationPrepDashboardProps) => {
+  const negotiationFramework = parsedData
+    ? { batna: parsedData.batna, leveragePoints: parsedData.leveragePoints, sequence: parsedData.sequence }
+    : defaultNegotiationFramework;
   return (
     <Card className="card-elevated">
       <CardHeader className="pb-4">

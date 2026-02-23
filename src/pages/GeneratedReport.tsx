@@ -23,6 +23,7 @@ import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import DashboardRenderer from "@/components/reports/DashboardRenderer";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
 import { useShareableReport } from "@/hooks/useShareableReport";
+import { stripDashboardData } from "@/lib/dashboard-data-parser";
 
 interface ReportState {
   scenarioTitle: string;
@@ -113,6 +114,8 @@ const GeneratedReport = () => {
   
   // Ensure analysisResult is never null for rendering
   const safeAnalysisResult = analysisResult ?? '';
+  // Strip <dashboard-data> block from displayed text (keep it in safeAnalysisResult for DashboardRenderer)
+  const displayAnalysis = stripDashboardData(safeAnalysisResult);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -296,7 +299,7 @@ const GeneratedReport = () => {
               <CardContent>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
                   <div className="text-foreground bg-secondary/30 rounded-lg p-5 border border-border space-y-4">
-                    {safeAnalysisResult.split('\n').map((line, i) => {
+                    {displayAnalysis.split('\n').map((line, i) => {
                       // Check if line starts with hash headers (###, ####, etc.)
                       const hashMatch = line.match(/^(#{1,4})\s*(.*)$/);
                       const isHashHeader = !!hashMatch;

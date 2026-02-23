@@ -1,6 +1,7 @@
 import { Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { LicenseTierData } from "@/lib/dashboard-data-parser";
 
 interface LicenseTier {
   name: string;
@@ -16,6 +17,7 @@ interface LicenseTierDashboardProps {
   subtitle?: string;
   tiers?: LicenseTier[];
   currency?: string;
+  parsedData?: LicenseTierData;
 }
 
 const defaultTiers: LicenseTier[] = [
@@ -40,15 +42,17 @@ const LicenseTierDashboard = ({
   subtitle = "User tier analysis",
   tiers = defaultTiers,
   currency = "$",
+  parsedData,
 }: LicenseTierDashboardProps) => {
-  const totalUsers = tiers.reduce((sum, t) => sum + t.users, 0);
-  const totalCost = tiers.reduce((sum, t) => sum + t.totalCost, 0);
+  const effectiveTiers = parsedData?.tiers || tiers;
+  const effectiveCurrency = parsedData?.currency || currency;
+  const totalUsers = effectiveTiers.reduce((sum, t) => sum + t.users, 0);
+  const totalCost = effectiveTiers.reduce((sum, t) => sum + t.totalCost, 0);
   
-  // Calculate potential savings from optimization
-  const optimizedCost = tiers.reduce((sum, t) => sum + (t.recommended || t.users) * t.costPerUser, 0);
+  const optimizedCost = effectiveTiers.reduce((sum, t) => sum + (t.recommended || t.users) * t.costPerUser, 0);
   const potentialSavings = totalCost - optimizedCost;
 
-  const maxCost = Math.max(...tiers.map((t) => t.totalCost));
+  const maxCost = Math.max(...effectiveTiers.map((t) => t.totalCost));
 
   return (
     <Card className="card-elevated h-full">
@@ -73,7 +77,7 @@ const LicenseTierDashboard = ({
       <CardContent className="space-y-4">
         {/* Tier breakdown with bars */}
         <div className="space-y-3">
-          {tiers.map((tier) => {
+          {effectiveTiers.map((tier) => {
             const barWidth = (tier.totalCost / maxCost) * 100;
             const hasOptimization = tier.recommended && tier.recommended !== tier.users;
             const userDiff = tier.recommended ? tier.recommended - tier.users : 0;
@@ -87,7 +91,7 @@ const LicenseTierDashboard = ({
                     <span className="text-muted-foreground">({tier.users} users)</span>
                   </div>
                   <span className="font-semibold text-foreground">
-                    {formatCurrency(tier.totalCost, currency)}
+                    {formatCurrency(tier.totalCost, effectiveCurrency)}
                   </span>
                 </div>
 
@@ -101,7 +105,7 @@ const LicenseTierDashboard = ({
                     }}
                   />
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white font-medium">
-                    {formatCurrency(tier.costPerUser, currency)}/user
+                    {formatCurrency(tier.costPerUser, effectiveCurrency)}/user
                   </span>
                 </div>
 
@@ -115,7 +119,7 @@ const LicenseTierDashboard = ({
                       {userDiff > 0 ? `+${userDiff}` : userDiff} users recommended
                     </Badge>
                     <span className="text-muted-foreground">
-                      → Save {formatCurrency(Math.abs(userDiff) * tier.costPerUser, currency)}/mo
+                      → Save {formatCurrency(Math.abs(userDiff) * tier.costPerUser, effectiveCurrency)}/mo
                     </span>
                   </div>
                 )}
@@ -130,19 +134,19 @@ const LicenseTierDashboard = ({
             <div>
               <p className="text-xs text-muted-foreground mb-1">Current Cost</p>
               <p className="text-sm font-semibold text-foreground">
-                {formatCurrency(totalCost, currency)}/mo
+                {formatCurrency(totalCost, effectiveCurrency)}/mo
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Optimized Cost</p>
               <p className="text-sm font-semibold text-foreground">
-                {formatCurrency(optimizedCost, currency)}/mo
+                {formatCurrency(optimizedCost, effectiveCurrency)}/mo
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Potential Savings</p>
               <p className="text-sm font-semibold text-primary">
-                {formatCurrency(potentialSavings, currency)}/mo
+                {formatCurrency(potentialSavings, effectiveCurrency)}/mo
               </p>
             </div>
           </div>
