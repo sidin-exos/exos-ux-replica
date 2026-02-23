@@ -153,172 +153,35 @@ const CATEGORY_KPIS: Record<string, string[]> = {
 // Including 3 CEO overrides: annualMaintenance (tco), contractLength (sw-licensing), contractTerm (savings)
 // =============================================
 const SCENARIO_SCHEMAS: Record<string, ScenarioSchema> = {
-  "make-vs-buy": {
-    required: ["industryContext", "mainFocus", "internalSalary", "agencyFee"],
-    optional: ["recruitingCost", "managementTime", "officeItPerHead", "agencyOnboardingSpeed",
-               "knowledgeRetentionRisk", "qualityBenchmark", "peakLoadCapacity", "strategicImportance"]
-  },
-  "cost-breakdown": {
-    required: ["industryContext", "mainFocus", "productDescription", "totalCost", "volumePerYear"],
-    optional: ["materialCost", "laborCost", "overheadCost", "logisticsCost", "toolingCost",
-               "profitMargin", "commodityIndex", "laborRateReference", "currencyExposure"]
-  },
-  "spend-analysis-categorization": {
-    required: ["industryContext", "mainFocus", "spendData"],
-    optional: ["timeframe", "categoryTaxonomy"]
-  },
-  "tail-spend-sourcing": {
-    required: ["industryContext", "mainFocus", "purchaseAmount", "urgency"],
-    optional: ["catalogAvailable", "paymentTerms", "approvalRequired",
-               "quotesCount", "warranty", "deliveryCost", "returnRisk", "alternativesExist"]
-  },
-  "supplier-review": {
-    required: ["industryContext", "mainFocus", "qualityScore", "onTimeDelivery", "innovationScore"],
-    optional: ["incidentCount", "communicationScore", "financialStability",
-               "socialResponsibility", "priceVsMarket", "crisisSupport", "spendVolume"]
-  },
-  "disruption-management": {
-    required: ["industryContext", "mainFocus", "deficitSku", "stockDays", "lostRevenuePerDay"],
-    optional: ["altSuppliers", "altProducts", "switchingTime", "substitutePrice",
-               "forceMajeureClause", "inTransitStatus", "competitorResponse"]
-  },
-  "risk-assessment": {
-    required: ["industryContext", "mainFocus", "assessmentSubject", "annualValue", "businessCriticality"],
-    optional: ["marketVolatility", "regulatoryExposure", "geopoliticalRisk",
-               "contractType", "liabilityProtection", "terminationRights",
-               "currentChallenges", "supplierFinancialHealth", "recoveryTime",
-               "commodityDependency", "priceAdjustmentMechanism", "supplyChainVisibility", "recentIncidents"]
-  },
-  "tco-analysis": {
-    required: ["industryContext", "mainFocus", "assetDescription", "ownershipPeriod", "purchasePrice", "annualMaintenance"],
-    optional: ["installationCost", "trainingCost", "energyConsumption", "vendorLockInRisk", "residualValue",
-               "integrationCost", "consumablesCost", "laborCost", "insuranceCost",
-               "proprietaryComponents", "alternativeSuppliers", "dataPortability",
-               "technologyObsolescence", "marketPriceTrend", "regulatoryChanges",
-               "inflationAssumption", "currencyExposure", "interestRate",
-               "decommissioningCost", "dataMigrationCost", "downtimeRisk", "downtimeCostPerHour"]
-  },
-  "software-licensing": {
-    required: ["industryContext", "mainFocus", "softwareName", "softwareCategory", "totalUsers",
-               "externalUsers", "userGrowthRate", "perUserMonthly", "enterpriseTierCost", "contractLength"],
-    optional: ["powerUsers", "regularUsers", "occasionalUsers",
-               "usageBasedRate", "implementationCost", "longTermDiscount", "annualEscalation",
-               "paymentTerms", "terminationClause", "dataExportability",
-               "integrationDependency", "switchingCostEstimate", "alternativeProducts",
-               "proprietaryFeatures", "vendorStability", "complianceRequirements",
-               "currentSolution", "currentAnnualCost"]
-  },
-  "risk-matrix": {
-    required: ["industryContext", "mainFocus", "dataAccess"],
-    optional: ["legalStatus", "lawsuits", "financialHealth", "concentration",
-               "cyberSecurity", "environmentalRisk", "sanctionsRisk", "insurance", "siteAudits"]
-  },
-  "sow-critic": {
-    required: ["industryContext", "mainFocus", "sowText"],
-    optional: ["deliverables", "acceptanceCriteria", "timeline", "responsibilities",
-               "clientResources", "exclusions", "changeProcess", "penalties", "warrantyPeriod"]
-  },
-  "sla-definition": {
-    required: ["industryContext", "mainFocus", "operatingHours", "responseTime", "serviceCriticality"],
-    optional: ["resolutionTime", "allowedDowntime", "escalationProcess",
-               "contactMethods", "reportingFrequency", "qualityBonuses"]
-  },
-  "rfp-generator": {
-    required: ["industryContext", "rawBrief", "documentTypes", "evaluationPriorities",
-               "budgetRange", "additionalInstructions"],
-    optional: ["mainFocus"]
-  },
-  "requirements-gathering": {
-    required: ["industryContext", "mainFocus", "businessGoal", "mustHaveFeatures"],
-    optional: ["budget", "userCount", "dataSecurityLevel", "urgency",
-               "itLandscape", "niceToHaveFeatures", "scalability", "languageSupport"]
-  },
-  "negotiation-preparation": {
-    required: ["industryContext", "mainFocus", "negotiationSubject", "currentSpend",
-               "supplierName", "batna", "negotiationObjectives"],
-    optional: ["relationshipHistory", "buyingPower", "marketAlternatives", "switchingCost",
-               "supplierDependency", "supplierBatna", "mustHaves", "niceToHaves",
-               "knownConstraints", "timeline"]
-  },
-  "procurement-project-planning": {
-    required: ["industryContext", "mainFocus", "projectTitle", "projectObjective", "projectScope"],
-    optional: ["keyInputs", "expectedOutputs", "budgetConstraint", "timelineConstraint",
-               "resourceConstraint", "stakeholders", "riskFactors", "successCriteria",
-               "strategicAlignment", "dependencies"]
-  },
-  "forecasting-budgeting": {
-    required: ["industryContext", "categoryContext", "historicalSpendData",
-               "knownFutureEvents", "budgetConstraints", "forecastHorizon"],
-    optional: []
-  },
-  "market-snapshot": {
-    required: ["industryContext", "region", "analysisScope", "successCriteria"],
-    optional: ["timeframe"]
-  },
-  "contract-template": {
-    required: ["industryContext", "mainFocus", "country", "timeTier",
-               "contractBrief", "contractType", "contractValue", "specialRequirements"],
-    optional: []
-  },
-  "saas-optimization": {
-    required: ["industryContext", "mainFocus", "totalSeats", "pricePerSeat", "contractEndDate"],
-    optional: ["lastLoginDate", "featureUsage", "noticePeriod", "autoRenewal",
-               "ssoIntegration", "duplicateApps", "supportTier"]
-  },
-  "capex-vs-opex": {
-    required: ["industryContext", "mainFocus", "purchasePrice", "leaseRate", "leaseTerm"],
-    optional: ["maintenanceCost", "residualValue", "wacc",
-               "propertyTax", "partsInflation", "energyCost", "trainingCost"]
-  },
-  "savings-calculation": {
-    required: ["industryContext", "mainFocus", "baselinePrice", "newPrice", "volume", "contractTerm"],
-    optional: ["inflationIndex", "fxRate", "qualityCost", "earlyPaymentDiscount",
-               "storageCost", "switchingCosts"]
-  },
-  "volume-consolidation": {
-    required: ["industryContext", "mainFocus", "spendPerVendor"],
-    optional: ["skuOverlap", "unitOfMeasure", "paymentTerms", "orderFrequency",
-               "reliabilityIndex", "volumeGrowthForecast", "currentPenalties", "taxRate"]
-  },
-  "category-strategy": {
-    required: ["industryContext", "mainFocus", "categoryName", "annualSpend", "painPoints"],
-    optional: ["supplierCount", "marketStructure", "supplyRisk", "businessImpact",
-               "currentStrategy", "innovationNeeds", "contractStatus", "stakeholders",
-               "historicalSavings", "benchmarkData"]
-  },
-  // === 5 NEW SCENARIOS ===
-  "pre-flight-audit": {
-    required: ["industryContext", "mainFocus", "supplierWebsite", "supplierName"],
-    optional: ["plannedPurchase", "estimatedValue", "existingRelationship",
-               "researchFocus", "urgency", "redFlags"]
-  },
-  "category-risk-evaluator": {
-    required: ["industryContext", "mainFocus", "categoryName", "tenderStage", "contractValue"],
-    optional: ["sowText", "contractType", "marketConcentration", "marketTrends",
-               "priceVolatility", "supplyRisk", "regulatoryExposure",
-               "technologyChange", "substitutability", "pastIssues"]
-  },
-  "supplier-dependency-planner": {
-    required: ["industryContext", "mainFocus", "supplierName", "serviceCategory",
-               "annualSpend", "strategicImportance", "diversificationGoal"],
-    optional: ["categoryTotalSpend", "spendConcentration", "revenueShare",
-               "uniqueCapabilities", "contractTerms", "terminationPenalty",
-               "dataPortability", "integrationDepth", "knowledgeDependency",
-               "alternativeSuppliers", "switchingTimeEstimate", "switchingCostEstimate", "timeHorizon"]
-  },
-  "specification-optimizer": {
-    required: ["industryContext", "mainFocus", "specificationText", "specificationCategory", "safetyRequirements"],
-    optional: ["estimatedValue", "specSource", "lastReviewed", "competitiveMarket",
-               "performanceMargins", "certificationRequirements", "tolerances"]
-  },
-  "black-swan-scenario": {
-    required: ["industryContext", "mainFocus", "assessmentScope", "scopeDetails",
-               "annualExposure", "scenarioTypes"],
-    optional: ["businessImpact", "singleSourceItems", "geographicConcentration",
-               "tierVisibility", "inventoryBuffer", "recentNearMisses",
-               "alternativesReady", "responsePlaybook", "financialReserve",
-               "insuranceCoverage", "acceptableDowntime", "investmentWillingness"]
-  },
+  "make-vs-buy": { required: ["industryContext", "projectBrief"], optional: ["makeCosts", "buyCosts", "strategicFactors"] },
+  "cost-breakdown": { required: ["industryContext", "productDescription", "currentCosts"], optional: ["marketFactors"] },
+  "spend-analysis-categorization": { required: ["industryContext", "rawSpendData"], optional: ["timeframe", "businessGoal"] },
+  "tail-spend-sourcing": { required: ["industryContext", "purchaseAmount", "urgency"], optional: ["alternativesExist", "vendorHistory", "technicalSpecs"] },
+  "supplier-review": { required: ["industryContext", "qualityScore", "onTimeDelivery", "spendVolume"], optional: ["communicationScore", "priceVsMarket", "contractStatus", "incidentLog"] },
+  "disruption-management": { required: ["industryContext", "crisisDescription", "impactAssessment"], optional: ["alternativesContext"] },
+  "risk-assessment": { required: ["industryContext", "assessmentSubject", "currentSituation"], optional: ["contractContext", "riskTolerance"] },
+  "tco-analysis": { required: ["industryContext", "assetDescription", "ownershipPeriod", "capexBreakdown", "opexBreakdown"], optional: ["riskFactors"] },
+  "software-licensing": { required: ["industryContext", "softwareDetails", "userMetrics"], optional: ["commercialTerms", "strategicFactors"] },
+  "risk-matrix": { required: ["industryContext", "supplierName", "operationalRisks"], optional: ["commercialRisks"] },
+  "sow-critic": { required: ["industryContext", "sowText"], optional: ["reviewPriorities"] },
+  "sla-definition": { required: ["industryContext", "serviceDescription", "performanceTargets"], optional: ["escalationAndPenalties"] },
+  "rfp-generator": { required: ["rawBrief"], optional: ["industryContext", "budgetRange", "evaluationPriorities", "technicalRequirements", "incumbentData", "additionalInstructions"] },
+  "requirements-gathering": { required: ["industryContext", "businessGoal", "technicalLandscape"], optional: ["featureRequirements"] },
+  "volume-consolidation": { required: ["industryContext", "consolidationScope"], optional: ["logisticsTerms", "growthForecast"] },
+  "capex-vs-opex": { required: ["industryContext", "assetDetails"], optional: ["lifecycleCosts", "financialParameters"] },
+  "savings-calculation": { required: ["industryContext", "savingsScenario", "costAdjustments"], optional: ["reportingRequirements"] },
+  "saas-optimization": { required: ["industryContext", "subscriptionDetails", "usageMetrics"], optional: ["redundancyContext"] },
+  "forecasting-budgeting": { required: ["historicalSpendData", "knownFutureEvents", "forecastHorizon"], optional: ["industryContext", "categoryContext", "budgetConstraints"] },
+  "category-strategy": { required: ["industryContext", "categoryOverview", "marketDynamics"], optional: ["strategicGoals"] },
+  "negotiation-preparation": { required: ["industryContext", "negotiationSubject", "currentSpend", "supplierName", "batna", "negotiationObjectives"], optional: ["relationshipHistory", "mustHaves", "timeline", "spendBreakdown", "leverageContext"] },
+  "procurement-project-planning": { required: ["industryContext", "projectBrief", "constraintsAndResources"], optional: ["risksAndSuccess"] },
+  "pre-flight-audit": { required: ["industryContext", "supplierIdentity", "researchScope"], optional: ["decisionContext"] },
+  "category-risk-evaluator": { required: ["industryContext", "categoryAndTender", "sowAndMarket"], optional: ["historicalRisks"] },
+  "supplier-dependency-planner": { required: ["industryContext", "dependencyContext", "lockInFactors"], optional: ["diversificationGoals"] },
+  "specification-optimizer": { required: ["industryContext", "specificationText", "specContext"], optional: ["optimizationGoals"] },
+  "black-swan-scenario": { required: ["industryContext", "assessmentScope", "riskPosture"], optional: ["scenarioSimulation"] },
+  "market-snapshot": { required: ["region", "analysisScope"], optional: ["industryContext", "successCriteria", "timeframe"] },
+  "contract-template": { required: ["country", "timeTier", "contractBrief", "contractType"], optional: ["industryContext", "contractValue", "specialRequirements"] },
 };
 
 // Helper to get all fields from a schema
@@ -336,7 +199,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Excellent quality metrics from samples, but production batch consistency issues mentioned casually",
         "Strong overall ratings, but crisis response time has degraded over past quarters with blame on external factors"
       ],
-      targetFields: ["industryContext", "crisisSupport"],
+      targetFields: ["industryContext", "incidentLog"],
       subtlety: "moderate"
     },
     {
@@ -345,7 +208,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Supplier appears stable but recently lost major customer representing significant portion of their revenue",
         "Good payment terms offered, but context mentions extended payment requests to their suppliers"
       ],
-      targetFields: ["industryContext", "financialStability"],
+      targetFields: ["industryContext", "spendVolume"],
       subtlety: "subtle"
     },
     {
@@ -354,7 +217,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Only qualified supplier for critical component, mentioned positively as 'exclusive partnership'",
         "Proprietary technology integration that would require 18-month transition mentioned as 'seamless integration'"
       ],
-      targetFields: ["industryContext", "strategicImportance"],
+      targetFields: ["industryContext", "spendVolume"],
       subtlety: "moderate"
     },
     {
@@ -363,7 +226,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Prominent sustainability certifications displayed, but audit scope limited to headquarters only",
         "Carbon neutral claims for operations, but supply chain emissions not included in scope"
       ],
-      targetFields: ["socialResponsibility", "industryContext"],
+      targetFields: ["industryContext", "incidentLog"],
       subtlety: "subtle"
     }
   ],
@@ -374,7 +237,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Generous discount for 3-year term, but data export only available in proprietary format",
         "Low per-user cost, but API access requires separate enterprise license at significant premium"
       ],
-      targetFields: ["industryContext", "contractLength"],
+      targetFields: ["industryContext", "commercialTerms"],
       subtlety: "moderate"
     },
     {
@@ -383,7 +246,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Competitive Year 1 pricing with standard 'cost of living adjustments' - actually 8-12% annual increases",
         "Base price locked, but 'usage fees' have uncapped growth tied to company metrics"
       ],
-      targetFields: ["industryContext", "perUserMonthly"],
+      targetFields: ["industryContext", "commercialTerms"],
       subtlety: "subtle"
     },
     {
@@ -392,7 +255,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Enterprise tier purchased for full workforce, but only 20% are power users needing those features",
         "All-in licensing when actual usage pattern is 60% light users who could use cheaper tier"
       ],
-      targetFields: ["powerUsers", "regularUsers", "occasionalUsers"],
+      targetFields: ["userMetrics", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -401,7 +264,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Early termination requires payment of remaining term plus 6-month penalty",
         "Data extraction services priced at $500/hour for assisted migration mentioned in fine print"
       ],
-      targetFields: ["industryContext", "contractLength"],
+      targetFields: ["industryContext", "commercialTerms"],
       subtlety: "subtle"
     }
   ],
@@ -412,7 +275,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Competitive purchase price but annual maintenance at 22% of purchase price vs industry standard 15%",
         "Low base cost but consumables only available from vendor at 3x market rates"
       ],
-      targetFields: ["purchasePrice", "annualMaintenance", "industryContext"],
+      targetFields: ["capexBreakdown", "opexBreakdown", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -430,7 +293,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Proprietary spare parts with single-source availability and extended lead times",
         "Specialized technician certification required that only vendor provides"
       ],
-      targetFields: ["industryContext", "vendorLockInRisk"],
+      targetFields: ["industryContext", "riskFactors"],
       subtlety: "moderate"
     },
     {
@@ -439,7 +302,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Hazardous materials requiring specialized disposal not mentioned in ownership cost",
         "Asset contains regulated substances requiring certified decommissioning"
       ],
-      targetFields: ["residualValue", "industryContext"],
+      targetFields: ["riskFactors", "industryContext"],
       subtlety: "expert-level"
     }
   ],
@@ -450,7 +313,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Three alternative suppliers identified but all have 12+ month qualification lead times",
         "Multiple options available but incumbent has exclusive access to required certifications"
       ],
-      targetFields: ["marketAlternatives", "switchingCost", "industryContext"],
+      targetFields: ["leverageContext", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -468,7 +331,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Auto-renewal clause with 90-day notice window, current contract expires in 45 days",
         "Evergreen contract with renewal pricing 20% above initial term"
       ],
-      targetFields: ["knownConstraints", "industryContext"],
+      targetFields: ["timeline", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -488,7 +351,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Tier-1 supplier appears diversified but all Tier-2 sources share single raw material supplier",
         "Multiple manufacturing sites listed but all in same regulatory jurisdiction"
       ],
-      targetFields: ["industryContext", "geopoliticalRisk"],
+      targetFields: ["industryContext", "currentSituation"],
       subtlety: "expert-level"
     },
     {
@@ -497,7 +360,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Three approved suppliers all located within same 50km radius disaster zone",
         "Alternative sources identified but all dependent on same regional infrastructure"
       ],
-      targetFields: ["industryContext", "businessCriticality"],
+      targetFields: ["industryContext", "riskTolerance"],
       subtlety: "subtle"
     },
     {
@@ -506,7 +369,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Business continuity requirements mentioned but no contractual SLAs for recovery time",
         "Force majeure clause excludes the most likely disruption scenarios for this category"
       ],
-      targetFields: ["industryContext", "recoveryTime"],
+      targetFields: ["industryContext", "riskTolerance"],
       subtlety: "moderate"
     },
     {
@@ -515,7 +378,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Previous quality incident resolved without root cause analysis mentioned casually",
         "Past delivery disruption attributed to one-time event that could easily recur"
       ],
-      targetFields: ["industryContext", "supplierFinancialHealth"],
+      targetFields: ["industryContext", "currentSituation"],
       subtlety: "subtle"
     }
   ],
@@ -526,7 +389,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Internal team 'could' develop capability but current capacity fully allocated for 18 months",
         "Technical skills exist but not at scale required for production workload"
       ],
-      targetFields: ["industryContext", "knowledgeRetentionRisk"],
+      targetFields: ["industryContext", "strategicFactors"],
       subtlety: "moderate"
     },
     {
@@ -535,7 +398,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Direct labor costs compared but management overhead for internal option not included",
         "Quality control requirements would need additional headcount not reflected in analysis"
       ],
-      targetFields: ["managementTime", "industryContext"],
+      targetFields: ["makeCosts", "industryContext"],
       subtlety: "subtle"
     },
     {
@@ -544,7 +407,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "External provider gains proprietary process knowledge that becomes competitive advantage",
         "IP developed jointly but ownership defaults to vendor per standard contract terms"
       ],
-      targetFields: ["knowledgeRetentionRisk", "strategicImportance"],
+      targetFields: ["strategicFactors", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -553,7 +416,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Build option based on current volume but demand volatility requires 3x peak capacity",
         "Agency model attractive at current scale but economics invert at projected growth"
       ],
-      targetFields: ["peakLoadCapacity", "industryContext"],
+      targetFields: ["projectBrief", "industryContext"],
       subtlety: "subtle"
     }
   ],
@@ -564,7 +427,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Three alternative suppliers listed but none have required certifications or capacity",
         "Backup sources identified but lead time for qualification exceeds crisis timeline"
       ],
-      targetFields: ["altSuppliers", "altProducts", "industryContext"],
+      targetFields: ["alternativesContext", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -573,7 +436,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Switching time quoted for normal conditions but crisis creates industry-wide demand surge",
         "Recovery timeline assumes immediate capacity availability that doesn't exist"
       ],
-      targetFields: ["switchingTime", "stockDays"],
+      targetFields: ["crisisDescription", "industryContext"],
       subtlety: "subtle"
     },
     {
@@ -582,7 +445,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Revenue impact calculated for single product line but downstream dependencies not included",
         "Daily loss estimate excludes customer penalty clauses triggered at day 7"
       ],
-      targetFields: ["lostRevenuePerDay", "industryContext"],
+      targetFields: ["impactAssessment", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -591,7 +454,7 @@ const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "All alternatives route through same port or logistics hub as primary",
         "Backup power/IT infrastructure shares same grid or data center dependency"
       ],
-      targetFields: ["industryContext", "altSuppliers"],
+      targetFields: ["industryContext", "alternativesContext"],
       subtlety: "expert-level"
     }
   ],
@@ -1020,13 +883,10 @@ ${schema.optional.map(f => `- ${f}`).join('\n')}
 CRITICAL RULES:
 1. ALL data must be consistent with the above context
 2. "industryContext" field MUST be 100+ words describing a specific company matching ALL parameters
-3. "mainFocus" field MUST describe the user's primary objective or challenge for this analysis (50-100 words). This represents what the user is focused on - it may or may NOT align with hidden issues.
-4. All numeric values must be plausible for the company scale
+3. All numeric values must be plausible for the company scale
 5. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
 6. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
 ${trickInstructions}
-
-IMPORTANT: "mainFocus" is the user's stated priority. It may be DIFFERENT from the hidden trick.
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.

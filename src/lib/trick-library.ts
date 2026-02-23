@@ -26,7 +26,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Excellent quality metrics from samples, but production batch consistency issues mentioned casually",
         "Strong overall ratings, but crisis response time has degraded over past quarters with blame on external factors"
       ],
-      targetFields: ["industryContext", "crisisSupport"],
+      targetFields: ["industryContext", "incidentLog"],
       subtlety: "moderate"
     },
     {
@@ -36,7 +36,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Good payment terms offered, but context mentions extended payment requests to their suppliers",
         "Strong credit rating from last year, but recent restructuring and management changes mentioned in passing"
       ],
-      targetFields: ["industryContext", "financialStability"],
+      targetFields: ["industryContext", "spendVolume"],
       subtlety: "subtle"
     },
     {
@@ -46,7 +46,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Proprietary technology integration that would require 18-month transition mentioned as 'seamless integration'",
         "Supplier holds key patents for required specifications, framed as 'technical excellence'"
       ],
-      targetFields: ["industryContext", "strategicImportance"],
+      targetFields: ["industryContext", "spendVolume"],
       subtlety: "moderate"
     },
     {
@@ -56,7 +56,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Carbon neutral claims for operations, but supply chain emissions not included in scope",
         "Strong diversity metrics at corporate level, but manufacturing sites not included in reporting"
       ],
-      targetFields: ["socialResponsibility", "industryContext"],
+      targetFields: ["industryContext", "incidentLog"],
       subtlety: "subtle"
     }
   ],
@@ -69,7 +69,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Low per-user cost, but API access requires separate enterprise license at significant premium",
         "Attractive pricing includes deep integration features that create switching dependencies"
       ],
-      targetFields: ["industryContext", "contractLength"],
+      targetFields: ["industryContext", "commercialTerms"],
       subtlety: "moderate"
     },
     {
@@ -79,7 +79,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Base price locked, but 'usage fees' have uncapped growth tied to company metrics",
         "Initial term pricing favorable, but renewal rates subject to 'then-current list pricing'"
       ],
-      targetFields: ["industryContext", "perUserMonthly"],
+      targetFields: ["industryContext", "commercialTerms"],
       subtlety: "subtle"
     },
     {
@@ -89,7 +89,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "All-in licensing when actual usage pattern is 60% light users who could use cheaper tier",
         "Premium collaboration features included but organization uses external tools for those functions"
       ],
-      targetFields: ["powerUsers", "regularUsers", "occasionalUsers"],
+      targetFields: ["userMetrics", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -99,7 +99,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Data extraction services priced at $500/hour for assisted migration mentioned in fine print",
         "90-day termination notice required, but billing continues for 180 days post-notice"
       ],
-      targetFields: ["industryContext", "contractLength"],
+      targetFields: ["industryContext", "commercialTerms"],
       subtlety: "subtle"
     }
   ],
@@ -112,7 +112,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Low base cost but consumables only available from vendor at 3x market rates",
         "Attractive acquisition cost but training certification required annually at significant cost per operator"
       ],
-      targetFields: ["purchasePrice", "annualMaintenance", "industryContext"],
+      targetFields: ["capexBreakdown", "opexBreakdown", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -132,7 +132,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Specialized technician certification required that only vendor provides",
         "Custom firmware that requires vendor involvement for any modifications"
       ],
-      targetFields: ["industryContext", "vendorLockInRisk"],
+      targetFields: ["industryContext", "riskFactors"],
       subtlety: "moderate"
     },
     {
@@ -142,12 +142,12 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Asset contains regulated substances requiring certified decommissioning",
         "Removal and site restoration requirements buried in installation documentation"
       ],
-      targetFields: ["residualValue", "industryContext"],
+      targetFields: ["riskFactors", "industryContext"],
       subtlety: "expert-level"
     }
   ],
 
-  "negotiation-prep": [
+  "negotiation-preparation": [
     {
       category: "leverage-illusion",
       templates: [
@@ -155,7 +155,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Multiple options available but incumbent has exclusive access to required certifications",
         "Competitive market exists but switching requires customer re-approval that takes 18 months"
       ],
-      targetFields: ["alternativeCount", "switchingCost", "industryContext"],
+      targetFields: ["leverageContext", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -165,7 +165,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Strong relationship scores mask gradual erosion of service levels over past 3 years",
         "Preferred supplier status maintained despite declining competitiveness on key metrics"
       ],
-      targetFields: ["relationshipYears", "industryContext"],
+      targetFields: ["relationshipHistory", "industryContext"],
       subtlety: "subtle"
     },
     {
@@ -175,7 +175,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Evergreen contract with renewal pricing 20% above initial term",
         "Multi-year deal approaching renewal with incumbent already assuming continuation"
       ],
-      targetFields: ["contractEndDate", "industryContext"],
+      targetFields: ["timeline", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -185,7 +185,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Supplier-provided 'competitive analysis' used as benchmark reference",
         "Cost increases accepted as 'market conditions' without independent verification"
       ],
-      targetFields: ["annualSpend", "spendTrend", "industryContext"],
+      targetFields: ["currentSpend", "industryContext"],
       subtlety: "subtle"
     }
   ],
@@ -198,7 +198,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Multiple manufacturing sites listed but all in same regulatory jurisdiction",
         "Dual-sourcing in place but both suppliers use same logistics provider"
       ],
-      targetFields: ["industryContext", "geopoliticalRisk"],
+      targetFields: ["industryContext", "currentSituation"],
       subtlety: "expert-level"
     },
     {
@@ -208,7 +208,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Alternative sources identified but all dependent on same regional infrastructure",
         "Backup suppliers confirmed but all share same key sub-component manufacturer"
       ],
-      targetFields: ["industryContext", "businessCriticality"],
+      targetFields: ["industryContext", "riskTolerance"],
       subtlety: "subtle"
     },
     {
@@ -218,7 +218,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Force majeure clause excludes the most likely disruption scenarios for this category",
         "Insurance requirements specified but coverage amounts inadequate for identified risks"
       ],
-      targetFields: ["industryContext", "recoveryTime"],
+      targetFields: ["industryContext", "riskTolerance"],
       subtlety: "moderate"
     },
     {
@@ -228,7 +228,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Past delivery disruption attributed to one-time event that could easily recur",
         "Regulatory near-miss from 2 years ago downplayed as 'successfully addressed'"
       ],
-      targetFields: ["industryContext", "supplierFinancialHealth"],
+      targetFields: ["industryContext", "currentSituation"],
       subtlety: "subtle"
     }
   ],
@@ -241,7 +241,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Technical skills exist but not at scale required for production workload",
         "Previous similar project completed but key team members have since departed"
       ],
-      targetFields: ["industryContext", "knowledgeRetentionRisk"],
+      targetFields: ["industryContext", "strategicFactors"],
       subtlety: "moderate"
     },
     {
@@ -251,7 +251,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Quality control requirements would need additional headcount not reflected in analysis",
         "Compliance monitoring burden for in-house option significantly underestimated"
       ],
-      targetFields: ["managementTime", "industryContext"],
+      targetFields: ["makeCosts", "industryContext"],
       subtlety: "subtle"
     },
     {
@@ -261,7 +261,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "IP developed jointly but ownership defaults to vendor per standard contract terms",
         "Specialized expertise transfers out but re-acquisition cost not considered"
       ],
-      targetFields: ["knowledgeRetentionRisk", "strategicImportance"],
+      targetFields: ["strategicFactors", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -271,7 +271,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Agency model attractive at current scale but economics invert at projected growth",
         "Fixed costs of internal option require 5-year payback but technology cycle is 3 years"
       ],
-      targetFields: ["peakLoadCapacity", "industryContext"],
+      targetFields: ["projectBrief", "industryContext"],
       subtlety: "subtle"
     }
   ],
@@ -284,7 +284,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Backup sources identified but lead time for qualification exceeds crisis timeline",
         "Alternative products exist but customer approval required, taking 6+ months"
       ],
-      targetFields: ["altSuppliers", "altProducts", "industryContext"],
+      targetFields: ["alternativesContext", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -294,7 +294,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Recovery timeline assumes immediate capacity availability that doesn't exist",
         "Ramp-up estimates based on supplier optimism rather than historical performance"
       ],
-      targetFields: ["switchingTime", "stockDays"],
+      targetFields: ["crisisDescription", "industryContext"],
       subtlety: "subtle"
     },
     {
@@ -304,7 +304,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Daily loss estimate excludes customer penalty clauses triggered at day 7",
         "Direct costs captured but reputational damage and customer defection not quantified"
       ],
-      targetFields: ["lostRevenuePerDay", "industryContext"],
+      targetFields: ["impactAssessment", "industryContext"],
       subtlety: "moderate"
     },
     {
@@ -314,7 +314,7 @@ export const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
         "Backup power/IT infrastructure shares same grid or data center dependency",
         "Alternative suppliers all source key input from same geographic region"
       ],
-      targetFields: ["industryContext", "altSuppliers"],
+      targetFields: ["industryContext", "alternativesContext"],
       subtlety: "expert-level"
     }
   ],
