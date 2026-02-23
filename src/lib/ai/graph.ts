@@ -46,6 +46,17 @@ export function isDeepAnalyticsScenario(id: string): id is DeepAnalyticsScenario
   return (DEEP_ANALYTICS_SCENARIOS as readonly string[]).includes(id);
 }
 
+export const LEAKAGE_MARKERS = ['[PASS]', '[FAIL]', '<draft>', '</draft>', '<critique>', '</critique>'];
+
+export function detectPromptLeakage(content: string): boolean {
+  return LEAKAGE_MARKERS.some(marker => content.includes(marker));
+}
+
+export const LATENCY_BENCHMARKS = {
+  multiCycle: { warning: 45000, fail: 60000 },
+  standard:   { warning: 15000, fail: 25000 },
+} as const;
+
 /**
  * Model configuration type for provider selection
  */

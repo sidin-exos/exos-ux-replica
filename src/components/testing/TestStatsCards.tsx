@@ -3,6 +3,7 @@ import { useTestStats } from "@/hooks/useTestDatabase";
 import StatCard from "@/components/dashboard/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { isDeepAnalyticsScenario } from "@/lib/ai/graph";
 
 const AUDIT_THRESHOLD = 10;
 
@@ -45,11 +46,18 @@ const TestStatsCards = ({ scenarioType }: TestStatsCardsProps) => {
           value={`${stats?.successRate ?? 0}%`}
           icon={CheckCircle}
         />
-        <StatCard
-          title="Avg Processing"
-          value={`${stats?.avgProcessingTimeMs ?? 0}ms`}
-          icon={Clock}
-        />
+        <div>
+          <StatCard
+            title="Avg Processing"
+            value={`${stats?.avgProcessingTimeMs ?? 0}ms`}
+            icon={Clock}
+          />
+          {scenarioType && (
+            <span className="text-[10px] text-muted-foreground mt-1 block text-center">
+              (benchmark: {isDeepAnalyticsScenario(scenarioType) ? "45s" : "15s"})
+            </span>
+          )}
+        </div>
         <StatCard
           title="Avg Tokens"
           value={String(stats?.avgTotalTokens ?? 0)}

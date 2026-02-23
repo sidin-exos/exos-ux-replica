@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTestPromptsByScenario } from "@/hooks/useTestDatabase";
 import type { TestPromptWithReport } from "@/hooks/useTestDatabase";
+import { isDeepAnalyticsScenario } from "@/lib/ai/graph";
 
 interface TestSessionLogProps {
   scenarioType: string;
@@ -137,8 +138,16 @@ const TestSessionLog = ({ scenarioType, scenarioTitle, isThresholdReached }: Tes
                         <XCircle className="w-3 h-3" />
                         {group.failCount}
                       </span>
-                    )}
-                  </div>
+                     )}
+                     {(() => {
+                       const mcCount = group.prompts.filter(p => isDeepAnalyticsScenario(p.scenario_type)).length;
+                       return mcCount > 0 ? (
+                         <Badge variant="outline" className="text-[10px] border-purple-400 text-purple-600">
+                           {mcCount}x Multi-Cycle
+                         </Badge>
+                       ) : null;
+                     })()}
+                   </div>
                 </div>
                 <Button
                   variant={isThresholdReached ? "default" : "outline"}
