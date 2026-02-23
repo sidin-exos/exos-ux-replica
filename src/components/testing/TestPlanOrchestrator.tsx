@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Shuffle, Play, Copy, Download, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Shuffle, Play, Copy, Download, CheckCircle2, XCircle, Loader2, AlertTriangle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { generateAITestData, INDUSTRY_CATEGORY_COMPATIBILITY } from "@/lib/ai-test-data-generator";
 import { supabase } from "@/integrations/supabase/client";
+import { isDeepAnalyticsScenario, detectPromptLeakage, LATENCY_BENCHMARKS } from "@/lib/ai/graph";
 import type { BuyerPersona, EntropyLevel, TestPlanItem } from "@/lib/testing/types";
 
 const PERSONAS: BuyerPersona[] = [
@@ -33,6 +34,10 @@ interface ExecutionResult {
   index: number;
   status: "success" | "error";
   error?: string;
+  isMultiCycle?: boolean;
+  promptLeakage?: boolean;
+  processingTimeMs?: number;
+  latencyStatus?: "ok" | "warning" | "fail";
 }
 
 interface TestPlanOrchestratorProps {
@@ -54,6 +59,23 @@ function loadPersistedResults(scenarioId: string): ExecutionResult[] | null {
     return Array.isArray(parsed) ? parsed : null;
   } catch { return null; }
 }
+
+function computeLatencyStatus(
+  processingTimeMs: number | undefined,
+  isMultiCycle: boolean
+): "ok" | "warning" | "fail" {
+  if (!processingTimeMs) return "ok";
+  const bench = isMultiCycle ? LATENCY_BENCHMARKS.multiCycle : LATENCY_BENCHMARKS.standard;
+  if (processingTimeMs >= bench.fail) return "fail";
+  if (processingTimeMs >= bench.warning) return "warning";
+  return "ok";
+}
+
+const LATENCY_DOT_COLORS: Record<string, string> = {
+  ok: "bg-green-500",
+  warning: "bg-yellow-500",
+  fail: "bg-red-500",
+};
 
 const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) => {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -127,6 +149,7 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
     for (let i = 0; i < plan.length; i++) {
       setCurrentIndex(i + 1);
       const item = plan[i];
+      const multiCycle = isDeepAnalyticsScenario(item.scenarioId);
 
       try {
         // Phase 1: Generate synthetic data
@@ -139,12 +162,12 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
         });
 
         if (!genResult.success) {
-          runResults.push({ index: i, status: "error", error: `Generation failed: ${genResult.error}` });
+          runResults.push({ index: i, status: "error", error: `Generation failed: ${genResult.error}`, isMultiCycle: multiCycle });
           continue;
         }
 
         // Phase 2: Run through sentinel-analysis
-        const { error: analysisError } = await supabase.functions.invoke("sentinel-analysis", {
+        const { data, error: analysisError } = await supabase.functions.invoke("sentinel-analysis", {
           body: {
             scenarioType: item.scenarioId,
             scenarioData: genResult.data,
@@ -158,19 +181,41 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
         });
 
         if (analysisError) {
-          runResults.push({ index: i, status: "error", error: `Analysis failed: ${analysisError.message}` });
+          runResults.push({ index: i, status: "error", error: `Analysis failed: ${analysisError.message}`, isMultiCycle: multiCycle });
         } else {
-          runResults.push({ index: i, status: "success" });
+          const processingTimeMs = data?.processing_time_ms;
+          const latencyStatus = computeLatencyStatus(processingTimeMs, multiCycle);
+          const hasLeakage = multiCycle && detectPromptLeakage(data?.content || "");
+
+          if (hasLeakage) {
+            runResults.push({
+              index: i,
+              status: "error",
+              error: "CRITICAL: Auditor prompt leakage detected in final output.",
+              isMultiCycle: multiCycle,
+              promptLeakage: true,
+              processingTimeMs,
+              latencyStatus,
+            });
+          } else {
+            runResults.push({
+              index: i,
+              status: "success",
+              isMultiCycle: multiCycle,
+              processingTimeMs,
+              latencyStatus,
+            });
+          }
         }
       } catch (err) {
-        runResults.push({ index: i, status: "error", error: err instanceof Error ? err.message : "Unknown error" });
+        runResults.push({ index: i, status: "error", error: err instanceof Error ? err.message : "Unknown error", isMultiCycle: multiCycle });
       }
 
       // Persist after each item so results survive page refresh
       try { localStorage.setItem(getStorageKey(scenarioId), JSON.stringify(runResults)); } catch {}
 
-      // Rate-limit protection
-      if (i < plan.length - 1) await sleep(1000);
+      // Rate-limit protection: 3s for multi-cycle (3 internal LLM calls), 1s for standard
+      if (i < plan.length - 1) await sleep(multiCycle ? 3000 : 1000);
     }
 
     setResults(runResults);
@@ -188,7 +233,7 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
       description: `${successCount}/${plan.length} succeeded, ${failCount} failed`,
       variant: failCount > 0 ? "destructive" : "default",
     });
-  }, [importedJson, model, queryClient]);
+  }, [importedJson, model, queryClient, scenarioId]);
 
   const successCount = results.filter((r) => r.status === "success").length;
   const failedResults = results.filter((r) => r.status === "error");
@@ -285,15 +330,54 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
                 </Badge>
               )}
             </div>
-            {failedResults.length > 0 && (
-              <div className="space-y-1.5">
-                {failedResults.map((r) => (
-                  <div key={r.index} className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1">
-                    <strong>Item {r.index + 1}:</strong> {r.error}
-                  </div>
-                ))}
-              </div>
-            )}
+
+            <div className="space-y-1.5">
+              {results.map((r) => (
+                <div
+                  key={r.index}
+                  className={`text-xs rounded px-2 py-1.5 flex items-center gap-2 flex-wrap ${
+                    r.status === "error" ? "text-destructive bg-destructive/10" : "text-foreground bg-muted/50"
+                  }`}
+                >
+                  <strong>Item {r.index + 1}:</strong>
+
+                  {/* Cycle type badge */}
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] px-1.5 py-0 ${
+                      r.isMultiCycle ? "border-purple-400 text-purple-600" : "border-muted-foreground/30 text-muted-foreground"
+                    }`}
+                  >
+                    {r.isMultiCycle ? "Multi-Cycle (3)" : "Single-Pass (1)"}
+                  </Badge>
+
+                  {/* Latency dot */}
+                  {r.latencyStatus && (
+                    <span className="flex items-center gap-1">
+                      <span className={`inline-block w-2 h-2 rounded-full ${LATENCY_DOT_COLORS[r.latencyStatus]}`} />
+                      {r.processingTimeMs != null && (
+                        <span className="text-muted-foreground">{(r.processingTimeMs / 1000).toFixed(1)}s</span>
+                      )}
+                    </span>
+                  )}
+
+                  {/* Leakage badge */}
+                  {r.promptLeakage && (
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0 gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      LEAKAGE
+                    </Badge>
+                  )}
+
+                  {/* Status / error */}
+                  {r.status === "success" ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600 ml-auto" />
+                  ) : (
+                    <span className="text-destructive ml-auto truncate max-w-[50%]">{r.error}</span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

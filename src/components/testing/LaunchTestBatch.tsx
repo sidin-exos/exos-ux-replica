@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Zap, SlidersHorizontal } from "lucide-react";
+import { isDeepAnalyticsScenario, detectPromptLeakage } from "@/lib/ai/graph";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,10 +127,22 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
         });
       } else {
         const totalTokens = analysisResult?.totalTokens ?? analysisResult?.token_usage?.total ?? "—";
-        toast({
-          title: "Test complete",
-          description: `Gen score: ${genScore} | Tokens: ${totalTokens}`,
-        });
+        const multiCycle = isDeepAnalyticsScenario(scenarioId);
+        const cycleLabel = multiCycle ? "Multi-Cycle (3)" : "Single-Pass";
+        const hasLeakage = multiCycle && detectPromptLeakage(analysisResult?.content || "");
+
+        if (hasLeakage) {
+          toast({
+            title: "CRITICAL: Prompt leakage detected",
+            description: "Auditor prompt leakage detected in final output. Internal markers ([PASS]/[FAIL]/<draft>/<critique>) were found.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Test complete",
+            description: `${cycleLabel} | Gen score: ${genScore} | Tokens: ${totalTokens}`,
+          });
+        }
       }
     } catch (err) {
       toast({
