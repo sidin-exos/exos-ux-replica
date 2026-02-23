@@ -1,90 +1,87 @@
 
 
-# Add Region Focus + Detailed Output to Market Intelligence
+# Fix CRITICAL #4 and #5: Persist Feedback + Fix Header Icons
 
-## What Changes
+## Issue #4: Persist Scenario Feedback
 
-### 1. New "Region Focus" Parameter
-Add a dropdown to the Query Builder with these options:
-- Global (default -- no regional bias)
-- Europe (EU/EEA)
-- North America (US/Canada)
-- Asia-Pacific (APAC)
-- Middle East & Africa (MEA)
-- Latin America (LATAM)
+### Problem
+`handleFeedbackSubmit` in `GenericScenarioWizard.tsx` only does `console.log`. No data reaches the database.
 
-The selected region gets injected into the Perplexity system prompt as a regional directive, e.g.:
-> "Focus your analysis on the **European (EU/EEA)** market. Prioritize sources and data relevant to this region."
+### Complication
+The existing `chat_feedback` table is designed for chat message ratings (columns: `message_id`, `rating`, `conversation_messages`). It does NOT fit scenario feedback which needs `scenario_id`, a numeric rating, and free-text feedback. Reusing it would require hacking unrelated data into mismatched columns.
 
-### 2. Always-Detailed Output
-All queries will produce detailed, deep-dive responses by:
-- Adding `max_tokens: 4096` to the Perplexity API call (currently unlimited/default ~1024)
-- Appending a "depth directive" to every system prompt: *"Provide a comprehensive, detailed analysis. Include specific data points, percentages, named entities, and actionable recommendations."*
+### Solution: New `scenario_feedback` table
 
-No UI toggle needed since all outputs should be detailed.
-
-### 3. Database Migration
-Add a nullable `region_filter` text column to `intel_queries` so query history records which region was selected.
-
----
-
-## Files Changed (4 files + 1 migration)
-
-### Migration: Add `region_filter` column
+**Migration SQL:**
 ```sql
-ALTER TABLE public.intel_queries ADD COLUMN region_filter text;
+CREATE TABLE public.scenario_feedback (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  scenario_id text NOT NULL,
+  rating integer NOT NULL,
+  feedback_text text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.scenario_feedback ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can submit feedback (no auth required, same pattern as chat_feedback)
+CREATE POLICY "Anyone can submit scenario feedback"
+  ON public.scenario_feedback FOR INSERT
+  WITH CHECK (true);
+
+-- Only admins can read feedback
+CREATE POLICY "Admins can read scenario feedback"
+  ON public.scenario_feedback FOR SELECT
+  USING (has_role(auth.uid(), 'admin'::app_role));
 ```
 
-### File 1: `src/hooks/useMarketIntelligence.ts`
-- Add `RegionFilter` type: `'global' | 'europe' | 'north-america' | 'asia-pacific' | 'mea' | 'latam'`
-- Add `regionFilter?: RegionFilter` to `IntelQueryParams`
-- Add `REGION_OPTIONS` constant with labels for the dropdown
-- Add `region_filter` to `IntelQuery` interface
+**Code change in `GenericScenarioWizard.tsx` (line 346-349):**
 
-### File 2: `src/components/intelligence/QueryBuilder.tsx`
-- Add `regionFilter` state (default: `"global"`)
-- Add a new Select dropdown labeled "Region Focus" between Time Range and Advanced Options
-- Pass `regionFilter` in `onSubmit` params (skip if `"global"`)
-
-### File 3: `supabase/functions/market-intelligence/index.ts`
-- Add `regionFilter` to `IntelRequest` interface
-- Validate with `requireStringEnum` (optional)
-- Build a `REGION_PROMPTS` map that returns a regional directive string per region
-- Append `REGION_PROMPTS[regionFilter]` + the depth directive to every system prompt
-- Set `max_tokens: 4096` in the Perplexity API body
-- Store `region_filter` in the `intel_queries` insert
-
-### File 4: `src/integrations/supabase/types.ts`
-- Auto-generated after migration (no manual edit)
-
----
-
-## Technical Details
-
-**Region prompt injection example** (appended to the query-type system prompt):
-
-```text
-REGIONAL FOCUS: European (EU/EEA) market.
-Prioritize sources, regulations, suppliers, and pricing data relevant to this region.
-If global data is referenced, clearly distinguish it from region-specific findings.
-
-DEPTH: Provide a comprehensive, detailed analysis with specific data points,
-percentages, named entities, timelines, and actionable recommendations.
-Structure your response with clear headers and sub-sections.
-```
-
-**Perplexity API body change:**
+Replace the console.log stub with:
 ```typescript
-const perplexityBody = {
-  model: "sonar-pro",
-  max_tokens: 4096,  // NEW: ensures detailed output
-  messages: [
-    { role: "system", content: systemPrompt + regionDirective + depthDirective },
-    { role: "user", content: enrichedQuery }
-  ],
-  // ... existing filters
+const handleFeedbackSubmit = async (rating: number, feedback: string) => {
+  try {
+    const { error } = await supabase.from("scenario_feedback").insert({
+      scenario_id: scenario.id,
+      rating,
+      feedback_text: feedback || null,
+    });
+    if (error) throw error;
+    toast.success("Thank you for your feedback!");
+  } catch (err: any) {
+    console.error("Feedback save failed:", err);
+    toast.error("Could not save feedback. Please try again.");
+  }
 };
 ```
 
-**Zero breaking changes:** `regionFilter` is optional everywhere. Existing queries without it continue to work as "Global" with the same detailed depth.
+`toast` from sonner is already available in this component (used on lines 242, 340).
 
+---
+
+## Issue #5: Fix Dead Header Icons
+
+**File:** `src/components/layout/Header.tsx`
+
+### Changes:
+1. **Remove the Bell/Notifications button entirely** -- no notification system exists, the fake red dot is misleading.
+2. **Wire the Settings gear icon** to navigate to `/account` using `useNavigate` from react-router-dom.
+
+### Technical Details
+
+- Add `import { useNavigate } from "react-router-dom";`
+- Add `const navigate = useNavigate();` inside the component
+- Delete the Bell button block (lines 87-90)
+- Add `onClick={() => navigate("/account")}` to the Settings button
+
+---
+
+## Summary of Changes
+
+| File | Change |
+|---|---|
+| Migration (new) | Create `scenario_feedback` table with RLS |
+| `GenericScenarioWizard.tsx` | Replace console.log with supabase insert + toasts |
+| `Header.tsx` | Remove Bell button, wire Settings to `/account` |
+
+No breaking changes. Both fixes are isolated, zero risk to existing functionality.
