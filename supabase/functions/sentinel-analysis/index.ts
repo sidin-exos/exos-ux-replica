@@ -16,8 +16,9 @@ const corsHeaders = {
  * 1. Optionally fetches industry/category context from DB (server-side grounding)
  * 2. Builds grounding XML and system prompt server-side when slugs are provided
  * 3. Calls AI gateway with grounded prompt
- * 4. Logs prompts and responses to testing database
- * 5. Returns response for client-side validation and de-anonymization
+ * 4. For Deep Analytics scenarios, runs a 3-cycle Chain-of-Experts (Analyst → Auditor → Synthesizer)
+ * 5. Logs prompts and responses to testing database
+ * 6. Returns response for client-side validation and de-anonymization
  */
 
 interface AnalysisRequest {
@@ -39,9 +40,77 @@ interface AnalysisRequest {
   groundingContext?: Record<string, unknown>;
   anonymizationMetadata?: Record<string, unknown>;
   enableTestLogging?: boolean;
+  // Multi-cycle routing
+  scenarioId?: string;
   // Tracing
   env?: string;
 }
+
+// ============================================
+// DEEP ANALYTICS MULTI-CYCLE CONSTANTS
+// ============================================
+
+const DEEP_ANALYTICS_SCENARIOS = [
+  'tco-analysis', 'cost-breakdown', 'capex-vs-opex',
+  'savings-calculation', 'make-vs-buy', 'volume-consolidation',
+  'forecasting-budgeting', 'specification-optimizer',
+];
+
+const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor specializing in procurement cost analysis. Your task is to rigorously audit an AI-generated procurement analysis draft.
+
+## Audit Checklist — apply EVERY check:
+
+### 1. Arithmetic Verification
+- Verify ALL calculations: ROI, NPV, IRR, break-even points, payback periods
+- Check percentage calculations and compound effects
+- Validate any savings projections against stated baseline costs
+- Mark each calculation: [PASS] or [FAIL] with correction
+
+### 2. Hidden Cost Detection
+- Flag any missing: taxes, duties, tariffs
+- Check for depreciation and amortization gaps
+- Identify switching costs, integration costs, training costs
+- Look for opportunity costs not accounted for
+- Verify warranty, maintenance, and end-of-life costs
+
+### 3. Savings Classification
+- Enforce strict Hard Savings vs. Soft Savings separation
+- Hard Savings: directly measurable budget reductions (price cuts, volume discounts)
+- Soft Savings: efficiency gains, risk avoidance, productivity improvements
+- [FAIL] any analysis that mixes hard and soft savings without clear labels
+
+### 4. Unit Consistency
+- Check monthly vs. annual vs. multi-year alignment
+- Verify currency consistency throughout
+- Validate quantity units (per unit, per lot, per annum)
+
+### 5. Logical Coherence
+- Verify recommendations follow from the data provided
+- Flag unsupported claims or overly optimistic projections
+- Check for contradictions between sections
+
+Output your audit as a structured critique with [PASS] or [FAIL] markers for each check.
+At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION].`;
+
+const SYNTHESIZER_SYSTEM_PROMPT = `You are a Senior Procurement Strategist producing the final deliverable for a client.
+
+You are given:
+1. An original analysis draft
+2. An auditor's critique with [PASS]/[FAIL] markers
+
+Your task:
+- Correct ALL items marked [FAIL] by the auditor
+- Preserve all items marked [PASS] exactly as they are
+- Incorporate any missing costs or corrections the auditor identified
+- Ensure Hard Savings and Soft Savings are clearly separated
+- Verify all arithmetic is correct in the final output
+
+Output ONLY the final polished analysis. Do NOT include:
+- Audit markers ([PASS]/[FAIL])
+- References to the audit process
+- Meta-commentary about corrections made
+
+The output should read as a clean, professional procurement analysis as if it were correct from the start.`;
 
 // ============================================
 // SERVER-SIDE GROUNDING HELPERS
@@ -181,6 +250,133 @@ ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n
 }
 
 // ============================================
+// REUSABLE LLM CALL HELPER
+// ============================================
+
+/**
+ * Internal helper to call an LLM provider (Google AI Studio or Lovable Gateway).
+ * Encapsulates retry logic, fallback, and LangSmith tracing in one place.
+ * Used for both single-pass and multi-cycle flows.
+ */
+async function callLLM(
+  sysPrompt: string,
+  usrPrompt: string,
+  opts: {
+    model: string;
+    useGoogleAIStudio: boolean;
+    googleModel: string;
+    tracer: LangSmithTracer;
+    parentRunId: string;
+    spanName: string;
+  }
+): Promise<string> {
+  const { model, useGoogleAIStudio, googleModel, tracer, parentRunId, spanName } = opts;
+
+  const spanId = tracer.createRun(spanName, "llm", {
+    model: useGoogleAIStudio ? googleModel : model,
+    provider: useGoogleAIStudio ? "google_ai_studio" : "lovable_gateway",
+    systemPromptLength: sysPrompt.length,
+    userPromptLength: usrPrompt.length,
+  }, { parentRunId });
+
+  // --- Try Google AI Studio first if BYOK ---
+  if (useGoogleAIStudio) {
+    const GOOGLE_AI_STUDIO_KEY = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
+    if (GOOGLE_AI_STUDIO_KEY) {
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${googleModel}:generateContent?key=${GOOGLE_AI_STUDIO_KEY}`;
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: sysPrompt + "\n\n" + usrPrompt }] }],
+            generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          tracer.patchRun(spanId, { contentLength: content.length, provider: "google_ai_studio" });
+          return content;
+        }
+
+        const errText = await res.text();
+        console.warn(`[callLLM] Google AI Studio ${res.status} for ${spanName}, falling back to gateway`);
+        // Fall through to gateway on 429, 5xx, 400-403
+        if (!(res.status === 429 || res.status >= 500 || res.status === 400 || res.status === 401 || res.status === 403)) {
+          tracer.patchRun(spanId, undefined, `Google AI Studio ${res.status}: ${errText}`);
+          throw new Error(`Google AI Studio error ${res.status}`);
+        }
+      } catch (googleErr) {
+        console.warn(`[callLLM] Google AI Studio error for ${spanName}:`, googleErr);
+        // Fall through to Lovable Gateway
+      }
+    }
+  }
+
+  // --- Lovable AI Gateway with retry ---
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    tracer.patchRun(spanId, undefined, "LOVABLE_API_KEY not configured");
+    throw new Error("AI gateway not configured");
+  }
+
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [1000, 2000, 4000];
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
+      }
+
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: sysPrompt },
+            { role: "user", content: usrPrompt },
+          ],
+          temperature: 0.4,
+          max_completion_tokens: 4096,
+        }),
+      });
+
+      if (res.status === 503 && attempt < MAX_RETRIES - 1) {
+        const errText = await res.text();
+        console.warn(`[callLLM] Gateway 503 attempt ${attempt + 1} for ${spanName}: ${errText}`);
+        continue;
+      }
+
+      if (!res.ok) {
+        const errText = await res.text();
+        tracer.patchRun(spanId, undefined, `Gateway ${res.status}: ${errText}`);
+        throw new Error(`AI gateway error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      tracer.patchRun(spanId, { contentLength: content.length, provider: "lovable_gateway", usage: data.usage });
+      return content;
+    } catch (fetchErr) {
+      if (attempt === MAX_RETRIES - 1) {
+        tracer.patchRun(spanId, undefined, fetchErr instanceof Error ? fetchErr.message : "Network error");
+        throw fetchErr;
+      }
+    }
+  }
+
+  tracer.patchRun(spanId, undefined, "All retry attempts exhausted");
+  throw new Error("AI gateway unavailable after retries");
+}
+
+// ============================================
 // MAIN HANDLER
 // ============================================
 
@@ -228,7 +424,11 @@ serve(async (req) => {
     const groundingContext = optionalRecord(body.groundingContext, "groundingContext", 50);
     const anonymizationMetadata = optionalRecord(body.anonymizationMetadata, "anonymizationMetadata", 50);
     const enableTestLogging = optionalBoolean(body.enableTestLogging, "enableTestLogging") ?? true;
+    const scenarioId = requireString(body.scenarioId, "scenarioId", { optional: true, maxLength: 100 });
     const reqEnv = requireString(body.env, "env", { optional: true, maxLength: 50 });
+
+    // Determine if multi-cycle
+    const isMultiCycle = !!scenarioId && DEEP_ANALYTICS_SCENARIOS.includes(scenarioId);
 
     // Initialize LangSmith tracer
     tracer = new LangSmithTracer({ env: reqEnv, feature: "sentinel_analysis" });
@@ -236,9 +436,11 @@ serve(async (req) => {
       model,
       scenarioType: scenarioType || "unknown",
       serverSideGrounding,
+      scenarioId: scenarioId || null,
+      isMultiCycle,
     }, {
-      metadata: { industrySlug, categorySlug, useGoogleAIStudio, useLocalModel },
-      tags: [model],
+      metadata: { industrySlug, categorySlug, useGoogleAIStudio, useLocalModel, isMultiCycle, cycleCount: isMultiCycle ? 3 : 1 },
+      tags: [model, ...(isMultiCycle ? ["multi-cycle", "chain-of-experts"] : [])],
     });
 
     // Initialize Supabase client
@@ -259,7 +461,7 @@ serve(async (req) => {
       }, { parentRunId });
 
       let industryResult: { data: IndustryRow | null; error: unknown } = { data: null, error: null };
-      let categoryResult: { data: IndustryRow | null; error: unknown } = { data: null, error: null };
+      let categoryResult: { data: CategoryRow | null; error: unknown } = { data: null, error: null };
       const fetchErrors: string[] = [];
 
       try {
@@ -304,8 +506,8 @@ serve(async (req) => {
         userPrompt = grounded.userPrompt;
       } finally {
         tracer.patchRun(assembleRunId, {
-          systemPromptLength: systemPrompt!?.length || 0,
-          userPromptLength: userPrompt!?.length || 0,
+          systemPromptLength: systemPrompt?.length || 0,
+          userPromptLength: userPrompt?.length || 0,
           contextPartsCount: (industryResult.data ? 1 : 0) + (categoryResult.data ? 1 : 0),
         });
       }
@@ -372,6 +574,71 @@ serve(async (req) => {
         { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // ============================================
+    // MULTI-CYCLE CHAIN-OF-EXPERTS (Deep Analytics)
+    // ============================================
+    if (isMultiCycle) {
+      console.log(`[Sentinel] Multi-cycle Chain-of-Experts for scenario: ${scenarioId}`);
+
+      const llmOpts = { model, useGoogleAIStudio, googleModel, tracer, parentRunId: parentRunId!, spanName: "" };
+
+      // Cycle 1: Analyst Draft
+      const draft = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
+      console.log(`[Sentinel] Cycle 1 (Analyst Draft): ${draft.length} chars`);
+
+      // Cycle 2: Auditor Critique
+      const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPrompt}\n</original-request>`;
+      const critique = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
+      console.log(`[Sentinel] Cycle 2 (Auditor Critique): ${critique.length} chars`);
+
+      // Cycle 3: Synthesizer Final
+      const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPrompt}\n</original-request>`;
+      const finalContent = await callLLM(SYNTHESIZER_SYSTEM_PROMPT, synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      console.log(`[Sentinel] Cycle 3 (Synthesizer Final): ${finalContent.length} chars`);
+
+      const processingTime = Math.round(performance.now() - startTime);
+
+      // Log final result (only final — drafts/critiques stay server-side)
+      if (enableTestLogging && supabase && promptId) {
+        try {
+          await supabase.from("test_reports").insert({
+            prompt_id: promptId,
+            model: useGoogleAIStudio ? googleModel : model,
+            raw_response: finalContent,
+            processing_time_ms: processingTime,
+            success: true,
+          });
+        } catch (reportError) {
+          console.error("[Sentinel] Failed to log multi-cycle report:", reportError);
+        }
+      }
+
+      tracer.patchRun(parentRunId!, {
+        success: true,
+        isMultiCycle: true,
+        cycleCount: 3,
+        contentLength: finalContent.length,
+        processingTimeMs: processingTime,
+        source: useGoogleAIStudio ? "google_ai_studio" : "cloud",
+      });
+
+      return new Response(
+        JSON.stringify({
+          content: finalContent,
+          model: useGoogleAIStudio ? googleModel : model,
+          source: useGoogleAIStudio ? "google_ai_studio" : "cloud",
+          promptId,
+          processingTimeMs: processingTime,
+          isMultiCycle: true,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============================================
+    // SINGLE-PASS INFERENCE (Standard scenarios)
+    // ============================================
 
     // --- Child Run 3: ai-inference (wraps all AI provider attempts) ---
     const inferenceRunId = tracer.createRun("ai-inference", "chain", {
@@ -482,12 +749,7 @@ serve(async (req) => {
 
           return new Response(
             JSON.stringify({
-              content,
-              model: googleModel,
-              source: "google_ai_studio",
-              usage,
-              promptId,
-              processingTimeMs: processingTime
+              content, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );

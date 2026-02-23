@@ -324,7 +324,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         model: configModel,
       };
 
-      const result = await runExosGraph(queryText, graphConfig);
+      const result = await runExosGraph(queryText, graphConfig, scenario.id);
 
       clearInterval(progressInterval);
       setDeepAnalysisStep(4); // Complete all steps

@@ -25,6 +25,28 @@ import {
 } from './trace-utils';
 
 /**
+ * Deep Analytics scenarios that trigger the server-side
+ * Multi-Cycle Chain-of-Experts (Analyst → Auditor → Synthesizer).
+ * Standard scenarios use single-pass inference.
+ */
+export const DEEP_ANALYTICS_SCENARIOS = [
+  'tco-analysis',
+  'cost-breakdown',
+  'capex-vs-opex',
+  'savings-calculation',
+  'make-vs-buy',
+  'volume-consolidation',
+  'forecasting-budgeting',
+  'specification-optimizer',
+] as const;
+
+export type DeepAnalyticsScenario = typeof DEEP_ANALYTICS_SCENARIOS[number];
+
+export function isDeepAnalyticsScenario(id: string): id is DeepAnalyticsScenario {
+  return (DEEP_ANALYTICS_SCENARIOS as readonly string[]).includes(id);
+}
+
+/**
  * Model configuration type for provider selection
  */
 export type ModelConfigType = {
@@ -38,6 +60,7 @@ export type ModelConfigType = {
 interface PipelineState {
   userQuery: string;
   config: ModelConfigType;
+  scenarioId?: string;
   anonymizedQuery: string;
   entityMap: Map<string, SensitiveEntity>;
   aiResponse: string;
@@ -96,6 +119,7 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
       useGoogleAIStudio,
       googleModel: useGoogleAIStudio ? model : undefined,
       enableTestLogging: false,
+      scenarioId: state.scenarioId,
     },
   });
 
@@ -182,14 +206,16 @@ function stepDeanonymize(state: PipelineState): PipelineState {
  */
 export async function runExosGraph(
   userQuery: string,
-  config: ModelConfigType
+  config: ModelConfigType,
+  scenarioId?: string
 ): Promise<{
   finalAnswer: string;
   confidenceScore: number;
   validationStatus: 'pending' | 'approved' | 'rejected';
   retryCount: number;
 }> {
-  console.log(`🚀 Pipeline: Starting with config`, config);
+  const isMultiCycle = scenarioId ? isDeepAnalyticsScenario(scenarioId) : false;
+  console.log(`🚀 Pipeline: Starting (scenarioId: ${scenarioId || 'none'}, multiCycle: ${isMultiCycle})`, config);
   
   // Log tracing config on first run
   if (isTracingEnabled()) {
@@ -200,12 +226,15 @@ export async function runExosGraph(
   const parentRunId = await startPipelineTrace("EXOS_Deep_Analysis", {
     userQuery,
     config,
+    scenarioId,
+    isMultiCycle,
   });
 
   // Initialize state
   let state: PipelineState = {
     userQuery,
     config,
+    scenarioId,
     anonymizedQuery: '',
     entityMap: new Map(),
     aiResponse: '',
