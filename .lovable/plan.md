@@ -1,147 +1,92 @@
 
 
-# Server-Side Multi-Cycle Chain-of-Experts
+# Testing Pipeline: Multi-Cycle Awareness Upgrade
 
-## Problem with Previous Plan
-The original spec orchestrated 3 LLM cycles from the browser (`graph.ts`), causing:
-- 3 HTTP round-trips (latency)
-- Intermediate AI reasoning (drafts, critiques) exposed in browser Network tab
-- Client-side complexity for what should be atomic server logic
+## Summary
+Add latency benchmarks, prompt leakage detection, cycle-type badges, and adaptive delays to the testing pipeline -- with shared utilities exported from `graph.ts` (no DRY violations).
 
-## Architecture
+## Files Changed (5)
 
-```text
-CLIENT (graph.ts)                    SERVER (sentinel-analysis/index.ts)
-+-----------------------+            +-----------------------------------+
-| 1. Anonymize          |            |                                   |
-| 2. POST to edge fn    |---HTTP---->| IF isMultiCycle:                  |
-|    { ...payload,      |            |   Cycle 1: Analyst Draft          |
-|      scenarioId }     |            |   Cycle 2: Auditor Critique       |
-|                       |            |   Cycle 3: Synthesizer Final      |
-| 3. Receive final only |<---HTTP---| ELSE:                             |
-| 4. Validate           |            |   Single-pass inference           |
-| 5. Deanonymize        |            +-----------------------------------+
-+-----------------------+
+### 1. `src/lib/ai/graph.ts` -- Export Shared Utilities
+
+Add after the existing `isDeepAnalyticsScenario` function (line ~47):
+
+```typescript
+export const LEAKAGE_MARKERS = ['[PASS]', '[FAIL]', '<draft>', '</draft>', '<critique>', '</critique>'];
+
+export function detectPromptLeakage(content: string): boolean {
+  return LEAKAGE_MARKERS.some(marker => content.includes(marker));
+}
+
+export const LATENCY_BENCHMARKS = {
+  multiCycle: { warning: 45000, fail: 60000 },
+  standard:   { warning: 15000, fail: 25000 },
+} as const;
 ```
 
-## Changes
+No other changes to this file.
 
-### 1. `src/lib/ai/graph.ts` (Client -- Minimal Changes)
+### 2. `src/components/testing/TestPlanOrchestrator.tsx` -- Execution Logic + Results UI
 
-**Add constants** (top of file):
+**Imports:** Add `isDeepAnalyticsScenario`, `detectPromptLeakage`, `LATENCY_BENCHMARKS` from `@/lib/ai/graph`. Add `AlertTriangle` from lucide.
+
+**Extend `ExecutionResult`:**
 ```typescript
-export const DEEP_ANALYTICS_SCENARIOS = [
-  'tco-analysis', 'cost-breakdown', 'capex-vs-opex',
-  'savings-calculation', 'make-vs-buy', 'volume-consolidation',
-  'forecasting-budgeting', 'specification-optimizer'
-] as const;
-
-export type DeepAnalyticsScenario = typeof DEEP_ANALYTICS_SCENARIOS[number];
-
-export function isDeepAnalyticsScenario(id: string): id is DeepAnalyticsScenario {
-  return (DEEP_ANALYTICS_SCENARIOS as readonly string[]).includes(id);
+interface ExecutionResult {
+  index: number;
+  status: "success" | "error";
+  error?: string;
+  isMultiCycle?: boolean;
+  promptLeakage?: boolean;
+  processingTimeMs?: number;
+  latencyStatus?: "ok" | "warning" | "fail";
 }
 ```
 
-**Update `runExosGraph` signature** to accept optional `scenarioId`:
-```typescript
-export async function runExosGraph(
-  userQuery: string,
-  config: ModelConfigType,
-  scenarioId?: string
-)
-```
+**Update execution loop** (`handleRunPlan`, inside the success branch ~line 162-163):
+- Determine `isMultiCycle` via `isDeepAnalyticsScenario(item.scenarioId)`.
+- Extract `processingTimeMs` from `data.processing_time_ms`.
+- Compute `latencyStatus` using the appropriate benchmark thresholds.
+- Run `detectPromptLeakage(data.content)` -- if true, force status to `"error"` with message `"CRITICAL: Auditor prompt leakage detected in final output."` and set `promptLeakage: true`.
+- Store all new fields in the result object.
 
-**Update `stepReasoning`** to pass `scenarioId` in the edge function payload. This is the ONLY change to the execution flow -- the client still makes one HTTP call and receives the final result:
-```typescript
-body: {
-  ...existingPayload,
-  scenarioId,  // edge function uses this for routing
-}
-```
+**Update rate-limit delay** (~line 173): Change from fixed `1000ms` to `isDeepAnalyticsScenario(item.scenarioId) ? 3000 : 1000`.
 
-No new step functions (no `stepCritique`, no `stepSynthesize`). The client is unaware of cycles.
+**Update Results Summary UI** (~lines 274-298):
+- Add cycle-type badge per result row: purple `"Multi-Cycle (3)"` or gray `"Single-Pass (1)"`.
+- Add latency dot indicator: green (ok), yellow (warning), red (fail).
+- If `promptLeakage` is true, show a red `"LEAKAGE"` badge.
 
-### 2. `src/components/scenarios/GenericScenarioWizard.tsx` (1-line change)
+### 3. `src/components/testing/LaunchTestBatch.tsx` -- Single Test Leakage Check
 
-Pass `scenario.id` to `runExosGraph`:
-```typescript
-const result = await runExosGraph(queryText, graphConfig, scenario.id);
-```
+**Imports:** Add `isDeepAnalyticsScenario`, `detectPromptLeakage` from `@/lib/ai/graph`. Add `Badge` from ui.
 
-### 3. `supabase/functions/sentinel-analysis/index.ts` (Server -- Core Logic)
+**Update success branch** (~lines 127-133):
+- After analysis succeeds, check `detectPromptLeakage(analysisResult?.content || "")`.
+- If leakage detected: show destructive toast `"CRITICAL: Auditor prompt leakage detected in final output."`.
+- Add cycle type to success toast: `"Multi-Cycle (3) | Gen score: X | Tokens: Y"` or `"Single-Pass | Gen score: X | Tokens: Y"`.
 
-**Add to `AnalysisRequest` interface:**
-```typescript
-scenarioId?: string;
-```
+### 4. `src/components/testing/TestSessionLog.tsx` -- Multi-Cycle Count Badge
 
-**Add Deep Analytics constants and prompts** (above main handler):
+**Imports:** Add `isDeepAnalyticsScenario` from `@/lib/ai/graph`.
 
-```typescript
-const DEEP_ANALYTICS_SCENARIOS = [
-  'tco-analysis', 'cost-breakdown', 'capex-vs-opex',
-  'savings-calculation', 'make-vs-buy', 'volume-consolidation',
-  'forecasting-budgeting', 'specification-optimizer'
-];
+**Update date group row** (~line 127-141): After the existing prompts/success/fail badges, add a small purple badge showing how many prompts in the group are multi-cycle. Example: `"2x Multi-Cycle"`. Only rendered if count > 0.
 
-const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor...
-- Verify ALL arithmetic (ROI, NPV, IRR, break-even, payback period)
-- Flag missing hidden costs (taxes, depreciation, switching costs, opportunity cost)
-- Enforce Hard vs. Soft savings separation
-- Check unit consistency (monthly vs. annual, currency alignment)
-- Output structured critique with [PASS]/[FAIL] markers per check`;
+### 5. `src/components/testing/TestStatsCards.tsx` -- Benchmark Context Label
 
-const SYNTHESIZER_SYSTEM_PROMPT = `You are a Senior Procurement Strategist...
-Merge the original analysis draft with the auditor's critique.
-Correct any [FAIL] items. Preserve all [PASS] items.
-Output only the final polished analysis. Do not include audit markers.`;
-```
+**Imports:** Add `isDeepAnalyticsScenario` from `@/lib/ai/graph`.
 
-**Add helper function** `callLLM(systemPrompt, userPrompt, model, tracer, parentRunId, spanName)` to DRY up the existing Google AI Studio / Lovable Gateway call logic into a reusable internal function. This avoids copy-pasting the retry/fallback logic 3 times.
+**Update "Avg Processing" StatCard** (~line 49): Below the value, conditionally render benchmark context:
+- If `scenarioType` is provided and `isDeepAnalyticsScenario(scenarioType)`: show `"(benchmark: 45s)"`.
+- Otherwise if `scenarioType` is provided: show `"(benchmark: 15s)"`.
+- If no scenario selected: no benchmark shown.
 
-**Add multi-cycle orchestration** after prompt resolution, before the current single inference call:
+This is done by adding a small `<span>` beneath the StatCard value, not modifying the StatCard component itself.
 
-```typescript
-if (DEEP_ANALYTICS_SCENARIOS.includes(scenarioId)) {
-  // Cycle 1: Analyst Draft
-  const draft = await callLLM(systemPrompt, userPrompt, model, tracer, parentRunId, "Analyst_Draft");
+## Technical Notes
 
-  // Cycle 2: Auditor Critique
-  const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPrompt}\n</original-request>`;
-  const critique = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, model, tracer, parentRunId, "Auditor_Critique");
-
-  // Cycle 3: Synthesizer
-  const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPrompt}\n</original-request>`;
-  const finalContent = await callLLM(SYNTHESIZER_SYSTEM_PROMPT, synthPrompt, model, tracer, parentRunId, "Synthesizer_Final");
-
-  // Return ONLY the final content (drafts/critiques never leave the server)
-  return new Response(JSON.stringify({ content: finalContent, model, source, ... }));
-}
-
-// ELSE: existing single-pass inference (unchanged)
-```
-
-**LangSmith tracing**: Each `callLLM` invocation creates a child span under the parent run, labeled `Analyst_Draft`, `Auditor_Critique`, `Synthesizer_Final`. The parent span gets metadata `{ isMultiCycle: true, cycleCount: 3 }`.
-
-## Security Guarantees
-- Intermediate drafts and critiques NEVER leave the edge function boundary
-- Browser Network tab shows a single POST/response pair (same as today)
-- No client-side looping or retry for multi-cycle scenarios
-- Scratchpad reasoning stays server-side only
-
-## What Stays Unchanged
-- Client-side anonymization (Step 1) -- PII never leaves the browser
-- Client-side validation (Step 3) -- hallucination check on final output
-- Client-side deanonymization (Step 4) -- entity restoration after validation
-- Standard (non-deep-analytics) scenarios -- completely untouched code path
-- Google AI Studio BYOK fallback logic -- reused inside `callLLM`
-
-## Implementation Sequence
-1. Add `callLLM` helper to edge function (refactor existing inference into it)
-2. Add multi-cycle routing block to edge function
-3. Deploy edge function
-4. Add constants + `scenarioId` param to `graph.ts`
-5. Update wizard to pass `scenario.id`
-6. Test end-to-end with a Cost Breakdown scenario
+- **Zero duplication**: `detectPromptLeakage`, `LEAKAGE_MARKERS`, and `LATENCY_BENCHMARKS` are exported once from `graph.ts` and imported everywhere.
+- **No database changes** -- all frontend-only, reading data already returned by the edge function.
+- **Backward compatible** -- `ExecutionResult` new fields are all optional; persisted localStorage results from previous runs still deserialize fine.
+- **Rate-limit adjustment**: 3s delay between multi-cycle tests (3 internal LLM calls each) vs 1s for standard.
 
