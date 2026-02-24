@@ -438,12 +438,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      pipeline_iq_stats: {
+        Row: {
+          accuracy: number | null
+          avg_processing_time_ms: number | null
+          batch_date: string | null
+          total_runs: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_shared_report: {
         Args: { p_expires_at: string; p_payload: Json }
         Returns: string
+      }
+      get_evolutionary_directives: {
+        Args: { limit_num?: number }
+        Returns: {
+          directive_text: string
+          occurrence_count: number
+          source_field_action: string
+          target_scenario: string
+        }[]
       }
       get_shared_report: { Args: { p_share_id: string }; Returns: Json }
       has_role: {
