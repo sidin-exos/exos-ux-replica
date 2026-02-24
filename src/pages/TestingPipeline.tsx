@@ -1,12 +1,13 @@
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toPng, toSvg } from "html-to-image";
-import { Download, Image, FileCode, ArrowLeft, Sparkles, Zap, Target, LayoutGrid } from "lucide-react";
+import { Download, Image, FileCode, ArrowLeft, Sparkles, Zap, Target, LayoutGrid, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/layout/Header";
 import { NavLink } from "@/components/NavLink";
 import TestingPipelineDiagram from "@/components/architecture/TestingPipelineDiagram";
@@ -16,53 +17,15 @@ import TestSessionLog from "@/components/testing/TestSessionLog";
 import TestPlanOrchestrator from "@/components/testing/TestPlanOrchestrator";
 import DashboardSmokeTest from "@/components/testing/DashboardSmokeTest";
 import { useTestStats } from "@/hooks/useTestDatabase";
+import { useAccuracyTrend, useEvolutionaryDirectives } from "@/hooks/usePipelineIQ";
 import { useModelConfig } from "@/contexts/ModelConfigContext";
 import { scenarios } from "@/lib/scenarios";
-import type { EvolutionaryDirective } from "@/lib/testing/types";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
-
-// Mock data for Pipeline IQ — will be replaced with real aggregation
-const MOCK_ACCURACY_TREND = [
-  { batch: 1, accuracy: 0.42 },
-  { batch: 2, accuracy: 0.51 },
-  { batch: 3, accuracy: 0.58 },
-  { batch: 4, accuracy: 0.63 },
-  { batch: 5, accuracy: 0.71 },
-  { batch: 6, accuracy: 0.74 },
-  { batch: 7, accuracy: 0.79 },
-];
-
-const MOCK_DIRECTIVES: EvolutionaryDirective[] = [
-  {
-    id: "d1",
-    target_scenario: "contract_renewal",
-    directive_text: "Increase structured fields for payment_terms — AI hallucinates 40% of the time without explicit user input.",
-    confidence_gain_projected: 0.12,
-    source_field_action: "CRITICAL_REQUIRE",
-    generated_at: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: "d2",
-    target_scenario: "vendor_consolidation",
-    directive_text: "Hide vendor_risk_score field — server context provides this with 95% accuracy from grounding data.",
-    confidence_gain_projected: 0.08,
-    source_field_action: "REDUNDANT_HIDE",
-    generated_at: new Date(Date.now() - 172800000).toISOString(),
-  },
-  {
-    id: "d3",
-    target_scenario: "cost_reduction",
-    directive_text: "Add new field: baseline_unit_cost — detected as schema gap by 3 personas across 12 runs.",
-    confidence_gain_projected: 0.15,
-    source_field_action: "SCHEMA_GAP_DETECTED",
-    generated_at: new Date(Date.now() - 259200000).toISOString(),
-  },
-];
 
 const CHART_CONFIG = {
   accuracy: {
@@ -72,7 +35,7 @@ const CHART_CONFIG = {
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  CRITICAL_REQUIRE: "text-red-600 bg-red-50 border-red-200",
+  CRITICAL_REQUIRE: "text-destructive bg-destructive/10 border-destructive/30",
   REDUNDANT_HIDE: "text-green-600 bg-green-50 border-green-200",
   SCHEMA_GAP_DETECTED: "text-blue-600 bg-blue-50 border-blue-200",
   OPTIONAL_KEEP: "text-amber-600 bg-amber-50 border-amber-200",
@@ -97,7 +60,15 @@ const TestingPipeline = () => {
 
   const selectedScenario = scenarios.find((s) => s.id === scenarioId);
   const { data: stats } = useTestStats(scenarioId || undefined);
+  const { data: accuracyData, isLoading: isAccuracyLoading } = useAccuracyTrend();
+  const { data: directives, isLoading: isDirectivesLoading } = useEvolutionaryDirectives();
   const isThresholdReached = (stats?.totalReports ?? 0) >= AUDIT_THRESHOLD;
+
+  const currentAccuracy = accuracyData?.length ? accuracyData[accuracyData.length - 1].accuracy : null;
+  const deltaFromFirst = accuracyData && accuracyData.length >= 2
+    ? Math.round((accuracyData[accuracyData.length - 1].accuracy - accuracyData[0].accuracy) * 100)
+    : null;
+  const chartData = (accuracyData ?? []).map((row, i) => ({ batch: i + 1, accuracy: row.accuracy }));
 
   const downloadAsPNG = async () => {
     if (!diagramRef.current) return;
@@ -287,7 +258,6 @@ const TestingPipeline = () => {
             <DashboardSmokeTest />
           </TabsContent>
 
-          {/* Tab 4: Pipeline IQ (GEA) */}
           <TabsContent value="pipeline-iq" className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Inference Accuracy Chart */}
@@ -302,46 +272,64 @@ const TestingPipeline = () => {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <ChartContainer config={CHART_CONFIG} className="h-[280px] w-full">
-                    <LineChart data={MOCK_ACCURACY_TREND}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis
-                        dataKey="batch"
-                        label={{ value: "Test Batch", position: "insideBottom", offset: -5 }}
-                        className="text-muted-foreground"
-                      />
-                      <YAxis
-                        domain={[0, 1]}
-                        tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
-                        className="text-muted-foreground"
-                      />
-                      <ChartTooltip
-                        content={
-                          <ChartTooltipContent
-                            formatter={(value: number) => `${(value * 100).toFixed(1)}%`}
+                  {isAccuracyLoading ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-[280px] w-full" />
+                      <Skeleton className="h-4 w-48" />
+                    </div>
+                  ) : chartData.length === 0 ? (
+                    <div className="h-[280px] flex flex-col items-center justify-center text-muted-foreground gap-2">
+                      <Inbox className="w-10 h-10 opacity-40" />
+                      <p className="text-sm">No batch data yet. Run some tests first.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <ChartContainer config={CHART_CONFIG} className="h-[280px] w-full">
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis
+                            dataKey="batch"
+                            label={{ value: "Test Batch", position: "insideBottom", offset: -5 }}
+                            className="text-muted-foreground"
                           />
-                        }
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="accuracy"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2.5}
-                        dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ChartContainer>
-                  <div className="mt-4 flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-primary" />
-                      <span className="text-muted-foreground">Current: <strong className="text-foreground">79%</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Zap className="w-3.5 h-3.5 text-green-500" />
-                      <span className="text-muted-foreground">Δ from batch 1: <strong className="text-green-600">+37pp</strong></span>
-                    </div>
-                  </div>
+                          <YAxis
+                            domain={[0, 1]}
+                            tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
+                            className="text-muted-foreground"
+                          />
+                          <ChartTooltip
+                            content={
+                              <ChartTooltipContent
+                                formatter={(value: number) => `${(value * 100).toFixed(1)}%`}
+                              />
+                            }
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="accuracy"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={2.5}
+                            dot={{ r: 4, fill: "hsl(var(--primary))" }}
+                            activeDot={{ r: 6 }}
+                          />
+                        </LineChart>
+                      </ChartContainer>
+                      <div className="mt-4 flex items-center gap-4 text-sm">
+                        {currentAccuracy !== null && (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 rounded-full bg-primary" />
+                            <span className="text-muted-foreground">Current: <strong className="text-foreground">{(currentAccuracy * 100).toFixed(1)}%</strong></span>
+                          </div>
+                        )}
+                        {deltaFromFirst !== null && (
+                          <div className="flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5 text-green-500" />
+                            <span className="text-muted-foreground">Δ from batch 1: <strong className={deltaFromFirst >= 0 ? "text-green-600" : "text-destructive"}>{deltaFromFirst >= 0 ? "+" : ""}{deltaFromFirst}pp</strong></span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -357,36 +345,44 @@ const TestingPipeline = () => {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {MOCK_DIRECTIVES.map((d) => (
-                      <div
-                        key={d.id}
-                        className="border rounded-lg p-3 space-y-2"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-semibold text-foreground">
-                            {d.target_scenario.replace(/_/g, " ")}
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                              ACTION_COLORS[d.source_field_action] || ""
-                            }`}
-                          >
-                            {d.source_field_action}
-                          </span>
+                  {isDirectivesLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
+                    </div>
+                  ) : !directives?.length ? (
+                    <div className="h-40 flex flex-col items-center justify-center text-muted-foreground gap-2">
+                      <Inbox className="w-10 h-10 opacity-40" />
+                      <p className="text-sm">No directives yet. Need shadow_log data from test runs.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {directives.map((d, idx) => (
+                        <div
+                          key={idx}
+                          className="border rounded-lg p-3 space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-foreground">
+                              {d.target_scenario}
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                ACTION_COLORS[d.source_field_action] || ""
+                              }`}
+                            >
+                              {d.source_field_action}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {d.directive_text}
+                          </p>
+                          <div className="text-[10px] text-muted-foreground">
+                            Occurrences: <strong className="text-foreground">{d.occurrence_count}</strong>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {d.directive_text}
-                        </p>
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                          <span>
-                            Projected gain: <strong className="text-green-600">+{(d.confidence_gain_projected * 100).toFixed(0)}%</strong>
-                          </span>
-                          <span>{new Date(d.generated_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
