@@ -236,6 +236,60 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_intel_configs: {
+        Row: {
+          config_type: string
+          context: string | null
+          created_at: string
+          domain_filter: string[] | null
+          grounding_target: Json | null
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          name: string
+          query_text: string
+          query_type: string
+          recency_filter: string | null
+          schedule_cron: string | null
+          trigger_instruction: string | null
+          user_id: string
+        }
+        Insert: {
+          config_type: string
+          context?: string | null
+          created_at?: string
+          domain_filter?: string[] | null
+          grounding_target?: Json | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name: string
+          query_text: string
+          query_type: string
+          recency_filter?: string | null
+          schedule_cron?: string | null
+          trigger_instruction?: string | null
+          user_id: string
+        }
+        Update: {
+          config_type?: string
+          context?: string | null
+          created_at?: string
+          domain_filter?: string[] | null
+          grounding_target?: Json | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name?: string
+          query_text?: string
+          query_type?: string
+          recency_filter?: string | null
+          schedule_cron?: string | null
+          trigger_instruction?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       scenario_feedback: {
         Row: {
           created_at: string
@@ -469,6 +523,23 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      save_intel_to_knowledge_base: {
+        Args: {
+          p_category_name?: string
+          p_category_slug?: string
+          p_citations?: Json
+          p_confidence_score?: number
+          p_content: string
+          p_industry_name?: string
+          p_industry_slug?: string
+          p_key_trends?: string[]
+          p_model_used?: string
+          p_opportunities?: string[]
+          p_processing_time_ms?: number
+          p_risk_signals?: string[]
+        }
+        Returns: string
       }
     }
     Enums: {

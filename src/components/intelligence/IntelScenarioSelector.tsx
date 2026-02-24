@@ -23,19 +23,17 @@ const scenarios: ScenarioOption[] = [
   },
   {
     id: "regular",
-    title: "Regular Reports",
-    description: "Set up scheduled updates with your inputs — daily, weekly, or monthly intelligence briefings",
+    title: "Scheduled Reports",
+    description: "Configure recurring intelligence queries — daily, weekly, or monthly briefings saved to your knowledge base",
     icon: CalendarClock,
-    badge: "Coming Soon",
-    badgeVariant: "secondary",
   },
   {
     id: "triggered",
-    title: "Triggered Notifications",
-    description: "Monitor conditions continuously and get notified when selected triggers are confirmed",
+    title: "Triggered Monitoring",
+    description: "Define monitoring instructions that continuously watch for conditions and initiate full-scale intelligence collection",
     icon: Bell,
-    badge: "Coming Soon",
-    badgeVariant: "secondary",
+    badge: "Enterprise",
+    badgeVariant: "default",
   },
 ];
 

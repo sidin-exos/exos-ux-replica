@@ -4,6 +4,8 @@ import { QueryBuilder } from "@/components/intelligence/QueryBuilder";
 import { IntelResults } from "@/components/intelligence/IntelResults";
 import { RecentQueries } from "@/components/intelligence/RecentQueries";
 import { IntelScenarioSelector, type IntelScenario } from "@/components/intelligence/IntelScenarioSelector";
+import { ScheduledReportsPanel } from "@/components/intelligence/ScheduledReportsPanel";
+import { EnterpriseTriggerGate } from "@/components/intelligence/EnterpriseTriggerGate";
 import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,12 +26,41 @@ const MarketIntelligence = () => {
     clearResult,
   } = useMarketIntelligence();
 
+  const renderScenarioContent = () => {
+    if (selectedScenario === "triggered") {
+      return <EnterpriseTriggerGate />;
+    }
+
+    if (selectedScenario === "regular") {
+      return <ScheduledReportsPanel />;
+    }
+
+    // Ad-hoc flow
+    return (
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          {result ? (
+            <IntelResults result={result} onNewQuery={clearResult} />
+          ) : (
+            <QueryBuilder onSubmit={query} isLoading={isLoading} />
+          )}
+        </div>
+        <div className="lg:col-span-1">
+          <RecentQueries
+            queries={recentQueries}
+            isLoading={isLoadingHistory}
+            onLoad={loadRecentQueries}
+          />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       <main className="container py-8">
-        {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -43,7 +74,6 @@ const MarketIntelligence = () => {
           </p>
         </div>
 
-        {/* Main Tabs */}
         <Tabs defaultValue="queries" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="queries" className="flex items-center gap-2">
@@ -57,13 +87,11 @@ const MarketIntelligence = () => {
           </TabsList>
 
           <TabsContent value="queries" className="space-y-6">
-            {/* Scenario Selector */}
             <IntelScenarioSelector
               selected={selectedScenario}
               onSelect={setSelectedScenario}
             />
 
-            {/* Error Alert */}
             {error && (
               <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
@@ -72,26 +100,7 @@ const MarketIntelligence = () => {
               </Alert>
             )}
 
-            {/* Query Content */}
-            <div className="grid lg:grid-cols-3 gap-6">
-              {/* Query Builder / Results */}
-              <div className="lg:col-span-2">
-                {result ? (
-                  <IntelResults result={result} onNewQuery={clearResult} />
-                ) : (
-                  <QueryBuilder onSubmit={query} isLoading={isLoading} />
-                )}
-              </div>
-
-              {/* Sidebar - Recent Queries */}
-              <div className="lg:col-span-1">
-                <RecentQueries
-                  queries={recentQueries}
-                  isLoading={isLoadingHistory}
-                  onLoad={loadRecentQueries}
-                />
-              </div>
-            </div>
+            {renderScenarioContent()}
           </TabsContent>
 
           <TabsContent value="insights">
