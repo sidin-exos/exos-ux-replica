@@ -1,96 +1,123 @@
 
 
-# Fix #3: Report Export Integrations — Excel/CSV + Jira
+# Market Intelligence: Scheduled Reports, Save-to-Grounding, and Triggered Monitoring
 
-## Current State
+## Summary
 
-All export buttons in `ReportExportButtons.tsx` (except PDF and Share Link) are stubs that show a "coming soon" toast. The component receives `scenarioTitle`, `analysisResult`, `formData`, `timestamp`, and `selectedDashboards` as props — all the data needed to build exports.
+Three changes to the Market Intelligence module:
 
-Two integrations are prioritized: **Excel/CSV** (client-side, no external dependencies) and **Jira** (requires Atlassian connector).
+1. **Regular Reports** → Rename to "Scheduled Reports". Same ad-hoc query interface but with a schedule selector (daily/weekly/monthly). User configures a query + schedule, system saves the configuration. Actual cron execution is a future backend task — the UI collects and persists the schedule intent now.
+
+2. **Save Intel Results** → After any query completes, user can "Save to Knowledge Base" and tag it with an industry slug, category slug, or specific scenario ID. Saved results get inserted into `market_insights` table (same table used for grounding in `sentinel-analysis`), making them automatically available for future AI analysis grounding.
+
+3. **Triggered Notifications** → Rename badge to "Enterprise". User enters a monitoring instruction (text field describing what to watch for). The trigger definition is persisted. When the monitoring system runs (scheduled cron — future), it executes the query and evaluates if the trigger condition is met. If yes, it initiates a full report collection. The UI collects trigger configs now.
 
 ---
 
-## Integration A: Excel/CSV Export (Client-Side)
-
-**Approach**: Pure client-side using the `xlsx` npm package (or lightweight alternative). No backend needed. Generates a multi-sheet `.xlsx` file containing:
-
-- **Sheet 1 — Summary**: Scenario title, timestamp, executive summary key points
-- **Sheet 2 — Analysis Inputs**: Key-value pairs from `formData`
-- **Sheet 3 — Dashboard Data**: If `analysisResult` contains a `<dashboard-data>` block, parse it via `extractDashboardData()` and output each dashboard's structured data as a table (e.g., action checklist rows, cost waterfall components, decision matrix scores)
-
-**Architecture:**
+## Architecture
 
 ```text
-ReportExportButtons.tsx
-  → handleExcelExport()
-    → extractDashboardData(analysisResult)
-    → buildExcelWorkbook(title, formData, keyPoints, dashboardData)
-    → trigger browser download of .xlsx blob
+CURRENT:
+  IntelScenarioSelector: adhoc (active) | regular (disabled) | triggered (disabled)
+  QueryBuilder → Perplexity API → IntelResults → done
+
+PROPOSED:
+  IntelScenarioSelector: adhoc (active) | scheduled (active) | triggered (Enterprise badge)
+
+  [Ad-hoc]     → QueryBuilder → IntelResults → "Save to Knowledge Base" button
+  [Scheduled]  → QueryBuilder + ScheduleConfig → saves to `saved_intel_configs` table
+  [Triggered]  → TriggerConfig (instruction text + query params) → saves to `saved_intel_configs`
+
+  Save flow:  IntelResults → SaveToKnowledgeBase dialog → pick industry/category/scenario → INSERT into market_insights
 ```
 
-**New dependency**: `xlsx` (SheetJS Community Edition) — lightweight, no backend needed, well-maintained.
+---
 
-**Files changed:**
-| # | File | Action |
+## Step 1: Database Migration
+
+New table `saved_intel_configs` to store both scheduled reports and trigger monitors:
+
+| Column | Type | Description |
 |---|---|---|
-| 1 | `package.json` | Add `xlsx` dependency |
-| 2 | `src/lib/report-export-excel.ts` | New — builds multi-sheet workbook from report data |
-| 3 | `src/components/reports/ReportExportButtons.tsx` | Wire Excel button to real export function |
+| `id` | uuid PK | |
+| `user_id` | uuid | Auth user who created it |
+| `config_type` | text | `'scheduled'` or `'triggered'` |
+| `name` | text | User-given name for this config |
+| `query_type` | text | supplier/commodity/etc |
+| `query_text` | text | The query template |
+| `recency_filter` | text | Optional |
+| `domain_filter` | text[] | Optional |
+| `context` | text | Optional additional context |
+| `schedule_cron` | text | For scheduled: `'daily'`, `'weekly'`, `'monthly'` |
+| `trigger_instruction` | text | For triggered: the monitoring instruction |
+| `grounding_target` | jsonb | `{ industry_slug?, category_slug?, scenario_id? }` — where to save results |
+| `is_active` | boolean | Default true |
+| `last_run_at` | timestamptz | Last execution time |
+| `created_at` | timestamptz | |
+
+RLS: Users can CRUD their own configs (`user_id = auth.uid()`). Admins can read all.
 
 ---
 
-## Integration B: Jira Export (Atlassian Connector)
+## Step 2: Update Scenario Selector
 
-**Approach**: Use the Atlassian MCP connector (available but not yet connected) to create a Jira issue from the report. The export creates an issue with:
-
-- **Title**: `[EXOS] {scenarioTitle} Analysis — {date}`
-- **Description**: Executive summary key points as markdown bullet list + link to shared report
-- **Checklist/subtasks**: If an `action-checklist` dashboard exists in the data, map each action item as a subtask or checklist entry
-
-**However** — the Atlassian MCP connector extends the **Lovable agent** (build-time), not the **user's app** (runtime). This means:
-
-> MCP tools are available to me (the agent) to help build apps, but the apps themselves cannot call MCP tools directly.
-
-**Options for Jira runtime integration:**
-
-| Option | Approach | Complexity |
-|--------|----------|------------|
-| **A — Edge Function + Jira API** | User provides a Jira API token as a secret. An edge function calls the Jira REST API to create issues. Full control, real integration. | Medium |
-| **B — Copy-to-Clipboard for Jira** | Format the report as Jira-compatible markdown. User clicks "Copy for Jira" and pastes into a new Jira issue. Zero infrastructure. | Low |
-| **C — Jira Webhook** | User configures a Jira Automation webhook URL. Edge function POSTs a payload that Jira Automation converts into an issue. No API token needed. | Medium-Low |
-
-**Recommendation**: Start with **Option B** (Copy for Jira) as the MVP — it provides immediate value with zero infrastructure. Then upgrade to **Option A** (Edge Function) when users request true one-click creation.
+- **"Regular Reports"** → rename to **"Scheduled Reports"**, remove "Coming Soon" badge, make selectable
+- **"Triggered Notifications"** → change badge from "Coming Soon" to **"Enterprise"**, keep disabled
+- Update descriptions to match new functionality
 
 ---
 
-## Implementation Plan
+## Step 3: Save Intel Results to Knowledge Base
 
-### Step 1: Excel Export (no backend)
+Add a "Save to Knowledge Base" button in `IntelResults.tsx`:
 
-1. Install `xlsx` package
-2. Create `src/lib/report-export-excel.ts`:
-   - `exportReportToExcel(scenarioTitle, analysisResult, formData, timestamp, selectedDashboards)`
-   - Uses `extractDashboardData()` to parse structured dashboard data
-   - Builds sheets: Summary, Inputs, per-dashboard data tables
-   - Triggers `.xlsx` download via blob URL
-3. Update `ReportExportButtons.tsx`: Replace the Excel stub `handleExport("Excel")` with the real function call
+- Opens a dialog with:
+  - **Industry selector** (dropdown from `industry_contexts` table)
+  - **Category selector** (dropdown from `procurement_categories` table)
+  - Optional: scenario ID text field
+- On save: inserts into `market_insights` table with the query result mapped to the market_insights schema:
+  - `content` = result summary
+  - `citations` = result citations
+  - `industry_slug` / `category_slug` from selectors
+  - `confidence_score` = 0.8 (default for ad-hoc queries)
+  - `key_trends`, `risk_signals`, `opportunities` = extracted from summary (simple heuristic) or empty arrays
+- This makes the intel result immediately available for grounding in `sentinel-analysis` edge function
 
-### Step 2: Jira — Copy-to-Clipboard MVP
+**Important**: `market_insights` currently has no INSERT RLS policy. We need an edge function or RPC to handle the insert with service role, since the table is admin-write-only by design.
 
-1. Create `src/lib/report-export-jira.ts`:
-   - `formatReportForJira(scenarioTitle, analysisResult, formData, timestamp)`: Returns Jira-flavored markdown string
-   - Includes: heading, executive summary bullets, action items (if present), link placeholder
-2. Update `ReportExportButtons.tsx`:
-   - Replace Jira stub with a function that calls `formatReportForJira()` and copies to clipboard
-   - Show toast: "Report formatted for Jira — paste into a new issue"
-   - Change button label to "Copy for Jira"
+**Approach**: Create an RPC `save_intel_to_knowledge_base(...)` with `SECURITY DEFINER` that validates the authenticated user exists and inserts the record. This keeps the table locked down while allowing authenticated users to contribute intelligence.
 
-### Step 3 (Future): Jira API Integration
+---
 
-When upgrading to direct Jira API integration:
-1. User provides Jira credentials (domain, email, API token) via secrets
-2. Edge function `export-to-jira` creates the issue via Jira REST API v3
-3. UI shows a dialog for project/issue-type selection before creating
+## Step 4: Scheduled Reports UI
+
+When user selects "Scheduled Reports" scenario:
+- Show the same `QueryBuilder` form
+- Add a **schedule frequency** selector below it: Daily / Weekly / Monthly
+- Add a **grounding target** section: pick industry + category where results should auto-save
+- Add a **name** field for the configuration
+- Submit saves to `saved_intel_configs` with `config_type = 'scheduled'`
+- Show a list of user's saved scheduled configs below the form
+
+**Note**: The actual cron execution (running queries on schedule) is a future backend task. The UI persists the intent. A placeholder message explains: "Scheduled execution is being rolled out. Your configuration is saved and will activate automatically."
+
+---
+
+## Step 5: Triggered Notifications UI (Enterprise)
+
+When user clicks the "Triggered" card:
+- Show an **Enterprise badge** overlay with description:
+  - "Continuous monitoring with automated trigger detection. The system regularly checks your conditions and initiates full-scale intelligence collection when triggers are confirmed."
+  - "Contact us to enable Enterprise features."
+- The card is clickable but shows the enterprise gate instead of a form
+
+---
+
+## Step 6: Update MarketIntelligence Page
+
+- When `selectedScenario === "scheduled"`, render a new `ScheduledReportsPanel` component instead of `QueryBuilder`
+- When `selectedScenario === "triggered"`, render the Enterprise gate card
+- Keep ad-hoc flow unchanged except for the new Save button in results
 
 ---
 
@@ -98,20 +125,22 @@ When upgrading to direct Jira API integration:
 
 | # | File | Action | Summary |
 |---|---|---|---|
-| 1 | `package.json` | Edit | Add `xlsx` dependency |
-| 2 | `src/lib/report-export-excel.ts` | Create | Multi-sheet Excel workbook builder |
-| 3 | `src/lib/report-export-jira.ts` | Create | Jira markdown formatter |
-| 4 | `src/components/reports/ReportExportButtons.tsx` | Edit | Wire Excel + Jira buttons to real functions, update labels |
+| 1 | Migration SQL | Create | `saved_intel_configs` table + RLS + `save_intel_to_knowledge_base` RPC |
+| 2 | `src/components/intelligence/IntelScenarioSelector.tsx` | Edit | Rename labels, update badges, enable "scheduled" |
+| 3 | `src/components/intelligence/IntelResults.tsx` | Edit | Add "Save to Knowledge Base" button + dialog |
+| 4 | `src/components/intelligence/ScheduledReportsPanel.tsx` | Create | Form for creating scheduled report configs |
+| 5 | `src/components/intelligence/SaveToKnowledgeBaseDialog.tsx` | Create | Dialog with industry/category selectors for saving |
+| 6 | `src/hooks/useSavedIntelConfigs.ts` | Create | CRUD hook for `saved_intel_configs` table |
+| 7 | `src/pages/MarketIntelligence.tsx` | Edit | Wire scheduled/triggered views based on selected scenario |
 
 ## What Does NOT Change
-- PDF export — already functional
-- Share Link — already functional
-- Notion/Confluence/Slack/Trello — remain as stubs (deprioritized)
-- Dashboard data parser — reused as-is
-- Edge functions — none needed for this phase
+- `market-intelligence` edge function — no changes
+- `sentinel-analysis` edge function — already reads from `market_insights`, saved results auto-ground
+- `MarketInsightsAdmin` — admin KB management stays as-is
+- `QueryBuilder` — reused as-is for both ad-hoc and scheduled flows
 
 ## Technical Notes
-- `xlsx` (SheetJS) is ~200KB gzipped, tree-shakeable. Alternative: `exceljs` (heavier but more formatting control). Recommend `xlsx` for velocity.
-- The Jira clipboard approach works because Jira's rich text editor accepts markdown-like formatting on paste.
-- The Excel export reuses `extractDashboardData()` — same parser that feeds the PDF and interactive dashboards. Single Source of Truth preserved.
+- The `save_intel_to_knowledge_base` RPC uses `SECURITY DEFINER` because `market_insights` has no user INSERT policy by design (admin-only writes). The RPC validates `auth.uid() IS NOT NULL` before inserting.
+- Scheduled execution (cron) is deferred — the table stores configs for future `pg_cron` + `pg_net` integration that will call the `market-intelligence` edge function on schedule.
+- Triggered monitoring follows the same pattern — stored config, future cron evaluates the trigger instruction against fresh search results.
 
