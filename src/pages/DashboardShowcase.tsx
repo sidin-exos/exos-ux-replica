@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -72,6 +72,14 @@ const DashboardShowcase = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8 space-y-10">
+        {/* Demo Mode Banner */}
+        <div className="flex items-start gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
+          <div className="text-sm">
+            <span className="font-semibold text-blue-300">Demo Mode</span>
+            <span className="text-blue-300/80"> — All data shown below is illustrative sample data for demonstration purposes. Run a scenario analysis to generate real insights.</span>
+          </div>
+        </div>
         {/* New Dashboards Section */}
         <section>
           <h2 className="text-lg font-display font-semibold text-foreground mb-2">
