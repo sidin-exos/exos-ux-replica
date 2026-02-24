@@ -26,6 +26,10 @@ import {
   Cloud,
   Server,
   ArrowUp,
+  Database,
+  Share2,
+  CalendarClock,
+  Zap,
 } from "lucide-react";
 
 // Color palette matching the Miro style
@@ -125,11 +129,35 @@ const ExosArchitectureDiagram: React.FC = () => {
                   <ArchitectureNode
                     icon={<TrendingUp size={28} />}
                     label="Market Intel"
-                    sublabel="Perplexity Integration"
+                    sublabel="Ad-hoc · Scheduled · Triggered"
                     color={COLORS.orange}
                     number={6}
                   />
+                  {/* Mode icons */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-1 bg-orange-100 px-2 py-0.5 rounded text-[8px] font-medium text-orange-700">
+                      <CalendarClock size={10} /> Scheduled
+                    </div>
+                    <div className="flex items-center gap-1 bg-orange-100 px-2 py-0.5 rounded text-[8px] font-medium text-orange-700">
+                      <Zap size={10} /> Triggered
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-medium text-orange-500 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
+                    Perplexity Sonar Pro
+                  </span>
                 </div>
+              </div>
+
+              {/* Knowledge Base Feedback Loop */}
+              <div className="mt-4 flex items-center justify-center gap-4">
+                <ArchitectureArrow direction="left" length={60} label="Knowledge Base Feedback" labelPosition="top" dashed color={COLORS.orange} />
+                <div className="flex flex-col items-center gap-1 p-3 bg-amber-50 rounded-lg border border-amber-300 border-dashed">
+                  <Database size={20} className="text-amber-600" />
+                  <span className="text-[9px] font-semibold text-amber-700">Knowledge Base</span>
+                  <span className="text-[8px] text-amber-600">saved_intel_configs</span>
+                  <span className="text-[8px] text-amber-600">market_insights</span>
+                </div>
+                <ArchitectureArrow direction="left" length={60} label="Grounding Data" labelPosition="top" dashed color={COLORS.orange} />
               </div>
             </ArchitectureContainer>
 
@@ -242,7 +270,17 @@ const ExosArchitectureDiagram: React.FC = () => {
                 <div className="flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-full border border-purple-200">
                   <Cpu size={14} className="text-purple-600" />
                   <span className="text-[10px] font-medium text-purple-700">
-                    Models: Gemini 3 Flash · Gemini 2.5 Pro · GPT-5
+                    Models: Gemini 3 Flash · Gemini 2.5 Pro · GPT-5 · GPT-5.2
+                  </span>
+                </div>
+              </div>
+
+              {/* Deep Analysis Badge */}
+              <div className="flex justify-center mt-3">
+                <div className="flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-lg border border-purple-300 border-dashed">
+                  <Brain size={14} className="text-purple-600" />
+                  <span className="text-[10px] font-medium text-purple-700">
+                    Chain-of-Experts: Analyst → Auditor → Synthesizer (multi-cycle)
                   </span>
                 </div>
               </div>
@@ -382,7 +420,7 @@ const ExosArchitectureDiagram: React.FC = () => {
                 <ArchitectureNode
                   icon={<FileOutput size={28} />}
                   label="Executive Reports"
-                  sublabel="PDF with Citations"
+                  sublabel="PDF · Excel · Jira"
                   color={COLORS.cyan}
                   number={12}
                 />
@@ -406,6 +444,13 @@ const ExosArchitectureDiagram: React.FC = () => {
                   sublabel="Opportunities"
                   color={COLORS.cyan}
                   number={15}
+                />
+                <ArchitectureNode
+                  icon={<Share2 size={28} />}
+                  label="Shareable Links"
+                  sublabel="128-bit · 5-day expiry"
+                  color={COLORS.cyan}
+                  number={16}
                 />
               </div>
             </ArchitectureContainer>
@@ -459,6 +504,10 @@ const ExosArchitectureDiagram: React.FC = () => {
           <div className="flex items-center gap-2">
             <RotateCcw size={14} className="text-orange-500" />
             <span className="text-gray-600">Retry Loop (3x max)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Database size={14} className="text-amber-500" />
+            <span className="text-gray-600">Knowledge Base Persistence</span>
           </div>
         </div>
       </div>
