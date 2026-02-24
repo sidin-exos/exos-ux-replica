@@ -1,96 +1,168 @@
 
 
-# Fix #8: Replace Mocked Sentinel Grounding with Real Data (Option C, Phase 1)
+# Fix #9: Data-Driven Server-Side Validation
 
-## Summary
+## Architecture Overview
 
-Wire the existing `market_insights` table (102 rows) into the `sentinel-analysis` edge function as a third grounding source. Strip all hardcoded mock arrays from client-side `grounding.ts` and `validator.ts`. Fix the confidence score math so it does not penalize when no golden cases exist.
+```text
+BEFORE (current):
+  Edge Function → raw content → Client (graph.ts) → hardcoded regex validation → result
 
----
+AFTER (this fix):
+  Edge Function → fetch validation_rules from DB → validate content → return { content, validation }
+  Client (graph.ts) → extract server validation → run local checkTokenIntegrity → merge → result
+```
 
-## Changes (3 files)
-
-### 1. `supabase/functions/sentinel-analysis/index.ts`
-
-**In the `fetch-context` block (lines 472-490):**
-- Add a third query to the existing `Promise.all` that fetches `market_insights`:
-  ```typescript
-  (industrySlug && categorySlug)
-    ? supabase.from("market_insights")
-        .select("key_trends, risk_signals, opportunities")
-        .eq("industry_slug", industrySlug)
-        .eq("category_slug", categorySlug)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-    : Promise.resolve({ data: null, error: null })
-  ```
-- Log `foundInsight: !!insightResult.data` in the `patchRun` metadata for the `fetch-context` span.
-
-**In `buildServerGroundedPrompts` (lines 208-255):**
-- Add a new parameter: `marketInsight: { key_trends: string[]; risk_signals: string[]; opportunities: string[] } | null`
-- If `marketInsight` is provided, inject a new XML block into the system prompt's `<grounding-context>`:
-  ```xml
-  <market-intelligence>
-    <key-trends>
-      <trend>...</trend>
-    </key-trends>
-    <risk-signals>
-      <signal>...</signal>
-    </risk-signals>
-    <opportunities>
-      <opportunity>...</opportunity>
-    </opportunities>
-  </market-intelligence>
-  ```
-- Update the call site (line ~501) to pass the fetched market insight data.
-
-### 2. `src/lib/sentinel/grounding.ts`
-
-- **DELETE** the `MOCK_HISTORICAL_CASES` array (lines ~36-55)
-- **DELETE** the `MOCK_BENCHMARKS` array (lines ~61-80)
-- **DELETE** the `simulateVectorSearch()` function (lines ~86-100)
-- **Refactor** `buildGroundingContext()` to return empty arrays for `historicalCases` and `benchmarks`, with a comment: `// Grounding is handled server-side in the sentinel-analysis edge function`
-- **Refactor** `generateGroundedPrompt()`: replace the historical-context and benchmark-context XML sections with a single placeholder:
-  ```xml
-  <server-side-grounding>Enterprise context, benchmarks, and market insights are securely injected at the Edge layer.</server-side-grounding>
-  ```
-- Keep `getGroundingMetadata()` and `DEFAULT_GROUNDING_CONFIG` as-is (they're used by other components)
-
-### 3. `src/lib/sentinel/validator.ts`
-
-- **DELETE** the `MOCK_GOLDEN_CASES` array (lines ~18-50)
-- **DELETE** the `GoldenCase` import if no longer used
-- **Update** `matchGoldenCases()` to immediately return `[]` with a `// TODO (Phase 2): Integrate with DB-backed golden cases` comment
-- **CRITICAL MATH FIX** in `calculateConfidenceScore()` (lines ~170-195):
-  - Current logic: `score = score * 0.7 + avgSimilarity * 0.3` -- this penalizes when golden cases are empty (avgSimilarity = 0)
-  - New logic: if `goldenCaseMatches.length === 0`, skip the weighting entirely and return the score based 100% on structural validation (token integrity, hallucinations, unsafe content checks)
-  ```typescript
-  if (goldenCaseMatches.length > 0) {
-    const avgSimilarity = goldenCaseMatches.reduce((sum, m) => sum + m.similarity, 0) / goldenCaseMatches.length;
-    score = score * 0.7 + avgSimilarity * 0.3;
-  }
-  // else: score relies entirely on structural validation — no penalty
-  ```
-- Keep all real regex-based validators: `checkTokenIntegrity`, `checkForHallucinations`, `checkForUnsafeContent`
+## 4 Implementation Steps
 
 ---
 
-## What Stays Untouched (Intentional, Phase 2 Backlog)
+### Step 1: Database Migration — `validation_rules` Table + Seed Data
 
-| Item | Reason |
-|---|---|
-| `pgvector` extension | No real vector embeddings to search yet |
-| `grounding_cases` / `grounding_benchmarks` tables | Need real procurement case data to seed |
-| DB-backed golden cases for validator | Needs a curation workflow first |
+Create table with public SELECT RLS (edge function uses service role, but keeping consistent with `market_insights` pattern). Seed with the 7 current hardcoded patterns + 3 scenario-specific rules.
+
+```sql
+CREATE TABLE public.validation_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scenario_type TEXT,  -- NULL = applies to ALL scenarios
+  rule_type TEXT NOT NULL CHECK (rule_type IN (
+    'hallucination_indicator', 'unsafe_content', 'forbidden_pattern',
+    'required_section', 'required_keyword', 'token_integrity'
+  )),
+  pattern TEXT NOT NULL,
+  severity TEXT NOT NULL DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  description TEXT NOT NULL,
+  suggestion TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.validation_rules ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Validation rules are publicly readable"
+  ON public.validation_rules FOR SELECT USING (true);
+```
+
+**Seed data** (10 rows):
+- 4 hallucination indicators from current `HALLUCINATION_INDICATORS` (severity: medium)
+- 3 unsafe content patterns from current `UNSAFE_PATTERNS` (severity: critical)
+- `tco-analysis` → required_keyword: `total cost of ownership|TCO`
+- `cost-breakdown` → required_section: `cost breakdown|cost analysis|cost structure`
+- `risk-assessment` → required_section: `risk matrix|risk assessment|risk mitigation`
 
 ---
 
-## Technical Notes
+### Step 2: Edge Function — `supabase/functions/sentinel-analysis/index.ts`
 
-- The `market_insights` table has RLS allowing public SELECT, so the service-role client in the edge function will have access.
-- The `key_trends`, `risk_signals`, and `opportunities` columns are `text[]` arrays, so they can be iterated and XML-escaped per element.
-- The edge function already deploys automatically -- no manual deployment needed.
-- The client-side XML preview components (`FinalXMLPreview`, `MasterXMLPreview`) will show the `<server-side-grounding>` placeholder instead of fake data, which is more honest and protects IP.
+Add a server-side validation stage that runs after LLM inference. Changes at 3 points:
+
+**A. New helper function `runServerValidation()`** (after `buildMarketIntelligenceXML`):
+- Takes `content: string`, `scenarioType: string`, `supabase` client
+- Fetches active rules: `WHERE (scenario_type = $scenarioType OR scenario_type IS NULL) AND is_active = true`
+- Runs each rule's regex `pattern` against the content
+- Computes `issues[]`, `passed`, `confidenceScore` (same deduction math as current client)
+- Returns `{ passed, confidenceScore, issues: { rule_type, severity, description, match }[] }`
+
+**B. Multi-cycle path** (line ~648-681):
+- After getting `finalContent` from Synthesizer, call `runServerValidation(finalContent, scenarioType, supabase)`
+- Store validation result in `test_reports.validation_result` JSONB column
+- Include `validation` object in the JSON response
+
+**C. Single-pass paths** (Google AI Studio ~772-799, Gateway ~954-977):
+- After extracting `content`, call `runServerValidation(content, scenarioType, supabase)`
+- Store validation result in `test_reports.validation_result`
+- Include `validation` object in the JSON response
+
+**Response shape change** — all paths now return:
+```json
+{
+  "content": "...",
+  "validation": {
+    "passed": true,
+    "confidenceScore": 0.92,
+    "issues": [
+      { "rule_type": "hallucination_indicator", "severity": "medium", "description": "...", "match": "..." }
+    ]
+  },
+  ...existing fields...
+}
+```
+
+---
+
+### Step 3: Client Validator — `src/lib/sentinel/validator.ts`
+
+- **DELETE** `HALLUCINATION_INDICATORS` array (lines 21-26)
+- **DELETE** `UNSAFE_PATTERNS` array (lines 31-35)
+- **DELETE** `checkForHallucinations()` function (lines 77-95)
+- **DELETE** `checkForUnsafeContent()` function (lines 100-118)
+- **KEEP** `checkTokenIntegrity()` — this needs the client-side entity map
+- **KEEP** `matchGoldenCases()` (already returns `[]`)
+- **KEEP** `calculateConfidenceScore()` (already fixed in Fix #8)
+
+**NEW export** — `mergeValidationResults()`:
+```typescript
+export interface ServerValidation {
+  passed: boolean;
+  confidenceScore: number;
+  issues: Array<{ rule_type: string; severity: string; description: string; match?: string }>;
+}
+
+export function mergeValidationResults(
+  serverValidation: ServerValidation | null,
+  clientTokenIssues: ValidationIssue[]
+): ValidationResult {
+  // Combine server issues (converted to ValidationIssue format) + client token issues
+  // Recalculate confidence from merged issues
+  // Return unified ValidationResult
+}
+```
+
+**UPDATE** `validateResponse()` — add optional `serverValidation` parameter. When provided, skip local hallucination/unsafe checks (they ran server-side) and only run `checkTokenIntegrity`. Then merge via `mergeValidationResults`.
+
+---
+
+### Step 4: Client Orchestrator — `src/lib/ai/graph.ts`
+
+**A. Extend `PipelineState`** (line 71):
+```typescript
+interface PipelineState {
+  ...existing fields...
+  serverValidation: ServerValidation | null;  // NEW
+}
+```
+
+**B. Update `stepReasoning()`** (line 119):
+- Extract `data.validation` from edge function response
+- Store in `state.serverValidation`
+
+**C. Update `stepValidate()`** (line 164):
+- Run `checkTokenIntegrity(maskedTokens, state.aiResponse)` locally
+- Call `mergeValidationResults(state.serverValidation, tokenIssues)` to get final result
+- Use merged result for `validationStatus` and `confidenceScore`
+- If validation fails, trigger existing retry loop (unchanged)
+
+**D. Update import** — import `mergeValidationResults`, `checkTokenIntegrity`, `ServerValidation` from validator instead of `validateResponse`
+
+---
+
+## Files Changed
+
+| # | File | Type | Summary |
+|---|---|---|---|
+| 1 | New migration | DB | Create `validation_rules` + seed 10 rows |
+| 2 | `supabase/functions/sentinel-analysis/index.ts` | Edge Fn | Fetch rules, validate, store in `test_reports`, return in response |
+| 3 | `src/lib/sentinel/validator.ts` | Client | Remove hardcoded patterns, add `mergeValidationResults()` |
+| 4 | `src/lib/ai/graph.ts` | Client | Extract server validation, merge with local token checks |
+
+## What Does NOT Change
+- `useSentinel.ts` — not the active orchestrator (per your correction)
+- `orchestrator.ts` — not the active orchestrator
+- `checkTokenIntegrity()` — stays client-side (needs entity map)
+- `matchGoldenCases()` / `calculateConfidenceScore()` — already cleaned in Fix #8
+- Retry loop logic in `graph.ts` — unchanged, just driven by merged validation now
+
+## Risk Assessment
+- **Low risk**: The `validation_rules` fetch adds ~10ms (single indexed query)
+- **Low risk**: Existing `test_reports.validation_result` column is already JSONB — we just start populating it
+- **Medium risk**: All 3 response paths (multi-cycle, Google, Gateway) need the validation injection — must not miss any path
 
