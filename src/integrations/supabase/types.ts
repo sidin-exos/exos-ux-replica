@@ -400,6 +400,42 @@ export type Database = {
         }
         Relationships: []
       }
+      validation_rules: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          is_active: boolean
+          pattern: string
+          rule_type: string
+          scenario_type: string | null
+          severity: string
+          suggestion: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          is_active?: boolean
+          pattern: string
+          rule_type: string
+          scenario_type?: string | null
+          severity?: string
+          suggestion?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          pattern?: string
+          rule_type?: string
+          scenario_type?: string | null
+          severity?: string
+          suggestion?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

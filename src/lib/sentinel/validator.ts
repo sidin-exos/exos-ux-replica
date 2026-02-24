@@ -2,8 +2,9 @@
  * EXOS Sentinel - Reasoning Integrity Validator
  * 
  * Component 5: The Internal Auditor
- * Validates AI responses for hallucinations, inconsistencies,
- * and unsafe content using regex-based structural checks.
+ * Validates AI responses using a hybrid approach:
+ * - Server-side: DB-backed regex rules (hallucination, unsafe content, scenario-specific)
+ * - Client-side: Token integrity checks (requires local entity map)
  * 
  * NOTE: Golden case matching is a Phase 2 feature that will use
  * DB-backed golden cases. Currently returns empty matches.
@@ -16,28 +17,19 @@ import type {
 } from './types';
 
 /**
- * Patterns that indicate potential hallucination
+ * Server-side validation result shape returned by the edge function
  */
-const HALLUCINATION_INDICATORS = [
-  /\b(definitely|certainly|absolutely|100%)\s+will\b/gi, // Overconfident predictions
-  /\b(I remember|As I recall|From my knowledge)\b/gi, // False memory claims
-  /\[SUPPLIER_[A-Z]\d*\]\s+(?:is|was|has been)\s+(?:founded|established|created)\b/gi, // Fabricating masked entity details
-  /\b(exact|precise)\s+(?:figure|number|amount)\b/gi, // False precision claims
-];
+export interface ServerValidation {
+  passed: boolean;
+  confidenceScore: number;
+  issues: Array<{ rule_type: string; severity: string; description: string; match?: string }>;
+}
 
 /**
- * Patterns that indicate unsafe content
+ * Check if response maintains masked tokens (CLIENT-SIDE ONLY)
+ * This must stay client-side because it needs the entity map from anonymization.
  */
-const UNSAFE_PATTERNS = [
-  /\b(illegal|fraudulent|bribe|kickback)\b/gi,
-  /\b(circumvent|bypass|ignore)\s+(?:compliance|regulations?|laws?)\b/gi,
-  /\b(confidential|secret)\s+(?:information|data)\s+(?:leak|share|expose)\b/gi,
-];
-
-/**
- * Check if response maintains masked tokens
- */
-function checkTokenIntegrity(
+export function checkTokenIntegrity(
   originalTokens: string[],
   response: string
 ): ValidationIssue[] {
@@ -66,52 +58,6 @@ function checkTokenIntegrity(
       location: match[0],
       suggestion: 'Remove any attempts to reveal or guess masked entity values',
     });
-  }
-  
-  return issues;
-}
-
-/**
- * Check for hallucination indicators
- */
-function checkForHallucinations(response: string): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
-  
-  for (const pattern of HALLUCINATION_INDICATORS) {
-    pattern.lastIndex = 0;
-    let match;
-    while ((match = pattern.exec(response)) !== null) {
-      issues.push({
-        type: 'hallucination',
-        severity: 'medium',
-        description: `Potential hallucination indicator: "${match[0]}"`,
-        location: match[0],
-        suggestion: 'Consider softening language to reflect uncertainty appropriately',
-      });
-    }
-  }
-  
-  return issues;
-}
-
-/**
- * Check for unsafe content
- */
-function checkForUnsafeContent(response: string): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
-  
-  for (const pattern of UNSAFE_PATTERNS) {
-    pattern.lastIndex = 0;
-    let match;
-    while ((match = pattern.exec(response)) !== null) {
-      issues.push({
-        type: 'unsafe_content',
-        severity: 'critical',
-        description: `Potentially unsafe content detected: "${match[0]}"`,
-        location: match[0],
-        suggestion: 'Review and remove any content suggesting unethical or illegal actions',
-      });
-    }
   }
   
   return issues;
@@ -170,28 +116,78 @@ function calculateConfidenceScore(
 }
 
 /**
- * Validate AI response for quality and safety
+ * Convert server-side validation issues to client ValidationIssue format
+ */
+function convertServerIssues(serverIssues: ServerValidation['issues']): ValidationIssue[] {
+  return serverIssues.map(issue => ({
+    type: issue.rule_type === 'unsafe_content' ? 'unsafe_content' as const
+      : issue.rule_type === 'hallucination_indicator' ? 'hallucination' as const
+      : 'inconsistency' as const,
+    severity: issue.severity as ValidationIssue['severity'],
+    description: issue.description,
+    location: issue.match,
+    suggestion: undefined,
+  }));
+}
+
+/**
+ * Merge server-side validation results with client-side token integrity issues.
+ * This is the primary validation entry point when server validation is available.
+ */
+export function mergeValidationResults(
+  serverValidation: ServerValidation | null,
+  clientTokenIssues: ValidationIssue[]
+): ValidationResult {
+  const allIssues: ValidationIssue[] = [...clientTokenIssues];
+  
+  if (serverValidation) {
+    allIssues.push(...convertServerIssues(serverValidation.issues));
+  }
+  
+  // Check against golden cases (empty until Phase 2)
+  const goldenCaseMatches = matchGoldenCases('', '', '');
+  
+  // Calculate confidence from merged issues
+  const confidenceScore = calculateConfidenceScore(allIssues, goldenCaseMatches);
+  
+  // Determine pass/fail
+  const hasCriticalIssues = allIssues.some(i => i.severity === 'critical');
+  const passed = !hasCriticalIssues && confidenceScore >= 0.6;
+  
+  return {
+    passed,
+    confidenceScore,
+    issues: allIssues,
+    goldenCaseMatches,
+  };
+}
+
+/**
+ * Validate AI response for quality and safety.
+ * When serverValidation is provided, skips local hallucination/unsafe checks
+ * (they ran server-side) and only runs client-side token integrity.
  */
 export function validateResponse(
   response: string,
   originalInput: string,
   scenarioType: string,
-  maskedTokens: string[] = []
+  maskedTokens: string[] = [],
+  serverValidation?: ServerValidation | null
 ): ValidationResult {
-  const issues: ValidationIssue[] = [];
+  // Always run client-side token integrity
+  const tokenIssues = checkTokenIntegrity(maskedTokens, response);
   
-  // Run all structural validation checks
-  issues.push(...checkTokenIntegrity(maskedTokens, response));
-  issues.push(...checkForHallucinations(response));
-  issues.push(...checkForUnsafeContent(response));
+  if (serverValidation !== undefined) {
+    // Server validation available — merge with client token issues only
+    return mergeValidationResults(serverValidation, tokenIssues);
+  }
   
-  // Check against golden cases (empty until Phase 2)
+  // Fallback: no server validation — run everything client-side (legacy path)
+  // This should not happen in normal flow but keeps backward compat
+  const issues: ValidationIssue[] = [...tokenIssues];
+  
   const goldenCaseMatches = matchGoldenCases(scenarioType, originalInput, response);
-  
-  // Calculate confidence score
   const confidenceScore = calculateConfidenceScore(issues, goldenCaseMatches);
-  
-  // Determine pass/fail based on critical issues and confidence
   const hasCriticalIssues = issues.some(i => i.severity === 'critical');
   const passed = !hasCriticalIssues && confidenceScore >= 0.6;
   

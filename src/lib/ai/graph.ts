@@ -7,11 +7,13 @@
  * - Implements self-correction loop for validation failures
  * - Supports both Lovable Gateway and Google AI Studio (BYOK)
  * - Sends traces to LangSmith via REST API (browser-compatible)
+ * - Merges server-side DB-driven validation with client-side token integrity
  */
 
 import { anonymize, DEFAULT_ANONYMIZATION_CONFIG } from '../sentinel/anonymizer';
 import { deanonymize } from '../sentinel/deanonymizer';
-import { validateResponse } from '../sentinel/validator';
+import { checkTokenIntegrity, mergeValidationResults } from '../sentinel/validator';
+import type { ServerValidation } from '../sentinel/validator';
 import type { SensitiveEntity } from '../sentinel/types';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -79,6 +81,7 @@ interface PipelineState {
   confidenceScore: number;
   validationStatus: 'pending' | 'approved' | 'rejected';
   retryCount: number;
+  serverValidation: ServerValidation | null;
 }
 
 /**
@@ -115,6 +118,7 @@ function stepAnonymize(state: PipelineState): PipelineState {
 
 /**
  * Step 2: AI Reasoning via Edge Function
+ * Extracts server-side validation from the response when available.
  */
 async function stepReasoning(state: PipelineState): Promise<PipelineState> {
   const { provider, model } = state.config;
@@ -150,28 +154,35 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
     throw new Error('Empty response from AI');
   }
 
+  // Extract server-side validation if present
+  const serverValidation: ServerValidation | null = data?.validation || null;
+  if (serverValidation) {
+    console.log(`✅ Pipeline: Server validation received (passed: ${serverValidation.passed}, confidence: ${serverValidation.confidenceScore}, issues: ${serverValidation.issues.length})`);
+  }
+
   console.log('✅ Pipeline: Received AI response');
 
   return {
     ...state,
     aiResponse: responseContent,
+    serverValidation,
   };
 }
 
 /**
- * Step 3: Validate response for hallucinations
+ * Step 3: Validate response
+ * Runs client-side token integrity check, then merges with server validation.
  */
 function stepValidate(state: PipelineState): PipelineState {
   console.log('⚖️ Pipeline: Validating response...');
 
   const maskedTokens = Array.from(state.entityMap.keys());
 
-  const validationResult = validateResponse(
-    state.aiResponse,
-    state.anonymizedQuery,
-    'cost_breakdown',
-    maskedTokens
-  );
+  // Run client-side token integrity check (needs local entity map)
+  const tokenIssues = checkTokenIntegrity(maskedTokens, state.aiResponse);
+
+  // Merge server validation with client-side token issues
+  const validationResult = mergeValidationResults(state.serverValidation, tokenIssues);
 
   const hasCriticalIssues = validationResult.issues.some(
     (issue) => issue.severity === 'critical'
@@ -253,6 +264,7 @@ export async function runExosGraph(
     confidenceScore: 0,
     validationStatus: 'pending',
     retryCount: 0,
+    serverValidation: null,
   };
 
   try {
@@ -289,6 +301,7 @@ export async function runExosGraph(
         { 
           responseLength: state.aiResponse.length,
           attempt: state.retryCount + 1,
+          hasServerValidation: !!state.serverValidation,
         },
         () => stepValidate(state),
         parentRunId
