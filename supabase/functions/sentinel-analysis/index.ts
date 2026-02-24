@@ -229,6 +229,114 @@ ${opps}
   </market-intelligence>`;
 }
 
+// ============================================
+// SERVER-SIDE VALIDATION HELPER
+// ============================================
+
+interface ValidationRule {
+  rule_type: string;
+  pattern: string;
+  severity: string;
+  description: string;
+  suggestion: string | null;
+}
+
+interface ServerValidationResult {
+  passed: boolean;
+  confidenceScore: number;
+  issues: Array<{ rule_type: string; severity: string; description: string; match?: string }>;
+}
+
+async function runServerValidation(
+  content: string,
+  scenarioType: string | undefined,
+  supabaseClient: ReturnType<typeof createClient> | null
+): Promise<ServerValidationResult> {
+  if (!supabaseClient) {
+    return { passed: true, confidenceScore: 1.0, issues: [] };
+  }
+
+  try {
+    let query = supabaseClient
+      .from("validation_rules")
+      .select("rule_type, pattern, severity, description, suggestion")
+      .eq("is_active", true);
+
+    if (scenarioType) {
+      query = query.or(`scenario_type.is.null,scenario_type.eq.${scenarioType}`);
+    } else {
+      query = query.is("scenario_type", null);
+    }
+
+    const { data: rules, error } = await query;
+
+    if (error) {
+      console.warn("[Sentinel] Failed to fetch validation_rules:", error);
+      return { passed: true, confidenceScore: 1.0, issues: [] };
+    }
+
+    if (!rules || rules.length === 0) {
+      return { passed: true, confidenceScore: 1.0, issues: [] };
+    }
+
+    const issues: ServerValidationResult["issues"] = [];
+    const contentLower = content.toLowerCase();
+
+    for (const rule of rules as ValidationRule[]) {
+      try {
+        if (rule.rule_type === 'required_section' || rule.rule_type === 'required_keyword') {
+          // For required patterns, check if ANY alternative matches (pipe-separated)
+          const alternatives = rule.pattern.split('|').map(p => p.trim().toLowerCase());
+          const found = alternatives.some(alt => contentLower.includes(alt));
+          if (!found) {
+            issues.push({
+              rule_type: rule.rule_type,
+              severity: rule.severity,
+              description: rule.description,
+            });
+          }
+        } else {
+          // For hallucination/unsafe/forbidden patterns, use regex matching
+          const regex = new RegExp(rule.pattern, 'gi');
+          let match;
+          while ((match = regex.exec(content)) !== null) {
+            issues.push({
+              rule_type: rule.rule_type,
+              severity: rule.severity,
+              description: rule.description,
+              match: match[0],
+            });
+            // Prevent infinite loop on zero-length matches
+            if (match[0].length === 0) break;
+          }
+        }
+      } catch (regexErr) {
+        console.warn(`[Sentinel] Invalid regex pattern in rule: ${rule.pattern}`, regexErr);
+      }
+    }
+
+    // Calculate confidence score (same deduction math as client-side)
+    let score = 1.0;
+    for (const issue of issues) {
+      switch (issue.severity) {
+        case 'critical': score -= 0.3; break;
+        case 'high': score -= 0.15; break;
+        case 'medium': score -= 0.08; break;
+        case 'low': score -= 0.03; break;
+      }
+    }
+    score = Math.max(0, Math.min(1, score));
+
+    const hasCritical = issues.some(i => i.severity === 'critical');
+    const passed = !hasCritical && score >= 0.6;
+
+    return { passed, confidenceScore: score, issues };
+  } catch (err) {
+    console.warn("[Sentinel] Server validation error:", err);
+    return { passed: true, confidenceScore: 1.0, issues: [] };
+  }
+}
+
 function buildServerGroundedPrompts(
   industry: IndustryRow | null,
   category: CategoryRow | null,
@@ -644,6 +752,10 @@ serve(async (req) => {
 
       const processingTime = Math.round(performance.now() - startTime);
 
+      // Run server-side validation
+      const validation = await runServerValidation(finalContent, scenarioId, supabase);
+      console.log(`[Sentinel] Multi-cycle validation: passed=${validation.passed}, confidence=${validation.confidenceScore}, issues=${validation.issues.length}`);
+
       // Log final result (only final — drafts/critiques stay server-side)
       if (enableTestLogging && supabase && promptId) {
         try {
@@ -653,6 +765,7 @@ serve(async (req) => {
             raw_response: finalContent,
             processing_time_ms: processingTime,
             success: true,
+            validation_result: validation,
           });
         } catch (reportError) {
           console.error("[Sentinel] Failed to log multi-cycle report:", reportError);
@@ -666,11 +779,14 @@ serve(async (req) => {
         contentLength: finalContent.length,
         processingTimeMs: processingTime,
         source: useGoogleAIStudio ? "google_ai_studio" : "cloud",
+        validationPassed: validation.passed,
+        validationConfidence: validation.confidenceScore,
       });
 
       return new Response(
         JSON.stringify({
           content: finalContent,
+          validation,
           model: useGoogleAIStudio ? googleModel : model,
           source: useGoogleAIStudio ? "google_ai_studio" : "cloud",
           promptId,
@@ -768,7 +884,10 @@ serve(async (req) => {
             total_tokens: googleData.usageMetadata.totalTokenCount || 0,
           } : null;
 
-          // Log successful response with shadow_log
+          // Run server-side validation
+          const validation = await runServerValidation(content, scenarioType, supabase);
+
+          // Log successful response with shadow_log + validation
           if (enableTestLogging && supabase && promptId) {
             try {
               await supabase.from("test_reports").insert({
@@ -782,6 +901,7 @@ serve(async (req) => {
                 prompt_tokens: usage?.prompt_tokens || 0,
                 completion_tokens: usage?.completion_tokens || 0,
                 total_tokens: usage?.total_tokens || 0,
+                validation_result: validation,
               });
             } catch (reportError) {
               console.error("[Sentinel] Failed to log report:", reportError);
@@ -794,7 +914,7 @@ serve(async (req) => {
 
           return new Response(
             JSON.stringify({
-              content, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
+              content, validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
@@ -951,7 +1071,10 @@ serve(async (req) => {
       console.log("[Sentinel] Shadow log extracted (Gateway):", JSON.stringify(shadowLog));
     }
 
-    // Log successful response with shadow_log
+    // Run server-side validation
+    const validation = await runServerValidation(content, scenarioType, supabase);
+
+    // Log successful response with shadow_log + validation
     if (enableTestLogging && supabase && promptId) {
       try {
         await supabase.from("test_reports").insert({
@@ -961,6 +1084,7 @@ serve(async (req) => {
           prompt_tokens: data.usage?.prompt_tokens || 0,
           completion_tokens: data.usage?.completion_tokens || 0,
           total_tokens: data.usage?.total_tokens || 0,
+          validation_result: validation,
         });
       } catch (reportError) {
         console.error("[Sentinel] Failed to log report:", reportError);
@@ -972,7 +1096,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        content, model, source: "cloud", usage: data.usage, promptId, processingTimeMs: processingTime
+        content, validation, model, source: "cloud", usage: data.usage, promptId, processingTimeMs: processingTime
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
