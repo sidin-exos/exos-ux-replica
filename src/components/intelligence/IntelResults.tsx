@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,11 @@ import {
   GitMerge, 
   AlertTriangle,
   RefreshCw,
-  Coins
+  Coins,
+  Database
 } from "lucide-react";
 import { type IntelResult, type QueryType, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
+import { SaveToKnowledgeBaseDialog } from "@/components/intelligence/SaveToKnowledgeBaseDialog";
 import { toast } from "sonner";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -35,6 +38,7 @@ interface IntelResultsProps {
 }
 
 export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const typeInfo = QUERY_TYPE_LABELS[result.queryType];
   const IconComponent = ICONS[typeInfo.icon];
 
@@ -138,12 +142,22 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
 
       {/* Actions */}
       <Separator />
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-3">
+        <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="gap-2">
+          <Database className="w-4 h-4" />
+          Save to Knowledge Base
+        </Button>
         <Button variant="outline" onClick={onNewQuery} className="gap-2">
           <RefreshCw className="w-4 h-4" />
           New Query
         </Button>
       </div>
+
+      <SaveToKnowledgeBaseDialog
+        open={showSaveDialog}
+        onOpenChange={setShowSaveDialog}
+        result={result}
+      />
     </div>
   );
 }
