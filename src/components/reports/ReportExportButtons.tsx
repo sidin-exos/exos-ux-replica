@@ -30,6 +30,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import PDFPreviewModal from "./pdf/PDFPreviewModal";
 import { useShareableReport } from "@/hooks/useShareableReport";
+import { exportReportToExcel } from "@/lib/report-export-excel";
+import { formatReportForJira } from "@/lib/report-export-jira";
 
 // Custom Jira icon component
 const JiraIcon = () => (
@@ -81,6 +83,31 @@ const ReportExportButtons = ({
     toast.info(`${type} export will be available soon`, {
       description: "This integration is coming in a future update.",
     });
+  };
+
+  const handleExcelExport = () => {
+    try {
+      exportReportToExcel(scenarioTitle, analysisResult, formData, timestamp);
+      toast.success("Excel report downloaded", {
+        description: "Check your downloads folder for the .xlsx file.",
+      });
+    } catch (err) {
+      console.error("[excel-export]", err);
+      toast.error("Failed to generate Excel file");
+    }
+  };
+
+  const handleJiraCopy = async () => {
+    try {
+      const jiraText = formatReportForJira(scenarioTitle, analysisResult, formData, timestamp);
+      await navigator.clipboard.writeText(jiraText);
+      toast.success("Copied for Jira", {
+        description: "Paste into a new Jira issue to create the task.",
+      });
+    } catch (err) {
+      console.error("[jira-copy]", err);
+      toast.error("Failed to copy to clipboard");
+    }
   };
 
   const handleShare = async () => {
@@ -144,14 +171,14 @@ const ReportExportButtons = ({
           Export to PDF
         </Button>
 
-        {/* Jira Integration */}
+        {/* Jira — Copy to Clipboard */}
         <Button
-          onClick={() => handleExport("Jira")}
+          onClick={handleJiraCopy}
           variant="outline"
           className="gap-2"
         >
           <JiraIcon />
-          Export to Jira
+          Copy for Jira
         </Button>
 
         {/* More Integrations Dropdown */}
@@ -180,7 +207,7 @@ const ReportExportButtons = ({
               <Slack className="w-4 h-4" />
               <span className="ml-2">Share to Slack</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExport("Excel")}>
+            <DropdownMenuItem onClick={handleExcelExport}>
               <FileSpreadsheet className="w-4 h-4" />
               <span className="ml-2">Export to Excel</span>
             </DropdownMenuItem>
