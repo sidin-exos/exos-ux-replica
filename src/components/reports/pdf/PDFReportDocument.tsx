@@ -7,7 +7,7 @@ import {
   Image,
 } from "@react-pdf/renderer";
 import exosLogo from "@/assets/logo-concept-layers.png";
-import { PDFDashboardVisuals } from "./PDFDashboardVisuals";
+import { PDFDashboardPages } from "./PDFDashboardVisuals";
 import { extractDashboardData, stripDashboardData } from "@/lib/dashboard-data-parser";
 
 // EXOS Corporate Colors
@@ -373,17 +373,6 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {/* Dashboard Visualizations */}
-        {selectedDashboards.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Image src={exosLogo} style={styles.sectionLogoImage} />
-              <Text style={styles.sectionTitle}>Analysis Visualizations</Text>
-            </View>
-            <PDFDashboardVisuals selectedDashboards={selectedDashboards} parsedData={parsedData} />
-          </View>
-        )}
-
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
@@ -400,6 +389,11 @@ const PDFReportDocument = ({
           </View>
         </View>
       </Page>
+
+      {/* Dashboard Pages — dedicated pages, 2 per page */}
+      {selectedDashboards.length > 0 && (
+        <PDFDashboardPages selectedDashboards={selectedDashboards} parsedData={parsedData} />
+      )}
 
       {/* Page 2: Detailed Analysis */}
       <Page size="A4" style={styles.page}>
