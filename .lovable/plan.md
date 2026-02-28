@@ -1,55 +1,38 @@
 
 
-# PDF Report Refinements — Diagrams, Inputs, Limitations
+## Plan: Collapsible Data Requirements Advisory for `make-vs-buy`
 
-## Issue 1: Dashboard diagram fonts too small
+### 1. `src/lib/scenarios.ts` — Extend interface + add data
 
-The shared theme (`theme.ts`) still has small font sizes (8-9pt) for dashboard visuals while the main report text was already bumped. All dashboard font sizes need a +15% increase.
+**Interface change** (after line 63, before closing `}`):
+```typescript
+dataRequirements?: {
+  title: string;
+  sections: { heading: string; description: string }[];
+};
+```
 
-**File: `src/components/reports/pdf/dashboardVisuals/theme.ts`**
-- `dashboardTitle`: 13 → 15
-- `dashboardSubtitle`: 9 → 10
-- `barLabel`: 9 → 10
-- `barValue`: 9 → 10
-- `matrixCell`: 9 → 10
-- `scoreCellText`: 8 → 9
-- `tornadoLabel`: 9 → 10
-- `tornadoValue`: 8 → 9
-- `legendText`: 8 → 9
-- `statLabel`: 8 → 9
-- `statValue`: 12 → 14
-- `listText`: 9 → 10
-- `listMeta`: 8 → 9
-- `quadrantLabel`: 8 → 9
+**Add `dataRequirements` to `make-vs-buy` scenario** (after `strategySelector` on line 75):
+- Title: "What data prevents Value Leakage in Make vs. Buy decisions?"
+- 4 sections: Internal Cost Benchmarks, External Quotes & Market Data, Strategic & Capability Factors, Timeline & Risk Constraints — each with a short description of what to prepare and why it matters.
 
-**All 14 individual dashboard components** — update inline `fontSize` values (headerText 8→9, cellText 9→10, category labels 7→8, badge text 8→9, etc.)
+### 2. `src/components/scenarios/GenericScenarioWizard.tsx` — Render collapsible
 
-## Issue 2: "Analysis Inputs" shows raw textarea dumps
+**Imports** — add:
+```typescript
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ChevronRight } from "lucide-react";
+```
 
-Currently the code iterates over all `formData` entries and dumps full values including multi-paragraph industry context blocks. This is unacceptable for an executive report.
+**Insert between `ScenarioTutorial` (line 494) and the "Enter Your Data" header (line 496)**:
 
-**File: `src/components/reports/pdf/PDFReportDocument.tsx`**
-- Replace the current raw dump with a keyword extraction approach:
-  - For short values (≤60 chars): show as-is (e.g., "Above Market", "96", "7")
-  - For long values (>60 chars): extract first sentence only, truncated to 80 chars with "…"
-- Rename section to "Analysis Parameters"
-- Use a compact horizontal tag/pill layout instead of the current 2-column grid
-- Each tag: label in muted text, value in a surface-colored pill
+Conditionally render when `scenario.dataRequirements` exists:
+- `<Collapsible defaultOpen={false}>` with local `open` state for chevron rotation
+- Trigger: ghost/outline button bar — `"💡 What data do I need to prepare?"` + animated chevron
+- Content: bordered card with `scenario.dataRequirements.title` as a small heading, then map `sections` into `heading` (font-medium) + `description` (text-muted-foreground text-sm) pairs
+- Styled with existing Tailwind (`border rounded-lg p-4 bg-muted/30`)
 
-## Issue 3: "Analysis Limitations" is generic legal boilerplate
-
-The current 4 bullet points are static legal disclaimers. The user wants structured feedback on data quality — which fields were provided, what's missing, confidence level.
-
-**File: `src/components/reports/pdf/PDFReportDocument.tsx`**
-- Rename to "Data Quality Assessment"
-- Replace static disclaimers with dynamic content derived from `formData`:
-  - Count fields provided vs total possible
-  - Show coverage percentage (e.g., "6 of 8 parameters provided — 75% coverage")
-  - List which key fields are missing (empty/absent keys)
-  - Show a confidence indicator based on coverage: High (≥80%), Medium (50-79%), Low (<50%)
-  - Add one brief note: "Provide additional parameters to improve analysis accuracy"
-
-## Technical detail
-
-No structural/routing changes. All edits are within PDF rendering components only. No new dependencies.
+### What stays untouched
+- All 3-Block textareas, form logic, other scenarios unchanged
+- Only `make-vs-buy` gets `dataRequirements` as proof of concept
 
