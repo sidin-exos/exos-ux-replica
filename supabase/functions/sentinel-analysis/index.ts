@@ -524,14 +524,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Authenticate request
+  // Soft auth: use token if available, allow anonymous access
   const authResult = await authenticateRequest(req);
-  if ("error" in authResult) {
-    return new Response(
-      JSON.stringify({ error: authResult.error.message }),
-      { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
+  const userId = "user" in authResult ? authResult.user.userId : null;
 
   // Declare tracer and parentRunId at function scope for error handler
   let tracer: LangSmithTracer | undefined;
