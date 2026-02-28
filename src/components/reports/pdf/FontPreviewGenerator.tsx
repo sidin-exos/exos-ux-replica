@@ -103,19 +103,19 @@ const makeStyles = (fc: FontConfig) =>
     },
     brand: {
       fontFamily: fc.header,
-      fontSize: 22,
+      fontSize: 26,
       color: C.teal,
       marginBottom: 4,
     },
     tagline: {
       fontFamily: fc.body,
-      fontSize: 8,
+      fontSize: 10,
       color: C.muted,
       letterSpacing: 3,
     },
     fontLabel: {
       fontFamily: fc.body,
-      fontSize: 9,
+      fontSize: 11,
       color: C.tealDark,
       marginTop: 8,
       padding: 4,
@@ -124,7 +124,7 @@ const makeStyles = (fc: FontConfig) =>
     },
     sectionTitle: {
       fontFamily: fc.header,
-      fontSize: 14,
+      fontSize: 17,
       color: C.white,
       marginBottom: 12,
       marginTop: 20,
@@ -136,14 +136,14 @@ const makeStyles = (fc: FontConfig) =>
     },
     bulletDot: {
       fontFamily: fc.body,
-      fontSize: 10,
+      fontSize: 12,
       color: C.teal,
       marginRight: 8,
       marginTop: 1,
     },
     bulletText: {
       fontFamily: fc.body,
-      fontSize: 10,
+      fontSize: 12,
       color: C.white,
       flex: 1,
       lineHeight: 1.5,
@@ -164,7 +164,7 @@ const makeStyles = (fc: FontConfig) =>
     },
     tableHeaderCell: {
       fontFamily: fc.header,
-      fontSize: 9,
+      fontSize: 11,
       color: C.teal,
       flex: 1,
     },
@@ -176,13 +176,13 @@ const makeStyles = (fc: FontConfig) =>
     },
     tableCellName: {
       fontFamily: fc.body,
-      fontSize: 9,
+      fontSize: 11,
       color: C.white,
       flex: 1,
     },
     tableCellData: {
       fontFamily: fc.data,
-      fontSize: 9,
+      fontSize: 11,
       color: C.white,
       flex: 1,
     },
@@ -195,7 +195,7 @@ const makeStyles = (fc: FontConfig) =>
     },
     footerText: {
       fontFamily: fc.body,
-      fontSize: 7,
+      fontSize: 8,
       color: C.muted,
       opacity: 0.5,
     },
