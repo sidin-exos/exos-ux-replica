@@ -49,6 +49,30 @@ const pageStyles = {
     height: 4,
     backgroundColor: pageColors.primary,
   },
+  gradientLayer1: {
+    position: "absolute" as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: "50%",
+    backgroundColor: "#232338",
+  },
+  gradientLayer2: {
+    position: "absolute" as const,
+    top: "30%",
+    left: 0,
+    right: 0,
+    bottom: "30%",
+    backgroundColor: "rgba(107, 158, 138, 0.06)",
+  },
+  gradientLayer3: {
+    position: "absolute" as const,
+    top: "50%",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#1a1a2a",
+  },
   footer: {
     position: "absolute" as const,
     bottom: 30,
@@ -85,11 +109,11 @@ const pageStyles = {
     flexDirection: "row" as const,
     alignItems: "center" as const,
     marginBottom: 16,
-    gap: 8,
   },
   sectionLogoImage: {
     width: 20,
     height: 20,
+    marginRight: 8,
   },
   sectionTitle: {
     fontSize: 16,
@@ -181,6 +205,9 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData }: PDFDashboa
     <>
       {pairs.map((pair, pairIdx) => (
         <Page key={`dash-page-${pairIdx}`} size="A4" style={pageStyles.page}>
+          <View style={pageStyles.gradientLayer1} />
+          <View style={pageStyles.gradientLayer2} />
+          <View style={pageStyles.gradientLayer3} />
           <View style={pageStyles.accentBar} />
 
           <View style={pageStyles.sectionHeader}>

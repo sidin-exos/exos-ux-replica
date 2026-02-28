@@ -45,11 +45,11 @@ const styles = StyleSheet.create({
   logoSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
   },
   logoImage: {
     width: 40,
     height: 40,
+    marginRight: 12,
   },
   brandName: {
     fontSize: 23,
@@ -105,11 +105,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 12,
-    gap: 8,
   },
   sectionLogoImage: {
     width: 20,
     height: 20,
+    marginRight: 8,
   },
   sectionTitle: {
     fontSize: 16,
@@ -129,7 +129,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: 10,
-    gap: 10,
   },
   keyPointBullet: {
     width: 18,
@@ -139,6 +138,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: 2,
+    marginRight: 10,
   },
   keyPointBulletText: {
     color: colors.background,
@@ -179,7 +179,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: 8,
-    gap: 8,
   },
   limitationBullet: {
     width: 6,
@@ -187,6 +186,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.textMuted,
     borderRadius: 3,
     marginTop: 5,
+    marginRight: 8,
   },
   limitationText: {
     flex: 1,
@@ -198,11 +198,11 @@ const styles = StyleSheet.create({
   inputsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
   },
   inputItem: {
     width: "48%",
     marginBottom: 8,
+    marginRight: 12,
   },
   inputLabel: {
     fontSize: 9,
@@ -257,6 +257,31 @@ const styles = StyleSheet.create({
     right: 0,
     height: 4,
     backgroundColor: colors.primary,
+  },
+  // Gradient simulation layers
+  gradientLayer1: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: "50%",
+    backgroundColor: "#232338",
+  },
+  gradientLayer2: {
+    position: "absolute",
+    top: "30%",
+    left: 0,
+    right: 0,
+    bottom: "30%",
+    backgroundColor: "rgba(107, 158, 138, 0.06)",
+  },
+  gradientLayer3: {
+    position: "absolute",
+    top: "50%",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#1a1a2a",
   },
 });
 
@@ -328,6 +353,9 @@ const PDFReportDocument = ({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <View style={styles.gradientLayer1} />
+        <View style={styles.gradientLayer2} />
+        <View style={styles.gradientLayer3} />
         <View style={styles.accentBar} />
 
         <View style={styles.header}>
@@ -391,6 +419,9 @@ const PDFReportDocument = ({
       )}
 
       <Page size="A4" style={styles.page}>
+        <View style={styles.gradientLayer1} />
+        <View style={styles.gradientLayer2} />
+        <View style={styles.gradientLayer3} />
         <View style={styles.accentBar} />
 
         <View style={styles.section}>
