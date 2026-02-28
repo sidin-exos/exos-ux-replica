@@ -1,46 +1,55 @@
 
 
+# PDF Report Refinements — Diagrams, Inputs, Limitations
 
-# Soften PDF Color Palette — Warm Neutral (Premium Dark)
+## Issue 1: Dashboard diagram fonts too small
 
-## Current vs New Palette
+The shared theme (`theme.ts`) still has small font sizes (8-9pt) for dashboard visuals while the main report text was already bumped. All dashboard font sizes need a +15% increase.
 
-| Token | Current (aggressive) | New (warm neutral) |
-|---|---|---|
-| background | `#0c1220` (near-black navy) | `#1e1e2e` (warm charcoal) |
-| surface | `#111827` | `#262637` |
-| surfaceLight | `#1f2937` | `#2f2f42` |
-| text | `#f9fafb` (near-white) | `#d4d4dc` (soft cream) |
-| textMuted | `#9ca3af` | `#8b8b9e` |
-| primary | `#14b8a6` (bright teal) | `#6b9e8a` (desaturated sage) |
-| primaryDark | `#0d9488` | `#5a8a76` |
-| accent | `#06b6d4` | `#6b9e8a` |
-| success | `#22c55e` | `#6bbf8a` (muted green) |
-| warning | `#f59e0b` | `#c9a24d` (warm gold) |
-| destructive | `#ef4444` | `#c06060` (muted rose) |
-| border | `#374151` | `#3a3a4e` |
+**File: `src/components/reports/pdf/dashboardVisuals/theme.ts`**
+- `dashboardTitle`: 13 → 15
+- `dashboardSubtitle`: 9 → 10
+- `barLabel`: 9 → 10
+- `barValue`: 9 → 10
+- `matrixCell`: 9 → 10
+- `scoreCellText`: 8 → 9
+- `tornadoLabel`: 9 → 10
+- `tornadoValue`: 8 → 9
+- `legendText`: 8 → 9
+- `statLabel`: 8 → 9
+- `statValue`: 12 → 14
+- `listText`: 9 → 10
+- `listMeta`: 8 → 9
+- `quadrantLabel`: 8 → 9
 
-Contrast ratio text-on-background drops from ~18:1 to ~8:1 — still WCAG AAA compliant but far less harsh.
+**All 14 individual dashboard components** — update inline `fontSize` values (headerText 8→9, cellText 9→10, category labels 7→8, badge text 8→9, etc.)
 
-## Files Changed
+## Issue 2: "Analysis Inputs" shows raw textarea dumps
 
-| # | File | Action | Summary |
-|---|---|---|---|
-| 1 | `src/components/reports/pdf/dashboardVisuals/theme.ts` | Edit | Update `colors` object to warm neutral palette |
-| 2 | `src/components/reports/pdf/PDFReportDocument.tsx` | Edit | Update local `colors` object + `textSemiTransparent` to match |
-| 3 | `src/components/reports/pdf/PDFDashboardVisuals.tsx` | Edit | Update `pageColors` to match new palette |
+Currently the code iterates over all `formData` entries and dumps full values including multi-paragraph industry context blocks. This is unacceptable for an executive report.
 
-All three files define their own color constants — all must be updated to stay consistent. No structural changes, just color hex values.
+**File: `src/components/reports/pdf/PDFReportDocument.tsx`**
+- Replace the current raw dump with a keyword extraction approach:
+  - For short values (≤60 chars): show as-is (e.g., "Above Market", "96", "7")
+  - For long values (>60 chars): extract first sentence only, truncated to 80 chars with "…"
+- Rename section to "Analysis Parameters"
+- Use a compact horizontal tag/pill layout instead of the current 2-column grid
+- Each tag: label in muted text, value in a surface-colored pill
 
-## Round 2: Font +15% & Bright Color Purge
+## Issue 3: "Analysis Limitations" is generic legal boilerplate
 
-### Font Changes
-All font sizes bumped ~15%: 6→7, 7→8, 8→9, 9→10, 10→12, 11→13, 12→14, 14→16, 20→23, 24→28
+The current 4 bullet points are static legal disclaimers. The user wants structured feedback on data quality — which fields were provided, what's missing, confidence level.
 
-### Color Replacements
-| Old (bright) | New (muted) | Used in |
-|---|---|---|
-| `#6366f1` (indigo) | `#7a7fa0` (slate blue) | TCO, Decision Matrix, License, Scenario |
-| `#8b5cf6` (purple) | `#8a7d9b` (lavender) | TCO, Decision Matrix, License |
+**File: `src/components/reports/pdf/PDFReportDocument.tsx`**
+- Rename to "Data Quality Assessment"
+- Replace static disclaimers with dynamic content derived from `formData`:
+  - Count fields provided vs total possible
+  - Show coverage percentage (e.g., "6 of 8 parameters provided — 75% coverage")
+  - List which key fields are missing (empty/absent keys)
+  - Show a confidence indicator based on coverage: High (≥80%), Medium (50-79%), Low (<50%)
+  - Add one brief note: "Provide additional parameters to improve analysis accuracy"
 
-Added `option2` and `option3` to theme colors for centralized management.
+## Technical detail
+
+No structural/routing changes. All edits are within PDF rendering components only. No new dependencies.
+
