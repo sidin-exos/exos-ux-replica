@@ -1,4 +1,4 @@
-import { Grid3X3 } from "lucide-react";
+import { Grid3X3, Shield, Filter, ClipboardList, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { KraljicData } from "@/lib/dashboard-data-parser";
@@ -8,8 +8,8 @@ type Quadrant = "strategic" | "leverage" | "bottleneck" | "non-critical";
 interface PositionedItem {
   id: string;
   name: string;
-  supplyRisk: number; // 0-100
-  businessImpact: number; // 0-100
+  supplyRisk: number;
+  businessImpact: number;
   spend?: string;
 }
 
@@ -29,11 +29,51 @@ const defaultItems: PositionedItem[] = [
   { id: "F", name: "Standard Packaging", supplyRisk: 30, businessImpact: 25, spend: "$180K" },
 ];
 
-const quadrantConfig: Record<Quadrant, { label: string; strategy: string; className: string }> = {
-  strategic: { label: "Strategic", strategy: "Partner & Collaborate", className: "bg-primary/20 border-primary/40" },
-  leverage: { label: "Leverage", strategy: "Maximize Value", className: "bg-success/20 border-success/40" },
-  bottleneck: { label: "Bottleneck", strategy: "Secure Supply", className: "bg-warning/20 border-warning/40" },
-  "non-critical": { label: "Non-Critical", strategy: "Simplify & Automate", className: "bg-muted border-border" },
+const quadrantConfig: Record<Quadrant, {
+  label: string;
+  strategy: string;
+  description: string;
+  borderColor: string;
+  bgClass: string;
+  accentClass: string;
+  icon: typeof Shield;
+}> = {
+  leverage: {
+    label: "Leverage",
+    strategy: "Maximize Value",
+    description: "High profit impact, low supply risk. Negotiate aggressively and consolidate volumes.",
+    borderColor: "border-primary/60",
+    bgClass: "bg-primary/5",
+    accentClass: "text-primary",
+    icon: Zap,
+  },
+  strategic: {
+    label: "Strategic",
+    strategy: "Partner & Collaborate",
+    description: "High profit impact, high supply risk. Build partnerships and secure long-term contracts.",
+    borderColor: "border-warning/60",
+    bgClass: "bg-warning/5",
+    accentClass: "text-warning",
+    icon: Shield,
+  },
+  "non-critical": {
+    label: "Non-Critical",
+    strategy: "Simplify & Automate",
+    description: "Low profit impact, low supply risk. Standardize processes and reduce transaction costs.",
+    borderColor: "border-muted-foreground/40",
+    bgClass: "bg-muted/30",
+    accentClass: "text-muted-foreground",
+    icon: ClipboardList,
+  },
+  bottleneck: {
+    label: "Bottleneck",
+    strategy: "Secure Supply",
+    description: "Low profit impact, high supply risk. Diversify sources and maintain safety stock.",
+    borderColor: "border-accent-foreground/40",
+    bgClass: "bg-accent/30",
+    accentClass: "text-accent-foreground",
+    icon: Filter,
+  },
 };
 
 const getQuadrant = (supplyRisk: number, businessImpact: number): Quadrant => {
@@ -43,6 +83,8 @@ const getQuadrant = (supplyRisk: number, businessImpact: number): Quadrant => {
   return "non-critical";
 };
 
+const quadrantOrder: [Quadrant, Quadrant, Quadrant, Quadrant] = ["leverage", "strategic", "non-critical", "bottleneck"];
+
 const KraljicQuadrantDashboard = ({
   title = "Kraljic Matrix",
   subtitle = "Strategic positioning",
@@ -50,7 +92,7 @@ const KraljicQuadrantDashboard = ({
   parsedData,
 }: KraljicQuadrantDashboardProps) => {
   const effectiveItems = parsedData?.items || items;
-  // Group items by quadrant
+
   const groupedItems = effectiveItems.reduce((acc, item) => {
     const quadrant = getQuadrant(item.supplyRisk, item.businessImpact);
     if (!acc[quadrant]) acc[quadrant] = [];
@@ -72,90 +114,94 @@ const KraljicQuadrantDashboard = ({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* 2x2 Matrix Grid */}
-        <div className="relative aspect-square max-h-64">
-          {/* Axis labels */}
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-muted-foreground whitespace-nowrap">
-            Supply Risk →
-          </div>
-          <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
-            Business Impact →
+      <CardContent className="space-y-5">
+        {/* Two-column layout: Matrix left, Strategies right */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left: 2x2 Matrix */}
+          <div className="relative">
+            {/* Y-axis label */}
+            <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-medium text-muted-foreground whitespace-nowrap tracking-wider uppercase">
+              Profit Impact
+            </div>
+            {/* High / Low Y labels */}
+            <div className="absolute left-3 top-1 text-[9px] text-muted-foreground/70">High</div>
+            <div className="absolute left-3 bottom-6 text-[9px] text-muted-foreground/70">Low</div>
+
+            {/* Grid */}
+            <div className="ml-8 grid grid-cols-2 grid-rows-2 border border-border/30 rounded-lg overflow-hidden">
+              {quadrantOrder.map((q, idx) => {
+                const config = quadrantConfig[q];
+                const Icon = config.icon;
+                const qItems = groupedItems[q] || [];
+                return (
+                  <div
+                    key={q}
+                    className={`relative p-3 min-h-[120px] flex flex-col border-2 ${config.borderColor} ${config.bgClass} ${
+                      idx === 0 ? "rounded-tl-md border-r-0 border-b-0" :
+                      idx === 1 ? "rounded-tr-md border-b-0" :
+                      idx === 2 ? "rounded-bl-md border-r-0" :
+                      "rounded-br-md"
+                    }`}
+                  >
+                    <div className={`text-xs font-semibold ${config.accentClass} mb-1`}>{config.label}</div>
+                    <div className="flex flex-wrap gap-1 mt-1 flex-1">
+                      {qItems.map((item) => (
+                        <Badge key={item.id} variant="outline" className="text-[10px] bg-background/60 h-5 px-1.5">
+                          {item.id}
+                        </Badge>
+                      ))}
+                    </div>
+                    {/* Centered icon */}
+                    <div className="absolute bottom-2 right-2">
+                      <div className={`w-7 h-7 rounded-full bg-background/80 border ${config.borderColor} flex items-center justify-center`}>
+                        <Icon className={`w-3.5 h-3.5 ${config.accentClass}`} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* X-axis */}
+            <div className="ml-8 flex justify-between mt-1.5 px-1">
+              <span className="text-[9px] text-muted-foreground/70">Low</span>
+              <span className="text-[10px] font-medium text-muted-foreground tracking-wider uppercase">Supply Risk</span>
+              <span className="text-[9px] text-muted-foreground/70">High</span>
+            </div>
           </div>
 
-          {/* Grid container */}
-          <div className="ml-4 h-full grid grid-cols-2 grid-rows-2 gap-1">
-            {/* Top row: Bottleneck | Strategic */}
-            <div className={`rounded-tl-lg p-2 ${quadrantConfig.bottleneck.className} border`}>
-              <div className="text-xs font-medium text-foreground mb-1">{quadrantConfig.bottleneck.label}</div>
-              <div className="flex flex-wrap gap-1">
-                {groupedItems.bottleneck?.map((item) => (
-                  <Badge key={item.id} variant="outline" className="text-xs bg-background/50">
-                    {item.id}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div className={`rounded-tr-lg p-2 ${quadrantConfig.strategic.className} border`}>
-              <div className="text-xs font-medium text-foreground mb-1">{quadrantConfig.strategic.label}</div>
-              <div className="flex flex-wrap gap-1">
-                {groupedItems.strategic?.map((item) => (
-                  <Badge key={item.id} variant="outline" className="text-xs bg-background/50">
-                    {item.id}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* Bottom row: Non-Critical | Leverage */}
-            <div className={`rounded-bl-lg p-2 ${quadrantConfig["non-critical"].className} border`}>
-              <div className="text-xs font-medium text-foreground mb-1">{quadrantConfig["non-critical"].label}</div>
-              <div className="flex flex-wrap gap-1">
-                {groupedItems["non-critical"]?.map((item) => (
-                  <Badge key={item.id} variant="outline" className="text-xs bg-background/50">
-                    {item.id}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div className={`rounded-br-lg p-2 ${quadrantConfig.leverage.className} border`}>
-              <div className="text-xs font-medium text-foreground mb-1">{quadrantConfig.leverage.label}</div>
-              <div className="flex flex-wrap gap-1">
-                {groupedItems.leverage?.map((item) => (
-                  <Badge key={item.id} variant="outline" className="text-xs bg-background/50">
-                    {item.id}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+          {/* Right: Strategy descriptions */}
+          <div className="space-y-3">
+            {(["strategic", "leverage", "bottleneck", "non-critical"] as Quadrant[]).map((q) => {
+              const config = quadrantConfig[q];
+              const count = (groupedItems[q] || []).length;
+              return (
+                <div key={q} className={`rounded-md border ${config.borderColor} p-3 ${config.bgClass}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-xs font-semibold ${config.accentClass}`}>
+                      {config.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">{count} item{count !== 1 ? "s" : ""}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{config.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Item Legend */}
-        <div className="pt-3 border-t border-border/30">
-          <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="pt-3 border-t border-border/20">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
             {effectiveItems.map((item) => (
               <div key={item.id} className="flex items-center gap-2">
-                <Badge variant="outline" className="w-6 h-6 rounded-full justify-center p-0">
+                <Badge variant="outline" className="w-5 h-5 rounded-full justify-center p-0 text-[10px]">
                   {item.id}
                 </Badge>
                 <div className="flex-1 min-w-0">
-                  <p className="text-foreground truncate">{item.name}</p>
-                  {item.spend && <p className="text-muted-foreground">{item.spend}</p>}
+                  <p className="text-foreground truncate text-[11px]">{item.name}</p>
+                  {item.spend && <p className="text-muted-foreground text-[10px]">{item.spend}</p>}
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Strategy Summary */}
-        <div className="pt-3 border-t border-border/30">
-          <p className="text-xs text-muted-foreground mb-2 font-medium">Recommended Strategies:</p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {(["strategic", "leverage", "bottleneck", "non-critical"] as Quadrant[]).map((q) => (
-              <div key={q} className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded ${quadrantConfig[q].className.replace("/20", "")}`} />
-                <span className="text-muted-foreground">{quadrantConfig[q].strategy}</span>
               </div>
             ))}
           </div>
