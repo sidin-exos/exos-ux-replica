@@ -1,47 +1,33 @@
 
 
-# Font Comparison — Generate 3 Sample PDF Pages
+# Soften PDF Color Palette — Warm Neutral (Premium Dark)
 
-## Approach
+## Current vs New Palette
 
-Create a temporary **Font Preview** utility that generates 3 mini PDF documents — one per font option — using `@react-pdf/renderer`. Each PDF will contain a sample EXOS report page (header, executive summary bullet, dashboard card snippet, footer) rendered with the candidate font combination. The user downloads all 3 and compares side-by-side.
+| Token | Current (aggressive) | New (warm neutral) |
+|---|---|---|
+| background | `#0c1220` (near-black navy) | `#1e1e2e` (warm charcoal) |
+| surface | `#111827` | `#262637` |
+| surfaceLight | `#1f2937` | `#2f2f42` |
+| text | `#f9fafb` (near-white) | `#d4d4dc` (soft cream) |
+| textMuted | `#9ca3af` | `#8b8b9e` |
+| primary | `#14b8a6` (bright teal) | `#6b9e8a` (desaturated sage) |
+| primaryDark | `#0d9488` | `#5a8a76` |
+| accent | `#06b6d4` | `#6b9e8a` |
+| success | `#22c55e` | `#6bbf8a` (muted green) |
+| warning | `#f59e0b` | `#c9a24d` (warm gold) |
+| destructive | `#ef4444` | `#c06060` (muted rose) |
+| border | `#374151` | `#3a3a4e` |
 
-## The 3 Font Options
-
-| Option | Headers | Body Text | Data/Tables |
-|---|---|---|---|
-| **A: Helvetica Pure** | Helvetica-Bold | Helvetica | Helvetica |
-| **B: Helvetica + Times** | Helvetica-Bold | Times-Roman | Times-Roman |
-| **C: Helvetica + Courier Data** | Helvetica-Bold | Helvetica | Courier (numbers/tables only) |
-
-## Implementation
-
-### New file: `src/components/reports/pdf/FontPreviewGenerator.tsx`
-
-- Creates 3 `<Document>` components, each using one font combo
-- Each document = 1 page with:
-  - EXOS header (logo + brand)
-  - Sample section title + 3 bullet points of body text
-  - A mini table (supplier name, score, spend) to show data font
-  - Footer
-- All on the dark navy background with teal accents (matching current theme)
-- Exports a React component with 3 "Download Sample A/B/C" buttons
-- Each button calls `pdf(doc).toBlob()` and triggers download
-
-### Temporary route or modal trigger
-
-- Add a small "Preview Fonts" button on the `/report` page (next to export buttons)
-- Opens a dialog with the 3 download buttons
-- Will be removed after the user picks a font
+Contrast ratio text-on-background drops from ~18:1 to ~8:1 — still WCAG AAA compliant but far less harsh.
 
 ## Files Changed
 
 | # | File | Action | Summary |
 |---|---|---|---|
-| 1 | `src/components/reports/pdf/FontPreviewGenerator.tsx` | Create | 3 sample PDF documents with different font combos + download buttons |
-| 2 | `src/pages/GeneratedReport.tsx` | Edit | Add temporary "Preview Fonts" button that opens the font preview dialog |
+| 1 | `src/components/reports/pdf/dashboardVisuals/theme.ts` | Edit | Update `colors` object to warm neutral palette |
+| 2 | `src/components/reports/pdf/PDFReportDocument.tsx` | Edit | Update local `colors` object + `textSemiTransparent` to match |
+| 3 | `src/components/reports/pdf/PDFDashboardVisuals.tsx` | Edit | Update `pageColors` to match new palette |
 
-## Cleanup
-
-After user picks a font, we remove `FontPreviewGenerator.tsx` and the temporary button, then apply the chosen font to `PDFReportDocument.tsx` and the dashboard visual theme.
+All three files define their own color constants — all must be updated to stay consistent. No structural changes, just color hex values.
 
