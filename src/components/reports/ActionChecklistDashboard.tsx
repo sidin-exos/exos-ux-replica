@@ -111,7 +111,8 @@ const ActionChecklistDashboard = ({
 
               <div className="space-y-1.5">
                 {items.map((item) => {
-                  const StatusIcon = statusConfig[item.status].icon;
+                  const config = statusConfig[item.status] || statusConfig.pending;
+                  const StatusIcon = config.icon;
                   return (
                     <div
                       key={item.id}
@@ -119,7 +120,7 @@ const ActionChecklistDashboard = ({
                         item.status === "done" ? "opacity-60" : ""
                       }`}
                     >
-                      <StatusIcon className={`w-4 h-4 mt-0.5 shrink-0 ${statusConfig[item.status].className}`} />
+                      <StatusIcon className={`w-4 h-4 mt-0.5 shrink-0 ${config.className}`} />
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm text-foreground ${item.status === "done" ? "line-through" : ""}`}>
                           {item.action}
