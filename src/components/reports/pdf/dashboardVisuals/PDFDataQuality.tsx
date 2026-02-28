@@ -52,8 +52,8 @@ export const PDFDataQuality = ({ data }: { data?: DataQualityData }) => {
           <Text style={styles.dashboardSubtitle}>Input coverage and confidence</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 12, fontWeight: 700, color: getScoreColor(avgQuality) }}>{avgQuality}%</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>avg quality</Text>
+          <Text style={{ fontSize: 14, fontWeight: 700, color: getScoreColor(avgQuality) }}>{avgQuality}%</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>avg quality</Text>
         </View>
       </View>
 
@@ -78,18 +78,18 @@ export const PDFDataQuality = ({ data }: { data?: DataQualityData }) => {
             <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.2 }]}>{item.name}</Text>
             <View style={[styles.matrixCell, { alignItems: "center" }]}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ width: 20, height: 4, backgroundColor: colors.surfaceLight, borderRadius: 2, marginRight: 4, overflow: "hidden" }}>
-                  <View style={{ width: `${item.value}%`, height: 4, backgroundColor: getScoreColor(item.value), borderRadius: 2 }} />
+                <View style={{ width: 22, height: 5, backgroundColor: colors.surfaceLight, borderRadius: 2, marginRight: 4, overflow: "hidden" }}>
+                  <View style={{ width: `${item.value}%`, height: 5, backgroundColor: getScoreColor(item.value), borderRadius: 2 }} />
                 </View>
-                <Text style={{ fontSize: 7, color: getScoreColor(item.value), fontWeight: 600 }}>{item.value}%</Text>
+                <Text style={{ fontSize: 8, color: getScoreColor(item.value), fontWeight: 600 }}>{item.value}%</Text>
               </View>
             </View>
             <View style={[styles.matrixCell, { alignItems: "center" }]}>
               <View style={{ paddingHorizontal: 4, paddingVertical: 1, backgroundColor: getScoreColor(item.value) + "20", borderRadius: 2 }}>
-                <Text style={{ fontSize: 6, color: getScoreColor(item.value) }}>{item.status}</Text>
+                <Text style={{ fontSize: 7, color: getScoreColor(item.value) }}>{item.status}</Text>
               </View>
             </View>
-            <Text style={[styles.matrixCell, { flex: 1.5, fontSize: 7, color: item.missing === "-" ? colors.success : colors.textMuted }]}>
+            <Text style={[styles.matrixCell, { flex: 1.5, fontSize: 8, color: item.missing === "-" ? colors.success : colors.textMuted }]}>
               {item.missing}
             </Text>
           </View>
@@ -97,7 +97,7 @@ export const PDFDataQuality = ({ data }: { data?: DataQualityData }) => {
       </View>
 
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 7, color: colors.textMuted }}>
+        <Text style={{ fontSize: 8, color: colors.textMuted }}>
           <Text style={{ color: colors.warning, fontWeight: 600 }}>Data Gap: </Text>
           Request missing supplier pricing and clarify renewal terms to improve analysis confidence.
         </Text>

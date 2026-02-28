@@ -36,8 +36,8 @@ const tableStyles = {
   colImpact: { width: "14%" as const, alignItems: "center" as const },
   colProb: { width: "14%" as const, alignItems: "center" as const },
   colScore: { width: "16%" as const, alignItems: "center" as const },
-  headerText: { fontSize: 7, fontWeight: 700 as const, color: colors.textMuted, textTransform: "uppercase" as const },
-  cellText: { fontSize: 8, color: colors.text },
+  headerText: { fontSize: 8, fontWeight: 700 as const, color: colors.textMuted, textTransform: "uppercase" as const },
+  cellText: { fontSize: 9, color: colors.text },
 };
 
 export const PDFRiskMatrix = ({ data }: { data?: RiskMatrixData }) => {
@@ -66,12 +66,12 @@ export const PDFRiskMatrix = ({ data }: { data?: RiskMatrixData }) => {
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           {criticalCount > 0 && (
             <View style={{ backgroundColor: colors.destructive, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3, marginRight: 4 }}>
-              <Text style={{ fontSize: 7, fontWeight: 700, color: colors.background }}>{criticalCount} Critical</Text>
+              <Text style={{ fontSize: 8, fontWeight: 700, color: colors.background }}>{criticalCount} Critical</Text>
             </View>
           )}
           {highCount > 0 && (
             <View style={{ backgroundColor: colors.warning, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 }}>
-              <Text style={{ fontSize: 7, fontWeight: 700, color: colors.background }}>{highCount} High</Text>
+              <Text style={{ fontSize: 8, fontWeight: 700, color: colors.background }}>{highCount} High</Text>
             </View>
           )}
         </View>
@@ -93,12 +93,12 @@ export const PDFRiskMatrix = ({ data }: { data?: RiskMatrixData }) => {
             <View key={risk.id} style={[tableStyles.dataRow, i === sortedRisks.length - 1 && tableStyles.lastRow]}>
               <View style={tableStyles.colSeverity}>
                 <View style={{ backgroundColor: severity.bgColor, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3, minWidth: 48, alignItems: "center" }}>
-                  <Text style={{ fontSize: 7, fontWeight: 700, color: severity.color }}>{severity.label}</Text>
+                  <Text style={{ fontSize: 8, fontWeight: 700, color: severity.color }}>{severity.label}</Text>
                 </View>
               </View>
               <View style={tableStyles.colRisk}>
                 <Text style={tableStyles.cellText}>{risk.name}</Text>
-                <Text style={{ fontSize: 6, color: colors.textMuted, marginTop: 1 }}>{risk.category}</Text>
+                <Text style={{ fontSize: 7, color: colors.textMuted, marginTop: 1 }}>{risk.category}</Text>
               </View>
               <View style={tableStyles.colImpact}><Text style={[tableStyles.cellText, { fontWeight: 600 }]}>{risk.impact}</Text></View>
               <View style={tableStyles.colProb}><Text style={[tableStyles.cellText, { fontWeight: 600 }]}>{risk.probability}</Text></View>

@@ -4,8 +4,8 @@ import type { LicenseTierData } from "@/lib/dashboard-data-parser";
 
 const defaultTiers = [
   { name: "Power Users", users: 85, costPerUser: 45, totalCost: 45900, recommended: 75, color: colors.primary },
-  { name: "Regular Users", users: 210, costPerUser: 25, totalCost: 63000, recommended: 180, color: "#6366f1" },
-  { name: "Occasional", users: 340, costPerUser: 10, totalCost: 40800, recommended: 380, color: "#8b5cf6" },
+  { name: "Regular Users", users: 210, costPerUser: 25, totalCost: 63000, recommended: 180, color: colors.option2 },
+  { name: "Occasional", users: 340, costPerUser: 10, totalCost: 40800, recommended: 380, color: colors.option3 },
   { name: "View-Only", users: 180, costPerUser: 5, totalCost: 10800, recommended: 180, color: colors.warning },
 ];
 
@@ -32,8 +32,8 @@ export const PDFLicenseTier = ({ data }: { data?: LicenseTierData }) => {
           <Text style={styles.dashboardSubtitle}>User tier analysis</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 12, fontWeight: 700, color: colors.text }}>{totalUsers}</Text>
-          <Text style={{ fontSize: 7, color: colors.textMuted }}>total users</Text>
+          <Text style={{ fontSize: 14, fontWeight: 700, color: colors.text }}>{totalUsers}</Text>
+          <Text style={{ fontSize: 8, color: colors.textMuted }}>total users</Text>
         </View>
       </View>
 
@@ -45,26 +45,26 @@ export const PDFLicenseTier = ({ data }: { data?: LicenseTierData }) => {
             <View key={i} style={{ marginBottom: 8 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 3 }}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: tier.color, marginRight: 6 }} />
-                  <Text style={{ fontSize: 8, color: colors.text, fontWeight: 600 }}>{tier.name}</Text>
-                  <Text style={{ fontSize: 7, color: colors.textMuted, marginLeft: 4 }}>({tier.users} users)</Text>
+                  <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: tier.color, marginRight: 6 }} />
+                  <Text style={{ fontSize: 9, color: colors.text, fontWeight: 600 }}>{tier.name}</Text>
+                  <Text style={{ fontSize: 8, color: colors.textMuted, marginLeft: 4 }}>({tier.users} users)</Text>
                 </View>
-                <Text style={{ fontSize: 8, color: colors.text, fontWeight: 600 }}>{formatCurrency(tier.totalCost)}</Text>
+                <Text style={{ fontSize: 9, color: colors.text, fontWeight: 600 }}>{formatCurrency(tier.totalCost)}</Text>
               </View>
-              <View style={{ height: 14, backgroundColor: colors.surfaceLight, borderRadius: 3, overflow: "hidden", position: "relative" }}>
-                <View style={{ height: 14, borderRadius: 3, backgroundColor: tier.color, width: `${barWidth}%` }} />
-                <Text style={{ position: "absolute", left: 6, top: 3, fontSize: 7, color: colors.background, fontWeight: 600 }}>
+              <View style={{ height: 16, backgroundColor: colors.surfaceLight, borderRadius: 3, overflow: "hidden", position: "relative" }}>
+                <View style={{ height: 16, borderRadius: 3, backgroundColor: tier.color, width: `${barWidth}%` }} />
+                <Text style={{ position: "absolute", left: 6, top: 3, fontSize: 8, color: colors.background, fontWeight: 600 }}>
                   ${tier.costPerUser}/user
                 </Text>
               </View>
               {userDiff !== 0 && (
                 <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
                   <View style={{ paddingHorizontal: 4, paddingVertical: 1, borderRadius: 2, borderWidth: 1, borderColor: userDiff > 0 ? colors.primary : colors.warning, marginRight: 4 }}>
-                    <Text style={{ fontSize: 6, color: userDiff > 0 ? colors.primary : colors.warning }}>
+                    <Text style={{ fontSize: 7, color: userDiff > 0 ? colors.primary : colors.warning }}>
                       {userDiff > 0 ? `+${userDiff}` : userDiff} users recommended
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 6, color: colors.textMuted }}>→ Save {formatCurrency(Math.abs(userDiff) * tier.costPerUser)}/mo</Text>
+                  <Text style={{ fontSize: 7, color: colors.textMuted }}>→ Save {formatCurrency(Math.abs(userDiff) * tier.costPerUser)}/mo</Text>
                 </View>
               )}
             </View>
@@ -88,7 +88,7 @@ export const PDFLicenseTier = ({ data }: { data?: LicenseTierData }) => {
       </View>
 
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 7, color: colors.textMuted }}>
+        <Text style={{ fontSize: 8, color: colors.textMuted }}>
           <Text style={{ color: colors.primary, fontWeight: 600 }}>Optimization: </Text>
           Downgrade 10 Power Users and 30 Regular Users to lower tiers based on usage patterns
         </Text>

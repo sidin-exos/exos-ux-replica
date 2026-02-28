@@ -50,8 +50,8 @@ export const PDFCostWaterfall = ({ data }: { data?: CostWaterfallData }) => {
           <Text style={styles.dashboardSubtitle}>Component analysis</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 12, fontWeight: 700, color: colors.text }}>{totalAmount}</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>total spend</Text>
+          <Text style={{ fontSize: 14, fontWeight: 700, color: colors.text }}>{totalAmount}</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>total spend</Text>
         </View>
       </View>
 
@@ -59,16 +59,16 @@ export const PDFCostWaterfall = ({ data }: { data?: CostWaterfallData }) => {
         {costBreakdownData.map((item, i) => (
           <View key={i} style={styles.barRow}>
             <View style={{ flexDirection: "row", alignItems: "center", width: 82 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: item.color, marginRight: 4 }} />
-              <Text style={{ fontSize: 8, color: colors.text }}>{item.name}</Text>
+              <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: item.color, marginRight: 4 }} />
+              <Text style={{ fontSize: 9, color: colors.text }}>{item.name}</Text>
             </View>
             <View style={styles.barTrack}>
               <View style={[styles.barFill, { flex: item.value, backgroundColor: item.color }]} />
               <View style={{ flex: Math.max(0, 100 - item.value) }} />
             </View>
             <View style={{ width: 54, alignItems: "flex-end" }}>
-              <Text style={{ fontSize: 8, color: colors.text, fontWeight: 600 }}>{item.amount}</Text>
-              <Text style={{ fontSize: 6, color: colors.textMuted }}>{item.value}%</Text>
+              <Text style={{ fontSize: 9, color: colors.text, fontWeight: 600 }}>{item.amount}</Text>
+              <Text style={{ fontSize: 7, color: colors.textMuted }}>{item.value}%</Text>
             </View>
           </View>
         ))}

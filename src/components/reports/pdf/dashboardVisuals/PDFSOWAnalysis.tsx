@@ -54,8 +54,8 @@ export const PDFSOWAnalysis = ({ data }: { data?: SOWAnalysisData }) => {
           <Text style={styles.dashboardSubtitle}>Clause coverage score (0–100)</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 12, fontWeight: 700, color: getScoreColor(avgScore) }}>{avgScore}</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>avg score</Text>
+          <Text style={{ fontSize: 14, fontWeight: 700, color: getScoreColor(avgScore) }}>{avgScore}</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>avg score</Text>
         </View>
       </View>
 
@@ -81,14 +81,14 @@ export const PDFSOWAnalysis = ({ data }: { data?: SOWAnalysisData }) => {
           <View key={i} style={{ marginBottom: 6 }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: item.color, marginRight: 4 }} />
-                <Text style={{ fontSize: 8, color: colors.text }}>{item.name}</Text>
+                <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: item.color, marginRight: 4 }} />
+                <Text style={{ fontSize: 9, color: colors.text }}>{item.name}</Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View style={{ paddingHorizontal: 3, paddingVertical: 1, backgroundColor: item.color + "20", borderRadius: 2, marginRight: 6 }}>
-                  <Text style={{ fontSize: 6, color: item.color }}>{item.status}</Text>
+                  <Text style={{ fontSize: 7, color: item.color }}>{item.status}</Text>
                 </View>
-                <Text style={{ fontSize: 8, fontWeight: 600, color: item.color }}>{item.score}</Text>
+                <Text style={{ fontSize: 9, fontWeight: 600, color: item.color }}>{item.score}</Text>
               </View>
             </View>
             <View style={styles.barTrack}>
@@ -100,7 +100,7 @@ export const PDFSOWAnalysis = ({ data }: { data?: SOWAnalysisData }) => {
       </View>
 
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 7, color: colors.textMuted }}>
+        <Text style={{ fontSize: 8, color: colors.textMuted }}>
           <Text style={{ color: colors.destructive, fontWeight: 600 }}>Action Required: </Text>
           {recommendations[0]}
         </Text>

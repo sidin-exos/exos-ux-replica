@@ -34,8 +34,8 @@ const tableStyles = {
   colTrend: { width: "12%" as const, alignItems: "center" as const },
   colSpend: { width: "18%" as const, alignItems: "flex-end" as const },
   colCategory: { width: "20%" as const, alignItems: "flex-end" as const },
-  headerText: { fontSize: 7, fontWeight: 700 as const, color: colors.textMuted, textTransform: "uppercase" as const },
-  cellText: { fontSize: 8, color: colors.text },
+  headerText: { fontSize: 8, fontWeight: 700 as const, color: colors.textMuted, textTransform: "uppercase" as const },
+  cellText: { fontSize: 9, color: colors.text },
 };
 
 export const PDFSupplierScorecard = ({ data }: { data?: SupplierScorecardData }) => {
@@ -53,7 +53,7 @@ export const PDFSupplierScorecard = ({ data }: { data?: SupplierScorecardData })
           <Text style={styles.dashboardTitle}>Supplier Scorecard</Text>
           <Text style={styles.dashboardSubtitle}>Performance rankings & spend analysis</Text>
         </View>
-        <Text style={{ fontSize: 7, color: colors.textMuted }}>{suppliers.length} suppliers</Text>
+        <Text style={{ fontSize: 8, color: colors.textMuted }}>{suppliers.length} suppliers</Text>
       </View>
 
       <View style={tableStyles.tableContainer}>
@@ -70,14 +70,14 @@ export const PDFSupplierScorecard = ({ data }: { data?: SupplierScorecardData })
             <View style={tableStyles.colSupplier}><Text style={tableStyles.cellText}>{supplier.name}</Text></View>
             <View style={[tableStyles.colScore, { flexDirection: "row", justifyContent: "center" }]}>
               <View style={{ backgroundColor: getScoreColor(supplier.score) + "30", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 }}>
-                <Text style={{ fontSize: 8, fontWeight: 700, color: getScoreColor(supplier.score) }}>{supplier.score}</Text>
+                <Text style={{ fontSize: 9, fontWeight: 700, color: getScoreColor(supplier.score) }}>{supplier.score}</Text>
               </View>
             </View>
             <View style={tableStyles.colTrend}>
-              <Text style={{ fontSize: 9, color: getTrendColor(supplier.trend) }}>{getTrendSymbol(supplier.trend)}</Text>
+              <Text style={{ fontSize: 10, color: getTrendColor(supplier.trend) }}>{getTrendSymbol(supplier.trend)}</Text>
             </View>
             <View style={tableStyles.colSpend}><Text style={[tableStyles.cellText, { textAlign: "right" }]}>{supplier.spend}</Text></View>
-            <View style={tableStyles.colCategory}><Text style={[tableStyles.cellText, { fontSize: 7, color: colors.textMuted }]}>{supplier.category}</Text></View>
+            <View style={tableStyles.colCategory}><Text style={[tableStyles.cellText, { fontSize: 8, color: colors.textMuted }]}>{supplier.category}</Text></View>
           </View>
         ))}
       </View>

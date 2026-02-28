@@ -61,7 +61,7 @@ const pageStyles = {
     paddingTop: 15,
   },
   footerBrand: {
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: "Courier" as const,
     color: "rgba(212, 212, 220, 0.35)",
     fontWeight: 400 as const,
@@ -74,11 +74,11 @@ const pageStyles = {
     width: "100%",
   },
   footerText: {
-    fontSize: 8,
+    fontSize: 9,
     color: pageColors.textMuted,
   },
   pageNumber: {
-    fontSize: 8,
+    fontSize: 9,
     color: pageColors.textMuted,
   },
   sectionHeader: {
@@ -92,7 +92,7 @@ const pageStyles = {
     height: 20,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: "Helvetica" as const,
     fontWeight: 600 as const,
     color: pageColors.text,
@@ -109,7 +109,7 @@ export const PDFDashboardPlaceholder = ({ name }: { name: string }) => (
       </View>
     </View>
     <View style={{ padding: 12, alignItems: "center" }}>
-      <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "center" }}>
+      <Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center" }}>
         This dashboard doesn't have a PDF visual yet.
       </Text>
     </View>
@@ -181,10 +181,8 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData }: PDFDashboa
     <>
       {pairs.map((pair, pairIdx) => (
         <Page key={`dash-page-${pairIdx}`} size="A4" style={pageStyles.page}>
-          {/* Accent Bar */}
           <View style={pageStyles.accentBar} />
 
-          {/* Page Header */}
           <View style={pageStyles.sectionHeader}>
             <Image src={exosLogo} style={pageStyles.sectionLogoImage} />
             <Text style={pageStyles.sectionTitle}>
@@ -192,7 +190,6 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData }: PDFDashboa
             </Text>
           </View>
 
-          {/* Dashboard cards — break-avoid on each */}
           {pair.map((dashboardType, idx) => (
             <View
               key={dashboardType}
@@ -204,7 +201,6 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData }: PDFDashboa
             </View>
           ))}
 
-          {/* Footer */}
           <View style={pageStyles.footer} fixed>
             <Text style={pageStyles.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
             <View style={pageStyles.footerRow}>

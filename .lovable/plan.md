@@ -1,5 +1,6 @@
 
 
+
 # Soften PDF Color Palette — Warm Neutral (Premium Dark)
 
 ## Current vs New Palette
@@ -31,3 +32,15 @@ Contrast ratio text-on-background drops from ~18:1 to ~8:1 — still WCAG AAA co
 
 All three files define their own color constants — all must be updated to stay consistent. No structural changes, just color hex values.
 
+## Round 2: Font +15% & Bright Color Purge
+
+### Font Changes
+All font sizes bumped ~15%: 6→7, 7→8, 8→9, 9→10, 10→12, 11→13, 12→14, 14→16, 20→23, 24→28
+
+### Color Replacements
+| Old (bright) | New (muted) | Used in |
+|---|---|---|
+| `#6366f1` (indigo) | `#7a7fa0` (slate blue) | TCO, Decision Matrix, License, Scenario |
+| `#8b5cf6` (purple) | `#8a7d9b` (lavender) | TCO, Decision Matrix, License |
+
+Added `option2` and `option3` to theme colors for centralized management.
