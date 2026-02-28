@@ -50,11 +50,11 @@ export const PDFKraljicQuadrant = ({ data }: { data?: KraljicData }) => {
     return (
       <View style={cellStyles}>
         <Text style={[styles.quadrantLabel, { color: info.color, fontWeight: 600 }]}>{info.label}</Text>
-        <Text style={{ fontSize: 6, color: colors.textMuted, marginTop: 2 }}>{quadrantItems.length} items</Text>
+        <Text style={{ fontSize: 7, color: colors.textMuted, marginTop: 2 }}>{quadrantItems.length} items</Text>
         {quadrantItems.slice(0, 2).map((item, idx) => (
           <View key={idx} style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: info.color, marginRight: 3 }} />
-            <Text style={{ fontSize: 6, color: colors.text }}>{item.name}</Text>
+            <View style={{ width: 5, height: 5, borderRadius: 2, backgroundColor: info.color, marginRight: 3 }} />
+            <Text style={{ fontSize: 7, color: colors.text }}>{item.name}</Text>
           </View>
         ))}
       </View>
@@ -70,16 +70,16 @@ export const PDFKraljicQuadrant = ({ data }: { data?: KraljicData }) => {
           <Text style={styles.dashboardSubtitle}>Supply risk vs business impact</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 10, fontWeight: 700, color: colors.destructive }}>
+          <Text style={{ fontSize: 12, fontWeight: 700, color: colors.destructive }}>
             {items.filter(i => i.quadrant === "strategic").length}
           </Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>strategic items</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>strategic items</Text>
         </View>
       </View>
 
       <View style={{ marginTop: 8, flexDirection: "row" }}>
         <View style={{ width: 14, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ fontSize: 6, color: colors.textMuted, transform: "rotate(-90deg)" }}>Profit Impact ↑</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted, transform: "rotate(-90deg)" }}>Profit Impact ↑</Text>
         </View>
         <View style={{ flex: 1 }}>
           <View style={styles.quadrantGrid}>
@@ -92,17 +92,17 @@ export const PDFKraljicQuadrant = ({ data }: { data?: KraljicData }) => {
               {renderQuadrant("noncritical", true, true)}
             </View>
           </View>
-          <Text style={{ fontSize: 6, color: colors.textMuted, textAlign: "center", marginTop: 4 }}>Supply Risk →</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted, textAlign: "center", marginTop: 4 }}>Supply Risk →</Text>
         </View>
       </View>
 
       <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 7, fontWeight: 600, color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
+        <Text style={{ fontSize: 8, fontWeight: 600, color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
         {Object.entries(quadrantInfo).map(([key, info], i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 3 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: info.color, marginRight: 6 }} />
-            <Text style={{ fontSize: 7, color: colors.text, fontWeight: 500, width: 60 }}>{info.label}:</Text>
-            <Text style={{ fontSize: 7, color: colors.textMuted }}>{info.strategy}</Text>
+            <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: info.color, marginRight: 6 }} />
+            <Text style={{ fontSize: 8, color: colors.text, fontWeight: 500, width: 60 }}>{info.label}:</Text>
+            <Text style={{ fontSize: 8, color: colors.textMuted }}>{info.strategy}</Text>
           </View>
         ))}
       </View>

@@ -10,7 +10,7 @@ import exosLogo from "@/assets/logo-concept-layers.png";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
 import { extractDashboardData, stripDashboardData } from "@/lib/dashboard-data-parser";
 
-// EXOS Corporate Colors
+// EXOS Corporate Colors — Warm Neutral
 const colors = {
   primary: "#6b9e8a",
   primaryDark: "#5a8a76",
@@ -52,14 +52,14 @@ const styles = StyleSheet.create({
     height: 40,
   },
   brandName: {
-    fontSize: 20,
+    fontSize: 23,
     fontFamily: "Helvetica",
     fontWeight: 700,
     color: colors.text,
     letterSpacing: 1,
   },
   brandTagline: {
-    fontSize: 8,
+    fontSize: 9,
     color: colors.textMuted,
     marginTop: 2,
   },
@@ -74,12 +74,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   reportBadgeText: {
-    fontSize: 7,
+    fontSize: 8,
     color: colors.primary,
     fontWeight: 600,
   },
   reportDate: {
-    fontSize: 8,
+    fontSize: 9,
     color: colors.textMuted,
   },
   // Title Section
@@ -87,14 +87,14 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   reportTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: "Helvetica",
     fontWeight: 700,
     color: colors.primary,
     marginBottom: 8,
   },
   reportSubtitle: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textMuted,
   },
   // Sections
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     height: 20,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: "Helvetica",
     fontWeight: 600,
     color: colors.text,
@@ -132,34 +132,34 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   keyPointBullet: {
-    width: 16,
-    height: 16,
+    width: 18,
+    height: 18,
     backgroundColor: colors.success,
-    borderRadius: 8,
+    borderRadius: 9,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 2,
   },
   keyPointBulletText: {
     color: colors.background,
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: 700,
   },
   keyPointText: {
     flex: 1,
-    fontSize: 10,
+    fontSize: 12,
     color: colors.text,
     lineHeight: 1.5,
   },
   // Analysis Content
   analysisText: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.text,
     lineHeight: 1.6,
     marginBottom: 8,
   },
   analysisHeader: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: "Helvetica",
     fontWeight: 700,
     color: colors.text,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   analysisSubHeader: {
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: "Helvetica",
     fontWeight: 600,
     color: colors.text,
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   },
   limitationText: {
     flex: 1,
-    fontSize: 9,
+    fontSize: 10,
     color: colors.textMuted,
     lineHeight: 1.5,
   },
@@ -205,13 +205,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputLabel: {
-    fontSize: 8,
+    fontSize: 9,
     color: colors.textMuted,
     marginBottom: 2,
     textTransform: "capitalize",
   },
   inputValue: {
-    fontSize: 9,
+    fontSize: 10,
     color: colors.text,
     fontFamily: "Courier",
     fontWeight: 600,
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     paddingTop: 15,
   },
   footerBrand: {
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: "Helvetica",
     color: "rgba(212, 212, 220, 0.35)",
     fontWeight: 400,
@@ -242,11 +242,11 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   footerText: {
-    fontSize: 8,
+    fontSize: 9,
     color: colors.textMuted,
   },
   pageNumber: {
-    fontSize: 8,
+    fontSize: 9,
     color: colors.textMuted,
   },
   // Accent bar
@@ -273,10 +273,10 @@ interface PDFReportDocumentProps {
 // Clean markdown formatting from text
 const cleanMarkdown = (text: string): string => {
   return text
-    .replace(/\*\*\*/g, "") // Remove triple stars
-    .replace(/\*\*/g, "") // Remove double stars (bold)
-    .replace(/^\s*\*\s+/gm, "") // Remove bullet points (* at start of line)
-    .replace(/^#{1,4}\s*/gm, "") // Remove hash headers
+    .replace(/\*\*\*/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/^\s*\*\s+/gm, "")
+    .replace(/^#{1,4}\s*/gm, "")
     .trim();
 };
 
@@ -328,10 +328,8 @@ const PDFReportDocument = ({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Accent Bar */}
         <View style={styles.accentBar} />
 
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoSection}>
             <Image src={exosLogo} style={styles.logoImage} />
@@ -348,7 +346,6 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {/* Title */}
         <View style={styles.titleSection}>
           <Text style={styles.reportTitle}>{scenarioTitle} Analysis</Text>
           <Text style={styles.reportSubtitle}>
@@ -356,7 +353,6 @@ const PDFReportDocument = ({
           </Text>
         </View>
 
-        {/* Executive Summary */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Image src={exosLogo} style={styles.sectionLogoImage} />
@@ -374,7 +370,6 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
           <View style={styles.footerRow}>
@@ -391,12 +386,10 @@ const PDFReportDocument = ({
         </View>
       </Page>
 
-      {/* Dashboard Pages — dedicated pages, 2 per page */}
       {selectedDashboards.length > 0 && (
         <PDFDashboardPages selectedDashboards={selectedDashboards} parsedData={parsedData} />
       )}
 
-      {/* Page 2: Detailed Analysis */}
       <Page size="A4" style={styles.page}>
         <View style={styles.accentBar} />
 
@@ -407,18 +400,14 @@ const PDFReportDocument = ({
           </View>
           <View style={styles.sectionContent}>
             {analysisLines.map((line, i) => {
-              // Check if line starts with hash headers (###, ####, etc.)
               const hashMatch = line.match(/^(#{1,4})\s*(.*)$/);
               const isHashHeader = !!hashMatch;
-              
-              // Clean all markdown formatting
               const cleanLine = cleanMarkdown(line);
               
               if (!cleanLine) {
                 return <View key={i} style={{ height: 8 }} />;
               }
               
-              // Hash headers get largest styling
               if (isHashHeader) {
                 const headerLevel = hashMatch[1].length;
                 const headerStyle = headerLevel <= 2 ? styles.analysisHeader : styles.analysisSubHeader;
@@ -429,7 +418,6 @@ const PDFReportDocument = ({
                 );
               }
               
-              // Check if line looks like a section header (ends with colon or is title case short line)
               const isSectionHeader =
                 (cleanLine.endsWith(":") && cleanLine.length < 80) ||
                 (cleanLine.length > 0 &&
@@ -454,7 +442,6 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {/* Analysis Limitations */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Image src={exosLogo} style={styles.sectionLogoImage} />
@@ -488,7 +475,6 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {/* Analysis Inputs - Now last */}
         {Object.keys(formData).length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -498,16 +484,13 @@ const PDFReportDocument = ({
             <View style={styles.sectionContent}>
               <View style={styles.inputsGrid}>
                 {Object.entries(formData)
-                  .filter(([_, value]) => value)
-                  .slice(0, 6)
+                  .filter(([_, value]) => value && value.trim() !== "")
                   .map(([key, value]) => (
                     <View key={key} style={styles.inputItem}>
                       <Text style={styles.inputLabel}>
-                        {key.replace(/([A-Z])/g, " $1").replace(/_/g, " ")}
+                        {key.replace(/_/g, " ").replace(/([A-Z])/g, " $1")}
                       </Text>
-                      <Text style={styles.inputValue}>
-                        {value.length > 40 ? `${value.slice(0, 40)}...` : value}
-                      </Text>
+                      <Text style={styles.inputValue}>{value}</Text>
                     </View>
                   ))}
               </View>
@@ -515,7 +498,6 @@ const PDFReportDocument = ({
           </View>
         )}
 
-        {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
           <View style={styles.footerRow}>

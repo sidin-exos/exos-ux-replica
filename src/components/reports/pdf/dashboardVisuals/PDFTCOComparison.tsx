@@ -4,8 +4,8 @@ import type { TCOComparisonData } from "@/lib/dashboard-data-parser";
 
 const defaultOptions = [
   { name: "Buy Outright", totalTCO: 485000, color: colors.primary },
-  { name: "3-Year Lease", totalTCO: 520000, color: "#6366f1" },
-  { name: "Subscription", totalTCO: 595000, color: "#8b5cf6" },
+  { name: "3-Year Lease", totalTCO: 520000, color: colors.option2 },
+  { name: "Subscription", totalTCO: 595000, color: colors.option3 },
 ];
 
 const defaultData = [
@@ -50,16 +50,16 @@ export const PDFTCOComparison = ({ data }: { data?: TCOComparisonData }) => {
           <Text style={styles.dashboardSubtitle}>Cumulative cost over time</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 12, fontWeight: 700, color: colors.primary }}>{formatCurrency(savings)}</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>potential savings</Text>
+          <Text style={{ fontSize: 14, fontWeight: 700, color: colors.primary }}>{formatCurrency(savings)}</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>potential savings</Text>
         </View>
       </View>
 
       <View style={{ flexDirection: "row", marginTop: 6, marginBottom: 10 }}>
         {options.map((opt, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", marginRight: 12 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: opt.color, marginRight: 4 }} />
-            <Text style={{ fontSize: 7, color: colors.textMuted }}>{opt.name}</Text>
+            <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: opt.color, marginRight: 4 }} />
+            <Text style={{ fontSize: 8, color: colors.textMuted }}>{opt.name}</Text>
           </View>
         ))}
       </View>
@@ -67,10 +67,10 @@ export const PDFTCOComparison = ({ data }: { data?: TCOComparisonData }) => {
       <View style={{ marginBottom: 10 }}>
         {chartData.map((point, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-            <Text style={{ width: 20, fontSize: 7, color: colors.textMuted }}>{point.year}</Text>
-            <View style={{ flex: 1, flexDirection: "row", height: 8, marginLeft: 6 }}>
+            <Text style={{ width: 22, fontSize: 8, color: colors.textMuted }}>{point.year}</Text>
+            <View style={{ flex: 1, flexDirection: "row", height: 10, marginLeft: 6 }}>
               {point.values.map((val, j) => (
-                <View key={j} style={{ width: `${(val / maxValue) * 100}%`, height: 4, backgroundColor: options[j]?.color || colors.textMuted, marginTop: j * 2, borderRadius: 1, position: "absolute", left: 0 }} />
+                <View key={j} style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted, marginTop: j * 2, borderRadius: 1, position: "absolute", left: 0 }} />
               ))}
             </View>
           </View>
@@ -88,8 +88,8 @@ export const PDFTCOComparison = ({ data }: { data?: TCOComparisonData }) => {
           return (
             <View key={i} style={styles.matrixRow}>
               <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.5, flexDirection: "row", alignItems: "center" }]}>
-                <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: opt.color, marginRight: 4 }} />
-                <Text style={{ fontSize: 8, color: colors.text }}>{opt.name}</Text>
+                <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: opt.color, marginRight: 4 }} />
+                <Text style={{ fontSize: 9, color: colors.text }}>{opt.name}</Text>
               </View>
               <Text style={[styles.matrixCell, { fontWeight: 600 }]}>{formatCurrency(opt.totalTCO)}</Text>
               <Text style={[styles.matrixCell, { color: diff === 0 ? colors.primary : colors.textMuted }]}>
@@ -101,7 +101,7 @@ export const PDFTCOComparison = ({ data }: { data?: TCOComparisonData }) => {
       </View>
 
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 7, color: colors.textMuted }}>
+        <Text style={{ fontSize: 8, color: colors.textMuted }}>
           <Text style={{ color: colors.primary, fontWeight: 600 }}>Recommendation: </Text>
           {lowestTCO.name} offers the lowest total cost of ownership
         </Text>

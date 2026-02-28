@@ -17,6 +17,9 @@ export const colors = {
   warning: "#c9a24d",
   destructive: "#c06060",
   border: "#3a3a4e",
+  /** Muted option colors for multi-series charts */
+  option2: "#7a7fa0",
+  option3: "#8a7d9b",
 } as const;
 
 export const styles = StyleSheet.create({
@@ -26,7 +29,7 @@ export const styles = StyleSheet.create({
   dashboardCard: {
     backgroundColor: colors.surface,
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -36,8 +39,8 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   dashboardIcon: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     backgroundColor: colors.surfaceLight,
     borderRadius: 4,
     justifyContent: "center",
@@ -45,13 +48,13 @@ export const styles = StyleSheet.create({
     marginRight: 8,
   },
   dashboardTitle: {
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: "Helvetica",
     fontWeight: 600,
     color: colors.text,
   },
   dashboardSubtitle: {
-    fontSize: 8,
+    fontSize: 9,
     color: colors.textMuted,
     marginTop: 2,
   },
@@ -67,12 +70,12 @@ export const styles = StyleSheet.create({
   },
   barLabel: {
     width: 92,
-    fontSize: 8,
+    fontSize: 9,
     color: colors.text,
   },
   barTrack: {
     flex: 1,
-    height: 12,
+    height: 14,
     backgroundColor: colors.surfaceLight,
     borderRadius: 3,
     overflow: "hidden",
@@ -81,12 +84,12 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
   },
   barFill: {
-    height: 12,
+    height: 14,
     borderRadius: 3,
   },
   barValue: {
     width: 54,
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: "Courier",
     color: colors.textMuted,
     textAlign: "right",
@@ -107,7 +110,7 @@ export const styles = StyleSheet.create({
   matrixCell: {
     flex: 1,
     padding: 6,
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: "Helvetica",
     color: colors.text,
     textAlign: "center",
@@ -116,15 +119,15 @@ export const styles = StyleSheet.create({
     textAlign: "left",
   },
   scoreCell: {
-    width: 24,
-    height: 18,
+    width: 26,
+    height: 20,
     borderRadius: 3,
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
   },
   scoreCellText: {
-    fontSize: 7,
+    fontSize: 8,
     fontFamily: "Courier",
     fontWeight: 700,
     color: colors.background,
@@ -138,14 +141,14 @@ export const styles = StyleSheet.create({
   },
   tornadoLabel: {
     width: 84,
-    fontSize: 8,
+    fontSize: 9,
     color: colors.text,
   },
   tornadoChart: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    height: 14,
+    height: 16,
   },
   tornadoLeft: {
     flex: 1,
@@ -157,16 +160,16 @@ export const styles = StyleSheet.create({
   },
   tornadoCenter: {
     width: 1,
-    height: 14,
+    height: 16,
     backgroundColor: colors.border,
   },
   tornadoBar: {
-    height: 12,
+    height: 14,
     borderRadius: 2,
   },
   tornadoValue: {
     width: 48,
-    fontSize: 7,
+    fontSize: 8,
     fontFamily: "Courier",
     color: colors.textMuted,
     textAlign: "right",
@@ -187,13 +190,13 @@ export const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   legendDot: {
-    width: 8,
-    height: 8,
+    width: 9,
+    height: 9,
     borderRadius: 2,
     marginRight: 4,
   },
   legendText: {
-    fontSize: 7,
+    fontSize: 8,
     color: colors.textMuted,
   },
 
@@ -210,12 +213,12 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   statLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: colors.textMuted,
     marginBottom: 2,
   },
   statValue: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Courier",
     fontWeight: 600,
     color: colors.text,
@@ -228,19 +231,19 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
   },
   listDot: {
-    width: 8,
-    height: 8,
+    width: 9,
+    height: 9,
     borderRadius: 2,
     marginRight: 8,
   },
   listText: {
     flex: 1,
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: "Helvetica",
     color: colors.text,
   },
   listMeta: {
-    fontSize: 7,
+    fontSize: 8,
     color: colors.textMuted,
     marginLeft: 8,
   },
@@ -273,12 +276,12 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   quadrantLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: colors.textMuted,
   },
   quadrantDot: {
-    width: 8,
-    height: 8,
+    width: 9,
+    height: 9,
     borderRadius: 4,
     marginTop: 6,
   },

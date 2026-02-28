@@ -12,11 +12,11 @@ const defaultCriteria = [
 
 const defaultOptions = [
   { name: "Option A", scores: [4, 5, 3, 4, 3], weighted: 82, color: colors.primary },
-  { name: "Option B", scores: [5, 4, 4, 3, 4], weighted: 84, color: "#6366f1" },
-  { name: "Option C", scores: [3, 4, 5, 5, 5], weighted: 83, color: "#8b5cf6" },
+  { name: "Option B", scores: [5, 4, 4, 3, 4], weighted: 84, color: colors.option2 },
+  { name: "Option C", scores: [3, 4, 5, 5, 5], weighted: 83, color: colors.option3 },
 ];
 
-const optionColors = [colors.primary, "#6366f1", "#8b5cf6", colors.warning, colors.success];
+const optionColors = [colors.primary, colors.option2, colors.option3, colors.warning, colors.success];
 
 const getScoreBg = (score: number): string => {
   if (score >= 5) return colors.primary;
@@ -49,8 +49,8 @@ export const PDFDecisionMatrix = ({ data }: { data?: DecisionMatrixData }) => {
           <Text style={styles.dashboardSubtitle}>Weighted multi-criteria analysis</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 10, fontWeight: 700, color: colors.primary }}>{winner.name}</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>recommended</Text>
+          <Text style={{ fontSize: 12, fontWeight: 700, color: colors.primary }}>{winner.name}</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>recommended</Text>
         </View>
       </View>
 
@@ -60,8 +60,8 @@ export const PDFDecisionMatrix = ({ data }: { data?: DecisionMatrixData }) => {
           <Text style={styles.matrixCell}>Wt%</Text>
           {matrixOptions.map((opt, i) => (
             <View key={i} style={[styles.matrixCell, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]}>
-              <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: opt.color, marginRight: 3 }} />
-              <Text style={{ fontSize: 7, color: colors.text }}>{opt.name}</Text>
+              <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: opt.color, marginRight: 3 }} />
+              <Text style={{ fontSize: 8, color: colors.text }}>{opt.name}</Text>
             </View>
           ))}
         </View>
@@ -81,10 +81,10 @@ export const PDFDecisionMatrix = ({ data }: { data?: DecisionMatrixData }) => {
         ))}
 
         <View style={[styles.matrixRow, { borderBottomWidth: 0, backgroundColor: colors.surfaceLight }]}>
-          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.5, fontWeight: 700, fontSize: 8 }]}>Weighted Score</Text>
+          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.5, fontWeight: 700, fontSize: 9 }]}>Weighted Score</Text>
           <Text style={[styles.matrixCell, { fontWeight: 600 }]}>100%</Text>
           {matrixOptions.map((opt, i) => (
-            <Text key={i} style={[styles.matrixCell, { fontWeight: 700, fontSize: 9, color: opt.weighted === winner.weighted ? colors.primary : colors.text }]}>
+            <Text key={i} style={[styles.matrixCell, { fontWeight: 700, fontSize: 10, color: opt.weighted === winner.weighted ? colors.primary : colors.text }]}>
               {opt.weighted}
             </Text>
           ))}

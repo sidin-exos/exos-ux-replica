@@ -51,8 +51,8 @@ export const PDFTimelineRoadmap = ({ data }: { data?: TimelineRoadmapData }) => 
           <Text style={styles.dashboardSubtitle}>Phases and indicative duration</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 10, fontWeight: 700, color: currentPhase.color }}>{currentPhase.name}</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>current phase</Text>
+          <Text style={{ fontSize: 12, fontWeight: 700, color: currentPhase.color }}>{currentPhase.name}</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>current phase</Text>
         </View>
       </View>
 
@@ -60,7 +60,7 @@ export const PDFTimelineRoadmap = ({ data }: { data?: TimelineRoadmapData }) => 
         <View style={{ flexDirection: "row", marginBottom: 4, marginLeft: 80 }}>
           {Array.from({ length: totalWeeks }).map((_, i) => (
             <View key={i} style={{ flex: 1, alignItems: "center" }}>
-              <Text style={{ fontSize: 6, color: colors.textMuted }}>W{i + 1}</Text>
+              <Text style={{ fontSize: 7, color: colors.textMuted }}>W{i + 1}</Text>
             </View>
           ))}
         </View>
@@ -72,15 +72,15 @@ export const PDFTimelineRoadmap = ({ data }: { data?: TimelineRoadmapData }) => 
 
           return (
             <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-              <Text style={{ width: 76, fontSize: 8, color: colors.text }}>{phase.name}</Text>
-              <View style={{ flex: 1, height: 16, position: "relative" }}>
-                <View style={{ position: "absolute", left: 0, right: 0, height: 16, backgroundColor: colors.surfaceLight, borderRadius: 3 }} />
-                <View style={{ position: "absolute", left: `${startPct}%`, width: `${widthPct}%`, height: 16, backgroundColor: phase.color, borderRadius: 3, opacity: phase.status === "upcoming" ? 0.6 : 1 }} />
+              <Text style={{ width: 76, fontSize: 9, color: colors.text }}>{phase.name}</Text>
+              <View style={{ flex: 1, height: 18, position: "relative" }}>
+                <View style={{ position: "absolute", left: 0, right: 0, height: 18, backgroundColor: colors.surfaceLight, borderRadius: 3 }} />
+                <View style={{ position: "absolute", left: `${startPct}%`, width: `${widthPct}%`, height: 18, backgroundColor: phase.color, borderRadius: 3, opacity: phase.status === "upcoming" ? 0.6 : 1 }} />
                 {phase.status === "complete" && (
-                  <Text style={{ position: "absolute", left: `${startPct + widthPct / 2 - 2}%`, top: 3, fontSize: 8, color: colors.background, fontWeight: 700 }}>✓</Text>
+                  <Text style={{ position: "absolute", left: `${startPct + widthPct / 2 - 2}%`, top: 3, fontSize: 9, color: colors.background, fontWeight: 700 }}>✓</Text>
                 )}
                 {phase.status === "active" && (
-                  <Text style={{ position: "absolute", left: `${startPct + widthPct / 2 - 2}%`, top: 3, fontSize: 8, color: colors.background, fontWeight: 700 }}>●</Text>
+                  <Text style={{ position: "absolute", left: `${startPct + widthPct / 2 - 2}%`, top: 3, fontSize: 9, color: colors.background, fontWeight: 700 }}>●</Text>
                 )}
               </View>
             </View>
@@ -98,14 +98,14 @@ export const PDFTimelineRoadmap = ({ data }: { data?: TimelineRoadmapData }) => 
         {phases.map((phase, i) => (
           <View key={i} style={styles.matrixRow}>
             <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.2, flexDirection: "row", alignItems: "center" }]}>
-              <View style={{ width: 6, height: 6, borderRadius: 1, backgroundColor: phase.color, marginRight: 4 }} />
-              <Text style={{ fontSize: 8, color: colors.text }}>{phase.name}</Text>
+              <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: phase.color, marginRight: 4 }} />
+              <Text style={{ fontSize: 9, color: colors.text }}>{phase.name}</Text>
             </View>
             <Text style={styles.matrixCell}>{phase.weeks}</Text>
             <Text style={[styles.matrixCell, { flex: 1.5 }]}>{phase.milestone}</Text>
             <View style={[styles.matrixCell, { alignItems: "center" }]}>
               <View style={{ paddingHorizontal: 4, paddingVertical: 1, borderRadius: 2, backgroundColor: phase.status === "complete" ? colors.success + "20" : phase.status === "active" ? colors.warning + "20" : colors.surfaceLight }}>
-                <Text style={{ fontSize: 6, color: phase.status === "complete" ? colors.success : phase.status === "active" ? colors.warning : colors.textMuted, textTransform: "capitalize" }}>
+                <Text style={{ fontSize: 7, color: phase.status === "complete" ? colors.success : phase.status === "active" ? colors.warning : colors.textMuted, textTransform: "capitalize" }}>
                   {phase.status}
                 </Text>
               </View>

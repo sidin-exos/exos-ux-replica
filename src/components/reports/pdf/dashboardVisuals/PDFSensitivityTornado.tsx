@@ -13,7 +13,7 @@ const defaultVariables = [
 export const PDFSensitivityAnalysis = ({ data }: { data?: SensitivityData }) => {
   const variables = data?.variables
     ? data.variables.map(v => {
-        const baseCase = v.baseCase || 1; // prevent division by zero
+        const baseCase = v.baseCase || 1;
         const low = Math.round(((v.lowCase - baseCase) / baseCase) * 100);
         const high = Math.round(((v.highCase - baseCase) / baseCase) * 100);
         return {
@@ -37,8 +37,8 @@ export const PDFSensitivityAnalysis = ({ data }: { data?: SensitivityData }) => 
           <Text style={styles.dashboardSubtitle}>Tornado chart: impact on total cost</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 10, fontWeight: 700, color: colors.primary }}>±{maxImpact}%</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>max impact</Text>
+          <Text style={{ fontSize: 12, fontWeight: 700, color: colors.primary }}>±{maxImpact}%</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>max impact</Text>
         </View>
       </View>
 
@@ -47,7 +47,7 @@ export const PDFSensitivityAnalysis = ({ data }: { data?: SensitivityData }) => 
           <View key={i} style={styles.tornadoRow}>
             <View style={{ width: 84 }}>
               <Text style={styles.tornadoLabel}>{v.name}</Text>
-              <Text style={{ fontSize: 6, color: colors.textMuted }}>{v.baseValue}</Text>
+              <Text style={{ fontSize: 7, color: colors.textMuted }}>{v.baseValue}</Text>
             </View>
 
             <View style={styles.tornadoChart}>
@@ -61,21 +61,21 @@ export const PDFSensitivityAnalysis = ({ data }: { data?: SensitivityData }) => 
             </View>
 
             <View style={{ width: 48, flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ fontSize: 7, color: colors.destructive }}>{v.low}%</Text>
-              <Text style={{ fontSize: 7, color: colors.success }}>+{v.high}%</Text>
+              <Text style={{ fontSize: 8, color: colors.destructive }}>{v.low}%</Text>
+              <Text style={{ fontSize: 8, color: colors.success }}>+{v.high}%</Text>
             </View>
           </View>
         ))}
       </View>
 
       <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 8 }}>
-        <Text style={{ fontSize: 6, color: colors.textMuted }}>← Decreases Cost</Text>
+        <Text style={{ fontSize: 7, color: colors.textMuted }}>← Decreases Cost</Text>
         <View style={{ width: 20 }} />
-        <Text style={{ fontSize: 6, color: colors.textMuted }}>Increases Cost →</Text>
+        <Text style={{ fontSize: 7, color: colors.textMuted }}>Increases Cost →</Text>
       </View>
 
       <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 7, color: colors.textMuted }}>
+        <Text style={{ fontSize: 8, color: colors.textMuted }}>
           <Text style={{ color: colors.primary, fontWeight: 600 }}>Key Driver: </Text>
           Volume and Price changes have the highest impact on total cost. Focus negotiation efforts on volume commitments and unit pricing.
         </Text>

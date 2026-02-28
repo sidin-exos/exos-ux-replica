@@ -43,8 +43,8 @@ export const PDFNegotiationPrep = ({ data }: { data?: NegotiationPrepData }) => 
           <Text style={styles.dashboardSubtitle}>Recommended sequencing</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 10, fontWeight: 700, color: colors.primary }}>{steps.length} Steps</Text>
-          <Text style={{ fontSize: 6, color: colors.textMuted }}>to success</Text>
+          <Text style={{ fontSize: 12, fontWeight: 700, color: colors.primary }}>{steps.length} Steps</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted }}>to success</Text>
         </View>
       </View>
 
@@ -60,15 +60,15 @@ export const PDFNegotiationPrep = ({ data }: { data?: NegotiationPrepData }) => 
       <View style={{ marginTop: 12 }}>
         {steps.map((s, i) => (
           <View key={i} style={{ flexDirection: "row", marginBottom: 8 }}>
-            <View style={{ width: 24, alignItems: "center" }}>
+            <View style={{ width: 26, alignItems: "center" }}>
               <View style={{
-                width: 18, height: 18, borderRadius: 9,
+                width: 20, height: 20, borderRadius: 10,
                 backgroundColor: s.status === "complete" ? colors.success : s.status === "active" ? colors.primary : colors.surfaceLight,
                 borderWidth: s.status === "upcoming" ? 1 : 0,
                 borderColor: colors.border,
                 justifyContent: "center", alignItems: "center",
               }}>
-                <Text style={{ fontSize: 8, fontWeight: 700, color: s.status === "upcoming" ? colors.textMuted : colors.background }}>
+                <Text style={{ fontSize: 9, fontWeight: 700, color: s.status === "upcoming" ? colors.textMuted : colors.background }}>
                   {s.status === "complete" ? "✓" : i + 1}
                 </Text>
               </View>
@@ -79,12 +79,12 @@ export const PDFNegotiationPrep = ({ data }: { data?: NegotiationPrepData }) => 
             <View style={{ flex: 1, marginLeft: 8, paddingBottom: 4 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <View>
-                  <Text style={{ fontSize: 9, fontWeight: 600, color: colors.text }}>{s.label}</Text>
-                  <Text style={{ fontSize: 7, color: colors.textMuted, marginTop: 1 }}>{s.details}</Text>
+                  <Text style={{ fontSize: 10, fontWeight: 600, color: colors.text }}>{s.label}</Text>
+                  <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 1 }}>{s.details}</Text>
                 </View>
                 {s.meta ? (
                   <View style={{ paddingHorizontal: 4, paddingVertical: 2, backgroundColor: colors.surfaceLight, borderRadius: 2 }}>
-                    <Text style={{ fontSize: 6, color: colors.primary }}>{s.meta}</Text>
+                    <Text style={{ fontSize: 7, color: colors.primary }}>{s.meta}</Text>
                   </View>
                 ) : null}
               </View>
@@ -94,7 +94,7 @@ export const PDFNegotiationPrep = ({ data }: { data?: NegotiationPrepData }) => 
       </View>
 
       <View style={{ marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 7, color: colors.textMuted }}>
+        <Text style={{ fontSize: 8, color: colors.textMuted }}>
           <Text style={{ color: colors.primary, fontWeight: 600 }}>Tip: </Text>
           Use as a guide; adjust timing for stakeholder constraints and supplier responsiveness.
         </Text>
