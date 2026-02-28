@@ -51,9 +51,9 @@ const ScenarioComparisonDashboard = ({ parsedData }: ScenarioComparisonDashboard
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         {/* Legend */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 mb-4">
           {scenarios.map((s) => (
             <div key={s.id} className="flex items-center gap-1.5 text-xs">
               <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
@@ -62,65 +62,70 @@ const ScenarioComparisonDashboard = ({ parsedData }: ScenarioComparisonDashboard
           ))}
         </div>
 
-        {/* Radar Chart */}
-        <div className="h-44">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="hsl(220, 20%, 22%)" />
-              <PolarAngleAxis 
-                dataKey="metric" 
-                tick={{ fill: "hsl(220, 15%, 55%)", fontSize: 10 }}
-              />
-              <PolarRadiusAxis 
-                angle={30} 
-                domain={[0, 100]} 
-                tick={false}
-                axisLine={false}
-              />
-              {scenarios.map((s) => (
-                <Radar
-                  key={s.id}
-                  dataKey={s.id}
-                  stroke={s.color}
-                  fill={s.color}
-                  fillOpacity={0.1}
-                  strokeWidth={1.5}
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left: Summary Table */}
+          <div className="space-y-4">
+            <div className="border-t border-border/30 pt-3">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-muted-foreground">
+                    <th className="text-left font-normal pb-2"></th>
+                    {scenarios.map((s) => (
+                      <th key={s.id} className="text-center font-normal pb-2" style={{ color: s.color }}>
+                        {s.id}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.map((row) => (
+                    <tr key={row.criteria}>
+                      <td className="py-1.5 text-muted-foreground">{row.criteria}</td>
+                      <td className="py-1.5 text-center text-foreground">{row.A}</td>
+                      <td className="py-1.5 text-center text-foreground">{row.B}</td>
+                      <td className="py-1.5 text-center text-foreground">{row.C}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Recommendation */}
+            <p className="text-xs text-muted-foreground pt-2">
+              <span className="text-primary">Recommended:</span> Scenario C offers balanced risk-reward
+            </p>
+          </div>
+
+          {/* Right: Radar Chart */}
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="hsl(220, 20%, 22%)" />
+                <PolarAngleAxis 
+                  dataKey="metric" 
+                  tick={{ fill: "hsl(220, 15%, 55%)", fontSize: 11 }}
                 />
-              ))}
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Summary Table */}
-        <div className="pt-2 border-t border-border/30">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-muted-foreground">
-                <th className="text-left font-normal pb-2"></th>
+                <PolarRadiusAxis 
+                  angle={30} 
+                  domain={[0, 100]} 
+                  tick={false}
+                  axisLine={false}
+                />
                 {scenarios.map((s) => (
-                  <th key={s.id} className="text-center font-normal pb-2" style={{ color: s.color }}>
-                    {s.id}
-                  </th>
+                  <Radar
+                    key={s.id}
+                    dataKey={s.id}
+                    stroke={s.color}
+                    fill={s.color}
+                    fillOpacity={0.1}
+                    strokeWidth={1.5}
+                  />
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {summary.map((row) => (
-                <tr key={row.criteria}>
-                  <td className="py-1 text-muted-foreground">{row.criteria}</td>
-                  <td className="py-1 text-center text-foreground">{row.A}</td>
-                  <td className="py-1 text-center text-foreground">{row.B}</td>
-                  <td className="py-1 text-center text-foreground">{row.C}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-
-        {/* Recommendation */}
-        <p className="text-xs text-muted-foreground pt-2">
-          <span className="text-primary">Recommended:</span> Scenario C offers balanced risk-reward
-        </p>
       </CardContent>
     </Card>
   );
