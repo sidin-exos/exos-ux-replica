@@ -1,51 +1,65 @@
 
 
-## Plan: Sync test-data-factory.ts Field IDs with Restructured Scenarios
+## Plan: Update Scenario → Dashboard Mappings Based on Audit v1
 
-The test-data-factory generators use old field IDs that no longer match the restructured scenarios in `scenarios.ts`. This will cause generated test data to fail to populate forms correctly.
+### Context
+The audit identifies structural mismatches in the current `scenarioDashboardMapping`. Several scenarios have dashboards assigned that are weak/no-fit, while strong matches are missing or misordered. The document also flags 10 new dashboard candidates (P1–P3) — those are **out of scope** for this change (they require new components). This plan only updates the mapping of existing 14 dashboards to existing 29 scenarios.
 
-### File: `src/lib/test-data-factory.ts`
+### File: `src/lib/dashboard-mappings.ts`
 
-#### Per-Scenario Field ID Remapping
+Update `scenarioDashboardMapping` to reflect audit findings. Changes grouped by audit verdict:
 
-| # | Scenario | Old Field IDs → New Field IDs |
-|---|----------|-------------------------------|
-| 1 | `tco-analysis` | `assetDescription` → `assetDefinition`, `ownershipPeriod` → remove (merged into assetDefinition), `capexBreakdown` → remove (merged into assetDefinition), `opexBreakdown` → `opexFinancials`, `riskFactors` → remove (merged into opexFinancials) |
-| 2 | `cost-breakdown` | `productDescription` → `productSpecification`, `costComponents` → `supplierQuote` (if present, merge content) |
-| 3 | `capex-vs-opex` | `assetDetails` → `assetFinancials`, `lifecycleCosts` → remove (merge into assetFinancials), `financialParameters` → `financialContext` |
-| 4 | `savings-calculation` | `savingsScenario` → `baselinePricing`, `costAdjustments` → `savingsClassification`, `reportingRequirements` → remove (merge into savingsClassification) |
-| 5 | `spend-analysis-categorization` | `rawSpendData` stays, add `classificationParameters`, remove `timeframe`/`businessGoal` (merge into classificationParameters) |
-| 6 | `forecasting-budgeting` | `categoryContext` → remove, `historicalSpendData` stays, `knownFutureEvents` → merge into `scenarioAssumptions`, `budgetConstraints`/`forecastHorizon` → merge into scenarioAssumptions |
-| 7 | `saas-optimization` | `subscriptionDetails` stays, `usageMetrics` → merge into subscriptionDetails, `redundancyContext` → `optimisationParameters` |
-| 8 | `specification-optimizer` | `specificationText` stays, `specContext` stays, `optimizationGoals` → remove (merge into specContext) |
-| 9 | `rfp-generator` | `rawBrief` stays, `budgetRange`/`evaluationPriorities`/`technicalRequirements`/`incumbentData`/`additionalInstructions` → merge into `complianceEvaluation` |
-| 10 | `sla-definition` | `serviceDescription` stays, `performanceTargets` → merge into serviceDescription, `escalationAndPenalties` → `remedyStructure` |
-| 11 | `tail-spend-sourcing` | `purchaseAmount`/`urgency`/`alternativesExist`/`vendorHistory`/`technicalSpecs` → consolidate into `purchaseRequirement` + `qualityParameters` |
-| 12 | `contract-template` | `country` stays, `timeTier` stays, `contractBrief` stays, `contractType` stays, `contractValue`/`specialRequirements` → merge into contractBrief |
-| 13 | `requirements-gathering` | `businessGoal` → `requirementBrief`, `technicalLandscape` → `technicalLandscape` (stays), `featureRequirements` → `constraintsSuccess` |
-| 14 | `project-planning` | `projectBrief` stays as `projectBrief`, `constraintsAndResources` stays, `risksAndSuccess` stays |
-| 15 | `supplier-review` | `qualityScore`/`onTimeDelivery`/`communicationScore`/`priceVsMarket`/`spendVolume`/`contractStatus`/`incidentLog` → consolidate into `supplierPerformance` + `contractSituation` |
-| 16 | `risk-assessment` | `assessmentSubject` → merge into industryContext, `currentSituation` → `riskLandscape`, `contractContext`/`riskTolerance` → `mitigationContext` |
-| 17 | `disruption-management` | `crisisDescription` → `crisisDefinition`, `impactAssessment` → merge into crisisDefinition, `alternativesContext` → `resourceConstraints` |
-| 18 | `risk-matrix` | `supplierName`/`operationalRisks`/`commercialRisks` → `riskRegister` + `matrixParameters` |
-| 19 | `software-licensing` | `softwareDetails`/`userMetrics`/`commercialTerms`/`strategicFactors` → `licenceDocument` + `usageContext` |
-| 20 | `category-risk-evaluator` | `categoryAndTender`/`sowAndMarket`/`historicalRisks` → `categoryProfile` + `riskIndicators` |
-| 21 | `negotiation-preparation` | `negotiationSubject`/`currentSpend`/`supplierName`/`relationshipHistory`/`batna`/`negotiationObjectives`/`mustHaves`/`timeline`/`spendBreakdown`/`leverageContext` → `supplierProposal` + `alternativesLeverage` |
-| 22 | `category-strategy` | `categoryOverview` stays, `marketDynamics` → merge into categoryOverview, `strategicGoals` stays |
-| 23 | `make-vs-buy` | `projectBrief` → merge into industryContext, `makeCosts` stays, `buyCosts` stays, `strategicFactors` → merge into makeCosts/buyCosts |
-| 24 | `volume-consolidation` | `consolidationScope` stays, `logisticsTerms`/`growthForecast` → `consolidationParameters` |
-| 25 | `supplier-dependency-planner` | `dependencyContext` → `dependencyProfile`, `lockInFactors` → merge into dependencyProfile, `diversificationGoals` → `exitParameters` |
-| 26 | `sow-critic` | `sowText` → `sowDocument`, `reviewPriorities` → `reviewParameters` |
-| 27 | `black-swan-scenario` | `assessmentScope` → `supplyChainTopology`, `riskPosture`/`scenarioSimulation` → merge into `supplyChainTopology` + `resilienceParameters` |
-| 28 | `market-snapshot` | `region` stays, `analysisScope` → `marketBrief`, `successCriteria` → `intelligencePriorities`, `timeframe` stays |
-| 29 | `pre-flight-audit` | `supplierIdentity` → `supplierLegalIdentity`, `researchScope`/`decisionContext` → `auditScope` |
+#### Group A — Analytical Value (8 scenarios)
+| Scenario | Current | Audit Recommendation |
+|---|---|---|
+| `tco-analysis` | tco-comparison, cost-waterfall, sensitivity-spider, decision-matrix | **Remove** sensitivity-spider, decision-matrix. Keep: `tco-comparison, cost-waterfall, scenario-comparison` |
+| `cost-breakdown` | cost-waterfall, sensitivity-spider, decision-matrix | **Remove** sensitivity-spider, decision-matrix. Set: `cost-waterfall, tco-comparison, data-quality` |
+| `capex-vs-opex` | tco-comparison, cost-waterfall, sensitivity-spider, decision-matrix | **Replace** with: `scenario-comparison, sensitivity-spider` (audit primary + secondary) |
+| `savings-calculation` | cost-waterfall, action-checklist, sensitivity-spider, data-quality | **Remove** sensitivity-spider, data-quality. Keep: `cost-waterfall, action-checklist` |
+| `spend-analysis-categorization` | cost-waterfall, kraljic-quadrant, supplier-scorecard, data-quality | **Replace** with: `data-quality, cost-waterfall` (audit: weak fit, minimal mapping) |
+| `forecasting-budgeting` | sensitivity-spider, cost-waterfall, timeline-roadmap, risk-matrix | **Replace** with: `scenario-comparison, sensitivity-spider` (audit primary + secondary) |
+| `saas-optimization` | license-tier, cost-waterfall, action-checklist, data-quality | **Remove** action-checklist, data-quality. Keep: `license-tier, cost-waterfall` |
+| `software-licensing` | license-tier, tco-comparison, scenario-comparison, risk-matrix | **Replace** with: `license-tier, cost-waterfall` (audit: Strong match) |
 
-#### Approach
-For each generator, restructure the returned object to output exactly the field IDs defined in `scenarios.ts`. Existing realistic content will be preserved but reorganized — multi-field content merged into the correct 3-block structure using newline concatenation where appropriate. No new content generation needed; this is purely a structural sync.
+#### Group B — Workflow (8 scenarios)
+| Scenario | Current | Audit Recommendation |
+|---|---|---|
+| `requirements-gathering` | action-checklist, timeline-roadmap, decision-matrix | **Replace** with: `action-checklist, data-quality` (audit: Weak, minimal) |
+| `rfp-generator` | timeline-roadmap, decision-matrix, action-checklist, data-quality | **Replace** with: `action-checklist, data-quality` (audit: Weak/doc output) |
+| `tail-spend-sourcing` | action-checklist, decision-matrix, data-quality | **Remove** decision-matrix. Keep: `action-checklist, data-quality` |
+| `contract-template` | action-checklist, timeline-roadmap, data-quality | **Remove** timeline-roadmap. Keep: `action-checklist, data-quality` (audit: None fit) |
+| `sow-critic` | sow-analysis, action-checklist, risk-matrix | **Replace** with: `sow-analysis, data-quality` (audit: Strong) |
+| `supplier-review` | supplier-scorecard, risk-matrix, action-checklist, timeline-roadmap | **Replace** with: `supplier-scorecard, timeline-roadmap, action-checklist` (audit: Strong) |
+| `procurement-project-planning` | timeline-roadmap, action-checklist, risk-matrix, sensitivity-spider | **Remove** sensitivity-spider. Keep: `timeline-roadmap, action-checklist, risk-matrix` |
+| `sla-definition` | decision-matrix, action-checklist, timeline-roadmap | **Replace** with: `action-checklist, negotiation-prep` (audit: Weak, SLA-adjacent) |
+
+#### Group D — Strategic Mentorship (7 scenarios)
+| Scenario | Current | Audit Recommendation |
+|---|---|---|
+| `negotiation-preparation` | negotiation-prep, scenario-comparison, risk-matrix, action-checklist | **Remove** risk-matrix, action-checklist. Keep: `negotiation-prep, scenario-comparison` |
+| `category-strategy` | kraljic-quadrant, scenario-comparison, timeline-roadmap, action-checklist | **Remove** scenario-comparison, action-checklist. Keep: `kraljic-quadrant, timeline-roadmap` |
+| `make-vs-buy` | decision-matrix, cost-waterfall, scenario-comparison, risk-matrix | **Remove** risk-matrix. Keep: `decision-matrix, scenario-comparison, cost-waterfall` |
+| `volume-consolidation` | scenario-comparison, supplier-scorecard, risk-matrix, cost-waterfall | **Remove** supplier-scorecard, risk-matrix. Keep: `scenario-comparison, cost-waterfall` |
+| `supplier-dependency-planner` | risk-matrix, supplier-scorecard, scenario-comparison, timeline-roadmap | **Replace** with: `risk-matrix, sensitivity-spider` (audit primary + secondary) |
+| `disruption-management` | timeline-roadmap, risk-matrix, scenario-comparison, action-checklist | **Reorder**: `action-checklist, timeline-roadmap, risk-matrix` (audit: Action Checklist is primary) |
+| `black-swan-scenario` | risk-matrix, scenario-comparison, timeline-roadmap, action-checklist | **Replace** with: `risk-matrix, sensitivity-spider, scenario-comparison` |
+
+#### Group E — Real-Time Knowledge (2 scenarios)
+| Scenario | Current | Audit Recommendation |
+|---|---|---|
+| `market-snapshot` | supplier-scorecard, decision-matrix, risk-matrix, data-quality | **Replace** with: `data-quality, action-checklist` (audit: NONE fit — minimal fallback) |
+| `pre-flight-audit` | supplier-scorecard, risk-matrix, action-checklist, data-quality | **Replace** with: `data-quality, risk-matrix` (audit: Weak, Data Quality primary) |
+
+#### Unchanged (not in audit scope)
+- `specification-optimizer` — keep current 4-dashboard mapping
+- `risk-assessment` — keep current mapping
+- `risk-matrix` (scenario) — keep current mapping
+- `category-risk-evaluator` — keep current mapping
 
 ### What Stays Untouched
-- `industryContext` field — universal Block 1, unchanged across all generators
-- `getRandomIndustryContext()` and all utility functions
-- `generateTestData()` and `getSupportedScenarios()` exports
-- `scenarios.ts` — no changes
+- `DashboardType` union, `dashboardConfigs` — no changes to the 14 existing dashboard definitions
+- `getDashboardsForScenario()`, `getDashboardDisplayInfo()` — no logic changes
+- All dashboard components, PDF visuals, renderer — unchanged
+- Test contract (`2-4 dashboards per scenario`) — all updated mappings stay within 2–3 range
+- New dashboard candidates (P1–P3 from audit) — deferred to separate implementation tickets
 
