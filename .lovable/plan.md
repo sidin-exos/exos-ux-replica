@@ -1,83 +1,51 @@
 
 
-## Plan: Apply Field Methodology v1 to All 29 Scenarios
+## Plan: Sync test-data-factory.ts Field IDs with Restructured Scenarios
 
-### Context
-The document defines the methodologically optimal field structure for each scenario, specifying:
-- Scenario-specific block **labels** (replacing generic names)
-- **Sub-prompt placeholder text** within each block (guided input)
-- A **deviation type** (0 = 3-block sufficient, 1 = sub-prompts required, 1H = sub-prompts critical, 2 = structural deviation / file upload)
+The test-data-factory generators use old field IDs that no longer match the restructured scenarios in `scenarios.ts`. This will cause generated test data to fail to populate forms correctly.
 
-### Scope — What Changes
+### File: `src/lib/test-data-factory.ts`
 
-**File: `src/lib/scenarios.ts`**
+#### Per-Scenario Field ID Remapping
 
-#### A. Interface Extension
-Add optional `deviationType` field to the `Scenario` interface:
-```typescript
-deviationType?: 0 | 1 | '1H' | 2;
-```
-This tags each scenario for future UX logic (e.g. data-gap warnings, file upload patterns).
+| # | Scenario | Old Field IDs → New Field IDs |
+|---|----------|-------------------------------|
+| 1 | `tco-analysis` | `assetDescription` → `assetDefinition`, `ownershipPeriod` → remove (merged into assetDefinition), `capexBreakdown` → remove (merged into assetDefinition), `opexBreakdown` → `opexFinancials`, `riskFactors` → remove (merged into opexFinancials) |
+| 2 | `cost-breakdown` | `productDescription` → `productSpecification`, `costComponents` → `supplierQuote` (if present, merge content) |
+| 3 | `capex-vs-opex` | `assetDetails` → `assetFinancials`, `lifecycleCosts` → remove (merge into assetFinancials), `financialParameters` → `financialContext` |
+| 4 | `savings-calculation` | `savingsScenario` → `baselinePricing`, `costAdjustments` → `savingsClassification`, `reportingRequirements` → remove (merge into savingsClassification) |
+| 5 | `spend-analysis-categorization` | `rawSpendData` stays, add `classificationParameters`, remove `timeframe`/`businessGoal` (merge into classificationParameters) |
+| 6 | `forecasting-budgeting` | `categoryContext` → remove, `historicalSpendData` stays, `knownFutureEvents` → merge into `scenarioAssumptions`, `budgetConstraints`/`forecastHorizon` → merge into scenarioAssumptions |
+| 7 | `saas-optimization` | `subscriptionDetails` stays, `usageMetrics` → merge into subscriptionDetails, `redundancyContext` → `optimisationParameters` |
+| 8 | `specification-optimizer` | `specificationText` stays, `specContext` stays, `optimizationGoals` → remove (merge into specContext) |
+| 9 | `rfp-generator` | `rawBrief` stays, `budgetRange`/`evaluationPriorities`/`technicalRequirements`/`incumbentData`/`additionalInstructions` → merge into `complianceEvaluation` |
+| 10 | `sla-definition` | `serviceDescription` stays, `performanceTargets` → merge into serviceDescription, `escalationAndPenalties` → `remedyStructure` |
+| 11 | `tail-spend-sourcing` | `purchaseAmount`/`urgency`/`alternativesExist`/`vendorHistory`/`technicalSpecs` → consolidate into `purchaseRequirement` + `qualityParameters` |
+| 12 | `contract-template` | `country` stays, `timeTier` stays, `contractBrief` stays, `contractType` stays, `contractValue`/`specialRequirements` → merge into contractBrief |
+| 13 | `requirements-gathering` | `businessGoal` → `requirementBrief`, `technicalLandscape` → `technicalLandscape` (stays), `featureRequirements` → `constraintsSuccess` |
+| 14 | `project-planning` | `projectBrief` stays as `projectBrief`, `constraintsAndResources` stays, `risksAndSuccess` stays |
+| 15 | `supplier-review` | `qualityScore`/`onTimeDelivery`/`communicationScore`/`priceVsMarket`/`spendVolume`/`contractStatus`/`incidentLog` → consolidate into `supplierPerformance` + `contractSituation` |
+| 16 | `risk-assessment` | `assessmentSubject` → merge into industryContext, `currentSituation` → `riskLandscape`, `contractContext`/`riskTolerance` → `mitigationContext` |
+| 17 | `disruption-management` | `crisisDescription` → `crisisDefinition`, `impactAssessment` → merge into crisisDefinition, `alternativesContext` → `resourceConstraints` |
+| 18 | `risk-matrix` | `supplierName`/`operationalRisks`/`commercialRisks` → `riskRegister` + `matrixParameters` |
+| 19 | `software-licensing` | `softwareDetails`/`userMetrics`/`commercialTerms`/`strategicFactors` → `licenceDocument` + `usageContext` |
+| 20 | `category-risk-evaluator` | `categoryAndTender`/`sowAndMarket`/`historicalRisks` → `categoryProfile` + `riskIndicators` |
+| 21 | `negotiation-preparation` | `negotiationSubject`/`currentSpend`/`supplierName`/`relationshipHistory`/`batna`/`negotiationObjectives`/`mustHaves`/`timeline`/`spendBreakdown`/`leverageContext` → `supplierProposal` + `alternativesLeverage` |
+| 22 | `category-strategy` | `categoryOverview` stays, `marketDynamics` → merge into categoryOverview, `strategicGoals` stays |
+| 23 | `make-vs-buy` | `projectBrief` → merge into industryContext, `makeCosts` stays, `buyCosts` stays, `strategicFactors` → merge into makeCosts/buyCosts |
+| 24 | `volume-consolidation` | `consolidationScope` stays, `logisticsTerms`/`growthForecast` → `consolidationParameters` |
+| 25 | `supplier-dependency-planner` | `dependencyContext` → `dependencyProfile`, `lockInFactors` → merge into dependencyProfile, `diversificationGoals` → `exitParameters` |
+| 26 | `sow-critic` | `sowText` → `sowDocument`, `reviewPriorities` → `reviewParameters` |
+| 27 | `black-swan-scenario` | `assessmentScope` → `supplyChainTopology`, `riskPosture`/`scenarioSimulation` → merge into `supplyChainTopology` + `resilienceParameters` |
+| 28 | `market-snapshot` | `region` stays, `analysisScope` → `marketBrief`, `successCriteria` → `intelligencePriorities`, `timeframe` stays |
+| 29 | `pre-flight-audit` | `supplierIdentity` → `supplierLegalIdentity`, `researchScope`/`decisionContext` → `auditScope` |
 
-#### B. Field Restructuring — All 29 Scenarios
-For each scenario, update `requiredFields` to match the document's 3-block structure:
-
-1. **Rename field labels** to match document (e.g. `"Asset or Service Definition"`, `"Supplier Proposal & Your Position"`)
-2. **Replace placeholder text** with the document's sub-prompt/guided text (bullet-pointed structure for Type 1/1H scenarios)
-3. **Consolidate fields** where the current code has 4+ fields but the document specifies 3 blocks — merge related fields into the appropriate block's placeholder guidance
-4. **Preserve field IDs** where possible to avoid breaking existing saved data; only rename IDs when blocks are fundamentally restructured
-
-#### C. Per-Scenario Changes (grouped by deviation type)
-
-**Type 0 — 3-Block Sufficient (12 scenarios):** Update labels + placeholders only
-- Specification Optimizer, RFP Generator, Tail Spend, Contract Template, Requirements Gathering, Procurement Project Planning, Risk Assessment, Negotiation Preparation, Category Strategy, Supplier Dependency Planner, Disruption Management, Market Snapshot
-
-**Type 1 — Sub-Prompts Required (11 scenarios):** Update labels + add structured bullet-point placeholders
-- TCO Analysis, Cost Breakdown, Savings Calculation, Forecasting & Budgeting, SaaS Optimization, SLA Definition, Category Risk Evaluator, Volume Consolidation
-
-**Type 1H — Sub-Prompts Critical (4 scenarios):** Update labels + add mandatory-feel structured placeholders
-- CAPEX vs OPEX (WACC + tax rate as explicit sub-prompts)
-- Supplier Review (KPI metrics as labeled sub-prompts)
-- Risk Matrix (risk register structured input format)
-- Make vs Buy (bilateral Make/Buy cost structure)
-- Pre-Flight Audit (legal entity vs trading name distinction)
-
-**Type 2 — Structural Deviation (3 scenarios):** Update labels + placeholders, add `deviationType: 2` tag. File upload is **deferred** (requires architectural decision).
-- Spend Analysis, SOW Critic, Software Licensing
-
-#### D. Field Count Normalization
-Most scenarios will be normalized to **3 textarea fields** matching the document's Block 1/2/3 structure. Exceptions:
-- Scenarios with select/dropdown fields that are UX-critical (e.g. Contract Template's country picker, Market Snapshot's region selector) retain those as additional fields
-- Block 1 is always `industryContext` (textarea, required or auto-injected)
+#### Approach
+For each generator, restructure the returned object to output exactly the field IDs defined in `scenarios.ts`. Existing realistic content will be preserved but reorganized — multi-field content merged into the correct 3-block structure using newline concatenation where appropriate. No new content generation needed; this is purely a structural sync.
 
 ### What Stays Untouched
-- `dataRequirements` (collapsible advisory) — already populated
-- `outputs` arrays — no changes
-- `strategySelector` — no changes
-- `icon`, `status`, `category` — no changes
-- `GenericScenarioWizard.tsx` rendering logic — works with any field structure
-- Type 2 file upload implementation — deferred to a separate ticket
-
-### Technical Detail
-
-Each scenario update follows this pattern (example — TCO Analysis):
-
-**Before:**
-```
-fields: industryContext, assetDescription (text), ownershipPeriod (number), 
-        capexBreakdown (textarea), opexBreakdown (textarea), riskFactors (textarea)
-```
-
-**After:**
-```
-fields: 
-  industryContext (textarea) — label: "Industry & Business Context"
-    placeholder: "Describe your industry, organisation size, and the procurement category..."
-  assetDefinition (textarea) — label: "Asset or Service Definition"  
-    placeholder: "• Asset or service name and description\n• Lifecycle duration (years)\n• Annual volume or usage rate\n• Quoted CAPEX or contract value (€)\n• Primary vendor or supplier (anonymised if needed)"
-  opexFinancials (textarea) — label: "OPEX & Financial Parameters"
-    placeholder: "• OPEX categories and estimated annual costs — list each: e.g. Maintenance €X / Logistics €Y / Training €Z / Disposal €W\n• WACC or internal discount rate (%)\n• Annual inflation assumption (%)\n• Currency"
-```
-
-This pattern repeats for all 29 scenarios, sourcing labels and placeholder text directly from the methodology document tables.
+- `industryContext` field — universal Block 1, unchanged across all generators
+- `getRandomIndustryContext()` and all utility functions
+- `generateTestData()` and `getSupportedScenarios()` exports
+- `scenarios.ts` — no changes
 
