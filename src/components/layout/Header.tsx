@@ -30,8 +30,8 @@ const Header = () => {
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
         <NavLink to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <div className="flex items-center justify-center w-14 h-14 rounded-lg overflow-hidden">
-            <img src={exosLogo} alt="EXOS Logo" className="w-24 h-24 object-contain scale-[1.8]" />
+          <div className="flex items-center justify-center w-16 h-16 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md shadow-primary/10">
+            <img src={exosLogo} alt="EXOS Logo" className="w-28 h-28 object-contain scale-[1.8]" />
           </div>
           <div>
             <h1 className="font-display text-lg font-semibold text-foreground">
