@@ -58,8 +58,8 @@ const Features = () => {
         {/* Hero Section */}
         <section className="mb-16 animate-fade-up text-center">
           <div className="flex justify-center mb-6">
-            <div className="w-32 h-32 md:w-[10.5rem] md:h-[10.5rem] overflow-hidden rounded-xl">
-              <img src={exosLogo} alt="EXOS" className="w-full h-full object-cover" />
+            <div className="w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-xl">
+              <img src={exosLogo} alt="EXOS" className="w-full h-full object-cover scale-[1.3]" />
             </div>
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">
