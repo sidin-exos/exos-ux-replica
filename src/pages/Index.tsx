@@ -57,7 +57,7 @@ const Index = () => {
                 Do More With Less.{" "}
                 <span className="text-gradient">Decide With Confidence.</span>
               </h1>
-              <p className="text-muted-foreground text-lg max-w-2xl mb-4">
+              <p className="text-muted-foreground text-base max-w-2xl mb-4">
                 Critical procurement decisions are often made unprepared due to lack of time, 
                 knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes—cost 
                 breakdowns, negotiation scenarios, make-or-buy simulations—all tailored to your business case.
