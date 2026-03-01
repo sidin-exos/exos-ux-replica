@@ -35,6 +35,10 @@
     --accent: 180 28% 42%;
     --accent-foreground: 0 0% 100%;
 
+    /* Dynamic green accent — same palette, more energy */
+    --highlight: 152 38% 42%;
+    --highlight-foreground: 0 0% 100%;
+
     /* Status colors */
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -95,6 +99,9 @@
 
     --accent: 180 30% 50%;
     --accent-foreground: 220 20% 10%;
+
+    --highlight: 152 32% 52%;
+    --highlight-foreground: 220 20% 10%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 210 40% 98%;
