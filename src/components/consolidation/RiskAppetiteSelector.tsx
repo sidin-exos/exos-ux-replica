@@ -35,17 +35,17 @@ const RiskAppetiteSelector = ({
   onChange,
 }: RiskAppetiteSelectorProps) => {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div>
-        <label className="text-base font-semibold text-foreground">
+        <label className="text-sm font-medium text-muted-foreground">
           Risk Appetite
         </label>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground/70 mt-0.5">
           How aggressively should we consolidate suppliers?
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {options.map((option) => {
           const Icon = option.icon;
           const isSelected = value === option.value;
@@ -56,26 +56,26 @@ const RiskAppetiteSelector = ({
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                "relative p-4 rounded-xl text-left transition-all duration-300",
-                "card-elevated hover:border-primary/50",
-                isSelected && "border-primary glow-effect"
+                "relative p-2.5 rounded-lg text-left transition-all duration-200",
+                "border border-border/50 hover:border-primary/30",
+                isSelected && "border-primary/60 bg-primary/5"
               )}
             >
               <div
                 className={cn(
-                  "w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors",
+                  "w-7 h-7 rounded-md flex items-center justify-center mb-1.5 transition-colors",
                   isSelected
                     ? option.color === "success"
-                      ? "bg-success/20"
+                      ? "bg-success/15"
                       : option.color === "warning"
-                      ? "bg-warning/20"
-                      : "bg-destructive/20"
-                    : "bg-secondary"
+                      ? "bg-warning/15"
+                      : "bg-destructive/15"
+                    : "bg-secondary/50"
                 )}
               >
                 <Icon
                   className={cn(
-                    "w-5 h-5",
+                    "w-3.5 h-3.5",
                     option.color === "success"
                       ? "text-success"
                       : option.color === "warning"
@@ -85,15 +85,15 @@ const RiskAppetiteSelector = ({
                 />
               </div>
 
-              <h4 className="font-semibold text-foreground mb-1">
+              <h4 className="font-medium text-xs text-foreground mb-0.5">
                 {option.label}
               </h4>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] text-muted-foreground/70 leading-tight">
                 {option.description}
               </p>
 
               {isSelected && (
-                <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary/60" />
               )}
             </button>
           );
