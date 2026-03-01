@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Settings, LogIn, User } from "lucide-react";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,7 +86,8 @@ const Header = () => {
           </NavLink>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
           <Button variant="ghost" size="icon" aria-label="Settings" onClick={() => navigate("/account")}>
             <Settings className="w-5 h-5" />
           </Button>
