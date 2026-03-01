@@ -2,39 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Procurement Analytics Design System - Enterprise Dark Theme */
+/* EXOS Design System — Dual Theme (Light default, Dark toggle) */
 
 @layer base {
   :root {
-    /* Core backgrounds - Deep navy enterprise feel */
+    /* ── Light Theme ── */
+    /* Core backgrounds — warm off-white with subtle warmth */
+    --background: 210 20% 97%;
+    --foreground: 220 25% 14%;
+
+    /* Card surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 14%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 14%;
+
+    /* Primary — Muted sage teal (same hue, adjusted for light) */
+    --primary: 174 40% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary — Soft cool gray */
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 20% 30%;
+
+    /* Muted surfaces */
+    --muted: 220 14% 94%;
+    --muted-foreground: 215 12% 48%;
+
+    /* Accent — Soft teal for highlights */
+    --accent: 180 28% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Status colors */
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 150 60% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 25% 14%;
+
+    /* Borders and inputs */
+    --border: 220 13% 87%;
+    --input: 220 13% 91%;
+    --ring: 174 40% 36%;
+
+    --radius: 0.75rem;
+
+    /* Gradients — Light */
+    --gradient-primary: linear-gradient(135deg, hsl(174, 40%, 36%) 0%, hsl(180, 28%, 42%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(210, 20%, 97%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(210, 20%, 98%) 0%, hsl(210, 18%, 95%) 50%, hsl(210, 20%, 97%) 100%);
+    --gradient-glow: radial-gradient(ellipse at 50% 0%, hsl(174 40% 36% / 0.06) 0%, transparent 50%);
+
+    /* Shadows — Light */
+    --shadow-sm: 0 1px 3px hsl(220 14% 70% / 0.12);
+    --shadow-md: 0 4px 12px hsl(220 14% 70% / 0.1);
+    --shadow-lg: 0 8px 24px hsl(220 14% 70% / 0.14);
+    --shadow-glow: 0 0 30px hsl(174 40% 36% / 0.08);
+
+    /* Sidebar — Light */
+    --sidebar-background: 210 18% 96%;
+    --sidebar-foreground: 220 25% 20%;
+    --sidebar-primary: 174 40% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 92%;
+    --sidebar-accent-foreground: 220 20% 18%;
+    --sidebar-border: 220 13% 89%;
+    --sidebar-ring: 174 40% 36%;
+  }
+
+  .dark {
+    /* ── Dark Theme ── */
     --background: 220 25% 8%;
     --foreground: 210 40% 96%;
 
-    /* Card surfaces with subtle elevation */
     --card: 220 25% 12%;
     --card-foreground: 210 40% 96%;
 
-    /* Popover matching card */
     --popover: 220 25% 14%;
     --popover-foreground: 210 40% 96%;
 
-    /* Primary - Muted sage teal */
     --primary: 174 35% 48%;
     --primary-foreground: 220 20% 10%;
 
-    /* Secondary - Muted slate */
     --secondary: 220 18% 20%;
     --secondary-foreground: 210 25% 88%;
 
-    /* Muted surfaces */
     --muted: 220 18% 16%;
     --muted-foreground: 215 15% 55%;
 
-    /* Accent - Soft teal for highlights */
     --accent: 180 30% 50%;
     --accent-foreground: 220 20% 10%;
 
-    /* Status colors */
     --destructive: 0 72% 55%;
     --destructive-foreground: 210 40% 98%;
     --success: 150 60% 45%;
@@ -42,26 +103,20 @@
     --warning: 38 92% 50%;
     --warning-foreground: 220 25% 8%;
 
-    /* Borders and inputs */
     --border: 220 20% 22%;
     --input: 220 20% 18%;
     --ring: 174 35% 48%;
 
-    --radius: 0.75rem;
-
-    /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(174, 35%, 48%) 0%, hsl(180, 30%, 50%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(220, 22%, 14%) 0%, hsl(220, 22%, 10%) 100%);
     --gradient-hero: linear-gradient(135deg, hsl(220, 22%, 6%) 0%, hsl(220, 25%, 12%) 50%, hsl(220, 22%, 8%) 100%);
     --gradient-glow: radial-gradient(ellipse at 50% 0%, hsl(174 35% 48% / 0.1) 0%, transparent 50%);
 
-    /* Shadows */
     --shadow-sm: 0 2px 8px hsl(220 22% 4% / 0.3);
     --shadow-md: 0 4px 16px hsl(220 22% 4% / 0.4);
     --shadow-lg: 0 8px 32px hsl(220 22% 4% / 0.5);
     --shadow-glow: 0 0 40px hsl(174 35% 48% / 0.12);
 
-    /* Sidebar */
     --sidebar-background: 220 25% 10%;
     --sidebar-foreground: 210 40% 90%;
     --sidebar-primary: 174 35% 48%;
@@ -70,10 +125,6 @@
     --sidebar-accent-foreground: 210 25% 94%;
     --sidebar-border: 220 18% 18%;
     --sidebar-ring: 174 35% 48%;
-  }
-
-  .dark {
-    /* Same as root - dark by default */
   }
 }
 
@@ -124,7 +175,7 @@
   }
 
   .glass-effect {
-    background: hsl(220 25% 12% / 0.8);
+    background: hsl(var(--card) / 0.85);
     backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--border) / 0.5);
   }
@@ -143,10 +194,10 @@
 
   @keyframes pulse-glow {
     0%, 100% {
-      box-shadow: 0 0 20px hsl(174 35% 48% / 0.2);
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
     }
     50% {
-      box-shadow: 0 0 40px hsl(174 35% 48% / 0.3);
+      box-shadow: 0 0 40px hsl(var(--primary) / 0.25);
     }
   }
 
@@ -171,7 +222,7 @@
     background: linear-gradient(
       90deg,
       hsl(var(--muted)) 0%,
-      hsl(220 20% 22%) 50%,
+      hsl(var(--border)) 50%,
       hsl(var(--muted)) 100%
     );
     background-size: 200% 100%;
