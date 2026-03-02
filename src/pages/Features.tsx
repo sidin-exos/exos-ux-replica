@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { Brain, Database, ArrowRight, Lock, Sparkles, FileCheck, Eye, Quote, TrendingUp, Shield, Users } from "lucide-react";
+import { Brain, Database, ArrowRight, Lock, Quote, TrendingUp, Shield, Users, RefreshCw } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
@@ -45,6 +46,11 @@ const successStories = [
 const Features = () => {
   const exosLogo = useThemedLogo();
   const location = useLocation();
+  const [storyIndex, setStoryIndex] = useState(() => Math.floor(Math.random() * successStories.length));
+
+  const nextStory = useCallback(() => {
+    setStoryIndex((prev) => (prev + 1) % successStories.length);
+  }, []);
 
   useEffect(() => {
     if (location.hash) {
@@ -55,11 +61,13 @@ const Features = () => {
     }
   }, [location.hash]);
 
+  const story = successStories[storyIndex];
+
   const valuePropositions = [
     {
       icon: Brain,
       title: "29 Procurement Scenarios",
-      description: "Purpose-built AI models for high-stakes procurement decisions. From cost optimization to risk simulation—each scenario is fine-tuned on proven methodologies.",
+      description: "Purpose-built AI models for high-stakes procurement decisions — from cost optimization to risk simulation.",
       highlights: [
         "Make-or-Buy & TCO analysis",
         "Supplier dependency & exit planning",
@@ -70,7 +78,7 @@ const Features = () => {
     {
       icon: Database,
       title: "Real-Time Market Intelligence",
-      description: "Ground every analysis with live market data. Our system queries real-time sources for supplier news, M&A activity, commodity trends, and regulatory changes—then injects this into your analysis.",
+      description: "Ground every analysis with live market data — supplier news, M&A activity, commodity trends, and regulatory changes.",
       highlights: [
         "Live supplier & category intelligence",
         "30+ industry grounding profiles",
@@ -81,7 +89,7 @@ const Features = () => {
     {
       icon: Lock,
       title: "Commercial Data Safety",
-      description: "Your sensitive commercial data—supplier names, pricing, contract terms—is semantically anonymized before reaching any external API. After AI processing, full context is restored on the way back.",
+      description: "Sensitive commercial data is semantically anonymized before reaching any external API, then restored on return.",
       highlights: [
         "Semantic anonymization of commercial data",
         "PII and financial identifier masking",
@@ -102,61 +110,125 @@ const Features = () => {
       <Header />
       
       <main className="container py-8 relative">
-        {/* Hero Section */}
-        <section className="mb-16 animate-fade-up text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-xl">
+        {/* Hero heading */}
+        <section className="mb-10 animate-fade-up text-center">
+          <div className="flex justify-center mb-4">
+            <div className="w-20 h-20 md:w-24 md:h-24 overflow-hidden rounded-xl">
               <img src={exosLogo} alt="EXOS" className="w-full h-full object-cover scale-[1.3]" />
             </div>
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
             How <span className="text-gradient">EXOS</span> Works
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Enterprise-grade AI analysis with privacy-first architecture. 
-            Your sensitive data stays protected while you get powerful insights.
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
+            Enterprise-grade AI analysis with privacy-first architecture.
           </p>
         </section>
 
-        {/* Value Propositions */}
+        {/* 2/3 Value Props + 1/3 Success Story */}
         <section className="mb-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {valuePropositions.map((prop, index) => (
-              <Card 
-                key={prop.title} 
-                className="card-elevated animate-fade-up border-border/50"
-                style={{ animationDelay: `${100 + index * 100}ms` }}
-              >
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
-                    <prop.icon className="w-6 h-6 text-primary-foreground" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left 2/3 — Value proposition cards */}
+            <div className="lg:col-span-2 space-y-4">
+              {valuePropositions.map((prop, index) => (
+                <Card 
+                  key={prop.title} 
+                  className="card-elevated animate-fade-up border-border/50"
+                  style={{ animationDelay: `${100 + index * 80}ms` }}
+                >
+                  <div className="flex items-start gap-4 p-5">
+                    <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <prop.icon className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display text-lg font-semibold mb-1">{prop.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {prop.highlights.map((h) => (
+                          <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70">
+                            <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
+                            {h}
+                          </span>
+                        ))}
+                      </div>
+                      {"link" in prop && prop.link && (
+                        <NavLink
+                          to={prop.link as string}
+                          className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
+                        >
+                          Learn about EXOS architecture
+                          <ArrowRight className="w-3 h-3" />
+                        </NavLink>
+                      )}
+                    </div>
                   </div>
-                  <CardTitle className="font-display text-xl">{prop.title}</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    {prop.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {prop.highlights.map((highlight) => (
-                      <li key={highlight} className="flex items-center gap-2 text-sm text-foreground/80">
-                        <ArrowRight className="w-3 h-3 text-primary flex-shrink-0" />
-                        {highlight}
-                      </li>
-                    ))}
-                  </ul>
-                  {"link" in prop && prop.link && (
-                    <NavLink
-                      to={prop.link as string}
-                      className="inline-flex items-center gap-1.5 mt-4 text-sm text-primary hover:text-primary/80 transition-colors"
+                </Card>
+              ))}
+            </div>
+
+            {/* Right 1/3 — Success story preview */}
+            <div className="lg:col-span-1">
+              <div className="lg:sticky lg:top-24">
+                <Card className="card-elevated border-border/50 animate-fade-up" style={{ animationDelay: "300ms" }}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Customer Success
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={nextStory}
+                        aria-label="Show another story"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="w-9 h-9 rounded-lg bg-copper/15 flex items-center justify-center">
+                        <story.icon className="w-4.5 h-4.5 text-copper" />
+                      </div>
+                      <Badge variant="outline" className="text-iris border-iris/30 bg-iris/10 text-xs">
+                        {story.industry}
+                      </Badge>
+                    </div>
+                    <CardTitle className="font-display text-base mt-2">{story.company}</CardTitle>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {story.scenarios.map((s) => (
+                        <Badge key={s} variant="secondary" className="text-xs bg-info/10 text-info border-info/20">
+                          {s}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="relative pl-3 border-l-2 border-primary/30">
+                      <Quote className="w-3.5 h-3.5 text-muted-foreground/40 absolute -left-2 -top-0.5 bg-card" />
+                      <p className="text-sm text-foreground/80 italic leading-relaxed">
+                        "{story.quote}"
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2 font-medium">
+                        — {story.person}
+                      </p>
+                    </div>
+                    <div className="pt-3 border-t border-border/50 flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-primary font-display">{story.metric}</span>
+                      <span className="text-xs text-muted-foreground">{story.metricLabel}</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const el = document.getElementById("success");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
                     >
-                      Know more about EXOS architecture and data flow
-                      <ArrowRight className="w-3 h-3" />
-                    </NavLink>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                      View all stories <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -190,7 +262,7 @@ const Features = () => {
           <DataFlowDiagram />
         </section>
 
-        {/* Customer Success Stories Section */}
+        {/* Customer Success Stories — Full Section */}
         <section id="success" className="mb-16 animate-fade-up" style={{ animationDelay: "500ms" }}>
           <div className="text-center mb-10">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-3">
@@ -203,26 +275,26 @@ const Features = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {successStories.map((story, index) => (
+            {successStories.map((s, index) => (
               <Card
-                key={story.company}
+                key={s.company}
                 className="card-elevated border-border/50 animate-fade-up"
                 style={{ animationDelay: `${600 + index * 100}ms` }}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 rounded-lg bg-copper/15 flex items-center justify-center">
-                      <story.icon className="w-5 h-5 text-copper" />
+                      <s.icon className="w-5 h-5 text-copper" />
                     </div>
                     <Badge variant="outline" className="text-iris border-iris/30 bg-iris/10 text-xs">
-                      {story.industry}
+                      {s.industry}
                     </Badge>
                   </div>
-                  <CardTitle className="font-display text-lg">{story.company}</CardTitle>
+                  <CardTitle className="font-display text-lg">{s.company}</CardTitle>
                   <div className="flex flex-wrap gap-1.5 mt-1">
-                    {story.scenarios.map((s) => (
-                      <Badge key={s} variant="secondary" className="text-xs bg-info/10 text-info border-info/20">
-                        {s}
+                    {s.scenarios.map((sc) => (
+                      <Badge key={sc} variant="secondary" className="text-xs bg-info/10 text-info border-info/20">
+                        {sc}
                       </Badge>
                     ))}
                   </div>
@@ -231,15 +303,15 @@ const Features = () => {
                   <div className="relative pl-4 border-l-2 border-primary/30">
                     <Quote className="w-4 h-4 text-muted-foreground/40 absolute -left-2 -top-1 bg-card" />
                     <p className="text-sm text-foreground/80 italic leading-relaxed">
-                      "{story.quote}"
+                      "{s.quote}"
                     </p>
                     <p className="text-xs text-muted-foreground mt-2 font-medium">
-                      — {story.person}
+                      — {s.person}
                     </p>
                   </div>
                   <div className="pt-3 border-t border-border/50 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-primary font-display">{story.metric}</span>
-                    <span className="text-xs text-muted-foreground">{story.metricLabel}</span>
+                    <span className="text-2xl font-bold text-primary font-display">{s.metric}</span>
+                    <span className="text-xs text-muted-foreground">{s.metricLabel}</span>
                   </div>
                 </CardContent>
               </Card>
