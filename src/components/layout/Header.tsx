@@ -162,13 +162,6 @@ const Header = () => {
           >
             Pricing
           </NavLink>
-          <NavLink 
-            to="/faq" 
-            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            activeClassName="text-foreground"
-          >
-            FAQ
-          </NavLink>
         </nav>
 
         <div className="flex items-center gap-1">
@@ -223,7 +216,7 @@ const Header = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
-                  onClick={() => navigate("/faq")}
+                  onClick={() => navigate("/pricing#faq")}
                 >
                   <HelpCircle className="w-4 h-4" />
                   Help & FAQ

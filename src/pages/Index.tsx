@@ -288,7 +288,7 @@ const Index = () => {
 
         {activeView === "dashboard" && (
           <section className="text-center py-16">
-            <a href="/faq#contact">
+            <a href="/pricing#contact">
               <Button size="lg" className="text-lg px-8 py-6 gap-2">
                 Get in Touch
                 <Mail className="w-5 h-5" />
