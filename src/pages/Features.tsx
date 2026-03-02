@@ -247,6 +247,67 @@ const Features = () => {
           <SentinelCapabilities />
         </section>
 
+        {/* Architecture Deep-Dive Section */}
+        <section id="architecture" className="mb-20 animate-fade-up" style={{ animationDelay: "350ms" }}>
+          <div className="text-center mb-10">
+            <h2 className="font-display text-2xl md:text-3xl font-bold mb-3">
+              Enterprise <span className="text-gradient">Architecture</span>
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              A purpose-built, privacy-first AI backend designed for high-stakes procurement decisions 
+              in regulated European industries.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Card className="card-elevated border-border/50">
+              <CardHeader className="pb-2">
+                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center mb-2">
+                  <Brain className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <CardTitle className="font-display text-lg">Agentic Structure & Chain of Experts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  EXOS employs an <strong className="text-foreground">agentic structure</strong> where 
+                  specialized AI agents collaborate in a server-side <strong className="text-foreground">Chain of Experts</strong> pipeline. 
+                  For financially complex scenarios, a 3-cycle flow — Analyst → Auditor → Synthesizer — ensures 
+                  every recommendation is rigorously challenged, mathematically verified, and synthesized into 
+                  actionable intelligence before reaching the user.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-elevated border-border/50">
+              <CardHeader className="pb-2">
+                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center mb-2">
+                  <Lock className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <CardTitle className="font-display text-lg">Anti-Hallucination & Grounding</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Every AI output passes through a multi-layer <strong className="text-foreground">anti-hallucination</strong> framework. 
+                  Server-side <strong className="text-foreground">grounding</strong> injects live market data, industry KPIs, 
+                  and regulatory context directly into prompts. Post-inference <strong className="text-foreground">results validation</strong> cross-checks 
+                  arithmetic (ROI, NPV, break-even), flags unsupported claims, and enforces separation 
+                  of hard vs. soft savings — ensuring outputs you can trust in boardroom presentations.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <NavLink
+              to="/architecture"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              Explore full architecture diagram
+              <ArrowRight className="w-4 h-4" />
+            </NavLink>
+          </div>
+        </section>
+
         {/* Data Flow Section */}
         <section id="dataflow" className="mb-20 animate-fade-up" style={{ animationDelay: "400ms" }}>
           <div className="text-center mb-10">
