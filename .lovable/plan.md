@@ -1,40 +1,35 @@
 
 
-## Plan: Context-Aware Preview Panel + Inline Chat Input
+## Plan: Enrich Light Theme with Additional Color Nuances
 
-### Change 1: ScenarioPreviewPanel — show category context instead of empty state
+The current light theme palette is limited to: sage teal (primary), cool gray (secondary), emerald green (highlight), plus status colors. This makes it feel flat and monochromatic. We'll add new complementary color tokens from the same cool-warm spectrum without touching any existing values.
 
-**Current**: When no scenario is hovered, the panel shows a generic "Hover over a scenario" placeholder with an eye icon.
+### New color tokens to add
 
-**New**: The panel receives the currently visible category (determined by which category section the user is scrolled near) and displays:
-- Category name as title (e.g. "Analysis & Optimization")
-- Category description
-- Count of available scenarios in that category
-- A prompt like "Hover a scenario to see details"
+All colors stay within the desaturated, enterprise-grade palette — siblings of the existing sage/teal hues:
 
-**Implementation**:
-- `ScenarioPreviewPanel` gets a new prop: `activeCategory: Scenario["category"] | null`
-- When `scenario` is null but `activeCategory` is set, render category info (name, description, scenario count) instead of the empty placeholder
-- `Index.tsx` tracks which category section is in view using an `IntersectionObserver` on each `category-${category}` section, updating an `activeCategory` state
-- Pass `activeCategory` to `ScenarioPreviewPanel`
+| Token | Light mode HSL | Purpose | Usage |
+|-------|---------------|---------|-------|
+| `--info` | `200 45% 48%` (soft steel blue) | Informational states, secondary CTAs | Badges, info alerts, links |
+| `--iris` | `245 30% 58%` (muted lavender) | Tertiary accent, category badges | Category labels, tags, subtle differentiation |
+| `--copper` | `22 50% 52%` (warm copper) | Warm contrast point | Feature highlights, icons, data viz |
+| `--surface` | `210 16% 93%` | Subtle card/section background layering | Alternating sections, nested cards |
+| `--surface-foreground` | same as foreground | Text on surface | — |
 
-### Change 2: ChatWidget — always-visible input bar (Lovable-style)
+Dark mode equivalents will also be added (slightly brighter/desaturated versions).
 
-**Current**: The default (closed) state shows a "Not sure where to start?" card with suggestion chips. The user must click a chip or "Ask anything" to open the chat panel with an input field.
+### Files to modify
 
-**New**: The default state is an inline input bar with the text field always visible, plus compact suggestion chips above or beside it. Similar to how Lovable and other AI tools present a single input field with placeholder text and optional quick-action chips. Clicking a chip or typing and pressing Enter opens the full chat panel with the message sent.
+1. **`src/index.css`** — Add new CSS variables in both `:root` and `.dark` blocks. Add a new gradient variable `--gradient-accent` using the iris-to-info range.
 
-**Implementation**:
-- Replace the closed-state render in `ChatWidget` with a compact bar containing:
-  - Small row of suggestion chips (compact, horizontal)
-  - An input field + send button always visible at the bottom
-- When user types and sends, call `toggleChat()` and `sendMessage()` to open the full panel with the conversation
-- Remove the intermediate "Not sure where to start?" card layout
+2. **`tailwind.config.ts`** — Register `info`, `iris`, `copper`, and `surface` in the colors map so they become available as utility classes (`bg-info`, `text-iris`, `border-copper`, etc.).
 
-### Technical details
+3. **`src/pages/Index.tsx`** — Apply the new tokens to the dashboard: use `surface` for alternating category section backgrounds, `iris` for category labels, and `copper` for scenario count/icon accents to demonstrate the richer palette immediately.
 
-**Files modified**:
-- `src/pages/Index.tsx` — Add `activeCategory` state + `IntersectionObserver` logic, pass to `ScenarioPreviewPanel`
-- `src/components/scenarios/ScenarioPreviewPanel.tsx` — Add `activeCategory` prop, render category summary in default state
-- `src/components/chat/ChatWidget.tsx` — Redesign closed state to show inline input bar with suggestions
+4. **`src/components/scenarios/ScenarioPreviewPanel.tsx`** — Use `info` and `iris` colors for the category badge and scenario output tags in the preview panel.
+
+5. **`src/components/dashboard/ScenarioCard.tsx`** — Add subtle `copper` or `iris` tints to the icon backgrounds to differentiate scenario categories visually.
+
+### What stays unchanged
+All existing color tokens (primary, secondary, accent, highlight, muted, success, warning, destructive) remain identical.
 
