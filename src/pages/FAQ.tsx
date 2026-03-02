@@ -38,6 +38,11 @@ Pick the Pro option if you're a full-time procurement professional who needs to 
     question: "Why is the price higher than ChatGPT or Gemini?",
     answer: `EXOS is not a mass product—it's designed for professionals seeking the best possible quality. For each request you make, we've run dozens of scenario simulations to improve quality, reduce hallucinations, and empower EXOS with best business practices.`,
   },
+  {
+    id: "market-intelligence",
+    question: "How does Market Intelligence work?",
+    answer: `Market Intelligence continuously scans trusted sources to deliver real-time insights on suppliers, commodities, regulations, and industry trends. Every finding is stored in your private knowledge base—never shared externally—and automatically used to enrich your analytical reports with live market data, risk signals, and pricing benchmarks. The more you use it, the sharper your decision support becomes.`,
+  },
 ];
 
 const FAQ = () => {
