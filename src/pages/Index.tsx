@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
@@ -11,13 +11,17 @@ import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
 
 type ActiveView = "dashboard" | "scenario";
 
+const categoryOrder: Scenario["category"][] = ["analysis", "planning", "risk", "documentation"];
+
 const Index = () => {
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
+  const [activeCategory, setActiveCategory] = useState<Scenario["category"] | null>("analysis");
   const location = useLocation();
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  // Handle hash-based scrolling from header dropdown
+  // Hash-based scrolling
   useEffect(() => {
     if (location.hash) {
       const id = location.hash.replace("#", "");
@@ -26,6 +30,26 @@ const Index = () => {
       }, 100);
     }
   }, [location.hash]);
+
+  // IntersectionObserver to track visible category
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    categoryOrder.forEach((cat) => {
+      const el = sectionRefs.current[cat];
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setActiveCategory(cat);
+          }
+        },
+        { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, [activeView]);
 
   const handleScenarioClick = (scenarioId: string) => {
     const scenario = scenarios.find((s) => s.id === scenarioId);
@@ -43,18 +67,13 @@ const Index = () => {
   // Group scenarios by category
   const scenariosByCategory = scenarios.reduce((acc, scenario) => {
     const category = scenario.category;
-    if (!acc[category]) {
-      acc[category] = [];
-    }
+    if (!acc[category]) acc[category] = [];
     acc[category].push(scenario);
     return acc;
   }, {} as Record<Scenario["category"], Scenario[]>);
 
-  const categoryOrder: Scenario["category"][] = ["analysis", "planning", "risk", "documentation"];
-
   return (
     <div className="min-h-screen gradient-hero">
-      {/* Glow effect overlay */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}
@@ -90,7 +109,12 @@ const Index = () => {
               {/* Left: Scenarios */}
               <div className="lg:col-span-2">
                 {categoryOrder.map((category) => (
-                  <section key={category} id={`category-${category}`} className="mb-10">
+                  <section
+                    key={category}
+                    id={`category-${category}`}
+                    ref={(el) => { sectionRefs.current[category] = el; }}
+                    className="mb-10"
+                  >
                     <div className="mb-4">
                       <h2 className="font-display text-xl font-semibold text-foreground">
                         {getCategoryLabel(category)}
@@ -129,7 +153,7 @@ const Index = () => {
 
               {/* Right: Preview panel */}
               <div className="hidden lg:block">
-                <ScenarioPreviewPanel scenario={hoveredScenario} />
+                <ScenarioPreviewPanel scenario={hoveredScenario} activeCategory={activeCategory} />
               </div>
             </div>
           </>

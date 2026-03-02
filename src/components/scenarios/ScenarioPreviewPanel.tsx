@@ -1,13 +1,25 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { getCategoryLabel, type Scenario } from "@/lib/scenarios";
-import { Eye } from "lucide-react";
+import { getCategoryLabel, scenarios, type Scenario } from "@/lib/scenarios";
+import { Layers, Eye } from "lucide-react";
+
+const CATEGORY_DESCRIPTIONS: Record<Scenario["category"], string> = {
+  analysis: "Optimize costs, consolidate volumes, and calculate savings across your procurement portfolio.",
+  planning: "Source efficiently, gather requirements, and plan your procurement strategy.",
+  risk: "Assess supplier risks, manage disruptions, and build resilient supply chains.",
+  documentation: "Generate, review, and manage procurement documents and contracts.",
+};
 
 interface ScenarioPreviewPanelProps {
   scenario: Scenario | null;
+  activeCategory?: Scenario["category"] | null;
 }
 
-const ScenarioPreviewPanel = ({ scenario }: ScenarioPreviewPanelProps) => {
+const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanelProps) => {
+  const categoryScenarioCount = activeCategory
+    ? scenarios.filter((s) => s.category === activeCategory).length
+    : 0;
+
   return (
     <div className="sticky top-24">
       <div className="card-elevated rounded-2xl p-6 min-h-[320px] flex flex-col">
@@ -65,6 +77,38 @@ const ScenarioPreviewPanel = ({ scenario }: ScenarioPreviewPanelProps) => {
                 </Badge>
               )}
             </motion.div>
+          ) : activeCategory ? (
+            <motion.div
+              key={`cat-${activeCategory}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Layers className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-display text-base font-semibold text-foreground">
+                    {getCategoryLabel(activeCategory)}
+                  </h3>
+                  <Badge variant="outline" className="text-xs mt-0.5">
+                    {categoryScenarioCount} scenario{categoryScenarioCount !== 1 ? "s" : ""}
+                  </Badge>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {CATEGORY_DESCRIPTIONS[activeCategory]}
+              </p>
+
+              <div className="flex items-center gap-2 text-xs text-muted-foreground/70 pt-2 border-t border-border/30">
+                <Eye className="w-3.5 h-3.5" />
+                Hover a scenario to see details
+              </div>
+            </motion.div>
           ) : (
             <motion.div
               key="empty"
@@ -77,12 +121,8 @@ const ScenarioPreviewPanel = ({ scenario }: ScenarioPreviewPanelProps) => {
                 <Eye className="w-6 h-6 text-muted-foreground/50" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Hover over a scenario
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  to see a detailed preview here
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Hover over a scenario</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">to see a detailed preview here</p>
               </div>
             </motion.div>
           )}

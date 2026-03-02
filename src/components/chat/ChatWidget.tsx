@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Send, Bot, Sparkles, MessageCircle } from 'lucide-react';
+import { X, Send, Bot, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -41,7 +41,13 @@ export function ChatWidget() {
     const trimmed = inputValue.trim();
     if (!trimmed || isTyping) return;
     setInputValue('');
+    if (!isOpen) toggleChat();
     sendMessage(trimmed);
+  };
+
+  const handleSuggestion = (text: string) => {
+    if (!isOpen) toggleChat();
+    setTimeout(() => sendMessage(text), 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -51,7 +57,7 @@ export function ChatWidget() {
     }
   };
 
-  // Inline trigger bar
+  // Inline trigger bar — always-visible input
   if (!isOpen) {
     return (
       <motion.div
@@ -60,38 +66,37 @@ export function ChatWidget() {
         transition={{ duration: 0.3, delay: 0.2 }}
         className="mb-8 glass-effect rounded-xl border border-border/50 p-4"
       >
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">Not sure where to start?</p>
-            <p className="text-xs text-muted-foreground">Let the EXOS Guide help you pick the right scenario</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-3">
           {SUGGESTIONS.map((s) => (
             <Button
               key={s.text}
               variant="outline"
               size="sm"
               className="text-xs"
-              onClick={() => {
-                toggleChat();
-                setTimeout(() => sendMessage(s.text), 100);
-              }}
+              onClick={() => handleSuggestion(s.text)}
             >
               {s.label}
             </Button>
           ))}
+        </div>
+        <div className="flex gap-2">
+          <div className="flex items-center gap-2 flex-1 relative">
+            <Sparkles className="w-4 h-4 text-primary absolute left-3 pointer-events-none" />
+            <Input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Describe your procurement challenge..."
+              className="flex-1 h-10 text-sm pl-9"
+            />
+          </div>
           <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground"
-            onClick={toggleChat}
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={handleSend}
+            disabled={!inputValue.trim()}
           >
-            <MessageCircle className="w-3.5 h-3.5 mr-1" />
-            Ask anything
+            <Send className="h-4 w-4" />
           </Button>
         </div>
       </motion.div>
@@ -157,7 +162,6 @@ export function ChatWidget() {
                 message={msg}
                 isLatest={i === messages.length - 1}
                 allMessages={messages}
-                
               />
             ))}
 
