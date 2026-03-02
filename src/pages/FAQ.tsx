@@ -43,6 +43,11 @@ Pick the Pro option if you're a full-time procurement professional who needs to 
     question: "How does Market Intelligence work?",
     answer: `Market Intelligence continuously scans trusted sources to deliver real-time insights on suppliers, commodities, regulations, and industry trends. Every finding is stored in your private knowledge base—never shared externally—and automatically used to enrich your analytical reports with live market data, risk signals, and pricing benchmarks. The more you use it, the sharper your decision support becomes.`,
   },
+  {
+    id: "fine-tuning",
+    question: "Can I get EXOS fine-tuned for my purposes?",
+    answer: `Absolutely. We offer fine-tuning and customisation for every Pro and Enterprise user. Pro users can request one custom scenario and one custom dashboard per month. Enterprise users get fully custom analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
+  },
 ];
 
 const FAQ = () => {
