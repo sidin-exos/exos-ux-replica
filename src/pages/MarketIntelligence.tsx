@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import { QueryBuilder } from "@/components/intelligence/QueryBuilder";
 import { IntelResults } from "@/components/intelligence/IntelResults";
@@ -13,7 +14,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search } from "lucide-react";
 
 const MarketIntelligence = () => {
-  const [selectedScenario, setSelectedScenario] = useState<IntelScenario>("adhoc");
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const modeParam = searchParams.get("mode") as IntelScenario | null;
+  
+  const defaultTab = tabParam === "insights" ? "insights" : "queries";
+  const defaultScenario: IntelScenario = modeParam && ["adhoc", "regular", "triggered"].includes(modeParam) ? modeParam : "adhoc";
+  
+  const [selectedScenario, setSelectedScenario] = useState<IntelScenario>(defaultScenario);
+  
+  useEffect(() => {
+    if (modeParam && ["adhoc", "regular", "triggered"].includes(modeParam)) {
+      setSelectedScenario(modeParam as IntelScenario);
+    }
+  }, [modeParam]);
   
   const {
     query,
@@ -74,7 +88,7 @@ const MarketIntelligence = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="queries" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="queries" className="flex items-center gap-2">
               <Search className="h-4 w-4" />

@@ -56,7 +56,7 @@ const Header = () => {
             <DropdownMenuTrigger asChild>
               <button className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 outline-none">
                 Scenarios & Simulations
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className="w-5 h-5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
@@ -71,13 +71,34 @@ const Header = () => {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <NavLink 
-            to="/market-intelligence" 
-            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            activeClassName="text-foreground"
-          >
-            Market Intelligence
-          </NavLink>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 outline-none">
+                Market Intelligence
+                <ChevronDown className="w-5 h-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => navigate("/market-intelligence")}
+              >
+                Generate a report
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => navigate("/market-intelligence?tab=queries&mode=regular")}
+              >
+                Set-up scheduled report or scenario trigger
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => navigate("/market-intelligence?tab=insights")}
+              >
+                Manage my knowledge base
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <NavLink 
             to="/features" 
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
