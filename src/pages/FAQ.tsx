@@ -26,7 +26,7 @@ Pick the Pro option if you're a full-time procurement professional who needs to 
   {
     id: "fine-tuned-scenarios",
     question: "What do you mean by fine-tuned procurement scenarios?",
-    answer: `To ensure the best possible quality, our system uses industry and category context along with specific rules to prevent external APIs from hallucinating. The request EXOS sends is not a typical text prompt—it's a structured XML prompt with all parameters refined and validated against industry-specific business cases. The system also provides feedback when information is insufficient, clearly pointing out its limitations.`,
+    answer: `Each scenario is enriched with industry-specific context, category expertise, and real-time market intelligence before analysis. EXOS validates your inputs against best-practice business cases, applies grounding from live market data—including trends, risk signals, and pricing benchmarks—and clearly flags its limitations when information is insufficient. The result is a decision-ready report, not a generic AI response.`,
   },
   {
     id: "limited-requests",
