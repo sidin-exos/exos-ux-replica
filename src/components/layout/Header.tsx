@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogIn, User } from "lucide-react";
+import { Settings, LogIn, User, ChevronDown } from "lucide-react";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
@@ -8,6 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import exosLogoFallback from "@/assets/logo-concept-layers.png";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { getCategoryLabel, type Scenario } from "@/lib/scenarios";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -44,13 +52,25 @@ const Header = () => {
         </NavLink>
         
         <nav className="hidden md:flex items-center gap-6">
-          <NavLink 
-            to="/" 
-            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            activeClassName="text-foreground"
-          >
-            Scenarios & Simulations
-          </NavLink>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 outline-none">
+                Scenarios & Simulations
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {(["analysis", "planning", "risk", "documentation"] as Scenario["category"][]).map((cat) => (
+                <DropdownMenuItem
+                  key={cat}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/#category-${cat}`)}
+                >
+                  {getCategoryLabel(cat)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <NavLink 
             to="/market-intelligence" 
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"

@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import ScenarioCard from "@/components/dashboard/ScenarioCard";
 import ConsolidationWizard from "@/components/consolidation/ConsolidationWizard";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard";
+import ScenarioPreviewPanel from "@/components/scenarios/ScenarioPreviewPanel";
 import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
 
 type ActiveView = "dashboard" | "scenario";
@@ -12,6 +14,18 @@ type ActiveView = "dashboard" | "scenario";
 const Index = () => {
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
+  const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
+  const location = useLocation();
+
+  // Handle hash-based scrolling from header dropdown
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace("#", "");
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [location.hash]);
 
   const handleScenarioClick = (scenarioId: string) => {
     const scenario = scenarios.find((s) => s.id === scenarioId);
@@ -71,41 +85,53 @@ const Index = () => {
             {/* AI Guide */}
             <ChatWidget />
 
-            {/* Scenarios by Category */}
-            {categoryOrder.map((category) => (
-              <section key={category} className="mb-10">
-                <div className="mb-4">
-                  <h2 className="font-display text-xl font-semibold text-foreground">
-                    {getCategoryLabel(category)}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {category === "analysis" && "Optimize costs, consolidate volumes, and calculate savings"}
-                    {category === "planning" && "Source efficiently and gather requirements"}
-                    {category === "risk" && "Assess supplier risks and manage disruptions"}
-                    {category === "documentation" && "Generate and review procurement documents"}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {scenariosByCategory[category]?.map((scenario, index) => (
-                    <div
-                      key={scenario.id}
-                      className="animate-fade-up"
-                      style={{ animationDelay: `${100 + index * 50}ms` }}
-                    >
-                      <ScenarioCard
-                        title={scenario.title}
-                        description={scenario.description}
-                        icon={scenario.icon}
-                        status={scenario.status}
-                        isActive={selectedScenario?.id === scenario.id}
-                        onClick={() => handleScenarioClick(scenario.id)}
-                      />
+            {/* Split layout: 2/3 scenarios + 1/3 preview */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left: Scenarios */}
+              <div className="lg:col-span-2">
+                {categoryOrder.map((category) => (
+                  <section key={category} id={`category-${category}`} className="mb-10">
+                    <div className="mb-4">
+                      <h2 className="font-display text-xl font-semibold text-foreground">
+                        {getCategoryLabel(category)}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {category === "analysis" && "Optimize costs, consolidate volumes, and calculate savings"}
+                        {category === "planning" && "Source efficiently and gather requirements"}
+                        {category === "risk" && "Assess supplier risks and manage disruptions"}
+                        {category === "documentation" && "Generate and review procurement documents"}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </section>
-            ))}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {scenariosByCategory[category]?.map((scenario, index) => (
+                        <div
+                          key={scenario.id}
+                          className="animate-fade-up"
+                          style={{ animationDelay: `${100 + index * 50}ms` }}
+                        >
+                          <ScenarioCard
+                            title={scenario.title}
+                            description={scenario.description}
+                            icon={scenario.icon}
+                            status={scenario.status}
+                            isActive={selectedScenario?.id === scenario.id}
+                            onClick={() => handleScenarioClick(scenario.id)}
+                            onMouseEnter={() => setHoveredScenario(scenario)}
+                            onMouseLeave={() => setHoveredScenario(null)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+
+              {/* Right: Preview panel */}
+              <div className="hidden lg:block">
+                <ScenarioPreviewPanel scenario={hoveredScenario} />
+              </div>
+            </div>
           </>
         ) : selectedScenario ? (
           <section className="animate-fade-up">
