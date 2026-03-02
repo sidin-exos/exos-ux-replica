@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogIn, User, ChevronDown, CreditCard, LogOut, HelpCircle } from "lucide-react";
+import { Settings, LogIn, User, ChevronDown, CreditCard, LogOut, HelpCircle, FileText, Database } from "lucide-react";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
@@ -192,6 +192,20 @@ const Header = () => {
                 >
                   <User className="w-4 h-4" />
                   My Account
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() => navigate("/reports")}
+                >
+                  <FileText className="w-4 h-4" />
+                  My Reports
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() => navigate("/market-intelligence?tab=insights")}
+                >
+                  <Database className="w-4 h-4" />
+                  My Knowledge Database
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer gap-2"
