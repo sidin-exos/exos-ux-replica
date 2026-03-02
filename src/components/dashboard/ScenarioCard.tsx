@@ -8,6 +8,8 @@ interface ScenarioCardProps {
   status: "available" | "coming-soon";
   onClick?: () => void;
   isActive?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 const ScenarioCard = ({
@@ -17,11 +19,15 @@ const ScenarioCard = ({
   status,
   onClick,
   isActive,
+  onMouseEnter,
+  onMouseLeave,
 }: ScenarioCardProps) => {
   return (
     <button
       onClick={status === "available" ? onClick : undefined}
       disabled={status === "coming-soon"}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className={cn(
         "group relative w-full p-6 rounded-xl text-left transition-all duration-300",
         "card-elevated hover:border-primary/50",

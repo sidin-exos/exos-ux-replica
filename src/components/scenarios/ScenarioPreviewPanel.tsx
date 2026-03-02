@@ -1,0 +1,95 @@
+import { AnimatePresence, motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { getCategoryLabel, type Scenario } from "@/lib/scenarios";
+import { Eye } from "lucide-react";
+
+interface ScenarioPreviewPanelProps {
+  scenario: Scenario | null;
+}
+
+const ScenarioPreviewPanel = ({ scenario }: ScenarioPreviewPanelProps) => {
+  return (
+    <div className="sticky top-24">
+      <div className="card-elevated rounded-2xl p-6 min-h-[320px] flex flex-col">
+        <AnimatePresence mode="wait">
+          {scenario ? (
+            <motion.div
+              key={scenario.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-4"
+            >
+              {/* Icon + Title */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <scenario.icon className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-display text-base font-semibold text-foreground">
+                    {scenario.title}
+                  </h3>
+                  <Badge variant="outline" className="text-xs mt-0.5">
+                    {getCategoryLabel(scenario.category)}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Description */}
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {scenario.description}
+              </p>
+
+              {/* Outputs */}
+              {scenario.outputs && scenario.outputs.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2">
+                    Outputs
+                  </p>
+                  <ul className="space-y-1">
+                    {scenario.outputs.slice(0, 5).map((output, i) => (
+                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                        <span className="text-highlight mt-0.5">•</span>
+                        {output}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Status */}
+              {scenario.status === "coming-soon" && (
+                <Badge variant="secondary" className="w-fit text-xs">
+                  Coming Soon
+                </Badge>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center h-full flex-1 text-center gap-3 py-8"
+            >
+              <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center">
+                <Eye className="w-6 h-6 text-muted-foreground/50" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Hover over a scenario
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  to see a detailed preview here
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+export default ScenarioPreviewPanel;
