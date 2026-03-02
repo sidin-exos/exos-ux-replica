@@ -1,4 +1,4 @@
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, Info, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -203,6 +203,15 @@ const DashboardShowcase = () => {
             <LicenseTierDashboard />
             <SensitivitySpiderDashboard />
           </div>
+        </section>
+
+        <section className="text-center py-16">
+          <a href="/faq#contact">
+            <Button size="lg" className="text-lg px-8 py-6 gap-2">
+              Get in Touch
+              <Mail className="w-5 h-5" />
+            </Button>
+          </a>
         </section>
       </main>
     </div>

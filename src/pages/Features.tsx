@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { Brain, Database, ArrowRight, Lock, Quote, TrendingUp, Shield, Users, RefreshCw } from "lucide-react";
+import { Brain, Database, ArrowRight, Lock, Quote, TrendingUp, Shield, Users, RefreshCw, Mail } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/NavLink";
@@ -378,6 +378,15 @@ const Features = () => {
               </Card>
             ))}
           </div>
+        </section>
+
+        <section className="text-center py-16">
+          <a href="/faq#contact">
+            <Button size="lg" className="text-lg px-8 py-6 gap-2">
+              Get in Touch
+              <Mail className="w-5 h-5" />
+            </Button>
+          </a>
         </section>
       </main>
     </div>
