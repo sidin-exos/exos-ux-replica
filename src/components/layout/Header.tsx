@@ -160,7 +160,7 @@ const Header = () => {
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             activeClassName="text-foreground"
           >
-            Pricing
+            Pricing & FAQ
           </NavLink>
         </nav>
 
