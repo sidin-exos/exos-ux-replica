@@ -50,7 +50,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
 
               {/* Description */}
               <p className="text-sm text-muted-foreground leading-relaxed">
-                {scenario.description}
+                {scenario.previewDescription || scenario.description}
               </p>
 
               {/* Outputs */}
