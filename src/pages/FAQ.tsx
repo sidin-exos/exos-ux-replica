@@ -5,7 +5,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Mail } from "lucide-react";
+import { ContactForm } from "@/components/contact/ContactForm";
 
 const faqData = [
   {
@@ -84,13 +85,21 @@ const FAQ = () => {
         </section>
 
         {/* Contact Section */}
-        <section className="mt-16 text-center animate-fade-up" style={{ animationDelay: "200ms" }}>
-          <p className="text-muted-foreground">
-            Still have questions?{" "}
-            <a href="#" className="text-primary hover:underline">
-              Contact our team
-            </a>
-          </p>
+        <section id="contact" className="mt-16 max-w-3xl mx-auto animate-fade-up" style={{ animationDelay: "200ms" }}>
+          <div className="card-elevated border border-border/50 rounded-xl p-8">
+            <div className="text-center mb-8">
+              <div className="mx-auto w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Mail className="w-6 h-6 text-primary" />
+              </div>
+              <h2 className="font-display text-2xl font-bold mb-2">
+                Contact <span className="text-gradient">Us</span>
+              </h2>
+              <p className="text-muted-foreground">
+                Have a question or want to learn more? We'd love to hear from you.
+              </p>
+            </div>
+            <ContactForm />
+          </div>
         </section>
       </main>
     </div>
