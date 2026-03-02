@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogIn, User, ChevronDown } from "lucide-react";
+import { Settings, LogIn, User, ChevronDown, CreditCard, LogOut, HelpCircle } from "lucide-react";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
@@ -173,16 +173,60 @@ const Header = () => {
 
         <div className="flex items-center gap-1">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Settings" onClick={() => navigate("/account")}>
-            <Settings className="w-5 h-5" />
-          </Button>
           
           {user ? (
-            <NavLink to="/account">
-              <div className="ml-2 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-semibold text-primary-foreground cursor-pointer hover:opacity-90 transition-opacity">
-                {user.email?.charAt(0).toUpperCase() || "U"}
-              </div>
-            </NavLink>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="ml-2 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-semibold text-primary-foreground cursor-pointer hover:opacity-90 transition-opacity outline-none">
+                  {user.email?.charAt(0).toUpperCase() || "U"}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() => navigate("/account")}
+                >
+                  <User className="w-4 h-4" />
+                  My Account
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() => navigate("/account")}
+                >
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() => navigate("/pricing")}
+                >
+                  <CreditCard className="w-4 h-4" />
+                  Manage Subscription
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() => navigate("/faq")}
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  Help & FAQ
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate("/");
+                  }}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <NavLink to="/auth">
               <Button variant="default" size="sm" className="ml-2 gap-2">
