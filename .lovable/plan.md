@@ -1,65 +1,40 @@
 
 
-## Plan: Update Scenario → Dashboard Mappings Based on Audit v1
+## Plan: Context-Aware Preview Panel + Inline Chat Input
 
-### Context
-The audit identifies structural mismatches in the current `scenarioDashboardMapping`. Several scenarios have dashboards assigned that are weak/no-fit, while strong matches are missing or misordered. The document also flags 10 new dashboard candidates (P1–P3) — those are **out of scope** for this change (they require new components). This plan only updates the mapping of existing 14 dashboards to existing 29 scenarios.
+### Change 1: ScenarioPreviewPanel — show category context instead of empty state
 
-### File: `src/lib/dashboard-mappings.ts`
+**Current**: When no scenario is hovered, the panel shows a generic "Hover over a scenario" placeholder with an eye icon.
 
-Update `scenarioDashboardMapping` to reflect audit findings. Changes grouped by audit verdict:
+**New**: The panel receives the currently visible category (determined by which category section the user is scrolled near) and displays:
+- Category name as title (e.g. "Analysis & Optimization")
+- Category description
+- Count of available scenarios in that category
+- A prompt like "Hover a scenario to see details"
 
-#### Group A — Analytical Value (8 scenarios)
-| Scenario | Current | Audit Recommendation |
-|---|---|---|
-| `tco-analysis` | tco-comparison, cost-waterfall, sensitivity-spider, decision-matrix | **Remove** sensitivity-spider, decision-matrix. Keep: `tco-comparison, cost-waterfall, scenario-comparison` |
-| `cost-breakdown` | cost-waterfall, sensitivity-spider, decision-matrix | **Remove** sensitivity-spider, decision-matrix. Set: `cost-waterfall, tco-comparison, data-quality` |
-| `capex-vs-opex` | tco-comparison, cost-waterfall, sensitivity-spider, decision-matrix | **Replace** with: `scenario-comparison, sensitivity-spider` (audit primary + secondary) |
-| `savings-calculation` | cost-waterfall, action-checklist, sensitivity-spider, data-quality | **Remove** sensitivity-spider, data-quality. Keep: `cost-waterfall, action-checklist` |
-| `spend-analysis-categorization` | cost-waterfall, kraljic-quadrant, supplier-scorecard, data-quality | **Replace** with: `data-quality, cost-waterfall` (audit: weak fit, minimal mapping) |
-| `forecasting-budgeting` | sensitivity-spider, cost-waterfall, timeline-roadmap, risk-matrix | **Replace** with: `scenario-comparison, sensitivity-spider` (audit primary + secondary) |
-| `saas-optimization` | license-tier, cost-waterfall, action-checklist, data-quality | **Remove** action-checklist, data-quality. Keep: `license-tier, cost-waterfall` |
-| `software-licensing` | license-tier, tco-comparison, scenario-comparison, risk-matrix | **Replace** with: `license-tier, cost-waterfall` (audit: Strong match) |
+**Implementation**:
+- `ScenarioPreviewPanel` gets a new prop: `activeCategory: Scenario["category"] | null`
+- When `scenario` is null but `activeCategory` is set, render category info (name, description, scenario count) instead of the empty placeholder
+- `Index.tsx` tracks which category section is in view using an `IntersectionObserver` on each `category-${category}` section, updating an `activeCategory` state
+- Pass `activeCategory` to `ScenarioPreviewPanel`
 
-#### Group B — Workflow (8 scenarios)
-| Scenario | Current | Audit Recommendation |
-|---|---|---|
-| `requirements-gathering` | action-checklist, timeline-roadmap, decision-matrix | **Replace** with: `action-checklist, data-quality` (audit: Weak, minimal) |
-| `rfp-generator` | timeline-roadmap, decision-matrix, action-checklist, data-quality | **Replace** with: `action-checklist, data-quality` (audit: Weak/doc output) |
-| `tail-spend-sourcing` | action-checklist, decision-matrix, data-quality | **Remove** decision-matrix. Keep: `action-checklist, data-quality` |
-| `contract-template` | action-checklist, timeline-roadmap, data-quality | **Remove** timeline-roadmap. Keep: `action-checklist, data-quality` (audit: None fit) |
-| `sow-critic` | sow-analysis, action-checklist, risk-matrix | **Replace** with: `sow-analysis, data-quality` (audit: Strong) |
-| `supplier-review` | supplier-scorecard, risk-matrix, action-checklist, timeline-roadmap | **Replace** with: `supplier-scorecard, timeline-roadmap, action-checklist` (audit: Strong) |
-| `procurement-project-planning` | timeline-roadmap, action-checklist, risk-matrix, sensitivity-spider | **Remove** sensitivity-spider. Keep: `timeline-roadmap, action-checklist, risk-matrix` |
-| `sla-definition` | decision-matrix, action-checklist, timeline-roadmap | **Replace** with: `action-checklist, negotiation-prep` (audit: Weak, SLA-adjacent) |
+### Change 2: ChatWidget — always-visible input bar (Lovable-style)
 
-#### Group D — Strategic Mentorship (7 scenarios)
-| Scenario | Current | Audit Recommendation |
-|---|---|---|
-| `negotiation-preparation` | negotiation-prep, scenario-comparison, risk-matrix, action-checklist | **Remove** risk-matrix, action-checklist. Keep: `negotiation-prep, scenario-comparison` |
-| `category-strategy` | kraljic-quadrant, scenario-comparison, timeline-roadmap, action-checklist | **Remove** scenario-comparison, action-checklist. Keep: `kraljic-quadrant, timeline-roadmap` |
-| `make-vs-buy` | decision-matrix, cost-waterfall, scenario-comparison, risk-matrix | **Remove** risk-matrix. Keep: `decision-matrix, scenario-comparison, cost-waterfall` |
-| `volume-consolidation` | scenario-comparison, supplier-scorecard, risk-matrix, cost-waterfall | **Remove** supplier-scorecard, risk-matrix. Keep: `scenario-comparison, cost-waterfall` |
-| `supplier-dependency-planner` | risk-matrix, supplier-scorecard, scenario-comparison, timeline-roadmap | **Replace** with: `risk-matrix, sensitivity-spider` (audit primary + secondary) |
-| `disruption-management` | timeline-roadmap, risk-matrix, scenario-comparison, action-checklist | **Reorder**: `action-checklist, timeline-roadmap, risk-matrix` (audit: Action Checklist is primary) |
-| `black-swan-scenario` | risk-matrix, scenario-comparison, timeline-roadmap, action-checklist | **Replace** with: `risk-matrix, sensitivity-spider, scenario-comparison` |
+**Current**: The default (closed) state shows a "Not sure where to start?" card with suggestion chips. The user must click a chip or "Ask anything" to open the chat panel with an input field.
 
-#### Group E — Real-Time Knowledge (2 scenarios)
-| Scenario | Current | Audit Recommendation |
-|---|---|---|
-| `market-snapshot` | supplier-scorecard, decision-matrix, risk-matrix, data-quality | **Replace** with: `data-quality, action-checklist` (audit: NONE fit — minimal fallback) |
-| `pre-flight-audit` | supplier-scorecard, risk-matrix, action-checklist, data-quality | **Replace** with: `data-quality, risk-matrix` (audit: Weak, Data Quality primary) |
+**New**: The default state is an inline input bar with the text field always visible, plus compact suggestion chips above or beside it. Similar to how Lovable and other AI tools present a single input field with placeholder text and optional quick-action chips. Clicking a chip or typing and pressing Enter opens the full chat panel with the message sent.
 
-#### Unchanged (not in audit scope)
-- `specification-optimizer` — keep current 4-dashboard mapping
-- `risk-assessment` — keep current mapping
-- `risk-matrix` (scenario) — keep current mapping
-- `category-risk-evaluator` — keep current mapping
+**Implementation**:
+- Replace the closed-state render in `ChatWidget` with a compact bar containing:
+  - Small row of suggestion chips (compact, horizontal)
+  - An input field + send button always visible at the bottom
+- When user types and sends, call `toggleChat()` and `sendMessage()` to open the full panel with the conversation
+- Remove the intermediate "Not sure where to start?" card layout
 
-### What Stays Untouched
-- `DashboardType` union, `dashboardConfigs` — no changes to the 14 existing dashboard definitions
-- `getDashboardsForScenario()`, `getDashboardDisplayInfo()` — no logic changes
-- All dashboard components, PDF visuals, renderer — unchanged
-- Test contract (`2-4 dashboards per scenario`) — all updated mappings stay within 2–3 range
-- New dashboard candidates (P1–P3 from audit) — deferred to separate implementation tickets
+### Technical details
+
+**Files modified**:
+- `src/pages/Index.tsx` — Add `activeCategory` state + `IntersectionObserver` logic, pass to `ScenarioPreviewPanel`
+- `src/components/scenarios/ScenarioPreviewPanel.tsx` — Add `activeCategory` prop, render category summary in default state
+- `src/components/chat/ChatWidget.tsx` — Redesign closed state to show inline input bar with suggestions
 
