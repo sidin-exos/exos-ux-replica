@@ -42,7 +42,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
                   <h3 className="font-display text-base font-semibold text-foreground">
                     {scenario.title}
                   </h3>
-                  <Badge variant="outline" className="text-xs mt-0.5">
+                  <Badge variant="outline" className="text-xs mt-0.5 border-info/30 text-info">
                     {getCategoryLabel(scenario.category)}
                   </Badge>
                 </div>
@@ -62,7 +62,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
                   <ul className="space-y-1">
                     {scenario.outputs.slice(0, 5).map((output, i) => (
                       <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                        <span className="text-highlight mt-0.5">•</span>
+                        <span className="text-copper mt-0.5">•</span>
                         {output}
                       </li>
                     ))}
@@ -87,14 +87,14 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
               className="flex flex-col gap-4"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Layers className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-iris/15 flex items-center justify-center">
+                  <Layers className="w-5 h-5 text-iris" />
                 </div>
                 <div>
                   <h3 className="font-display text-base font-semibold text-foreground">
                     {getCategoryLabel(activeCategory)}
                   </h3>
-                  <Badge variant="outline" className="text-xs mt-0.5">
+                  <Badge variant="outline" className="text-xs mt-0.5 border-info/30 text-info">
                     {categoryScenarioCount} scenario{categoryScenarioCount !== 1 ? "s" : ""}
                   </Badge>
                 </div>

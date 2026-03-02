@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/layout/Header";
 import ScenarioCard from "@/components/dashboard/ScenarioCard";
@@ -108,16 +109,22 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left: Scenarios */}
               <div className="lg:col-span-2">
-                {categoryOrder.map((category) => (
+                {categoryOrder.map((category, catIndex) => (
                   <section
                     key={category}
                     id={`category-${category}`}
                     ref={(el) => { sectionRefs.current[category] = el; }}
-                    className="mb-10"
+                    className={cn(
+                      "mb-10 rounded-xl p-5 -mx-2 transition-colors",
+                      catIndex % 2 === 1 ? "bg-surface" : ""
+                    )}
                   >
                     <div className="mb-4">
-                      <h2 className="font-display text-xl font-semibold text-foreground">
+                      <h2 className="font-display text-xl font-semibold text-foreground flex items-center gap-2">
                         {getCategoryLabel(category)}
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-iris/15 text-iris">
+                          {scenariosByCategory[category]?.length ?? 0}
+                        </span>
                       </h2>
                       <p className="text-sm text-muted-foreground">
                         {category === "analysis" && "Optimize costs, consolidate volumes, and calculate savings"}
@@ -139,6 +146,7 @@ const Index = () => {
                             description={scenario.description}
                             icon={scenario.icon}
                             status={scenario.status}
+                            category={scenario.category}
                             isActive={selectedScenario?.id === scenario.id}
                             onClick={() => handleScenarioClick(scenario.id)}
                             onMouseEnter={() => setHoveredScenario(scenario)}

@@ -1,22 +1,39 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Scenario } from "@/lib/scenarios";
 
 interface ScenarioCardProps {
   title: string;
   description: string;
   icon: LucideIcon;
   status: "available" | "coming-soon";
+  category?: Scenario["category"];
   onClick?: () => void;
   isActive?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }
 
+const CATEGORY_ICON_COLORS: Record<Scenario["category"], string> = {
+  analysis: "bg-copper/15 group-hover:bg-copper/25",
+  planning: "bg-iris/15 group-hover:bg-iris/25",
+  risk: "bg-destructive/10 group-hover:bg-destructive/20",
+  documentation: "bg-info/15 group-hover:bg-info/25",
+};
+
+const CATEGORY_ICON_TEXT: Record<Scenario["category"], string> = {
+  analysis: "text-copper",
+  planning: "text-iris",
+  risk: "text-destructive",
+  documentation: "text-info",
+};
+
 const ScenarioCard = ({
   title,
   description,
   icon: Icon,
   status,
+  category,
   onClick,
   isActive,
   onMouseEnter,
@@ -41,13 +58,19 @@ const ScenarioCard = ({
             "flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-300",
             isActive
               ? "gradient-primary"
-              : "bg-secondary group-hover:bg-primary/20"
+              : category
+                ? CATEGORY_ICON_COLORS[category]
+                : "bg-secondary group-hover:bg-primary/20"
           )}
         >
           <Icon
             className={cn(
               "w-6 h-6 transition-colors",
-              isActive ? "text-primary-foreground" : "text-primary"
+              isActive
+                ? "text-primary-foreground"
+                : category
+                  ? CATEGORY_ICON_TEXT[category]
+                  : "text-primary"
             )}
           />
         </div>
