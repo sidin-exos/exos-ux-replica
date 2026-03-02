@@ -287,13 +287,10 @@ const Index = () => {
         ) : null}
 
         {activeView === "dashboard" && (
-          <section className="text-center py-12 animate-fade-up">
-            <p className="text-muted-foreground">
-              Have a question or need help choosing a scenario?{" "}
-              <a href="/faq#contact" className="text-primary hover:underline font-medium">
-                Contact us
-              </a>
-            </p>
+          <section className="text-center py-12">
+            <a href="/faq#contact" className="text-primary hover:underline font-medium text-sm">
+              Contact us
+            </a>
           </section>
         )}
       </main>
