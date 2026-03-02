@@ -121,6 +121,15 @@ const MarketIntelligence = () => {
             <MarketInsightsAdmin />
           </TabsContent>
         </Tabs>
+
+        <section className="text-center py-12">
+          <p className="text-muted-foreground">
+            Need help with Market Intelligence?{" "}
+            <a href="/faq#contact" className="text-primary hover:underline font-medium">
+              Contact us
+            </a>
+          </p>
+        </section>
       </main>
     </div>
   );
