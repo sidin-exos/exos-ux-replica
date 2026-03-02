@@ -64,11 +64,14 @@ export function IntelScenarioSelector({ selected, onSelect }: IntelScenarioSelec
                 onClick={() => !isDisabled && onSelect(scenario.id)}
                 disabled={isDisabled}
                 className={cn(
-                  "relative p-4 rounded-lg border text-left transition-all group",
+                  "relative p-4 rounded-xl border text-left transition-all duration-300 group",
+                  "bg-card shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]",
+                  "hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5",
+                  "active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]",
                   isSelected && !isDisabled
-                    ? "border-primary bg-primary/10 ring-1 ring-primary/20"
-                    : "border-border hover:border-primary/50 hover:bg-secondary/30",
-                  isDisabled && "opacity-60 cursor-not-allowed hover:border-border hover:bg-transparent"
+                    ? "border-primary bg-primary/10 ring-1 ring-primary/20 shadow-[0_2px_0_0_hsl(var(--primary)/0.5),0_6px_20px_-4px_hsl(var(--primary)/0.15)] glow-effect"
+                    : "border-border/60",
+                  isDisabled && "opacity-60 cursor-not-allowed hover:border-border hover:bg-transparent hover:translate-y-0 hover:shadow-none"
                 )}
               >
                 {scenario.badge && (
