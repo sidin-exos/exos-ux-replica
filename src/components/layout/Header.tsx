@@ -52,81 +52,102 @@ const Header = () => {
         </NavLink>
         
         <nav className="hidden md:flex items-center gap-6">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 outline-none">
-                Scenarios & Simulations
-                <ChevronDown className="w-5 h-5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {(["analysis", "planning", "risk", "documentation"] as Scenario["category"][]).map((cat) => (
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => navigate("/")}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
+            >
+              Scenarios & Simulations
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-muted-foreground hover:text-primary transition-colors outline-none p-0.5">
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {(["analysis", "planning", "risk", "documentation"] as Scenario["category"][]).map((cat) => (
+                  <DropdownMenuItem
+                    key={cat}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/#category-${cat}`)}
+                  >
+                    {getCategoryLabel(cat)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => navigate("/market-intelligence")}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
+            >
+              Market Intelligence
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-muted-foreground hover:text-primary transition-colors outline-none p-0.5">
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
                 <DropdownMenuItem
-                  key={cat}
                   className="cursor-pointer"
-                  onClick={() => navigate(`/#category-${cat}`)}
+                  onClick={() => navigate("/market-intelligence")}
                 >
-                  {getCategoryLabel(cat)}
+                  Generate a report
                 </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 outline-none">
-                Market Intelligence
-                <ChevronDown className="w-5 h-5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => navigate("/market-intelligence")}
-              >
-                Generate a report
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => navigate("/market-intelligence?tab=queries&mode=regular")}
-              >
-                Set-up scheduled report or scenario trigger
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => navigate("/market-intelligence?tab=insights")}
-              >
-                Manage my knowledge base
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 outline-none">
-                Technology & Customer Success
-                <ChevronDown className="w-5 h-5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-72">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => navigate("/features#orchestration")}
-              >
-                Fine-Tuned AI Agentic Orchestration
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => navigate("/features#dataflow")}
-              >
-                Privacy-First Data Flow
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => navigate("/features#success")}
-              >
-                Customer Success Stories
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/market-intelligence?tab=queries&mode=regular")}
+                >
+                  Set-up scheduled report or scenario trigger
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/market-intelligence?tab=insights")}
+                >
+                  Manage my knowledge base
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => navigate("/features")}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
+            >
+              Technology & Customer Success
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-muted-foreground hover:text-primary transition-colors outline-none p-0.5">
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-72">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/features#orchestration")}
+                >
+                  Fine-Tuned AI Agentic Orchestration
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/features#dataflow")}
+                >
+                  Privacy-First Data Flow
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/features#success")}
+                >
+                  Customer Success Stories
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <NavLink 
             to="/reports" 
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
