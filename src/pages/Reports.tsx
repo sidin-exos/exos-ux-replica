@@ -142,7 +142,7 @@ const Reports = () => {
             variant="outline"
             size="sm"
             className="mt-4 gap-2 shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)] hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)] transition-all duration-300"
-            onClick={() => window.open("/samples/EXOS_Specification_Optimizer_2026-02-28.pdf", "_blank")}
+            onClick={() => { window.location.href = "/samples/EXOS_Specification_Optimizer_2026-02-28.pdf"; }}
           >
             <FileText className="h-4 w-4" />
             View Report Sample
