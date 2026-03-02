@@ -11,7 +11,8 @@ import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Sparkles, Database, Search } from "lucide-react";
+import { AlertTriangle, Sparkles, Database, Search, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const MarketIntelligence = () => {
   const [searchParams] = useSearchParams();
@@ -122,9 +123,12 @@ const MarketIntelligence = () => {
           </TabsContent>
         </Tabs>
 
-        <section className="text-center py-12">
-          <a href="/faq#contact" className="text-primary hover:underline font-medium text-sm">
-            Contact us
+        <section className="text-center py-16">
+          <a href="/faq#contact">
+            <Button size="lg" className="text-lg px-8 py-6 gap-2">
+              Get in Touch
+              <Mail className="w-5 h-5" />
+            </Button>
           </a>
         </section>
       </main>

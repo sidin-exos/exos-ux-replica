@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Quote, TrendingUp, Shield, Users, RefreshCw } from "lucide-react";
+import { ArrowLeft, Quote, TrendingUp, Shield, Users, RefreshCw, Mail } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -287,9 +287,12 @@ const Index = () => {
         ) : null}
 
         {activeView === "dashboard" && (
-          <section className="text-center py-12">
-            <a href="/faq#contact" className="text-primary hover:underline font-medium text-sm">
-              Contact us
+          <section className="text-center py-16">
+            <a href="/faq#contact">
+              <Button size="lg" className="text-lg px-8 py-6 gap-2">
+                Get in Touch
+                <Mail className="w-5 h-5" />
+              </Button>
             </a>
           </section>
         )}
