@@ -153,11 +153,14 @@ const Reports = () => {
                 <button
                   key={cat.label}
                   onClick={() => handleGuideClick(cat.dashboards)}
-                  className={`group rounded-lg border p-3 text-left transition-all hover:border-primary/50 hover:bg-primary/5 ${
-                    isActive
-                      ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30"
-                      : "border-border/50 bg-card/40"
-                  }`}
+                  className={`group rounded-xl border p-3 text-left transition-all duration-300
+                    bg-card shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]
+                    hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5
+                    active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]
+                    ${isActive
+                      ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30 shadow-[0_2px_0_0_hsl(var(--primary)/0.5),0_6px_20px_-4px_hsl(var(--primary)/0.15)] glow-effect"
+                      : "border-border/60"
+                    }`}
                 >
                   <Icon className={`h-5 w-5 mb-2 transition-colors ${
                     isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"
