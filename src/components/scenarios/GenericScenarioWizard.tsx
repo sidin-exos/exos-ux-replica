@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelineAnimation";
 import { DeepAnalysisPipeline } from "@/components/analysis/DeepAnalysisPipeline";
@@ -63,6 +63,7 @@ import {
   generateWithParameters,
 } from "@/lib/drafted-parameters";
 import { toast } from "sonner";
+import { ScenarioChatAssistant } from "./ScenarioChatAssistant";
 
 const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   const [open, setOpen] = useState(false);
@@ -124,6 +125,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // Market insights state
   const [isMarketInsightsActive, setIsMarketInsightsActive] = useState(false);
+
+  // Chat assistant state
+  const [showChatAssistant, setShowChatAssistant] = useState(false);
 
   // Deep Analysis state (LangGraph pipeline)
   const [isDeepAnalysisRunning, setIsDeepAnalysisRunning] = useState(false);
@@ -522,6 +526,43 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
             {scenario.dataRequirements && (
               <DataRequirementsCollapsible dataRequirements={scenario.dataRequirements} />
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowChatAssistant(!showChatAssistant)}
+              className="gap-2"
+            >
+              <MessageSquare className="w-4 h-4" />
+              {showChatAssistant ? "Hide chatbot" : "Use chatbot to enter data"}
+            </Button>
+
+            {showChatAssistant && (
+              <ScenarioChatAssistant
+                scenarioId={scenario.id}
+                requiredFields={scenario.requiredFields.map((f) => ({
+                  id: f.id,
+                  label: f.label,
+                  description: f.description,
+                  required: f.required,
+                  type: f.type,
+                  placeholder: f.placeholder,
+                }))}
+                dataRequirements={
+                  scenario.dataRequirements
+                    ? scenario.dataRequirements.sections
+                        .map((s) => `${s.heading}: ${s.description}`)
+                        .join("\n")
+                    : ""
+                }
+                onApply={(fields) => {
+                  setFormData((prev) => ({ ...prev, ...fields }));
+                  setShowChatAssistant(false);
+                  toast.success(`${Object.keys(fields).length} field(s) populated from chat`);
+                }}
+                onClose={() => setShowChatAssistant(false)}
+              />
             )}
 
             <div className="flex items-center justify-between">
