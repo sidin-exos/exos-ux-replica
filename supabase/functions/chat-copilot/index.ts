@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { parseBody, requireString, requireArray, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
+import {
+  BOT_IDENTITY,
+  CONVERSATION_ARCHITECTURE,
+  GDPR_PROTOCOL,
+  ESCALATION_PROTOCOL,
+  QUICK_REFERENCES,
+  buildScenarioNavBlock,
+} from "../_shared/chatbot-instructions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,9 +17,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT_BASE = `You are the EXOS Guide — a procurement strategy assistant embedded in the EXOS platform.
+// ─── SYSTEM PROMPT ──────────────────────────────────────────────────────────
 
-Your role: Help users identify which procurement scenario or tool best fits their challenge, then navigate them there.
+const SYSTEM_PROMPT_BASE = `${BOT_IDENTITY}
+
+${CONVERSATION_ARCHITECTURE}
 
 ## Available Pages
 
@@ -33,16 +43,18 @@ Preview all available dashboard visualizations (Kraljic, Risk Matrix, TCO, etc.)
 ### Pricing & FAQ (/pricing)
 Subscription tiers, pricing information, and frequently asked questions. FAQ is at /pricing#faq and contact form at /pricing#contact.
 
-## Conversation Guidelines
+## Navigation Rules
+1. **NEVER navigate on the first message.** First understand the user's specific challenge through conversation.
+2. Only use the navigate_to_scenario tool after at least 2 exchanges where the user has clearly expressed a specific need AND confirmed they want to go there.
+3. For general questions like "How to use EXOS?" — explain capabilities WITHOUT navigating. List relevant scenarios and ask what resonates.
+4. When you do navigate, prefer /reports for scenario analysis and /market-intelligence for market data.
+5. Keep responses under 150 words unless the user asks for detail.
 
-1. Be concise and action-oriented. Procurement professionals value efficiency.
-2. Ask clarifying questions to understand the user's specific challenge before recommending a scenario.
-3. **NEVER navigate on the first message.** First understand the user's specific challenge through conversation.
-4. Only use the navigate_to_scenario tool after at least 2 exchanges where the user has clearly expressed a specific need AND confirmed they want to go there.
-5. For general questions like "How to use EXOS?", "What can you do?", or "Help me get started" — explain the platform capabilities WITHOUT navigating. List the available scenarios and ask what resonates.
-6. When you do navigate, prefer /reports for scenario analysis and /market-intelligence for market data.
-7. Never fabricate procurement data or savings estimates — that's what the scenarios are for.
-8. Keep responses under 150 words unless the user asks for detail.`;
+${GDPR_PROTOCOL}
+
+${ESCALATION_PROTOCOL}
+
+${QUICK_REFERENCES}`;
 
 function buildSystemPrompt(
   currentPath: string,
@@ -51,14 +63,15 @@ function buildSystemPrompt(
   let scenarioBlock: string;
 
   if (scenarios && scenarios.length > 0) {
-    const lines = scenarios.map((s) => `- **${s.title}** (${s.id}): ${s.description}`);
-    scenarioBlock = `\n\n## Available Scenarios (${scenarios.length} total)\nAll accessible via /reports:\n${lines.join("\n")}`;
+    scenarioBlock = "\n\n" + buildScenarioNavBlock(scenarios);
   } else {
     scenarioBlock = "\n\n## Scenarios\nNo scenario catalog was provided. Direct users to /reports to browse the full list.";
   }
 
   return `${SYSTEM_PROMPT_BASE}${scenarioBlock}\n\nThe user is currently on: ${currentPath || "/"}`;
 }
+
+// ─── TOOLS ──────────────────────────────────────────────────────────────────
 
 const TOOLS = [
   {
@@ -81,6 +94,8 @@ const TOOLS = [
     },
   },
 ];
+
+// ─── HANDLER ────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
