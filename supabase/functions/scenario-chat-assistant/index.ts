@@ -10,6 +10,11 @@ import {
   ValidationError,
 } from "../_shared/validate.ts";
 import { sanitizeMessages } from "../_shared/anonymizer.ts";
+import {
+  BOT_IDENTITY,
+  GDPR_PROTOCOL,
+  buildCoachingBlock,
+} from "../_shared/chatbot-instructions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,7 +22,29 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ─── ABBREVIATED IDENTITY for scenario context (token-efficient) ────────────
+
+const SCENARIO_BOT_IDENTITY = `You are the EXOS Guide — a specialist procurement intelligence co-pilot embedded in the EXOS platform. You are helping a user fill in a scenario analysis form through conversation. You coach them to provide high-quality inputs; you do NOT fill in the form for them.
+
+Hard Boundaries:
+- Never ask for raw PII (employee names, personal emails, salary figures, HR system extracts).
+- Never provide legal, tax, or financial advice.
+- Never fabricate data or suggest specific values.
+- Never perform the analysis — that is the Sentinel Pipeline's function.
+- Frame GDPR compliance as a feature, not an obstacle.`;
+
+// ─── COACHING PROTOCOL ──────────────────────────────────────────────────────
+
+const COACHING_PROTOCOL = `## In-Scenario Coaching Protocol (4 Phases)
+PHASE 1 — Orient: Briefly explain what this scenario produces and why input quality matters. Reference the financial impact of poor input from the coaching card.
+PHASE 2 — Block-by-Block Guidance: Walk through PENDING fields in order. For each field: explain what it needs, give a concrete example in the right format, and flag the most common mistake.
+PHASE 3 — GDPR Check-In: Before the user submits, remind them of the specific privacy guardrail for this scenario (from the coaching card). Use scenario-specific guidance, not generic.
+PHASE 4 — Confidence Calibration: Let the user know if their inputs meet the Minimum Required threshold or if Enhanced Inputs are missing (LOW CONFIDENCE watermark may appear on their output).`;
+
+// ─── SYSTEM PROMPT BUILDER ──────────────────────────────────────────────────
+
 function buildSystemPrompt(
+  scenarioId: string,
   scenarioFields: { id: string; label: string; description: string; required: boolean; type: string; placeholder?: string }[],
   dataRequirements: string,
   extractedSoFar: Record<string, string>
@@ -33,15 +60,14 @@ function buildSystemPrompt(
     })
     .join("\n");
 
-  return `You are the EXOS Procurement Data Assistant. Your role is to help users fill in scenario analysis fields through conversation.
+  // Get scenario-specific coaching card
+  const coachingBlock = buildCoachingBlock(scenarioId);
 
-## Your Behavior
-- Walk through PENDING fields one at a time (or in small logical groups).
-- For each field, explain: what it means, why the analysis needs it, and where to find the data (ERP systems, finance team, supplier contracts, market reports).
-- If the user provides data, extract it and call the \`update_fields\` tool with the extracted values.
-- Be concise and professional. Never fabricate data or suggest specific values — only explain what's needed.
-- Note GDPR considerations when asking for supplier names, pricing, or contract details: remind users that data is anonymized before AI processing.
-- If a field is already filled, skip it unless the user wants to update it.
+  return `${SCENARIO_BOT_IDENTITY}
+
+${COACHING_PROTOCOL}
+
+${coachingBlock}
 
 ## Scenario Fields
 ${fieldList}
@@ -53,12 +79,17 @@ ${fieldList}
 ## Data Requirements Context
 ${dataRequirements || "No additional data requirements specified."}
 
-## Rules
-- NEVER invent numbers, names, or values.
+${GDPR_PROTOCOL}
+
+## Operational Rules
 - When the user provides information, extract it into the correct field(s) using the update_fields tool.
 - If a value is ambiguous, ask for clarification.
-- Keep responses under 200 words unless the user asks for more detail.`;
+- Keep responses under 200 words unless the user asks for more detail.
+- NEVER invent numbers, names, or values.
+- If a field is already filled, skip it unless the user wants to update it.`;
 }
+
+// ─── TOOL SCHEMA BUILDER ────────────────────────────────────────────────────
 
 function buildToolSchema(
   scenarioFields: { id: string; label: string; description: string }[]
@@ -87,6 +118,8 @@ function buildToolSchema(
     },
   ];
 }
+
+// ─── HANDLER ────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -134,7 +167,7 @@ serve(async (req) => {
     const sanitizedMessages = sanitizeMessages(messages);
 
     // Build prompt and tools
-    const systemPrompt = buildSystemPrompt(scenarioFields, dataRequirements, extractedSoFar);
+    const systemPrompt = buildSystemPrompt(scenarioId, scenarioFields, dataRequirements, extractedSoFar);
     const tools = buildToolSchema(scenarioFields);
 
     const llmMessages = [
