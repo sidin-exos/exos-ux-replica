@@ -73,7 +73,7 @@ const Header = () => {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          <div className="flex items-center gap-0.5">
+          <div className="relative flex items-center gap-0.5">
             <button
               onClick={() => navigate("/")}
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
@@ -86,7 +86,7 @@ const Header = () => {
                   <ChevronDown className="w-5 h-5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuContent align="end" className="w-56">
                 {(["analysis", "planning", "risk", "documentation"] as Scenario["category"][]).map((cat) => (
                   <DropdownMenuItem
                     key={cat}
@@ -99,7 +99,7 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="flex items-center gap-0.5">
+          <div className="relative flex items-center gap-0.5">
             <button
               onClick={() => navigate("/market-intelligence")}
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
@@ -112,7 +112,7 @@ const Header = () => {
                   <ChevronDown className="w-5 h-5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
+              <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => navigate("/market-intelligence")}
@@ -134,7 +134,7 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="flex items-center gap-0.5">
+          <div className="relative flex items-center gap-0.5">
             <button
               onClick={() => navigate("/features")}
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
@@ -147,7 +147,7 @@ const Header = () => {
                   <ChevronDown className="w-5 h-5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-72">
+              <DropdownMenuContent align="end" className="w-72">
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => navigate("/features#orchestration")}
