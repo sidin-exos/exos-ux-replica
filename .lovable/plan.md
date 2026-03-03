@@ -1,45 +1,58 @@
 
 
-## Mobile-Friendliness Audit and Plan
+## Refactor and Secure EXOS Chatbot — Implementation Plan
 
-Your analytics show nearly 50% mobile traffic (12 mobile vs 13 desktop visits). After reviewing all pages on a 390px viewport, here are the issues found and the plan to fix them.
+### 1. Database Migration: Secure `chat_feedback` table
 
-### Issues Found
+Add a `user_id` UUID column to `chat_feedback` and replace the permissive anonymous INSERT policy with an authenticated-only policy scoped to the user's own rows.
 
-**Critical: No mobile navigation**
-The header navigation (`nav`) uses `hidden md:flex`, meaning mobile users have zero way to navigate between pages. They can only reach the homepage via the logo. This is the single biggest mobile UX gap.
+```sql
+ALTER TABLE public.chat_feedback ADD COLUMN user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE;
+DROP POLICY "Anyone can submit chat feedback" ON public.chat_feedback;
+CREATE POLICY "Authenticated users can insert own feedback"
+  ON public.chat_feedback FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+```
 
-**Medium: Reports page tab overflow**
-The 14 dashboard tabs render in a wrapping flex layout that becomes very cramped on mobile. The tabs become tiny and hard to tap.
+### 2. Edge Function: `supabase/functions/chat-copilot/index.ts`
 
-**Medium: Account page header layout**
-The account info card places the avatar, user info, and Sign Out button in a horizontal `flex justify-between` that crowds on small screens.
+**Auth:** Import `authenticateRequest` from `_shared/auth.ts`. Reject unauthenticated requests with 401.
 
-**Low: Guide category descriptions hidden**
-On the Reports page, guide category descriptions use `hidden md:block`, which is fine -- mobile shows just the label and icon.
+**LangSmith:** Import `LangSmithTracer` from `_shared/langsmith.ts`. Create a parent run before the LLM call, patch it after with outputs/error.
 
-**Good news**: Index, Pricing, Features, Market Intelligence, Auth pages all render well on mobile. The `container` class, responsive grids (`grid-cols-1 md:grid-cols-X`), and text sizing (`text-3xl md:text-4xl`) are properly set up.
+**Dynamic prompt:** Remove the hardcoded 8-scenario list. Accept a `scenarios` array from the request body (`{id, title, description}[]`). Validate with `requireArray` (max 50 items). Inject into the system prompt as a formatted list grouped by category.
+
+**Fix stale routes:** Replace `### FAQ (/faq)` with `### Pricing & FAQ (/pricing)` and note that FAQ is at `/pricing#faq` and contact at `/pricing#contact`.
+
+**Payload validation:** Add `requireArray(body.scenarios, "scenarios", { optional: true, maxLength: 50 })` — optional so existing clients don't break, but the prompt will note "no scenarios provided" if missing.
+
+### 3. Frontend: `src/lib/chat-service.ts`
+
+Import `scenarios` from `@/lib/scenarios.ts`. Map to a lightweight array: `scenarios.filter(s => s.status === 'available').map(({ id, title, description }) => ({ id, title, description }))`. Include this as `scenarios` in the POST body alongside `messages` and `currentPath`.
+
+The `supabase.functions.invoke` call already passes the authenticated user's JWT automatically via the Supabase client — no change needed there.
+
+### 4. Frontend: `src/components/chat/ChatMessage.tsx`
+
+Update the `handleFeedback` function to include `user_id` when inserting into `chat_feedback`. Get the current user via `supabase.auth.getUser()` or pass it as a prop. If the user is not authenticated, disable or hide the feedback buttons.
+
+### 5. Frontend: `src/hooks/use-exos-chat.tsx`
+
+No changes needed — it already delegates to `chat-service.ts` and the Supabase client handles auth headers.
 
 ---
 
-### Implementation Plan
+### Files to edit
+| File | Change |
+|------|--------|
+| Migration SQL | Add `user_id` to `chat_feedback`, replace INSERT policy |
+| `supabase/functions/chat-copilot/index.ts` | Auth gate, LangSmith tracing, dynamic scenarios, fix routes |
+| `src/lib/chat-service.ts` | Send scenarios array in payload |
+| `src/components/chat/ChatMessage.tsx` | Pass `user_id` on feedback insert, gate on auth |
 
-#### 1. Add mobile hamburger menu to Header
-- Add a hamburger button (`Menu` icon) visible only on `md:hidden`
-- Use a `Sheet` (slide-in drawer from left or top) to render all nav links on mobile
-- Include the same navigation items: Scenarios, Market Intelligence, Technology, Dashboards, Pricing & FAQ
-- Include Sign In button or user avatar/dropdown within the sheet
-- Close sheet on navigation
-
-#### 2. Fix Reports page tabs for mobile
-- Wrap the `TabsList` in a horizontal `ScrollArea` on mobile so tabs scroll horizontally instead of wrapping into tiny pills
-- Alternatively, convert to a `Select` dropdown on mobile screens
-
-#### 3. Fix Account page header for mobile
-- Stack the avatar/info and Sign Out button vertically on small screens using `flex-col sm:flex-row`
-
-### Files to Edit
-- `src/components/layout/Header.tsx` -- add mobile menu (Sheet + hamburger)
-- `src/pages/Reports.tsx` -- improve tab list mobile UX
-- `src/pages/Account.tsx` -- stack account header on mobile
+### Constraints respected
+- No SSE/streaming
+- No conversation persistence table
+- Output signature `{ content, action? }` unchanged
+- `ChatWidget.tsx` untouched
 
