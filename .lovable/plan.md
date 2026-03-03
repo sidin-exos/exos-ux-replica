@@ -1,93 +1,95 @@
 
 
-## Scenario Data Collection Chatbot — Implementation Plan
+## Implement EXOS Chatbot System Instructions v1.0
 
-### What We're Building
+### What This Document Covers
 
-A conversational data-entry assistant that opens inline within the scenario wizard. It walks users through required fields, explains each field's purpose, sanitizes PII server-side before LLM contact, and returns structured field extractions via tool calling.
+The uploaded document is a 38-page system prompt reference for both EXOS chatbots. It defines:
 
-### Files to Create (4)
+1. **Bot Identity & Persona** — Professional procurement co-pilot, not a general assistant
+2. **Hard Boundaries** — Never ask for raw PII, never give legal/tax/financial advice, never fabricate data, never replicate the Sentinel analysis engine
+3. **Conversation Architecture** — Opening protocol, scenario discovery flow (progressive, not listing all 29), 4-phase in-scenario coaching (Orient → Block-by-Block → GDPR Check-In → Confidence Calibration)
+4. **Scenario Navigation Table** — All 29 scenarios with trigger phrases and navigation guidance
+5. **Per-Scenario Coaching Cards** (Section 4) — For each scenario: Purpose, Min Required Inputs, Enhanced Inputs, Common Failure Mode, Financial Impact of Gap, GDPR Guardrail, and specific Coaching Tips with example prompts
+6. **GDPR Compliance Protocol** (Section 5) — PII interception protocol with specific response patterns for different data types (employee names, NDA-protected rates, HR data, banking terms, M&A plans)
+7. **Escalation & Error Handling** (Section 6) — Decision tree for confused users, out-of-scope redirects, LOW CONFIDENCE handling, anonymisation pushback responses, feedback collection
+8. **Quick References** (Section 7) — 3-Block Meta-Pattern, Confidence Dependency tiers, Procurement glossary (BATNA, ZOPA, TCO, WACC, etc.)
 
-**1. `supabase/functions/_shared/anonymizer.ts`** — Lightweight PII sanitizer for Deno
+### Implementation Approach
 
-Port regex patterns from `src/lib/sentinel/anonymizer.ts` for: emails, phone numbers, IBANs, credit cards, tax IDs, company names with legal suffixes. Export a single `sanitizeMessages(messages)` function that replaces PII in `content` strings with generic tokens like `[EMAIL]`, `[PHONE]`, `[IBAN]`. No entity map or restoration — one-way masking only since the LLM response goes back to the user as-is.
+The document's intelligence needs to be injected into the **system prompts** of both edge functions. The per-scenario coaching cards should be stored as a structured data file and injected dynamically based on context.
 
-**2. `supabase/functions/scenario-chat-assistant/index.ts`** — Edge Function
+### Files to Create
 
-- **Auth**: `authenticateRequest` from `_shared/auth.ts` — reject 401
-- **Tracing**: `LangSmithTracer` with `feature: "scenario-chat-assistant"`
-- **Validation** via `_shared/validate.ts`: `messages` (max 30), `scenarioId` (string), `scenarioFields[]` (max 30 items), `dataRequirements` (string, max 10000), `extractedSoFar` (optional object)
-- **Sanitization**: Call `sanitizeMessages(messages)` before building the LLM payload
-- **System prompt**: Procurement data-gathering assistant role. Receives field metadata (id, label, description, required, type, placeholder) and dataRequirements text. Instructions: walk through unfilled fields conversationally, explain purpose, suggest data sources (ERP, finance, contracts), note GDPR considerations, never fabricate values
-- **Tool**: `update_fields` function tool with `properties` schema built dynamically from `scenarioFields[].id` — each property is `{ type: "string", description: field.label }`. Use `tool_choice: { type: "function", function: { name: "update_fields" } }` is NOT forced — let the model decide when to extract
-- **LLM call**: `google/gemini-3-flash-preview` via Lovable gateway, temperature 0.2
-- **Response parsing**: Extract `extractedFields` from tool calls, return `{ content, extractedFields? }`
-- **Error handling**: 429/402 friendly messages, same pattern as chat-copilot
+| File | Purpose |
+|------|---------|
+| `supabase/functions/_shared/chatbot-instructions.ts` | Central module exporting the full system prompt text, scenario coaching cards, GDPR protocol, and escalation logic as structured constants. Both `chat-copilot` and `scenario-chat-assistant` import from here. |
 
-Config: Do NOT add to `config.toml` — rely on default JWT verification at the API gateway level.
+### Files to Edit
 
-**3. `src/lib/scenario-chat-service.ts`** — Frontend service
+| File | Change |
+|------|--------|
+| `supabase/functions/chat-copilot/index.ts` | Replace the current `SYSTEM_PROMPT_BASE` with the full Section 1-3 identity, boundaries, conversation architecture, tone standards, scenario discovery flow, escalation protocol, and GDPR interception rules from the shared module. Inject per-scenario navigation guidance (trigger phrases + recommendations) alongside the dynamic scenario catalog. |
+| `supabase/functions/scenario-chat-assistant/index.ts` | Enhance `buildSystemPrompt` to inject the relevant scenario's coaching card (purpose, common failure mode, financial impact, GDPR guardrail, coaching tips) from the shared module. Add the 4-phase coaching protocol (Orient → Block-by-Block → GDPR Check-In → Confidence Calibration) and PII interception rules. |
+
+### Technical Details
+
+#### `_shared/chatbot-instructions.ts` Structure
 
 ```typescript
-export interface ScenarioChatMessage { role: 'user' | 'assistant'; content: string }
-export interface ScenarioChatResponse { content: string; extractedFields?: Record<string, string> }
+// Section 1: Identity, role, hard boundaries
+export const BOT_IDENTITY: string;
 
-export async function getScenarioChatResponse(
-  messages: ScenarioChatMessage[],
-  scenarioId: string,
-  scenarioFields: { id: string; label: string; description: string; required: boolean; type: string; placeholder?: string }[],
-  dataRequirements: string,
-  extractedSoFar: Record<string, string>
-): Promise<ScenarioChatResponse>
+// Section 2: Conversation architecture (opening, discovery flow, coaching protocol, tone)
+export const CONVERSATION_ARCHITECTURE: string;
+
+// Section 3: Scenario navigation table — keyed by scenario ID
+export const SCENARIO_NAV_GUIDANCE: Record<string, {
+  triggerPhrases: string;
+  navigationGuidance: string;
+}>;
+
+// Section 4: Per-scenario coaching cards — keyed by scenario ID
+export const SCENARIO_COACHING_CARDS: Record<string, {
+  purpose: string;
+  minRequired: string;
+  enhanced: string;
+  commonFailure: string;
+  financialImpact: string;
+  gdprGuardrail: string;
+  coachingTips: string;
+}>;
+
+// Section 5: GDPR compliance protocol
+export const GDPR_PROTOCOL: string;
+
+// Section 6: Escalation & error handling
+export const ESCALATION_PROTOCOL: string;
+
+// Section 7: Quick references (3-Block pattern, confidence tiers, glossary)
+export const QUICK_REFERENCES: string;
 ```
 
-Uses `supabase.functions.invoke('scenario-chat-assistant', { body })` — JWT automatic.
+#### `chat-copilot` Changes
 
-**4. `src/hooks/useScenarioChatAssistant.ts`** — React hook
+The current system prompt is ~45 lines. It will be replaced with:
+- `BOT_IDENTITY` + `CONVERSATION_ARCHITECTURE` + `GDPR_PROTOCOL` + `ESCALATION_PROTOCOL` as the base prompt
+- Dynamic scenario block now includes `SCENARIO_NAV_GUIDANCE[id].triggerPhrases` and `navigationGuidance` alongside the existing `title`/`description`
+- `QUICK_REFERENCES` appended for glossary context
 
-State: `messages: ScenarioChatMessage[]`, `extractedFields: Record<string, string>`, `isTyping: boolean`
+#### `scenario-chat-assistant` Changes
 
-Methods:
-- `sendMessage(content)` — append user msg, call service, append assistant response, merge any new `extractedFields`
-- `applyToForm()` → returns current `extractedFields`
-- `resetSession()` — clear all state
+The current `buildSystemPrompt` generically describes all fields. It will be enhanced to:
+- Look up `SCENARIO_COACHING_CARDS[scenarioId]` and inject the full card (purpose, failure mode, financial impact, GDPR guardrail, coaching tips)
+- Prepend the 4-phase coaching protocol from `CONVERSATION_ARCHITECTURE`
+- Add the PII interception table from `GDPR_PROTOCOL`
+- Add confidence calibration guidance based on scenario tier from `QUICK_REFERENCES`
 
-**5. `src/components/scenarios/ScenarioChatAssistant.tsx`** — Chat panel UI
+#### Prompt Size Consideration
 
-Inline Card component (not modal) with:
-- ScrollArea for message history (bot icon for assistant, user icon for user)
-- Input + Send button footer
-- **Field progress tracker**: Row of Badges showing each required field — green check if extracted, gray circle if pending. Shows count like "3/7 fields collected"
-- **"Apply to Form" button**: Enabled when `Object.keys(extractedFields).length > 0`. Calls `onApply(extractedFields)` prop
-- Close button to collapse
+The full document is ~15,000 words. We will NOT inject everything into every prompt. Instead:
+- `chat-copilot` gets: identity + conversation architecture + GDPR protocol + escalation + scenario nav table (condensed) — approximately 3,000 tokens
+- `scenario-chat-assistant` gets: identity (abbreviated) + coaching protocol + the ONE relevant scenario card + GDPR interception rules — approximately 1,500 tokens
 
-Props: `scenarioId`, `requiredFields`, `dataRequirements`, `onApply(fields)`, `onClose()`
-
-### File to Edit (1)
-
-**`src/components/scenarios/GenericScenarioWizard.tsx`**
-
-- Add `showChatAssistant` boolean state (line ~110 area)
-- After `DataRequirementsCollapsible` (line 524-525), add:
-  ```tsx
-  <Button variant="outline" size="sm" onClick={() => setShowChatAssistant(!showChatAssistant)} className="gap-2">
-    <MessageSquare className="w-4 h-4" />
-    Use chatbot to enter data
-  </Button>
-  ```
-- Conditionally render `<ScenarioChatAssistant>` inline below the button when toggled
-- Pass `scenario.requiredFields`, `scenario.dataRequirements` (serialized), `scenario.id`
-- `onApply` handler: `setFormData(prev => ({ ...prev, ...fields }))`, then `setShowChatAssistant(false)` and `toast.success("Fields populated from chat")`
-- Import `MessageSquare` from lucide-react, import `ScenarioChatAssistant`
-
-### Technical Decisions
-
-| Decision | Rationale |
-|----------|-----------|
-| Separate edge function from chat-copilot | Different system prompt, tool schema, and purpose — keeps both maintainable |
-| One-way PII masking (no restoration) | LLM response is conversational guidance, not data — no need to de-anonymize |
-| No `config.toml` entry | Default JWT verification at gateway level; auth.ts validates inside the function |
-| Tool calling not forced | LLM should only extract when user provides data, not on every exchange |
-| Temperature 0.2 | Precision over creativity — this is data extraction, not creative writing |
-| Client-side session only | Per constraints — no DB persistence yet |
+This keeps prompts focused and within reasonable token budgets.
 
