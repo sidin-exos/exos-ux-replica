@@ -20,6 +20,8 @@ import OrgChart from "./pages/OrgChart";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import FounderDashboard from "./pages/admin/FounderDashboard";
+import RiskPlatform from "./pages/enterprise/RiskPlatform";
+import InflationPlatform from "./pages/enterprise/InflationPlatform";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/layout/MobileBottomNav";
 const queryClient = new QueryClient();
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/account" element={<Account />} />
             <Route path="/admin/dashboard" element={<FounderDashboard />} />
+            <Route path="/enterprise/risk" element={<RiskPlatform />} />
+            <Route path="/enterprise/inflation" element={<InflationPlatform />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Settings, LogIn, User, ChevronDown, CreditCard, LogOut, HelpCircle, FileText, Database, Menu } from "lucide-react";
+import { Settings, LogIn, User, ChevronDown, CreditCard, LogOut, HelpCircle, FileText, Database, Menu, ShieldAlert, TrendingUp } from "lucide-react";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
@@ -169,6 +169,37 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          <div className="relative flex items-center gap-0.5">
+            <button
+              onClick={() => navigate("/enterprise/risk")}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
+            >
+              Enterprise
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-muted-foreground hover:text-primary transition-colors outline-none p-0.5">
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() => navigate("/enterprise/risk")}
+                >
+                  <ShieldAlert className="w-4 h-4" />
+                  Risk Assessment Platform
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() => navigate("/enterprise/inflation")}
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  Inflation Analysis Platform
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <NavLink 
             to="/reports" 
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
@@ -225,6 +256,18 @@ const Header = () => {
                   className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
                 >
                   Dashboards & Analytics
+                </button>
+                <button
+                  onClick={() => mobileNavigate("/enterprise/risk")}
+                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
+                >
+                  Enterprise: Risk Assessment
+                </button>
+                <button
+                  onClick={() => mobileNavigate("/enterprise/inflation")}
+                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
+                >
+                  Enterprise: Inflation Analysis
                 </button>
                 <button
                   onClick={() => mobileNavigate("/pricing")}

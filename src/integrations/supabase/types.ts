@@ -71,6 +71,39 @@ export type Database = {
         }
         Relationships: []
       }
+      enterprise_trackers: {
+        Row: {
+          created_at: string
+          file_references: Json
+          id: string
+          name: string
+          parameters: Json
+          status: string
+          tracker_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_references?: Json
+          id?: string
+          name: string
+          parameters?: Json
+          status?: string
+          tracker_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_references?: Json
+          id?: string
+          name?: string
+          parameters?: Json
+          status?: string
+          tracker_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       founder_metrics: {
         Row: {
           active_users: number
