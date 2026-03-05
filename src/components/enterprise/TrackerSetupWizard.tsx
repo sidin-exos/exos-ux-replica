@@ -30,12 +30,13 @@ const TrackerSetupWizard = ({
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [goods, setGoods] = useState("");
+  const [geography, setGeography] = useState("");
   const [context, setContext] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [gdprChecked, setGdprChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canProceedStep0 = name.trim().length > 0 && goods.trim().length > 0;
+  const canProceedStep0 = name.trim().length > 0 && goods.trim().length > 0 && geography.trim().length > 0;
   const canProceedStep1 = gdprChecked;
 
   const handleActivate = async () => {
@@ -45,6 +46,7 @@ const TrackerSetupWizard = ({
         name: name.trim(),
         parameters: {
           goods_services: goods.trim(),
+          geography: geography.trim(),
           additional_context: context.trim() || undefined,
         },
         files,
@@ -107,6 +109,18 @@ const TrackerSetupWizard = ({
                 rows={3}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="geography">Geography / Regions</Label>
+              <Input
+                id="geography"
+                placeholder="e.g. DACH, Nordics, EU-wide, Southeast Asia, Global"
+                value={geography}
+                onChange={(e) => setGeography(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Specify the geographic scope for market signals and regulatory monitoring.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -167,6 +181,10 @@ const TrackerSetupWizard = ({
               <div className="col-span-2">
                 <span className="text-muted-foreground">Monitoring</span>
                 <p className="font-medium text-foreground">{goods}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Geography</span>
+                <p className="font-medium text-foreground">{geography}</p>
               </div>
               {context && (
                 <div className="col-span-2">
