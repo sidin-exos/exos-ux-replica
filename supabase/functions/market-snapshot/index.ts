@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
-import { authenticateRequest } from "../_shared/auth.ts";
+import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import {
   parseBody,
   requireString,
@@ -51,6 +51,14 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: authResult.error.message }),
       { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const userOrgId = await getUserOrgId(authResult.user.userId);
+  if (!userOrgId) {
+    return new Response(
+      JSON.stringify({ error: "User has no organization" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
@@ -276,6 +284,7 @@ OUTPUT FORMAT (use these exact headings):
         model_used: "sonar-pro + gemini-3.1-flash-lite-preview",
         processing_time_ms: totalProcessingTimeMs,
         success: true,
+        organization_id: userOrgId,
       });
     }
 
@@ -325,6 +334,7 @@ OUTPUT FORMAT (use these exact headings):
           processing_time_ms: processingTimeMs,
           success: false,
           error_message: errorMessage,
+          organization_id: userOrgId,
         });
       }
     } catch (logErr) {

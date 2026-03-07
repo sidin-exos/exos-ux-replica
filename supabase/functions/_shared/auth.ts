@@ -67,3 +67,22 @@ export async function requireAdmin(userId: string): Promise<boolean> {
 
   return !!data;
 }
+
+/**
+ * Look up a user's organization_id from the profiles table.
+ * Used by edge functions that write with service_role (where auth.uid() is NULL).
+ */
+export async function getUserOrgId(userId: string): Promise<string | null> {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", userId)
+    .single();
+
+  return data?.organization_id || null;
+}

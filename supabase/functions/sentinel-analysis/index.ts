@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
-import { authenticateRequest } from "../_shared/auth.ts";
+import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import { parseBody, requireString, optionalBoolean, optionalStringOrNull, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { anonymizeText, deanonymizeText, type AnonymizationResultServer } from "../_shared/anonymizer.ts";
@@ -468,6 +468,7 @@ serve(async (req) => {
   // Soft auth: use token if available, allow anonymous access
   const authResult = await authenticateRequest(req);
   const userId = "user" in authResult ? authResult.user.userId : null;
+  const userOrgId = userId ? await getUserOrgId(userId) : null;
 
   // Declare tracer and parentRunId at function scope for error handler
   let tracer: LangSmithTracer | undefined;
@@ -671,7 +672,8 @@ serve(async (req) => {
             system_prompt: systemPrompt,
             user_prompt: userPrompt,
             grounding_context: groundingContext,
-            anonymization_metadata: anonymizationMetadata
+            anonymization_metadata: anonymizationMetadata,
+            ...(userOrgId ? { organization_id: userOrgId } : {}),
           })
           .select("id")
           .single();
@@ -741,6 +743,7 @@ serve(async (req) => {
             processing_time_ms: processingTime,
             success: true,
             validation_result: validation,
+            ...(userOrgId ? { organization_id: userOrgId } : {}),
           });
         } catch (reportError) {
           console.error("[Sentinel] Failed to log multi-cycle report:", reportError);
@@ -838,6 +841,7 @@ serve(async (req) => {
               completion_tokens: usage?.completion_tokens || 0,
               total_tokens: usage?.total_tokens || 0,
               validation_result: validation,
+              ...(userOrgId ? { organization_id: userOrgId } : {}),
             });
           } catch (reportError) {
             console.error("[Sentinel] Failed to log report:", reportError);
@@ -869,7 +873,8 @@ serve(async (req) => {
           if (enableTestLogging && supabase && promptId) {
             await supabase.from("test_reports").insert({
               prompt_id: promptId, model: googleModel, raw_response: "", processing_time_ms: processingTime,
-              success: false, error_message: "Rate limit exceeded"
+              success: false, error_message: "Rate limit exceeded",
+              ...(userOrgId ? { organization_id: userOrgId } : {}),
             });
           }
           tracer.patchRun(inferenceRunId, undefined, "Rate limit exceeded (429)");
@@ -886,7 +891,8 @@ serve(async (req) => {
           if (enableTestLogging && supabase && promptId) {
             await supabase.from("test_reports").insert({
               prompt_id: promptId, model: googleModel, raw_response: "", processing_time_ms: processingTime,
-              success: false, error_message: errorMessage
+              success: false, error_message: errorMessage,
+              ...(userOrgId ? { organization_id: userOrgId } : {}),
             });
           }
           tracer.patchRun(inferenceRunId, undefined, errorMessage);
