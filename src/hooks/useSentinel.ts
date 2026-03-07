@@ -54,8 +54,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       industry: IndustryContext | null,
       category: ProcurementCategory | null,
       config?: Partial<PipelineConfig>,
-      model: string = "google/gemini-3-flash-preview",
-      useGoogleAIStudio: boolean = false
+      model: string = "gemini-3-flash-preview"
     ): Promise<OrchestratorResponse | null> => {
       setState({
         isProcessing: true,
@@ -102,10 +101,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
             body: {
               userPrompt: context.anonymizedInput,
               serverSideGrounding: true,
-              model,
-              useLocalModel: false,
-              useGoogleAIStudio,
-              googleModel: useGoogleAIStudio ? model.replace("google/", "") : undefined,
+              googleModel: model,
               stream: false,
               scenarioType,
               scenarioData,

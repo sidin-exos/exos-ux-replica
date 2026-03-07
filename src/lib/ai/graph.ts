@@ -5,13 +5,11 @@
  * - Uses existing sentinel utilities (anonymizer, validator, deanonymizer)
  * - Routes AI inference through the sentinel-analysis edge function
  * - Implements self-correction loop for validation failures
- * - Supports both Lovable Gateway and Google AI Studio (BYOK)
+ * - Routes all inference through Google AI Studio
  * - Sends traces to LangSmith via REST API (browser-compatible)
  * - Merges server-side DB-driven validation with client-side token integrity
  */
 
-import { anonymize, DEFAULT_ANONYMIZATION_CONFIG } from '../sentinel/anonymizer';
-import { deanonymize } from '../sentinel/deanonymizer';
 import { checkTokenIntegrity, mergeValidationResults } from '../sentinel/validator';
 import type { ServerValidation } from '../sentinel/validator';
 import type { SensitiveEntity } from '../sentinel/types';
@@ -60,10 +58,9 @@ export const LATENCY_BENCHMARKS = {
 } as const;
 
 /**
- * Model configuration type for provider selection
+ * Model configuration type
  */
 export type ModelConfigType = {
-  provider: 'lovable' | 'google_ai_studio';
   model: string;
 };
 
@@ -101,18 +98,16 @@ Format your response with markdown headers for clarity.`;
 const MAX_RETRIES = 3;
 
 /**
- * Step 1: Anonymize sensitive data
+ * Step 1: Anonymization is now handled server-side in sentinel-analysis.
+ * Pass raw query through so the server can anonymize it.
  */
 function stepAnonymize(state: PipelineState): PipelineState {
-  console.log('🛡️ Pipeline: Anonymizing sensitive data...');
-  
-  const result = anonymize(state.userQuery, DEFAULT_ANONYMIZATION_CONFIG);
-  
+  console.log('Pipeline: Skipping client-side anonymization (server handles it)');
   return {
     ...state,
-    anonymizedQuery: result.anonymizedText,
-    entityMap: result.entityMap,
-    confidenceScore: result.metadata.confidence,
+    anonymizedQuery: state.userQuery,
+    entityMap: new Map(),
+    confidenceScore: 1.0,
   };
 }
 
@@ -121,18 +116,15 @@ function stepAnonymize(state: PipelineState): PipelineState {
  * Extracts server-side validation from the response when available.
  */
 async function stepReasoning(state: PipelineState): Promise<PipelineState> {
-  const { provider, model } = state.config;
-  const useGoogleAIStudio = provider === 'google_ai_studio';
+  const { model } = state.config;
 
-  console.log(`🧠 Pipeline: AI Reasoning (provider: ${provider}, model: ${model})`);
+  console.log(`🧠 Pipeline: AI Reasoning (model: ${model})`);
 
   const { data, error } = await supabase.functions.invoke('sentinel-analysis', {
     body: {
       systemPrompt: EXOS_SYSTEM_PROMPT,
       userPrompt: state.anonymizedQuery,
-      model: useGoogleAIStudio ? undefined : model,
-      useGoogleAIStudio,
-      googleModel: useGoogleAIStudio ? model : undefined,
+      googleModel: model,
       enableTestLogging: false,
       scenarioId: state.scenarioId,
     },
@@ -207,16 +199,14 @@ function stepValidate(state: PipelineState): PipelineState {
 }
 
 /**
- * Step 4: Deanonymize the final response
+ * Step 4: Deanonymization is now handled server-side.
+ * The AI response is already deanonymized by the edge function.
  */
 function stepDeanonymize(state: PipelineState): PipelineState {
-  console.log('🔓 Pipeline: Deanonymizing response...');
-
-  const result = deanonymize(state.aiResponse, state.entityMap);
-
+  console.log('Pipeline: Skipping client-side deanonymization (server already did it)');
   return {
     ...state,
-    finalAnswer: result.restoredText,
+    finalAnswer: state.aiResponse,
   };
 }
 

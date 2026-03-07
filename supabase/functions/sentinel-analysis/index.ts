@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
 import { parseBody, requireString, optionalBoolean, optionalStringOrNull, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
+import { callGoogleAI } from "../_shared/google-ai.ts";
+import { anonymizeText, deanonymizeText, type AnonymizationResultServer } from "../_shared/anonymizer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -393,73 +395,28 @@ ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n
 // ============================================
 
 /**
- * Internal helper to call an LLM provider (Google AI Studio or Lovable Gateway).
- * Encapsulates retry logic, fallback, and LangSmith tracing in one place.
- * Used for both single-pass and multi-cycle flows.
+ * Internal helper to call Google AI Studio via shared helper.
+ * Encapsulates retry logic (3 attempts with exponential backoff on 503)
+ * and LangSmith tracing. Used for both single-pass and multi-cycle flows.
  */
 async function callLLM(
   sysPrompt: string,
   usrPrompt: string,
   opts: {
-    model: string;
-    useGoogleAIStudio: boolean;
     googleModel: string;
     tracer: LangSmithTracer;
     parentRunId: string;
     spanName: string;
   }
 ): Promise<string> {
-  const { model, useGoogleAIStudio, googleModel, tracer, parentRunId, spanName } = opts;
+  const { googleModel, tracer, parentRunId, spanName } = opts;
 
   const spanId = tracer.createRun(spanName, "llm", {
-    model: useGoogleAIStudio ? googleModel : model,
-    provider: useGoogleAIStudio ? "google_ai_studio" : "lovable_gateway",
+    model: googleModel,
+    provider: "google_ai_studio",
     systemPromptLength: sysPrompt.length,
     userPromptLength: usrPrompt.length,
   }, { parentRunId });
-
-  // --- Try Google AI Studio first if BYOK ---
-  if (useGoogleAIStudio) {
-    const GOOGLE_AI_STUDIO_KEY = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
-    if (GOOGLE_AI_STUDIO_KEY) {
-      try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${googleModel}:generateContent?key=${GOOGLE_AI_STUDIO_KEY}`;
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: sysPrompt + "\n\n" + usrPrompt }] }],
-            generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          tracer.patchRun(spanId, { contentLength: content.length, provider: "google_ai_studio" });
-          return content;
-        }
-
-        const errText = await res.text();
-        console.warn(`[callLLM] Google AI Studio ${res.status} for ${spanName}, falling back to gateway`);
-        // Fall through to gateway on 429, 5xx, 400-403
-        if (!(res.status === 429 || res.status >= 500 || res.status === 400 || res.status === 401 || res.status === 403)) {
-          tracer.patchRun(spanId, undefined, `Google AI Studio ${res.status}: ${errText}`);
-          throw new Error(`Google AI Studio error ${res.status}`);
-        }
-      } catch (googleErr) {
-        console.warn(`[callLLM] Google AI Studio error for ${spanName}:`, googleErr);
-        // Fall through to Lovable Gateway
-      }
-    }
-  }
-
-  // --- Lovable AI Gateway with retry ---
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) {
-    tracer.patchRun(spanId, undefined, "LOVABLE_API_KEY not configured");
-    throw new Error("AI gateway not configured");
-  }
 
   const MAX_RETRIES = 3;
   const RETRY_DELAYS = [1000, 2000, 4000];
@@ -467,52 +424,36 @@ async function callLLM(
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       if (attempt > 0) {
+        console.warn(`[callLLM] Retry attempt ${attempt + 1}/${MAX_RETRIES} for ${spanName} after ${RETRY_DELAYS[attempt - 1]}ms`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
       }
 
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: sysPrompt },
-            { role: "user", content: usrPrompt },
-          ],
-          temperature: 0.4,
-          max_completion_tokens: 4096,
-        }),
+      const response = await callGoogleAI({
+        systemPrompt: sysPrompt,
+        contents: [{ role: "user", parts: [{ text: usrPrompt }] }],
+        temperature: 0.4,
+        maxOutputTokens: 4096,
+        model: googleModel,
       });
 
-      if (res.status === 503 && attempt < MAX_RETRIES - 1) {
-        const errText = await res.text();
-        console.warn(`[callLLM] Gateway 503 attempt ${attempt + 1} for ${spanName}: ${errText}`);
+      const content = response.text || "";
+      tracer.patchRun(spanId, { contentLength: content.length, provider: "google_ai_studio", usage: response.usageMetadata });
+      return content;
+    } catch (err) {
+      const status = (err as Error & { status?: number }).status;
+      if (status === 503 && attempt < MAX_RETRIES - 1) {
+        console.warn(`[callLLM] Google AI Studio 503 attempt ${attempt + 1} for ${spanName}`);
         continue;
       }
-
-      if (!res.ok) {
-        const errText = await res.text();
-        tracer.patchRun(spanId, undefined, `Gateway ${res.status}: ${errText}`);
-        throw new Error(`AI gateway error ${res.status}`);
-      }
-
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content || "";
-      tracer.patchRun(spanId, { contentLength: content.length, provider: "lovable_gateway", usage: data.usage });
-      return content;
-    } catch (fetchErr) {
       if (attempt === MAX_RETRIES - 1) {
-        tracer.patchRun(spanId, undefined, fetchErr instanceof Error ? fetchErr.message : "Network error");
-        throw fetchErr;
+        tracer.patchRun(spanId, undefined, err instanceof Error ? err.message : "Network error");
+        throw err;
       }
     }
   }
 
   tracer.patchRun(spanId, undefined, "All retry attempts exhausted");
-  throw new Error("AI gateway unavailable after retries");
+  throw new Error("Google AI Studio unavailable after retries");
 }
 
 // ============================================
@@ -537,19 +478,17 @@ serve(async (req) => {
 
     // Validate inputs
     const rawUserPrompt = requireString(body.userPrompt, "userPrompt", { minLength: 1, maxLength: 50000 })!;
-    const VALID_GATEWAY_MODELS = [
-      "google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite",
-      "google/gemini-3-pro-preview", "google/gemini-3-flash-preview",
-      "openai/gpt-5", "openai/gpt-5-mini", "openai/gpt-5-nano", "openai/gpt-5.2",
-    ];
-    const DEFAULT_GATEWAY_MODEL = "google/gemini-3-flash-preview";
-    const rawModel = requireString(body.model, "model", { optional: true, maxLength: 100 }) || DEFAULT_GATEWAY_MODEL;
-    const model = VALID_GATEWAY_MODELS.includes(rawModel) ? rawModel : DEFAULT_GATEWAY_MODEL;
+    // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
+    const rawGoogleModel = requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
+      || requireString(body.model, "model", { optional: true, maxLength: 100 })
+      || "gemini-3-flash-preview";
+    // Strip "google/" prefix if sent from legacy clients
+    const googleModel = rawGoogleModel.replace(/^google\//, "");
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
-    const useGoogleAIStudio = optionalBoolean(body.useGoogleAIStudio, "useGoogleAIStudio") ?? false;
-    const googleModel = requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 }) || "gemini-2.5-flash";
-    const stream = optionalBoolean(body.stream, "stream") ?? false;
+    // Accept but ignore — always use Google AI Studio
+    optionalBoolean(body.useGoogleAIStudio, "useGoogleAIStudio");
+    optionalBoolean(body.stream, "stream");
     const serverSideGrounding = optionalBoolean(body.serverSideGrounding, "serverSideGrounding") ?? false;
     const scenarioType = requireString(body.scenarioType, "scenarioType", { optional: true, maxLength: 200 });
     const scenarioData = optionalRecord(body.scenarioData, "scenarioData", 50);
@@ -561,20 +500,55 @@ serve(async (req) => {
     const scenarioId = requireString(body.scenarioId, "scenarioId", { optional: true, maxLength: 100 });
     const reqEnv = requireString(body.env, "env", { optional: true, maxLength: 50 });
 
+    // === SERVER-SIDE ANONYMIZATION (fail-closed) ===
+    let anonymizationResult: AnonymizationResultServer;
+    try {
+      anonymizationResult = anonymizeText(rawUserPrompt);
+      console.log(`[Sentinel] Anonymized: ${anonymizationResult.metadata.entitiesFound} entities found, confidence=${anonymizationResult.metadata.confidence.toFixed(2)}`);
+    } catch (anonymizationError) {
+      console.error("[Sentinel] CRITICAL: Anonymization failed, aborting to prevent PII exposure:", anonymizationError);
+      return new Response(
+        JSON.stringify({
+          error: "Anonymization failed",
+          message: "Unable to process your request safely. Please try again.",
+          stage: "anonymization",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const anonymizedUserPrompt = anonymizationResult.anonymizedText;
+
+    // Anonymize scenarioData values using the same entity map
+    let anonymizedScenarioData = scenarioData;
+    if (scenarioData && Object.keys(anonymizationResult.entityMap).length > 0) {
+      anonymizedScenarioData = {} as Record<string, unknown>;
+      for (const [key, value] of Object.entries(scenarioData)) {
+        if (typeof value === "string") {
+          let masked = value;
+          for (const [token, entity] of Object.entries(anonymizationResult.entityMap)) {
+            masked = masked.split(entity.originalValue).join(token);
+          }
+          (anonymizedScenarioData as Record<string, unknown>)[key] = masked;
+        } else {
+          (anonymizedScenarioData as Record<string, unknown>)[key] = value;
+        }
+      }
+    }
+
     // Determine if multi-cycle
     const isMultiCycle = !!scenarioId && DEEP_ANALYTICS_SCENARIOS.includes(scenarioId);
 
     // Initialize LangSmith tracer
     tracer = new LangSmithTracer({ env: reqEnv, feature: "sentinel_analysis" });
     parentRunId = tracer.createRun("sentinel-analysis", "chain", {
-      model,
+      model: googleModel,
       scenarioType: scenarioType || "unknown",
       serverSideGrounding,
       scenarioId: scenarioId || null,
       isMultiCycle,
     }, {
-      metadata: { industrySlug, categorySlug, useGoogleAIStudio, useLocalModel, isMultiCycle, cycleCount: isMultiCycle ? 3 : 1 },
-      tags: [model, ...(isMultiCycle ? ["multi-cycle", "chain-of-experts"] : [])],
+      metadata: { industrySlug, categorySlug, useLocalModel, isMultiCycle, cycleCount: isMultiCycle ? 3 : 1 },
+      tags: [googleModel, ...(isMultiCycle ? ["multi-cycle", "chain-of-experts"] : [])],
     });
 
     // Initialize Supabase client
@@ -637,15 +611,15 @@ serve(async (req) => {
       }, { parentRunId });
 
       try {
-        // Inject shadow log instruction for non-streaming test-logged requests
-        const shouldInjectShadowLog = enableTestLogging && !stream && !!scenarioType;
+        // Inject shadow log instruction for test-logged requests
+        const shouldInjectShadowLog = enableTestLogging && !!scenarioType;
 
         const grounded = buildServerGroundedPrompts(
           industryResult.data as IndustryRow | null,
           categoryResult.data as CategoryRow | null,
           scenarioType || "general",
-          scenarioData || {},
-          rawUserPrompt,
+          anonymizedScenarioData || {},
+          anonymizedUserPrompt,
           shouldInjectShadowLog,
           insightResult.data as MarketInsightRow | null
         );
@@ -662,15 +636,15 @@ serve(async (req) => {
     } else if (body.systemPrompt) {
       // Legacy path: client sent full prompts (useQuickAnalysis, ModelConfigPanel, etc.)
       systemPrompt = body.systemPrompt;
-      userPrompt = rawUserPrompt;
+      userPrompt = anonymizedUserPrompt;
       // Inject shadow log for legacy path too if conditions met
-      if (enableTestLogging && !stream && scenarioType) {
+      if (enableTestLogging && scenarioType) {
         systemPrompt += SHADOW_LOG_INSTRUCTION;
       }
     } else {
       // Fallback: no grounding, use a basic system prompt
       systemPrompt = "You are an expert procurement analyst. Provide clear, actionable recommendations.";
-      userPrompt = rawUserPrompt;
+      userPrompt = anonymizedUserPrompt;
     }
 
     // Validate required fields
@@ -691,7 +665,7 @@ serve(async (req) => {
           .from("test_prompts")
           .insert({
             scenario_type: scenarioType,
-            scenario_data: scenarioData || {},
+            scenario_data: anonymizedScenarioData || {},
             industry_slug: industrySlug,
             category_slug: categorySlug,
             system_prompt: systemPrompt,
@@ -729,7 +703,7 @@ serve(async (req) => {
     if (isMultiCycle) {
       console.log(`[Sentinel] Multi-cycle Chain-of-Experts for scenario: ${scenarioId}`);
 
-      const llmOpts = { model, useGoogleAIStudio, googleModel, tracer, parentRunId: parentRunId!, spanName: "" };
+      const llmOpts = { googleModel, tracer, parentRunId: parentRunId!, spanName: "" };
 
       // Cycle 1: Analyst Draft
       const draft = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
@@ -747,16 +721,22 @@ serve(async (req) => {
 
       const processingTime = Math.round(performance.now() - startTime);
 
-      // Run server-side validation
+      // Run server-side validation on anonymized response
       const validation = await runServerValidation(finalContent, scenarioId, supabase);
       console.log(`[Sentinel] Multi-cycle validation: passed=${validation.passed}, confidence=${validation.confidenceScore}, issues=${validation.issues.length}`);
 
-      // Log final result (only final — drafts/critiques stay server-side)
+      // Deanonymize the final response for the client
+      const multiDeanon = deanonymizeText(finalContent, anonymizationResult.entityMap);
+      if (multiDeanon.metadata.unmappedTokens.length > 0) {
+        console.warn("[Sentinel] Multi-cycle unmapped tokens:", multiDeanon.metadata.unmappedTokens);
+      }
+
+      // Log final result with ANONYMIZED content for privacy
       if (enableTestLogging && supabase && promptId) {
         try {
           await supabase.from("test_reports").insert({
             prompt_id: promptId,
-            model: useGoogleAIStudio ? googleModel : model,
+            model: googleModel,
             raw_response: finalContent,
             processing_time_ms: processingTime,
             success: true,
@@ -773,17 +753,17 @@ serve(async (req) => {
         cycleCount: 3,
         contentLength: finalContent.length,
         processingTimeMs: processingTime,
-        source: useGoogleAIStudio ? "google_ai_studio" : "cloud",
+        source: "google_ai_studio",
         validationPassed: validation.passed,
         validationConfidence: validation.confidenceScore,
       });
 
       return new Response(
         JSON.stringify({
-          content: finalContent,
+          content: multiDeanon.restoredText,
           validation,
-          model: useGoogleAIStudio ? googleModel : model,
-          source: useGoogleAIStudio ? "google_ai_studio" : "cloud",
+          model: googleModel,
+          source: "google_ai_studio",
           promptId,
           processingTimeMs: processingTime,
           isMultiCycle: true,
@@ -796,304 +776,133 @@ serve(async (req) => {
     // SINGLE-PASS INFERENCE (Standard scenarios)
     // ============================================
 
-    // --- Child Run 3: ai-inference (wraps all AI provider attempts) ---
-    const inferenceRunId = tracer.createRun("ai-inference", "chain", {
-      model, useGoogleAIStudio, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
+    // --- Child Run 3: ai-inference ---
+    const inferenceRunId = tracer.createRun("ai-inference", "llm", {
+      model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
     }, { parentRunId });
-
-    // Route to Google AI Studio (BYOK mode)
-    if (useGoogleAIStudio) {
-      const GOOGLE_AI_STUDIO_KEY = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
-
-      if (!GOOGLE_AI_STUDIO_KEY) {
-        console.error("[Sentinel] GOOGLE_AI_STUDIO_KEY not configured, falling back to Lovable AI");
-        // Fall through to Lovable AI Gateway
-      } else {
-        const googleEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${googleModel}:generateContent?key=${GOOGLE_AI_STUDIO_KEY}`;
-
-        const googleAttemptId = tracer.createRun("ai-attempt-1", "llm", {
-          model: googleModel, provider: "google_ai_studio", attempt: 1,
-        }, { parentRunId: inferenceRunId });
-
-        try {
-          const googleResponse = await fetch(googleEndpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
-              ],
-              generationConfig: {
-                temperature: 0.4,
-                maxOutputTokens: 4096,
-              },
-            }),
-          });
-
-          const processingTime = Math.round(performance.now() - startTime);
-
-          if (!googleResponse.ok) {
-            const errorText = await googleResponse.text();
-            console.error(`[Sentinel] Google AI Studio error: ${googleResponse.status}`, errorText);
-
-            tracer.patchRun(googleAttemptId, undefined, `Google AI Studio ${googleResponse.status}`);
-
-            if (enableTestLogging && supabase && promptId) {
-              await supabase.from("test_reports").insert({
-                prompt_id: promptId,
-                model: googleModel,
-                raw_response: errorText,
-                processing_time_ms: processingTime,
-                success: false,
-                error_message: `Google AI Studio error: ${googleResponse.status}`
-              });
-            }
-
-            // Fallback to Lovable AI Gateway on rate limit, server errors, OR auth/key errors (400/401/403)
-            if (googleResponse.status === 429 || googleResponse.status >= 500 || googleResponse.status === 400 || googleResponse.status === 401 || googleResponse.status === 403) {
-              console.warn(`[Sentinel] Google AI Studio ${googleResponse.status}, falling back to Lovable AI Gateway`);
-              throw new Error(`Google AI Studio ${googleResponse.status}: fallback to gateway`);
-            }
-
-            tracer.patchRun(inferenceRunId, { success: false, source: "google_ai_studio" }, `Google AI Studio ${googleResponse.status}`);
-            tracer.patchRun(parentRunId, { success: false, source: "google_ai_studio" }, `Google AI Studio ${googleResponse.status}`);
-
-            return new Response(
-              JSON.stringify({ error: "Google AI Studio error", details: errorText }),
-              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-
-          const googleData = await googleResponse.json();
-          const rawContent = googleData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-          // Extract and strip shadow_log from response
-          const { cleanContent: content, shadowLog } = extractShadowLog(rawContent);
-          if (shadowLog) {
-            console.log("[Sentinel] Shadow log extracted (Google):", JSON.stringify(shadowLog));
-          }
-
-          const usage = googleData.usageMetadata ? {
-            prompt_tokens: googleData.usageMetadata.promptTokenCount || 0,
-            completion_tokens: googleData.usageMetadata.candidatesTokenCount || 0,
-            total_tokens: googleData.usageMetadata.totalTokenCount || 0,
-          } : null;
-
-          // Run server-side validation
-          const validation = await runServerValidation(content, scenarioType, supabase);
-
-          // Log successful response with shadow_log + validation
-          if (enableTestLogging && supabase && promptId) {
-            try {
-              await supabase.from("test_reports").insert({
-                prompt_id: promptId,
-                model: googleModel,
-                raw_response: content,
-                processing_time_ms: processingTime,
-                token_usage: usage,
-                success: true,
-                shadow_log: shadowLog,
-                prompt_tokens: usage?.prompt_tokens || 0,
-                completion_tokens: usage?.completion_tokens || 0,
-                total_tokens: usage?.total_tokens || 0,
-                validation_result: validation,
-              });
-            } catch (reportError) {
-              console.error("[Sentinel] Failed to log report:", reportError);
-            }
-          }
-
-          tracer.patchRun(googleAttemptId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog });
-          tracer.patchRun(inferenceRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
-          tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
-
-          return new Response(
-            JSON.stringify({
-              content, validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        } catch (googleError) {
-          console.error("[Sentinel] Google AI Studio fetch error:", googleError);
-          tracer.patchRun(googleAttemptId, undefined, googleError instanceof Error ? googleError.message : "Google AI Studio error");
-          // Fall through to Lovable AI Gateway
-        }
-      }
-    }
-
-    // Call Lovable AI Gateway with retry logic
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("[Sentinel] LOVABLE_API_KEY not configured");
-      tracer.patchRun(inferenceRunId, undefined, "LOVABLE_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "AI gateway not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const MAX_RETRIES = 3;
     const RETRY_DELAYS = [1000, 2000, 4000];
-    let aiResponse: Response | null = null;
-    let lastError: string | null = null;
-    // Track attempt offset: if Google was attempt 1, gateway starts at 2
-    const attemptOffset = useGoogleAIStudio ? 1 : 0;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const attemptRunId = tracer.createRun(`ai-attempt-${attempt + 1 + attemptOffset}`, "llm", {
-        model, provider: "lovable_gateway", attempt: attempt + 1 + attemptOffset,
-      }, { parentRunId: inferenceRunId });
-
       try {
         if (attempt > 0) {
           console.warn(`[Sentinel] Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms`);
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
         }
 
-        aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt }
-            ],
-            temperature: 0.4,
-            max_completion_tokens: 4096,
-            stream
-          }),
+        const aiResponse = await callGoogleAI({
+          systemPrompt,
+          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          temperature: 0.4,
+          maxOutputTokens: 4096,
+          model: googleModel,
         });
 
-        if (aiResponse.status === 503) {
-          lastError = await aiResponse.text();
-          console.warn(`[Sentinel] Got 503 on attempt ${attempt + 1}: ${lastError}`);
-          tracer.patchRun(attemptRunId, undefined, `503: ${lastError}`);
-          if (attempt < MAX_RETRIES - 1) continue;
-        } else {
-          // Success or non-retryable error — patch this attempt as done
-          tracer.patchRun(attemptRunId, { status: aiResponse.status });
+        const processingTime = Math.round(performance.now() - startTime);
+        const rawContent = aiResponse.text || "";
+
+        // Extract and strip shadow_log from response
+        const { cleanContent: content, shadowLog } = extractShadowLog(rawContent);
+        if (shadowLog) {
+          console.log("[Sentinel] Shadow log extracted:", JSON.stringify(shadowLog));
         }
 
-        break;
-      } catch (fetchError) {
-        lastError = fetchError instanceof Error ? fetchError.message : "Network error";
-        console.warn(`[Sentinel] Fetch error on attempt ${attempt + 1}: ${lastError}`);
-        tracer.patchRun(attemptRunId, undefined, lastError);
-        if (attempt === MAX_RETRIES - 1) {
-          tracer.patchRun(inferenceRunId, undefined, `All ${MAX_RETRIES} attempts failed: ${lastError}`);
+        const usage = aiResponse.usageMetadata ? {
+          prompt_tokens: aiResponse.usageMetadata.promptTokenCount || 0,
+          completion_tokens: aiResponse.usageMetadata.candidatesTokenCount || 0,
+          total_tokens: aiResponse.usageMetadata.totalTokenCount || 0,
+        } : null;
+
+        // Run server-side validation on anonymized response
+        const validation = await runServerValidation(content, scenarioType, supabase);
+
+        // Deanonymize the response for the client
+        const singleDeanon = deanonymizeText(content, anonymizationResult.entityMap);
+        if (singleDeanon.metadata.unmappedTokens.length > 0) {
+          console.warn("[Sentinel] Single-pass unmapped tokens:", singleDeanon.metadata.unmappedTokens);
+        }
+
+        // Log successful response with ANONYMIZED content for privacy
+        if (enableTestLogging && supabase && promptId) {
+          try {
+            await supabase.from("test_reports").insert({
+              prompt_id: promptId,
+              model: googleModel,
+              raw_response: content,
+              processing_time_ms: processingTime,
+              token_usage: usage,
+              success: true,
+              shadow_log: shadowLog,
+              prompt_tokens: usage?.prompt_tokens || 0,
+              completion_tokens: usage?.completion_tokens || 0,
+              total_tokens: usage?.total_tokens || 0,
+              validation_result: validation,
+            });
+          } catch (reportError) {
+            console.error("[Sentinel] Failed to log report:", reportError);
+          }
+        }
+
+        tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog });
+        tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
+
+        return new Response(
+          JSON.stringify({
+            content: singleDeanon.restoredText, validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (aiError) {
+        const status = (aiError as Error & { status?: number }).status;
+        const processingTime = Math.round(performance.now() - startTime);
+
+        // Retry on 503
+        if (status === 503 && attempt < MAX_RETRIES - 1) {
+          console.warn(`[Sentinel] Google AI Studio 503 on attempt ${attempt + 1}`);
+          continue;
+        }
+
+        // Rate limit
+        if (status === 429) {
+          console.warn("[Sentinel] Rate limit exceeded");
+          if (enableTestLogging && supabase && promptId) {
+            await supabase.from("test_reports").insert({
+              prompt_id: promptId, model: googleModel, raw_response: "", processing_time_ms: processingTime,
+              success: false, error_message: "Rate limit exceeded"
+            });
+          }
+          tracer.patchRun(inferenceRunId, undefined, "Rate limit exceeded (429)");
           return new Response(
-            JSON.stringify({ error: "AI gateway connection failed after retries", details: lastError }),
-            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Final attempt exhausted or non-retryable error
+        if (attempt === MAX_RETRIES - 1) {
+          const errorMessage = aiError instanceof Error ? aiError.message : "AI error";
+          console.error("[Sentinel] AI error after retries:", errorMessage);
+          if (enableTestLogging && supabase && promptId) {
+            await supabase.from("test_reports").insert({
+              prompt_id: promptId, model: googleModel, raw_response: "", processing_time_ms: processingTime,
+              success: false, error_message: errorMessage
+            });
+          }
+          tracer.patchRun(inferenceRunId, undefined, errorMessage);
+          return new Response(
+            JSON.stringify({ error: "AI service error", details: errorMessage }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
       }
     }
 
-    if (!aiResponse) {
-      tracer.patchRun(inferenceRunId, undefined, `AI gateway unavailable: ${lastError}`);
-      return new Response(
-        JSON.stringify({ error: "AI gateway unavailable", details: lastError }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const processingTime = Math.round(performance.now() - startTime);
-
-    if (aiResponse.status === 429) {
-      console.warn("[Sentinel] Rate limit exceeded");
-      if (enableTestLogging && supabase && promptId) {
-        await supabase.from("test_reports").insert({
-          prompt_id: promptId, model, raw_response: "", processing_time_ms: processingTime,
-          success: false, error_message: "Rate limit exceeded"
-        });
-      }
-      tracer.patchRun(inferenceRunId, undefined, "Rate limit exceeded (429)");
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (aiResponse.status === 402) {
-      console.warn("[Sentinel] Payment required");
-      if (enableTestLogging && supabase && promptId) {
-        await supabase.from("test_reports").insert({
-          prompt_id: promptId, model, raw_response: "", processing_time_ms: processingTime,
-          success: false, error_message: "Payment required"
-        });
-      }
-      tracer.patchRun(inferenceRunId, undefined, "Payment required (402)");
-      return new Response(
-        JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }),
-        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error(`[Sentinel] AI gateway error: ${aiResponse.status}`, errorText);
-      if (enableTestLogging && supabase && promptId) {
-        await supabase.from("test_reports").insert({
-          prompt_id: promptId, model, raw_response: errorText, processing_time_ms: processingTime,
-          success: false, error_message: `AI gateway error: ${aiResponse.status}`
-        });
-      }
-      tracer.patchRun(inferenceRunId, undefined, `AI gateway error: ${aiResponse.status}`);
-      return new Response(
-        JSON.stringify({ error: "AI gateway error", details: errorText }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (stream) {
-      tracer.patchRun(inferenceRunId, { success: true, source: "cloud", streaming: true });
-      tracer.patchRun(parentRunId, { success: true, source: "cloud", streaming: true });
-      return new Response(aiResponse.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
-    }
-
-    const data = await aiResponse.json();
-    const rawContent = data.choices?.[0]?.message?.content || "";
-
-    // Extract and strip shadow_log from response
-    const { cleanContent: content, shadowLog } = extractShadowLog(rawContent);
-    if (shadowLog) {
-      console.log("[Sentinel] Shadow log extracted (Gateway):", JSON.stringify(shadowLog));
-    }
-
-    // Run server-side validation
-    const validation = await runServerValidation(content, scenarioType, supabase);
-
-    // Log successful response with shadow_log + validation
-    if (enableTestLogging && supabase && promptId) {
-      try {
-        await supabase.from("test_reports").insert({
-          prompt_id: promptId, model, raw_response: content,
-          processing_time_ms: processingTime, token_usage: data.usage || null, success: true,
-          shadow_log: shadowLog,
-          prompt_tokens: data.usage?.prompt_tokens || 0,
-          completion_tokens: data.usage?.completion_tokens || 0,
-          total_tokens: data.usage?.total_tokens || 0,
-          validation_result: validation,
-        });
-      } catch (reportError) {
-        console.error("[Sentinel] Failed to log report:", reportError);
-      }
-    }
-
-    tracer.patchRun(inferenceRunId, { success: true, contentLength: content.length, usage: data.usage, source: "cloud", processingTimeMs: processingTime, hasShadowLog: !!shadowLog });
-    tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "cloud", processingTimeMs: processingTime });
-
+    // Should not reach here, but safety fallback
+    tracer.patchRun(inferenceRunId, undefined, "All retry attempts exhausted");
     return new Response(
-      JSON.stringify({
-        content, validation, model, source: "cloud", usage: data.usage, promptId, processingTimeMs: processingTime
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "AI service unavailable after retries" }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {

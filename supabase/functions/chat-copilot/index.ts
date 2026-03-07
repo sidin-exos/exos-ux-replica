@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { parseBody, requireString, requireArray, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { callGoogleAI, convertOpenAITools } from "../_shared/google-ai.ts";
 import {
   BOT_IDENTITY,
   CONVERSATION_ARCHITECTURE,
@@ -119,11 +120,6 @@ serve(async (req) => {
   const tracer = new LangSmithTracer({ env: "production", feature: "chat-copilot" });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
     const body = await parseBody(req);
 
     const messages = requireArray(body.messages, "messages", { maxLength: 50 })!;
@@ -162,28 +158,48 @@ serve(async (req) => {
       scenarioCount: parsedScenarios?.length || 0,
     }, { tags: ["chat"] });
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-          ],
-          tools: TOOLS,
-          temperature: 0.4,
-        }),
-      }
-    );
+    // Convert messages to Google format (frontend sends user/assistant roles)
+    const typedMessages = messages as Array<{ role: string; content: string }>;
+    const googleContents = typedMessages.map(m => ({
+      role: (m.role === "assistant" ? "model" : "user") as "user" | "model",
+      parts: [{ text: m.content }],
+    }));
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    try {
+      const aiResponse = await callGoogleAI({
+        systemPrompt,
+        contents: googleContents,
+        temperature: 0.4,
+        tools: convertOpenAITools(TOOLS),
+      });
+
+      let content = aiResponse.text || "";
+      let action: { type: string; payload: string } | undefined;
+
+      if (aiResponse.functionCall?.name === "navigate_to_scenario") {
+        const args = aiResponse.functionCall.args;
+        if (args.path) {
+          action = { type: "NAVIGATE", payload: args.path as string };
+        }
+      }
+
+      if (!content && action) {
+        content = "Let me take you there.";
+      }
+
+      // Patch LangSmith with success
+      tracer.patchRun(parentRunId, {
+        content,
+        hasAction: !!action,
+        actionPath: action?.payload,
+      });
+
+      return new Response(JSON.stringify({ content, action }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (aiError) {
+      const status = (aiError as Error & { status?: number }).status;
+      if (status === 429) {
         tracer.patchRun(parentRunId, undefined, "rate_limited");
         return new Response(
           JSON.stringify({
@@ -195,65 +211,9 @@ serve(async (req) => {
           }
         );
       }
-      if (response.status === 402) {
-        tracer.patchRun(parentRunId, undefined, "credits_exhausted");
-        return new Response(
-          JSON.stringify({
-            content: "AI usage credits have been exhausted. Please contact the administrator.",
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      tracer.patchRun(parentRunId, undefined, `AI gateway error: ${response.status}`);
-      throw new Error(`AI gateway error: ${response.status}`);
+      tracer.patchRun(parentRunId, undefined, aiError instanceof Error ? aiError.message : "AI error");
+      throw aiError;
     }
-
-    const data = await response.json();
-    const choice = data.choices?.[0];
-
-    if (!choice) {
-      tracer.patchRun(parentRunId, undefined, "No response from AI model");
-      throw new Error("No response from AI model");
-    }
-
-    let content = choice.message?.content || "";
-    let action: { type: string; payload: string } | undefined;
-
-    const toolCalls = choice.message?.tool_calls;
-    if (toolCalls && toolCalls.length > 0) {
-      for (const tc of toolCalls) {
-        if (tc.function?.name === "navigate_to_scenario") {
-          try {
-            const args = JSON.parse(tc.function.arguments);
-            if (args.path) {
-              action = { type: "NAVIGATE", payload: args.path };
-            }
-          } catch (e) {
-            console.error("Failed to parse tool call arguments:", e);
-          }
-        }
-      }
-    }
-
-    if (!content && action) {
-      content = "Let me take you there.";
-    }
-
-    // Patch LangSmith with success
-    tracer.patchRun(parentRunId, {
-      content,
-      hasAction: !!action,
-      actionPath: action?.payload,
-    });
-
-    return new Response(JSON.stringify({ content, action }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (error) {
     if (error instanceof ValidationError) {
       return validationErrorResponse(error.message);

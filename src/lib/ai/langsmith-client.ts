@@ -15,7 +15,7 @@
 // Server-side tracing is handled in supabase/functions/_shared/langsmith.ts
 const TRACING_ENABLED = false;
 const API_KEY = "";
-const PROJECT = import.meta.env.VITE_LANGCHAIN_PROJECT || "default";
+const PROJECT = "default";
 const ENDPOINT = "";
 
 // ============================================================================

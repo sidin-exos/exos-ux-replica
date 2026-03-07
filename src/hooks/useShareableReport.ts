@@ -58,10 +58,9 @@ export function useShareableReport(): ShareableReportReturn {
 
         setShareId(id);
 
-        // IMPORTANT: Use the current origin so the share link points to the same
-        // environment that stored the payload (preview vs published are separate).
-        // On the published site this is still public (no Lovable auth gate).
-        const origin = typeof window !== "undefined" ? window.location.origin : "https://optimal-buy.lovable.app";
+        // Use the current origin so the share link points to the same
+        // environment that stored the payload.
+        const origin = typeof window !== "undefined" ? window.location.origin : "https://localhost:8080";
         const shareUrl = `${origin}/report?share=${id}`;
 
         return shareUrl;

@@ -250,8 +250,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   const canProceed = missingRequired.length === 0;
 
-  // Get model config from context for BYOK support
-  const { provider: configProvider, model: configModel } = useModelConfig();
+  // Get model config from settings context
+  const { model: configModel } = useModelConfig();
 
   const handleAnalyze = async () => {
     setStep("analyzing");
@@ -285,10 +285,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     }
 
     // --- Standard Sentinel pipeline for all other scenarios ---
-    // Determine if we should use Google AI Studio (BYOK)
-    const useGoogleAIStudio = configProvider === "google_ai_studio";
-    const effectiveModel = useGoogleAIStudio ? configModel : selectedModel;
-    
+    // Use the model from settings context (all inference goes through Google AI Studio)
+    const effectiveModel = configModel;
+
     // Include strategy and market insights in form data for AI grounding
     const enrichedData = {
       ...formData,
@@ -311,8 +310,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       industryContext || null,
       categoryContext || null,
       undefined, // config
-      effectiveModel, // pass the effective model (from config or selector)
-      useGoogleAIStudio // pass the BYOK flag
+      effectiveModel // pass the model from settings
     );
 
     if (result?.success) {
@@ -351,7 +349,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         .join('\n');
 
       const graphConfig: ModelConfigType = {
-        provider: configProvider,
         model: configModel,
       };
 

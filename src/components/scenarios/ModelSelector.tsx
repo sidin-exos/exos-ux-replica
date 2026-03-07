@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Cpu, Zap, Brain, Sparkles } from "lucide-react";
+import { ChevronDown, Zap, Brain, Sparkles } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,13 +14,12 @@ import {
 } from "@/components/ui/collapsible";
 import { useShareableMode } from "@/hooks/useShareableMode";
 
-export type AIModel = 
-  | "google/gemini-3-flash-preview"
-  | "google/gemini-3-pro-preview"
-  | "google/gemini-2.5-flash"
-  | "google/gemini-2.5-pro"
-  | "openai/gpt-5-mini"
-  | "openai/gpt-5";
+export type AIModel =
+  | "gemini-3-flash-preview"
+  | "gemini-3-pro-preview"
+  | "gemini-3.1-flash-lite-preview"
+  | "gemini-2.5-flash"
+  | "gemini-2.5-pro";
 
 interface ModelOption {
   value: AIModel;
@@ -32,46 +31,39 @@ interface ModelOption {
 
 const modelOptions: ModelOption[] = [
   {
-    value: "google/gemini-3-flash-preview",
+    value: "gemini-3-flash-preview",
     label: "Gemini 3 Flash",
-    description: "Fast & efficient. Best for quick analysis.",
+    description: "Fast & balanced (default).",
     icon: <Zap className="w-4 h-4 text-yellow-500" />,
     tier: "fast",
   },
   {
-    value: "google/gemini-2.5-flash",
-    label: "Gemini 2.5 Flash",
-    description: "Balanced speed and capability.",
-    icon: <Zap className="w-4 h-4 text-blue-500" />,
-    tier: "fast",
-  },
-  {
-    value: "google/gemini-3-pro-preview",
+    value: "gemini-3-pro-preview",
     label: "Gemini 3 Pro",
-    description: "Next-gen reasoning for complex scenarios.",
+    description: "Highest quality reasoning.",
     icon: <Brain className="w-4 h-4 text-purple-500" />,
     tier: "premium",
   },
   {
-    value: "google/gemini-2.5-pro",
+    value: "gemini-3.1-flash-lite-preview",
+    label: "Gemini 3.1 Flash Lite",
+    description: "Fast & cost-efficient.",
+    icon: <Zap className="w-4 h-4 text-green-500" />,
+    tier: "fast",
+  },
+  {
+    value: "gemini-2.5-pro",
     label: "Gemini 2.5 Pro",
-    description: "Top-tier for complex reasoning & big context.",
+    description: "Previous-gen powerhouse.",
     icon: <Brain className="w-4 h-4 text-indigo-500" />,
     tier: "premium",
   },
   {
-    value: "openai/gpt-5-mini",
-    label: "GPT-5 Mini",
-    description: "Strong performance, lower cost than full GPT-5.",
-    icon: <Sparkles className="w-4 h-4 text-green-500" />,
+    value: "gemini-2.5-flash",
+    label: "Gemini 2.5 Flash",
+    description: "Previous-gen balanced.",
+    icon: <Sparkles className="w-4 h-4 text-blue-500" />,
     tier: "balanced",
-  },
-  {
-    value: "openai/gpt-5",
-    label: "GPT-5",
-    description: "Most powerful. Best for critical analysis.",
-    icon: <Cpu className="w-4 h-4 text-rose-500" />,
-    tier: "premium",
   },
 ];
 
@@ -80,7 +72,7 @@ interface ModelSelectorProps {
   onChange: (model: AIModel) => void;
 }
 
-export const DEFAULT_MODEL: AIModel = "google/gemini-3-flash-preview";
+export const DEFAULT_MODEL: AIModel = "gemini-3-flash-preview";
 
 export function ModelSelector({ value, onChange }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);

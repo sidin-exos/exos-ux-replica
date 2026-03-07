@@ -9,6 +9,7 @@ import {
   validationErrorResponse,
   ValidationError,
 } from "../_shared/validate.ts";
+import { callGoogleAI } from "../_shared/google-ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,9 +59,6 @@ serve(async (req) => {
     const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
     if (!PERPLEXITY_API_KEY) throw new Error("PERPLEXITY_API_KEY is not configured");
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     // --- Parse & validate input ---
     const body = await parseBody(req);
 
@@ -76,7 +74,7 @@ serve(async (req) => {
     const parentRunId = tracer.createRun("market-snapshot", "chain", {
       region, analysisScopeLength: analysisScope.length, timeframe,
       hasSuccessCriteria: !!successCriteria, hasIndustryContext: !!industryContext,
-    }, { tags: ["model:sonar-pro", "model:lovable-ai"] });
+    }, { tags: ["model:sonar-pro", "model:gemini-3.1-flash-lite-preview"] });
 
     // =====================================================
     // PHASE 1: Market Research (Perplexity Sonar Pro)
@@ -172,7 +170,7 @@ IMPORTANT: Cite your sources inline using [1], [2], etc. Be specific about data 
     // =====================================================
     const phase2Start = Date.now();
     const phase2RunId = tracer.createRun("phase2-quality-gate", "llm", {
-      model: "google/gemini-2.5-flash", hasUserCriteria: !!successCriteria,
+      model: "gemini-3.1-flash-lite-preview", hasUserCriteria: !!successCriteria,
     }, { parentRunId });
 
     const qualityGatePrompt = `You are a quality assurance analyst for market intelligence reports. Your job is to benchmark a research output against success criteria and identify gaps.
@@ -221,41 +219,28 @@ OUTPUT FORMAT (use these exact headings):
 - [Source 1]: [URL or name] — [What gap it fills]
 - [Source 2]: ...`;
 
-    const qualityResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "user", content: qualityGatePrompt },
-        ],
-        temperature: 0.2,
-      }),
-    });
-
     let qualityGateOutput = "";
     let completenessScore = 0;
 
-    if (qualityResponse.ok) {
-      const qualityData = await qualityResponse.json();
-      qualityGateOutput = qualityData.choices?.[0]?.message?.content || "";
+    try {
+      const qualityResponse = await callGoogleAI({
+        contents: [{ role: "user", parts: [{ text: qualityGatePrompt }] }],
+        temperature: 0.2,
+        model: "gemini-3.1-flash-lite-preview",
+      });
 
-      // Extract completeness score from output
+      qualityGateOutput = qualityResponse.text || "";
+
       const scoreMatch = qualityGateOutput.match(/Overall Completeness Score:\s*(\d+)/i);
       if (scoreMatch) {
         completenessScore = parseInt(scoreMatch[1], 10);
       }
-    } else {
-      const errText = await qualityResponse.text();
-      console.error("[Phase 2] Quality gate error:", qualityResponse.status, errText);
-      
-      if (qualityResponse.status === 429) {
+    } catch (qualityError) {
+      const status = (qualityError as Error & { status?: number }).status;
+      console.error("[Phase 2] Quality gate error:", status, qualityError);
+
+      if (status === 429) {
         qualityGateOutput = "## Quality Gate Unavailable\nRate limit reached. The market research above is complete but could not be benchmarked against success criteria. Please retry later.";
-      } else if (qualityResponse.status === 402) {
-        qualityGateOutput = "## Quality Gate Unavailable\nAI credits exhausted. The market research above is complete but could not be benchmarked.";
       } else {
         qualityGateOutput = "## Quality Gate Unavailable\nThe quality assessment could not be completed. The market research above is still valid.";
       }
@@ -288,7 +273,7 @@ OUTPUT FORMAT (use these exact headings):
         summary: combinedResult.slice(0, 10000), // DB column limit safety
         citations,
         raw_response: { perplexity: perplexityData, completenessScore },
-        model_used: "sonar-pro + gemini-2.5-flash",
+        model_used: "sonar-pro + gemini-3.1-flash-lite-preview",
         processing_time_ms: totalProcessingTimeMs,
         success: true,
       });
@@ -308,7 +293,7 @@ OUTPUT FORMAT (use these exact headings):
         citations,
         completenessScore,
         processingTimeMs: totalProcessingTimeMs,
-        model: "sonar-pro + gemini-2.5-flash",
+        model: "sonar-pro + gemini-3.1-flash-lite-preview",
         phases: {
           research: { outputLength: researchOutput.length, citationCount: citations.length, processingTimeMs: phase1TimeMs },
           qualityGate: { completenessScore, processingTimeMs: phase2TimeMs },

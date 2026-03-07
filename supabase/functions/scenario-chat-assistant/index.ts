@@ -10,6 +10,7 @@ import {
   ValidationError,
 } from "../_shared/validate.ts";
 import { sanitizeMessages } from "../_shared/anonymizer.ts";
+import { callGoogleAI, convertOpenAITools } from "../_shared/google-ai.ts";
 import {
   BOT_IDENTITY,
   GDPR_PROTOCOL,
@@ -170,11 +171,6 @@ serve(async (req) => {
     const systemPrompt = buildSystemPrompt(scenarioId, scenarioFields, dataRequirements, extractedSoFar);
     const tools = buildToolSchema(scenarioFields);
 
-    const llmMessages = [
-      { role: "system", content: systemPrompt },
-      ...sanitizedMessages,
-    ];
-
     // Trace
     if (tracer.isEnabled()) {
       parentRunId = tracer.createRun(
@@ -190,31 +186,65 @@ serve(async (req) => {
       );
     }
 
-    // LLM call
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    // Convert sanitized messages to Google format
+    const googleContents = sanitizedMessages.map(msg => ({
+      role: (msg.role === "assistant" ? "model" : "user") as "user" | "model",
+      parts: [{ text: msg.content }],
+    }));
 
-    const llmResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: llmMessages,
-          tools,
-          temperature: 0.2,
-        }),
+    try {
+      const aiResponse = await callGoogleAI({
+        systemPrompt,
+        contents: googleContents,
+        temperature: 0.2,
+        tools: convertOpenAITools(tools),
+      });
+
+      // Parse response
+      let content = aiResponse.text ?? "";
+      let extractedFields: Record<string, string> | undefined;
+
+      // Extract tool calls — Google returns args as parsed object (no JSON.parse needed)
+      if (aiResponse.functionCall?.name === "update_fields") {
+        const args = aiResponse.functionCall.args;
+        const validIds = new Set(scenarioFields.map((f) => f.id));
+        const filtered: Record<string, string> = {};
+        for (const [key, value] of Object.entries(args)) {
+          if (validIds.has(key) && typeof value === "string" && value.trim()) {
+            filtered[key] = value.trim();
+          }
+        }
+        if (Object.keys(filtered).length > 0) {
+          extractedFields = filtered;
+        }
       }
-    );
 
-    if (!llmResponse.ok) {
-      const status = llmResponse.status;
+      // If no text content but tool calls exist, provide a default message
+      if (!content && extractedFields) {
+        const fieldNames = Object.keys(extractedFields)
+          .map((id) => scenarioFields.find((f) => f.id === id)?.label ?? id)
+          .join(", ");
+        content = `I've captured the following fields: ${fieldNames}. What would you like to provide next?`;
+      }
+
+      // Trace success
+      if (tracer.isEnabled() && parentRunId) {
+        tracer.patchRun(parentRunId, {
+          content: content?.slice(0, 200),
+          extractedFieldCount: extractedFields ? Object.keys(extractedFields).length : 0,
+        });
+      }
+
+      const result: { content: string; extractedFields?: Record<string, string> } = { content };
+      if (extractedFields) {
+        result.extractedFields = extractedFields;
+      }
+
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (aiError) {
+      const status = (aiError as Error & { status?: number }).status;
       if (status === 429) {
         return new Response(
           JSON.stringify({
@@ -223,75 +253,8 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (status === 402) {
-        return new Response(
-          JSON.stringify({
-            error: "AI usage limit reached. Please check your workspace credits.",
-          }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errorText = await llmResponse.text();
-      console.error("AI gateway error:", status, errorText);
-      throw new Error(`AI gateway returned ${status}`);
+      throw aiError;
     }
-
-    const llmData = await llmResponse.json();
-    const choice = llmData.choices?.[0];
-
-    // Parse response
-    let content = choice?.message?.content ?? "";
-    let extractedFields: Record<string, string> | undefined;
-
-    // Extract tool calls
-    const toolCalls = choice?.message?.tool_calls;
-    if (toolCalls && toolCalls.length > 0) {
-      for (const tc of toolCalls) {
-        if (tc.function?.name === "update_fields") {
-          try {
-            const args = JSON.parse(tc.function.arguments);
-            // Only keep keys that match scenario field IDs
-            const validIds = new Set(scenarioFields.map((f) => f.id));
-            const filtered: Record<string, string> = {};
-            for (const [key, value] of Object.entries(args)) {
-              if (validIds.has(key) && typeof value === "string" && value.trim()) {
-                filtered[key] = value.trim();
-              }
-            }
-            if (Object.keys(filtered).length > 0) {
-              extractedFields = { ...extractedFields, ...filtered };
-            }
-          } catch (e) {
-            console.error("Failed to parse tool call arguments:", e);
-          }
-        }
-      }
-    }
-
-    // If no text content but tool calls exist, provide a default message
-    if (!content && extractedFields) {
-      const fieldNames = Object.keys(extractedFields)
-        .map((id) => scenarioFields.find((f) => f.id === id)?.label ?? id)
-        .join(", ");
-      content = `I've captured the following fields: ${fieldNames}. What would you like to provide next?`;
-    }
-
-    // Trace success
-    if (tracer.isEnabled() && parentRunId) {
-      tracer.patchRun(parentRunId, {
-        content: content?.slice(0, 200),
-        extractedFieldCount: extractedFields ? Object.keys(extractedFields).length : 0,
-      });
-    }
-
-    const result: { content: string; extractedFields?: Record<string, string> } = { content };
-    if (extractedFields) {
-      result.extractedFields = extractedFields;
-    }
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     console.error("scenario-chat-assistant error:", e);
 

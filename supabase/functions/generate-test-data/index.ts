@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
 import { parseBody, requireString, requireStringEnum, optionalBoolean, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
+import { callGoogleAI } from "../_shared/google-ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +53,8 @@ interface DraftedParameters {
   dataQuality: DataQuality;
   reasoning: string;
   trick?: TrickDefinition;
+  persona?: string;
+  personaName?: string;
 }
 
 interface ScenarioSchema {
@@ -573,19 +576,11 @@ serve(async (req) => {
     const temperature = typeof body.temperature === "number" && body.temperature >= 0 && body.temperature <= 2
       ? body.temperature : 0.7;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "AI gateway not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     console.log(`[TestDataGen] Mode: ${mode}, Scenario: ${scenarioType}`);
 
     // === DRAFT MODE: Propose random consistent parameters ===
     if (mode === "draft") {
-      const draftResult = await handleDraftMode(LOVABLE_API_KEY, scenarioType, temperature);
+      const draftResult = await handleDraftMode(scenarioType, temperature);
       return new Response(
         JSON.stringify(draftResult),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -599,8 +594,7 @@ serve(async (req) => {
     // === GENERATE MODE: Single-pass with pre-approved parameters ===
     if (mode === "generate" && parameters) {
       const generateResult = await handleGenerateMode(
-        LOVABLE_API_KEY, 
-        scenarioType, 
+        scenarioType,
         parameters,
         temperature,
         selectedPersona
@@ -614,7 +608,6 @@ serve(async (req) => {
     // === MESSY MODE: Generate chaotic, high-friction inputs ===
     if (mode === "messy") {
       const messyResult = await handleMessyMode(
-        LOVABLE_API_KEY,
         scenarioType,
         temperature > 0 ? Math.max(temperature, 0.9) : 0.9,
         selectedPersona
@@ -656,7 +649,7 @@ serve(async (req) => {
         selectedPersona
       );
       
-      const generationResponse = await callAI(LOVABLE_API_KEY, generationPrompt.system, generationPrompt.user, temperature);
+      const generationResponse = await callAI(generationPrompt.system, generationPrompt.user, temperature);
       
       if (!generationResponse.success) {
         console.warn(`[TestDataGen] Generation failed on iteration ${iteration + 1}`);
@@ -672,7 +665,7 @@ serve(async (req) => {
         scenarioType
       );
       
-      const validationResponse = await callAI(LOVABLE_API_KEY, validationPrompt.system, validationPrompt.user, 0.3);
+      const validationResponse = await callAI(validationPrompt.system, validationPrompt.user, 0.3);
       const scoreResult = parseValidationScore(validationResponse.content);
       
       candidates.push({
@@ -731,7 +724,6 @@ serve(async (req) => {
 
 // === DRAFT MODE HANDLER ===
 async function handleDraftMode(
-  apiKey: string, 
   scenarioType: string,
   temperature: number
 ): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
@@ -776,7 +768,7 @@ Return ONLY a valid JSON object with these exact keys:
 
   const user = `Generate random parameters for a "${scenarioType}" procurement test case. Be creative but consistent.`;
 
-  const response = await callAI(apiKey, system, user, temperature);
+  const response = await callAI(system, user, temperature);
   
   if (!response.success) {
     return { success: false, error: "Failed to generate draft parameters" };
@@ -814,7 +806,6 @@ Return ONLY a valid JSON object with these exact keys:
 
 // === GENERATE MODE HANDLER ===
 async function handleGenerateMode(
-  apiKey: string,
   scenarioType: string,
   parameters: DraftedParameters,
   temperature: number,
@@ -907,7 +898,7 @@ Return ONLY the JSON object.`;
 
   console.log(`[TestDataGen] Generate mode - Trick: ${trick?.category || 'none'}, Target: ${trick?.targetField || 'N/A'}, Persona: ${selectedPersona.id}`);
 
-  const response = await callAI(apiKey, system, user, temperature);
+  const response = await callAI(system, user, temperature);
   
   if (!response.success) {
     return { success: false, error: "Failed to generate test data" };
@@ -920,7 +911,7 @@ Return ONLY the JSON object.`;
   }
 
   // Validate trick embedding if trick was specified
-  let trickScore = null;
+  let trickScore: { embedded: boolean; subtletyScore: number; feedback: string } | null = null;
   if (trick && data[trick.targetField]) {
     trickScore = scoreTrickEmbedding(data, trick);
     console.log(`[TestDataGen] Trick embedding score: ${trickScore.subtletyScore}/100 - ${trickScore.feedback}`);
@@ -1002,7 +993,6 @@ const HIGH_FRICTION_SCENARIOS = [
 ];
 
 async function handleMessyMode(
-  apiKey: string,
   scenarioType: string,
   temperature: number,
   selectedPersona: typeof BUYER_PERSONAS[number]
@@ -1051,7 +1041,7 @@ Examples of messy data styles:
 
 Return ONLY the JSON object.`;
 
-  const response = await callAI(apiKey, system, user, temperature);
+  const response = await callAI(system, user, temperature);
 
   if (!response.success) {
     return { success: false, error: "Failed to generate messy test data" };
@@ -1085,40 +1075,19 @@ Return ONLY the JSON object.`;
 }
 
 async function callAI(
-  apiKey: string, 
-  systemPrompt: string, 
+  systemPrompt: string,
   userPrompt: string,
   temperature: number = 0.7
 ): Promise<{ success: boolean; content: string }> {
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature,
-        max_tokens: 2048,
-      }),
+    const response = await callGoogleAI({
+      systemPrompt,
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      temperature,
+      maxOutputTokens: 2048,
+      model: "gemini-3.1-flash-lite-preview",
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[TestDataGen] AI error: ${response.status}`, errorText);
-      return { success: false, content: "" };
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
-      content: data.choices?.[0]?.message?.content || ""
-    };
+    return { success: true, content: response.text };
   } catch (error) {
     console.error("[TestDataGen] AI call failed:", error);
     return { success: false, content: "" };

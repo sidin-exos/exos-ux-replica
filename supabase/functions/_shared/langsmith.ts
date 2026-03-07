@@ -18,10 +18,10 @@ export class LangSmithTracer {
   private enabled: boolean;
 
   constructor(opts?: { env?: string; feature?: string }) {
-    this.apiKey = Deno.env.get("VITE_LANGCHAIN_API_KEY");
-    this.project = Deno.env.get("VITE_LANGCHAIN_PROJECT") || "EXOS";
-    this.endpoint = Deno.env.get("VITE_LANGCHAIN_ENDPOINT") || "https://api.smith.langchain.com";
-    const tracingEnabled = Deno.env.get("VITE_LANGCHAIN_TRACING_V2");
+    this.apiKey = Deno.env.get("LANGCHAIN_API_KEY");
+    this.project = Deno.env.get("LANGCHAIN_PROJECT") || "EXOS";
+    this.endpoint = Deno.env.get("LANGCHAIN_ENDPOINT") || "https://api.smith.langchain.com";
+    const tracingEnabled = Deno.env.get("LANGCHAIN_TRACING_V2");
 
     this.enabled = !!(this.apiKey && tracingEnabled === "true");
 

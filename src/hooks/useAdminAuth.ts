@@ -23,10 +23,10 @@ export function useAdminAuth() {
   const { data: isAdmin, isLoading: roleLoading } = useQuery({
     queryKey: ["admin-role", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_roles")
+      const { data, error } = await (supabase as any)
+        .from("profiles")
         .select("role")
-        .eq("user_id", userId!)
+        .eq("id", userId!)
         .eq("role", "admin")
         .maybeSingle();
 

@@ -14,10 +14,8 @@ import type {
   SensitiveEntity,
 } from './types';
 import type { IndustryContext, ProcurementCategory } from '../ai-context-templates';
-import { anonymize, DEFAULT_ANONYMIZATION_CONFIG } from './anonymizer';
 import { generateGroundedPrompt, DEFAULT_GROUNDING_CONFIG } from './grounding';
 import { validateResponse, getValidationSummary } from './validator';
-import { deanonymize, formatWithHighlights } from './deanonymizer';
 
 /**
  * Default pipeline configuration
@@ -28,7 +26,7 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
   enableValidation: true,
   useLocalModel: false, // Set to true when Mistral is available
   localModelEndpoint: undefined,
-  cloudModel: 'google/gemini-3-flash-preview',
+  cloudModel: 'gemini-3-flash-preview',
   validationThreshold: 0.6,
 };
 
@@ -68,50 +66,6 @@ function createContext(request: OrchestratorRequest): PipelineContext {
     stages: [],
     startTime: performance.now(),
   };
-}
-
-/**
- * Execute Stage 1: Semantic Anonymization
- */
-function executeAnonymization(
-  context: PipelineContext,
-  config: PipelineConfig
-): PipelineStageResult {
-  const stageStart = performance.now();
-  
-  if (!config.enableAnonymization) {
-    context.anonymizedInput = context.originalInput;
-    return {
-      stage: 'anonymization',
-      status: 'skipped',
-      timeMs: 0,
-      details: { reason: 'Anonymization disabled in config' },
-    };
-  }
-  
-  try {
-    const result = anonymize(context.originalInput, DEFAULT_ANONYMIZATION_CONFIG);
-    context.anonymizedInput = result.anonymizedText;
-    context.entityMap = result.entityMap;
-    
-    return {
-      stage: 'anonymization',
-      status: 'success',
-      timeMs: performance.now() - stageStart,
-      details: {
-        entitiesFound: result.metadata.entitiesFound,
-        confidence: result.metadata.confidence,
-      },
-    };
-  } catch (error) {
-    context.anonymizedInput = context.originalInput;
-    return {
-      stage: 'anonymization',
-      status: 'error',
-      timeMs: performance.now() - stageStart,
-      details: { error: error instanceof Error ? error.message : 'Unknown error' },
-    };
-  }
 }
 
 /**
@@ -252,51 +206,6 @@ function executeValidation(
 }
 
 /**
- * Execute Stage 6: De-anonymization
- */
-function executeDeanonymization(
-  context: PipelineContext,
-  config: PipelineConfig
-): PipelineStageResult {
-  const stageStart = performance.now();
-  
-  if (!config.enableAnonymization) {
-    context.finalOutput = context.validatedResponse;
-    return {
-      stage: 'deanonymization',
-      status: 'skipped',
-      timeMs: 0,
-      details: { reason: 'Anonymization was not enabled' },
-    };
-  }
-  
-  try {
-    const result = deanonymize(context.validatedResponse, context.entityMap);
-    context.finalOutput = result.restoredText;
-    
-    const status = result.metadata.unmappedTokens.length > 0 ? 'warning' : 'success';
-    
-    return {
-      stage: 'deanonymization',
-      status,
-      timeMs: performance.now() - stageStart,
-      details: {
-        entitiesRestored: result.metadata.entitiesRestored,
-        unmappedTokens: result.metadata.unmappedTokens,
-      },
-    };
-  } catch (error) {
-    context.finalOutput = context.validatedResponse;
-    return {
-      stage: 'deanonymization',
-      status: 'error',
-      timeMs: performance.now() - stageStart,
-      details: { error: error instanceof Error ? error.message : 'Unknown error' },
-    };
-  }
-}
-
-/**
  * Prepare pipeline request for edge function
  * Returns the data needed to call the AI and complete the pipeline
  */
@@ -311,16 +220,22 @@ export function preparePipelineRequest(
 } {
   const config = { ...DEFAULT_PIPELINE_CONFIG, ...request.config };
   const context = createContext(request);
-  
-  // Execute pre-inference stages
-  const anonymizationResult = executeAnonymization(context, config);
-  context.stages.push(anonymizationResult);
-  
+
+  // Anonymization is now handled server-side in sentinel-analysis edge function.
+  // Pass raw input through so it gets sent to the server for anonymization.
+  context.anonymizedInput = context.originalInput;
+  context.stages.push({
+    stage: 'anonymization',
+    status: 'skipped',
+    timeMs: 0,
+    details: { reason: 'Delegated to server-side anonymization' },
+  });
+
   const groundingResult = executeGrounding(context, request, industry, category, config);
   context.stages.push(groundingResult);
-  
+
   const inferencePayload = prepareInferencePayload(context, config);
-  
+
   return { context, inferencePayload, config };
 }
 
@@ -347,9 +262,15 @@ export function completePipeline(
   // Execute post-inference stages
   const validationResult = executeValidation(context, request, config);
   context.stages.push(validationResult);
-  
-  const deanonymizationResult = executeDeanonymization(context, config);
-  context.stages.push(deanonymizationResult);
+
+  // Deanonymization is now handled server-side — response is already restored.
+  context.finalOutput = context.validatedResponse;
+  context.stages.push({
+    stage: 'deanonymization',
+    status: 'skipped',
+    timeMs: 0,
+    details: { reason: 'Server returned deanonymized content' },
+  });
   
   const totalTimeMs = performance.now() - context.startTime;
   const validationPassed = validationResult.status !== 'error';

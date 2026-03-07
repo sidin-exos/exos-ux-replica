@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { parseBody, requireString, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
+import { callGoogleAI } from "../_shared/google-ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,66 +27,40 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
     const contextParts: string[] = [];
     if (industryName) contextParts.push(`Industry: ${industryName}`);
     if (categoryName) contextParts.push(`Category: ${categoryName}`);
     const contextStr = contextParts.join(", ");
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          temperature: 0.3,
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a procurement strategy advisor. Given a scenario name and an industry/category context, write 2-3 punchy bullet points explaining how this scenario solves real problems in that specific context. Markdown format. Under 100 words. No generic filler. Be specific and actionable.",
-            },
-            {
-              role: "user",
-              content: `Scenario: "${scenarioTitle}"\nContext: ${contextStr}\n\nExplain how this scenario specifically benefits professionals in this context.`,
-            },
-          ],
-        }),
-      }
-    );
+    try {
+      const response = await callGoogleAI({
+        systemPrompt:
+          "You are a procurement strategy advisor. Given a scenario name and an industry/category context, write 2-3 punchy bullet points explaining how this scenario solves real problems in that specific context. Markdown format. Under 100 words. No generic filler. Be specific and actionable.",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `Scenario: "${scenarioTitle}"\nContext: ${contextStr}\n\nExplain how this scenario specifically benefits professionals in this context.` }],
+          },
+        ],
+        temperature: 0.3,
+        model: "gemini-3.1-flash-lite-preview",
+      });
 
-    if (!response.ok) {
-      if (response.status === 429) {
+      const content = response.text || null;
+
+      return new Response(JSON.stringify({ content }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (aiError) {
+      const status = (aiError as Error & { status?: number }).status;
+      if (status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again shortly." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please top up your workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const text = await response.text();
-      console.error("AI gateway error:", response.status, text);
-      throw new Error(`AI gateway returned ${response.status}`);
+      throw aiError;
     }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content ?? null;
-
-    return new Response(JSON.stringify({ content }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     if (e instanceof ValidationError) {
       return validationErrorResponse(e.message);

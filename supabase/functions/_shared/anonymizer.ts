@@ -1,11 +1,65 @@
 /**
  * Shared PII Sanitizer for Edge Functions
- * 
- * One-way masking — replaces PII with generic tokens before LLM contact.
- * No entity map or restoration needed since LLM response goes back as-is.
- * 
+ *
+ * Two modes:
+ * 1. One-way masking (sanitizeMessages) — replaces PII with generic tokens.
+ *    Used by scenario-chat-assistant where no restoration is needed.
+ * 2. Reversible anonymization (anonymizeText / deanonymizeText) — replaces PII
+ *    with unique indexed tokens and returns an entity map for restoration.
+ *    Used by sentinel-analysis where the AI response must be deanonymized.
+ *
  * Ported from src/lib/sentinel/anonymizer.ts (regex patterns only).
  */
+
+// ============================================================================
+// TYPES (for reversible anonymization)
+// ============================================================================
+
+export type EntityType =
+  | "company"
+  | "person"
+  | "price"
+  | "contract"
+  | "location"
+  | "date"
+  | "percentage"
+  | "email"
+  | "phone"
+  | "iban"
+  | "credit_card"
+  | "tax_id"
+  | "custom";
+
+export interface SensitiveEntityServer {
+  id: string;
+  type: EntityType;
+  originalValue: string;
+  maskedToken: string;
+  context?: string;
+}
+
+/** JSON-serializable (Record, not Map) so it can be logged to test_prompts/test_reports */
+export interface AnonymizationResultServer {
+  anonymizedText: string;
+  entityMap: Record<string, SensitiveEntityServer>;
+  metadata: {
+    entitiesFound: number;
+    processingTimeMs: number;
+    confidence: number;
+  };
+}
+
+export interface DeanonymizationResultServer {
+  restoredText: string;
+  metadata: {
+    entitiesRestored: number;
+    unmappedTokens: string[];
+  };
+}
+
+// ============================================================================
+// ONE-WAY MASKING (unchanged — used by scenario-chat-assistant)
+// ============================================================================
 
 const PII_PATTERNS: { token: string; patterns: RegExp[] }[] = [
   {
@@ -89,4 +143,280 @@ export function sanitizeMessages(
     if (msg.role !== "user") return msg;
     return { ...msg, content: sanitizeText(msg.content) };
   });
+}
+
+// ============================================================================
+// REVERSIBLE ANONYMIZATION (used by sentinel-analysis)
+// ============================================================================
+
+// Full entity patterns ported from src/lib/sentinel/anonymizer.ts
+const REVERSIBLE_ENTITY_PATTERNS: Record<EntityType, RegExp[]> = {
+  company: [
+    /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Inc|LLC|Ltd|Corp|GmbH|SA|AG|PLC|Co)\.?))\b/g,
+    /\b([A-Z]{2,}(?:\s+[A-Z]{2,})*)\b/g,
+    /\b[\w]+(?:\s+[\w]+)*\s+(?:Inc|LLC|Ltd|GmbH|Corp|Co|S\.A\.|NV|Pty|AG|PLC)\.?\b/gi,
+    /(?<=(?:Vendor|Supplier|Client|Partner|Counterparty|Customer|Contractor|Subcontractor):\s*)[\w]+(?:\s+[\w]+)*/gi,
+  ],
+  person: [
+    /\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/g,
+    /\b(Mr\.|Mrs\.|Ms\.|Dr\.)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/g,
+  ],
+  price: [
+    /\$[\d,]+(?:\.\d{2})?(?:\s*(?:million|billion|M|B|k|K))?/g,
+    /€[\d,]+(?:\.\d{2})?(?:\s*(?:million|billion|M|B|k|K))?/g,
+    /£[\d,]+(?:\.\d{2})?(?:\s*(?:million|billion|M|B|k|K))?/g,
+    /[\d,]+(?:\.\d{2})?\s*(?:USD|EUR|GBP|CHF)/g,
+  ],
+  contract: [
+    /\b(?:Contract|Agreement|PO|Purchase Order)[\s#-]*[A-Z0-9-]+\b/gi,
+    /\b[A-Z]{2,4}-\d{4,}-\d{2,}\b/g,
+  ],
+  location: [
+    /\b\d{5}(?:-\d{4})?\b/g,
+    /\b[A-Z][a-z]+(?:,\s*[A-Z]{2})?\b/g,
+  ],
+  date: [
+    /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g,
+    /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b/gi,
+    /\b\d{4}-\d{2}-\d{2}\b/g,
+  ],
+  percentage: [
+    /\b\d+(?:\.\d+)?%/g,
+  ],
+  email: [
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
+  ],
+  phone: [
+    /(?!\d{4}-\d{2}-\d{2})\+?\d{2,3}[\s.-]?\d{1,4}[\s.-]?\d{2,4}[\s.-]?\d{2,4}[\s.-]?\d{0,4}\b/g,
+    /\b0\d{2,4}[\s./-]?\d{3,8}\b/g,
+  ],
+  iban: [
+    /[A-Z]{2}\d{2}[ ]\d{4}[ ]\d{4}[ ]\d{4}[ ]\d{4}[ ]?\d{0,8}/g,
+    /[A-Z]{2}\d{2}[A-Z0-9]{10,30}/g,
+  ],
+  credit_card: [
+    /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})/g,
+  ],
+  tax_id: [
+    /\b[A-Z]{2}[0-9A-Z]{8,12}\b/g,
+    /\b[1-9]\d?-\d{7}\b/g,
+  ],
+  custom: [],
+};
+
+// Token prefixes for each entity type
+const TOKEN_PREFIXES: Record<EntityType, string> = {
+  company: "SUPPLIER",
+  person: "CONTACT",
+  price: "AMOUNT",
+  contract: "CONTRACT_REF",
+  location: "LOCATION",
+  date: "DATE_REF",
+  percentage: "PERCENT",
+  email: "CONTACT_EMAIL",
+  phone: "PHONE",
+  iban: "BANK_ACCT",
+  credit_card: "CC_NUM",
+  tax_id: "TAX_ID",
+  custom: "ENTITY",
+};
+
+// Common business terms that should never be masked (false positive protection)
+const COMMON_BUSINESS_TERMS = new Set([
+  "invoice", "contract", "agreement", "total", "subtotal",
+  "date", "vendor", "supplier", "client", "manager",
+  "director", "chief", "officer", "bank", "swift",
+  "iban", "payment", "due", "amount", "reference",
+  "purchase", "order", "quote", "proposal", "estimate",
+  "receipt", "statement", "balance", "credit", "debit",
+  "tax", "vat", "net", "gross", "fee", "charge",
+  "january", "february", "march", "april", "may", "june",
+  "july", "august", "september", "october", "november", "december",
+  "monday", "tuesday", "wednesday", "thursday", "friday",
+  "saturday", "sunday",
+]);
+
+/** Generate a unique masked token for an entity */
+function generateMaskedToken(type: EntityType, index: number): string {
+  const prefix = TOKEN_PREFIXES[type];
+  const letter = String.fromCharCode(65 + (index % 26)); // A-Z
+  const number = Math.floor(index / 26) + 1;
+  return `[${prefix}_${letter}${number > 1 ? number : ""}]`;
+}
+
+/** Extract surrounding context for better restoration debugging */
+function extractContext(text: string, matchIndex: number, matchLength: number): string {
+  const contextRadius = 50;
+  const start = Math.max(0, matchIndex - contextRadius);
+  const end = Math.min(text.length, matchIndex + matchLength + contextRadius);
+  return text.slice(start, end);
+}
+
+/** Calculate dynamic confidence score based on analysis quality */
+function calculateConfidenceServer(
+  text: string,
+  entityMap: Record<string, SensitiveEntityServer>
+): number {
+  let confidence = 1.0;
+
+  const types = new Set(Object.values(entityMap).map((e) => e.type));
+  const entityCount = Object.keys(entityMap).length;
+
+  // Low Density Penalty: long text with few entities suggests missed detections
+  if (text.length > 500 && entityCount < 2) {
+    confidence -= 0.15;
+  }
+
+  // Missing Actor Penalty: transactions without identifiable parties
+  const hasTransaction =
+    types.has("contract") || types.has("price") || types.has("iban") || types.has("credit_card");
+  const hasActor = types.has("company") || types.has("person");
+  if (hasTransaction && !hasActor) {
+    confidence -= 0.2;
+  }
+
+  // PII Mismatch Penalty: email without associated person
+  if (types.has("email") && !types.has("person")) {
+    confidence -= 0.05;
+  }
+
+  return Math.max(0.1, Math.min(1.0, confidence));
+}
+
+const DEFAULT_ENTITY_TYPES: EntityType[] = [
+  "company", "person", "price", "contract", "email",
+  "phone", "iban", "credit_card", "tax_id",
+];
+
+/**
+ * Reversible anonymization — replaces PII with unique indexed tokens.
+ * Returns entity map for subsequent deanonymization.
+ *
+ * Deterministic within a single call: same input value always gets the same token.
+ */
+export function anonymizeText(
+  text: string,
+  entityTypes: EntityType[] = DEFAULT_ENTITY_TYPES
+): AnonymizationResultServer {
+  const startTime = performance.now();
+  const entityMap: Record<string, SensitiveEntityServer> = {};
+  let anonymizedText = text;
+  let entityIndex = 0;
+
+  // Collect all matches with their positions
+  const allMatches: Array<{
+    type: EntityType;
+    value: string;
+    index: number;
+    length: number;
+  }> = [];
+
+  for (const entityType of entityTypes) {
+    const patterns = REVERSIBLE_ENTITY_PATTERNS[entityType];
+    if (!patterns) continue;
+
+    for (const pattern of patterns) {
+      pattern.lastIndex = 0;
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        if (match[0].length < 3) continue;
+        if (COMMON_BUSINESS_TERMS.has(match[0].toLowerCase())) continue;
+
+        allMatches.push({
+          type: entityType,
+          value: match[0],
+          index: match.index,
+          length: match[0].length,
+        });
+      }
+    }
+  }
+
+  // Sort by position (descending) to replace from end to start
+  allMatches.sort((a, b) => b.index - a.index);
+
+  // Remove overlapping matches (keep longer ones)
+  const filteredMatches = allMatches.filter((match, i) => {
+    for (let j = 0; j < i; j++) {
+      const other = allMatches[j];
+      if (
+        match.index < other.index + other.length &&
+        match.index + match.length > other.index
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // Deduplicate by value (same value gets same token)
+  const valueToToken = new Map<string, string>();
+
+  for (const match of filteredMatches) {
+    let maskedToken: string;
+
+    if (valueToToken.has(match.value)) {
+      maskedToken = valueToToken.get(match.value)!;
+    } else {
+      maskedToken = generateMaskedToken(match.type, entityIndex);
+      valueToToken.set(match.value, maskedToken);
+
+      entityMap[maskedToken] = {
+        id: `entity_${entityIndex}`,
+        type: match.type,
+        originalValue: match.value,
+        maskedToken,
+        context: extractContext(text, match.index, match.length),
+      };
+      entityIndex++;
+    }
+
+    // Replace in text (from end to start avoids index drift)
+    anonymizedText =
+      anonymizedText.slice(0, match.index) +
+      maskedToken +
+      anonymizedText.slice(match.index + match.length);
+  }
+
+  return {
+    anonymizedText,
+    entityMap,
+    metadata: {
+      entitiesFound: Object.keys(entityMap).length,
+      processingTimeMs: performance.now() - startTime,
+      confidence: calculateConfidenceServer(text, entityMap),
+    },
+  };
+}
+
+/**
+ * Deanonymize text by replacing indexed tokens with original values.
+ */
+export function deanonymizeText(
+  anonymizedText: string,
+  entityMap: Record<string, SensitiveEntityServer>
+): DeanonymizationResultServer {
+  let restoredText = anonymizedText;
+  const unmappedTokens: string[] = [];
+  let entitiesRestored = 0;
+
+  // Find all tokens in the text
+  const tokenPattern = /\[[A-Z_]+_[A-Z]\d*\]/g;
+  const foundTokens = anonymizedText.match(tokenPattern) || [];
+  const uniqueTokens = [...new Set(foundTokens)];
+
+  for (const token of uniqueTokens) {
+    const entity = entityMap[token];
+    if (entity) {
+      restoredText = restoredText.split(token).join(entity.originalValue);
+      entitiesRestored++;
+    } else {
+      unmappedTokens.push(token);
+    }
+  }
+
+  return {
+    restoredText,
+    metadata: { entitiesRestored, unmappedTokens },
+  };
 }

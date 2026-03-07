@@ -1,43 +1,39 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export interface ModelConfig {
-  provider: "lovable" | "google_ai_studio";
   model: string;
   lastTested: string | null;
 }
 
 interface ModelConfigContextType extends ModelConfig {
-  setProvider: (provider: ModelConfig["provider"]) => void;
   setModel: (model: string) => void;
   markTested: () => void;
 }
 
 const STORAGE_KEY = "exos_model_config";
 
+const VALID_MODELS = [
+  "gemini-3-flash-preview", "gemini-3-pro-preview", "gemini-3.1-flash-lite-preview",
+  "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
+];
+
 const DEFAULT_CONFIG: ModelConfig = {
-  provider: "lovable",
-  model: "google/gemini-3-flash-preview",
+  model: "gemini-3-flash-preview",
   lastTested: null,
 };
 
 const ModelConfigContext = createContext<ModelConfigContextType | null>(null);
-
-const VALID_LOVABLE_MODELS = [
-  "google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite",
-  "google/gemini-3-pro-preview", "google/gemini-3-flash-preview",
-  "openai/gpt-5", "openai/gpt-5-mini", "openai/gpt-5-nano", "openai/gpt-5.2",
-];
 
 function loadConfig(): ModelConfig {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      const model = parsed.model || DEFAULT_CONFIG.model;
-      // Auto-migrate invalid cached models
-      const isValid = parsed.provider === "google_ai_studio" || VALID_LOVABLE_MODELS.includes(model);
+      let model = parsed.model || DEFAULT_CONFIG.model;
+      // Auto-migrate old prefixed model names (e.g. "google/gemini-3-flash-preview")
+      model = model.replace(/^google\//, "");
+      const isValid = VALID_MODELS.includes(model);
       return {
-        provider: parsed.provider || DEFAULT_CONFIG.provider,
         model: isValid ? model : DEFAULT_CONFIG.model,
         lastTested: parsed.lastTested || null,
       };
@@ -59,22 +55,10 @@ function saveConfig(config: ModelConfig): void {
 export function ModelConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<ModelConfig>(loadConfig);
 
-  // Auto-migrate invalid models at runtime (covers HMR / stale cache)
-  useEffect(() => {
-    if (config.provider === "lovable" && !VALID_LOVABLE_MODELS.includes(config.model)) {
-      console.warn(`[ModelConfig] Invalid model "${config.model}", resetting to default`);
-      setConfig((prev) => ({ ...prev, model: DEFAULT_CONFIG.model }));
-    }
-  }, [config.provider, config.model]);
-
   // Persist to localStorage on every change
   useEffect(() => {
     saveConfig(config);
   }, [config]);
-
-  const setProvider = (provider: ModelConfig["provider"]) => {
-    setConfig((prev) => ({ ...prev, provider }));
-  };
 
   const setModel = (model: string) => {
     setConfig((prev) => ({ ...prev, model }));
@@ -88,7 +72,6 @@ export function ModelConfigProvider({ children }: { children: ReactNode }) {
     <ModelConfigContext.Provider
       value={{
         ...config,
-        setProvider,
         setModel,
         markTested,
       }}
