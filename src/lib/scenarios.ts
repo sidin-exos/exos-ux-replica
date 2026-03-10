@@ -483,6 +483,7 @@ export const scenarios: Scenario[] = [
     id: "requirements-gathering",
     title: "Requirements Gathering",
     description: "Structure business needs into prioritized requirements with user stories and solution recommendations.",
+    tags: ["MoSCoW", "User Stories", "Scope"],
     previewDescription: "Transform chaotic stakeholder wishlists into a structured Business Requirements Document. Paste raw meeting notes, emails, or bullet points — the AI organises them into MoSCoW-prioritised requirements, generates user stories for validation, and scans the market for 3–5 matching solutions. Prevents the #1 cause of scope creep: ambiguous requirements that increase project costs by 20–45%.",
     icon: ListChecks,
     status: "available",
