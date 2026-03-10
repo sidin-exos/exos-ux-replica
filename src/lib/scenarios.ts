@@ -56,6 +56,7 @@ export interface Scenario {
   title: string;
   description: string;
   previewDescription?: string;
+  tags?: string[];
   icon: LucideIcon;
   status: "available" | "coming-soon";
   category: "analysis" | "planning" | "risk" | "documentation";

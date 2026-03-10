@@ -1,10 +1,12 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import type { Scenario } from "@/lib/scenarios";
 
 interface ScenarioCardProps {
   title: string;
   description: string;
+  tags?: string[];
   icon: LucideIcon;
   status: "available" | "coming-soon";
   category?: Scenario["category"];
