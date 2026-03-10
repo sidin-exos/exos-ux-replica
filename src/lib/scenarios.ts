@@ -993,6 +993,7 @@ export const scenarios: Scenario[] = [
     id: "market-snapshot",
     title: "Market Snapshot",
     description: "Perplexity-powered regional competitive landscape analysis. Identifies major players, market share, and recent moves — then benchmarks output completeness against your Definition of Success.",
+    tags: ["Competitive Intel", "Market Share", "Real-Time"],
     previewDescription: "Get real-time competitive intelligence for any supply market niche and region. Powered by Perplexity web search, the AI identifies major players, estimates market share, profiles recent M&A activity, and benchmarks output completeness against your Definition of Success. Specificity is the lever — a precise query ('automotive-grade MLCC capacitors in DACH') delivers actionable intelligence, not generic summaries.",
     icon: Radar,
     status: "available",
