@@ -640,6 +640,7 @@ export const scenarios: Scenario[] = [
     id: "risk-matrix",
     title: "Risk Matrix",
     description: "Supplier risk assessment covering legal, financial, cyber, and operational risks.",
+    tags: ["Probability/Impact", "Heatmap", "Controls"],
     previewDescription: "Build a visual risk heatmap from structured risk inputs. Provide at least 5 identified risks with probability and impact ratings, and the AI generates a colour-coded matrix with mitigation priorities, owner assignments, and residual risk targets. Transforms a static spreadsheet into a living risk management tool with escalation thresholds and board notification triggers.",
     icon: Shield,
     status: "available",
