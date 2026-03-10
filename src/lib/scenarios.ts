@@ -268,6 +268,7 @@ export const scenarios: Scenario[] = [
     id: "saas-optimization",
     title: "SaaS Optimization",
     description: "Identify unused licenses, duplicate tools, and right-sizing opportunities for software subscriptions.",
+    tags: ["License Audit", "Kill List", "Overlap"],
     previewDescription: "Audit your entire SaaS portfolio for waste. The AI cross-references licence counts against utilisation data, flags duplicate tools with overlapping features, identifies auto-renewal traps, and produces a prioritised 'kill list' of licences to remove. The average enterprise wastes 25% of SaaS spend on unused licences — this scenario finds and quantifies that waste.",
     icon: Cloud,
     status: "available",
