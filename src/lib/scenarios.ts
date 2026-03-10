@@ -176,6 +176,7 @@ export const scenarios: Scenario[] = [
     id: "savings-calculation",
     title: "Savings Calculation",
     description: "Document and validate procurement savings with inflation adjustment and audit-ready reporting.",
+    tags: ["Hard/Soft Savings", "Audit-Ready", "Inflation"],
     previewDescription: "Turn negotiation wins into Finance-approved numbers. This scenario classifies savings as hard, soft, or cost avoidance, applies inflation and FX adjustments, excludes maverick spend from baselines, and generates audit-ready documentation. Designed to survive CFO scrutiny — because ~40% of reported procurement savings are rejected due to categorisation errors.",
     icon: Calculator,
     status: "available",
