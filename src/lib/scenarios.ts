@@ -118,6 +118,7 @@ export const scenarios: Scenario[] = [
     id: "cost-breakdown",
     title: "Cost Breakdown",
     description: "Analyze cost drivers for goods and services, enabling detailed cost modelling and negotiation leverage.",
+    tags: ["Should-Cost", "Negotiation", "Benchmarking"],
     previewDescription: "Deconstruct any supplier quote into its raw components — materials, labour, overhead, margin — and benchmark each against industry standards. The AI builds a Should-Cost model that exposes inflated line items and gives you concrete data points to challenge pricing in negotiations. Typically uncovers 8–14% in addressable cost reductions.",
     icon: PieChart,
     status: "available",
