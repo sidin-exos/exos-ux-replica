@@ -147,6 +147,7 @@ export const scenarios: Scenario[] = [
     id: "capex-vs-opex",
     title: "Capex vs Opex (Lease/Buy)",
     description: "Financial comparison between purchasing assets versus leasing with NPV and cash flow analysis.",
+    tags: ["NPV", "Cash Flow", "IFRS 16"],
     previewDescription: "Should you buy or lease? This scenario models both paths side-by-side using NPV, cash flow impact, tax treatment (including IFRS 16), and residual value assumptions. It produces a CFO-ready recommendation that accounts for flexibility value, balance-sheet impact, and the real cost of capital — not just the monthly payment comparison.",
     icon: Building,
     status: "available",
