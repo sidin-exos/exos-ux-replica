@@ -603,6 +603,7 @@ export const scenarios: Scenario[] = [
     id: "risk-assessment",
     title: "Risk Assessment",
     description: "Comprehensive risk analysis combining industry dynamics, contract risks, and real-time market situation assessment.",
+    tags: ["Heat Map", "Regulatory", "Mitigation"],
     previewDescription: "Go beyond surface-level risk registers. This scenario combines industry dynamics, contract vulnerabilities, regulatory exposure, and real-time market intelligence to produce a multi-dimensional risk assessment. Identifies systemic and cascading risks that operational-only registers miss — including GDPR, cyber supply-chain, and geopolitical exposure that can cost €10–20M per incident.",
     icon: Shield,
     status: "available",
