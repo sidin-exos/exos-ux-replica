@@ -337,6 +337,7 @@ export const scenarios: Scenario[] = [
     id: "rfp-generator",
     title: "RFP Generator (Tender Package)",
     description: "Paste your procurement brief or requirements and select which tender documents to generate. EXOS extracts key details automatically and produces a complete, ready-to-send tender package.",
+    tags: ["Tender Package", "Evaluation Matrix", "Auto-Parse"],
     previewDescription: "Drop in your raw procurement brief — however rough — and the AI extracts key requirements, generates a structured tender package (RFP, RFI, or RFQ), builds an evaluation matrix with weighted scoring, and flags missing information that could delay the process. Eliminates 3–6 weeks of tender preparation work and prevents the #1 cause of RFP reissue: incomplete evaluation criteria.",
     icon: FileSpreadsheet,
     status: "available",
