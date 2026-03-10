@@ -20,24 +20,27 @@ export function useAdminAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const { data: isAdmin, isLoading: roleLoading } = useQuery({
+  const { data: profileData, isLoading: roleLoading } = useQuery({
     queryKey: ["admin-role", userId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("profiles")
-        .select("role")
+        .select("role, is_super_admin")
         .eq("id", userId!)
-        .eq("role", "admin")
         .maybeSingle();
 
-      if (error) return false;
-      return !!data;
+      if (error || !data) return { isAdmin: false, isSuperAdmin: false };
+      return {
+        isAdmin: data.role === "admin" || data.is_super_admin === true,
+        isSuperAdmin: data.is_super_admin === true,
+      };
     },
     enabled: !!userId,
   });
 
   return {
-    isAdmin: !!isAdmin,
+    isAdmin: profileData?.isAdmin ?? false,
+    isSuperAdmin: profileData?.isSuperAdmin ?? false,
     isLoading: authLoading || (!!userId && roleLoading),
   };
 }
