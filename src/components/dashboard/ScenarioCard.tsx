@@ -1,10 +1,12 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import type { Scenario } from "@/lib/scenarios";
 
 interface ScenarioCardProps {
   title: string;
   description: string;
+  tags?: string[];
   icon: LucideIcon;
   status: "available" | "coming-soon";
   category?: Scenario["category"];
@@ -31,6 +33,7 @@ const CATEGORY_ICON_TEXT: Record<Scenario["category"], string> = {
 const ScenarioCard = ({
   title,
   description,
+  tags,
   icon: Icon,
   status,
   category,
@@ -55,26 +58,26 @@ const ScenarioCard = ({
       )}
     >
       <div className="flex items-start gap-4">
-        <div
-          className={cn(
-            "flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-300",
-            isActive
-              ? "gradient-primary"
-              : category
-                ? CATEGORY_ICON_COLORS[category]
-                : "bg-secondary group-hover:bg-primary/20"
-          )}
-        >
-          <Icon
+          <div
             className={cn(
-              "w-6 h-6 transition-colors",
+              "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
               isActive
-                ? "text-primary-foreground"
+                ? "gradient-primary"
                 : category
-                  ? CATEGORY_ICON_TEXT[category]
-                  : "text-primary"
+                  ? CATEGORY_ICON_COLORS[category]
+                  : "bg-secondary group-hover:bg-primary/20"
             )}
-          />
+          >
+            <Icon
+              className={cn(
+                "w-5 h-5 transition-colors",
+                isActive
+                  ? "text-primary-foreground"
+                  : category
+                    ? CATEGORY_ICON_TEXT[category]
+                    : "text-primary"
+              )}
+            />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -88,9 +91,19 @@ const ScenarioCard = ({
               </span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {description}
-          </p>
+          {tags && tags.length > 0 ? (
+            <div className="flex flex-wrap gap-1 mt-0.5">
+              {tags.map((tag) => (
+                <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 font-medium">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {description}
+            </p>
+          )}
         </div>
       </div>
 
