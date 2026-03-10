@@ -18,6 +18,7 @@ import DevWorkflow from "./pages/DevWorkflow";
 import TestingPipeline from "./pages/TestingPipeline";
 import OrgChart from "./pages/OrgChart";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import FounderDashboard from "./pages/admin/FounderDashboard";
 import RiskPlatform from "./pages/enterprise/RiskPlatform";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/testing-pipeline" element={<TestingPipeline />} />
             <Route path="/org-chart" element={<OrgChart />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute requireSuperAdmin><FounderDashboard /></ProtectedRoute>} />
             <Route path="/enterprise/risk" element={<ProtectedRoute><RiskPlatform /></ProtectedRoute>} />
