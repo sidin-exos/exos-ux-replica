@@ -18,12 +18,14 @@ import DevWorkflow from "./pages/DevWorkflow";
 import TestingPipeline from "./pages/TestingPipeline";
 import OrgChart from "./pages/OrgChart";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import FounderDashboard from "./pages/admin/FounderDashboard";
 import RiskPlatform from "./pages/enterprise/RiskPlatform";
 import InflationPlatform from "./pages/enterprise/InflationPlatform";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/layout/MobileBottomNav";
+import ProtectedRoute from "./components/ProtectedRoute";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -49,10 +51,11 @@ const App = () => (
             <Route path="/testing-pipeline" element={<TestingPipeline />} />
             <Route path="/org-chart" element={<OrgChart />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/admin/dashboard" element={<FounderDashboard />} />
-            <Route path="/enterprise/risk" element={<RiskPlatform />} />
-            <Route path="/enterprise/inflation" element={<InflationPlatform />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+            <Route path="/admin/dashboard" element={<ProtectedRoute requireSuperAdmin><FounderDashboard /></ProtectedRoute>} />
+            <Route path="/enterprise/risk" element={<ProtectedRoute><RiskPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

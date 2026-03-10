@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { parseBody, requireString, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
+import { authenticateRequest } from "../_shared/auth.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +16,20 @@ serve(async (req) => {
   }
 
   try {
+    const authResult = await authenticateRequest(req);
+    if ("error" in authResult) {
+      return new Response(
+        JSON.stringify({ error: authResult.error.message }),
+        { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Rate limit: 30 requests/hour per user
+    const rateCheck = await checkRateLimit(authResult.user.userId, "scenario-tutorial", 30, 60);
+    if (!rateCheck.allowed) {
+      return rateLimitResponse(rateCheck, corsHeaders);
+    }
+
     const body = await parseBody(req);
 
     const scenarioTitle = requireString(body.scenarioTitle, "scenarioTitle", { optional: true, maxLength: 500 });

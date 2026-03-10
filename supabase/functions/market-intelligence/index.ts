@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
-import { parseBody, requireString, requireStringEnum, requireArray, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
+import { parseBody, requireString, requireStringEnum, requireArray, validationErrorResponse, ValidationError, filterPromptInjection } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -197,8 +197,13 @@ serve(async (req) => {
     const data = await response.json();
     const processingTimeMs = Date.now() - startTime;
 
-    // Extract response content and citations
-    const summary = data.choices?.[0]?.message?.content || "";
+    // Extract response content and citations, filter prompt injection
+    const rawSummary = data.choices?.[0]?.message?.content || "";
+    const injectionResult = filterPromptInjection(rawSummary);
+    if (injectionResult.flagged) {
+      console.warn("Prompt injection detected in Perplexity response:", injectionResult.matches);
+    }
+    const summary = injectionResult.cleaned;
     const citations = data.citations || [];
     
     // Extract token usage
