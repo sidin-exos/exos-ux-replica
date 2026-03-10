@@ -91,9 +91,19 @@ const ScenarioCard = ({
               </span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {description}
-          </p>
+          {tags && tags.length > 0 ? (
+            <div className="flex flex-wrap gap-1 mt-0.5">
+              {tags.map((tag) => (
+                <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 font-medium">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {description}
+            </p>
+          )}
         </div>
       </div>
 
