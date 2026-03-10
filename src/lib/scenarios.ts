@@ -668,6 +668,7 @@ export const scenarios: Scenario[] = [
     id: "software-licensing",
     title: "Software Licensing Structure",
     description: "Evaluate different software licensing models, multi-tier user needs, contract terms, and vendor lock-in to optimize software investments.",
+    tags: ["True-Up Traps", "Tier Analysis", "Lock-In"],
     previewDescription: "Decode complex software licensing agreements before they decode your budget. Upload your licence document and the AI analyses metric definitions, true-up traps, tier mismatches, and auto-renewal clauses — then models multi-year TCO under different scenarios (monthly vs. annual vs. enterprise). 68% of enterprises receive unexpected true-up invoices; this scenario prevents that with proactive licence structure analysis.",
     icon: KeyRound,
     status: "available",
