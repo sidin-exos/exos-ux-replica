@@ -401,6 +401,7 @@ export const scenarios: Scenario[] = [
     id: "tail-spend-sourcing",
     title: "Tail Spend Rapid Sourcing",
     description: "Quick analysis for low-value purchases to determine the fastest compliant procurement route.",
+    tags: ["Micro-Purchase", "Compliance", "Fast-Track"],
     previewDescription: "Fast-track low-value purchases without bypassing compliance. The AI assesses your micro-purchase against procurement policy thresholds, recommends the fastest compliant route (direct buy, mini-RFQ, or catalogue order), and generates the necessary documentation. Tail spend represents 20% of addressable spend with 80% of supplier relationships — poorly managed, it multiplies transaction costs disproportionately.",
     icon: ShoppingCart,
     status: "available",
