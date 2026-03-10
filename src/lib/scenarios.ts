@@ -512,6 +512,7 @@ export const scenarios: Scenario[] = [
     id: "supplier-review",
     title: "Supplier Review",
     description: "Comprehensive supplier performance evaluation with scorecard and improvement planning.",
+    tags: ["Scorecard", "KPIs", "QBR"],
     previewDescription: "Build a data-driven supplier scorecard combining quantitative KPIs (delivery, quality, invoice accuracy) with qualitative stakeholder feedback and trend analysis. The AI generates a radar diagram of competencies, identifies performance gaps, and produces a 90-day improvement plan with a QBR discussion script. Moves supplier management from subjective opinions to evidence-based decisions.",
     icon: ClipboardCheck,
     status: "available",
