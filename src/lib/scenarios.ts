@@ -852,6 +852,7 @@ export const scenarios: Scenario[] = [
     id: "volume-consolidation",
     title: "Volume Consolidation",
     description: "Analyze supplier spend and identify opportunities to consolidate volume for better pricing and reduced complexity.",
+    tags: ["Supplier Ratio", "Volume Discount", "Dual-Source"],
     previewDescription: "Model optimal supplier ratios for maximum volume leverage with minimum supply risk. The AI analyses your current spend distribution, calculates consolidation savings at different split ratios (single-source, dual 70/30, triple 80/10/10), and factors in logistics costs, capacity constraints, and contract timelines. A dual-source 70/30 split achieves 90% of volume discount benefits while retaining full supply continuity.",
     icon: Layers,
     status: "available",
