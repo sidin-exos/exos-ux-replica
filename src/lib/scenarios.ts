@@ -748,6 +748,7 @@ export const scenarios: Scenario[] = [
     id: "negotiation-preparation",
     title: "Preparing for Negotiation",
     description: "Assess buying power, risks, and BATNA to formulate a robust negotiation strategy with tactical recommendations.",
+    tags: ["BATNA", "Leverage", "Strategy"],
     previewDescription: "Enter a negotiation with a mathematically defined strategy. The AI analyses your BATNA strength, maps the power balance, identifies the supplier's vulnerabilities, and produces a tactical playbook with opening positions, concession sequences, and walk-away triggers. Buyers with structured BATNA/ZOPA preparation achieve 8–12% better commercial outcomes — on a €1M contract, that's €80–120k.",
     icon: Handshake,
     status: "available",
