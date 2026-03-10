@@ -233,6 +233,7 @@ const Index = () => {
                           <ScenarioCard
                             title={scenario.title}
                             description={scenario.description}
+                            tags={scenario.tags}
                             icon={scenario.icon}
                             status={scenario.status}
                             category={scenario.category}

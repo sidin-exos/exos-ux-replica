@@ -123,6 +123,49 @@ export function optionalRecord(
   return value as Record<string, unknown>;
 }
 
+// --- Prompt injection filtering ---
+
+export interface InjectionFilterResult {
+  cleaned: string;
+  flagged: boolean;
+  matches: string[];
+}
+
+const INJECTION_PATTERNS: RegExp[] = [
+  /ignore\s+(all\s+)?previous\s+(instructions?|prompts?|rules?)/gi,
+  /override\s+(system|instructions?|rules?)/gi,
+  /\bsystem\s*:\s/gi,
+  /\bassistant\s*:\s/gi,
+  /you\s+are\s+now\s+a/gi,
+  /forget\s+(everything|all|your)\s+(above|previous|prior)/gi,
+  /disregard\s+(all|any|previous|prior)\s+(instructions?|rules?|prompts?)/gi,
+  /\bdo\s+not\s+follow\s+(the\s+)?(above|previous|system)/gi,
+  /\bact\s+as\s+(if\s+you\s+are|a\s+different)/gi,
+  /\bjailbreak/gi,
+  /\bDAN\s+mode/gi,
+  /\bpretend\s+you\s+(are|have)\s+no\s+(restrictions?|rules?|limits?)/gi,
+];
+
+/**
+ * Scan text for prompt injection patterns.
+ * Returns cleaned text with flagged segments replaced, plus metadata.
+ */
+export function filterPromptInjection(text: string): InjectionFilterResult {
+  const matches: string[] = [];
+  let cleaned = text;
+
+  for (const pattern of INJECTION_PATTERNS) {
+    pattern.lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      matches.push(match[0]);
+    }
+    cleaned = cleaned.replace(pattern, "[FILTERED]");
+  }
+
+  return { cleaned, flagged: matches.length > 0, matches };
+}
+
 /** Parse and validate JSON body, returning raw object. Throws ValidationError on parse failure. */
 export async function parseBody(req: Request): Promise<Record<string, unknown>> {
   try {

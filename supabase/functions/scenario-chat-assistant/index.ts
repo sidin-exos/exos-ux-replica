@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import {
   parseBody,
@@ -145,6 +146,12 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    // Rate limit: 20 requests/hour per user
+    const rateCheck = await checkRateLimit(authResult.user.userId, "scenario-chat-assistant", 20, 60);
+    if (!rateCheck.allowed) {
+      return rateLimitResponse(rateCheck, corsHeaders);
     }
 
     // Parse & validate
