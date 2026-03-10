@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { parseBody, requireString, requireArray, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
+import { checkRateLimit } from "../_shared/rate-limit.ts";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { callGoogleAI, convertOpenAITools } from "../_shared/google-ai.ts";
 import {
@@ -115,6 +116,25 @@ serve(async (req) => {
     );
   }
   const { userId } = authResult.user;
+
+  // Rate limit: 20 requests/hour per user
+  const rateCheck = await checkRateLimit(userId, "chat-copilot", 20, 60);
+  if (!rateCheck.allowed) {
+    return new Response(
+      JSON.stringify({
+        content: "You're sending too many messages. Please wait a few minutes and try again.",
+      }),
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": rateCheck.resetAt,
+        },
+      }
+    );
+  }
 
   // Init tracer
   const tracer = new LangSmithTracer({ env: "production", feature: "chat-copilot" });

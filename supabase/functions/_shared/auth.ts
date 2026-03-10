@@ -1,6 +1,6 @@
 /**
  * Shared authentication helper for edge functions.
- * Validates JWT from Authorization header using getClaims().
+ * Validates JWT from Authorization header using getUser() (server-side validation).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
@@ -8,6 +8,7 @@ export interface AuthResult {
   userId: string;
   email?: string;
   role?: string;
+  isSuperAdmin?: boolean;
 }
 
 export interface AuthError {
@@ -33,26 +34,29 @@ export async function authenticateRequest(
     { global: { headers: { Authorization: authHeader } } }
   );
 
-  const token = authHeader.replace("Bearer ", "");
-  const { data, error } = await supabase.auth.getClaims(token);
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (error || !data?.claims) {
+  if (error || !user) {
     return { error: { status: 401, message: "Invalid or expired token" } };
   }
 
   return {
     user: {
-      userId: data.claims.sub as string,
-      email: data.claims.email as string | undefined,
-      role: data.claims.role as string | undefined,
+      userId: user.id,
+      email: user.email,
+      role: (user.app_metadata?.role as string) ?? undefined,
     },
   };
 }
 
 /**
  * Check if a user has admin role via the profiles table.
+ * When allowSuperAdmin is true, super admins also pass the check.
  */
-export async function requireAdmin(userId: string): Promise<boolean> {
+export async function requireAdmin(
+  userId: string,
+  opts?: { allowSuperAdmin?: boolean }
+): Promise<boolean> {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -60,9 +64,29 @@ export async function requireAdmin(userId: string): Promise<boolean> {
 
   const { data } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, is_super_admin")
     .eq("id", userId)
-    .eq("role", "admin")
+    .maybeSingle();
+
+  if (!data) return false;
+  if (opts?.allowSuperAdmin && data.is_super_admin) return true;
+  return data.role === "admin";
+}
+
+/**
+ * Check if a user is a platform-level super admin.
+ */
+export async function requireSuperAdmin(userId: string): Promise<boolean> {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("is_super_admin")
+    .eq("id", userId)
+    .eq("is_super_admin", true)
     .maybeSingle();
 
   return !!data;

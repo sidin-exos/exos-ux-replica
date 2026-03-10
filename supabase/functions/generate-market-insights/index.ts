@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
-import { parseBody, requireString, requireArray, optionalBoolean, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
+import { parseBody, requireString, requireArray, optionalBoolean, validationErrorResponse, ValidationError, filterPromptInjection } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -209,9 +209,14 @@ async function generateMarketInsights(
   }
 
   const data = await response.json();
-  
+  const rawContent = data.choices?.[0]?.message?.content || "";
+  const injectionResult = filterPromptInjection(rawContent);
+  if (injectionResult.flagged) {
+    console.warn("Prompt injection detected in market insights:", injectionResult.matches);
+  }
+
   return {
-    content: data.choices?.[0]?.message?.content || "",
+    content: injectionResult.cleaned,
     citations: data.citations || [],
     usage: data.usage || null,
   };

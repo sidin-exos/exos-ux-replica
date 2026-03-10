@@ -263,8 +263,13 @@ export function completePipeline(
   const validationResult = executeValidation(context, request, config);
   context.stages.push(validationResult);
 
-  // Deanonymization is now handled server-side — response is already restored.
-  context.finalOutput = context.validatedResponse;
+  // Block output when validation found critical issues
+  if (validationResult.status === 'error') {
+    context.finalOutput = '';
+  } else {
+    // Deanonymization is now handled server-side — response is already restored.
+    context.finalOutput = context.validatedResponse;
+  }
   context.stages.push({
     stage: 'deanonymization',
     status: 'skipped',
@@ -295,9 +300,10 @@ export function completePipeline(
     }
   }
   
+  const pipelineSuccess = errors.length === 0;
   return {
-    success: errors.length === 0,
-    result: context.finalOutput,
+    success: pipelineSuccess,
+    result: pipelineSuccess ? context.finalOutput : '',
     metadata: {
       pipelineStages: context.stages,
       totalTimeMs,
