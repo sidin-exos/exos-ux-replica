@@ -80,6 +80,7 @@ export const scenarios: Scenario[] = [
     id: "tco-analysis",
     title: "Total Cost of Ownership",
     description: "Comprehensive lifecycle cost analysis for complex purchases including acquisition, operation, risks, and exit costs.",
+    tags: ["Lifecycle Cost", "NPV", "Asset Purchase"],
     previewDescription: "Go beyond sticker price. This scenario builds a full lifecycle cost model — CAPEX, OPEX, maintenance, disposal, and hidden risks — then applies NPV discounting and sensitivity analysis to reveal which option truly costs less over 3–10 years. Ideal before any major asset purchase, outsourcing decision, or vendor renewal where long-term costs diverge from quoted prices.",
     icon: Calculator,
     status: "available",
