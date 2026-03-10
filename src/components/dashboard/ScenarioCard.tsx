@@ -58,26 +58,26 @@ const ScenarioCard = ({
       )}
     >
       <div className="flex items-start gap-4">
-        <div
-          className={cn(
-            "flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-300",
-            isActive
-              ? "gradient-primary"
-              : category
-                ? CATEGORY_ICON_COLORS[category]
-                : "bg-secondary group-hover:bg-primary/20"
-          )}
-        >
-          <Icon
+          <div
             className={cn(
-              "w-6 h-6 transition-colors",
+              "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
               isActive
-                ? "text-primary-foreground"
+                ? "gradient-primary"
                 : category
-                  ? CATEGORY_ICON_TEXT[category]
-                  : "text-primary"
+                  ? CATEGORY_ICON_COLORS[category]
+                  : "bg-secondary group-hover:bg-primary/20"
             )}
-          />
+          >
+            <Icon
+              className={cn(
+                "w-5 h-5 transition-colors",
+                isActive
+                  ? "text-primary-foreground"
+                  : category
+                    ? CATEGORY_ICON_TEXT[category]
+                    : "text-primary"
+              )}
+            />
         </div>
 
         <div className="flex-1 min-w-0">
