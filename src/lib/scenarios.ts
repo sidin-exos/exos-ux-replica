@@ -786,6 +786,7 @@ export const scenarios: Scenario[] = [
     id: "category-strategy",
     title: "Category Strategy",
     description: "Comprehensive category management analysis with AI-guided insights, best practices from proprietary database, and cross-category analogies.",
+    tags: ["Portfolio", "Segmentation", "Strategy"],
     previewDescription: "Develop a full category strategy with Kraljic positioning, market intelligence, and a 3-year roadmap. The AI draws on proprietary best-practice databases and cross-category analogies to recommend strategic options (consolidate, diversify, partner, disintermediate) with pros, cons, and quick-win opportunities. Organisations with active category strategies reduce spend by 6–15% over 3 years versus transactional buying.",
     icon: FolderKanban,
     status: "available",
