@@ -372,6 +372,7 @@ export const scenarios: Scenario[] = [
     id: "sla-definition",
     title: "SLA Definition",
     description: "Generate comprehensive Service Level Agreement terms with metrics, targets, and escalation procedures.",
+    tags: ["KPIs", "Penalties", "Escalation"],
     previewDescription: "Generate enforceable SLA terms with quantified metrics, tiered penalty structures, and escalation procedures. The AI translates vague service expectations into measurable KPIs, calculates the financial cost of each SLA breach level, and produces a ready-to-use contract appendix. Without financial penalties, SLAs are legally unenforceable — this scenario ensures yours aren't.",
     icon: Clock,
     status: "available",
