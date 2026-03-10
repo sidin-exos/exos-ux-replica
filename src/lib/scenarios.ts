@@ -574,6 +574,7 @@ export const scenarios: Scenario[] = [
     id: "sow-critic",
     title: "SOW Critic",
     description: "AI-powered Statement of Work review to identify gaps, ambiguities, and protection issues.",
+    tags: ["Redlining", "Scope Gaps", "IP Protection"],
     previewDescription: "Upload any SOW and get a clause-by-clause AI review that flags scope ambiguities, missing acceptance criteria, weak penalty structures, and IP ownership gaps. Produces a track-changes style redline, a protection scorecard (0–100%), and a list of clarification questions to send back to the supplier. Targets the #1 cause of supplier disputes: ambiguous deliverables that cost €30–80k per incident to resolve.",
     icon: FileText,
     status: "available",
