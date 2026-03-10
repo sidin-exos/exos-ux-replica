@@ -881,6 +881,7 @@ export const scenarios: Scenario[] = [
     id: "supplier-dependency-planner",
     title: "Supplier Dependency & Exit Planner",
     description: "Assess supplier dependency levels, calculate switching costs, evaluate portfolio concentration, and build diversification or exit roadmaps to reduce strategic risk.",
+    tags: ["Lock-In", "Switching Cost", "Exit Plan"],
     previewDescription: "Quantify your lock-in exposure before it becomes leverage against you. The AI maps contractual, technical, and knowledge dependencies, calculates total switching costs (typically underestimated by 300–500%), and builds a phased diversification or exit roadmap. Transforms supplier dependency from an invisible strategic risk into a managed, quantified position with clear de-risking milestones.",
     icon: LogOut,
     status: "available",
