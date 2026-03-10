@@ -297,6 +297,7 @@ export const scenarios: Scenario[] = [
     id: "specification-optimizer",
     title: "Specification Optimizer",
     description: "Analyze technical specifications for 'gold plating' - excessive requirements that limit supplier options and unnecessarily inflate costs.",
+    tags: ["Gold Plating", "Over-Spec", "Cost Reduction"],
     previewDescription: "Challenge over-engineered specifications that silently inflate costs and restrict your supplier base. The AI benchmarks your technical requirements against industry standards, identifies where tolerances or material grades exceed functional needs, and quantifies the cost premium of each over-specification. Typically uncovers 15–25% cost savings on over-specified components — the single largest avoidable cost driver in indirect spend.",
     icon: Sparkles,
     status: "available",
