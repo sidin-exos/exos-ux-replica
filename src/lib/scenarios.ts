@@ -541,6 +541,7 @@ export const scenarios: Scenario[] = [
     id: "procurement-project-planning",
     title: "Procurement Project Planning",
     description: "Analyze project inputs, outputs, and constraints to set strategic priorities using proven strategic analysis methods.",
+    tags: ["SWOT", "RACI", "Critical Path"],
     previewDescription: "Map your procurement project from inception to go-live using SWOT, stakeholder mapping, and critical path analysis. The AI identifies decision gates, approval bottlenecks, resource conflicts, and regulatory checkpoints — then produces a prioritised action plan with risk-adjusted timelines. Prevents the most common project delay: missing RACI clarity that stalls approval chains.",
     icon: Target,
     status: "available",
