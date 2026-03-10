@@ -46,10 +46,10 @@ const App = () => (
             <Route path="/report" element={<GeneratedReport />} />
             <Route path="/dashboards" element={<DashboardShowcase />} />
             <Route path="/market-intelligence" element={<MarketIntelligence />} />
-            <Route path="/architecture" element={<ArchitectureDiagram />} />
-            <Route path="/dev-workflow" element={<DevWorkflow />} />
-            <Route path="/testing-pipeline" element={<TestingPipeline />} />
-            <Route path="/org-chart" element={<OrgChart />} />
+            <Route path="/architecture" element={<ProtectedRoute requireSuperAdmin><ArchitectureDiagram /></ProtectedRoute>} />
+            <Route path="/dev-workflow" element={<ProtectedRoute requireSuperAdmin><DevWorkflow /></ProtectedRoute>} />
+            <Route path="/testing-pipeline" element={<ProtectedRoute requireSuperAdmin><TestingPipeline /></ProtectedRoute>} />
+            <Route path="/org-chart" element={<ProtectedRoute requireSuperAdmin><OrgChart /></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
