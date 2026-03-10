@@ -151,6 +151,7 @@ async function validateCombination(
       ],
       temperature: 0.1,
     }),
+    signal: AbortSignal.timeout(30_000),
   });
 
   if (!response.ok) {
@@ -200,6 +201,7 @@ async function generateMarketInsights(
       max_tokens: 5000, // 5x increase for comprehensive insights
       search_recency_filter: "month",
     }),
+    signal: AbortSignal.timeout(30_000),
   });
 
   if (!response.ok) {
@@ -290,7 +292,7 @@ serve(async (req) => {
     const validateOnly = optionalBoolean(body.validateOnly, "validateOnly") ?? false;
     const defaultGeography = requireString(body.defaultGeography, "defaultGeography", { optional: true, maxLength: 100 }) || "EU";
     const combinations = body.combinations !== undefined
-      ? (requireArray(body.combinations, "combinations", { maxLength: 50 }) as IndustryCategory[])
+      ? (requireArray(body.combinations, "combinations", { maxLength: 10 }) as IndustryCategory[])
       : undefined;
 
     // Validate each combination entry
