@@ -920,6 +920,7 @@ export const scenarios: Scenario[] = [
     id: "disruption-management",
     title: "Disruption Management",
     description: "Emergency response planning for supply chain disruptions with alternative sourcing strategies.",
+    tags: ["Crisis Response", "Recovery", "Alt Sourcing"],
     previewDescription: "Activate a structured crisis response when disruption hits. Describe the event and the AI generates a 4-stage recovery algorithm, models financial impact under different delay scenarios, identifies pre-qualified alternative suppliers, and drafts stakeholder communications. Reactive disruption management costs 2.3x more and lasts 40–60% longer than structured responses — this scenario provides the structure in minutes.",
     icon: AlertTriangle,
     status: "available",
