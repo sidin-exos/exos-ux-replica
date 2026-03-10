@@ -949,6 +949,7 @@ export const scenarios: Scenario[] = [
     id: "black-swan-scenario",
     title: "Black Swan Scenario Simulator",
     description: "Assess catastrophic risks with core suppliers and categories. Simulate Black Swan events and build proactive mitigation roadmaps before disruption strikes.",
+    tags: ["Stress Test", "BCP", "Cascading Risk"],
     previewDescription: "Stress-test your supply chain against catastrophic scenarios before they happen. Select a Black Swan event type (pandemic, embargo, cyberattack, financial collapse) and the AI simulates cascading failures across your supply network, identifies single points of failure, and builds a prioritised mitigation roadmap with early warning indicators. Companies with stress-tested BCP frameworks recover 2.3x faster, preserving millions in revenue.",
     icon: Feather,
     status: "available",
