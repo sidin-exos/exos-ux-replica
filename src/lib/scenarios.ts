@@ -205,6 +205,7 @@ export const scenarios: Scenario[] = [
     id: "spend-analysis-categorization",
     title: "Spend Analysis & Categorization",
     description: "Turn messy accounting exports into a strategic procurement dashboard. Paste your top expenses, and AI will map them to standard procurement categories, identify 'tail spend', and spot consolidation opportunities.",
+    tags: ["Tail Spend", "Taxonomy", "Consolidation"],
     previewDescription: "Upload raw spend data and the AI classifies it into standard procurement taxonomies (UNSPSC/eCl@ss), identifies tail spend hiding 20–30% of addressable savings, maps vendor fragmentation, and surfaces consolidation opportunities. Transforms unstructured accounting exports into a strategic procurement dashboard that reveals where money is actually going — and where it shouldn't be.",
     icon: PieChart,
     status: "available",
