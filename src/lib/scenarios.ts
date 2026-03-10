@@ -823,6 +823,7 @@ export const scenarios: Scenario[] = [
     id: "make-vs-buy",
     title: "Make vs Buy",
     description: "Evaluate whether to produce in-house or outsource based on cost, capability, speed, quality, and strategic fit.",
+    tags: ["Decision Matrix", "Break-Even", "Outsourcing"],
     previewDescription: "Model the full make-vs-buy decision across five dimensions: cost, capability, speed, quality, and strategic control. The AI compares fully-loaded internal costs against external quotes, assesses IP risk, calculates break-even points, and evaluates exit costs if outsourcing fails. Addresses the #1 cause of post-decision regret: underestimating hidden internal costs or overestimating vendor capability.",
     icon: Scale,
     status: "available",
