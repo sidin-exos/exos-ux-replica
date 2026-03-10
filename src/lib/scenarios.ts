@@ -429,6 +429,7 @@ export const scenarios: Scenario[] = [
     id: "contract-template",
     title: "Contract Template Generator",
     description: "Generate country-specific contract templates for EU procurement. Select your time investment tier and EXOS produces a structured template with clause-by-clause guidance. Not legal advice — a professional starting point.",
+    tags: ["EU Compliant", "Clause Library", "GDPR"],
     previewDescription: "Generate jurisdiction-aware contract templates tailored to EU procurement law. Select your time-investment tier (Quick/Standard/Comprehensive) and the AI produces structured clause sets covering scope, pricing, liability, IP, termination, and GDPR compliance — with clause-by-clause guidance explaining what each provision protects against. A professional starting point, not legal advice, that saves days of drafting time.",
     icon: ScrollText,
     status: "available",
