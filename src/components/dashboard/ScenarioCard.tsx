@@ -33,6 +33,7 @@ const CATEGORY_ICON_TEXT: Record<Scenario["category"], string> = {
 const ScenarioCard = ({
   title,
   description,
+  tags,
   icon: Icon,
   status,
   category,
