@@ -1034,6 +1034,7 @@ export const scenarios: Scenario[] = [
     id: "pre-flight-audit",
     title: "Pre-flight Audit",
     description: "Supplier intelligence gathering before negotiations. Get a comprehensive dossier on any supplier using just their website URL.",
+    tags: ["Due Diligence", "Sanctions", "Supplier Intel"],
     previewDescription: "Build a comprehensive supplier dossier in minutes. Provide the exact legal entity name and the AI scans financial health signals, litigation history, sanctions lists, ESG violations, M&A activity, and cybersecurity incidents — then produces a negotiation brief with leverage points and a due diligence checklist. A 10-minute pre-flight audit is the lowest-cost risk mitigation tool available, preventing onboarding risks that carry up to €5M in regulatory fines.",
     icon: Radar,
     status: "available",
