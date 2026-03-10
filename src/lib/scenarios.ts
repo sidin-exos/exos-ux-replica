@@ -706,6 +706,7 @@ export const scenarios: Scenario[] = [
     id: "category-risk-evaluator",
     title: "Category Risk Evaluator",
     description: "Comprehensive category risk assessment at tender stage combining SOW analysis, market intelligence, and category dynamics to identify budget and supply risks before commitment.",
+    tags: ["Category Score", "Tender Stage", "Go/No-Go"],
     previewDescription: "Assess category-level risk before committing budget. Combines supply market intelligence, supplier concentration analysis, regulatory exposure mapping, and demand forecasting to produce a Category Risk Score with breakdown by dimension. Identifies single points of failure, budget variance risks, and recommended contract terms — giving you a 'proceed / proceed with caution / halt' decision framework at tender stage.",
     icon: FileSearch,
     status: "available",
