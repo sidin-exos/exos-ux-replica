@@ -121,7 +121,7 @@ export function formatWithHighlights(
   for (const token of tokens) {
     const entity = entityMap.get(token);
     if (entity) {
-      const highlighted = `<span class="${highlightClass}" data-entity-type="${entity.type}" title="Originally: ${token}">${escapeHtml(entity.originalValue)}</span>`;
+      const highlighted = `<span class="${escapeHtml(highlightClass)}" data-entity-type="${escapeHtml(entity.type)}" title="Originally: ${escapeHtml(token)}">${escapeHtml(entity.originalValue)}</span>`;
       formattedText = formattedText.split(token).join(highlighted);
     }
   }
