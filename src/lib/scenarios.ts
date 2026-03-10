@@ -233,6 +233,7 @@ export const scenarios: Scenario[] = [
     id: "forecasting-budgeting",
     title: "Predictive Budgeting & Forecasting",
     description: "Combines your internal historical spend with external Market Intelligence. AI detects hidden seasonality, applies real-time industry inflation trends, and generates Best/Base/Worst case budget scenarios.",
+    tags: ["Forecasting", "Scenarios", "Inflation"],
     previewDescription: "Feed in 2+ years of category spend and the AI detects hidden seasonality, overlays real-time commodity and inflation indices from Market Intelligence, and generates three-scenario budget forecasts (Base/Stress/Upside). Prevents the most common budgeting failure: flat-line extrapolation that ignores macro shifts. A 5% CPI under-assumption on a €2M category = €100k unplanned spend.",
     icon: TrendingUp,
     status: "available",
