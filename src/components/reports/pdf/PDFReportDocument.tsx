@@ -114,7 +114,7 @@ function buildDocStyles(c: DocColors) {
     tocLabel: {
       fontSize: 10,
       color: c.primary,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       textDecoration: "none",
     },
     tocLeader: {
@@ -150,7 +150,7 @@ function buildDocStyles(c: DocColors) {
     },
     brandName: {
       fontSize: 23,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.text,
       letterSpacing: 1,
@@ -184,10 +184,11 @@ function buildDocStyles(c: DocColors) {
     },
     reportTitle: {
       fontSize: 28,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.primary,
       marginBottom: 8,
+      letterSpacing: 0.5,
     },
     reportSubtitle: {
       fontSize: 12,
@@ -203,9 +204,10 @@ function buildDocStyles(c: DocColors) {
     },
     sectionTitle: {
       fontSize: 16,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 600,
       color: c.text,
+      letterSpacing: 0.5,
     },
     sectionContent: {
       backgroundColor: c.surface,
@@ -252,6 +254,7 @@ function buildDocStyles(c: DocColors) {
       lineHeight: 1.6,
       marginBottom: 8,
       fontWeight: 700,
+      fontFamily: "Courier-Bold",
       backgroundColor: c.primary + "15",
       paddingHorizontal: 6,
       paddingVertical: 3,
@@ -259,7 +262,7 @@ function buildDocStyles(c: DocColors) {
     },
     analysisHeader: {
       fontSize: 14,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.text,
       marginTop: 14,
@@ -267,7 +270,7 @@ function buildDocStyles(c: DocColors) {
     },
     analysisSubHeader: {
       fontSize: 13,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 600,
       color: c.text,
       marginTop: 10,
@@ -317,10 +320,27 @@ function buildDocStyles(c: DocColors) {
     },
     sectionBlockHeader: {
       fontSize: 14,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.text,
       marginBottom: 10,
+    },
+    parameterBlock: {
+      marginBottom: 10,
+    },
+    parameterLabel: {
+      fontSize: 9,
+      color: c.textMuted,
+      fontFamily: "Helvetica",
+      textTransform: "uppercase" as const,
+      letterSpacing: 0.5,
+      marginBottom: 2,
+    },
+    parameterValue: {
+      fontSize: 10,
+      color: c.text,
+      fontFamily: "Helvetica-Bold",
+      lineHeight: 1.4,
     },
     numberedItem: {
       flexDirection: "row" as const,
@@ -1005,28 +1025,17 @@ const PDFReportDocument = ({
               <Text style={styles.sectionTitle}>Analysis Parameters</Text>
             </View>
             <View style={styles.sectionContent}>
-              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                {Object.entries(formData)
-                  .filter(([_, value]) => value && value.trim() !== "")
-                  .map(([key, value]) => {
-                    const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
-                    let displayValue = value;
-                    if (value.length > 60) {
-                      const firstSentence = value.split(/[.!?\n]/)[0] || value;
-                      displayValue = firstSentence.length > 80
-                        ? firstSentence.substring(0, 77) + "…"
-                        : firstSentence;
-                    }
-                    return (
-                      <View key={key} style={{ flexDirection: "row", alignItems: "center", marginRight: 8, marginBottom: 6 }}>
-                        <Text style={{ fontSize: 8, color: colors.textMuted, marginRight: 4 }}>{label}:</Text>
-                        <View style={{ backgroundColor: colors.surfaceLight, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 3 }}>
-                          <Text style={{ fontSize: 9, color: colors.text, fontFamily: "Courier" }}>{displayValue}</Text>
-                        </View>
-                      </View>
-                    );
-                  })}
-              </View>
+              {Object.entries(formData)
+                .filter(([_, value]) => value && value.trim() !== "")
+                .map(([key, value]) => {
+                  const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
+                  return (
+                    <View key={key} style={styles.parameterBlock}>
+                      <Text style={styles.parameterLabel}>{label}</Text>
+                      <Text style={styles.parameterValue}>{value}</Text>
+                    </View>
+                  );
+                })}
             </View>
           </View>
         )}

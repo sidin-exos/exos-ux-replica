@@ -1,37 +1,100 @@
 
 
-# Implement Point 5 (Analysis Parameters) and Point 7 (Typographic Hierarchy)
+## Enterprise Platforms — Phase 1 Implementation Plan
 
-## File: `src/components/reports/pdf/PDFReportDocument.tsx`
+### Overview
 
-### Task 1: Typographic Hierarchy (Point 7)
+Build the UI scaffolding, routing, database tables, storage bucket, and Supabase integration for persistent Risk Assessment and Inflation Analysis trackers. No AI processing or Edge Functions in this sprint.
 
-Update existing styles in `buildDocStyles`:
+### 1. Database Migration
 
-| Style | Change |
-|-------|--------|
-| `reportTitle` (line 185-191) | Add `fontFamily: "Helvetica-Bold"`, `letterSpacing: 0.5` |
-| `sectionTitle` (line 204-209) | Change to `fontFamily: "Helvetica-Bold"`, add `letterSpacing: 0.5` |
-| `analysisHeader` (line 260-267) | Change to `fontFamily: "Helvetica-Bold"` |
-| `analysisSubHeader` (line 268-275) | Change to `fontFamily: "Helvetica-Bold"` |
-| `sectionBlockHeader` (line 318-324) | Change to `fontFamily: "Helvetica-Bold"` |
-| `tocLabel` (line 114-119) | Change to `fontFamily: "Helvetica-Bold"` |
-| `brandName` (line 151-157) | Change to `fontFamily: "Helvetica-Bold"` |
-| `analysisTextHighlight` (line 249-259) | Change to `fontFamily: "Courier-Bold"` for financial figures |
+Create `enterprise_trackers` table and `tracker-files` storage bucket in a single migration:
 
-### Task 2: Fix Analysis Parameters Layout (Point 5)
+```sql
+CREATE TABLE public.enterprise_trackers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  tracker_type text NOT NULL,
+  name text NOT NULL,
+  status text NOT NULL DEFAULT 'setup',
+  parameters jsonb NOT NULL DEFAULT '{}',
+  file_references jsonb NOT NULL DEFAULT '[]',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-Add new styles:
-- `parameterBlock`: `{ marginBottom: 10 }`
-- `parameterLabel`: `{ fontSize: 9, color: c.textMuted, fontFamily: "Helvetica", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }`
-- `parameterValue`: `{ fontSize: 10, color: c.text, fontFamily: "Helvetica-Bold", lineHeight: 1.4 }`
+ALTER TABLE public.enterprise_trackers ENABLE ROW LEVEL SECURITY;
 
-Rewrite the Analysis Parameters section (lines 1001-1031): Replace the chip-based `flexDirection: "row", flexWrap: "wrap"` layout with a vertical list. Remove the truncation logic (lines 1014-1018) so values render in full with natural text wrapping. Each parameter renders as:
+-- User CRUD on own trackers
+CREATE POLICY "Users can select own trackers" ON public.enterprise_trackers
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own trackers" ON public.enterprise_trackers
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own trackers" ON public.enterprise_trackers
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own trackers" ON public.enterprise_trackers
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
+-- Admin read-all
+CREATE POLICY "Admins can read all trackers" ON public.enterprise_trackers
+  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
-```text
-<View parameterBlock>
-  <Text parameterLabel>INDUSTRY CONTEXT</Text>
-  <Text parameterValue>Engineering services company providing design, project management, and construction...</Text>
-</View>
+-- Storage bucket
+INSERT INTO storage.buckets (id, name, public) VALUES ('tracker-files', 'tracker-files', false);
+
+-- Storage RLS: users can upload/read/delete own files (path starts with user_id)
+CREATE POLICY "Users can upload own tracker files" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can read own tracker files" ON storage.objects
+  FOR SELECT TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can delete own tracker files" ON storage.objects
+  FOR DELETE TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
 ```
+
+### 2. New Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/pages/enterprise/RiskPlatform.tsx` | Risk Assessment platform page with Tabs (Monitor / Setup / Reports) |
+| `src/pages/enterprise/InflationPlatform.tsx` | Inflation Analysis platform page, same structure |
+| `src/components/enterprise/TrackerSetupWizard.tsx` | 3-step wizard: Parameters → Files & Context (with GDPR checkbox) → Review & Activate |
+| `src/components/enterprise/TrackerList.tsx` | Grid of Card components showing active trackers with status badges |
+| `src/components/enterprise/FileUploadZone.tsx` | Drag-and-drop file upload area for Step 2 |
+| `src/hooks/useEnterpriseTrackers.ts` | Hook for CRUD operations on `enterprise_trackers` table + file upload to `tracker-files` bucket |
+
+### 3. Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/App.tsx` | Add routes `/enterprise/risk` and `/enterprise/inflation` |
+| `src/components/layout/Header.tsx` | Add "Enterprise" dropdown with Risk Assessment and Inflation Analysis links (same split-button pattern as existing nav items) |
+| `src/components/layout/MobileBottomNav.tsx` | Not modified — 5 items is already tight. Enterprise is accessed via Header hamburger menu mobile sheet instead. |
+
+### 4. Component Design Details
+
+**Platform Pages** (Risk & Inflation share identical layout, differ by `trackerType` prop and icon):
+- Header with icon (`ShieldAlert` for Risk, `TrendingUp` for Inflation), title, description
+- Shadcn `<Tabs>` with 3 tabs: Monitor (default), Setup New Tracker, Reports
+- Monitor tab renders `<TrackerList>`; Setup tab renders `<TrackerSetupWizard>`; Reports tab shows placeholder
+
+**TrackerSetupWizard** (3 steps):
+- Step 1 — Parameters: name field, category/goods/services inputs (varies by tracker type), risk appetite or inflation baseline
+- Step 2 — Files & Context: `<FileUploadZone>` (drag-drop + click), optional context textarea, **mandatory GDPR checkbox** before proceeding
+- Step 3 — Review & Activate: summary card, "Activate" button that uploads files to storage, inserts tracker row, shows toast, switches to Monitor tab
+
+**TrackerList**: queries `enterprise_trackers` filtered by `tracker_type` and `user_id`, renders a responsive grid of Cards with name, status Badge, created_at formatted date, and a "View" button (placeholder for Phase 2 detail view).
+
+**useEnterpriseTrackers hook**:
+- `trackers` state via `useQuery` from `@tanstack/react-query`
+- `createTracker(data)` — uploads files to `tracker-files/${user_id}/${uuid}-${filename}`, then inserts row
+- Uses `supabase` client from `@/integrations/supabase/client`
+
+### 5. Mobile Navigation
+
+The existing mobile Sheet menu in `Header.tsx` will get the Enterprise links added below the existing nav items (before the separator). No changes to `MobileBottomNav.tsx` to avoid overcrowding.
+
+### 6. Security Notes
+
+- All tracker data user-scoped via RLS (`auth.uid() = user_id`)
+- Storage paths enforce user isolation via `(storage.foldername(name))[1] = auth.uid()::text`
+- GDPR checkbox required before file upload proceeds
+- No PII stored in parameters — UI guidance enforced
 
