@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Quote, TrendingUp, Shield, Users, RefreshCw, Mail } from "lucide-react";
+import { ArrowLeft, Quote, TrendingUp, Shield, Users, RefreshCw, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,27 @@ const successStories = [
 ];
 
 const categoryOrder: Scenario["category"][] = ["analysis", "planning", "risk", "documentation"];
+
+const CATEGORY_ICONS: Record<Scenario["category"], LucideIcon> = {
+  analysis: LineChart,
+  planning: CalendarDays,
+  risk: ShieldAlert,
+  documentation: FileText,
+};
+
+const CATEGORY_ICON_COLOR: Record<Scenario["category"], string> = {
+  analysis: "text-blue-500",
+  planning: "text-amber-500",
+  risk: "text-destructive",
+  documentation: "text-purple-500",
+};
+
+const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
+  analysis: "bg-blue-500/15 text-blue-500",
+  planning: "bg-amber-500/15 text-amber-500",
+  risk: "bg-destructive/15 text-destructive",
+  documentation: "bg-purple-500/15 text-purple-500",
+};
 
 const Index = () => {
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
@@ -209,9 +230,10 @@ const Index = () => {
                     )}
                   >
                     <div className="mb-4">
-                      <h2 className="font-display text-xl font-semibold text-foreground flex items-center gap-2">
+                      <h2 className="font-display text-2xl font-semibold text-foreground flex items-center gap-2">
+                        {(() => { const CatIcon = CATEGORY_ICONS[category]; return <CatIcon className={cn("w-6 h-6", CATEGORY_ICON_COLOR[category])} />; })()}
                         {getCategoryLabel(category)}
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-iris/15 text-iris">
+                        <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", CATEGORY_BADGE_COLOR[category])}>
                           {scenariosByCategory[category]?.length ?? 0}
                         </span>
                       </h2>
