@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useUser } from "@/hooks/useUser";
+import AuthPrompt from "@/components/auth/AuthPrompt";
 import Header from "@/components/layout/Header";
 import { Badge } from "@/components/ui/badge";
 import { dashboardConfigs, DashboardType } from "@/lib/dashboard-mappings";
@@ -147,7 +149,32 @@ const renderDashboard = (id: DashboardType) => {
 };
 
 const Reports = () => {
+  const { user, isLoading: isAuthLoading } = useUser();
   const [selectedDashboard, setSelectedDashboard] = useState<DashboardType>("decision-matrix");
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen gradient-hero">
+        <div className="fixed inset-0 pointer-events-none" style={{ background: "var(--gradient-glow)" }} />
+        <Header />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen gradient-hero">
+        <div className="fixed inset-0 pointer-events-none" style={{ background: "var(--gradient-glow)" }} />
+        <Header />
+        <main className="container py-16 relative">
+          <AuthPrompt
+            feature="Reports & Dashboards"
+            description="View your procurement analysis reports and performance dashboards"
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen gradient-hero">
