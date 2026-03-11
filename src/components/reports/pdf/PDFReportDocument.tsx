@@ -150,7 +150,7 @@ function buildDocStyles(c: DocColors) {
     },
     brandName: {
       fontSize: 23,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.text,
       letterSpacing: 1,
