@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/useUser";
 import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
@@ -11,17 +12,7 @@ import {
   type AllowedExtension,
 } from "@/lib/file-validation";
 
-export interface UserFile {
-  id: string;
-  user_id: string;
-  organization_id: string;
-  file_name: string;
-  file_type: string;
-  mime_type: string;
-  file_size: number;
-  storage_path: string;
-  created_at: string;
-}
+export type UserFile = Database["public"]["Tables"]["user_files"]["Row"];
 
 export interface UseUserFilesOptions {
   search?: string;
@@ -81,7 +72,7 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
 
       if (error) throw error;
       return {
-        files: (rows ?? []) as unknown as UserFile[],
+        files: rows ?? [],
         totalCount: count ?? 0,
       };
     },
@@ -153,8 +144,9 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
       if (uploadError) throw uploadError;
 
       // Insert metadata row
-      const row = {
+      const row: Database["public"]["Tables"]["user_files"]["Insert"] = {
         user_id: currentUser.id,
+        organization_id: profile.organization_id,
         file_name: file.name,
         file_type: ext,
         mime_type: ALLOWED_MIME_TYPES[ext],
@@ -164,7 +156,7 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
 
       const { data, error } = await supabase
         .from("user_files")
-        .insert(row as any)
+        .insert(row)
         .select()
         .single();
 
@@ -174,7 +166,7 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
         throw error;
       }
 
-      return data as unknown as UserFile;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
@@ -281,6 +273,21 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
     return data.signedUrl;
   };
 
+  // Get signed URL for inline preview (no Content-Disposition: attachment).
+  // Uses storage directly — no Edge Function because preview is read-only
+  // and storage RLS already enforces org-scoped access.
+  const getPreviewUrl = async (storagePath: string): Promise<string> => {
+    const { data, error } = await supabase.storage
+      .from("user-files")
+      .createSignedUrl(storagePath, 60);
+
+    if (error || !data?.signedUrl) {
+      throw new Error("Failed to generate preview URL");
+    }
+
+    return data.signedUrl;
+  };
+
   return {
     files,
     totalCount,
@@ -289,5 +296,6 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
     uploadFile,
     deleteFile,
     getDownloadUrl,
+    getPreviewUrl,
   };
 }

@@ -1,16 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useUser } from "@/hooks/useUser";
 
-export interface ScenarioFileAttachment {
-  id: string;
-  user_id: string;
-  organization_id: string;
-  file_id: string;
-  scenario_type: string;
-  scenario_run_id: string;
-  attached_at: string;
-}
+export type ScenarioFileAttachment = Database["public"]["Tables"]["scenario_file_attachments"]["Row"];
 
 export function useScenarioFileAttachments(scenarioRunId?: string) {
   const { user } = useUser();
@@ -31,7 +24,7 @@ export function useScenarioFileAttachments(scenarioRunId?: string) {
         .order("attached_at", { ascending: true });
 
       if (error) throw error;
-      return (data ?? []) as unknown as ScenarioFileAttachment[];
+      return data ?? [];
     },
     enabled: !!user && !!scenarioRunId,
   });
@@ -63,14 +56,15 @@ export function useScenarioFileAttachments(scenarioRunId?: string) {
 
       if (verifyError) throw verifyError;
 
-      const ownedIds = new Set((ownedFiles ?? []).map((f: { id: string }) => f.id));
+      const ownedIds = new Set((ownedFiles ?? []).map((f) => f.id));
       const unauthorized = fileIds.filter((id) => !ownedIds.has(id));
       if (unauthorized.length > 0) {
         throw new Error("One or more files not found or unauthorized");
       }
 
-      const rows = fileIds.map((fileId) => ({
+      const rows: Database["public"]["Tables"]["scenario_file_attachments"]["Insert"][] = fileIds.map((fileId) => ({
         user_id: currentUser.id,
+        organization_id: "", // Set by auto_set_organization_id trigger
         file_id: fileId,
         scenario_type: scenarioType,
         scenario_run_id: runId,
@@ -78,11 +72,11 @@ export function useScenarioFileAttachments(scenarioRunId?: string) {
 
       const { data, error } = await supabase
         .from("scenario_file_attachments")
-        .insert(rows as any)
+        .insert(rows)
         .select();
 
       if (error) throw error;
-      return (data ?? []) as unknown as ScenarioFileAttachment[];
+      return data ?? [];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
