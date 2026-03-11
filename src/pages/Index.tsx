@@ -174,7 +174,7 @@ const Index = () => {
                   const story = successStories[storyIndex];
                   const Icon = story.icon;
                   return (
-                    <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+                    <Card className="border-border/50 bg-card/80 backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
                       <CardContent className="p-5 space-y-3">
                         <div className="flex items-center justify-between">
                           <Badge variant="secondary" className="text-xs">{story.industry}</Badge>
