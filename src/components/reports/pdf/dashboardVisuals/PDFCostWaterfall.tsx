@@ -1,16 +1,6 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { CostWaterfallData } from "@/lib/dashboard-data-parser";
-
-const defaultBreakdown = [
-  { name: "Materials", value: 45, amount: "$225K", color: colors.textMuted },
-  { name: "Labor", value: 25, amount: "$125K", color: colors.textMuted },
-  { name: "Overhead", value: 17, amount: "$85K", color: colors.textMuted },
-  { name: "Logistics", value: 6, amount: "$30K", color: colors.textMuted },
-  { name: "Profit Margin", value: 7, amount: "$35K", color: colors.warning },
-];
 
 const formatAmount = (value: number, currency: string = "$"): string => {
   if (value >= 1_000_000) return `${currency}${(value / 1_000_000).toFixed(1)}M`;
@@ -18,29 +8,21 @@ const formatAmount = (value: number, currency: string = "$"): string => {
   return `${currency}${value}`;
 };
 
-export const PDFCostWaterfall = ({ data, themeMode }: { data?: CostWaterfallData; themeMode?: PdfThemeMode }) => {
+export const PDFCostWaterfall = ({ data, themeMode }: { data: CostWaterfallData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const currency = data?.currency || "$";
+  const currency = data.currency || "$";
 
-  const costBreakdownData = data?.components
-    ? (() => {
-        const total = data.components.reduce((s, c) => s + Math.abs(c.value), 0) || 1;
-        return data.components.map(c => ({
-          name: c.name,
-          value: Math.round((Math.abs(c.value) / total) * 100),
-          amount: formatAmount(Math.abs(c.value), currency),
-          color: c.type === "reduction" ? colors.warning : colors.textMuted,
-        }));
-      })()
-    : defaultBreakdown;
+  const total = data.components.reduce((s, c) => s + Math.abs(c.value), 0) || 1;
+  const costBreakdownData = data.components.map(c => ({
+    name: c.name,
+    value: Math.round((Math.abs(c.value) / total) * 100),
+    amount: formatAmount(Math.abs(c.value), currency),
+    color: c.type === "reduction" ? colors.warning : colors.textMuted,
+  }));
 
-  const totalRaw = data?.components
-    ? data.components.filter(c => c.type === "cost").reduce((s, c) => s + c.value, 0)
-    : 500000;
-  const savingsRaw = data?.components
-    ? data.components.filter(c => c.type === "reduction").reduce((s, c) => s + Math.abs(c.value), 0)
-    : 45000;
+  const totalRaw = data.components.filter(c => c.type === "cost").reduce((s, c) => s + c.value, 0);
+  const savingsRaw = data.components.filter(c => c.type === "reduction").reduce((s, c) => s + Math.abs(c.value), 0);
 
   const totalAmount = formatAmount(totalRaw, currency);
   const savingsOpportunity = formatAmount(savingsRaw, currency);

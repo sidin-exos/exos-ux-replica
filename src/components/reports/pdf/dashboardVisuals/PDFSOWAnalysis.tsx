@@ -1,23 +1,6 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { SOWAnalysisData } from "@/lib/dashboard-data-parser";
-
-const defaultClauses = [
-  { name: "IP Ownership", score: 80, status: "Strong", risk: "Low", color: colors.success },
-  { name: "Limitation of Liability", score: 55, status: "Weak", risk: "High", color: colors.destructive },
-  { name: "Termination", score: 72, status: "Adequate", risk: "Medium", color: colors.warning },
-  { name: "Data Protection", score: 66, status: "Adequate", risk: "Medium", color: colors.warning },
-  { name: "SLAs", score: 61, status: "Weak", risk: "High", color: colors.destructive },
-  { name: "Payment Terms", score: 78, status: "Strong", risk: "Low", color: colors.success },
-];
-
-const getScoreColor = (score: number): string => {
-  if (score >= 70) return colors.success;
-  if (score >= 60) return colors.warning;
-  return colors.destructive;
-};
 
 const statusToDisplay = (status: string): { label: string; risk: string } => {
   if (status === "complete") return { label: "Strong", risk: "Low" };
@@ -25,28 +8,33 @@ const statusToDisplay = (status: string): { label: string; risk: string } => {
   return { label: "Weak", risk: "High" };
 };
 
-export const PDFSOWAnalysis = ({ data, themeMode }: { data?: SOWAnalysisData; themeMode?: PdfThemeMode }) => {
+export const PDFSOWAnalysis = ({ data, themeMode }: { data: SOWAnalysisData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const clauses = data?.sections
-    ? data.sections.map(s => {
-        const display = statusToDisplay(s.status);
-        const score = s.status === "complete" ? 80 : s.status === "partial" ? 65 : 45;
-        return {
-          name: s.name,
-          score,
-          status: display.label,
-          risk: display.risk,
-          color: s.status === "complete" ? colors.success : s.status === "partial" ? colors.warning : colors.destructive,
-        };
-      })
-    : defaultClauses;
 
-  const avgScore = data?.clarity || (clauses.length > 0 ? Math.round(clauses.reduce((sum, c) => sum + c.score, 0) / clauses.length) : 0);
+  const getScoreColor = (score: number): string => {
+    if (score >= 70) return colors.success;
+    if (score >= 60) return colors.warning;
+    return colors.destructive;
+  };
+
+  const clauses = data.sections.map(s => {
+    const display = statusToDisplay(s.status);
+    const score = s.status === "complete" ? 80 : s.status === "partial" ? 65 : 45;
+    return {
+      name: s.name,
+      score,
+      status: display.label,
+      risk: display.risk,
+      color: s.status === "complete" ? colors.success : s.status === "partial" ? colors.warning : colors.destructive,
+    };
+  });
+
+  const avgScore = data.clarity || (clauses.length > 0 ? Math.round(clauses.reduce((sum, c) => sum + c.score, 0) / clauses.length) : 0);
   const highRiskCount = clauses.filter(c => c.risk === "High").length;
 
-  const recommendations = data?.recommendations || [
-    "Review Limitation of Liability and SLA clauses before signing. Consider legal consultation for high-risk items.",
+  const recommendations = data.recommendations || [
+    "Review high-risk clauses before signing.",
   ];
 
   return (

@@ -1,35 +1,18 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { TCOComparisonData } from "@/lib/dashboard-data-parser";
-
-const defaultOptions = [
-  { name: "Buy Outright", totalTCO: 485000, color: colors.primary },
-  { name: "3-Year Lease", totalTCO: 520000, color: colors.option2 },
-  { name: "Subscription", totalTCO: 595000, color: colors.option3 },
-];
-
-const defaultData = [
-  { year: "Y0", values: [350, 50, 80] },
-  { year: "Y1", values: [380, 170, 175] },
-  { year: "Y2", values: [410, 290, 280] },
-  { year: "Y3", values: [435, 410, 390] },
-  { year: "Y4", values: [460, 480, 505] },
-  { year: "Y5", values: [485, 520, 595] },
-];
 
 const formatCurrency = (value: number): string => {
   if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
   return `$${value}`;
 };
 
-export const PDFTCOComparison = ({ data, themeMode }: { data?: TCOComparisonData; themeMode?: PdfThemeMode }) => {
+export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const options = data?.options || defaultOptions;
+  const options = data.options;
 
-  const chartData = data?.data
+  const chartData = data.data
     ? data.data.map(row => {
         const values = options.map(opt => {
           const key: string = ("id" in opt && typeof opt.id === "string") ? opt.id : opt.name;
@@ -38,7 +21,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data?: TCOComparisonData
         });
         return { year: row.year as string, values };
       })
-    : defaultData;
+    : [];
 
   const lowestTCO = options.reduce((min, opt) => opt.totalTCO < min.totalTCO ? opt : min, options[0]);
   const highestTCO = options.reduce((max, opt) => opt.totalTCO > max.totalTCO ? opt : max, options[0]);
@@ -68,18 +51,20 @@ export const PDFTCOComparison = ({ data, themeMode }: { data?: TCOComparisonData
         ))}
       </View>
 
-      <View style={{ marginBottom: 10 }}>
-        {chartData.map((point, i) => (
-          <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-            <Text style={{ width: 22, fontSize: 9, color: colors.textMuted }}>{point.year}</Text>
-            <View style={{ flex: 1, flexDirection: "row", height: 10, marginLeft: 6 }}>
-              {point.values.map((val, j) => (
-                <View key={j} style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted, marginTop: j * 2, borderRadius: 1, position: "absolute", left: 0 }} />
-              ))}
+      {chartData.length > 0 && (
+        <View style={{ marginBottom: 10 }}>
+          {chartData.map((point, i) => (
+            <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+              <Text style={{ width: 22, fontSize: 9, color: colors.textMuted }}>{point.year}</Text>
+              <View style={{ flex: 1, flexDirection: "row", height: 10, marginLeft: 6 }}>
+                {point.values.map((val, j) => (
+                  <View key={j} style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted, marginTop: j * 2, borderRadius: 1, position: "absolute", left: 0 }} />
+                ))}
+              </View>
             </View>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      )}
 
       <View style={styles.matrixContainer}>
         <View style={[styles.matrixRow, styles.matrixHeader]}>

@@ -1,33 +1,21 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { SensitivityData } from "@/lib/dashboard-data-parser";
 
-const defaultVariables = [
-  { name: "Volume ±20%", low: -15, high: 18, baseValue: "100K units" },
-  { name: "Price ±10%", low: -12, high: 10, baseValue: "$45/unit" },
-  { name: "Exchange Rate ±5%", low: -8, high: 6, baseValue: "1.08 USD/EUR" },
-  { name: "Lead Time ±30%", low: -5, high: 4, baseValue: "6 weeks" },
-  { name: "Quality Defects ±50%", low: -3, high: 2, baseValue: "2%" },
-];
-
-export const PDFSensitivityAnalysis = ({ data, themeMode }: { data?: SensitivityData; themeMode?: PdfThemeMode }) => {
+export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const variables = data?.variables
-    ? data.variables.map(v => {
-        const baseCase = v.baseCase || 1;
-        const low = Math.round(((v.lowCase - baseCase) / baseCase) * 100);
-        const high = Math.round(((v.highCase - baseCase) / baseCase) * 100);
-        return {
-          name: v.name,
-          low,
-          high,
-          baseValue: v.unit ? `${v.baseCase} ${v.unit}` : String(v.baseCase),
-        };
-      })
-    : defaultVariables;
+  const variables = data.variables.map(v => {
+    const baseCase = v.baseCase || 1;
+    const low = Math.round(((v.lowCase - baseCase) / baseCase) * 100);
+    const high = Math.round(((v.highCase - baseCase) / baseCase) * 100);
+    return {
+      name: v.name,
+      low,
+      high,
+      baseValue: v.unit ? `${v.baseCase} ${v.unit}` : String(v.baseCase),
+    };
+  });
 
   const maxImpact = Math.max(1, ...variables.map(v => Math.max(Math.abs(v.low), Math.abs(v.high))));
   const scale = 40 / maxImpact;

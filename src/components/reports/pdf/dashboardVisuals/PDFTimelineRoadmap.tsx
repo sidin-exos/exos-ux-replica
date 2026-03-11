@@ -1,23 +1,6 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { TimelineRoadmapData } from "@/lib/dashboard-data-parser";
-
-const statusColorMap: Record<string, string> = {
-  complete: colors.primary,
-  completed: colors.primary,
-  active: colors.primaryDark,
-  "in-progress": colors.warning,
-  upcoming: colors.success,
-};
-
-const defaultPhases = [
-  { name: "Discovery", weeks: "Week 1-2", duration: 2, milestone: "Requirements finalized", color: colors.primary, status: "complete" as const },
-  { name: "RFP/RFQ", weeks: "Week 3-5", duration: 3, milestone: "Proposals received", color: colors.primaryDark, status: "active" as const },
-  { name: "Negotiation", weeks: "Week 6-7", duration: 2, milestone: "Terms agreed", color: colors.warning, status: "upcoming" as const },
-  { name: "Award & Onboard", weeks: "Week 8-9", duration: 2, milestone: "Contract signed", color: colors.success, status: "upcoming" as const },
-];
 
 const mapStatus = (s: string): string => {
   if (s === "completed") return "complete";
@@ -25,25 +8,32 @@ const mapStatus = (s: string): string => {
   return s;
 };
 
-export const PDFTimelineRoadmap = ({ data, themeMode }: { data?: TimelineRoadmapData; themeMode?: PdfThemeMode }) => {
+export const PDFTimelineRoadmap = ({ data, themeMode }: { data: TimelineRoadmapData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const phases = data?.phases
-    ? data.phases.map(p => {
-        const status = mapStatus(p.status);
-        const duration = p.endWeek - p.startWeek + 1;
-        return {
-          name: p.name,
-          weeks: `Week ${p.startWeek}-${p.endWeek}`,
-          duration,
-          milestone: p.milestones?.[0] || "",
-          color: statusColorMap[status] || colors.textMuted,
-          status,
-        };
-      })
-    : defaultPhases;
 
-  const totalWeeks = data?.totalWeeks || phases.reduce((sum, p) => sum + p.duration, 0);
+  const statusColorMap: Record<string, string> = {
+    complete: colors.primary,
+    completed: colors.primary,
+    active: colors.primaryDark,
+    "in-progress": colors.warning,
+    upcoming: colors.success,
+  };
+
+  const phases = data.phases.map(p => {
+    const status = mapStatus(p.status);
+    const duration = p.endWeek - p.startWeek + 1;
+    return {
+      name: p.name,
+      weeks: `Week ${p.startWeek}-${p.endWeek}`,
+      duration,
+      milestone: p.milestones?.[0] || "",
+      color: statusColorMap[status] || colors.textMuted,
+      status,
+    };
+  });
+
+  const totalWeeks = data.totalWeeks || phases.reduce((sum, p) => sum + p.duration, 0);
   const currentPhase = phases.find(p => p.status === "active") || phases[0];
 
   return (
