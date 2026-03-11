@@ -1,100 +1,54 @@
 
 
-## Enterprise Platforms — Phase 1 Implementation Plan
+# Refactor Header Navigation: Mega-Menu + Accordion Mobile
 
-### Overview
+## Overview
 
-Build the UI scaffolding, routing, database tables, storage bucket, and Supabase integration for persistent Risk Assessment and Inflation Analysis trackers. No AI processing or Edge Functions in this sprint.
+Replace the 6 separate `DropdownMenu` instances + flat mobile links with a unified Radix `NavigationMenu` (already installed) for desktop and `Accordion` (already installed) for mobile. Consolidate into 4 top-level groups.
 
-### 1. Database Migration
+## Navigation Structure
 
-Create `enterprise_trackers` table and `tracker-files` storage bucket in a single migration:
-
-```sql
-CREATE TABLE public.enterprise_trackers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  tracker_type text NOT NULL,
-  name text NOT NULL,
-  status text NOT NULL DEFAULT 'setup',
-  parameters jsonb NOT NULL DEFAULT '{}',
-  file_references jsonb NOT NULL DEFAULT '[]',
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.enterprise_trackers ENABLE ROW LEVEL SECURITY;
-
--- User CRUD on own trackers
-CREATE POLICY "Users can select own trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own trackers" ON public.enterprise_trackers
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own trackers" ON public.enterprise_trackers
-  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own trackers" ON public.enterprise_trackers
-  FOR DELETE TO authenticated USING (auth.uid() = user_id);
--- Admin read-all
-CREATE POLICY "Admins can read all trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
-
--- Storage bucket
-INSERT INTO storage.buckets (id, name, public) VALUES ('tracker-files', 'tracker-files', false);
-
--- Storage RLS: users can upload/read/delete own files (path starts with user_id)
-CREATE POLICY "Users can upload own tracker files" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can read own tracker files" ON storage.objects
-  FOR SELECT TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can delete own tracker files" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+```text
+Scenarios          Market Intelligence    Enterprise           Resources
+├─ Analysis        ├─ Generate Report     ├─ Risk Assessment   ├─ Dashboards & Analytics
+├─ Planning        ├─ Scheduled Reports   ├─ Inflation         ├─ Technology & AI
+├─ Risk            └─ Knowledge Base      │  Analysis          ├─ Customer Success
+└─ Documentation                          │                    ├─ Pricing
+                                          │                    └─ Help & FAQ
 ```
 
-### 2. New Files to Create
+## Changes (single file: `src/components/layout/Header.tsx`)
 
-| File | Purpose |
-|------|---------|
-| `src/pages/enterprise/RiskPlatform.tsx` | Risk Assessment platform page with Tabs (Monitor / Setup / Reports) |
-| `src/pages/enterprise/InflationPlatform.tsx` | Inflation Analysis platform page, same structure |
-| `src/components/enterprise/TrackerSetupWizard.tsx` | 3-step wizard: Parameters → Files & Context (with GDPR checkbox) → Review & Activate |
-| `src/components/enterprise/TrackerList.tsx` | Grid of Card components showing active trackers with status badges |
-| `src/components/enterprise/FileUploadZone.tsx` | Drag-and-drop file upload area for Step 2 |
-| `src/hooks/useEnterpriseTrackers.ts` | Hook for CRUD operations on `enterprise_trackers` table + file upload to `tracker-files` bucket |
+### Desktop (lines 74-217)
 
-### 3. Files to Edit
+Replace the `<nav>` block containing 4 `DropdownMenu` components + 2 `NavLink` items with a single `NavigationMenu` from `@/components/ui/navigation-menu`:
 
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add routes `/enterprise/risk` and `/enterprise/inflation` |
-| `src/components/layout/Header.tsx` | Add "Enterprise" dropdown with Risk Assessment and Inflation Analysis links (same split-button pattern as existing nav items) |
-| `src/components/layout/MobileBottomNav.tsx` | Not modified — 5 items is already tight. Enterprise is accessed via Header hamburger menu mobile sheet instead. |
+- 4 `NavigationMenuItem` items, each with a `NavigationMenuTrigger` and `NavigationMenuContent`
+- Content panels use `grid grid-cols-2 gap-3 p-4 w-[400px]` (or `w-[500px]` for Scenarios with 4 items)
+- Each sub-link is a `<button>` calling `navigate()`, styled with hover states matching `muted-foreground`/`primary` scheme
+- Icons retained for Enterprise sub-items (`ShieldAlert`, `TrendingUp`)
 
-### 4. Component Design Details
+### Mobile (lines 235-277)
 
-**Platform Pages** (Risk & Inflation share identical layout, differ by `trackerType` prop and icon):
-- Header with icon (`ShieldAlert` for Risk, `TrendingUp` for Inflation), title, description
-- Shadcn `<Tabs>` with 3 tabs: Monitor (default), Setup New Tracker, Reports
-- Monitor tab renders `<TrackerList>`; Setup tab renders `<TrackerSetupWizard>`; Reports tab shows placeholder
+Replace flat button list with `Accordion` from `@/components/ui/accordion`:
 
-**TrackerSetupWizard** (3 steps):
-- Step 1 — Parameters: name field, category/goods/services inputs (varies by tracker type), risk appetite or inflation baseline
-- Step 2 — Files & Context: `<FileUploadZone>` (drag-drop + click), optional context textarea, **mandatory GDPR checkbox** before proceeding
-- Step 3 — Review & Activate: summary card, "Activate" button that uploads files to storage, inserts tracker row, shows toast, switches to Monitor tab
+- 4 `AccordionItem` entries matching the desktop groups
+- `AccordionTrigger` for each group label
+- `AccordionContent` containing the sub-link buttons (same `mobileNavigate` calls)
+- Keeps existing styling: `text-sm font-medium`, `py-2.5 px-3`, `hover:bg-muted`
 
-**TrackerList**: queries `enterprise_trackers` filtered by `tracker_type` and `user_id`, renders a responsive grid of Cards with name, status Badge, created_at formatted date, and a "View" button (placeholder for Phase 2 detail view).
+### Imports
 
-**useEnterpriseTrackers hook**:
-- `trackers` state via `useQuery` from `@tanstack/react-query`
-- `createTracker(data)` — uploads files to `tracker-files/${user_id}/${uuid}-${filename}`, then inserts row
-- Uses `supabase` client from `@/integrations/supabase/client`
+- Add: `NavigationMenu`, `NavigationMenuList`, `NavigationMenuItem`, `NavigationMenuTrigger`, `NavigationMenuContent`, `NavigationMenuLink` from `@/components/ui/navigation-menu`
+- Add: `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent` from `@/components/ui/accordion`
+- Remove: `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` (still needed for user avatar menu — keep import)
+- Keep: `DropdownMenuSeparator` and user menu `DropdownMenu` (lines 331-397) untouched
 
-### 5. Mobile Navigation
+### Untouched
 
-The existing mobile Sheet menu in `Header.tsx` will get the Enterprise links added below the existing nav items (before the separator). No changes to `MobileBottomNav.tsx` to avoid overcrowding.
-
-### 6. Security Notes
-
-- All tracker data user-scoped via RLS (`auth.uid() = user_id`)
-- Storage paths enforce user isolation via `(storage.foldername(name))[1] = auth.uid()::text`
-- GDPR checkbox required before file upload proceeds
-- No PII stored in parameters — UI guidance enforced
+- Logo block (lines 60-72) — no changes
+- Auth state logic (lines 35-55) — no changes  
+- User avatar dropdown (lines 331-397) — no changes
+- ThemeToggle, Sheet wrapper — no changes
+- Mobile user section below Separator (lines 280-326) — no changes
 
