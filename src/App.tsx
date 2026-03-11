@@ -57,6 +57,7 @@ const App = () => (
             <Route path="/admin/dashboard" element={<ProtectedRoute requireSuperAdmin><FounderDashboard /></ProtectedRoute>} />
             <Route path="/enterprise/risk" element={<RiskPlatform />} />
             <Route path="/enterprise/inflation" element={<InflationPlatform />} />
+            <Route path="/pdf-test" element={<PdfTestPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
