@@ -106,11 +106,6 @@ function buildPageStyles(mode?: PdfThemeMode) {
       alignItems: "center" as const,
       marginBottom: 16,
     },
-    sectionLogoImage: {
-      width: 20,
-      height: 20,
-      marginRight: 8,
-    },
     sectionTitle: {
       fontSize: 16,
       fontFamily: "Helvetica" as const,
