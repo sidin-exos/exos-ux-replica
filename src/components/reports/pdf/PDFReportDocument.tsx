@@ -441,9 +441,22 @@ const PDFReportDocument = ({
             <Text style={styles.sectionTitle}>Executive Summary</Text>
           </View>
           <View style={styles.sectionContent}>
-            {keyPoints.map((point, i) => (
-              <View key={i} style={styles.keyPointItem}>
+            <Text style={styles.analysisSubHeader}>Key Findings</Text>
+            {findings.map((point, i) => (
+              <View key={`f-${i}`} style={styles.keyPointItem}>
                 <View style={styles.keyPointBullet}>
+                  <Text style={styles.keyPointBulletText}>{i + 1}</Text>
+                </View>
+                <Text style={styles.keyPointText}>{point}</Text>
+              </View>
+            ))}
+
+            <View style={{ height: 12 }} />
+
+            <Text style={styles.analysisSubHeader}>Top Recommendations</Text>
+            {recommendations.map((point, i) => (
+              <View key={`r-${i}`} style={styles.keyPointItem}>
+                <View style={[styles.keyPointBullet, { backgroundColor: colors.warning }]}>
                   <Text style={styles.keyPointBulletText}>{i + 1}</Text>
                 </View>
                 <Text style={styles.keyPointText}>{point}</Text>
