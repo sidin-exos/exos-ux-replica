@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   History, 
   Clock,
@@ -12,8 +13,8 @@ import {
   Scale, 
   GitMerge, 
   AlertTriangle,
-  Loader2,
-  RefreshCw
+  RefreshCw,
+  Search
 } from "lucide-react";
 import { 
   type IntelQuery, 
@@ -35,6 +36,22 @@ interface RecentQueriesProps {
   queries: IntelQuery[];
   isLoading: boolean;
   onLoad: () => void;
+}
+
+function QueryRowSkeleton() {
+  return (
+    <div className="p-3 rounded-lg border border-border">
+      <div className="flex items-start gap-2 mb-2">
+        <Skeleton className="w-4 h-4 shrink-0 mt-0.5 rounded" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-5 w-14 rounded-full" />
+        <Skeleton className="h-3 w-16 ml-auto" />
+      </div>
+    </div>
+  );
 }
 
 export function RecentQueries({ queries, isLoading, onLoad }: RecentQueriesProps) {
@@ -71,8 +88,10 @@ export function RecentQueries({ queries, isLoading, onLoad }: RecentQueriesProps
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          <div className="space-y-3">
+            <QueryRowSkeleton />
+            <QueryRowSkeleton />
+            <QueryRowSkeleton />
           </div>
         ) : !hasLoaded ? (
           <div className="text-center py-8 space-y-3">
@@ -84,8 +103,12 @@ export function RecentQueries({ queries, isLoading, onLoad }: RecentQueriesProps
             </Button>
           </div>
         ) : queries.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            No queries found. Start by searching above.
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Search className="w-12 h-12 text-muted-foreground/40 mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-1">No queries yet</h3>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              Run your first intelligence search above to see your history here.
+            </p>
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-4">

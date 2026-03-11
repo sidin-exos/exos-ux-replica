@@ -1,8 +1,9 @@
 import { format } from "date-fns";
-import { Eye } from "lucide-react";
+import { Eye, FolderPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
 
 interface TrackerListProps {
@@ -21,9 +22,15 @@ const TrackerList = ({ trackers, isLoading }: TrackerListProps) => {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader><div className="h-5 w-32 bg-muted rounded" /></CardHeader>
-            <CardContent><div className="h-4 w-20 bg-muted rounded" /></CardContent>
+          <Card key={i}>
+            <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </CardHeader>
+            <CardContent className="flex items-center justify-between">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-8 w-16" />
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -32,8 +39,12 @@ const TrackerList = ({ trackers, isLoading }: TrackerListProps) => {
 
   if (trackers.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground">No trackers yet. Create one from the "Setup New Tracker" tab.</p>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <FolderPlus className="w-12 h-12 text-muted-foreground/40 mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-1">No trackers yet</h3>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Create your first enterprise tracker from the "Setup New Tracker" tab to start monitoring.
+        </p>
       </div>
     );
   }

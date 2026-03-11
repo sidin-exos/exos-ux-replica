@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAllMarketInsights, useGenerateMarketInsights } from "@/hooks/useMarketInsights";
 
@@ -18,7 +19,6 @@ const EXISTING_COMBINATIONS = [
   { industrySlug: "healthcare", categorySlug: "mro-maintenance" },
 ];
 
-// New 20 EU-focused combinations
 const EU_COMBINATIONS = [
   { industrySlug: "aerospace-defense", industryName: "Aerospace & Defense", categorySlug: "semiconductors", categoryName: "Semiconductors", geography: "Global" },
   { industrySlug: "electronics", industryName: "Electronics", categorySlug: "electronic-components", categoryName: "Electronic Components", geography: "EU" },
@@ -42,13 +42,24 @@ const EU_COMBINATIONS = [
   { industrySlug: "sea-logistics", industryName: "Sea Logistics", categorySlug: "logistics-sea-freight", categoryName: "Logistics (Sea Freight)", geography: "EU" },
 ];
 
+function TableRowSkeleton() {
+  return (
+    <TableRow>
+      <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+      <TableCell><Skeleton className="h-5 w-12 rounded-full" /></TableCell>
+      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+      <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+    </TableRow>
+  );
+}
+
 export function MarketInsightsAdmin() {
   const { toast } = useToast();
   const { data: insights, isLoading: isLoadingInsights, refetch } = useAllMarketInsights();
   const { generate, isGenerating, generationResult } = useGenerateMarketInsights();
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentItem: string } | null>(null);
 
-  // Generate one at a time to avoid timeouts
   const handleGenerateBatch = async (combinations: typeof EU_COMBINATIONS) => {
     const total = combinations.length;
     let successCount = 0;
@@ -120,7 +131,6 @@ export function MarketInsightsAdmin() {
             </div>
           </div>
 
-          {/* Batch Progress */}
           {batchProgress && (
             <div className="space-y-2 p-4 rounded-lg bg-muted/50">
               <div className="flex justify-between text-sm">
@@ -131,7 +141,6 @@ export function MarketInsightsAdmin() {
             </div>
           )}
 
-          {/* Generation Result */}
           {generationResult && (
             <div className={`p-4 rounded-lg ${generationResult.success ? 'bg-green-500/10 border border-green-500/20' : 'bg-destructive/10 border border-destructive/20'}`}>
               {generationResult.success && generationResult.summary ? (
@@ -180,9 +189,24 @@ export function MarketInsightsAdmin() {
         </CardHeader>
         <CardContent>
           {isLoadingInsights ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Industry</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Confidence</TableHead>
+                  <TableHead>Citations</TableHead>
+                  <TableHead>Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRowSkeleton />
+                <TableRowSkeleton />
+                <TableRowSkeleton />
+                <TableRowSkeleton />
+                <TableRowSkeleton />
+              </TableBody>
+            </Table>
           ) : insights && insights.length > 0 ? (
             <Table>
               <TableHeader>
@@ -213,8 +237,12 @@ export function MarketInsightsAdmin() {
               </TableBody>
             </Table>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No market insights generated yet. Click "Generate 5 Market Insights" to create the first batch.
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Database className="w-12 h-12 text-muted-foreground/40 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-1">No market insights yet</h3>
+              <p className="text-sm text-muted-foreground max-w-sm">
+                Generate your first batch of AI-powered market insights using the button above.
+              </p>
             </div>
           )}
         </CardContent>
