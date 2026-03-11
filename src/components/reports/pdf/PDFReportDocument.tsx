@@ -320,10 +320,27 @@ function buildDocStyles(c: DocColors) {
     },
     sectionBlockHeader: {
       fontSize: 14,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.text,
       marginBottom: 10,
+    },
+    parameterBlock: {
+      marginBottom: 10,
+    },
+    parameterLabel: {
+      fontSize: 9,
+      color: c.textMuted,
+      fontFamily: "Helvetica",
+      textTransform: "uppercase" as const,
+      letterSpacing: 0.5,
+      marginBottom: 2,
+    },
+    parameterValue: {
+      fontSize: 10,
+      color: c.text,
+      fontFamily: "Helvetica-Bold",
+      lineHeight: 1.4,
     },
     numberedItem: {
       flexDirection: "row" as const,
