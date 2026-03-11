@@ -1,25 +1,8 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { KraljicData } from "@/lib/dashboard-data-parser";
 
-const quadrantInfo = {
-  strategic: { label: "Strategic", color: colors.destructive, strategy: "Partner closely, secure supply" },
-  bottleneck: { label: "Bottleneck", color: colors.warning, strategy: "Reduce risk, find alternatives" },
-  leverage: { label: "Leverage", color: colors.primary, strategy: "Maximize value, negotiate hard" },
-  noncritical: { label: "Non-critical", color: colors.textMuted, strategy: "Simplify, automate" },
-};
-
-type Quadrant = keyof typeof quadrantInfo;
-
-const defaultItems = [
-  { name: "Component A", quadrant: "strategic" as Quadrant, x: 75, y: 80, spend: "$450K" },
-  { name: "Component B", quadrant: "bottleneck" as Quadrant, x: 85, y: 35, spend: "$120K" },
-  { name: "Service C", quadrant: "leverage" as Quadrant, x: 30, y: 75, spend: "$280K" },
-  { name: "Material D", quadrant: "noncritical" as Quadrant, x: 25, y: 25, spend: "$65K" },
-  { name: "Material E", quadrant: "strategic" as Quadrant, x: 65, y: 90, spend: "$380K" },
-];
+type Quadrant = "strategic" | "bottleneck" | "leverage" | "noncritical";
 
 const deriveQuadrant = (supplyRisk: number, businessImpact: number): Quadrant => {
   if (supplyRisk >= 50 && businessImpact >= 50) return "strategic";
@@ -28,18 +11,24 @@ const deriveQuadrant = (supplyRisk: number, businessImpact: number): Quadrant =>
   return "noncritical";
 };
 
-export const PDFKraljicQuadrant = ({ data, themeMode }: { data?: KraljicData; themeMode?: PdfThemeMode }) => {
+export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const items = data?.items
-    ? data.items.map(item => ({
-        name: item.name,
-        quadrant: deriveQuadrant(item.supplyRisk, item.businessImpact),
-        x: item.supplyRisk,
-        y: item.businessImpact,
-        spend: item.spend || "",
-      }))
-    : defaultItems;
+
+  const quadrantInfo = {
+    strategic: { label: "Strategic", color: colors.destructive, strategy: "Partner closely, secure supply" },
+    bottleneck: { label: "Bottleneck", color: colors.warning, strategy: "Reduce risk, find alternatives" },
+    leverage: { label: "Leverage", color: colors.primary, strategy: "Maximize value, negotiate hard" },
+    noncritical: { label: "Non-critical", color: colors.textMuted, strategy: "Simplify, automate" },
+  };
+
+  const items = data.items.map(item => ({
+    name: item.name,
+    quadrant: deriveQuadrant(item.supplyRisk, item.businessImpact),
+    x: item.supplyRisk,
+    y: item.businessImpact,
+    spend: item.spend || "",
+  }));
 
   const renderQuadrant = (quadrant: Quadrant, isLastCol: boolean, isLastRow: boolean) => {
     const info = quadrantInfo[quadrant];

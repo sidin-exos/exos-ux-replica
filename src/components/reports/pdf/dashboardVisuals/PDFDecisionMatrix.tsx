@@ -1,46 +1,29 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { DecisionMatrixData } from "@/lib/dashboard-data-parser";
 
-const defaultCriteria = [
-  { name: "Total Cost", weight: 30 },
-  { name: "Quality", weight: 25 },
-  { name: "Delivery", weight: 20 },
-  { name: "Risk", weight: 15 },
-  { name: "Innovation", weight: 10 },
-];
+const optionColors = (c: ReturnType<typeof getPdfColors>) => [c.primary, c.option2, c.option3, c.warning, c.success];
 
-const defaultOptions = [
-  { name: "Option A", scores: [4, 5, 3, 4, 3], weighted: 82, color: colors.primary },
-  { name: "Option B", scores: [5, 4, 4, 3, 4], weighted: 84, color: colors.option2 },
-  { name: "Option C", scores: [3, 4, 5, 5, 5], weighted: 83, color: colors.option3 },
-];
-
-const optionColors = [colors.primary, colors.option2, colors.option3, colors.warning, colors.success];
-
-const getScoreBg = (score: number): string => {
-  if (score >= 5) return colors.primary;
-  if (score >= 4) return colors.primaryDark;
-  if (score >= 3) return colors.warning;
-  return colors.destructive;
+const getScoreBg = (score: number, c: ReturnType<typeof getPdfColors>): string => {
+  if (score >= 5) return c.primary;
+  if (score >= 4) return c.primaryDark;
+  if (score >= 3) return c.warning;
+  return c.destructive;
 };
 
-export const PDFDecisionMatrix = ({ data, themeMode }: { data?: DecisionMatrixData; themeMode?: PdfThemeMode }) => {
+export const PDFDecisionMatrix = ({ data, themeMode }: { data: DecisionMatrixData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const matrixCriteria = data?.criteria || defaultCriteria;
+  const oc = optionColors(colors);
+  const matrixCriteria = data.criteria;
 
-  const matrixOptions = data?.options
-    ? data.options.map((opt, idx) => {
-        const weighted = matrixCriteria.reduce(
-          (sum, c, ci) => sum + ((opt.scores[ci] || 0) * c.weight) / 5,
-          0
-        );
-        return { name: opt.name, scores: opt.scores, weighted: Math.round(weighted), color: optionColors[idx % optionColors.length] };
-      })
-    : defaultOptions;
+  const matrixOptions = data.options.map((opt, idx) => {
+    const weighted = matrixCriteria.reduce(
+      (sum, c, ci) => sum + ((opt.scores[ci] || 0) * c.weight) / 5,
+      0
+    );
+    return { name: opt.name, scores: opt.scores, weighted: Math.round(weighted), color: oc[idx % oc.length] };
+  });
 
   const winner = matrixOptions.reduce((max, opt) => opt.weighted > max.weighted ? opt : max, matrixOptions[0]);
 
@@ -76,7 +59,7 @@ export const PDFDecisionMatrix = ({ data, themeMode }: { data?: DecisionMatrixDa
             <Text style={styles.matrixCell}>{criterion.weight}%</Text>
             {matrixOptions.map((opt, i) => (
               <View key={i} style={[styles.matrixCell, { alignItems: "center" }]}>
-                <View style={[styles.scoreCell, { backgroundColor: getScoreBg(opt.scores[idx] || 0) }]}>
+                <View style={[styles.scoreCell, { backgroundColor: getScoreBg(opt.scores[idx] || 0, colors) }]}>
                   <Text style={styles.scoreCellText}>{opt.scores[idx] || 0}</Text>
                 </View>
               </View>

@@ -1,22 +1,6 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { DataQualityData } from "@/lib/dashboard-data-parser";
-
-const defaultFields = [
-  { name: "Supplier list", value: 92, status: "Complete", missing: "-" },
-  { name: "Volumes", value: 81, status: "Good", missing: "Q4 data pending" },
-  { name: "Pricing", value: 74, status: "Partial", missing: "2 suppliers missing" },
-  { name: "Terms", value: 63, status: "Partial", missing: "Renewal terms unclear" },
-  { name: "Quality metrics", value: 88, status: "Good", missing: "-" },
-];
-
-const getScoreColor = (score: number): string => {
-  if (score >= 80) return colors.success;
-  if (score >= 70) return colors.warning;
-  return colors.destructive;
-};
 
 const statusToDisplay = (status: string): { label: string; missing: string } => {
   if (status === "complete") return { label: "Complete", missing: "-" };
@@ -24,20 +8,25 @@ const statusToDisplay = (status: string): { label: string; missing: string } => 
   return { label: "Missing", missing: "Data not available" };
 };
 
-export const PDFDataQuality = ({ data, themeMode }: { data?: DataQualityData; themeMode?: PdfThemeMode }) => {
+export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const fields = data?.fields
-    ? data.fields.map(f => {
-        const display = statusToDisplay(f.status);
-        return {
-          name: f.field,
-          value: f.coverage,
-          status: display.label,
-          missing: display.missing,
-        };
-      })
-    : defaultFields;
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 80) return colors.success;
+    if (score >= 70) return colors.warning;
+    return colors.destructive;
+  };
+
+  const fields = data.fields.map(f => {
+    const display = statusToDisplay(f.status);
+    return {
+      name: f.field,
+      value: f.coverage,
+      status: display.label,
+      missing: display.missing,
+    };
+  });
 
   const avgQuality = fields.length > 0 ? Math.round(fields.reduce((sum, f) => sum + f.value, 0) / fields.length) : 0;
 

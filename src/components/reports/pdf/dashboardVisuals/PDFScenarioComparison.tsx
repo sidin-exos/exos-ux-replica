@@ -1,43 +1,31 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { ScenarioComparisonData } from "@/lib/dashboard-data-parser";
 
-const defaultCriteria = [
-  { name: "Cost", weight: 25, a: 82, b: 74 },
-  { name: "Risk", weight: 20, a: 68, b: 77 },
-  { name: "Speed", weight: 20, a: 71, b: 63 },
-  { name: "Quality", weight: 20, a: 79, b: 73 },
-  { name: "Flexibility", weight: 15, a: 66, b: 70 },
-];
-
-const getScoreColor = (score: number, otherScore: number): string => {
-  if (score > otherScore) return colors.primary;
-  if (score < otherScore) return colors.textMuted;
-  return colors.text;
-};
-
-export const PDFScenarioComparison = ({ data, themeMode }: { data?: ScenarioComparisonData; themeMode?: PdfThemeMode }) => {
+export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioComparisonData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const scenarioNames = data?.scenarios?.slice(0, 2) || [
-    { id: "a", name: "Scenario A", color: colors.primary },
-    { id: "b", name: "Scenario B", color: colors.option2 },
-  ];
+
+  const getScoreColor = (score: number, otherScore: number): string => {
+    if (score > otherScore) return colors.primary;
+    if (score < otherScore) return colors.textMuted;
+    return colors.text;
+  };
+
+  const scenarioNames = data.scenarios?.slice(0, 2) || [];
   const scA = scenarioNames[0] || { id: "a", name: "Scenario A", color: colors.primary };
   const scB = scenarioNames[1] || { id: "b", name: "Scenario B", color: colors.option2 };
 
-  const criteria = data?.radarData
+  const criteria = data.radarData
     ? data.radarData.map(r => {
         const aVal = typeof r[scA.id] === "number" ? (r[scA.id] as number) : 50;
         const bVal = typeof r[scB.id] === "number" ? (r[scB.id] as number) : 50;
         return { name: r.metric as string, weight: 20, a: aVal, b: bVal };
       })
-    : defaultCriteria;
+    : [];
 
   const equalWeight = criteria.length > 0 ? Math.round(100 / criteria.length) : 20;
-  const effectiveCriteria = data?.radarData ? criteria.map(c => ({ ...c, weight: equalWeight })) : criteria;
+  const effectiveCriteria = criteria.map(c => ({ ...c, weight: equalWeight }));
 
   const weightedA = effectiveCriteria.reduce((sum, c) => sum + (c.a * c.weight / 100), 0).toFixed(1);
   const weightedB = effectiveCriteria.reduce((sum, c) => sum + (c.b * c.weight / 100), 0).toFixed(1);

@@ -150,37 +150,84 @@ export const PDFDashboardPlaceholder = ({ name, themeMode }: { name: string; the
   );
 };
 
+/** No-data placeholder shown when parsed data is missing for a dashboard */
+const PDFNoDataPlaceholder = ({ name, themeMode }: { name: string; themeMode?: PdfThemeMode }) => {
+  const isLight = themeMode === "light";
+  return (
+    <View style={{
+      backgroundColor: isLight ? "#f3f4f6" : "#2a2a3a",
+      padding: 20,
+      borderRadius: 6,
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 80,
+    }}>
+      <Text style={{ fontSize: 11, fontFamily: "Helvetica", fontWeight: 600, color: isLight ? "#374151" : "#9ca3af", marginBottom: 6 }}>
+        {name}
+      </Text>
+      <Text style={{ fontSize: 10, fontFamily: "Helvetica", color: "#6b7280", textAlign: "center", lineHeight: 1.4 }}>
+        Visualization data could not be extracted automatically. Please refer to the detailed analysis below.
+      </Text>
+    </View>
+  );
+};
+
+/** Map dashboard type to the corresponding key in DashboardData */
+const dashboardDataKey: Record<string, keyof DashboardData> = {
+  "action-checklist": "actionChecklist",
+  "decision-matrix": "decisionMatrix",
+  "cost-waterfall": "costWaterfall",
+  "timeline-roadmap": "timelineRoadmap",
+  "kraljic-quadrant": "kraljicQuadrant",
+  "tco-comparison": "tcoComparison",
+  "license-tier": "licenseTier",
+  "sensitivity-spider": "sensitivitySpider",
+  "risk-matrix": "riskMatrix",
+  "scenario-comparison": "scenarioComparison",
+  "supplier-scorecard": "supplierScorecard",
+  "sow-analysis": "sowAnalysis",
+  "negotiation-prep": "negotiationPrep",
+  "data-quality": "dataQuality",
+};
+
 /** Render a single dashboard by type */
 const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardData | null, themeMode?: PdfThemeMode): ReactNode => {
+  // Gate: if no parsed data exists for this dashboard type, show placeholder
+  const dataKey = dashboardDataKey[dashboardType];
+  if (dataKey && (!parsedData || !parsedData[dataKey])) {
+    const config = dashboardConfigs[dashboardType as DashboardType];
+    return <PDFNoDataPlaceholder name={config?.name || String(dashboardType)} themeMode={themeMode} />;
+  }
+
   switch (dashboardType) {
     case "action-checklist":
-      return <PDFActionChecklist data={parsedData?.actionChecklist} themeMode={themeMode} />;
+      return <PDFActionChecklist data={parsedData!.actionChecklist!} themeMode={themeMode} />;
     case "decision-matrix":
-      return <PDFDecisionMatrix data={parsedData?.decisionMatrix} themeMode={themeMode} />;
+      return <PDFDecisionMatrix data={parsedData!.decisionMatrix!} themeMode={themeMode} />;
     case "cost-waterfall":
-      return <PDFCostWaterfall data={parsedData?.costWaterfall} themeMode={themeMode} />;
+      return <PDFCostWaterfall data={parsedData!.costWaterfall!} themeMode={themeMode} />;
     case "timeline-roadmap":
-      return <PDFTimelineRoadmap data={parsedData?.timelineRoadmap} themeMode={themeMode} />;
+      return <PDFTimelineRoadmap data={parsedData!.timelineRoadmap!} themeMode={themeMode} />;
     case "kraljic-quadrant":
-      return <PDFKraljicQuadrant data={parsedData?.kraljicQuadrant} themeMode={themeMode} />;
+      return <PDFKraljicQuadrant data={parsedData!.kraljicQuadrant!} themeMode={themeMode} />;
     case "tco-comparison":
-      return <PDFTCOComparison data={parsedData?.tcoComparison} themeMode={themeMode} />;
+      return <PDFTCOComparison data={parsedData!.tcoComparison!} themeMode={themeMode} />;
     case "license-tier":
-      return <PDFLicenseTier data={parsedData?.licenseTier} themeMode={themeMode} />;
+      return <PDFLicenseTier data={parsedData!.licenseTier!} themeMode={themeMode} />;
     case "sensitivity-spider":
-      return <PDFSensitivityAnalysis data={parsedData?.sensitivitySpider} themeMode={themeMode} />;
+      return <PDFSensitivityAnalysis data={parsedData!.sensitivitySpider!} themeMode={themeMode} />;
     case "risk-matrix":
-      return <PDFRiskMatrix data={parsedData?.riskMatrix} themeMode={themeMode} />;
+      return <PDFRiskMatrix data={parsedData!.riskMatrix!} themeMode={themeMode} />;
     case "scenario-comparison":
-      return <PDFScenarioComparison data={parsedData?.scenarioComparison} themeMode={themeMode} />;
+      return <PDFScenarioComparison data={parsedData!.scenarioComparison!} themeMode={themeMode} />;
     case "supplier-scorecard":
-      return <PDFSupplierScorecard data={parsedData?.supplierScorecard} themeMode={themeMode} />;
+      return <PDFSupplierScorecard data={parsedData!.supplierScorecard!} themeMode={themeMode} />;
     case "sow-analysis":
-      return <PDFSOWAnalysis data={parsedData?.sowAnalysis} themeMode={themeMode} />;
+      return <PDFSOWAnalysis data={parsedData!.sowAnalysis!} themeMode={themeMode} />;
     case "negotiation-prep":
-      return <PDFNegotiationPrep data={parsedData?.negotiationPrep} themeMode={themeMode} />;
+      return <PDFNegotiationPrep data={parsedData!.negotiationPrep!} themeMode={themeMode} />;
     case "data-quality":
-      return <PDFDataQuality data={parsedData?.dataQuality} themeMode={themeMode} />;
+      return <PDFDataQuality data={parsedData!.dataQuality!} themeMode={themeMode} />;
     default: {
       const config = dashboardConfigs[dashboardType as DashboardType];
       return <PDFDashboardPlaceholder name={config?.name || String(dashboardType)} themeMode={themeMode} />;
