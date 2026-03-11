@@ -1,3 +1,34 @@
+npm warn exec The following package was not found and will be installed: supabase@2.78.1
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'bin-links@6.0.0',
+npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
+npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'cmd-shim@8.0.0',
+npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
+npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'npm-normalize-package-bin@5.0.0',
+npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
+npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'proc-log@6.1.0',
+npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
+npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'read-cmd-shim@6.0.0',
+npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
+npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'write-file-atomic@7.0.1',
+npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
+npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
+npm warn EBADENGINE }
 export type Json =
   | string
   | number
@@ -518,6 +549,51 @@ export type Database = {
         }
         Relationships: []
       }
+      scenario_file_attachments: {
+        Row: {
+          attached_at: string
+          file_id: string
+          id: string
+          organization_id: string
+          scenario_run_id: string
+          scenario_type: string
+          user_id: string
+        }
+        Insert: {
+          attached_at?: string
+          file_id: string
+          id?: string
+          organization_id: string
+          scenario_run_id: string
+          scenario_type: string
+          user_id: string
+        }
+        Update: {
+          attached_at?: string
+          file_id?: string
+          id?: string
+          organization_id?: string
+          scenario_run_id?: string
+          scenario_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_file_attachments_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "user_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenario_file_attachments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_reports: {
         Row: {
           created_at: string
@@ -668,6 +744,50 @@ export type Database = {
             columns: ["prompt_id"]
             isOneToOne: false
             referencedRelation: "test_prompts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          mime_type: string
+          organization_id: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          mime_type: string
+          organization_id: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          mime_type?: string
+          organization_id?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_files_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

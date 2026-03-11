@@ -6,9 +6,18 @@ import { cn } from "@/lib/utils";
 interface FileUploadZoneProps {
   files: File[];
   onFilesChange: (files: File[]) => void;
+  accept?: string;
+  maxSizeMB?: number;
+  description?: string;
 }
 
-const FileUploadZone = ({ files, onFilesChange }: FileUploadZoneProps) => {
+const FileUploadZone = ({
+  files,
+  onFilesChange,
+  accept = ".pdf,.xlsx,.docx",
+  maxSizeMB = 10,
+  description,
+}: FileUploadZoneProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDrop = useCallback(
@@ -53,7 +62,7 @@ const FileUploadZone = ({ files, onFilesChange }: FileUploadZoneProps) => {
           Drop files here or click to browse
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          PDF, Excel, CSV — max 20MB per file
+          {description || `Excel (.xlsx), Word (.docx), PDF (.pdf) — max ${maxSizeMB}MB per file`}
         </p>
         <input
           id="file-upload-input"
@@ -61,7 +70,7 @@ const FileUploadZone = ({ files, onFilesChange }: FileUploadZoneProps) => {
           multiple
           className="hidden"
           onChange={handleFileInput}
-          accept=".pdf,.xlsx,.xls,.csv,.doc,.docx"
+          accept={accept}
         />
       </div>
 
