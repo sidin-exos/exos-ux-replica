@@ -196,11 +196,6 @@ function buildDocStyles(c: DocColors) {
       alignItems: "center",
       marginBottom: 12,
     },
-    sectionLogoImage: {
-      width: 20,
-      height: 20,
-      marginRight: 8,
-    },
     sectionTitle: {
       fontSize: 16,
       fontFamily: "Helvetica",
