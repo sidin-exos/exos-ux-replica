@@ -23,6 +23,7 @@ import Account from "./pages/Account";
 import FounderDashboard from "./pages/admin/FounderDashboard";
 import RiskPlatform from "./pages/enterprise/RiskPlatform";
 import InflationPlatform from "./pages/enterprise/InflationPlatform";
+import PdfTestPage from "./pages/PdfTestPage";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/layout/MobileBottomNav";
 import ProtectedRoute from "./components/ProtectedRoute";
