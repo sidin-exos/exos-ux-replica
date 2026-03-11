@@ -196,6 +196,17 @@ function buildDocStyles(c: DocColors) {
       lineHeight: 1.6,
       marginBottom: 8,
     },
+    analysisTextHighlight: {
+      fontSize: 12,
+      color: c.primary,
+      lineHeight: 1.6,
+      marginBottom: 8,
+      fontWeight: 700,
+      backgroundColor: c.primary + "15",
+      paddingHorizontal: 6,
+      paddingVertical: 3,
+      borderRadius: 3,
+    },
     analysisHeader: {
       fontSize: 14,
       fontFamily: "Helvetica",
@@ -211,6 +222,90 @@ function buildDocStyles(c: DocColors) {
       color: c.text,
       marginTop: 10,
       marginBottom: 6,
+    },
+    sectionBlockBase: {
+      backgroundColor: c.surface,
+      borderRadius: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      marginBottom: 15,
+    },
+    sectionBlockRecommendations: {
+      backgroundColor: c.surface,
+      borderRadius: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderLeftWidth: 3,
+      borderLeftColor: c.primary,
+      marginBottom: 15,
+    },
+    sectionBlockRisks: {
+      backgroundColor: c.destructive + "10",
+      borderRadius: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.destructive + "30",
+      marginBottom: 15,
+    },
+    sectionBlockNextSteps: {
+      backgroundColor: c.surface,
+      borderRadius: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      marginBottom: 15,
+    },
+    sectionBlockHeader: {
+      fontSize: 14,
+      fontFamily: "Helvetica",
+      fontWeight: 700,
+      color: c.text,
+      marginBottom: 10,
+    },
+    numberedItem: {
+      flexDirection: "row" as const,
+      alignItems: "flex-start" as const,
+      marginBottom: 8,
+    },
+    numberedBullet: {
+      width: 20,
+      height: 20,
+      backgroundColor: c.primary,
+      borderRadius: 10,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
+      marginRight: 10,
+      marginTop: 1,
+    },
+    numberedBulletText: {
+      color: "#ffffff",
+      fontSize: 9,
+      fontWeight: 700,
+    },
+    checklistItem: {
+      flexDirection: "row" as const,
+      alignItems: "flex-start" as const,
+      marginBottom: 8,
+    },
+    checkBox: {
+      width: 14,
+      height: 14,
+      borderWidth: 1.5,
+      borderColor: c.primary,
+      borderRadius: 2,
+      marginRight: 10,
+      marginTop: 2,
+    },
+    warningIcon: {
+      fontSize: 14,
+      marginRight: 6,
+    },
+    riskHeaderRow: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      marginBottom: 10,
     },
     limitationItem: {
       flexDirection: "row",
@@ -385,6 +480,69 @@ const formatDate = (dateString: string) => {
   });
 };
 
+// ── Section categorization ──
+
+type SectionType = "findings" | "recommendations" | "risks" | "nextSteps" | "general";
+
+interface AnalysisSection {
+  type: SectionType;
+  title: string;
+  lines: string[];
+}
+
+const sectionPatterns: Record<Exclude<SectionType, "general">, RegExp> = {
+  findings: /\b(finding|analysis|overview|assessment|current\s*state|summary|market|evaluation)\b/i,
+  recommendations: /\b(recommend|action|strateg|approach|should|suggest|advise|optimi[sz])\b/i,
+  risks: /\b(risk|challeng|threat|concern|limitation|vulnerabilit|caveat|warning)\b/i,
+  nextSteps: /\b(next\s*step|implement|timeline|roadmap|action\s*plan|phase|mileston|rollout)\b/i,
+};
+
+const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
+  const sections: AnalysisSection[] = [];
+  let current: AnalysisSection = { type: "general", title: "Analysis Overview", lines: [] };
+
+  for (const rawLine of lines) {
+    const hashMatch = rawLine.match(/^(#{1,4})\s*(.*)$/);
+    const cleanLine = cleanMarkdown(rawLine);
+    if (!cleanLine) continue;
+
+    const isHeader =
+      !!hashMatch ||
+      (cleanLine.endsWith(":") && cleanLine.length < 80) ||
+      (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."));
+
+    if (isHeader) {
+      // Flush previous section if it has lines
+      if (current.lines.length > 0) {
+        sections.push(current);
+      }
+
+      // Detect type from header text
+      let detectedType: SectionType = "general";
+      for (const [type, pattern] of Object.entries(sectionPatterns) as [Exclude<SectionType, "general">, RegExp][]) {
+        if (pattern.test(cleanLine)) {
+          detectedType = type;
+          break;
+        }
+      }
+
+      current = { type: detectedType, title: cleanLine.replace(/:$/, ""), lines: [] };
+    } else {
+      current.lines.push(cleanLine);
+    }
+  }
+
+  if (current.lines.length > 0) {
+    sections.push(current);
+  }
+
+  return sections;
+};
+
+const hasMetricHighlight = (text: string): boolean => {
+  return /(\$|€|£)\s*[\d,.]+|[\d,.]+\s*%|\b(aim\s+to|target)\b/i.test(text);
+};
+
 // ── Component ──
 
 const PDFReportDocument = ({
@@ -491,54 +649,74 @@ const PDFReportDocument = ({
         <View style={styles.gradientLayer3} />
         <View style={styles.accentBar} />
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Image src={exosLogo} style={styles.sectionLogoImage} />
-            <Text style={styles.sectionTitle}>Detailed Analysis</Text>
-          </View>
-          <View style={styles.sectionContent}>
-            {analysisLines.map((line, i) => {
-              const hashMatch = line.match(/^(#{1,4})\s*(.*)$/);
-              const isHashHeader = !!hashMatch;
-              const cleanLine = cleanMarkdown(line);
-              
-              if (!cleanLine) {
-                return <View key={i} style={{ height: 8 }} />;
-              }
-              
-              if (isHashHeader) {
-                const headerLevel = hashMatch[1].length;
-                const headerStyle = headerLevel <= 2 ? styles.analysisHeader : styles.analysisSubHeader;
-                return (
-                  <Text key={i} style={headerStyle}>
-                    {cleanLine}
-                  </Text>
-                );
-              }
-              
-              const isSectionHeader =
-                (cleanLine.endsWith(":") && cleanLine.length < 80) ||
-                (cleanLine.length > 0 &&
-                  cleanLine.length < 60 &&
-                  /^[A-Z]/.test(cleanLine) &&
-                  !cleanLine.includes("."));
+        {(() => {
+          const sections = categorizeAnalysisSections(analysisLines);
+          return sections.map((section, si) => {
+            const blockStyle =
+              section.type === "recommendations"
+                ? styles.sectionBlockRecommendations
+                : section.type === "risks"
+                ? styles.sectionBlockRisks
+                : section.type === "nextSteps"
+                ? styles.sectionBlockNextSteps
+                : styles.sectionBlockBase;
 
-              if (isSectionHeader) {
-                return (
-                  <Text key={i} style={styles.analysisSubHeader}>
-                    {cleanLine}
-                  </Text>
-                );
-              }
+            return (
+              <View key={`section-${si}`} style={{ marginBottom: 15 }} wrap={false}>
+                {si === 0 && (
+                  <View style={styles.sectionHeader}>
+                    <Image src={exosLogo} style={styles.sectionLogoImage} />
+                    <Text style={styles.sectionTitle}>Detailed Analysis</Text>
+                  </View>
+                )}
+                <View style={blockStyle}>
+                  {section.type === "risks" ? (
+                    <View style={styles.riskHeaderRow}>
+                      <Text style={styles.warningIcon}>⚠</Text>
+                      <Text style={styles.sectionBlockHeader}>{section.title}</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.sectionBlockHeader}>{section.title}</Text>
+                  )}
 
-              return (
-                <Text key={i} style={styles.analysisText}>
-                  {cleanLine}
-                </Text>
-              );
-            })}
-          </View>
-        </View>
+                  {section.lines.map((line, li) => {
+                    const isHighlight = hasMetricHighlight(line);
+
+                    if (section.type === "recommendations") {
+                      return (
+                        <View key={`l-${li}`} style={styles.numberedItem}>
+                          <View style={styles.numberedBullet}>
+                            <Text style={styles.numberedBulletText}>{li + 1}</Text>
+                          </View>
+                          <Text style={{ flex: 1, ...(isHighlight ? styles.analysisTextHighlight : styles.analysisText) }}>
+                            {line}
+                          </Text>
+                        </View>
+                      );
+                    }
+
+                    if (section.type === "nextSteps") {
+                      return (
+                        <View key={`l-${li}`} style={styles.checklistItem}>
+                          <View style={styles.checkBox} />
+                          <Text style={{ flex: 1, ...(isHighlight ? styles.analysisTextHighlight : styles.analysisText) }}>
+                            {line}
+                          </Text>
+                        </View>
+                      );
+                    }
+
+                    return (
+                      <Text key={`l-${li}`} style={isHighlight ? styles.analysisTextHighlight : styles.analysisText}>
+                        {line}
+                      </Text>
+                    );
+                  })}
+                </View>
+              </View>
+            );
+          });
+        })()}
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
