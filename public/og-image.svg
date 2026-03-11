@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <rect x="40" y="40" width="1120" height="550" rx="8" fill="none" stroke="#1e293b" stroke-width="2"/>
+  <line x1="200" y1="400" x2="1000" y2="400" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <text x="600" y="290" text-anchor="middle" font-family="'Space Grotesk', 'Inter', system-ui, sans-serif" font-size="120" font-weight="700" fill="#f8fafc" letter-spacing="12">EXOS</text>
+  <text x="600" y="360" text-anchor="middle" font-family="'Inter', system-ui, sans-serif" font-size="28" font-weight="400" fill="#94a3b8" letter-spacing="4">YOUR PROCUREMENT EXOSKELETON</text>
+  <text x="600" y="480" text-anchor="middle" font-family="'Inter', system-ui, sans-serif" font-size="18" font-weight="400" fill="#64748b">AI-Powered Cost Analysis · Negotiation Scenarios · Risk Intelligence</text>
+</svg>
