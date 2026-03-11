@@ -397,7 +397,7 @@ const PDFReportDocument = ({
 }: PDFReportDocumentProps) => {
   const parsedData = extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
-  const keyPoints = extractKeyPoints(strippedAnalysis);
+  const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
   const analysisLines = strippedAnalysis.split("\n").filter((line) => line.trim());
 
   const styles = getDocStyles(pdfTheme);
