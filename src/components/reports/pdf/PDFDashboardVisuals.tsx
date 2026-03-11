@@ -3,12 +3,10 @@
  * 2 per page (paired), with break-avoid to prevent splitting.
  */
 
-import { Page, View, Text, Image } from "@react-pdf/renderer";
+import { Page, View, Text } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
 import type { DashboardData } from "@/lib/dashboard-data-parser";
-import exosLogoDark from "@/assets/logo-concept-layers.png";
-import exosLogoLight from "@/assets/logo-concept-layers-light.png";
 
 import { styles, colors, getPdfColors, getPdfStyles, type PdfThemeMode } from "./dashboardVisuals/theme";
 import { PDFCostWaterfall } from "./dashboardVisuals/PDFCostWaterfall";
@@ -108,11 +106,6 @@ function buildPageStyles(mode?: PdfThemeMode) {
       alignItems: "center" as const,
       marginBottom: 16,
     },
-    sectionLogoImage: {
-      width: 20,
-      height: 20,
-      marginRight: 8,
-    },
     sectionTitle: {
       fontSize: 16,
       fontFamily: "Helvetica" as const,
@@ -155,18 +148,21 @@ const PDFNoDataPlaceholder = ({ name, themeMode }: { name: string; themeMode?: P
   const isLight = themeMode === "light";
   return (
     <View style={{
-      backgroundColor: isLight ? "#f3f4f6" : "#2a2a3a",
-      padding: 20,
+      backgroundColor: isLight ? "#f9fafb" : "#2a2a3a",
+      padding: 24,
       borderRadius: 6,
       alignItems: "center",
       justifyContent: "center",
-      minHeight: 80,
+      minHeight: 150,
+      borderWidth: 1.5,
+      borderStyle: "dashed",
+      borderColor: isLight ? "#d1d5db" : "#4a4a5e",
     }}>
-      <Text style={{ fontSize: 11, fontFamily: "Helvetica", fontWeight: 600, color: isLight ? "#374151" : "#9ca3af", marginBottom: 6 }}>
+      <Text style={{ fontSize: 12, fontFamily: "Helvetica", fontWeight: 600, color: isLight ? "#374151" : "#9ca3af", marginBottom: 8 }}>
         {name}
       </Text>
-      <Text style={{ fontSize: 10, fontFamily: "Helvetica", color: "#6b7280", textAlign: "center", lineHeight: 1.4 }}>
-        Visualization data could not be extracted automatically. Please refer to the detailed analysis below.
+      <Text style={{ fontSize: 10, fontFamily: "Helvetica", color: "#6b7280", textAlign: "center", lineHeight: 1.5 }}>
+        Visualization data could not be extracted automatically.{"\n"}Please refer to the detailed analysis section.
       </Text>
     </View>
   );
@@ -262,7 +258,6 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, sc
 
   const pairs = chunkPairs(selectedDashboards);
   const pageStyles = getPageStyles(pdfTheme);
-  const exosLogo = pdfTheme === "light" ? exosLogoLight : exosLogoDark;
   const c = getPdfColors(pdfTheme);
   const isLight = pdfTheme === "light";
 
@@ -307,7 +302,7 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, sc
           </View>
 
           <View style={pairIdx === 0 ? { ...pageStyles.sectionHeader } : pageStyles.sectionHeader} id={pairIdx === 0 ? "section-visualizations" : undefined}>
-            <Image src={exosLogo} style={pageStyles.sectionLogoImage} />
+            <View style={{ width: 8, height: 8, backgroundColor: c.primary, borderRadius: 2, marginRight: 8 }} />
             <Text style={pageStyles.sectionTitle}>
               Analysis Visualizations {pairs.length > 1 ? `(${pairIdx + 1}/${pairs.length})` : ""}
             </Text>
