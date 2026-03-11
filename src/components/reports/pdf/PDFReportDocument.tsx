@@ -5,6 +5,7 @@ import {
   View,
   StyleSheet,
   Image,
+  Link,
 } from "@react-pdf/renderer";
 import exosLogoDark from "@/assets/logo-concept-layers.png";
 import exosLogoLight from "@/assets/logo-concept-layers-light.png";
@@ -74,6 +75,55 @@ function buildDocStyles(c: DocColors) {
       padding: 40,
       fontFamily: "Helvetica",
       color: c.text,
+    },
+    pageWithHeader: {
+      backgroundColor: c.background,
+      paddingTop: 50,
+      paddingLeft: 40,
+      paddingRight: 40,
+      paddingBottom: 40,
+      fontFamily: "Helvetica",
+      color: c.text,
+    },
+    runningHeader: {
+      position: "absolute",
+      top: 0,
+      left: 40,
+      right: 40,
+      paddingTop: 10,
+      paddingBottom: 6,
+      borderBottomWidth: 0.5,
+      borderBottomColor: c.border,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    runningHeaderText: {
+      fontSize: 8,
+      color: c.textMuted,
+      fontFamily: "Helvetica",
+    },
+    tocSection: {
+      marginBottom: 24,
+    },
+    tocRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 6,
+      borderBottomWidth: 0.5,
+      borderBottomColor: c.border + "40",
+    },
+    tocLabel: {
+      fontSize: 10,
+      color: c.primary,
+      fontFamily: "Helvetica",
+      textDecoration: "none",
+    },
+    tocPageHint: {
+      fontSize: 9,
+      color: c.textMuted,
+      fontFamily: "Helvetica",
     },
     header: {
       flexDirection: "row",
@@ -543,6 +593,63 @@ const hasMetricHighlight = (text: string): boolean => {
   return /(\$|€|£)\s*[\d,.]+|[\d,.]+\s*%|\b(aim\s+to|target)\b/i.test(text);
 };
 
+// ── Report hash for traceability ──
+
+const generateReportHash = (title: string, ts: string): string => {
+  let hash = 0;
+  const str = `${title}-${ts}`;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36).toUpperCase().slice(0, 8);
+};
+
+// ── TOC entries ──
+
+interface TocEntry {
+  label: string;
+  anchor: string;
+}
+
+const buildTocEntries = (hasDashboards: boolean, hasParams: boolean): TocEntry[] => {
+  const entries: TocEntry[] = [];
+  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations" });
+  entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis" });
+  entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality" });
+  if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters" });
+  return entries;
+};
+
+// ── Reusable running header ──
+
+const RunningHeader = ({ scenarioTitle, dateStr, styles: s }: { scenarioTitle: string; dateStr: string; styles: ReturnType<typeof buildDocStyles> }) => (
+  <View style={s.runningHeader} fixed>
+    <Text style={s.runningHeaderText}>EXOS | {scenarioTitle} Analysis</Text>
+    <Text style={s.runningHeaderText}>{dateStr}</Text>
+  </View>
+);
+
+// ── Reusable footer ──
+
+const ReportFooter = ({ reportHash, styles: s }: { reportHash: string; styles: ReturnType<typeof buildDocStyles> }) => (
+  <View style={s.footer} fixed>
+    <Text style={s.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
+    <View style={s.footerRow}>
+      <Text style={s.footerText}>
+        Confidential • For internal use only
+      </Text>
+      <Text
+        style={s.pageNumber}
+        render={({ pageNumber, totalPages }) =>
+          `Page ${pageNumber} of ${totalPages} • ID: ${reportHash}`
+        }
+      />
+    </View>
+  </View>
+);
+
 // ── Component ──
 
 const PDFReportDocument = ({
@@ -561,9 +668,16 @@ const PDFReportDocument = ({
   const styles = getDocStyles(pdfTheme);
   const colors = getDocColors(pdfTheme);
   const exosLogo = getDocLogo(pdfTheme);
+  const reportHash = generateReportHash(scenarioTitle, timestamp);
+  const formattedDate = formatDate(timestamp);
+  const hasDashboards = selectedDashboards.length > 0;
+  const hasParams = Object.keys(formData).length > 0;
+  const tocEntries = buildTocEntries(hasDashboards, hasParams);
+  const showToc = hasDashboards; // proxy for >3 pages
 
   return (
     <Document>
+      {/* ── Page 1: Cover ── */}
       <Page size="A4" style={styles.page}>
         <View style={styles.gradientLayer1} />
         <View style={styles.gradientLayer2} />
@@ -582,7 +696,7 @@ const PDFReportDocument = ({
             <View style={styles.reportBadge}>
               <Text style={styles.reportBadgeText}>AI-GENERATED REPORT</Text>
             </View>
-            <Text style={styles.reportDate}>{formatDate(timestamp)}</Text>
+            <Text style={styles.reportDate}>{formattedDate}</Text>
           </View>
         </View>
 
@@ -593,6 +707,7 @@ const PDFReportDocument = ({
           </Text>
         </View>
 
+        {/* Executive Summary */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Image src={exosLogo} style={styles.sectionLogoImage} />
@@ -623,31 +738,49 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        <View style={styles.footer} fixed>
-          <Text style={styles.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>
-              Confidential • For internal use only
-            </Text>
-            <Text
-              style={styles.pageNumber}
-              render={({ pageNumber, totalPages }) =>
-                `Page ${pageNumber} of ${totalPages}`
-              }
-            />
+        {/* Table of Contents */}
+        {showToc && (
+          <View style={styles.tocSection}>
+            <View style={styles.sectionHeader}>
+              <Image src={exosLogo} style={styles.sectionLogoImage} />
+              <Text style={styles.sectionTitle}>Contents</Text>
+            </View>
+            <View style={styles.sectionContent}>
+              {tocEntries.map((entry, i) => (
+                <View key={entry.anchor} style={styles.tocRow}>
+                  <Link src={`#${entry.anchor}`} style={styles.tocLabel}>
+                    {`${i + 1}. ${entry.label}`}
+                  </Link>
+                  <Text style={styles.tocPageHint}>→</Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
+
+        <ReportFooter reportHash={reportHash} styles={styles} />
       </Page>
 
-      {selectedDashboards.length > 0 && (
-        <PDFDashboardPages selectedDashboards={selectedDashboards} parsedData={parsedData} pdfTheme={pdfTheme} />
+      {/* ── Dashboard pages ── */}
+      {hasDashboards && (
+        <PDFDashboardPages
+          selectedDashboards={selectedDashboards}
+          parsedData={parsedData}
+          pdfTheme={pdfTheme}
+          scenarioTitle={scenarioTitle}
+          reportDate={formattedDate}
+          reportHash={reportHash}
+        />
       )}
 
-      <Page size="A4" style={styles.page}>
+      {/* ── Detailed Analysis + Data Quality + Parameters ── */}
+      <Page size="A4" style={styles.pageWithHeader}>
         <View style={styles.gradientLayer1} />
         <View style={styles.gradientLayer2} />
         <View style={styles.gradientLayer3} />
         <View style={styles.accentBar} />
+
+        <RunningHeader scenarioTitle={scenarioTitle} dateStr={formattedDate} styles={styles} />
 
         {(() => {
           const sections = categorizeAnalysisSections(analysisLines);
@@ -664,7 +797,7 @@ const PDFReportDocument = ({
             return (
               <View key={`section-${si}`} style={{ marginBottom: 15 }} wrap={false}>
                 {si === 0 && (
-                  <View style={styles.sectionHeader}>
+                  <View style={styles.sectionHeader} id="section-detailed-analysis">
                     <Image src={exosLogo} style={styles.sectionLogoImage} />
                     <Text style={styles.sectionTitle}>Detailed Analysis</Text>
                   </View>
@@ -718,7 +851,7 @@ const PDFReportDocument = ({
           });
         })()}
 
-        <View style={styles.section}>
+        <View style={styles.section} id="section-data-quality">
           <View style={styles.sectionHeader}>
             <Image src={exosLogo} style={styles.sectionLogoImage} />
             <Text style={styles.sectionTitle}>Data Quality Assessment</Text>
@@ -779,8 +912,8 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {Object.keys(formData).length > 0 && (
-          <View style={styles.section}>
+        {hasParams && (
+          <View style={styles.section} id="section-parameters">
             <View style={styles.sectionHeader}>
               <Image src={exosLogo} style={styles.sectionLogoImage} />
               <Text style={styles.sectionTitle}>Analysis Parameters</Text>
@@ -812,20 +945,7 @@ const PDFReportDocument = ({
           </View>
         )}
 
-        <View style={styles.footer} fixed>
-          <Text style={styles.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>
-              Confidential • For internal use only
-            </Text>
-            <Text
-              style={styles.pageNumber}
-              render={({ pageNumber, totalPages }) =>
-                `Page ${pageNumber} of ${totalPages}`
-              }
-            />
-          </View>
-        </View>
+        <ReportFooter reportHash={reportHash} styles={styles} />
       </Page>
     </Document>
   );

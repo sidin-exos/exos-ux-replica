@@ -248,29 +248,65 @@ interface PDFDashboardVisualsProps {
   selectedDashboards: DashboardType[];
   parsedData?: DashboardData | null;
   pdfTheme?: PdfThemeMode;
+  scenarioTitle?: string;
+  reportDate?: string;
+  reportHash?: string;
 }
 
 /**
  * Returns an array of <Page> elements, each containing 1-2 dashboards.
  * Must be rendered as direct children of <Document>.
  */
-export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme }: PDFDashboardVisualsProps) => {
+export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, scenarioTitle, reportDate, reportHash }: PDFDashboardVisualsProps) => {
   if (!selectedDashboards || selectedDashboards.length === 0) return null;
 
   const pairs = chunkPairs(selectedDashboards);
   const pageStyles = getPageStyles(pdfTheme);
   const exosLogo = pdfTheme === "light" ? exosLogoLight : exosLogoDark;
+  const c = getPdfColors(pdfTheme);
+  const isLight = pdfTheme === "light";
+
+  const runningHeaderStyle = {
+    position: "absolute" as const,
+    top: 0,
+    left: 40,
+    right: 40,
+    paddingTop: 10,
+    paddingBottom: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: c.border,
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+  };
+  const runningHeaderTextStyle = {
+    fontSize: 8,
+    color: isLight ? "rgba(30, 30, 46, 0.5)" : "rgba(212, 212, 220, 0.6)",
+    fontFamily: "Helvetica" as const,
+  };
+
+  // Use pageWithHeader padding for dashboard pages
+  const dashPageStyle = {
+    ...pageStyles.page,
+    paddingTop: 50,
+  };
 
   return (
     <>
       {pairs.map((pair, pairIdx) => (
-        <Page key={`dash-page-${pairIdx}`} size="A4" style={pageStyles.page}>
+        <Page key={`dash-page-${pairIdx}`} size="A4" style={dashPageStyle}>
           <View style={pageStyles.gradientLayer1} />
           <View style={pageStyles.gradientLayer2} />
           <View style={pageStyles.gradientLayer3} />
           <View style={pageStyles.accentBar} />
 
-          <View style={pageStyles.sectionHeader}>
+          {/* Running header */}
+          <View style={runningHeaderStyle} fixed>
+            <Text style={runningHeaderTextStyle}>EXOS | {scenarioTitle || "Report"} Analysis</Text>
+            <Text style={runningHeaderTextStyle}>{reportDate || ""}</Text>
+          </View>
+
+          <View style={pairIdx === 0 ? { ...pageStyles.sectionHeader } : pageStyles.sectionHeader} id={pairIdx === 0 ? "section-visualizations" : undefined}>
             <Image src={exosLogo} style={pageStyles.sectionLogoImage} />
             <Text style={pageStyles.sectionTitle}>
               Analysis Visualizations {pairs.length > 1 ? `(${pairIdx + 1}/${pairs.length})` : ""}
@@ -297,7 +333,7 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme }: 
               <Text
                 style={pageStyles.pageNumber}
                 render={({ pageNumber, totalPages }) =>
-                  `Page ${pageNumber} of ${totalPages}`
+                  `Page ${pageNumber} of ${totalPages}${reportHash ? ` • ID: ${reportHash}` : ""}`
                 }
               />
             </View>
