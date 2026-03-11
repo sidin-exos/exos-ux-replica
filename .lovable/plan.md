@@ -91,3 +91,4 @@ Uses `xlsx` (already in dependencies via `src/lib/report-export-excel.ts`) to bu
 2. `src/pages/admin/AnalyticsDashboard.tsx` — add time filter UI, recent runs table, industry table, satisfaction card, export button, fix rating scale
 
 No new files. No migrations. No edge functions.
+
