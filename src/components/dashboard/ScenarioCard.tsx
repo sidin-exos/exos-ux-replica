@@ -107,7 +107,7 @@ const ScenarioCard = ({
           {tags && tags.length > 0 ? (
             <div className="flex flex-wrap gap-1 mt-0.5">
               {tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 font-medium">
+                <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 font-medium text-foreground/70">
                   {tag}
                 </Badge>
               ))}

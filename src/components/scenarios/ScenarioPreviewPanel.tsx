@@ -104,7 +104,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
                 {CATEGORY_DESCRIPTIONS[activeCategory]}
               </p>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground/70 pt-2 border-t border-border/30">
+              <div className="flex items-center gap-2 text-xs text-foreground/60 pt-2 border-t border-border/30">
                 <Eye className="w-3.5 h-3.5" />
                 Hover a scenario to see details
               </div>
