@@ -3,12 +3,10 @@
  * 2 per page (paired), with break-avoid to prevent splitting.
  */
 
-import { Page, View, Text, Image } from "@react-pdf/renderer";
+import { Page, View, Text } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
 import type { DashboardData } from "@/lib/dashboard-data-parser";
-import exosLogoDark from "@/assets/logo-concept-layers.png";
-import exosLogoLight from "@/assets/logo-concept-layers-light.png";
 
 import { styles, colors, getPdfColors, getPdfStyles, type PdfThemeMode } from "./dashboardVisuals/theme";
 import { PDFCostWaterfall } from "./dashboardVisuals/PDFCostWaterfall";
