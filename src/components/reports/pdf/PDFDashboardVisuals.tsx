@@ -258,7 +258,6 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, sc
 
   const pairs = chunkPairs(selectedDashboards);
   const pageStyles = getPageStyles(pdfTheme);
-  const exosLogo = pdfTheme === "light" ? exosLogoLight : exosLogoDark;
   const c = getPdfColors(pdfTheme);
   const isLight = pdfTheme === "light";
 
