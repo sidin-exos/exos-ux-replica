@@ -114,7 +114,7 @@ function buildDocStyles(c: DocColors) {
     tocLabel: {
       fontSize: 10,
       color: c.primary,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       textDecoration: "none",
     },
     tocLeader: {
