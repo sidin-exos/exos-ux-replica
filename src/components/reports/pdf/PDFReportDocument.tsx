@@ -565,7 +565,7 @@ const formatDate = (dateString: string) => {
 
 // ── Section categorization ──
 
-type SectionType = "findings" | "recommendations" | "risks" | "nextSteps" | "general";
+type SectionType = "findings" | "recommendations" | "risks" | "nextSteps" | "costDrivers" | "general";
 
 interface AnalysisSection {
   type: SectionType;
@@ -574,6 +574,7 @@ interface AnalysisSection {
 }
 
 const sectionPatterns: Record<Exclude<SectionType, "general">, RegExp> = {
+  costDrivers: /\b(cost\s*driver|key\s*cost|cost\s*factor|cost\s*breakdown|cost\s*component|cost\s*structure)\b/i,
   findings: /\b(finding|analysis|overview|assessment|current\s*state|summary|market|evaluation)\b/i,
   recommendations: /\b(recommend|action|strateg|approach|should|suggest|advise|optimi[sz])\b/i,
   risks: /\b(risk|challeng|threat|concern|limitation|vulnerabilit|caveat|warning)\b/i,
