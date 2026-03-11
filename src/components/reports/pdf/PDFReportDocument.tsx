@@ -820,7 +820,7 @@ const PDFReportDocument = ({
               <View key={`section-${si}`} style={{ marginBottom: 15 }} wrap={false}>
                 {si === 0 && (
                   <View style={styles.sectionHeader} id="section-detailed-analysis">
-                    <Image src={exosLogo} style={styles.sectionLogoImage} />
+                    <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
                     <Text style={styles.sectionTitle}>Detailed Analysis</Text>
                   </View>
                 )}
