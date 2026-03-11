@@ -109,7 +109,7 @@ const RiskPlatform = () => {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
+    </EnterpriseLayout>
   );
 };
 
