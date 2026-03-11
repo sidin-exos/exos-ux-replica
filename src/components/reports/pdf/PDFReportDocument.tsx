@@ -779,9 +779,10 @@ const PDFReportDocument = ({
             <View style={styles.sectionContent}>
               {tocEntries.map((entry, i) => (
                 <View key={entry.anchor} style={styles.tocRow}>
-                  <Link src={`#${entry.anchor}`} style={styles.tocLabel}>
-                    {`${i + 1}. ${entry.label}`}
+                  <Link src={`#${entry.anchor}`}>
+                    <Text style={styles.tocLabel}>{i + 1}. {entry.label}</Text>
                   </Link>
+                  <View style={styles.tocLeader} />
                   <Text style={styles.tocPageHint}>→</Text>
                 </View>
               ))}
