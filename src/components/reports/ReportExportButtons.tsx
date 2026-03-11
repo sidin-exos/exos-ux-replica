@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import PDFPreviewModal from "./pdf/PDFPreviewModal";
 import { useShareableReport } from "@/hooks/useShareableReport";
 import { exportReportToExcel } from "@/lib/report-export-excel";
+import { exportReportToWord } from "@/lib/report-export-word";
 import { formatReportForJira } from "@/lib/report-export-jira";
 
 // Custom Jira icon component
@@ -94,6 +95,18 @@ const ReportExportButtons = ({
     } catch (err) {
       console.error("[excel-export]", err);
       toast.error("Failed to generate Excel file");
+    }
+  };
+
+  const handleWordExport = async () => {
+    try {
+      await exportReportToWord(scenarioTitle, analysisResult, formData, timestamp);
+      toast.success("Word report downloaded", {
+        description: "Check your downloads folder for the .docx file.",
+      });
+    } catch (err) {
+      console.error("[word-export]", err);
+      toast.error("Failed to generate Word file");
     }
   };
 
@@ -210,6 +223,10 @@ const ReportExportButtons = ({
             <DropdownMenuItem onClick={handleExcelExport}>
               <FileSpreadsheet className="w-4 h-4" />
               <span className="ml-2">Export to Excel</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleWordExport}>
+              <FileText className="w-4 h-4" />
+              <span className="ml-2">Export to Word</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
