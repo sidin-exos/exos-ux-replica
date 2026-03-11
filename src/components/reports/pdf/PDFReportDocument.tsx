@@ -617,6 +617,7 @@ const buildTocEntries = (hasDashboards: boolean, hasParams: boolean): TocEntry[]
   const entries: TocEntry[] = [];
   if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations" });
   entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis" });
+  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology" });
   entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality" });
   if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters" });
   return entries;
