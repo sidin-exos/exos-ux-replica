@@ -480,6 +480,69 @@ const formatDate = (dateString: string) => {
   });
 };
 
+// ── Section categorization ──
+
+type SectionType = "findings" | "recommendations" | "risks" | "nextSteps" | "general";
+
+interface AnalysisSection {
+  type: SectionType;
+  title: string;
+  lines: string[];
+}
+
+const sectionPatterns: Record<Exclude<SectionType, "general">, RegExp> = {
+  findings: /\b(finding|analysis|overview|assessment|current\s*state|summary|market|evaluation)\b/i,
+  recommendations: /\b(recommend|action|strateg|approach|should|suggest|advise|optimi[sz])\b/i,
+  risks: /\b(risk|challeng|threat|concern|limitation|vulnerabilit|caveat|warning)\b/i,
+  nextSteps: /\b(next\s*step|implement|timeline|roadmap|action\s*plan|phase|mileston|rollout)\b/i,
+};
+
+const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
+  const sections: AnalysisSection[] = [];
+  let current: AnalysisSection = { type: "general", title: "Analysis Overview", lines: [] };
+
+  for (const rawLine of lines) {
+    const hashMatch = rawLine.match(/^(#{1,4})\s*(.*)$/);
+    const cleanLine = cleanMarkdown(rawLine);
+    if (!cleanLine) continue;
+
+    const isHeader =
+      !!hashMatch ||
+      (cleanLine.endsWith(":") && cleanLine.length < 80) ||
+      (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."));
+
+    if (isHeader) {
+      // Flush previous section if it has lines
+      if (current.lines.length > 0) {
+        sections.push(current);
+      }
+
+      // Detect type from header text
+      let detectedType: SectionType = "general";
+      for (const [type, pattern] of Object.entries(sectionPatterns) as [Exclude<SectionType, "general">, RegExp][]) {
+        if (pattern.test(cleanLine)) {
+          detectedType = type;
+          break;
+        }
+      }
+
+      current = { type: detectedType, title: cleanLine.replace(/:$/, ""), lines: [] };
+    } else {
+      current.lines.push(cleanLine);
+    }
+  }
+
+  if (current.lines.length > 0) {
+    sections.push(current);
+  }
+
+  return sections;
+};
+
+const hasMetricHighlight = (text: string): boolean => {
+  return /(\$|€|£)\s*[\d,.]+|[\d,.]+\s*%|\b(aim\s+to|target)\b/i.test(text);
+};
+
 // ── Component ──
 
 const PDFReportDocument = ({
