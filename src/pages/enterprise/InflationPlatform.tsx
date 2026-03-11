@@ -109,7 +109,7 @@ const InflationPlatform = () => {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
+    </EnterpriseLayout>
   );
 };
 
