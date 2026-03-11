@@ -66,6 +66,8 @@ import {
 } from "@/lib/drafted-parameters";
 import { toast } from "sonner";
 import { ScenarioChatAssistant } from "./ScenarioChatAssistant";
+import ScenarioFileAttachment from "./ScenarioFileAttachment";
+import { useScenarioFileAttachments } from "@/hooks/useScenarioFileAttachments";
 
 const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   const [open, setOpen] = useState(false);
@@ -130,6 +132,11 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // Chat assistant state
   const [showChatAssistant, setShowChatAssistant] = useState(false);
+
+  // File attachment state
+  const [attachedFileIds, setAttachedFileIds] = useState<string[]>([]);
+  const scenarioRunId = useRef(crypto.randomUUID()).current;
+  const { attachFiles } = useScenarioFileAttachments();
 
   // Auth prompt state
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
@@ -330,6 +337,15 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       setAnalysisTimestamp(new Date().toISOString());
       setStep("results");
       toast.success("Analysis complete!");
+
+      // Save file attachments (fire-and-forget)
+      if (attachedFileIds.length > 0) {
+        attachFiles.mutate({
+          runId: scenarioRunId,
+          scenarioType: scenario.id,
+          fileIds: attachedFileIds,
+        });
+      }
     } else {
       setStep("review");
       toast.error(sentinelError?.message || "Analysis failed. Please try again.");
@@ -780,6 +796,12 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               scenarioId={scenario.id}
               selectedDashboards={selectedDashboards}
               onSelectionChange={setSelectedDashboards}
+            />
+
+            {/* File Attachment */}
+            <ScenarioFileAttachment
+              selectedFileIds={attachedFileIds}
+              onSelectionChange={setAttachedFileIds}
             />
 
             {/* AI Model Selector - hidden in shareable mode */}

@@ -10,6 +10,7 @@ import { User, CreditCard, LogOut, Loader2, Check, Zap, Shield, Building2 } from
 import { useToast } from "@/hooks/use-toast";
 import { useShareableMode } from "@/hooks/useShareableMode";
 import { ModelConfigPanel } from "@/components/settings/ModelConfigPanel";
+import UserFilesManager from "@/components/files/UserFilesManager";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const subscriptionPlans = [
@@ -182,6 +183,9 @@ const Account = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* File Management */}
+          <UserFilesManager />
 
           {/* AI Model Configuration Panel (internal users only) */}
           {showTechnicalDetails && (
