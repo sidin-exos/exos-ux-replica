@@ -65,7 +65,9 @@ const ScenarioCard = ({
         "hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5",
         "active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]",
         isActive && "border-primary shadow-[0_2px_0_0_hsl(var(--primary)/0.5),0_6px_20px_-4px_hsl(var(--primary)/0.15)] glow-effect",
-        status === "coming-soon" && "opacity-50 cursor-not-allowed"
+        status === "coming-soon" && "opacity-50 cursor-not-allowed",
+        category && CATEGORY_BORDER[category],
+        category && CATEGORY_BG[category]
       )}
     >
       <div className="flex items-start gap-4">
