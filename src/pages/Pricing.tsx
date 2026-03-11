@@ -11,6 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 
