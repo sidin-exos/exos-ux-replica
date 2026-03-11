@@ -254,6 +254,7 @@ function buildDocStyles(c: DocColors) {
       lineHeight: 1.6,
       marginBottom: 8,
       fontWeight: 700,
+      fontFamily: "Courier-Bold",
       backgroundColor: c.primary + "15",
       paddingHorizontal: 6,
       paddingVertical: 3,
