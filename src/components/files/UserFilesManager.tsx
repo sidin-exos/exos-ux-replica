@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, Trash2, FolderOpen, Loader2, FileSpreadsheet, FileText, File, SearchX } from "lucide-react";
+import { Download, Trash2, FolderOpen, Loader2, FileSpreadsheet, FileText, File, SearchX, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +22,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import FileUploadZone from "@/components/enterprise/FileUploadZone";
 import FileSearchFilterBar from "@/components/files/FileSearchFilterBar";
 import FilePagination from "@/components/files/FilePagination";
@@ -49,7 +56,7 @@ const UserFilesManager = () => {
   const [page, setPage] = useState(0);
   const debouncedSearch = useDebounce(searchInput, 300);
 
-  const { files, totalCount, pageSize, isLoading, uploadFile, deleteFile, getDownloadUrl } =
+  const { files, totalCount, pageSize, isLoading, uploadFile, deleteFile, getDownloadUrl, getPreviewUrl } =
     useUserFiles({ search: debouncedSearch, fileType, page, pageSize: 10, paginate: true });
 
   const [pendingFiles, setPendingFiles] = useState<globalThis.File[]>([]);
@@ -59,6 +66,8 @@ const UserFilesManager = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [previewFile, setPreviewFile] = useState<UserFile | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const hasActiveFilters = debouncedSearch !== "" || fileType !== null;
 
@@ -128,6 +137,23 @@ const UserFilesManager = () => {
     } finally {
       setDownloadingId(null);
     }
+  };
+
+  const handlePreview = async (file: UserFile) => {
+    try {
+      const url = await getPreviewUrl(file.storage_path);
+      setPreviewUrl(url);
+      setPreviewFile(file);
+    } catch (err) {
+      toast.error("Preview failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  };
+
+  const closePreview = () => {
+    setPreviewFile(null);
+    setPreviewUrl(null);
   };
 
   const handleConfirmDelete = async () => {
@@ -329,6 +355,16 @@ const UserFilesManager = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {file.file_type === "pdf" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handlePreview(file)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -395,6 +431,23 @@ const UserFilesManager = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* PDF preview dialog */}
+      <Dialog open={!!previewFile} onOpenChange={(v) => !v && closePreview()}>
+        <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="truncate">{previewFile?.file_name}</DialogTitle>
+            <DialogDescription className="sr-only">PDF file preview</DialogDescription>
+          </DialogHeader>
+          {previewUrl && (
+            <iframe
+              src={previewUrl}
+              className="w-full flex-1 border-0 rounded"
+              title={previewFile?.file_name}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk delete confirmation dialog */}
       <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>

@@ -1,9 +1,17 @@
 import { useState, useEffect } from "react";
-import { Paperclip, ChevronRight, FileSpreadsheet, FileText, File } from "lucide-react";
+import { Paperclip, ChevronRight, FileSpreadsheet, FileText, File, Eye } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useUserFiles } from "@/hooks/useUserFiles";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useUserFiles, type UserFile } from "@/hooks/useUserFiles";
 import { useDebounce } from "@/hooks/useDebounce";
 import FileSearchFilterBar from "@/components/files/FileSearchFilterBar";
 import FilePagination from "@/components/files/FilePagination";
@@ -29,7 +37,7 @@ const ScenarioFileAttachment = ({
   const [page, setPage] = useState(0);
   const debouncedSearch = useDebounce(searchInput, 300);
 
-  const { files, totalCount, pageSize, isLoading } = useUserFiles({
+  const { files, totalCount, pageSize, isLoading, getPreviewUrl } = useUserFiles({
     search: debouncedSearch,
     fileType,
     page,
@@ -37,6 +45,8 @@ const ScenarioFileAttachment = ({
     paginate: true,
   });
   const [open, setOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<UserFile | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const hasActiveFilters = debouncedSearch !== "" || fileType !== null;
 
@@ -56,7 +66,24 @@ const ScenarioFileAttachment = ({
     }
   };
 
+  const handlePreview = async (e: React.MouseEvent, file: UserFile) => {
+    e.stopPropagation(); // Don't toggle checkbox
+    try {
+      const url = await getPreviewUrl(file.storage_path);
+      setPreviewUrl(url);
+      setPreviewFile(file);
+    } catch {
+      // Silent fail — preview is a nice-to-have here
+    }
+  };
+
+  const closePreview = () => {
+    setPreviewFile(null);
+    setPreviewUrl(null);
+  };
+
   return (
+    <>
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
         <button className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors text-sm font-medium text-foreground">
@@ -115,6 +142,16 @@ const ScenarioFileAttachment = ({
                     {getFileTypeLabel(file.file_type as AllowedExtension)} · {formatFileSize(file.file_size)}
                   </span>
                 </div>
+                {file.file_type === "pdf" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    onClick={(e) => handlePreview(e, file)}
+                  >
+                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                )}
               </div>
             );
           })}
@@ -127,6 +164,24 @@ const ScenarioFileAttachment = ({
         </div>
       </CollapsibleContent>
     </Collapsible>
+
+    {/* PDF preview dialog */}
+    <Dialog open={!!previewFile} onOpenChange={(v) => !v && closePreview()}>
+      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="truncate">{previewFile?.file_name}</DialogTitle>
+          <DialogDescription className="sr-only">PDF file preview</DialogDescription>
+        </DialogHeader>
+        {previewUrl && (
+          <iframe
+            src={previewUrl}
+            className="w-full flex-1 border-0 rounded"
+            title={previewFile?.file_name}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
