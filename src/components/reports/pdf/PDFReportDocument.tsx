@@ -957,7 +957,7 @@ const PDFReportDocument = ({
               {/* ── Data Quality Assessment (simplified) ── */}
               <View style={styles.section} id="section-data-quality">
                 <View style={styles.sectionHeader}>
-                  <Image src={exosLogo} style={styles.sectionLogoImage} />
+                  <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
                   <Text style={styles.sectionTitle}>Data Quality Assessment</Text>
                 </View>
                 <View style={styles.sectionContent}>
