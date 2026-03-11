@@ -108,17 +108,22 @@ function buildDocStyles(c: DocColors) {
     },
     tocRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
       paddingVertical: 6,
-      borderBottomWidth: 0.5,
-      borderBottomColor: c.border + "40",
     },
     tocLabel: {
       fontSize: 10,
       color: c.primary,
       fontFamily: "Helvetica",
       textDecoration: "none",
+    },
+    tocLeader: {
+      flex: 1,
+      borderBottomWidth: 1,
+      borderBottomStyle: "dashed",
+      borderBottomColor: c.border + "60",
+      marginHorizontal: 10,
+      marginBottom: 3,
     },
     tocPageHint: {
       fontSize: 9,
@@ -296,6 +301,14 @@ function buildDocStyles(c: DocColors) {
     },
     sectionBlockNextSteps: {
       backgroundColor: c.surface,
+      borderRadius: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      marginBottom: 15,
+    },
+    sectionBlockCostDrivers: {
+      backgroundColor: c.surfaceLight,
       borderRadius: 8,
       padding: 16,
       borderWidth: 1,
@@ -552,7 +565,7 @@ const formatDate = (dateString: string) => {
 
 // ── Section categorization ──
 
-type SectionType = "findings" | "recommendations" | "risks" | "nextSteps" | "general";
+type SectionType = "findings" | "recommendations" | "risks" | "nextSteps" | "costDrivers" | "general";
 
 interface AnalysisSection {
   type: SectionType;
@@ -561,6 +574,7 @@ interface AnalysisSection {
 }
 
 const sectionPatterns: Record<Exclude<SectionType, "general">, RegExp> = {
+  costDrivers: /\b(cost\s*driver|key\s*cost|cost\s*factor|cost\s*breakdown|cost\s*component|cost\s*structure)\b/i,
   findings: /\b(finding|analysis|overview|assessment|current\s*state|summary|market|evaluation)\b/i,
   recommendations: /\b(recommend|action|strateg|approach|should|suggest|advise|optimi[sz])\b/i,
   risks: /\b(risk|challeng|threat|concern|limitation|vulnerabilit|caveat|warning)\b/i,
@@ -765,9 +779,10 @@ const PDFReportDocument = ({
             <View style={styles.sectionContent}>
               {tocEntries.map((entry, i) => (
                 <View key={entry.anchor} style={styles.tocRow}>
-                  <Link src={`#${entry.anchor}`} style={styles.tocLabel}>
-                    {`${i + 1}. ${entry.label}`}
+                  <Link src={`#${entry.anchor}`}>
+                    <Text style={styles.tocLabel}>{i + 1}. {entry.label}</Text>
                   </Link>
+                  <View style={styles.tocLeader} />
                   <Text style={styles.tocPageHint}>→</Text>
                 </View>
               ))}
@@ -809,10 +824,12 @@ const PDFReportDocument = ({
                 ? styles.sectionBlockRisks
                 : section.type === "nextSteps"
                 ? styles.sectionBlockNextSteps
+                : section.type === "costDrivers"
+                ? styles.sectionBlockCostDrivers
                 : styles.sectionBlockBase;
 
             return (
-              <View key={`section-${si}`} style={{ marginBottom: 15 }} wrap={false}>
+              <View key={`section-${si}`} style={{ marginBottom: 15 }}>
                 {si === 0 && (
                   <View style={styles.sectionHeader} id="section-detailed-analysis">
                     <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
