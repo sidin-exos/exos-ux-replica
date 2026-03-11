@@ -108,17 +108,22 @@ function buildDocStyles(c: DocColors) {
     },
     tocRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
       paddingVertical: 6,
-      borderBottomWidth: 0.5,
-      borderBottomColor: c.border + "40",
     },
     tocLabel: {
       fontSize: 10,
       color: c.primary,
       fontFamily: "Helvetica",
       textDecoration: "none",
+    },
+    tocLeader: {
+      flex: 1,
+      borderBottomWidth: 1,
+      borderBottomStyle: "dashed",
+      borderBottomColor: c.border + "60",
+      marginHorizontal: 10,
+      marginBottom: 3,
     },
     tocPageHint: {
       fontSize: 9,
