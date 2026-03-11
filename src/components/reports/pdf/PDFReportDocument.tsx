@@ -736,31 +736,27 @@ const PDFReportDocument = ({
         {/* Executive Summary */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Image src={exosLogo} style={styles.sectionLogoImage} />
+            <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
             <Text style={styles.sectionTitle}>Executive Summary</Text>
           </View>
           <View style={styles.sectionContent}>
             <Text style={styles.analysisSubHeader}>Key Findings</Text>
             {findings.map((point, i) => (
-              <View key={`f-${i}`} style={styles.keyPointItem}>
-                <View style={styles.keyPointBullet}>
-                  <Text style={styles.keyPointBulletText}>{i + 1}</Text>
-                </View>
-                <Text style={styles.keyPointText}>{point}</Text>
-              </View>
+              <Text key={`f-${i}`} style={styles.keyPointText}>
+                {i + 1}. {point}
+              </Text>
             ))}
 
             <View style={{ height: 12 }} />
 
             <Text style={styles.analysisSubHeader}>Top Recommendations</Text>
-            {recommendations.map((point, i) => (
-              <View key={`r-${i}`} style={styles.keyPointItem}>
-                <View style={[styles.keyPointBullet, { backgroundColor: colors.warning }]}>
-                  <Text style={styles.keyPointBulletText}>{i + 1}</Text>
-                </View>
-                <Text style={styles.keyPointText}>{point}</Text>
-              </View>
-            ))}
+            <View style={{ backgroundColor: colors.warning + "10", borderRadius: 6, padding: 10 }}>
+              {recommendations.map((point, i) => (
+                <Text key={`r-${i}`} style={{ ...styles.keyPointText, marginBottom: 6 }}>
+                  {i + 1}. {point}
+                </Text>
+              ))}
+            </View>
           </View>
         </View>
 
