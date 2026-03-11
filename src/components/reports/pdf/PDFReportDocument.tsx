@@ -887,7 +887,7 @@ const PDFReportDocument = ({
             <>
               <View style={styles.section} id="section-methodology" wrap={false}>
                 <View style={styles.sectionHeader}>
-                  <Image src={exosLogo} style={styles.sectionLogoImage} />
+                  <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
                   <Text style={styles.sectionTitle}>Methodology & Limitations</Text>
                 </View>
                 <View style={styles.sectionContent}>
