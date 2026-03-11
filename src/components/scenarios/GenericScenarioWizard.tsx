@@ -927,10 +927,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   </div>
                   
                   {analysisResult ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <div className="whitespace-pre-wrap text-foreground bg-card rounded-lg p-4 border border-border max-h-[500px] overflow-y-auto">
-                        {analysisResult}
-                      </div>
+                    <div className="bg-card rounded-lg p-4 border border-border max-h-[500px] overflow-y-auto">
+                      <MarkdownRenderer content={analysisResult} />
                     </div>
                   ) : (
                     <p className="text-muted-foreground">
