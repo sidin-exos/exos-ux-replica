@@ -649,54 +649,74 @@ const PDFReportDocument = ({
         <View style={styles.gradientLayer3} />
         <View style={styles.accentBar} />
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Image src={exosLogo} style={styles.sectionLogoImage} />
-            <Text style={styles.sectionTitle}>Detailed Analysis</Text>
-          </View>
-          <View style={styles.sectionContent}>
-            {analysisLines.map((line, i) => {
-              const hashMatch = line.match(/^(#{1,4})\s*(.*)$/);
-              const isHashHeader = !!hashMatch;
-              const cleanLine = cleanMarkdown(line);
-              
-              if (!cleanLine) {
-                return <View key={i} style={{ height: 8 }} />;
-              }
-              
-              if (isHashHeader) {
-                const headerLevel = hashMatch[1].length;
-                const headerStyle = headerLevel <= 2 ? styles.analysisHeader : styles.analysisSubHeader;
-                return (
-                  <Text key={i} style={headerStyle}>
-                    {cleanLine}
-                  </Text>
-                );
-              }
-              
-              const isSectionHeader =
-                (cleanLine.endsWith(":") && cleanLine.length < 80) ||
-                (cleanLine.length > 0 &&
-                  cleanLine.length < 60 &&
-                  /^[A-Z]/.test(cleanLine) &&
-                  !cleanLine.includes("."));
+        {(() => {
+          const sections = categorizeAnalysisSections(analysisLines);
+          return sections.map((section, si) => {
+            const blockStyle =
+              section.type === "recommendations"
+                ? styles.sectionBlockRecommendations
+                : section.type === "risks"
+                ? styles.sectionBlockRisks
+                : section.type === "nextSteps"
+                ? styles.sectionBlockNextSteps
+                : styles.sectionBlockBase;
 
-              if (isSectionHeader) {
-                return (
-                  <Text key={i} style={styles.analysisSubHeader}>
-                    {cleanLine}
-                  </Text>
-                );
-              }
+            return (
+              <View key={`section-${si}`} style={{ marginBottom: 15 }} wrap={false}>
+                {si === 0 && (
+                  <View style={styles.sectionHeader}>
+                    <Image src={exosLogo} style={styles.sectionLogoImage} />
+                    <Text style={styles.sectionTitle}>Detailed Analysis</Text>
+                  </View>
+                )}
+                <View style={blockStyle}>
+                  {section.type === "risks" ? (
+                    <View style={styles.riskHeaderRow}>
+                      <Text style={styles.warningIcon}>⚠</Text>
+                      <Text style={styles.sectionBlockHeader}>{section.title}</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.sectionBlockHeader}>{section.title}</Text>
+                  )}
 
-              return (
-                <Text key={i} style={styles.analysisText}>
-                  {cleanLine}
-                </Text>
-              );
-            })}
-          </View>
-        </View>
+                  {section.lines.map((line, li) => {
+                    const isHighlight = hasMetricHighlight(line);
+
+                    if (section.type === "recommendations") {
+                      return (
+                        <View key={`l-${li}`} style={styles.numberedItem}>
+                          <View style={styles.numberedBullet}>
+                            <Text style={styles.numberedBulletText}>{li + 1}</Text>
+                          </View>
+                          <Text style={{ flex: 1, ...(isHighlight ? styles.analysisTextHighlight : styles.analysisText) }}>
+                            {line}
+                          </Text>
+                        </View>
+                      );
+                    }
+
+                    if (section.type === "nextSteps") {
+                      return (
+                        <View key={`l-${li}`} style={styles.checklistItem}>
+                          <View style={styles.checkBox} />
+                          <Text style={{ flex: 1, ...(isHighlight ? styles.analysisTextHighlight : styles.analysisText) }}>
+                            {line}
+                          </Text>
+                        </View>
+                      );
+                    }
+
+                    return (
+                      <Text key={`l-${li}`} style={isHighlight ? styles.analysisTextHighlight : styles.analysisText}>
+                        {line}
+                      </Text>
+                    );
+                  })}
+                </View>
+              </View>
+            );
+          });
+        })()}
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
