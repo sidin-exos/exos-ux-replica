@@ -74,7 +74,7 @@ const pricingTiers = [
       "EXOS engine placed on your local server",
       "SLA guarantees",
     ],
-    cta: "Contact Sales",
+    cta: "Book a 15-min Demo",
   },
 ];
 
