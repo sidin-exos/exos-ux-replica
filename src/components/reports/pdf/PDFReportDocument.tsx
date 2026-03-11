@@ -184,10 +184,11 @@ function buildDocStyles(c: DocColors) {
     },
     reportTitle: {
       fontSize: 28,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.primary,
       marginBottom: 8,
+      letterSpacing: 0.5,
     },
     reportSubtitle: {
       fontSize: 12,
