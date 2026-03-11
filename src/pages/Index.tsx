@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import ScenarioCard from "@/components/dashboard/ScenarioCard";
 import ConsolidationWizard from "@/components/consolidation/ConsolidationWizard";
 import { ChatWidget } from "@/components/chat/ChatWidget";
