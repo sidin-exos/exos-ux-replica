@@ -3,6 +3,7 @@ import { ShieldAlert, AlertTriangle, BarChart3, Bell, FileSearch } from "lucide-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/layout/Header";
+import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
 import TrackerList from "@/components/enterprise/TrackerList";
 import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
@@ -35,7 +36,7 @@ const RiskPlatform = () => {
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
 
   return (
-    <div className="min-h-screen bg-background">
+    <EnterpriseLayout>
       <Header />
       <main className="container py-8 space-y-6">
         <div className="flex items-center gap-3">
@@ -108,7 +109,7 @@ const RiskPlatform = () => {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
+    </EnterpriseLayout>
   );
 };
 
