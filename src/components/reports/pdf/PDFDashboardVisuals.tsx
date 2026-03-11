@@ -155,18 +155,21 @@ const PDFNoDataPlaceholder = ({ name, themeMode }: { name: string; themeMode?: P
   const isLight = themeMode === "light";
   return (
     <View style={{
-      backgroundColor: isLight ? "#f3f4f6" : "#2a2a3a",
-      padding: 20,
+      backgroundColor: isLight ? "#f9fafb" : "#2a2a3a",
+      padding: 24,
       borderRadius: 6,
       alignItems: "center",
       justifyContent: "center",
-      minHeight: 80,
+      minHeight: 150,
+      borderWidth: 1.5,
+      borderStyle: "dashed",
+      borderColor: isLight ? "#d1d5db" : "#4a4a5e",
     }}>
-      <Text style={{ fontSize: 11, fontFamily: "Helvetica", fontWeight: 600, color: isLight ? "#374151" : "#9ca3af", marginBottom: 6 }}>
+      <Text style={{ fontSize: 12, fontFamily: "Helvetica", fontWeight: 600, color: isLight ? "#374151" : "#9ca3af", marginBottom: 8 }}>
         {name}
       </Text>
-      <Text style={{ fontSize: 10, fontFamily: "Helvetica", color: "#6b7280", textAlign: "center", lineHeight: 1.4 }}>
-        Visualization data could not be extracted automatically. Please refer to the detailed analysis below.
+      <Text style={{ fontSize: 10, fontFamily: "Helvetica", color: "#6b7280", textAlign: "center", lineHeight: 1.5 }}>
+        Visualization data could not be extracted automatically.{"\n"}Please refer to the detailed analysis section.
       </Text>
     </View>
   );
