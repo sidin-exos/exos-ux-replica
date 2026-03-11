@@ -1025,28 +1025,17 @@ const PDFReportDocument = ({
               <Text style={styles.sectionTitle}>Analysis Parameters</Text>
             </View>
             <View style={styles.sectionContent}>
-              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                {Object.entries(formData)
-                  .filter(([_, value]) => value && value.trim() !== "")
-                  .map(([key, value]) => {
-                    const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
-                    let displayValue = value;
-                    if (value.length > 60) {
-                      const firstSentence = value.split(/[.!?\n]/)[0] || value;
-                      displayValue = firstSentence.length > 80
-                        ? firstSentence.substring(0, 77) + "…"
-                        : firstSentence;
-                    }
-                    return (
-                      <View key={key} style={{ flexDirection: "row", alignItems: "center", marginRight: 8, marginBottom: 6 }}>
-                        <Text style={{ fontSize: 8, color: colors.textMuted, marginRight: 4 }}>{label}:</Text>
-                        <View style={{ backgroundColor: colors.surfaceLight, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 3 }}>
-                          <Text style={{ fontSize: 9, color: colors.text, fontFamily: "Courier" }}>{displayValue}</Text>
-                        </View>
-                      </View>
-                    );
-                  })}
-              </View>
+              {Object.entries(formData)
+                .filter(([_, value]) => value && value.trim() !== "")
+                .map(([key, value]) => {
+                  const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
+                  return (
+                    <View key={key} style={styles.parameterBlock}>
+                      <Text style={styles.parameterLabel}>{label}</Text>
+                      <Text style={styles.parameterValue}>{value}</Text>
+                    </View>
+                  );
+                })}
             </View>
           </View>
         )}
