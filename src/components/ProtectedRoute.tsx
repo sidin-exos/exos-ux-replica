@@ -24,16 +24,12 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
       setAuthenticated(true);
 
       if (requireAdmin || requireSuperAdmin) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("role, is_super_admin")
-          .eq("id", session.user.id)
-          .maybeSingle();
+        const { data: roleData } = await supabase.rpc("is_super_admin", { _user_id: session.user.id });
+        const { data: orgRole } = await supabase.rpc("get_user_org_role", { _user_id: session.user.id });
 
-        if (data) {
-          setIsSuperAdmin(data.is_super_admin === true);
-          setIsAdmin(data.role === "admin" || data.is_super_admin === true);
-        }
+        const superAdmin = roleData === true;
+        setIsSuperAdmin(superAdmin);
+        setIsAdmin(orgRole === "admin" || superAdmin);
       }
       setLoading(false);
     };
