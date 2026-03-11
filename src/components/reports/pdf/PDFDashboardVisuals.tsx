@@ -310,7 +310,7 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, sc
           </View>
 
           <View style={pairIdx === 0 ? { ...pageStyles.sectionHeader } : pageStyles.sectionHeader} id={pairIdx === 0 ? "section-visualizations" : undefined}>
-            <Image src={exosLogo} style={pageStyles.sectionLogoImage} />
+            <View style={{ width: 8, height: 8, backgroundColor: c.primary, borderRadius: 2, marginRight: 8 }} />
             <Text style={pageStyles.sectionTitle}>
               Analysis Visualizations {pairs.length > 1 ? `(${pairIdx + 1}/${pairs.length})` : ""}
             </Text>
