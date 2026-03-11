@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { pdf } from "@react-pdf/renderer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Loader2, Eye, EyeOff, AlertTriangle, FileText, Sun, Moon } from "lucide-react";
+import { toast } from "sonner";
 import type { PdfThemeMode } from "./dashboardVisuals/theme";
 import { Button } from "@/components/ui/button";
 import {
@@ -90,8 +91,10 @@ const PDFPreviewModal = ({
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       setPdfBlobUrl(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate PDF preview:", error);
+      const msg = error?.message || "Unknown error";
+      toast.error(`PDF generation failed: ${msg}`);
       setPreviewError(true);
     } finally {
       setIsGenerating(false);
