@@ -30,6 +30,17 @@ const CATEGORY_ICON_TEXT: Record<Scenario["category"], string> = {
   documentation: "text-info",
 };
 
+const CATEGORY_BORDER: Record<Scenario["category"], string> = {
+  analysis: "border-l-4 border-l-blue-500",
+  planning: "border-l-4 border-l-amber-500",
+  risk: "border-l-4 border-l-destructive",
+  documentation: "border-l-4 border-l-purple-500",
+};
+
+const CATEGORY_BG: Partial<Record<Scenario["category"], string>> = {
+  risk: "bg-destructive/5",
+};
+
 const ScenarioCard = ({
   title,
   description,
