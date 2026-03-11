@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Check, Zap, Shield, Building2, HelpCircle, Mail } from "lucide-react";
+import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
