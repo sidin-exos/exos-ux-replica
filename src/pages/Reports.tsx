@@ -1,14 +1,12 @@
 import { useState } from "react";
 import Header from "@/components/layout/Header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { dashboardConfigs, DashboardType } from "@/lib/dashboard-mappings";
 import { getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
 import DashboardContextCard from "@/components/reports/DashboardContextCard";
-import { Scale, DollarSign, ShieldAlert, CalendarClock, DatabaseZap, FileText } from "lucide-react";
+import { Scale, DollarSign, ShieldAlert, CalendarClock, FileText, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Dashboard components
 import ActionChecklistDashboard from "@/components/reports/ActionChecklistDashboard";
@@ -59,80 +57,105 @@ const tcoCostBreakdown = [
   { name: "Trade-in Credit", value: -35000, type: "reduction" as const },
 ];
 
-// All dashboard types for selection
-const allDashboards: DashboardType[] = [
-  "action-checklist",
-  "decision-matrix",
-  "cost-waterfall",
-  "timeline-roadmap",
-  "kraljic-quadrant",
-  "tco-comparison",
-  "license-tier",
-  "sensitivity-spider",
-  "risk-matrix",
-  "scenario-comparison",
-  "supplier-scorecard",
-  "sow-analysis",
-  "negotiation-prep",
-  "data-quality",
+// Category grouping
+interface DashboardCategory {
+  label: string;
+  icon: LucideIcon;
+  description: string;
+  dashboards: { id: DashboardType; subtitle: string }[];
+}
+
+const dashboardCategories: DashboardCategory[] = [
+  {
+    label: "Decision Support",
+    icon: Scale,
+    description: "Evaluate vendors, make-vs-buy, or strategic alternatives",
+    dashboards: [
+      { id: "decision-matrix", subtitle: "Weighted criteria scoring" },
+      { id: "scenario-comparison", subtitle: "Side-by-side scenario analysis" },
+      { id: "kraljic-quadrant", subtitle: "Supplier strategic positioning" },
+      { id: "negotiation-prep", subtitle: "Leverage & BATNA planning" },
+    ],
+  },
+  {
+    label: "Cost Analysis",
+    icon: DollarSign,
+    description: "Break down spend, model TCO, and stress-test assumptions",
+    dashboards: [
+      { id: "cost-waterfall", subtitle: "Component cost breakdown" },
+      { id: "tco-comparison", subtitle: "Total cost of ownership" },
+      { id: "license-tier", subtitle: "License cost distribution" },
+      { id: "sensitivity-spider", subtitle: "Assumption stress testing" },
+    ],
+  },
+  {
+    label: "Risk & Compliance",
+    icon: ShieldAlert,
+    description: "Assess supply risks, contract gaps, and data reliability",
+    dashboards: [
+      { id: "risk-matrix", subtitle: "Probability × impact mapping" },
+      { id: "sow-analysis", subtitle: "Scope & contract gap analysis" },
+      { id: "data-quality", subtitle: "Analysis reliability scoring" },
+    ],
+  },
+  {
+    label: "Planning & Performance",
+    icon: CalendarClock,
+    description: "Build timelines, track actions, and monitor suppliers",
+    dashboards: [
+      { id: "action-checklist", subtitle: "Prioritized action tracking" },
+      { id: "timeline-roadmap", subtitle: "Implementation milestones" },
+      { id: "supplier-scorecard", subtitle: "Supplier performance metrics" },
+    ],
+  },
 ];
 
-// Guide Me categories
-const guideCategories = [
-  {
-    label: "Compare Options",
-    icon: Scale,
-    dashboards: ["decision-matrix", "scenario-comparison", "tco-comparison"] as DashboardType[],
-    description: "Evaluate vendors, make-vs-buy, or strategic alternatives",
-  },
-  {
-    label: "Understand Costs",
-    icon: DollarSign,
-    dashboards: ["cost-waterfall", "tco-comparison", "sensitivity-spider"] as DashboardType[],
-    description: "Break down spend, model TCO, and stress-test assumptions",
-  },
-  {
-    label: "Manage Risk",
-    icon: ShieldAlert,
-    dashboards: ["risk-matrix", "supplier-scorecard", "sow-analysis"] as DashboardType[],
-    description: "Assess supply risks, supplier health, and contract gaps",
-  },
-  {
-    label: "Plan & Execute",
-    icon: CalendarClock,
-    dashboards: ["timeline-roadmap", "action-checklist", "negotiation-prep"] as DashboardType[],
-    description: "Build timelines, track actions, and prepare negotiations",
-  },
-  {
-    label: "Assess Data Quality",
-    icon: DatabaseZap,
-    dashboards: ["data-quality", "kraljic-quadrant"] as DashboardType[],
-    description: "Understand analysis reliability and category positioning",
-  },
-];
+// Render the active dashboard content
+const renderDashboard = (id: DashboardType) => {
+  switch (id) {
+    case "action-checklist":
+      return <ActionChecklistDashboard title="Volume Consolidation Actions" subtitle="Supplier rationalization roadmap" actions={volumeConsolidationActions} />;
+    case "decision-matrix":
+      return <DecisionMatrixDashboard title="Make vs Buy Analysis" subtitle="Strategic sourcing decision" criteria={makeVsBuyCriteria} options={makeVsBuyOptions} />;
+    case "cost-waterfall":
+      return <CostWaterfallDashboard title="TCO Analysis: Industrial Equipment" subtitle="5-year total cost of ownership" components={tcoCostBreakdown} currency="$" />;
+    case "timeline-roadmap":
+      return <TimelineRoadmapDashboard />;
+    case "kraljic-quadrant":
+      return <KraljicQuadrantDashboard />;
+    case "tco-comparison":
+      return <TCOComparisonDashboard />;
+    case "license-tier":
+      return <LicenseTierDashboard />;
+    case "sensitivity-spider":
+      return <SensitivitySpiderDashboard />;
+    case "risk-matrix":
+      return <RiskMatrixDashboard />;
+    case "scenario-comparison":
+      return <ScenarioComparisonDashboard />;
+    case "supplier-scorecard":
+      return <SupplierPerformanceDashboard />;
+    case "sow-analysis":
+      return <SOWAnalysisDashboard />;
+    case "negotiation-prep":
+      return <NegotiationPrepDashboard />;
+    case "data-quality":
+      return <DataQualityDashboard />;
+    default:
+      return null;
+  }
+};
 
 const Reports = () => {
-  const [selectedTab, setSelectedTab] = useState<DashboardType>("action-checklist");
-  const [highlightedDashboards, setHighlightedDashboards] = useState<DashboardType[]>([]);
-
-  const handleGuideClick = (dashboards: DashboardType[]) => {
-    setHighlightedDashboards(dashboards);
-    setSelectedTab(dashboards[0]);
-    // Clear highlight after 3s
-    setTimeout(() => setHighlightedDashboards([]), 3000);
-  };
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardType>("decision-matrix");
 
   return (
     <div className="min-h-screen gradient-hero">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{ background: "var(--gradient-glow)" }}
-      />
-
+      <div className="fixed inset-0 pointer-events-none" style={{ background: "var(--gradient-glow)" }} />
       <Header />
 
       <main className="container py-8 relative">
-        {/* Hero Section */}
+        {/* Hero */}
         <section className="mb-8 animate-fade-up">
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
             <span className="text-gradient">Dashboards</span>
@@ -140,11 +163,7 @@ const Reports = () => {
           <p className="text-muted-foreground text-lg max-w-2xl">
             EXOS dashboards — empowering your decision-making with transparency.
           </p>
-          <a
-            href="/samples/EXOS_Specification_Optimizer_2026-02-28.pdf"
-            download="EXOS_Report_Sample.pdf"
-            className="inline-block mt-4"
-          >
+          <a href="/samples/EXOS_Specification_Optimizer_2026-02-28.pdf" download="EXOS_Report_Sample.pdf" className="inline-block mt-4">
             <Button variant="outline" size="sm" className="gap-2 shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)] hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)] transition-all duration-300">
               <FileText className="h-4 w-4" />
               Download Report Sample
@@ -152,32 +171,26 @@ const Reports = () => {
           </a>
         </section>
 
-        {/* Guide Me Section */}
+        {/* Guide Me — 4-category cards */}
         <section className="mb-8 animate-fade-up" style={{ animationDelay: "100ms" }}>
           <h2 className="text-sm font-medium text-foreground/70 uppercase tracking-wide mb-3">
             What are you trying to decide?
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {guideCategories.map((cat) => {
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {dashboardCategories.map((cat) => {
               const Icon = cat.icon;
-              const isActive = highlightedDashboards.length > 0 &&
-                cat.dashboards.some(d => highlightedDashboards.includes(d));
+              const isActive = cat.dashboards.some((d) => d.id === selectedDashboard);
               return (
                 <button
                   key={cat.label}
-                  onClick={() => handleGuideClick(cat.dashboards)}
+                  onClick={() => setSelectedDashboard(cat.dashboards[0].id)}
                   className={`group rounded-xl border p-3 text-left transition-all duration-300
                     bg-card shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]
                     hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5
                     active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]
-                    ${isActive
-                      ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30 shadow-[0_2px_0_0_hsl(var(--primary)/0.5),0_6px_20px_-4px_hsl(var(--primary)/0.15)] glow-effect"
-                      : "border-border/60"
-                    }`}
+                    ${isActive ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30" : "border-border/60"}`}
                 >
-                  <Icon className={`h-5 w-5 mb-2 transition-colors ${
-                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"
-                  }`} />
+                  <Icon className={`h-5 w-5 mb-2 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"}`} />
                   <p className="text-sm font-medium text-foreground">{cat.label}</p>
                   <p className="text-xs text-muted-foreground mt-1 hidden md:block">{cat.description}</p>
                 </button>
@@ -186,153 +199,91 @@ const Reports = () => {
           </div>
         </section>
 
-        {/* Dashboard Tabs */}
-        <section className="mb-8">
-          <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as DashboardType)} className="w-full">
-            {/* Mobile: Select dropdown */}
-            <div className="md:hidden mb-6">
-              <Select value={selectedTab} onValueChange={(v) => setSelectedTab(v as DashboardType)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {allDashboards.map((dashboardId) => {
-                    const config = dashboardConfigs[dashboardId];
-                    const count = getDashboardScenarioCount(dashboardId);
+        {/* Mobile: Grouped select dropdown */}
+        <div className="md:hidden mb-6">
+          <Select value={selectedDashboard} onValueChange={(v) => setSelectedDashboard(v as DashboardType)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {dashboardCategories.map((cat) => (
+                <SelectGroup key={cat.label}>
+                  <SelectLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {cat.label}
+                  </SelectLabel>
+                  {cat.dashboards.map((d) => {
+                    const config = dashboardConfigs[d.id];
+                    const count = getDashboardScenarioCount(d.id);
                     return (
-                      <SelectItem key={dashboardId} value={dashboardId}>
+                      <SelectItem key={d.id} value={d.id}>
                         {config.name}{count > 0 ? ` (${count})` : ""}
                       </SelectItem>
                     );
                   })}
-                </SelectContent>
-              </Select>
-            </div>
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-            {/* Desktop: Scrollable tabs */}
-            <ScrollArea className="hidden md:block w-full mb-6">
-              <TabsList className="inline-flex w-max h-auto gap-1 bg-secondary/30 p-1">
-                {allDashboards.map((dashboardId) => {
-                  const config = dashboardConfigs[dashboardId];
-                  const count = getDashboardScenarioCount(dashboardId);
-                  const isHighlighted = highlightedDashboards.includes(dashboardId);
-                  return (
-                    <TabsTrigger
-                      key={dashboardId}
-                      value={dashboardId}
-                      className={`text-xs px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all whitespace-nowrap ${
-                        isHighlighted ? "ring-2 ring-primary/50 bg-primary/10" : ""
-                      }`}
-                    >
-                      {config.name}
-                      {count > 0 && (
-                        <span className="ml-1.5 text-[10px] opacity-60">{count}</span>
-                      )}
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+        {/* Desktop: Master-detail layout */}
+        <section className="hidden md:grid md:grid-cols-4 md:gap-8 mb-8">
+          {/* Sidebar */}
+          <nav className="md:col-span-1 space-y-6">
+            {dashboardCategories.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <div key={cat.label}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {cat.label}
+                    </h3>
+                  </div>
+                  <div className="space-y-0.5">
+                    {cat.dashboards.map((d) => {
+                      const isActive = selectedDashboard === d.id;
+                      const config = dashboardConfigs[d.id];
+                      const count = getDashboardScenarioCount(d.id);
+                      return (
+                        <button
+                          key={d.id}
+                          onClick={() => setSelectedDashboard(d.id)}
+                          className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border-l-2 ${
+                            isActive
+                              ? "border-l-primary bg-muted text-foreground"
+                              : "border-l-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{config.name}</span>
+                            {count > 0 && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                                {count}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{d.subtitle}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </nav>
 
-            {/* Action Checklist */}
-            <TabsContent value="action-checklist">
-              <DashboardContextCard dashboardId="action-checklist" config={dashboardConfigs["action-checklist"]} />
-              <ActionChecklistDashboard
-                title="Volume Consolidation Actions"
-                subtitle="Supplier rationalization roadmap"
-                actions={volumeConsolidationActions}
-              />
-            </TabsContent>
+          {/* Content */}
+          <div className="md:col-span-3">
+            <DashboardContextCard dashboardId={selectedDashboard} config={dashboardConfigs[selectedDashboard]} />
+            {renderDashboard(selectedDashboard)}
+          </div>
+        </section>
 
-            {/* Decision Matrix */}
-            <TabsContent value="decision-matrix">
-              <DashboardContextCard dashboardId="decision-matrix" config={dashboardConfigs["decision-matrix"]} />
-              <DecisionMatrixDashboard
-                title="Make vs Buy Analysis"
-                subtitle="Strategic sourcing decision"
-                criteria={makeVsBuyCriteria}
-                options={makeVsBuyOptions}
-              />
-            </TabsContent>
-
-            {/* Cost Waterfall */}
-            <TabsContent value="cost-waterfall">
-              <DashboardContextCard dashboardId="cost-waterfall" config={dashboardConfigs["cost-waterfall"]} />
-              <CostWaterfallDashboard
-                title="TCO Analysis: Industrial Equipment"
-                subtitle="5-year total cost of ownership"
-                components={tcoCostBreakdown}
-                currency="$"
-              />
-            </TabsContent>
-
-            {/* Timeline Roadmap */}
-            <TabsContent value="timeline-roadmap">
-              <DashboardContextCard dashboardId="timeline-roadmap" config={dashboardConfigs["timeline-roadmap"]} />
-              <TimelineRoadmapDashboard />
-            </TabsContent>
-
-            {/* Kraljic Quadrant */}
-            <TabsContent value="kraljic-quadrant">
-              <DashboardContextCard dashboardId="kraljic-quadrant" config={dashboardConfigs["kraljic-quadrant"]} />
-              <KraljicQuadrantDashboard />
-            </TabsContent>
-
-            {/* TCO Comparison */}
-            <TabsContent value="tco-comparison">
-              <DashboardContextCard dashboardId="tco-comparison" config={dashboardConfigs["tco-comparison"]} />
-              <TCOComparisonDashboard />
-            </TabsContent>
-
-            {/* License Tier */}
-            <TabsContent value="license-tier">
-              <DashboardContextCard dashboardId="license-tier" config={dashboardConfigs["license-tier"]} />
-              <LicenseTierDashboard />
-            </TabsContent>
-
-            {/* Sensitivity Spider */}
-            <TabsContent value="sensitivity-spider">
-              <DashboardContextCard dashboardId="sensitivity-spider" config={dashboardConfigs["sensitivity-spider"]} />
-              <SensitivitySpiderDashboard />
-            </TabsContent>
-
-            {/* Risk Matrix */}
-            <TabsContent value="risk-matrix">
-              <DashboardContextCard dashboardId="risk-matrix" config={dashboardConfigs["risk-matrix"]} />
-              <RiskMatrixDashboard />
-            </TabsContent>
-
-            {/* Scenario Comparison */}
-            <TabsContent value="scenario-comparison">
-              <DashboardContextCard dashboardId="scenario-comparison" config={dashboardConfigs["scenario-comparison"]} />
-              <ScenarioComparisonDashboard />
-            </TabsContent>
-
-            {/* Supplier Scorecard */}
-            <TabsContent value="supplier-scorecard">
-              <DashboardContextCard dashboardId="supplier-scorecard" config={dashboardConfigs["supplier-scorecard"]} />
-              <SupplierPerformanceDashboard />
-            </TabsContent>
-
-            {/* SOW Analysis */}
-            <TabsContent value="sow-analysis">
-              <DashboardContextCard dashboardId="sow-analysis" config={dashboardConfigs["sow-analysis"]} />
-              <SOWAnalysisDashboard />
-            </TabsContent>
-
-            {/* Negotiation Prep */}
-            <TabsContent value="negotiation-prep">
-              <DashboardContextCard dashboardId="negotiation-prep" config={dashboardConfigs["negotiation-prep"]} />
-              <NegotiationPrepDashboard />
-            </TabsContent>
-
-            {/* Data Quality */}
-            <TabsContent value="data-quality">
-              <DashboardContextCard dashboardId="data-quality" config={dashboardConfigs["data-quality"]} />
-              <DataQualityDashboard />
-            </TabsContent>
-          </Tabs>
+        {/* Mobile content */}
+        <section className="md:hidden mb-8">
+          <DashboardContextCard dashboardId={selectedDashboard} config={dashboardConfigs[selectedDashboard]} />
+          {renderDashboard(selectedDashboard)}
         </section>
       </main>
     </div>
