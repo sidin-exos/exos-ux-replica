@@ -477,7 +477,7 @@ serve(async (req) => {
   const userOrgId = await getUserOrgId(userId);
 
   // Rate limit: 10 requests/hour per user (expensive multi-cycle endpoint)
-  const rateCheck = await checkRateLimit(userId, "sentinel-analysis", 10, 60, { failClosed: true });
+  const rateCheck = await checkRateLimit(userId, "sentinel-analysis", 30, 60, { failClosed: true });
   if (!rateCheck.allowed) {
     return rateLimitResponse(rateCheck, corsHeaders,
       "Analysis rate limit reached. Please wait before submitting another analysis."
