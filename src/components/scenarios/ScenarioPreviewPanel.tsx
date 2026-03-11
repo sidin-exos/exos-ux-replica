@@ -61,7 +61,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
                   </p>
                   <ul className="space-y-1">
                     {scenario.outputs.slice(0, 5).map((output, i) => (
-                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                      <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
                         <span className="text-copper mt-0.5">•</span>
                         {output}
                       </li>
@@ -104,7 +104,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
                 {CATEGORY_DESCRIPTIONS[activeCategory]}
               </p>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground/70 pt-2 border-t border-border/30">
+              <div className="flex items-center gap-2 text-xs text-foreground/60 pt-2 border-t border-border/30">
                 <Eye className="w-3.5 h-3.5" />
                 Hover a scenario to see details
               </div>

@@ -22,15 +22,15 @@ export function EnterpriseTriggerGate() {
         <div className="grid sm:grid-cols-3 gap-4 max-w-lg mx-auto">
           <div className="p-3 rounded-lg bg-muted/50 text-center">
             <Zap className="w-5 h-5 mx-auto mb-1 text-primary" />
-            <p className="text-xs text-muted-foreground">Real-time condition checks</p>
+            <p className="text-xs text-foreground/70">Real-time condition checks</p>
           </div>
           <div className="p-3 rounded-lg bg-muted/50 text-center">
             <Shield className="w-5 h-5 mx-auto mb-1 text-primary" />
-            <p className="text-xs text-muted-foreground">Automated alert escalation</p>
+            <p className="text-xs text-foreground/70">Automated alert escalation</p>
           </div>
           <div className="p-3 rounded-lg bg-muted/50 text-center">
             <Bell className="w-5 h-5 mx-auto mb-1 text-primary" />
-            <p className="text-xs text-muted-foreground">Full report on trigger</p>
+            <p className="text-xs text-foreground/70">Full report on trigger</p>
           </div>
         </div>
 
