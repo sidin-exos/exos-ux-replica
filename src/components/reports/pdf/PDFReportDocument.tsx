@@ -376,6 +376,31 @@ function buildDocStyles(c: DocColors) {
       color: c.textMuted,
       lineHeight: 1.5,
     },
+    methodologyBox: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 6,
+      padding: 14,
+      marginBottom: 12,
+    },
+    methodologySubHeader: {
+      fontSize: 11,
+      fontFamily: "Helvetica-Bold",
+      color: c.text,
+      marginBottom: 6,
+    },
+    methodologyText: {
+      fontSize: 10,
+      fontFamily: "Helvetica",
+      color: c.textMuted,
+      lineHeight: 1.5,
+    },
+    auditTrail: {
+      marginTop: 10,
+      paddingTop: 8,
+      borderTopWidth: 0.5,
+      borderTopColor: c.border,
+    },
     inputsGrid: {
       flexDirection: "row",
       flexWrap: "wrap",
