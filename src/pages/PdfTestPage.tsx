@@ -111,7 +111,7 @@ const PdfTestPage = () => {
         analysisResult={MOCK_ANALYSIS}
         formData={MOCK_FORM_DATA}
         timestamp={new Date().toISOString()}
-        selectedDashboards={["cost_waterfall", "tco_comparison"]}
+        selectedDashboards={["cost-waterfall", "tco-comparison"]}
       />
     </div>
   );
