@@ -44,18 +44,18 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/report" element={<GeneratedReport />} />
-            <Route path="/dashboards" element={<DashboardShowcase />} />
+            <Route path="/dashboards" element={<ProtectedRoute requireSuperAdmin><DashboardShowcase /></ProtectedRoute>} />
             <Route path="/market-intelligence" element={<MarketIntelligence />} />
-            <Route path="/architecture" element={<ArchitectureDiagram />} />
-            <Route path="/dev-workflow" element={<DevWorkflow />} />
-            <Route path="/testing-pipeline" element={<TestingPipeline />} />
-            <Route path="/org-chart" element={<OrgChart />} />
+            <Route path="/architecture" element={<ProtectedRoute requireSuperAdmin><ArchitectureDiagram /></ProtectedRoute>} />
+            <Route path="/dev-workflow" element={<ProtectedRoute requireSuperAdmin><DevWorkflow /></ProtectedRoute>} />
+            <Route path="/testing-pipeline" element={<ProtectedRoute requireSuperAdmin><TestingPipeline /></ProtectedRoute>} />
+            <Route path="/org-chart" element={<ProtectedRoute requireSuperAdmin><OrgChart /></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute requireSuperAdmin><FounderDashboard /></ProtectedRoute>} />
-            <Route path="/enterprise/risk" element={<ProtectedRoute><RiskPlatform /></ProtectedRoute>} />
-            <Route path="/enterprise/inflation" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/risk" element={<RiskPlatform />} />
+            <Route path="/enterprise/inflation" element={<InflationPlatform />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -3,6 +3,7 @@ import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare } from "lucide-react";
+import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelineAnimation";
 import { DeepAnalysisPipeline } from "@/components/analysis/DeepAnalysisPipeline";
@@ -130,6 +131,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   // Chat assistant state
   const [showChatAssistant, setShowChatAssistant] = useState(false);
 
+  // Auth prompt state
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+
   // Deep Analysis state (LangGraph pipeline)
   const [isDeepAnalysisRunning, setIsDeepAnalysisRunning] = useState(false);
   const [deepAnalysisStep, setDeepAnalysisStep] = useState(0);
@@ -255,6 +259,13 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const { model: configModel } = useModelConfig();
 
   const handleAnalyze = async () => {
+    // Check auth before running analysis
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setShowAuthPrompt(true);
+      return;
+    }
+
     setStep("analyzing");
     
     // --- Market Snapshot: bypass Sentinel, call dedicated edge function ---
@@ -327,6 +338,13 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // Deep Analysis handler (LangGraph pipeline)
   const handleDeepAnalysis = async () => {
+    // Check auth before running analysis
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setShowAuthPrompt(true);
+      return;
+    }
+
     setStep("analyzing");
     setIsDeepAnalysisRunning(true);
     setDeepAnalysisStep(0);
@@ -974,6 +992,14 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AuthPrompt
+        variant="modal"
+        open={showAuthPrompt}
+        onOpenChange={setShowAuthPrompt}
+        feature="AI Procurement Analysis"
+        description="Create a free account to get AI-powered insights on your procurement scenarios"
+      />
     </div>
   );
 };

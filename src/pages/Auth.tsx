@@ -209,7 +209,7 @@ const Auth = () => {
           <CardContent className="space-y-4">
             {view === "auth" ? (
               <>
-                <Tabs defaultValue="sign-in" onValueChange={handleTabChange}>
+                <Tabs defaultValue={searchParams.get("tab") === "sign-up" ? "sign-up" : "sign-in"} onValueChange={handleTabChange}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="sign-in">Sign In</TabsTrigger>
                     <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
