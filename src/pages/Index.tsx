@@ -50,6 +50,27 @@ const successStories = [
 
 const categoryOrder: Scenario["category"][] = ["analysis", "planning", "risk", "documentation"];
 
+const CATEGORY_ICONS: Record<Scenario["category"], LucideIcon> = {
+  analysis: LineChart,
+  planning: CalendarDays,
+  risk: ShieldAlert,
+  documentation: FileText,
+};
+
+const CATEGORY_ICON_COLOR: Record<Scenario["category"], string> = {
+  analysis: "text-blue-500",
+  planning: "text-amber-500",
+  risk: "text-destructive",
+  documentation: "text-purple-500",
+};
+
+const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
+  analysis: "bg-blue-500/15 text-blue-500",
+  planning: "bg-amber-500/15 text-amber-500",
+  risk: "bg-destructive/15 text-destructive",
+  documentation: "bg-purple-500/15 text-purple-500",
+};
+
 const Index = () => {
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
