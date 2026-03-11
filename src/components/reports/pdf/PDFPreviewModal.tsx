@@ -90,8 +90,10 @@ const PDFPreviewModal = ({
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       setPdfBlobUrl(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate PDF preview:", error);
+      const msg = error?.message || "Unknown error";
+      toast.error(`PDF generation failed: ${msg}`);
       setPreviewError(true);
     } finally {
       setIsGenerating(false);
