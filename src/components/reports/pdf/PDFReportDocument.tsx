@@ -348,29 +348,33 @@ const cleanMarkdown = (text: string): string => {
     .trim();
 };
 
-const extractKeyPoints = (text: string): string[] => {
-  const lines = text.split("\n").filter((line) => line.trim());
-  const keyPoints: string[] = [];
+const extractExecutiveSummary = (text: string): { findings: string[]; recommendations: string[] } => {
+  const lines = text.split("\n").map(cleanMarkdown).filter((l) => l.length > 15);
+
+  const findingPattern = /(\$|€|%|found|indicates?|presents?|analysis|current(ly)?|total|average|estimated|reveals?|shows?)/i;
+  const recommendPattern = /\b(target|aim to|recommend|should|negotiate|consider|implement|prioritize|pursue|establish|ensure|leverage|explore)\b/i;
+
+  const findings: string[] = [];
+  const recommendations: string[] = [];
 
   for (const line of lines) {
-    const cleanLine = cleanMarkdown(line);
-    if (!cleanLine) continue;
-
-    if (
-      cleanLine.includes("recommend") ||
-      cleanLine.includes("suggest") ||
-      cleanLine.includes("should") ||
-      cleanLine.includes("%") ||
-      cleanLine.includes("$")
-    ) {
-      keyPoints.push(cleanLine);
-      if (keyPoints.length >= 5) break;
+    if (recommendations.length < 3 && recommendPattern.test(line)) {
+      recommendations.push(line);
+    } else if (findings.length < 3 && findingPattern.test(line)) {
+      findings.push(line);
     }
+    if (findings.length >= 3 && recommendations.length >= 3) break;
   }
 
-  return keyPoints.length > 0
-    ? keyPoints
-    : lines.slice(0, 5).map(cleanMarkdown).filter(Boolean);
+  // Fallback: split first 6 sentences
+  if (findings.length === 0 || recommendations.length === 0) {
+    const pool = lines.slice(0, 6);
+    const mid = Math.ceil(pool.length / 2);
+    if (findings.length === 0) findings.push(...pool.slice(0, mid).slice(0, 3));
+    if (recommendations.length === 0) recommendations.push(...pool.slice(mid).slice(0, 3));
+  }
+
+  return { findings, recommendations };
 };
 
 const formatDate = (dateString: string) => {
@@ -393,7 +397,7 @@ const PDFReportDocument = ({
 }: PDFReportDocumentProps) => {
   const parsedData = extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
-  const keyPoints = extractKeyPoints(strippedAnalysis);
+  const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
   const analysisLines = strippedAnalysis.split("\n").filter((line) => line.trim());
 
   const styles = getDocStyles(pdfTheme);
@@ -437,9 +441,22 @@ const PDFReportDocument = ({
             <Text style={styles.sectionTitle}>Executive Summary</Text>
           </View>
           <View style={styles.sectionContent}>
-            {keyPoints.map((point, i) => (
-              <View key={i} style={styles.keyPointItem}>
+            <Text style={styles.analysisSubHeader}>Key Findings</Text>
+            {findings.map((point, i) => (
+              <View key={`f-${i}`} style={styles.keyPointItem}>
                 <View style={styles.keyPointBullet}>
+                  <Text style={styles.keyPointBulletText}>{i + 1}</Text>
+                </View>
+                <Text style={styles.keyPointText}>{point}</Text>
+              </View>
+            ))}
+
+            <View style={{ height: 12 }} />
+
+            <Text style={styles.analysisSubHeader}>Top Recommendations</Text>
+            {recommendations.map((point, i) => (
+              <View key={`r-${i}`} style={styles.keyPointItem}>
+                <View style={[styles.keyPointBullet, { backgroundColor: colors.warning }]}>
                   <Text style={styles.keyPointBulletText}>{i + 1}</Text>
                 </View>
                 <Text style={styles.keyPointText}>{point}</Text>
