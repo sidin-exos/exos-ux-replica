@@ -5,6 +5,7 @@ import {
   View,
   StyleSheet,
   Image,
+  Link,
 } from "@react-pdf/renderer";
 import exosLogoDark from "@/assets/logo-concept-layers.png";
 import exosLogoLight from "@/assets/logo-concept-layers-light.png";
