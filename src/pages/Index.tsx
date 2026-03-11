@@ -230,9 +230,10 @@ const Index = () => {
                     )}
                   >
                     <div className="mb-4">
-                      <h2 className="font-display text-xl font-semibold text-foreground flex items-center gap-2">
+                      <h2 className="font-display text-2xl font-semibold text-foreground flex items-center gap-2">
+                        {(() => { const CatIcon = CATEGORY_ICONS[category]; return <CatIcon className={cn("w-6 h-6", CATEGORY_ICON_COLOR[category])} />; })()}
                         {getCategoryLabel(category)}
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-iris/15 text-iris">
+                        <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", CATEGORY_BADGE_COLOR[category])}>
                           {scenariosByCategory[category]?.length ?? 0}
                         </span>
                       </h2>
