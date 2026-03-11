@@ -856,7 +856,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   size="lg"
                   onClick={handleDeepAnalysis}
                   disabled={!canProceed || isDeepAnalysisRunning}
-                  className="gap-2 border-purple-500/50 hover:bg-purple-500/10"
+                  className="gap-2 border-iris/50 hover:bg-iris/10"
                 >
                   <BrainCircuit className="w-4 h-4" />
                   Deep Analysis
