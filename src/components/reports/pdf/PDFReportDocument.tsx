@@ -262,7 +262,7 @@ function buildDocStyles(c: DocColors) {
     },
     analysisHeader: {
       fontSize: 14,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.text,
       marginTop: 14,
@@ -270,7 +270,7 @@ function buildDocStyles(c: DocColors) {
     },
     analysisSubHeader: {
       fontSize: 13,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 600,
       color: c.text,
       marginTop: 10,
