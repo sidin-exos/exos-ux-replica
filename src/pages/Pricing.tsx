@@ -42,7 +42,7 @@ const pricingTiers = [
     annualNote: "or €66/mo billed quarterly (€197/quarter)",
     period: "month",
     icon: Shield,
-    featured: false,
+    featured: true,
     features: [
       "Everything in SMB, plus:",
       "Unlimited simulations & scenarios",
