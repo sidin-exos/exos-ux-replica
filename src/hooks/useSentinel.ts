@@ -7,6 +7,7 @@
 
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
 import type { IndustryContext, ProcurementCategory } from "@/lib/ai-context-templates";
 import {
   preparePipelineRequest,
@@ -156,6 +157,9 @@ export function useSentinel(options: UseSentinelOptions = {}) {
         return result;
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
+        if (isAuthError(err)) {
+          showAuthErrorToast();
+        }
         options.onError?.(err);
         setState({
           isProcessing: false,

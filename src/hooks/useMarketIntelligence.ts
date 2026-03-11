@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
 
 export type QueryType = 'supplier' | 'commodity' | 'industry' | 'regulatory' | 'm&a' | 'risk';
 export type RecencyFilter = 'day' | 'week' | 'month' | 'year';
@@ -123,6 +124,9 @@ export function useMarketIntelligence() {
       setResult(data);
       return data;
     } catch (err) {
+      if (isAuthError(err)) {
+        showAuthErrorToast();
+      }
       const errorMessage = err instanceof Error ? err.message : "Failed to query market intelligence";
       setError(errorMessage);
       return null;

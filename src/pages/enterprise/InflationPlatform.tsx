@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useUser } from "@/hooks/useUser";
+import AuthPrompt from "@/components/auth/AuthPrompt";
 import { TrendingUp, LineChart, Layers, Globe, CalendarClock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,8 +34,31 @@ const CAPABILITIES = [
 ];
 
 const InflationPlatform = () => {
+  const { user, isLoading: isAuthLoading } = useUser();
   const [activeTab, setActiveTab] = useState("monitor");
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("inflation");
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-16">
+          <AuthPrompt
+            feature="Enterprise Inflation Platform"
+            description="Track and analyze inflation impacts on your procurement portfolio"
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <EnterpriseLayout>

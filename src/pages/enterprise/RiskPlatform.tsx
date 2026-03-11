@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useUser } from "@/hooks/useUser";
+import AuthPrompt from "@/components/auth/AuthPrompt";
 import { ShieldAlert, AlertTriangle, BarChart3, Bell, FileSearch } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,8 +34,31 @@ const CAPABILITIES = [
 ];
 
 const RiskPlatform = () => {
+  const { user, isLoading: isAuthLoading } = useUser();
   const [activeTab, setActiveTab] = useState("monitor");
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-16">
+          <AuthPrompt
+            feature="Enterprise Risk Platform"
+            description="Monitor and assess procurement risks across your supply chain"
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <EnterpriseLayout>

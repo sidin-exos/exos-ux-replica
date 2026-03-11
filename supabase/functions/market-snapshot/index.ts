@@ -11,11 +11,7 @@ import {
 } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 const VALID_REGIONS = [
   "Germany", "France", "UK", "Netherlands", "Spain", "Italy", "Poland",

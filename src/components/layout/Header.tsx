@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
+import { useUser } from "@/hooks/useUser";
 import exosLogoFallback from "@/assets/logo-concept-layers.png";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -81,20 +81,11 @@ const NAV_GROUPS = [
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const exosLogo = useThemedLogo();
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
+  // Close mobile menu on navigation
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname, location.search, location.hash]);

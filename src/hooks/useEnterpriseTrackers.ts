@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/useUser";
+import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
 
 export type TrackerType = "risk" | "inflation";
 export type TrackerStatus = "setup" | "active" | "paused";
@@ -24,6 +26,7 @@ interface CreateTrackerInput {
 }
 
 export function useEnterpriseTrackers(trackerType: TrackerType) {
+  const { user } = useUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -32,8 +35,8 @@ export function useEnterpriseTrackers(trackerType: TrackerType) {
   const { data: trackers = [], isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("enterprise_trackers")
@@ -44,6 +47,7 @@ export function useEnterpriseTrackers(trackerType: TrackerType) {
       if (error) throw error;
       return (data ?? []) as unknown as EnterpriseTracker[];
     },
+    enabled: !!user,
   });
 
   const createTracker = useMutation({
@@ -88,6 +92,10 @@ export function useEnterpriseTrackers(trackerType: TrackerType) {
       });
     },
     onError: (err: Error) => {
+      if (isAuthError(err)) {
+        showAuthErrorToast();
+        return;
+      }
       toast({
         title: "Failed to create tracker",
         description: err.message,
