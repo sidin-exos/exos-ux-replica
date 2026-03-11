@@ -1,100 +1,45 @@
 
 
-## Enterprise Platforms — Phase 1 Implementation Plan
+# Loading Skeletons & Empty States
 
-### Overview
+## Components to Update
 
-Build the UI scaffolding, routing, database tables, storage bucket, and Supabase integration for persistent Risk Assessment and Inflation Analysis trackers. No AI processing or Edge Functions in this sprint.
+### 1. TrackerList.tsx — Upgrade loading skeletons + rich empty state
+- **Loading**: Replace `animate-pulse` divs with proper `Skeleton` components matching card shape (title line, badge, date line, button)
+- **Empty**: Add centered empty state with `FolderPlus` icon, descriptive text, no CTA needed (already directs to setup tab)
 
-### 1. Database Migration
+### 2. RecentQueries.tsx — Skeleton list + rich empty state  
+- **Loading**: Replace `Loader2` spinner with 3 skeleton rows matching the query item shape (icon + text line + badge row)
+- **Empty** (after load): Add `Search` icon, descriptive text, keep existing message
 
-Create `enterprise_trackers` table and `tracker-files` storage bucket in a single migration:
+### 3. MarketInsightsAdmin.tsx — Skeleton table rows + rich empty state
+- **Loading**: Replace `Loader2` spinner with 5 skeleton table rows matching the 5-column layout
+- **Empty**: Add `Database` icon, descriptive text, keep existing CTA message
 
-```sql
-CREATE TABLE public.enterprise_trackers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  tracker_type text NOT NULL,
-  name text NOT NULL,
-  status text NOT NULL DEFAULT 'setup',
-  parameters jsonb NOT NULL DEFAULT '{}',
-  file_references jsonb NOT NULL DEFAULT '[]',
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+### 4. TestStatsCards.tsx — Already good (uses `Skeleton`), no changes needed
 
-ALTER TABLE public.enterprise_trackers ENABLE ROW LEVEL SECURITY;
+## Skeleton Patterns
 
--- User CRUD on own trackers
-CREATE POLICY "Users can select own trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own trackers" ON public.enterprise_trackers
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own trackers" ON public.enterprise_trackers
-  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own trackers" ON public.enterprise_trackers
-  FOR DELETE TO authenticated USING (auth.uid() = user_id);
--- Admin read-all
-CREATE POLICY "Admins can read all trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+Each skeleton mimics the real content shape:
+- **Card skeleton**: `Skeleton` for title (h-5 w-32), badge (h-5 w-16), date (h-4 w-24), button (h-8 w-16)
+- **Query row skeleton**: rounded-lg border container with `Skeleton` lines for icon+text and badges
+- **Table row skeleton**: `Skeleton` cells matching column widths
 
--- Storage bucket
-INSERT INTO storage.buckets (id, name, public) VALUES ('tracker-files', 'tracker-files', false);
+## Empty State Pattern (reusable structure)
 
--- Storage RLS: users can upload/read/delete own files (path starts with user_id)
-CREATE POLICY "Users can upload own tracker files" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can read own tracker files" ON storage.objects
-  FOR SELECT TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can delete own tracker files" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+```tsx
+<div className="flex flex-col items-center justify-center py-16 text-center">
+  <Icon className="w-12 h-12 text-muted-foreground/40 mb-4" />
+  <h3 className="text-lg font-semibold text-foreground mb-1">Title</h3>
+  <p className="text-sm text-muted-foreground max-w-sm mb-4">Description</p>
+  <Button variant="outline" onClick={...}>CTA</Button> {/* where appropriate */}
+</div>
 ```
 
-### 2. New Files to Create
+## Files Changed
+- `src/components/enterprise/TrackerList.tsx`
+- `src/components/intelligence/RecentQueries.tsx`  
+- `src/components/insights/MarketInsightsAdmin.tsx`
 
-| File | Purpose |
-|------|---------|
-| `src/pages/enterprise/RiskPlatform.tsx` | Risk Assessment platform page with Tabs (Monitor / Setup / Reports) |
-| `src/pages/enterprise/InflationPlatform.tsx` | Inflation Analysis platform page, same structure |
-| `src/components/enterprise/TrackerSetupWizard.tsx` | 3-step wizard: Parameters → Files & Context (with GDPR checkbox) → Review & Activate |
-| `src/components/enterprise/TrackerList.tsx` | Grid of Card components showing active trackers with status badges |
-| `src/components/enterprise/FileUploadZone.tsx` | Drag-and-drop file upload area for Step 2 |
-| `src/hooks/useEnterpriseTrackers.ts` | Hook for CRUD operations on `enterprise_trackers` table + file upload to `tracker-files` bucket |
-
-### 3. Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add routes `/enterprise/risk` and `/enterprise/inflation` |
-| `src/components/layout/Header.tsx` | Add "Enterprise" dropdown with Risk Assessment and Inflation Analysis links (same split-button pattern as existing nav items) |
-| `src/components/layout/MobileBottomNav.tsx` | Not modified — 5 items is already tight. Enterprise is accessed via Header hamburger menu mobile sheet instead. |
-
-### 4. Component Design Details
-
-**Platform Pages** (Risk & Inflation share identical layout, differ by `trackerType` prop and icon):
-- Header with icon (`ShieldAlert` for Risk, `TrendingUp` for Inflation), title, description
-- Shadcn `<Tabs>` with 3 tabs: Monitor (default), Setup New Tracker, Reports
-- Monitor tab renders `<TrackerList>`; Setup tab renders `<TrackerSetupWizard>`; Reports tab shows placeholder
-
-**TrackerSetupWizard** (3 steps):
-- Step 1 — Parameters: name field, category/goods/services inputs (varies by tracker type), risk appetite or inflation baseline
-- Step 2 — Files & Context: `<FileUploadZone>` (drag-drop + click), optional context textarea, **mandatory GDPR checkbox** before proceeding
-- Step 3 — Review & Activate: summary card, "Activate" button that uploads files to storage, inserts tracker row, shows toast, switches to Monitor tab
-
-**TrackerList**: queries `enterprise_trackers` filtered by `tracker_type` and `user_id`, renders a responsive grid of Cards with name, status Badge, created_at formatted date, and a "View" button (placeholder for Phase 2 detail view).
-
-**useEnterpriseTrackers hook**:
-- `trackers` state via `useQuery` from `@tanstack/react-query`
-- `createTracker(data)` — uploads files to `tracker-files/${user_id}/${uuid}-${filename}`, then inserts row
-- Uses `supabase` client from `@/integrations/supabase/client`
-
-### 5. Mobile Navigation
-
-The existing mobile Sheet menu in `Header.tsx` will get the Enterprise links added below the existing nav items (before the separator). No changes to `MobileBottomNav.tsx` to avoid overcrowding.
-
-### 6. Security Notes
-
-- All tracker data user-scoped via RLS (`auth.uid() = user_id`)
-- Storage paths enforce user isolation via `(storage.foldername(name))[1] = auth.uid()::text`
-- GDPR checkbox required before file upload proceeds
-- No PII stored in parameters — UI guidance enforced
+No data-fetching logic modified. No routing changes.
 
