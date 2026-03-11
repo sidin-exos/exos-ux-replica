@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { pdf } from "@react-pdf/renderer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Loader2, Eye, EyeOff, AlertTriangle, FileText, Sun, Moon } from "lucide-react";
+import { toast } from "sonner";
 import type { PdfThemeMode } from "./dashboardVisuals/theme";
 import { Button } from "@/components/ui/button";
 import {
