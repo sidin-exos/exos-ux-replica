@@ -204,9 +204,10 @@ function buildDocStyles(c: DocColors) {
     },
     sectionTitle: {
       fontSize: 16,
-      fontFamily: "Helvetica",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 600,
       color: c.text,
+      letterSpacing: 0.5,
     },
     sectionContent: {
       backgroundColor: c.surface,
