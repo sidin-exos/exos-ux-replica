@@ -307,6 +307,14 @@ function buildDocStyles(c: DocColors) {
       borderColor: c.border,
       marginBottom: 15,
     },
+    sectionBlockCostDrivers: {
+      backgroundColor: c.surfaceLight,
+      borderRadius: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      marginBottom: 15,
+    },
     sectionBlockHeader: {
       fontSize: 14,
       fontFamily: "Helvetica",
