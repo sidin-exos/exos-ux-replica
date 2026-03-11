@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import {
   parseBody,
   requireString,
@@ -47,6 +48,14 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: authResult.error.message }),
       { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Rate limit: 15 requests/hour per user (calls Perplexity + Google AI)
+  const rateCheck = await checkRateLimit(authResult.user.userId, "market-snapshot", 15, 60, { failClosed: true });
+  if (!rateCheck.allowed) {
+    return rateLimitResponse(rateCheck, corsHeaders,
+      "Market snapshot rate limit reached. Please wait before requesting another snapshot."
     );
   }
 
