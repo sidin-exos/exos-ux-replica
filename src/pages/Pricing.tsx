@@ -235,6 +235,52 @@ const Pricing = () => {
           })}
         </div>
 
+        {/* Feature Comparison Table */}
+        <section className="mt-20 max-w-5xl mx-auto animate-fade-up" style={{ animationDelay: "250ms" }}>
+          <h2 className="font-display text-2xl md:text-3xl font-bold mb-8 text-center">
+            Compare Plan <span className="text-gradient">Features</span>
+          </h2>
+          <div className="card-elevated border border-border/50 rounded-xl overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[200px]">Feature</TableHead>
+                  <TableHead className="text-center">SMB</TableHead>
+                  <TableHead className="text-center font-semibold text-primary">Professional</TableHead>
+                  <TableHead className="text-center">Enterprise</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[
+                  { feature: "Available Scenarios", smb: "5 / month", pro: "Unlimited", enterprise: "Unlimited + Custom" },
+                  { feature: "Excel / Jira Export", smb: false, pro: true, enterprise: true },
+                  { feature: "Perplexity Real-Time AI", smb: false, pro: true, enterprise: true },
+                  { feature: "Dedicated Account Manager", smb: false, pro: false, enterprise: true },
+                  { feature: "Custom GDPR Guardrails", smb: false, pro: false, enterprise: true },
+                ].map((row) => (
+                  <TableRow key={row.feature}>
+                    <TableCell className="font-medium text-foreground">{row.feature}</TableCell>
+                    {(["smb", "pro", "enterprise"] as const).map((tier) => {
+                      const val = row[tier];
+                      return (
+                        <TableCell key={tier} className="text-center">
+                          {typeof val === "string" ? (
+                            <span className="text-sm text-foreground">{val}</span>
+                          ) : val ? (
+                            <Check className="w-5 h-5 text-green-500 mx-auto" />
+                          ) : (
+                            <Minus className="w-5 h-5 text-muted-foreground mx-auto" />
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+
         {/* FAQ Section */}
         <section id="faq" className="mt-20 max-w-3xl mx-auto animate-fade-up" style={{ animationDelay: "300ms" }}>
           <div className="text-center mb-10">
