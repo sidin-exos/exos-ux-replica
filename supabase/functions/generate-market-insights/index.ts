@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
 import { parseBody, requireString, requireArray, optionalBoolean, validationErrorResponse, ValidationError, filterPromptInjection } from "../_shared/validate.ts";
 
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 interface IndustryCategory {
@@ -269,6 +270,12 @@ serve(async (req) => {
       JSON.stringify({ error: "Admin access required" }),
       { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+  }
+
+  // Rate limit: 10 requests/hour per admin user
+  const rateCheck = await checkRateLimit(authResult.user.userId, "generate-market-insights", 10, 60, { failClosed: true });
+  if (!rateCheck.allowed) {
+    return rateLimitResponse(rateCheck, corsHeaders);
   }
 
   try {
