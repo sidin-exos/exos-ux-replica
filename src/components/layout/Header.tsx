@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Settings, LogIn, User, ChevronDown, CreditCard, LogOut, HelpCircle, FileText, Database, Menu, ShieldAlert, TrendingUp } from "lucide-react";
+import { Settings, LogIn, User, CreditCard, LogOut, HelpCircle, FileText, Database, Menu, ShieldAlert, TrendingUp, BarChart3, Sparkles, BookOpen, DollarSign, Zap, ClipboardList, AlertTriangle, FileCheck } from "lucide-react";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
+import { useUser } from "@/hooks/useUser";
 import exosLogoFallback from "@/assets/logo-concept-layers.png";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -22,27 +22,68 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { getCategoryLabel, type Scenario } from "@/lib/scenarios";
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
+} from "@/components/ui/navigation-menu";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+
+// -- Navigation data ----------------------------------------------------------
+
+const NAV_GROUPS = [
+  {
+    label: "Scenarios",
+    items: [
+      { label: "Analysis", path: "/#category-analysis", icon: BarChart3 },
+      { label: "Planning", path: "/#category-planning", icon: ClipboardList },
+      { label: "Risk", path: "/#category-risk", icon: AlertTriangle },
+      { label: "Documentation", path: "/#category-documentation", icon: FileCheck },
+    ],
+  },
+  {
+    label: "Market Intelligence",
+    items: [
+      { label: "Generate a Report", path: "/market-intelligence" },
+      { label: "Scheduled Reports & Triggers", path: "/market-intelligence?tab=queries&mode=regular" },
+      { label: "Knowledge Base", path: "/market-intelligence?tab=insights", icon: Database },
+    ],
+  },
+  {
+    label: "Enterprise",
+    items: [
+      { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert },
+      { label: "Inflation Analysis Platform", path: "/enterprise/inflation", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Resources",
+    items: [
+      { label: "Dashboards & Analytics", path: "/reports", icon: BarChart3 },
+      { label: "Technology & AI", path: "/features#orchestration", icon: Sparkles },
+      { label: "Customer Success", path: "/features#success", icon: BookOpen },
+      { label: "Pricing", path: "/pricing", icon: DollarSign },
+      { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
+    ],
+  },
+] as const;
+
+// -- Component ----------------------------------------------------------------
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const exosLogo = useThemedLogo();
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Close mobile menu on navigation
   useEffect(() => {
@@ -57,164 +98,47 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
+        {/* Logo */}
         <NavLink to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <div className="flex items-center justify-center w-16 h-16 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md shadow-primary/10">
-            <img src={exosLogo} alt="EXOS Logo" className="w-28 h-28 object-contain scale-[1.8]" />
+          <div className="flex items-center justify-center h-14 w-14 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md shadow-primary/10">
+            <img src={exosLogo} alt="EXOS Logo" className="w-full h-full object-contain" />
           </div>
           <div>
-            <h1 className="font-display text-lg font-semibold text-foreground">
-              EXOS
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Your procurement exoskeleton
-            </p>
+            <h1 className="font-display text-lg font-semibold text-foreground">EXOS</h1>
+            <p className="text-xs text-muted-foreground">Your procurement exoskeleton</p>
           </div>
         </NavLink>
-        
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <div className="relative flex items-center gap-0.5">
-            <button
-              onClick={() => navigate("/")}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
-            >
-              Scenarios & Simulations
-            </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-muted-foreground hover:text-primary transition-colors outline-none p-0.5">
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {(["analysis", "planning", "risk", "documentation"] as Scenario["category"][]).map((cat) => (
-                  <DropdownMenuItem
-                    key={cat}
-                    className="cursor-pointer"
-                    onClick={() => navigate(`/#category-${cat}`)}
-                  >
-                    {getCategoryLabel(cat)}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="relative flex items-center gap-0.5">
-            <button
-              onClick={() => navigate("/market-intelligence")}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
-            >
-              Market Intelligence
-            </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-muted-foreground hover:text-primary transition-colors outline-none p-0.5">
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => navigate("/market-intelligence")}
-                >
-                  Generate a report
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => navigate("/market-intelligence?tab=queries&mode=regular")}
-                >
-                  Set-up scheduled report or scenario trigger
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => navigate("/market-intelligence?tab=insights")}
-                >
-                  Manage my knowledge base
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="relative flex items-center gap-0.5">
-            <button
-              onClick={() => navigate("/features")}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
-            >
-              Technology & Customer Success
-            </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-muted-foreground hover:text-primary transition-colors outline-none p-0.5">
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => navigate("/features#orchestration")}
-                >
-                  Fine-Tuned AI Agentic Orchestration
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => navigate("/features#dataflow")}
-                >
-                  Privacy-First Data Flow
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => navigate("/features#success")}
-                >
-                  Customer Success Stories
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="relative flex items-center gap-0.5">
-            <button
-              onClick={() => navigate("/enterprise/risk")}
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors outline-none"
-            >
-              Enterprise
-            </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-muted-foreground hover:text-primary transition-colors outline-none p-0.5">
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onClick={() => navigate("/enterprise/risk")}
-                >
-                  <ShieldAlert className="w-4 h-4" />
-                  Risk Assessment Platform
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onClick={() => navigate("/enterprise/inflation")}
-                >
-                  <TrendingUp className="w-4 h-4" />
-                  Inflation Analysis Platform
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <NavLink 
-            to="/reports" 
-            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            activeClassName="text-foreground"
-          >
-            Dashboards & Analytics
-          </NavLink>
-          <NavLink 
-            to="/pricing" 
-            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            activeClassName="text-foreground"
-          >
-            Pricing & FAQ
-          </NavLink>
-        </nav>
+
+        {/* Desktop Mega-Menu */}
+        <NavigationMenu className="hidden md:flex">
+          <NavigationMenuList>
+            {NAV_GROUPS.map((group) => (
+              <NavigationMenuItem key={group.label}>
+                <NavigationMenuTrigger className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
+                  {group.label}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <li key={item.path}>
+                          <button
+                            onClick={() => navigate(item.path)}
+                            className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+                          >
+                            {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
+                            {item.label}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
 
         <div className="flex items-center gap-1">
           <ThemeToggle />
@@ -232,50 +156,32 @@ const Header = () => {
                 <SheetTitle className="font-display text-lg">EXOS</SheetTitle>
               </SheetHeader>
 
-              <nav className="flex flex-col gap-1">
-                <button
-                  onClick={() => mobileNavigate("/")}
-                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
-                >
-                  Scenarios & Simulations
-                </button>
-                <button
-                  onClick={() => mobileNavigate("/market-intelligence")}
-                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
-                >
-                  Market Intelligence
-                </button>
-                <button
-                  onClick={() => mobileNavigate("/features")}
-                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
-                >
-                  Technology & Customer Success
-                </button>
-                <button
-                  onClick={() => mobileNavigate("/reports")}
-                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
-                >
-                  Dashboards & Analytics
-                </button>
-                <button
-                  onClick={() => mobileNavigate("/enterprise/risk")}
-                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
-                >
-                  Enterprise: Risk Assessment
-                </button>
-                <button
-                  onClick={() => mobileNavigate("/enterprise/inflation")}
-                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
-                >
-                  Enterprise: Inflation Analysis
-                </button>
-                <button
-                  onClick={() => mobileNavigate("/pricing")}
-                  className="text-sm font-medium text-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left"
-                >
-                  Pricing & FAQ
-                </button>
-              </nav>
+              <Accordion type="multiple" className="w-full">
+                {NAV_GROUPS.map((group) => (
+                  <AccordionItem key={group.label} value={group.label}>
+                    <AccordionTrigger className="text-sm font-medium text-foreground py-2.5 px-3 hover:no-underline hover:bg-muted rounded-md">
+                      {group.label}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1 pt-0">
+                      <div className="flex flex-col gap-0.5 pl-3">
+                        {group.items.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.path}
+                              onClick={() => mobileNavigate(item.path)}
+                              className="text-sm text-muted-foreground py-2 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                            >
+                              {Icon && <Icon className="w-4 h-4 text-primary" />}
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
 
               <Separator className="my-4" />
 
@@ -326,7 +232,7 @@ const Header = () => {
               )}
             </SheetContent>
           </Sheet>
-          
+
           {/* Desktop user menu */}
           {user ? (
             <DropdownMenu>
@@ -340,47 +246,23 @@ const Header = () => {
                   <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onClick={() => navigate("/account")}
-                >
-                  <User className="w-4 h-4" />
-                  My Account
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
+                  <User className="w-4 h-4" /> My Account
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onClick={() => navigate("/reports")}
-                >
-                  <FileText className="w-4 h-4" />
-                  My Reports
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/reports")}>
+                  <FileText className="w-4 h-4" /> My Reports
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onClick={() => navigate("/market-intelligence?tab=insights")}
-                >
-                  <Database className="w-4 h-4" />
-                  My Knowledge Database
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/market-intelligence?tab=insights")}>
+                  <Database className="w-4 h-4" /> My Knowledge Database
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onClick={() => navigate("/account")}
-                >
-                  <Settings className="w-4 h-4" />
-                  Settings
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
+                  <Settings className="w-4 h-4" /> Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onClick={() => navigate("/pricing")}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  Manage Subscription
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/pricing")}>
+                  <CreditCard className="w-4 h-4" /> Manage Subscription
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onClick={() => navigate("/pricing#faq")}
-                >
-                  <HelpCircle className="w-4 h-4" />
-                  Help & FAQ
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/pricing#faq")}>
+                  <HelpCircle className="w-4 h-4" /> Help & FAQ
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -390,8 +272,7 @@ const Header = () => {
                     navigate("/");
                   }}
                 >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
+                  <LogOut className="w-4 h-4" /> Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

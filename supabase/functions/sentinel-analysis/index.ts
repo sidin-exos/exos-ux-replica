@@ -2,14 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { parseBody, requireString, optionalBoolean, optionalStringOrNull, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { anonymizeText, deanonymizeText, type AnonymizationResultServer } from "../_shared/anonymizer.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 /**
  * EXOS Sentinel Analysis Edge Function
@@ -465,10 +462,27 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Soft auth: use token if available, allow anonymous access
+  // Hard auth: require authentication
   const authResult = await authenticateRequest(req);
-  const userId = "user" in authResult ? authResult.user.userId : null;
-  const userOrgId = userId ? await getUserOrgId(userId) : null;
+  if ("error" in authResult) {
+    return new Response(
+      JSON.stringify({ error: authResult.error.message }),
+      {
+        status: authResult.error.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+  const { userId } = authResult.user;
+  const userOrgId = await getUserOrgId(userId);
+
+  // Rate limit: 10 requests/hour per user (expensive multi-cycle endpoint)
+  const rateCheck = await checkRateLimit(userId, "sentinel-analysis", 30, 60, { failClosed: true });
+  if (!rateCheck.allowed) {
+    return rateLimitResponse(rateCheck, corsHeaders,
+      "Analysis rate limit reached. Please wait before submitting another analysis."
+    );
+  }
 
   // Declare tracer and parentRunId at function scope for error handler
   let tracer: LangSmithTracer | undefined;
@@ -482,7 +496,7 @@ serve(async (req) => {
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
     const rawGoogleModel = requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-3-flash-preview";
+      || "gemini-3.1-pro-preview";
     // Strip "google/" prefix if sent from legacy clients
     const googleModel = rawGoogleModel.replace(/^google\//, "");
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;

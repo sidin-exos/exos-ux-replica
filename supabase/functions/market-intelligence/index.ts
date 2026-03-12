@@ -4,10 +4,7 @@ import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import { parseBody, requireString, requireStringEnum, requireArray, validationErrorResponse, ValidationError, filterPromptInjection } from "../_shared/validate.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 type QueryType = 'supplier' | 'commodity' | 'industry' | 'regulatory' | 'm&a' | 'risk';
 type RecencyFilter = 'day' | 'week' | 'month' | 'year';

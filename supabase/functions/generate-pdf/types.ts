@@ -1,0 +1,224 @@
+/**
+ * Shared types for server-side PDF generation.
+ * Mirrors the frontend types from dashboard-data-parser.ts and dashboard-mappings.ts.
+ */
+
+// ── Dashboard type ──
+
+export type DashboardType =
+  | "action-checklist"
+  | "decision-matrix"
+  | "cost-waterfall"
+  | "timeline-roadmap"
+  | "kraljic-quadrant"
+  | "tco-comparison"
+  | "license-tier"
+  | "sensitivity-spider"
+  | "risk-matrix"
+  | "scenario-comparison"
+  | "supplier-scorecard"
+  | "sow-analysis"
+  | "negotiation-prep"
+  | "data-quality";
+
+export interface DashboardConfig {
+  id: DashboardType;
+  name: string;
+}
+
+export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
+  "action-checklist": { id: "action-checklist", name: "Action Checklist" },
+  "decision-matrix": { id: "decision-matrix", name: "Decision Matrix" },
+  "cost-waterfall": { id: "cost-waterfall", name: "Cost Breakdown" },
+  "timeline-roadmap": { id: "timeline-roadmap", name: "Timeline Roadmap" },
+  "kraljic-quadrant": { id: "kraljic-quadrant", name: "Kraljic Matrix" },
+  "tco-comparison": { id: "tco-comparison", name: "TCO Comparison" },
+  "license-tier": { id: "license-tier", name: "License Distribution" },
+  "sensitivity-spider": { id: "sensitivity-spider", name: "Sensitivity Analysis" },
+  "risk-matrix": { id: "risk-matrix", name: "Risk Matrix" },
+  "scenario-comparison": { id: "scenario-comparison", name: "Scenario Comparison" },
+  "supplier-scorecard": { id: "supplier-scorecard", name: "Supplier Scorecard" },
+  "sow-analysis": { id: "sow-analysis", name: "SOW Analysis" },
+  "negotiation-prep": { id: "negotiation-prep", name: "Negotiation Prep" },
+  "data-quality": { id: "data-quality", name: "Data Quality" },
+};
+
+// ── Per-dashboard data interfaces ──
+
+export interface ActionChecklistData {
+  actions: {
+    action: string;
+    priority: "critical" | "high" | "medium" | "low";
+    status: "done" | "in-progress" | "pending" | "blocked";
+    owner?: string;
+    dueDate?: string;
+  }[];
+}
+
+export interface DecisionMatrixData {
+  criteria: { name: string; weight: number }[];
+  options: { name: string; scores: number[] }[];
+}
+
+export interface CostWaterfallData {
+  components: { name: string; value: number; type: "cost" | "reduction" }[];
+  currency?: string;
+}
+
+export interface TimelineRoadmapData {
+  phases: {
+    name: string;
+    startWeek: number;
+    endWeek: number;
+    status: "completed" | "in-progress" | "upcoming";
+    milestones?: string[];
+  }[];
+  totalWeeks?: number;
+}
+
+export interface KraljicData {
+  items: {
+    id: string;
+    name: string;
+    supplyRisk: number;
+    businessImpact: number;
+    spend?: string;
+  }[];
+}
+
+export interface TCOComparisonData {
+  data: { year: string; [key: string]: number | string }[];
+  options: { id: string; name: string; color: string; totalTCO: number }[];
+  currency?: string;
+}
+
+export interface LicenseTierData {
+  tiers: {
+    name: string;
+    users: number;
+    costPerUser: number;
+    totalCost: number;
+    color: string;
+    recommended?: number;
+  }[];
+  currency?: string;
+}
+
+export interface SensitivityData {
+  variables: {
+    name: string;
+    baseCase: number;
+    lowCase: number;
+    highCase: number;
+    unit?: string;
+  }[];
+  baseCaseTotal?: number;
+  currency?: string;
+}
+
+export interface RiskMatrixData {
+  risks: {
+    supplier: string;
+    impact: "high" | "medium" | "low";
+    probability: "high" | "medium" | "low";
+    category: string;
+  }[];
+}
+
+export interface ScenarioComparisonData {
+  scenarios: { id: string; name: string; color: string }[];
+  radarData: { metric: string; [key: string]: number | string }[];
+  summary: { criteria: string; [key: string]: string }[];
+}
+
+export interface SupplierScorecardData {
+  suppliers: {
+    name: string;
+    score: number;
+    trend: "up" | "down" | "stable";
+    spend: string;
+  }[];
+}
+
+export interface SOWAnalysisData {
+  clarity: number;
+  sections: {
+    name: string;
+    status: "complete" | "partial" | "missing";
+    note: string;
+  }[];
+  recommendations?: string[];
+}
+
+export interface NegotiationPrepData {
+  batna: { strength: number; description: string };
+  leveragePoints: { point: string; tactic: string }[];
+  sequence: { step: string; detail: string }[];
+}
+
+export interface DataQualityData {
+  fields: {
+    field: string;
+    status: "complete" | "partial" | "missing";
+    coverage: number;
+  }[];
+  limitations?: { title: string; impact: string }[];
+}
+
+// ── Top-level union ──
+
+export interface DashboardData {
+  actionChecklist?: ActionChecklistData;
+  decisionMatrix?: DecisionMatrixData;
+  costWaterfall?: CostWaterfallData;
+  timelineRoadmap?: TimelineRoadmapData;
+  kraljicQuadrant?: KraljicData;
+  tcoComparison?: TCOComparisonData;
+  licenseTier?: LicenseTierData;
+  sensitivitySpider?: SensitivityData;
+  riskMatrix?: RiskMatrixData;
+  scenarioComparison?: ScenarioComparisonData;
+  supplierScorecard?: SupplierScorecardData;
+  sowAnalysis?: SOWAnalysisData;
+  negotiationPrep?: NegotiationPrepData;
+  dataQuality?: DataQualityData;
+}
+
+// ── Extraction utilities ──
+
+const DASHBOARD_DATA_REGEX = /<dashboard-data>([\s\S]*?)<\/dashboard-data>/;
+
+export function extractDashboardData(text: string): DashboardData | null {
+  if (!text) return null;
+  const match = text.match(DASHBOARD_DATA_REGEX);
+  if (!match?.[1]) return null;
+  try {
+    const raw = match[1].replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const parsed = JSON.parse(raw) as DashboardData;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function stripDashboardData(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(DASHBOARD_DATA_REGEX, "")
+    .replace(/```dashboard:\w+[\s\S]*?```/g, "") // strip ```dashboard:xxx...``` code blocks
+    .trim();
+}
+
+// ── Request payload ──
+
+export interface GeneratePdfPayload {
+  scenarioTitle: string;
+  analysisResult: string;
+  formData: Record<string, string>;
+  timestamp: string;
+  selectedDashboards?: DashboardType[];
+  pdfTheme?: "light" | "dark";
+}
+
+export type PdfThemeMode = "light" | "dark";

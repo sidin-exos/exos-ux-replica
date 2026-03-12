@@ -18,7 +18,8 @@ export async function checkRateLimit(
   userId: string,
   endpoint: string,
   maxRequests: number = 20,
-  windowMinutes: number = 60
+  windowMinutes: number = 60,
+  options?: { failClosed?: boolean }
 ): Promise<RateLimitResult> {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -36,8 +37,13 @@ export async function checkRateLimit(
     .gte("created_at", windowStart);
 
   if (countError) {
-    // Fail open for availability — if rate limit check fails, allow the request
     console.error("Rate limit check failed:", countError);
+    if (options?.failClosed) {
+      // Fail-closed: deny on DB error for high-value endpoints
+      console.warn(`Rate limit fail-closed triggered for endpoint: ${endpoint}`);
+      return { allowed: false, remaining: 0, resetAt: new Date(Date.now() + 60_000).toISOString() };
+    }
+    // Fail-open: allow on DB error for low-risk endpoints
     return { allowed: true, remaining: maxRequests, resetAt: "" };
   }
 

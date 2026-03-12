@@ -3,10 +3,7 @@ import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
 import { parseBody, requireString, requireStringEnum, optionalBoolean, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 /**
  * AI-Powered Test Data Generation with Drafter-Validator Pattern

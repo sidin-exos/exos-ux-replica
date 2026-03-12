@@ -2,17 +2,6 @@ import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
 import type { RiskMatrixData } from "@/lib/dashboard-data-parser";
 
-const colors = getPdfColors();
-
-const defaultRisks = [
-  { id: "R1", name: "Supply Chain Disruption", impact: 5, probability: 4, category: "Operations" },
-  { id: "R2", name: "Price Volatility", impact: 4, probability: 4, category: "Financial" },
-  { id: "R3", name: "Quality Non-Conformance", impact: 4, probability: 3, category: "Quality" },
-  { id: "R4", name: "Regulatory Compliance Gap", impact: 5, probability: 2, category: "Compliance" },
-  { id: "R5", name: "Single Supplier Dependency", impact: 4, probability: 3, category: "Strategic" },
-  { id: "R6", name: "Delivery Delays", impact: 3, probability: 4, category: "Operations" },
-];
-
 const levelToNum = (level: string): number => {
   if (level === "high") return 5;
   if (level === "medium") return 3;
@@ -21,14 +10,14 @@ const levelToNum = (level: string): number => {
 
 const getRiskScore = (impact: number, probability: number): number => impact * probability;
 
-const getRiskSeverity = (score: number, c: typeof colors) => {
+const getRiskSeverity = (score: number, c: ReturnType<typeof getPdfColors>) => {
   if (score >= 16) return { label: "Critical", color: c.badgeText, bgColor: c.destructive };
   if (score >= 10) return { label: "High", color: c.badgeText, bgColor: c.warning };
   if (score >= 6) return { label: "Medium", color: c.text, bgColor: c.surfaceLight };
   return { label: "Low", color: c.text, bgColor: c.surfaceLight };
 };
 
-function buildTableStyles(c: typeof colors) {
+function buildTableStyles(c: ReturnType<typeof getPdfColors>) {
   return {
     tableContainer: { marginTop: 8, borderWidth: 1, borderColor: c.border, borderRadius: 4, overflow: "hidden" as const },
     headerRow: { flexDirection: "row" as const, backgroundColor: c.surfaceLight, borderBottomWidth: 1, borderBottomColor: c.border, paddingVertical: 6, paddingHorizontal: 8 },
@@ -44,20 +33,18 @@ function buildTableStyles(c: typeof colors) {
   };
 }
 
-export const PDFRiskMatrix = ({ data, themeMode }: { data?: RiskMatrixData; themeMode?: PdfThemeMode }) => {
+export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const tableStyles = buildTableStyles(colors);
 
-  const risks = data?.risks
-    ? data.risks.map((r, idx) => ({
-        id: `R${idx + 1}`,
-        name: r.supplier,
-        impact: levelToNum(r.impact),
-        probability: levelToNum(r.probability),
-        category: r.category || "Operations",
-      }))
-    : defaultRisks;
+  const risks = data.risks.map((r, idx) => ({
+    id: `R${idx + 1}`,
+    name: r.supplier,
+    impact: levelToNum(r.impact),
+    probability: levelToNum(r.probability),
+    category: r.category || "Operations",
+  }));
 
   const sortedRisks = [...risks].sort((a, b) => getRiskScore(b.impact, b.probability) - getRiskScore(a.impact, a.probability));
   const criticalCount = sortedRisks.filter(r => getRiskScore(r.impact, r.probability) >= 16).length;

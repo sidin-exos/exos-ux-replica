@@ -375,6 +375,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_super_admin: boolean
           organization_id: string | null
           role: Database["public"]["Enums"]["org_role"]
           updated_at: string
@@ -383,6 +384,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          is_super_admin?: boolean
           organization_id?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           updated_at?: string
@@ -391,6 +393,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_super_admin?: boolean
           organization_id?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           updated_at?: string
@@ -404,6 +407,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       saved_intel_configs: {
         Row: {
@@ -493,6 +517,51 @@ export type Database = {
           scenario_id?: string
         }
         Relationships: []
+      }
+      scenario_file_attachments: {
+        Row: {
+          attached_at: string
+          file_id: string
+          id: string
+          organization_id: string
+          scenario_run_id: string
+          scenario_type: string
+          user_id: string
+        }
+        Insert: {
+          attached_at?: string
+          file_id: string
+          id?: string
+          organization_id: string
+          scenario_run_id: string
+          scenario_type: string
+          user_id: string
+        }
+        Update: {
+          attached_at?: string
+          file_id?: string
+          id?: string
+          organization_id?: string
+          scenario_run_id?: string
+          scenario_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_file_attachments_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "user_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenario_file_attachments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shared_reports: {
         Row: {
@@ -648,23 +717,49 @@ export type Database = {
           },
         ]
       }
-      user_roles: {
+      user_files: {
         Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
           id: string
-          role: Database["public"]["Enums"]["app_role"]
+          mime_type: string
+          organization_id: string
+          storage_path: string
           user_id: string
         }
         Insert: {
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
+          mime_type: string
+          organization_id: string
+          storage_path: string
           user_id: string
         }
         Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          mime_type?: string
+          organization_id?: string
+          storage_path?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_files_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       validation_rules: {
         Row: {
@@ -715,6 +810,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_rate_limits: { Args: never; Returns: undefined }
       create_shared_report: {
         Args: { p_expires_at: string; p_payload: Json }
         Returns: string
@@ -734,14 +830,8 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["org_role"]
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
       is_org_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       save_intel_to_knowledge_base: {
         Args: {
           p_category_name?: string
@@ -761,7 +851,6 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
       org_role: "admin" | "manager" | "user"
     }
     CompositeTypes: {
@@ -890,7 +979,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
       org_role: ["admin", "manager", "user"],
     },
   },

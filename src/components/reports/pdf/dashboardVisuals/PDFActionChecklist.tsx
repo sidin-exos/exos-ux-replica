@@ -1,28 +1,17 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { ActionChecklistData } from "@/lib/dashboard-data-parser";
 
-const defaultTasks = [
-  { task: "Confirm scope & stakeholders", status: "Done", priority: "High", owner: "Procurement Lead", color: colors.success },
-  { task: "Collect supplier quotes", status: "In Progress", priority: "High", owner: "Category Manager", color: colors.warning },
-  { task: "Validate demand forecast", status: "In Progress", priority: "Medium", owner: "Operations", color: colors.warning },
-  { task: "Model savings scenarios", status: "To Do", priority: "Medium", owner: "Analyst", color: colors.textMuted },
-  { task: "Align legal terms", status: "To Do", priority: "Low", owner: "Legal", color: colors.textMuted },
-  { task: "Finalize award recommendation", status: "To Do", priority: "High", owner: "Procurement Lead", color: colors.textMuted },
-];
-
-export const PDFActionChecklist = ({ data, themeMode }: { data?: ActionChecklistData; themeMode?: PdfThemeMode }) => {
+export const PDFActionChecklist = ({ data, themeMode }: { data: ActionChecklistData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const tasks = data?.actions?.map(a => ({
+  const tasks = data.actions.map(a => ({
     task: a.action,
     status: a.status === "done" ? "Done" : a.status === "in-progress" ? "In Progress" : a.status === "blocked" ? "Blocked" : "To Do",
     priority: a.priority.charAt(0).toUpperCase() + a.priority.slice(1),
     owner: a.owner || "Unassigned",
     color: a.status === "done" ? colors.success : a.status === "in-progress" ? colors.warning : colors.textMuted,
-  })) || defaultTasks;
+  }));
 
   const stats = {
     done: tasks.filter(t => t.status === "Done").length,

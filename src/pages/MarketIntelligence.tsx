@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useUser } from "@/hooks/useUser";
+import AuthPrompt from "@/components/auth/AuthPrompt";
 import Header from "@/components/layout/Header";
 import { QueryBuilder } from "@/components/intelligence/QueryBuilder";
 import { IntelResults } from "@/components/intelligence/IntelResults";
@@ -30,6 +32,8 @@ const MarketIntelligence = () => {
     }
   }, [modeParam]);
   
+  const { user, isLoading: isAuthLoading } = useUser();
+
   const {
     query,
     isLoading,
@@ -40,6 +44,28 @@ const MarketIntelligence = () => {
     loadRecentQueries,
     clearResult,
   } = useMarketIntelligence();
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-16">
+          <AuthPrompt
+            feature="Market Intelligence"
+            description="Search real-time market data, supplier news, and industry trends powered by AI"
+          />
+        </main>
+      </div>
+    );
+  }
 
   const renderScenarioContent = () => {
     if (selectedScenario === "triggered") {

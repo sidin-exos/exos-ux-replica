@@ -1,7 +1,21 @@
-import { useState, useEffect } from "react";
-import { pdf } from "@react-pdf/renderer";
+import { useState, useEffect, useCallback } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Loader2, Eye, EyeOff, AlertTriangle, FileText, Sun, Moon } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  AlertTriangle,
+  FileText,
+  Sun,
+  Moon,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  ExternalLink,
+} from "lucide-react";
+import { toast } from "sonner";
 import type { PdfThemeMode } from "./dashboardVisuals/theme";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +24,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import PDFReportDocument from "./PDFReportDocument";
+import { supabase } from "@/integrations/supabase/client";
 import { DashboardType } from "@/lib/dashboard-mappings";
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
 
 interface PDFPreviewModalProps {
   open: boolean;
@@ -32,66 +52,69 @@ const PDFPreviewModal = ({
   timestamp,
   selectedDashboards = [],
 }: PDFPreviewModalProps) => {
-  const [showPreview, setShowPreview] = useState(true);
+  // Raw PDF bytes for canvas preview (avoids CSP connect-src restrictions on blob URLs)
+  const [pdfData, setPdfData] = useState<{ data: Uint8Array } | null>(null);
+  // Blob URL only for download / open-in-tab
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const [pdfTheme, setPdfTheme] = useState<PdfThemeMode>("dark");
 
+  // PDF viewer state
+  const [numPages, setNumPages] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [scale, setScale] = useState(1.0);
+
   const fileName = `EXOS_${scenarioTitle.replace(/\s+/g, "_")}_${new Date(timestamp).toISOString().split("T")[0]}.pdf`;
 
-  // Generate (or re-generate) the PDF blob whenever the modal opens or inputs change.
-  // This fixes cases where dashboards load asynchronously (shared reports) and the
-  // previously generated blob was missing visuals.
   useEffect(() => {
     if (!open) {
-      if (pdfBlobUrl) {
-        URL.revokeObjectURL(pdfBlobUrl);
-      }
+      if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
       setPdfBlobUrl(null);
+      setPdfData(null);
       setPreviewError(false);
+      setNumPages(0);
+      setCurrentPage(1);
+      setScale(1.0);
       return;
     }
 
-    // Revoke any prior blob before regenerating
     if (pdfBlobUrl) {
       URL.revokeObjectURL(pdfBlobUrl);
       setPdfBlobUrl(null);
     }
+    setPdfData(null);
 
-    generatePdfBlob();
+    generatePdf();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    open,
-    scenarioTitle,
-    analysisResult,
-    timestamp,
-    selectedDashboards,
-    formData,
-    pdfTheme,
-  ]);
+  }, [open, scenarioTitle, analysisResult, timestamp, selectedDashboards, formData, pdfTheme]);
 
-  const generatePdfBlob = async () => {
+  const generatePdf = async () => {
     setIsGenerating(true);
     setPreviewError(false);
-    
+    setNumPages(0);
+    setCurrentPage(1);
+
     try {
-      const doc = (
-        <PDFReportDocument
-          scenarioTitle={scenarioTitle}
-          analysisResult={analysisResult}
-          formData={formData}
-          timestamp={timestamp}
-          selectedDashboards={selectedDashboards}
-          pdfTheme={pdfTheme}
-        />
-      );
-      
-      const blob = await pdf(doc).toBlob();
-      const url = URL.createObjectURL(blob);
-      setPdfBlobUrl(url);
-    } catch (error) {
-      console.error("Failed to generate PDF preview:", error);
+      const { data, error } = await supabase.functions.invoke("generate-pdf", {
+        body: { scenarioTitle, analysisResult, formData, timestamp, selectedDashboards, pdfTheme },
+      });
+
+      if (error) throw error;
+
+      // Convert response to ArrayBuffer → Uint8Array
+      const blob = data instanceof Blob ? data : new Blob([data], { type: "application/pdf" });
+      const arrayBuffer = await blob.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+
+      // Pass raw bytes to PDF.js (no network fetch needed — bypasses connect-src CSP)
+      setPdfData({ data: bytes });
+      // Keep a blob URL for download / open-in-tab only
+      setPdfBlobUrl(URL.createObjectURL(blob));
+    } catch (error: any) {
+      console.error("Failed to generate PDF:", error);
+      const msg = error?.message || "Unknown error";
+      toast.error(`PDF generation failed: ${msg}`);
       setPreviewError(true);
     } finally {
       setIsGenerating(false);
@@ -110,10 +133,18 @@ const PDFPreviewModal = ({
   };
 
   const handleOpenInNewTab = () => {
-    if (pdfBlobUrl) {
-      window.open(pdfBlobUrl, "_blank");
-    }
+    if (pdfBlobUrl) window.open(pdfBlobUrl, "_blank");
   };
+
+  const onDocumentLoadSuccess = useCallback(({ numPages: n }: { numPages: number }) => {
+    setNumPages(n);
+    setCurrentPage(1);
+  }, []);
+
+  const goToPrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
+  const goToNextPage = () => setCurrentPage((p) => Math.min(numPages, p + 1));
+  const zoomIn = () => setScale((s) => Math.min(2.0, s + 0.2));
+  const zoomOut = () => setScale((s) => Math.max(0.4, s - 0.2));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,36 +186,18 @@ const PDFPreviewModal = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowPreview(!showPreview)}
-                className="gap-2"
-              >
-                {showPreview ? (
-                  <>
-                    <EyeOff className="w-4 h-4" />
-                    Hide Preview
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Show Preview
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={handleOpenInNewTab}
-                disabled={!pdfBlobUrl || isGenerating}
+                disabled={!pdfData || isGenerating}
                 className="gap-2"
               >
-                <FileText className="w-4 h-4" />
+                <ExternalLink className="w-4 h-4" />
                 Open in Tab
               </Button>
               <Button
                 variant="hero"
                 size="sm"
                 onClick={handleDownload}
-                disabled={!pdfBlobUrl || isGenerating}
+                disabled={!pdfData || isGenerating}
                 className="gap-2"
               >
                 {isGenerating ? (
@@ -204,7 +217,7 @@ const PDFPreviewModal = ({
         </DialogHeader>
 
         {/* Preview Area */}
-        <div className="flex-1 overflow-hidden bg-secondary/30">
+        <div className="flex-1 overflow-hidden bg-secondary/30 relative">
           <AnimatePresence mode="wait">
             {isGenerating ? (
               <motion.div
@@ -216,7 +229,8 @@ const PDFPreviewModal = ({
               >
                 <div className="text-center p-8">
                   <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-                  <p className="text-muted-foreground">Generating PDF preview...</p>
+                  <p className="text-muted-foreground">Generating PDF report...</p>
+                  <p className="text-xs text-muted-foreground mt-1">This may take a few seconds</p>
                 </div>
               </motion.div>
             ) : previewError ? (
@@ -232,71 +246,84 @@ const PDFPreviewModal = ({
                     <AlertTriangle className="w-8 h-8 text-destructive" />
                   </div>
                   <h3 className="font-display text-lg font-semibold mb-2">
-                    Preview Unavailable
+                    Generation Failed
                   </h3>
                   <p className="text-muted-foreground text-sm mb-4">
-                    Unable to generate preview. You can still download the PDF directly.
+                    Something went wrong while generating the PDF. Please try again.
                   </p>
-                  <Button variant="outline" size="sm" onClick={generatePdfBlob}>
+                  <Button variant="outline" size="sm" onClick={generatePdf}>
                     Retry
                   </Button>
                 </div>
               </motion.div>
-            ) : showPreview && pdfBlobUrl ? (
+            ) : pdfData ? (
               <motion.div
                 key="preview"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="w-full h-full"
+                className="w-full h-full flex flex-col"
               >
-                <object
-                  data={pdfBlobUrl}
-                  type="application/pdf"
-                  width="100%"
-                  height="100%"
-                  className="border-0"
-                >
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center p-8 max-w-md">
-                      <div className="w-16 h-16 rounded-2xl bg-muted mx-auto mb-4 flex items-center justify-center">
-                        <FileText className="w-8 h-8 text-muted-foreground" />
+                {/* PDF canvas viewer — fed raw bytes, no network fetch needed */}
+                <div className="flex-1 overflow-auto flex justify-center py-4 bg-muted/30">
+                  <Document
+                    file={pdfData}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    loading={
+                      <div className="flex items-center justify-center h-full py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
                       </div>
-                      <h3 className="font-display text-lg font-semibold mb-2">
-                        Preview Blocked
-                      </h3>
-                      <p className="text-muted-foreground text-sm mb-4">
-                        Your browser blocked the inline preview. Click "Open in Tab" or download the PDF directly.
-                      </p>
+                    }
+                    error={
+                      <div className="flex items-center justify-center h-full py-20">
+                        <div className="text-center">
+                          <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-sm text-muted-foreground">Failed to load preview</p>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <Page
+                      pageNumber={currentPage}
+                      scale={scale}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={true}
+                    />
+                  </Document>
+                </div>
+
+                {/* Bottom toolbar: pagination + zoom */}
+                {numPages > 0 && (
+                  <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-background/80 backdrop-blur-sm">
+                    {/* Pagination */}
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPrevPage} disabled={currentPage <= 1}>
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm text-muted-foreground tabular-nums min-w-[80px] text-center">
+                        {currentPage} / {numPages}
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToNextPage} disabled={currentPage >= numPages}>
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    {/* Zoom */}
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomOut} disabled={scale <= 0.4}>
+                        <ZoomOut className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm text-muted-foreground tabular-nums min-w-[50px] text-center">
+                        {Math.round(scale * 100)}%
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomIn} disabled={scale >= 2.0}>
+                        <ZoomIn className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
-                </object>
+                )}
               </motion.div>
-            ) : (
-              <motion.div
-                key="info"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="flex items-center justify-center h-full"
-              >
-                <div className="text-center p-8 max-w-md">
-                  <div className="w-16 h-16 rounded-2xl gradient-primary mx-auto mb-4 flex items-center justify-center">
-                    <Download className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                  <h3 className="font-display text-lg font-semibold mb-2">
-                    Ready to Download
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Your PDF report has been generated with EXOS corporate branding. 
-                    Click the download button above to save it.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    File: {fileName}
-                  </p>
-                </div>
-              </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
         </div>
       </DialogContent>

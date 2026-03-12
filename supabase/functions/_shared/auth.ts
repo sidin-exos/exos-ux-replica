@@ -28,13 +28,17 @@ export async function authenticateRequest(
     return { error: { status: 401, message: "Missing authorization header" } };
   }
 
+  const token = authHeader.replace("Bearer ", "");
+
+  // Use getUser(token) for direct JWT validation — the header-based
+  // approach (global headers + getUser()) doesn't work reliably in
+  // Deno Edge Function runtime ("Auth session missing!" error).
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } }
+    Deno.env.get("SUPABASE_ANON_KEY")!
   );
 
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser(token);
 
   if (error || !user) {
     return { error: { status: 401, message: "Invalid or expired token" } };

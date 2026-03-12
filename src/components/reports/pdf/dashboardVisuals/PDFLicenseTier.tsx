@@ -1,25 +1,16 @@
 import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
-const colors = getPdfColors();
-const styles = getPdfStyles();
 import type { LicenseTierData } from "@/lib/dashboard-data-parser";
-
-const defaultTiers = [
-  { name: "Power Users", users: 85, costPerUser: 45, totalCost: 45900, recommended: 75, color: colors.primary },
-  { name: "Regular Users", users: 210, costPerUser: 25, totalCost: 63000, recommended: 180, color: colors.option2 },
-  { name: "Occasional", users: 340, costPerUser: 10, totalCost: 40800, recommended: 380, color: colors.option3 },
-  { name: "View-Only", users: 180, costPerUser: 5, totalCost: 10800, recommended: 180, color: colors.warning },
-];
 
 const formatCurrency = (value: number): string => {
   if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
   return `$${value}`;
 };
 
-export const PDFLicenseTier = ({ data, themeMode }: { data?: LicenseTierData; themeMode?: PdfThemeMode }) => {
+export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const tiers = data?.tiers || defaultTiers;
+  const tiers = data.tiers;
 
   const totalUsers = tiers.reduce((sum, t) => sum + t.users, 0);
   const totalCost = tiers.reduce((sum, t) => sum + t.totalCost, 0);
@@ -94,7 +85,7 @@ export const PDFLicenseTier = ({ data, themeMode }: { data?: LicenseTierData; th
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
         <Text style={{ fontSize: 9, color: colors.textMuted }}>
           <Text style={{ color: colors.primary, fontWeight: 600 }}>Optimization: </Text>
-          Downgrade 10 Power Users and 30 Regular Users to lower tiers based on usage patterns
+          Downgrade underutilized users to lower tiers based on usage patterns
         </Text>
       </View>
     </View>

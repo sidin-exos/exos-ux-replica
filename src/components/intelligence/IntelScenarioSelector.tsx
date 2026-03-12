@@ -97,7 +97,7 @@ export function IntelScenarioSelector({ selected, onSelect }: IntelScenarioSelec
                         <ArrowRight className="w-3 h-3 text-primary" />
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <p className="text-xs text-foreground/70 line-clamp-2">
                       {scenario.description}
                     </p>
                   </div>
