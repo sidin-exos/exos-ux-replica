@@ -865,6 +865,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             <DataRequirementsAlert
               missingRequired={missingRequired}
               missingOptional={missingOptional}
+              evaluation={evaluation}
               onFieldClick={(fieldId) => {
                 setStep("input");
                 setTimeout(() => handleFieldClick(fieldId), 100);
