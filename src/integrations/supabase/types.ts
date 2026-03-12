@@ -1,34 +1,3 @@
-npm warn exec The following package was not found and will be installed: supabase@2.78.1
-npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'bin-links@6.0.0',
-npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
-npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
-npm warn EBADENGINE }
-npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'cmd-shim@8.0.0',
-npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
-npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
-npm warn EBADENGINE }
-npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'npm-normalize-package-bin@5.0.0',
-npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
-npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
-npm warn EBADENGINE }
-npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'proc-log@6.1.0',
-npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
-npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
-npm warn EBADENGINE }
-npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'read-cmd-shim@6.0.0',
-npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
-npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
-npm warn EBADENGINE }
-npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'write-file-atomic@7.0.1',
-npm warn EBADENGINE   required: { node: '^20.17.0 || >=22.9.0' },
-npm warn EBADENGINE   current: { node: 'v20.15.1', npm: '10.7.0' }
-npm warn EBADENGINE }
 export type Json =
   | string
   | number
