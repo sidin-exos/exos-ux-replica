@@ -315,6 +315,11 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     const enrichedData = {
       ...formData,
       strategy: strategyValue,
+      // Constraint #1: LangSmith telemetry — confidence_flag and evaluation_score
+      ...(evaluation ? {
+        _evaluation_score: String(evaluation.score),
+        _confidence_flag: evaluation.confidenceFlag,
+      } : {}),
       // Include market insights if activated
       ...(isMarketInsightsActive && marketInsight ? {
         _marketInsights: JSON.stringify({
