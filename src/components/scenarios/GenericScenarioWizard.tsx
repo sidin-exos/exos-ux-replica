@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare, CheckCircle2, AlertCircle } from "lucide-react";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelineAnimation";
@@ -68,6 +68,7 @@ import { toast } from "sonner";
 import { ScenarioChatAssistant } from "./ScenarioChatAssistant";
 import ScenarioFileAttachment from "./ScenarioFileAttachment";
 import { useScenarioFileAttachments } from "@/hooks/useScenarioFileAttachments";
+import { useInputEvaluator } from "@/hooks/useInputEvaluator";
 
 const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   const [open, setOpen] = useState(false);
@@ -262,6 +263,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   const canProceed = missingRequired.length === 0;
 
+  // Input quality evaluator (debounced 800ms)
+  const evaluation = useInputEvaluator(scenario.id, formData);
+
   // Get model config from settings context
   const { model: configModel } = useModelConfig();
 
@@ -311,6 +315,11 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     const enrichedData = {
       ...formData,
       strategy: strategyValue,
+      // Constraint #1: LangSmith telemetry — confidence_flag and evaluation_score
+      ...(evaluation ? {
+        _evaluation_score: String(evaluation.score),
+        _confidence_flag: evaluation.confidenceFlag,
+      } : {}),
       // Include market insights if activated
       ...(isMarketInsightsActive && marketInsight ? {
         _marketInsights: JSON.stringify({
@@ -377,11 +386,17 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     }, 3500);
 
     try {
-      // Build query from form data
-      const queryText = Object.entries(formData)
-        .filter(([_, value]) => value) // Only include non-empty values
-        .map(([key, value]) => `${key}: ${value}`)
-        .join('\n');
+      // Build query from form data — include evaluation telemetry for LangSmith (Constraint #1)
+      const queryParts = Object.entries(formData)
+        .filter(([_, value]) => value)
+        .map(([key, value]) => `${key}: ${value}`);
+      
+      if (evaluation) {
+        queryParts.push(`_evaluation_score: ${evaluation.score}`);
+        queryParts.push(`_confidence_flag: ${evaluation.confidenceFlag}`);
+      }
+      
+      const queryText = queryParts.join('\n');
 
       const graphConfig: ModelConfigType = {
         model: configModel,
@@ -745,6 +760,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                       );
                     }
                     
+                    const blockEval = evaluation?.blocks.find((b) => b.fieldId === field.id);
                     return (
                       <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
                         <Label className="flex items-center gap-1">
@@ -755,6 +771,16 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                           )}
                           {field.type === "currency" && (
                             <span className="text-muted-foreground text-xs">($)</span>
+                          )}
+                          {/* Inline quality indicator */}
+                          {blockEval && blockEval.status === "pass" && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-success ml-1" />
+                          )}
+                          {blockEval && blockEval.status === "warning" && (
+                            <AlertCircle className="w-3.5 h-3.5 text-warning ml-1" />
+                          )}
+                          {blockEval && blockEval.status === "fail" && (
+                            <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-1" />
                           )}
                         </Label>
                         {renderField(field)}
@@ -850,6 +876,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             <DataRequirementsAlert
               missingRequired={missingRequired}
               missingOptional={missingOptional}
+              evaluation={evaluation}
               onFieldClick={(fieldId) => {
                 setStep("input");
                 setTimeout(() => handleFieldClick(fieldId), 100);
