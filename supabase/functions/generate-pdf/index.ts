@@ -3,10 +3,25 @@
  *
  * Generates a PDF report server-side using @react-pdf/renderer.
  * Accepts a POST with GeneratePdfPayload and returns binary PDF.
+ *
+ * Security:
+ * - Rate limited: 20 requests/hour per user
+ * - Input validated via shared validators (200KB max for analysisResult)
+ * - Filename sanitized against header injection
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { authenticateRequest } from "../_shared/auth.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
+import {
+  parseBody,
+  requireString,
+  optionalRecord,
+  requireStringEnum,
+  requireArray,
+  validationErrorResponse,
+  ValidationError,
+} from "../_shared/validate.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { generatePdfBuffer } from "./pdf-document.tsx";
 import type { GeneratePdfPayload } from "./types.ts";
@@ -25,49 +40,54 @@ serve(async (req) => {
     );
   }
 
-  // 1. Authenticate
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(
-      JSON.stringify({ error: "Missing authorization header" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  }
-
-  const token = authHeader.replace("Bearer ", "");
-  const authClient = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-  );
-
-  const { data: { user: authUser }, error: authError } = await authClient.auth.getUser(token);
-
-  if (authError || !authUser) {
-    return new Response(
-      JSON.stringify({ error: "Invalid or expired token" }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  }
-
-  // 2. Parse body
-  let payload: GeneratePdfPayload;
   try {
-    payload = await req.json();
-    if (!payload.scenarioTitle || !payload.analysisResult || !payload.timestamp) {
-      throw new Error("Missing required fields");
+    // 1. Authenticate
+    const authResult = await authenticateRequest(req);
+    if ("error" in authResult) {
+      return new Response(
+        JSON.stringify({ error: authResult.error.message }),
+        { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
-  } catch (e) {
-    return new Response(
-      JSON.stringify({ error: "Invalid request body: scenarioTitle, analysisResult, and timestamp are required" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  }
 
-  // 3. Generate PDF
-  try {
+    // 2. Rate limit: 20 requests/hour per user
+    const rateCheck = await checkRateLimit(authResult.user.userId, "generate-pdf", 20, 60);
+    if (!rateCheck.allowed) {
+      return rateLimitResponse(rateCheck, corsHeaders, "PDF generation rate limit reached. Please wait before generating another report.");
+    }
+
+    // 3. Parse and validate body
+    const body = await parseBody(req);
+
+    const scenarioTitle = requireString(body.scenarioTitle, "scenarioTitle", { maxLength: 500 })!;
+    const analysisResult = requireString(body.analysisResult, "analysisResult", { maxLength: 200000 })!;
+    const timestamp = requireString(body.timestamp, "timestamp", { maxLength: 50 })!;
+    const formData = (optionalRecord(body.formData, "formData", 100) ?? {}) as Record<string, string>;
+    const selectedDashboards = body.selectedDashboards !== undefined
+      ? requireArray(body.selectedDashboards, "selectedDashboards", { maxLength: 20 }) as string[]
+      : undefined;
+    const pdfTheme = body.pdfTheme !== undefined
+      ? requireStringEnum(body.pdfTheme, "pdfTheme", ["light", "dark"] as const)
+      : undefined;
+
+    const payload: GeneratePdfPayload = {
+      scenarioTitle,
+      analysisResult,
+      formData,
+      timestamp,
+      selectedDashboards: selectedDashboards as GeneratePdfPayload["selectedDashboards"],
+      pdfTheme: pdfTheme as GeneratePdfPayload["pdfTheme"],
+    };
+
+    // 4. Generate PDF
     const pdfBytes = await generatePdfBuffer(payload);
 
-    const fileName = `EXOS_${payload.scenarioTitle.replace(/\s+/g, "_")}_${payload.timestamp.split("T")[0]}.pdf`;
+    // Sanitize filename to prevent Content-Disposition header injection
+    const safeTitle = scenarioTitle
+      .replace(/[^a-zA-Z0-9_\-]/g, "_")
+      .replace(/_+/g, "_")
+      .slice(0, 40);
+    const fileName = `EXOS_${safeTitle}_${timestamp.split("T")[0]}.pdf`;
 
     return new Response(pdfBytes, {
       status: 200,
@@ -79,9 +99,12 @@ serve(async (req) => {
       },
     });
   } catch (err) {
+    if (err instanceof ValidationError) {
+      return validationErrorResponse(err.message);
+    }
     console.error("PDF generation failed:", err);
     return new Response(
-      JSON.stringify({ error: "PDF generation failed", details: String(err) }),
+      JSON.stringify({ error: "PDF generation failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

@@ -115,7 +115,7 @@ serve(async (req) => {
       await serviceClient.from("file_access_audit").insert({
         file_id: fileId,
         accessed_by: userId,
-        organization_id: userOrgId || "unknown",
+        organization_id: userOrgId || file.organization_id,
         action: "download",
         status: "denied",
         error_message: "Organization mismatch",

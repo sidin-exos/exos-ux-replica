@@ -494,11 +494,15 @@ serve(async (req) => {
     // Validate inputs
     const rawUserPrompt = requireString(body.userPrompt, "userPrompt", { minLength: 1, maxLength: 50000 })!;
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
-    const rawGoogleModel = requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
+    const rawGoogleModel = (requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-3.1-pro-preview";
-    // Strip "google/" prefix if sent from legacy clients
-    const googleModel = rawGoogleModel.replace(/^google\//, "");
+      || "gemini-3.1-pro-preview").replace(/^google\//, "");
+    // Server-side model whitelist — prevents cost amplification and model probing
+    const ALLOWED_MODELS = [
+      "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3-pro-preview",
+      "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
+    ];
+    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-3.1-pro-preview";
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     // Accept but ignore — always use Google AI Studio
@@ -911,7 +915,7 @@ serve(async (req) => {
           }
           tracer.patchRun(inferenceRunId, undefined, errorMessage);
           return new Response(
-            JSON.stringify({ error: "AI service error", details: errorMessage }),
+            JSON.stringify({ error: "AI service error", details: "The AI service encountered an error processing your request" }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -932,7 +936,7 @@ serve(async (req) => {
     console.error("[Sentinel] Error:", error);
     try { tracer?.patchRun(parentRunId!, undefined, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

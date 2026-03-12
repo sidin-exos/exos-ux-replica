@@ -3,6 +3,7 @@ import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
 import { parseBody, requireString, requireStringEnum, optionalBoolean, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 /**
@@ -556,6 +557,12 @@ serve(async (req) => {
       JSON.stringify({ error: "Admin access required" }),
       { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+  }
+
+  // Rate limit: 10 requests/hour per admin user
+  const rateCheck = await checkRateLimit(authResult.user.userId, "generate-test-data", 10, 60, { failClosed: true });
+  if (!rateCheck.allowed) {
+    return rateLimitResponse(rateCheck, corsHeaders);
   }
 
   try {
