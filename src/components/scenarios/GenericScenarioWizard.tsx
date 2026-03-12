@@ -263,6 +263,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   const canProceed = missingRequired.length === 0;
 
+  // Input quality evaluator (debounced 800ms)
+  const evaluation = useInputEvaluator(scenario.id, formData);
+
   // Get model config from settings context
   const { model: configModel } = useModelConfig();
 
