@@ -164,6 +164,9 @@ function buildDocStyles(c: DocColors) {
     parameterBlock: { marginBottom: 10 },
     parameterLabel: { fontSize: 9, color: c.textMuted, fontFamily: "Helvetica", textTransform: "uppercase" as const, letterSpacing: 0.5, marginBottom: 2 },
     parameterValue: { fontSize: 10, color: c.text, fontFamily: "Helvetica-Bold", lineHeight: 1.4 },
+    parameterTagRow: { flexDirection: "row" as const, flexWrap: "wrap" as const, gap: 4, marginTop: 2 },
+    parameterTag: { backgroundColor: c.surfaceLight, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, marginBottom: 2 },
+    parameterTagText: { fontSize: 9, color: c.text, fontFamily: "Helvetica-Bold" },
     numberedItem: { flexDirection: "row" as const, alignItems: "flex-start" as const, marginBottom: 8 },
     numberedBullet: { width: 20, height: 20, backgroundColor: c.primary, borderRadius: 10, justifyContent: "center" as const, alignItems: "center" as const, marginRight: 10, marginTop: 1 },
     numberedBulletText: { color: "#ffffff", fontSize: 9, fontWeight: 700 },
@@ -195,6 +198,32 @@ const lightDocStyles = buildDocStyles(lightColors);
 
 function getDocStyles(mode?: PdfThemeMode) {
   return mode === "light" ? lightDocStyles : darkDocStyles;
+}
+
+// ── Parameter summarization ──
+
+function summarizeParameter(value: string, maxWords = 30): string {
+  const words = value.trim().split(/\s+/);
+  if (words.length <= maxWords) return value.trim();
+  const fragments = value.split(/[.•\n]+/).map(s => s.trim()).filter(Boolean);
+  const scored = fragments.map(f => {
+    let score = 0;
+    if (/[\d€$£¥%]/.test(f)) score += 3;
+    if (/[A-Z]{2,}/.test(f)) score += 2;
+    if (/±|mm|kg|g\b|alloy|CNC|SOC|GDPR|ISO|SaaS|B2B/.test(f)) score += 2;
+    score += (f.match(/[A-Z][a-z]+/g) || []).length;
+    return { text: f, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  const result: string[] = [];
+  let wordCount = 0;
+  for (const { text } of scored) {
+    const tw = text.split(/\s+/).length;
+    if (wordCount + tw > maxWords && result.length > 0) break;
+    result.push(text);
+    wordCount += tw;
+  }
+  return result.join(", ");
 }
 
 // ── Helpers ──
@@ -860,10 +889,22 @@ const PDFReportDocument = ({
                 .filter(([_, value]) => value && value.trim() !== "")
                 .map(([key, value]) => {
                   const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
+                  const summary = summarizeParameter(value);
+                  const tags = summary.includes(",") ? summary.split(",").map(t => t.trim()).filter(Boolean) : null;
                   return (
                     <View key={key} style={styles.parameterBlock}>
                       <Text style={styles.parameterLabel}>{label}</Text>
-                      <Text style={styles.parameterValue}>{value}</Text>
+                      {tags ? (
+                        <View style={styles.parameterTagRow}>
+                          {tags.map((tag: string, i: number) => (
+                            <View key={i} style={styles.parameterTag}>
+                              <Text style={styles.parameterTagText}>{tag}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      ) : (
+                        <Text style={styles.parameterValue}>{summary}</Text>
+                      )}
                     </View>
                   );
                 })}
