@@ -760,6 +760,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                       );
                     }
                     
+                    const blockEval = evaluation?.blocks.find((b) => b.fieldId === field.id);
                     return (
                       <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
                         <Label className="flex items-center gap-1">
@@ -770,6 +771,16 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                           )}
                           {field.type === "currency" && (
                             <span className="text-muted-foreground text-xs">($)</span>
+                          )}
+                          {/* Inline quality indicator */}
+                          {blockEval && blockEval.status === "pass" && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-success ml-1" />
+                          )}
+                          {blockEval && blockEval.status === "warning" && (
+                            <AlertCircle className="w-3.5 h-3.5 text-warning ml-1" />
+                          )}
+                          {blockEval && blockEval.status === "fail" && (
+                            <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-1" />
                           )}
                         </Label>
                         {renderField(field)}
