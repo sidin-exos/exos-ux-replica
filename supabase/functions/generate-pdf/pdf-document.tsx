@@ -200,6 +200,32 @@ function getDocStyles(mode?: PdfThemeMode) {
   return mode === "light" ? lightDocStyles : darkDocStyles;
 }
 
+// ── Parameter summarization ──
+
+function summarizeParameter(value: string, maxWords = 30): string {
+  const words = value.trim().split(/\s+/);
+  if (words.length <= maxWords) return value.trim();
+  const fragments = value.split(/[.•\n]+/).map(s => s.trim()).filter(Boolean);
+  const scored = fragments.map(f => {
+    let score = 0;
+    if (/[\d€$£¥%]/.test(f)) score += 3;
+    if (/[A-Z]{2,}/.test(f)) score += 2;
+    if (/±|mm|kg|g\b|alloy|CNC|SOC|GDPR|ISO|SaaS|B2B/.test(f)) score += 2;
+    score += (f.match(/[A-Z][a-z]+/g) || []).length;
+    return { text: f, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  const result: string[] = [];
+  let wordCount = 0;
+  for (const { text } of scored) {
+    const tw = text.split(/\s+/).length;
+    if (wordCount + tw > maxWords && result.length > 0) break;
+    result.push(text);
+    wordCount += tw;
+  }
+  return result.join(", ");
+}
+
 // ── Helpers ──
 
 const cleanMarkdown = (text: string): string => {

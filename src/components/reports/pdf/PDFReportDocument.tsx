@@ -14,6 +14,44 @@ import { extractDashboardData, stripDashboardData } from "@/lib/dashboard-data-p
 import { DashboardType } from "@/lib/dashboard-mappings";
 import type { PdfThemeMode } from "./dashboardVisuals/theme";
 
+// ── Parameter summarization ──
+
+/**
+ * Condenses a long parameter value into max 30 words.
+ * Extracts key information-dense fragments (numbers, proper nouns, technical terms).
+ */
+function summarizeParameter(value: string, maxWords = 30): string {
+  const words = value.trim().split(/\s+/);
+  if (words.length <= maxWords) return value.trim();
+
+  // Split into fragments by sentences or bullet separators
+  const fragments = value.split(/[.•\n]+/).map(s => s.trim()).filter(Boolean);
+
+  // Score fragments: prefer those with numbers, currencies, uppercase words, technical terms
+  const scored = fragments.map(f => {
+    let score = 0;
+    if (/[\d€$£¥%]/.test(f)) score += 3; // numbers/currencies
+    if (/[A-Z]{2,}/.test(f)) score += 2; // acronyms
+    if (/±|mm|kg|g\b|alloy|CNC|SOC|GDPR|ISO|SaaS|B2B/.test(f)) score += 2; // technical
+    score += (f.match(/[A-Z][a-z]+/g) || []).length; // proper nouns
+    return { text: f, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // Collect top fragments until we hit word limit
+  const result: string[] = [];
+  let wordCount = 0;
+  for (const { text } of scored) {
+    const tw = text.split(/\s+/).length;
+    if (wordCount + tw > maxWords && result.length > 0) break;
+    result.push(text);
+    wordCount += tw;
+  }
+
+  return result.join(", ");
+}
+
 // ── Color palettes ──
 
 const darkColors = {
