@@ -496,7 +496,7 @@ serve(async (req) => {
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
     const rawGoogleModel = requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-3-flash-preview";
+      || "gemini-3.1-pro-preview";
     // Strip "google/" prefix if sent from legacy clients
     const googleModel = rawGoogleModel.replace(/^google\//, "");
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;

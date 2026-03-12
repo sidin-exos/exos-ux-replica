@@ -13,12 +13,12 @@ interface ModelConfigContextType extends ModelConfig {
 const STORAGE_KEY = "exos_model_config";
 
 const VALID_MODELS = [
-  "gemini-3-flash-preview", "gemini-3-pro-preview", "gemini-3.1-flash-lite-preview",
-  "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
+  "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3-pro-preview",
+  "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
 ];
 
 const DEFAULT_CONFIG: ModelConfig = {
-  model: "gemini-3-flash-preview",
+  model: "gemini-3.1-pro-preview",
   lastTested: null,
 };
 
@@ -32,6 +32,10 @@ function loadConfig(): ModelConfig {
       let model = parsed.model || DEFAULT_CONFIG.model;
       // Auto-migrate old prefixed model names (e.g. "google/gemini-3-flash-preview")
       model = model.replace(/^google\//, "");
+      // Auto-migrate old default: flash → 3.1 pro
+      if (model === "gemini-3-flash-preview") {
+        model = DEFAULT_CONFIG.model;
+      }
       const isValid = VALID_MODELS.includes(model);
       return {
         model: isValid ? model : DEFAULT_CONFIG.model,
