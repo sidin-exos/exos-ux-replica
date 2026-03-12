@@ -55,7 +55,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       industry: IndustryContext | null,
       category: ProcurementCategory | null,
       config?: Partial<PipelineConfig>,
-      model: string = "gemini-3-flash-preview"
+      model: string = "gemini-3.1-pro-preview"
     ): Promise<OrchestratorResponse | null> => {
       setState({
         isProcessing: true,

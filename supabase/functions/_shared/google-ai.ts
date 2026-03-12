@@ -2,11 +2,11 @@
  * Google AI Studio shared helper for all EXOS Edge Functions.
  *
  * Two-tier model strategy:
- *   Heavy (default): "gemini-3-flash-preview" — complex reasoning, tool use, multi-turn
+ *   Heavy (default): "gemini-3.1-pro-preview" — complex reasoning, tool use, multi-turn
  *   Light:           "gemini-3.1-flash-lite-preview" — simple single-turn, cost-sensitive
  */
 
-const DEFAULT_MODEL = "gemini-3-flash-preview";
+const DEFAULT_MODEL = "gemini-3.1-pro-preview";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
