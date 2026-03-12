@@ -342,6 +342,24 @@ function buildDocStyles(c: DocColors) {
       fontFamily: "Helvetica-Bold",
       lineHeight: 1.4,
     },
+    parameterTagRow: {
+      flexDirection: "row" as const,
+      flexWrap: "wrap" as const,
+      gap: 4,
+      marginTop: 2,
+    },
+    parameterTag: {
+      backgroundColor: c.surfaceLight,
+      borderRadius: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      marginBottom: 2,
+    },
+    parameterTagText: {
+      fontSize: 9,
+      color: c.text,
+      fontFamily: "Helvetica-Bold",
+    },
     numberedItem: {
       flexDirection: "row" as const,
       alignItems: "flex-start" as const,
