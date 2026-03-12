@@ -1,100 +1,63 @@
 
 
-## Enterprise Platforms — Phase 1 Implementation Plan
+# INPUT_EVALUATOR — Phase 1 + Phase 2 Implementation
 
-### Overview
+## Scope
+Implement the quality-aware input evaluation system per the approved spec, with the 4 Architecture Board constraints applied.
 
-Build the UI scaffolding, routing, database tables, storage bucket, and Supabase integration for persistent Risk Assessment and Inflation Analysis trackers. No AI processing or Edge Functions in this sprint.
+## Files to Create (Phase 1 — this batch)
 
-### 1. Database Migration
+### 1. `src/lib/input-evaluator/types.ts`
+Core type definitions: `EvaluationResult`, `BlockEvaluation`, `QualityCheck`, `ScenarioEvalConfig`, `CheckType`, severity levels. Uses scenario string IDs (not numbers) to match existing codebase convention.
 
-Create `enterprise_trackers` table and `tracker-files` storage bucket in a single migration:
+### 2. `src/lib/input-evaluator/wordlist.ts`
+Procurement domain glossary (~200 terms from spec §8) plus top 500 English stopwords/common words for gibberish detection. Exported as a `Set<string>` for O(1) lookup.
 
-```sql
-CREATE TABLE public.enterprise_trackers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  tracker_type text NOT NULL,
-  name text NOT NULL,
-  status text NOT NULL DEFAULT 'setup',
-  parameters jsonb NOT NULL DEFAULT '{}',
-  file_references jsonb NOT NULL DEFAULT '[]',
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+### 3. `src/lib/input-evaluator/universal-checks.ts`
+5 universal checks applied to every block:
+- **UNIVERSAL_GIBBERISH** — keyboard-mash patterns (`asdf`, `qwerty`, `zxcv`), repeated char sequences, dictionary-word ratio < 40%. Exempts numeric-heavy blocks.
+- **UNIVERSAL_MIN_LENGTH** — 30/40/20 word thresholds per block position, with Type 1H overrides.
+- **UNIVERSAL_BOILERPLATE** — detects identical content across multiple blocks.
+- **UNIVERSAL_LANGUAGE** — non-Latin script detection (INFO only).
+- **UNIVERSAL_PII** — regex for emails, phones, titled names. **ReDoS protection: slices input to 5000 chars before regex execution** with explicit comment per constraint #2.
 
-ALTER TABLE public.enterprise_trackers ENABLE ROW LEVEL SECURITY;
+### 4. `src/lib/input-evaluator/group-checks.ts`
+Group-level checks for A/B/C/D/E per spec §4. Each exports a function `runGroupChecks(group, blocks, formData)` returning `QualityCheck[]`.
 
--- User CRUD on own trackers
-CREATE POLICY "Users can select own trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own trackers" ON public.enterprise_trackers
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own trackers" ON public.enterprise_trackers
-  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own trackers" ON public.enterprise_trackers
-  FOR DELETE TO authenticated USING (auth.uid() = user_id);
--- Admin read-all
-CREATE POLICY "Admins can read all trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+### 5. `src/lib/input-evaluator/scenario-checks.ts`
+All scenario-specific checks from spec §5 (Type 1H critical: S3/S14/S23/S29, Type 1 subprompt coverage, Type 2 document validation, and per-scenario overrides S1–S28). Keyword proximity checks, entity format detection, list structure validation.
 
--- Storage bucket
-INSERT INTO storage.buckets (id, name, public) VALUES ('tracker-files', 'tracker-files', false);
+### 6. `src/lib/input-evaluator/configs.ts`
+**Constraint #4**: Exports `SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig>` — a mapped object keyed by scenario string ID for all 29 scenarios. Each config contains: group, deviationType, confidenceDependency, block definitions (with minWords, expectedDataType, subPrompts), scenario check definitions, financialImpactGap, commonFailureMode, gdprGuardrail, and enhancedInputItems.
 
--- Storage RLS: users can upload/read/delete own files (path starts with user_id)
-CREATE POLICY "Users can upload own tracker files" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can read own tracker files" ON storage.objects
-  FOR SELECT TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can delete own tracker files" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-```
+### 7. `src/lib/input-evaluator/index.ts`
+Main orchestrator: `evaluateInputQuality(scenarioId: string, formData: Record<string, string>): EvaluationResult`. Pipeline: universal checks → group checks → scenario checks → score calculation (READY/IMPROVABLE/INSUFFICIENT) → confidence flag derivation → financial impact warning assembly.
 
-### 2. New Files to Create
+### 8. `src/hooks/useInputEvaluator.ts`
+React hook wrapping `evaluateInputQuality` with 800ms debounce.
+**Constraint #3**: Uses `useRef` + `JSON.stringify` comparison to ensure stable `EvaluationResult` reference — only updates state when the serialized result actually changes, preventing infinite re-renders.
 
-| File | Purpose |
-|------|---------|
-| `src/pages/enterprise/RiskPlatform.tsx` | Risk Assessment platform page with Tabs (Monitor / Setup / Reports) |
-| `src/pages/enterprise/InflationPlatform.tsx` | Inflation Analysis platform page, same structure |
-| `src/components/enterprise/TrackerSetupWizard.tsx` | 3-step wizard: Parameters → Files & Context (with GDPR checkbox) → Review & Activate |
-| `src/components/enterprise/TrackerList.tsx` | Grid of Card components showing active trackers with status badges |
-| `src/components/enterprise/FileUploadZone.tsx` | Drag-and-drop file upload area for Step 2 |
-| `src/hooks/useEnterpriseTrackers.ts` | Hook for CRUD operations on `enterprise_trackers` table + file upload to `tracker-files` bucket |
+## Files to Modify (Phase 2 — this batch)
 
-### 3. Files to Edit
+### 9. `src/components/consolidation/DataRequirementsAlert.tsx`
+- Accept optional `evaluation?: EvaluationResult` prop.
+- When present, render quality-aware banners (green/amber/red per spec §6.3) with coaching messages and financial impact warnings.
+- Show per-block status with inline icons.
+- Show GDPR warnings with shield icon when detected.
+- Falls back to existing presence-check UI when `evaluation` is undefined.
 
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add routes `/enterprise/risk` and `/enterprise/inflation` |
-| `src/components/layout/Header.tsx` | Add "Enterprise" dropdown with Risk Assessment and Inflation Analysis links (same split-button pattern as existing nav items) |
-| `src/components/layout/MobileBottomNav.tsx` | Not modified — 5 items is already tight. Enterprise is accessed via Header hamburger menu mobile sheet instead. |
+### 10. `src/components/scenarios/GenericScenarioWizard.tsx`
+- Import `useInputEvaluator` hook, call with `scenario.id` and `formData`.
+- Pass `EvaluationResult` to `DataRequirementsAlert` on the review step.
+- Show inline per-block status indicators (check/warning/alert icons) next to field labels in the input step.
+- **Constraint #1**: In `handleAnalyze` and `handleDeepAnalysis`, append `confidence_flag` and `evaluation_score` from the evaluator result to the metadata payload sent to Supabase edge functions (enrichedData object), enabling LangSmith telemetry downstream.
+- Add "Unlock deeper analysis" collapsible for missing enhanced inputs when score is READY or IMPROVABLE.
+- Show GDPR privacy reminder banner for Group A/C scenarios and S5.
 
-### 4. Component Design Details
+## Key Architecture Constraints Applied
 
-**Platform Pages** (Risk & Inflation share identical layout, differ by `trackerType` prop and icon):
-- Header with icon (`ShieldAlert` for Risk, `TrendingUp` for Inflation), title, description
-- Shadcn `<Tabs>` with 3 tabs: Monitor (default), Setup New Tracker, Reports
-- Monitor tab renders `<TrackerList>`; Setup tab renders `<TrackerSetupWizard>`; Reports tab shows placeholder
-
-**TrackerSetupWizard** (3 steps):
-- Step 1 — Parameters: name field, category/goods/services inputs (varies by tracker type), risk appetite or inflation baseline
-- Step 2 — Files & Context: `<FileUploadZone>` (drag-drop + click), optional context textarea, **mandatory GDPR checkbox** before proceeding
-- Step 3 — Review & Activate: summary card, "Activate" button that uploads files to storage, inserts tracker row, shows toast, switches to Monitor tab
-
-**TrackerList**: queries `enterprise_trackers` filtered by `tracker_type` and `user_id`, renders a responsive grid of Cards with name, status Badge, created_at formatted date, and a "View" button (placeholder for Phase 2 detail view).
-
-**useEnterpriseTrackers hook**:
-- `trackers` state via `useQuery` from `@tanstack/react-query`
-- `createTracker(data)` — uploads files to `tracker-files/${user_id}/${uuid}-${filename}`, then inserts row
-- Uses `supabase` client from `@/integrations/supabase/client`
-
-### 5. Mobile Navigation
-
-The existing mobile Sheet menu in `Header.tsx` will get the Enterprise links added below the existing nav items (before the separator). No changes to `MobileBottomNav.tsx` to avoid overcrowding.
-
-### 6. Security Notes
-
-- All tracker data user-scoped via RLS (`auth.uid() = user_id`)
-- Storage paths enforce user isolation via `(storage.foldername(name))[1] = auth.uid()::text`
-- GDPR checkbox required before file upload proceeds
-- No PII stored in parameters — UI guidance enforced
+1. **LangSmith telemetry**: `confidence_flag` and `evaluation_score` appended to `enrichedData` in submit handlers → flows through Sentinel to edge functions → picked up by LangSmith tracer metadata.
+2. **ReDoS protection**: All PII regexes operate on `text.slice(0, 5000)` with explicit comment.
+3. **React performance**: `useInputEvaluator` uses `JSON.stringify` equality check on result before calling `setState`, ensuring referential stability.
+4. **Bundle-size ready**: `configs.ts` exports `Record<string, ScenarioEvalConfig>` for future lazy-load splitting.
 
