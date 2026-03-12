@@ -386,11 +386,17 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     }, 3500);
 
     try {
-      // Build query from form data
-      const queryText = Object.entries(formData)
-        .filter(([_, value]) => value) // Only include non-empty values
-        .map(([key, value]) => `${key}: ${value}`)
-        .join('\n');
+      // Build query from form data — include evaluation telemetry for LangSmith (Constraint #1)
+      const queryParts = Object.entries(formData)
+        .filter(([_, value]) => value)
+        .map(([key, value]) => `${key}: ${value}`);
+      
+      if (evaluation) {
+        queryParts.push(`_evaluation_score: ${evaluation.score}`);
+        queryParts.push(`_confidence_flag: ${evaluation.confidenceFlag}`);
+      }
+      
+      const queryText = queryParts.join('\n');
 
       const graphConfig: ModelConfigType = {
         model: configModel,
