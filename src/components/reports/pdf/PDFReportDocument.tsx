@@ -1047,10 +1047,22 @@ const PDFReportDocument = ({
                 .filter(([_, value]) => value && value.trim() !== "")
                 .map(([key, value]) => {
                   const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
+                  const summary = summarizeParameter(value);
+                  const tags = summary.includes(",") ? summary.split(",").map(t => t.trim()).filter(Boolean) : null;
                   return (
                     <View key={key} style={styles.parameterBlock}>
                       <Text style={styles.parameterLabel}>{label}</Text>
-                      <Text style={styles.parameterValue}>{value}</Text>
+                      {tags ? (
+                        <View style={styles.parameterTagRow}>
+                          {tags.map((tag, i) => (
+                            <View key={i} style={styles.parameterTag}>
+                              <Text style={styles.parameterTagText}>{tag}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      ) : (
+                        <Text style={styles.parameterValue}>{summary}</Text>
+                      )}
                     </View>
                   );
                 })}
