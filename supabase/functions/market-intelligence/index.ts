@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { parseBody, requireString, requireStringEnum, requireArray, validationErrorResponse, ValidationError, filterPromptInjection } from "../_shared/validate.ts";
 
 import { corsHeaders } from "../_shared/cors.ts";
@@ -96,6 +97,12 @@ serve(async (req) => {
     );
   }
 
+  // Rate limit: 20 requests/hour per user (calls paid Perplexity API)
+  const rateCheck = await checkRateLimit(authResult.user.userId, "market-intelligence", 20, 60, { failClosed: true });
+  if (!rateCheck.allowed) {
+    return rateLimitResponse(rateCheck, corsHeaders, "Market intelligence rate limit reached. Please wait before sending another query.");
+  }
+
   const userOrgId = await getUserOrgId(authResult.user.userId);
   if (!userOrgId) {
     return new Response(
@@ -188,7 +195,7 @@ serve(async (req) => {
       if (response.status === 401) {
         throw new Error("Invalid API key. Please check your Perplexity API key configuration.");
       }
-      throw new Error(`Perplexity API error: ${response.status}`);
+      throw new Error("Intelligence service temporarily unavailable");
     }
 
     const data = await response.json();
@@ -306,7 +313,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: errorMessage,
+        error: "An unexpected error occurred",
       }),
       {
         status: 500,
