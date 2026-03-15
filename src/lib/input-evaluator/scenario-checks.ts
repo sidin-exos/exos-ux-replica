@@ -87,7 +87,7 @@ export function checkS14Critical(formData: Record<string, string>): QualityCheck
   if (!hasKeyword(metrics, ["satisfaction", "score", "rating", "1-5", "out of"])) {
     checks.push({
       id: "S14_SATISFACTION_MISSING",
-      severity: "WARNING",
+      severity: "CRITICAL",
       message: "No stakeholder satisfaction rating detected. Quantitative scores without qualitative context are strategically limited.",
       fieldId: "performanceMetrics",
       suggestion: "Include an overall stakeholder satisfaction score (e.g. '3.5 out of 5').",
