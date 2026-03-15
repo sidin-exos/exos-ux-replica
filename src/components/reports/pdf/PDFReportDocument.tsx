@@ -218,30 +218,30 @@ function buildDocStyles(c: DocColors) {
       color: c.textMuted,
     },
     titleSection: {
-      marginBottom: 30,
+      marginBottom: 14,
     },
     reportTitle: {
-      fontSize: 28,
+      fontSize: 22,
       fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.primary,
-      marginBottom: 8,
+      marginBottom: 4,
       letterSpacing: 0.5,
     },
     reportSubtitle: {
-      fontSize: 12,
+      fontSize: 10,
       color: c.textMuted,
     },
     section: {
-      marginBottom: 24,
+      marginBottom: 14,
     },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 12,
+      marginBottom: 6,
     },
     sectionTitle: {
-      fontSize: 16,
+      fontSize: 13,
       fontFamily: "Helvetica-Bold",
       fontWeight: 600,
       color: c.text,
@@ -250,7 +250,7 @@ function buildDocStyles(c: DocColors) {
     sectionContent: {
       backgroundColor: c.surface,
       borderRadius: 8,
-      padding: 16,
+      padding: 10,
       borderWidth: 1,
       borderColor: c.border,
     },
