@@ -52,7 +52,7 @@ function runGroupAChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasCurrencySymbol(text) && !hasPercentage(text)) {
     checks.push({
       id: "GROUPA_CURRENCY_CONSISTENCY",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No currency symbols or percentages detected. Financial analysis benefits from explicit monetary values.",
       fieldId,
       suggestion: "Include currency amounts (€, $, £) and percentages where applicable.",
