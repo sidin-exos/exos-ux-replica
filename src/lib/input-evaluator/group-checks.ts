@@ -93,7 +93,7 @@ function runGroupBChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasStakeholder) {
     checks.push({
       id: "GROUPB_STAKEHOLDER_REFERENCE",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No stakeholder roles mentioned. Workflow outputs improve when key roles are identified.",
       fieldId,
       suggestion: "Reference key roles: project sponsor, approver, procurement lead, etc.",
