@@ -34,13 +34,13 @@ function calculateScore(blocks: BlockEvaluation[], allChecks: QualityCheck[]): n
   for (const check of allChecks) {
     switch (check.severity) {
       case "CRITICAL":
-        score -= 15;
+        score -= 25;
         break;
       case "WARNING":
-        score -= 5;
+        score -= 10;
         break;
       case "INFO":
-        score -= 1;
+        score -= 3;
         break;
     }
   }
