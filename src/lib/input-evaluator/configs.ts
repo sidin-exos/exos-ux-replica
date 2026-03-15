@@ -342,9 +342,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "D",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "dependencyProfile", label: "Dependency Profile", minWords: 30, expectedDataType: "narrative", required: true },
-      { fieldId: "exitParameters", label: "Exit & De-risking Parameters", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "dependencyProfile", label: "Dependency Profile", minWords: 50, expectedDataType: "narrative", required: true },
+      { fieldId: "exitParameters", label: "Exit & De-risking Parameters", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "Enterprise switching costs average 18–24 months + 25–40% of original contract value.",
