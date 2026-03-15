@@ -52,7 +52,7 @@ export function checkGibberish(text: string, fieldId: string): QualityCheck | nu
 
   // Check dictionary-word ratio
   const ratio = knownWordRatio(text);
-  if (ratio < 0.4) {
+  if (ratio < 0.5) {
     return {
       id: "UNIVERSAL_GIBBERISH_RATIO",
       severity: "WARNING",
