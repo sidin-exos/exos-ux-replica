@@ -969,8 +969,8 @@ Return ONLY the JSON object.`;
       trickValidation: trickScore,
       persona: selectedPersona.id,
       personaName: selectedPersona.name,
-      requiredFieldCount: schema.required.length,
-      optionalFieldCount: schema.optional.length,
+      requiredFieldCount: fieldGroups.required.length,
+      optionalFieldCount: fieldGroups.optional.length,
       qualityTier,
       deviationType,
     }
