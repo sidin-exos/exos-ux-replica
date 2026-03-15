@@ -276,9 +276,9 @@ function buildDocStyles(c: DocColors) {
     },
     keyPointText: {
       flex: 1,
-      fontSize: 12,
+      fontSize: 9.5,
       color: c.text,
-      lineHeight: 1.5,
+      lineHeight: 1.4,
     },
     analysisText: {
       fontSize: 12,
