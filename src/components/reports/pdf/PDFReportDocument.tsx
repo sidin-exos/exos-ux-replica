@@ -908,7 +908,7 @@ const PDFReportDocument = ({
                 : styles.sectionBlockBase;
 
             return (
-              <View key={`section-${si}`} style={{ marginBottom: 15 }}>
+              <View key={`section-${si}`} style={{ marginBottom: 15 }} wrap={false}>
                 {si === 0 && (
                   <View style={styles.sectionHeader} id="section-detailed-analysis">
                     <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
