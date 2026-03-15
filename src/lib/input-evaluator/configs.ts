@@ -355,9 +355,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "D",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 15, expectedDataType: "narrative", required: true },
-      { fieldId: "crisisDefinition", label: "Crisis Definition", minWords: 30, expectedDataType: "narrative", required: true, expectedKeywords: ["disruption", "cause", "affected", "severity"] },
-      { fieldId: "resourceConstraints", label: "Resource & Constraint Status", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "crisisDefinition", label: "Crisis Definition", minWords: 50, expectedDataType: "narrative", required: true, expectedKeywords: ["disruption", "cause", "affected", "severity"] },
+      { fieldId: "resourceConstraints", label: "Resource & Constraint Status", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "Average supply chain disruption costs $184M when managed reactively.",
