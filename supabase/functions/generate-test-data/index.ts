@@ -642,10 +642,10 @@ serve(async (req) => {
       console.log(`[TestDataGen] MCTS iteration ${iteration + 1}/${mctsIterations}`);
       
       const generationPrompt = buildGenerationPrompt(
-        scenarioType, 
-        selectedIndustry, 
-        selectedCategory, 
-        schema,
+        scenarioType,
+        selectedIndustry,
+        selectedCategory,
+        fieldGroups,
         iteration,
         selectedPersona
       );
