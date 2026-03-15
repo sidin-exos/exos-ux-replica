@@ -1,71 +1,100 @@
 
 
-# Plan: Implement Advanced Test Data Engine (Multi-Block & Quality Tiers)
+## Enterprise Platforms — Phase 1 Implementation Plan
 
-## Problem
-The "Draft Test Case" button only populates Block 1. Blocks 2 and 3 remain empty due to:
-1. `maxOutputTokens: 2048` — truncates after Block 1
-2. Prompts list bare field names with no per-block guidance
-3. `dataQuality` parameter is drafted but never shapes generation
-4. No deviation type awareness
+### Overview
 
-## Changes
+Build the UI scaffolding, routing, database tables, storage bucket, and Supabase integration for persistent Risk Assessment and Inflation Analysis trackers. No AI processing or Edge Functions in this sprint.
 
-### 1. Create `supabase/functions/generate-test-data/block-guidance.ts` (new file, ~800 lines)
+### 1. Database Migration
 
-Exports:
+Create `enterprise_trackers` table and `tracker-files` storage bucket in a single migration:
 
-**`BlockGuidance` interface** with `fieldId`, `label`, `guidance`, `subPrompts[]` (each with `label`, `isCritical?`, `dataType`, `realisticRange?`), `isRequired`, `expectedDataType`.
+```sql
+CREATE TABLE public.enterprise_trackers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  tracker_type text NOT NULL,
+  name text NOT NULL,
+  status text NOT NULL DEFAULT 'setup',
+  parameters jsonb NOT NULL DEFAULT '{}',
+  file_references jsonb NOT NULL DEFAULT '[]',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-**`SCENARIO_BLOCK_GUIDANCE: Record<string, BlockGuidance[]>`** — all 29 scenarios derived from `scenarios.ts` `requiredFields`. Each entry provides:
-- Block labels from Field Methodology
-- Content guidance with EU context (EUR, metric, EU regulatory references)
-- Sub-prompt structures for Type 1/1H scenarios with realistic value ranges
-- Critical field markers for Type 1H (WACC, tax rate, KPI%, legal entity name)
-- Document-length rules for Type 2 (spend tables 10+ rows, SOW 500+ words, licence summaries)
+ALTER TABLE public.enterprise_trackers ENABLE ROW LEVEL SECURITY;
 
-**`QUALITY_TIER_INSTRUCTIONS: Record<QualityTier, string>`** — four tier instruction blocks per spec §5.3:
-- OPTIMAL: All blocks populated, all sub-prompts with concrete values, domain terms, internally consistent financials
-- MINIMUM: Brief Block 1 (30-40 words), Block 2 minimum viable, Block 3 mostly empty
-- DEGRADED: Generic Block 1, qualitative-only Block 2 (no numbers), Block 3 empty. For Type 1H: critical fields absent
-- GIBBERISH: Random chars Block 1, lorem/single word Block 2, empty Block 3
+-- User CRUD on own trackers
+CREATE POLICY "Users can select own trackers" ON public.enterprise_trackers
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own trackers" ON public.enterprise_trackers
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own trackers" ON public.enterprise_trackers
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own trackers" ON public.enterprise_trackers
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
+-- Admin read-all
+CREATE POLICY "Admins can read all trackers" ON public.enterprise_trackers
+  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
-Each tier includes the GDPR guardrail: "ALL data 100% synthetic. No real EU citizen data, no real company names. Use fictional entity names with correct legal suffixes (GmbH, Ltd, S.A.), role-based references, Labour Rate Bands."
+-- Storage bucket
+INSERT INTO storage.buckets (id, name, public) VALUES ('tracker-files', 'tracker-files', false);
 
-**`DEVIATION_TYPE_RULES: Record<string, string>`** — Type 0/1/1H/2 generation approach instructions from spec §7.
+-- Storage RLS: users can upload/read/delete own files (path starts with user_id)
+CREATE POLICY "Users can upload own tracker files" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can read own tracker files" ON storage.objects
+  FOR SELECT TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can delete own tracker files" ON storage.objects
+  FOR DELETE TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+```
 
-**`mapDataQualityToTier(dataQuality: string): QualityTier`** — excellent/good → OPTIMAL, partial → MINIMUM, poor → DEGRADED.
+### 2. New Files to Create
 
-### 2. Modify `supabase/functions/generate-test-data/index.ts`
+| File | Purpose |
+|------|---------|
+| `src/pages/enterprise/RiskPlatform.tsx` | Risk Assessment platform page with Tabs (Monitor / Setup / Reports) |
+| `src/pages/enterprise/InflationPlatform.tsx` | Inflation Analysis platform page, same structure |
+| `src/components/enterprise/TrackerSetupWizard.tsx` | 3-step wizard: Parameters → Files & Context (with GDPR checkbox) → Review & Activate |
+| `src/components/enterprise/TrackerList.tsx` | Grid of Card components showing active trackers with status badges |
+| `src/components/enterprise/FileUploadZone.tsx` | Drag-and-drop file upload area for Step 2 |
+| `src/hooks/useEnterpriseTrackers.ts` | Hook for CRUD operations on `enterprise_trackers` table + file upload to `tracker-files` bucket |
 
-**`callAI()`** (line 1091): Change `maxOutputTokens: 2048` → `8192`.
+### 3. Files to Edit
 
-**`handleDraftMode()`** (line 730): After parsing parameters, compute `qualityTier` via `mapDataQualityToTier(parsed.dataQuality)` and attach to returned object.
+| File | Change |
+|------|--------|
+| `src/App.tsx` | Add routes `/enterprise/risk` and `/enterprise/inflation` |
+| `src/components/layout/Header.tsx` | Add "Enterprise" dropdown with Risk Assessment and Inflation Analysis links (same split-button pattern as existing nav items) |
+| `src/components/layout/MobileBottomNav.tsx` | Not modified — 5 items is already tight. Enterprise is accessed via Header hamburger menu mobile sheet instead. |
 
-**`handleGenerateMode()`** (line 812):
-- Import and look up `SCENARIO_BLOCK_GUIDANCE[scenarioType]`
-- Compute `qualityTier` from `parameters.dataQuality`
-- Replace the bare field listing in system/user prompts with structured per-block instructions: for each block, inject label, guidance, sub-prompts with ranges
-- For Type 1H + DEGRADED: list critical fields to deliberately omit
-- Append `QUALITY_TIER_INSTRUCTIONS[tier]` and `DEVIATION_TYPE_RULES`
-- Add `qualityTier` to metadata
-- Import LangSmithTracer and pass `qualityTier` + deviation type into tags/metadata
+### 4. Component Design Details
 
-**`buildGenerationPrompt()`** (line 1101): Same block guidance injection, default to OPTIMAL tier.
+**Platform Pages** (Risk & Inflation share identical layout, differ by `trackerType` prop and icon):
+- Header with icon (`ShieldAlert` for Risk, `TrendingUp` for Inflation), title, description
+- Shadcn `<Tabs>` with 3 tabs: Monitor (default), Setup New Tracker, Reports
+- Monitor tab renders `<TrackerList>`; Setup tab renders `<TrackerSetupWizard>`; Reports tab shows placeholder
 
-**`handleMessyMode()`** (line 999): Force GIBBERISH tier instructions.
+**TrackerSetupWizard** (3 steps):
+- Step 1 — Parameters: name field, category/goods/services inputs (varies by tracker type), risk appetite or inflation baseline
+- Step 2 — Files & Context: `<FileUploadZone>` (drag-drop + click), optional context textarea, **mandatory GDPR checkbox** before proceeding
+- Step 3 — Review & Activate: summary card, "Activate" button that uploads files to storage, inserts tracker row, shows toast, switches to Monitor tab
 
-### 3. Modify `src/lib/drafted-parameters.ts`
+**TrackerList**: queries `enterprise_trackers` filtered by `tracker_type` and `user_id`, renders a responsive grid of Cards with name, status Badge, created_at formatted date, and a "View" button (placeholder for Phase 2 detail view).
 
-- Add `qualityTier?: 'OPTIMAL' | 'MINIMUM' | 'DEGRADED' | 'GIBBERISH'` to `DraftedParameters` interface
-- Add `qualityTier` labels to `PARAMETER_LABELS`
+**useEnterpriseTrackers hook**:
+- `trackers` state via `useQuery` from `@tanstack/react-query`
+- `createTracker(data)` — uploads files to `tracker-files/${user_id}/${uuid}-${filename}`, then inserts row
+- Uses `supabase` client from `@/integrations/supabase/client`
 
-### No UI changes
-`GenericScenarioWizard.tsx` already passes full `DraftedParameters` to `generateWithParameters()`.
+### 5. Mobile Navigation
 
-## Scope
-- **Create**: `supabase/functions/generate-test-data/block-guidance.ts`
-- **Modify**: `supabase/functions/generate-test-data/index.ts`
-- **Modify**: `src/lib/drafted-parameters.ts`
-- No DB changes, no UI changes
+The existing mobile Sheet menu in `Header.tsx` will get the Enterprise links added below the existing nav items (before the separator). No changes to `MobileBottomNav.tsx` to avoid overcrowding.
+
+### 6. Security Notes
+
+- All tracker data user-scoped via RLS (`auth.uid() = user_id`)
+- Storage paths enforce user isolation via `(storage.foldername(name))[1] = auth.uid()::text`
+- GDPR checkbox required before file upload proceeds
+- No PII stored in parameters — UI guidance enforced
 

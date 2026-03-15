@@ -5,6 +5,16 @@ import { callGoogleAI } from "../_shared/google-ai.ts";
 
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { LangSmithTracer } from "../_shared/langsmith.ts";
+import {
+  SCENARIO_BLOCK_GUIDANCE,
+  QUALITY_TIER_INSTRUCTIONS,
+  DEVIATION_TYPE_RULES,
+  mapDataQualityToTier,
+  getDeviationType,
+  buildBlockInstructions,
+  type QualityTier,
+} from "./block-guidance.ts";
 
 /**
  * AI-Powered Test Data Generation with Drafter-Validator Pattern
@@ -801,6 +811,11 @@ Return ONLY a valid JSON object with these exact keys:
     parsed.persona = persona.id;
     parsed.personaName = persona.name;
     
+    // Compute and attach qualityTier
+    const qualityTier = mapDataQualityToTier(parsed.dataQuality);
+    (parsed as any).qualityTier = qualityTier;
+    console.log(`[TestDataGen] Draft mode - qualityTier: ${qualityTier} (from dataQuality: ${parsed.dataQuality})`);
+    
     return { success: true, parameters: parsed };
   } catch (error) {
     console.error("[TestDataGen] Failed to parse draft:", error);
@@ -818,6 +833,10 @@ async function handleGenerateMode(
   const schema = SCENARIO_SCHEMAS[scenarioType] || { required: ["industryContext"], optional: [] };
   const fields = getAllFields(schema);
   
+  // Compute quality tier
+  const qualityTier: QualityTier = mapDataQualityToTier(parameters.dataQuality);
+  const deviationType = getDeviationType(scenarioType);
+  
   const companySizeDescriptions: Record<CompanySize, string> = {
     "startup": "10-50 employees, Series A/B stage, limited procurement maturity",
     "smb": "50-500 employees, established business, growing procurement needs",
@@ -825,6 +844,9 @@ async function handleGenerateMode(
     "enterprise": "2,000-10,000 employees, multi-national, mature procurement",
     "large-enterprise": "10,000+ employees, global operations, complex procurement"
   };
+
+  // Build block-specific instructions from guidance registry
+  const blockInstructions = buildBlockInstructions(scenarioType, qualityTier);
 
   // Build trick embedding instructions if trick is present
   const trick = parameters.trick;
@@ -859,6 +881,8 @@ STRICT CONTEXT:
 - Strategic Priority: ${parameters.strategicPriority}
 - Market Conditions: ${parameters.marketConditions}
 - Data Quality: ${parameters.dataQuality}
+- Quality Tier: ${qualityTier}
+- Deviation Type: ${deviationType}
 
 BUYER PERSONA:
 You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
@@ -874,13 +898,14 @@ ${schema.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some blank as empty strings):
 ${schema.optional.map(f => `- ${f}`).join('\n')}
+${blockInstructions}
 
 CRITICAL RULES:
 1. ALL data must be consistent with the above context
-2. "industryContext" field MUST be 100+ words describing a specific company matching ALL parameters
+2. ALL blocks must be populated according to the quality tier instructions above
 3. All numeric values must be plausible for the company scale
-5. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
-6. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
+4. If data quality is "partial" or "poor", follow the MINIMUM/DEGRADED tier rules
+5. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
 ${trickInstructions}
 
 OUTPUT FORMAT:
@@ -898,19 +923,36 @@ ${schema.optional.map(f => `- ${f}`).join('\n')}
 Context: ${parameters.reasoning}
 ${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
 
+IMPORTANT: You MUST generate content for ALL required fields — not just the first one. Follow the block-by-block instructions in the system prompt.
+
 Return ONLY the JSON object.`;
 
-  console.log(`[TestDataGen] Generate mode - Trick: ${trick?.category || 'none'}, Target: ${trick?.targetField || 'N/A'}, Persona: ${selectedPersona.id}`);
+  console.log(`[TestDataGen] Generate mode - QualityTier: ${qualityTier}, DeviationType: ${deviationType}, Trick: ${trick?.category || 'none'}, Persona: ${selectedPersona.id}`);
+
+  // LangSmith tracing
+  const tracer = new LangSmithTracer({ env: "production", feature: "test-data-gen" });
+  const runId = tracer.createRun("generate-test-data", "chain", {
+    scenarioType,
+    qualityTier,
+    deviationType,
+    persona: selectedPersona.id,
+    trick: trick?.category || "none",
+  }, {
+    tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`],
+    metadata: { qualityTier, deviationType, persona: selectedPersona.id },
+  });
 
   const response = await callAI(system, user, temperature);
   
   if (!response.success) {
+    tracer.patchRun(runId, undefined, "AI call failed");
     return { success: false, error: "Failed to generate test data" };
   }
 
   const data = parseGeneratedData(response.content, fields);
   
   if (Object.keys(data).length === 0) {
+    tracer.patchRun(runId, undefined, "Failed to parse generated data");
     return { success: false, error: "Failed to parse generated data" };
   }
 
@@ -920,6 +962,12 @@ Return ONLY the JSON object.`;
     trickScore = scoreTrickEmbedding(data, trick);
     console.log(`[TestDataGen] Trick embedding score: ${trickScore.subtletyScore}/100 - ${trickScore.feedback}`);
   }
+
+  tracer.patchRun(runId, {
+    fieldsGenerated: Object.keys(data).length,
+    fieldsExpected: fields.length,
+    qualityTier,
+  });
 
   return {
     success: true,
@@ -936,6 +984,8 @@ Return ONLY the JSON object.`;
       personaName: selectedPersona.name,
       requiredFieldCount: schema.required.length,
       optionalFieldCount: schema.optional.length,
+      qualityTier,
+      deviationType,
     }
   };
 }
@@ -1016,7 +1066,12 @@ async function handleMessyMode(
 
   console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}, Persona: ${messyPersona.id}`);
 
+  // Inject GIBBERISH tier instructions
+  const gibberishInstructions = QUALITY_TIER_INSTRUCTIONS['GIBBERISH'];
+
   const system = `You are a busy, disorganized procurement manager. Generate realistic, messy corporate data for the '${targetScenario}' scenario. Do NOT provide clean, isolated numbers or perfectly formatted text. Instead, generate copy-pasted email threads from suppliers, fragmented meeting notes, or raw CSV strings where pricing, terms, and context are all mixed together in unstructured text. Force this chaotic text into the required scenario schema fields, even if it means shoving a whole email paragraph into a 'currency' or 'number' field, or leaving some fields completely blank. The goal is to simulate maximum UX friction and trigger the shadow logging evaluation.
+
+${gibberishInstructions}
 
 BUYER PERSONA:
 You are generating this messy data from the perspective of: "${messyPersona.name}"
@@ -1088,7 +1143,7 @@ async function callAI(
       systemPrompt,
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
       temperature,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 8192,
       model: "gemini-3.1-flash-lite-preview",
     });
     return { success: true, content: response.text };
@@ -1115,6 +1170,9 @@ function buildGenerationPrompt(
     "Generate data for a company undergoing digital transformation."
   ];
 
+  // Default to OPTIMAL for full mode
+  const blockInstructions = buildBlockInstructions(scenarioType, 'OPTIMAL');
+
   const system = `You are an expert procurement consultant generating realistic test data for procurement analysis software.
 
 BUYER PERSONA:
@@ -1131,11 +1189,12 @@ ${schema.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some as empty strings):
 ${schema.optional.length > 0 ? schema.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+${blockInstructions}
 
 CRITICAL RULES:
 1. All generated data MUST be consistent with the ${industry} industry
 2. All generated data MUST be relevant to the ${category} procurement category
-3. The "industryContext" field MUST be at least 100 words describing a realistic company
+3. ALL blocks must be populated — do not stop after Block 1
 4. All numeric values must be plausible for the industry scale
 5. DO NOT generate illogical combinations (e.g., pharmaceutical procurement for a software company)
 6. ALWAYS fill all REQUIRED fields. For OPTIONAL fields, follow the persona fill rate — include unfilled optional fields as empty strings.
@@ -1155,6 +1214,7 @@ ${fields.map(f => `- ${f}`).join('\n')}
 
 IMPORTANT:
 - "industryContext" must describe a specific, realistic company (100+ words) in the ${industry} sector
+- You MUST generate content for ALL required fields — not just the first one
 - All values must be internally consistent with that company
 - Numbers should be realistic for the company size described
 - Include specific details like certifications, employee counts, and strategic priorities
