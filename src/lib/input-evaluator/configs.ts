@@ -31,9 +31,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "A",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "productSpecification", label: "Product or Service Specification", minWords: 30, expectedDataType: "mixed", required: true, expectedKeywords: ["material", "weight", "manufacturing", "labour"] },
-      { fieldId: "supplierQuote", label: "Supplier Quote & Benchmark", minWords: 20, expectedDataType: "numeric", required: true, expectedKeywords: ["price", "quote", "target", "margin"] },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "productSpecification", label: "Product or Service Specification", minWords: 50, expectedDataType: "mixed", required: true, expectedKeywords: ["material", "weight", "manufacturing", "labour"] },
+      { fieldId: "supplierQuote", label: "Supplier Quote & Benchmark", minWords: 30, expectedDataType: "numeric", required: true, expectedKeywords: ["price", "quote", "target", "margin"] },
     ],
     scenarioChecks: [],
     financialImpactGap: "Should-Cost modelling yields 8–14% additional price reduction — but only with material/labour splits.",
