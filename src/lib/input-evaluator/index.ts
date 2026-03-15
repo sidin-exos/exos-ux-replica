@@ -55,7 +55,7 @@ function deriveStatus(score: number): OverallStatus {
 }
 
 function deriveConfidence(score: number, hasCritical: boolean): ConfidenceFlag {
-  if (hasCritical || score < 50) return "LOW";
+  if (hasCritical || score < 65) return "LOW";
   return "HIGH";
 }
 

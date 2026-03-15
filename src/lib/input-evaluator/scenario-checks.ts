@@ -261,7 +261,7 @@ export function runScenarioChecks(
   // S16 (sow-critic): check document completeness
   if (scenarioId === "sow-critic") {
     const sow = formData["sowText"] || "";
-    if (sow.trim().split(/\s+/).length < 100) {
+    if (sow.trim().split(/\s+/).length < 200) {
       checks.push({
         id: "S16_DOCUMENT_SHORT",
         severity: "WARNING",
