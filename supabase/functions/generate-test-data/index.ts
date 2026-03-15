@@ -1066,7 +1066,12 @@ async function handleMessyMode(
 
   console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}, Persona: ${messyPersona.id}`);
 
+  // Inject GIBBERISH tier instructions
+  const gibberishInstructions = QUALITY_TIER_INSTRUCTIONS['GIBBERISH'];
+
   const system = `You are a busy, disorganized procurement manager. Generate realistic, messy corporate data for the '${targetScenario}' scenario. Do NOT provide clean, isolated numbers or perfectly formatted text. Instead, generate copy-pasted email threads from suppliers, fragmented meeting notes, or raw CSV strings where pricing, terms, and context are all mixed together in unstructured text. Force this chaotic text into the required scenario schema fields, even if it means shoving a whole email paragraph into a 'currency' or 'number' field, or leaving some fields completely blank. The goal is to simulate maximum UX friction and trigger the shadow logging evaluation.
+
+${gibberishInstructions}
 
 BUYER PERSONA:
 You are generating this messy data from the perspective of: "${messyPersona.name}"
