@@ -171,9 +171,24 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   });
 
   // === DRAFTER-VALIDATOR WORKFLOW ===
+
+  const ensureAuthenticatedForTestData = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setShowAuthPrompt(true);
+      toast.error("Sign in required", {
+        description: "Please sign in to use AI test data generation.",
+      });
+      return false;
+    }
+    return true;
+  };
   
   // Step 1: Draft parameters (1 AI call)
   const handleDraftTestCase = async () => {
+    const isAuthenticated = await ensureAuthenticatedForTestData();
+    if (!isAuthenticated) return;
+
     setIsDrafting(true);
     setDraftedParams(null);
     setTestDataMetadata(null);
@@ -199,6 +214,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // Step 2: Generate with approved parameters (1 AI call)
   const handleApproveAndGenerate = async (params: DraftedParameters) => {
+    const isAuthenticated = await ensureAuthenticatedForTestData();
+    if (!isAuthenticated) return;
+
     setIsGeneratingFromDraft(true);
     
     try {
