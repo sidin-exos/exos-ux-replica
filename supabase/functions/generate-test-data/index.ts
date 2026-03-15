@@ -595,8 +595,7 @@ serve(async (req) => {
     }
 
     // === FULL MODE: Legacy MCTS approach ===
-    const schema = SCENARIO_SCHEMAS[scenarioType] || { required: ["industryContext"], optional: [] };
-    const fields = getAllFields(schema);
+    const fields = getScenarioFields(scenarioType);
     const industries = Object.keys(COMPATIBILITY_MATRIX);
     
     const selectedIndustry = industry && industries.includes(industry) 
