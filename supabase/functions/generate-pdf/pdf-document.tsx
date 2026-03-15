@@ -154,7 +154,7 @@ function buildDocStyles(c: DocColors) {
     keyPointText: { fontSize: 9.5, color: c.text, lineHeight: 1.4, marginBottom: 4 },
     analysisText: { fontSize: 12, color: c.text, lineHeight: 1.6, marginBottom: 8 },
     analysisTextHighlight: { fontSize: 12, color: c.primary, lineHeight: 1.6, marginBottom: 8, fontWeight: 700, fontFamily: "Courier-Bold", backgroundColor: c.primary + "15", paddingHorizontal: 6, paddingVertical: 3, borderRadius: 3 },
-    analysisSubHeader: { fontSize: 13, fontFamily: "Helvetica-Bold", fontWeight: 600, color: c.text, marginTop: 10, marginBottom: 6 },
+    analysisSubHeader: { fontSize: 11, fontFamily: "Helvetica-Bold", fontWeight: 600, color: c.text, marginTop: 4, marginBottom: 3 },
     sectionBlockBase: { backgroundColor: c.surface, borderRadius: 8, padding: 16, borderWidth: 1, borderColor: c.border, marginBottom: 15 },
     sectionBlockRecommendations: { backgroundColor: c.surface, borderRadius: 8, padding: 16, borderWidth: 1, borderColor: c.border, borderLeftWidth: 3, borderLeftColor: c.primary, marginBottom: 15 },
     sectionBlockRisks: { backgroundColor: c.destructive + "10", borderRadius: 8, padding: 16, borderWidth: 1, borderColor: c.destructive + "30", marginBottom: 15 },
