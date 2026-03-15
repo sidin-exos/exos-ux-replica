@@ -49,8 +49,8 @@ function calculateScore(blocks: BlockEvaluation[], allChecks: QualityCheck[]): n
 }
 
 function deriveStatus(score: number): OverallStatus {
-  if (score >= 75) return "READY";
-  if (score >= 40) return "IMPROVABLE";
+  if (score >= 85) return "READY";
+  if (score >= 55) return "IMPROVABLE";
   return "INSUFFICIENT";
 }
 
