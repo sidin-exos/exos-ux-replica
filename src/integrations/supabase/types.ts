@@ -126,6 +126,60 @@ export type Database = {
           },
         ]
       }
+      file_access_audit: {
+        Row: {
+          accessed_by: string
+          action: string
+          created_at: string
+          error_message: string | null
+          file_id: string | null
+          id: string
+          ip_address: string | null
+          organization_id: string
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          accessed_by: string
+          action: string
+          created_at?: string
+          error_message?: string | null
+          file_id?: string | null
+          id?: string
+          ip_address?: string | null
+          organization_id: string
+          status: string
+          user_agent?: string | null
+        }
+        Update: {
+          accessed_by?: string
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          file_id?: string | null
+          id?: string
+          ip_address?: string | null
+          organization_id?: string
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_access_audit_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "user_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_file_audit_org"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       founder_metrics: {
         Row: {
           active_users: number
