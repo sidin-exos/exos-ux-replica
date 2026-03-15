@@ -42,6 +42,7 @@ export interface DraftedParameters {
   trick?: TrickDefinition;    // Optional training trick
   persona?: string;           // e.g. "rushed-junior"
   personaName?: string;       // e.g. "The Rushed Junior Buyer"
+  qualityTier?: 'OPTIMAL' | 'MINIMUM' | 'DEGRADED' | 'GIBBERISH';
 }
 
 export interface DraftResult {
