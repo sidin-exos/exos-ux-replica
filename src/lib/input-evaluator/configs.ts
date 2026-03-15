@@ -223,9 +223,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "C",
     deviationType: 2,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 15, expectedDataType: "narrative", required: true },
-      { fieldId: "sowText", label: "Statement of Work Document", minWords: 100, expectedDataType: "narrative", required: true },
-      { fieldId: "reviewScope", label: "Review Scope & Parameters", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "sowText", label: "Statement of Work Document", minWords: 200, expectedDataType: "narrative", required: true },
+      { fieldId: "reviewScope", label: "Review Scope & Parameters", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "Scope dispute resolution averages €30–80k per incident.",
