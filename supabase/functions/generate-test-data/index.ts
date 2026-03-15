@@ -66,11 +66,33 @@ interface DraftedParameters {
 }
 
 // Dynamic field derivation from block guidance registry
-function getScenarioFields(scenarioType: string): string[] {
-  const guidance = SCENARIO_BLOCK_GUIDANCE[scenarioType];
-  if (!guidance) return ["industryContext"];
-  return guidance.map(block => block.fieldId);
+interface ScenarioFieldGroups {
+  required: string[];
+  optional: string[];
+  all: string[];
 }
+
+function getScenarioFieldGroups(scenarioType: string): ScenarioFieldGroups {
+  const guidance = SCENARIO_BLOCK_GUIDANCE[scenarioType];
+
+  if (!guidance) {
+    return {
+      required: ["industryContext"],
+      optional: [],
+      all: ["industryContext"],
+    };
+  }
+
+  const required = guidance.filter((block) => block.isRequired).map((block) => block.fieldId);
+  const optional = guidance.filter((block) => !block.isRequired).map((block) => block.fieldId);
+
+  return {
+    required,
+    optional,
+    all: [...required, ...optional],
+  };
+}
+
 
 // =============================================
 // BUYER PERSONAS
@@ -595,7 +617,8 @@ serve(async (req) => {
     }
 
     // === FULL MODE: Legacy MCTS approach ===
-    const fields = getScenarioFields(scenarioType);
+    const fieldGroups = getScenarioFieldGroups(scenarioType);
+    const fields = fieldGroups.all;
     const industries = Object.keys(COMPATIBILITY_MATRIX);
     
     const selectedIndustry = industry && industries.includes(industry) 
@@ -616,10 +639,10 @@ serve(async (req) => {
       console.log(`[TestDataGen] MCTS iteration ${iteration + 1}/${mctsIterations}`);
       
       const generationPrompt = buildGenerationPrompt(
-        scenarioType, 
-        selectedIndustry, 
-        selectedCategory, 
-        schema,
+        scenarioType,
+        selectedIndustry,
+        selectedCategory,
+        fieldGroups,
         iteration,
         selectedPersona
       );
@@ -676,8 +699,8 @@ serve(async (req) => {
           reasoning: bestCandidate.reasoning,
           persona: selectedPersona.id,
           personaName: selectedPersona.name,
-          requiredFieldCount: schema.required.length,
-          optionalFieldCount: schema.optional.length,
+          requiredFieldCount: fieldGroups.required.length,
+          optionalFieldCount: fieldGroups.optional.length,
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -791,7 +814,8 @@ async function handleGenerateMode(
   temperature: number,
   selectedPersona: typeof BUYER_PERSONAS[number]
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
-  const fields = getScenarioFields(scenarioType);
+  const fieldGroups = getScenarioFieldGroups(scenarioType);
+  const fields = fieldGroups.all;
   
   // Compute quality tier
   const qualityTier: QualityTier = mapDataQualityToTier(parameters.dataQuality);
@@ -854,10 +878,10 @@ Adjust your output accordingly:
 
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST always be filled):
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some blank as empty strings):
-${schema.optional.map(f => `- ${f}`).join('\n')}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 ${blockInstructions}
 
 CRITICAL RULES:
@@ -875,10 +899,10 @@ Include ALL required fields and the optional fields you choose to fill. For unfi
   const user = `Generate test data for "${scenarioType}" scenario.
 
 REQUIRED FIELDS:
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill per persona behavior):
-${schema.optional.map(f => `- ${f}`).join('\n')}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 Context: ${parameters.reasoning}
 ${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
@@ -942,8 +966,8 @@ Return ONLY the JSON object.`;
       trickValidation: trickScore,
       persona: selectedPersona.id,
       personaName: selectedPersona.name,
-      requiredFieldCount: schema.required.length,
-      optionalFieldCount: schema.optional.length,
+      requiredFieldCount: fieldGroups.required.length,
+      optionalFieldCount: fieldGroups.optional.length,
       qualityTier,
       deviationType,
     }
@@ -1016,7 +1040,8 @@ async function handleMessyMode(
     ? scenarioType
     : HIGH_FRICTION_SCENARIOS[Math.floor(Math.random() * HIGH_FRICTION_SCENARIOS.length)];
 
-  const fields = getScenarioFields(targetScenario);
+  const fieldGroups = getScenarioFieldGroups(targetScenario);
+  const fields = fieldGroups.all;
 
   // Messy mode defaults to frustrated-stakeholder but can be overridden
   const messyPersona = selectedPersona.id === "frustrated-stakeholder" || selectedPersona
@@ -1038,10 +1063,10 @@ ${messyPersona.description}
 
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST be filled, even if messily):
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill chaotically per persona, some blank):
-${schema.optional.map(f => `- ${f}`).join('\n')}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with ALL field names as keys. Required fields must have messy data. Optional fields may be empty strings or contain mismatched data.`;
@@ -1086,8 +1111,8 @@ Return ONLY the JSON object.`;
       fieldsExpected: fields.length,
       persona: messyPersona.id,
       personaName: messyPersona.name,
-      requiredFieldCount: schema.required.length,
-      optionalFieldCount: schema.optional.length,
+      requiredFieldCount: fieldGroups.required.length,
+      optionalFieldCount: fieldGroups.optional.length,
     }
   };
 }
@@ -1116,11 +1141,11 @@ function buildGenerationPrompt(
   scenarioType: string,
   industry: string,
   category: string,
-  schema: ScenarioSchema,
+  fieldGroups: ScenarioFieldGroups,
   seed: number,
   selectedPersona: typeof BUYER_PERSONAS[number]
 ): { system: string; user: string } {
-  const fields = getAllFields(schema);
+  const fields = fieldGroups.all;
   const diversityHints = [
     "Focus on a mid-size company with typical procurement challenges.",
     "Consider a large enterprise with complex supply chain requirements.",
@@ -1144,10 +1169,10 @@ Adjust your output accordingly:
 
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST always be filled):
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some as empty strings):
-${schema.optional.length > 0 ? schema.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 ${blockInstructions}
 
 CRITICAL RULES:
