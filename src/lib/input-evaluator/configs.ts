@@ -100,9 +100,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "A",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 15, expectedDataType: "narrative", required: true },
-      { fieldId: "subscriptionDetails", label: "Current SaaS Portfolio", minWords: 30, expectedDataType: "tabular", required: true },
-      { fieldId: "optimisationParameters", label: "Optimisation Parameters", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "subscriptionDetails", label: "Current SaaS Portfolio", minWords: 50, expectedDataType: "tabular", required: true },
+      { fieldId: "optimisationParameters", label: "Optimisation Parameters", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "Average enterprise wastes 25% of SaaS spend on unused licences.",
