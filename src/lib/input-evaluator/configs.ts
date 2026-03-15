@@ -249,9 +249,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "C",
     deviationType: "1H",
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 15, expectedDataType: "narrative", required: true },
-      { fieldId: "riskRegister", label: "Risk Register", minWords: 40, expectedDataType: "tabular", required: true },
-      { fieldId: "controlOwnership", label: "Controls & Ownership", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "riskRegister", label: "Risk Register", minWords: 60, expectedDataType: "tabular", required: true },
+      { fieldId: "controlOwnership", label: "Controls & Ownership", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "A risk matrix without user-provided probability and impact inputs produces no decision value.",
