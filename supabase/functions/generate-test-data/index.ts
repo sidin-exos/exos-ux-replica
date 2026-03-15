@@ -93,9 +93,6 @@ function getScenarioFieldGroups(scenarioType: string): ScenarioFieldGroups {
   };
 }
 
-function getScenarioFields(scenarioType: string): string[] {
-  return getScenarioFieldGroups(scenarioType).all;
-}
 
 // =============================================
 // BUYER PERSONAS
