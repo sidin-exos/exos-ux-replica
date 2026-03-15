@@ -329,9 +329,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "D",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "consolidationScope", label: "Current Supplier Spend Distribution", minWords: 30, expectedDataType: "tabular", required: true },
-      { fieldId: "consolidationParameters", label: "Consolidation Parameters", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "consolidationScope", label: "Current Supplier Spend Distribution", minWords: 50, expectedDataType: "tabular", required: true },
+      { fieldId: "consolidationParameters", label: "Consolidation Parameters", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "Dual-source 70/30 split achieves 90% of volume discount benefits with full supply continuity.",
