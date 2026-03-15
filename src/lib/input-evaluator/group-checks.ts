@@ -114,7 +114,7 @@ function runGroupCChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasRegulatory) {
     checks.push({
       id: "GROUPC_REGULATORY_REFERENCE",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No regulatory or compliance framework referenced. Risk and compliance scenarios benefit from explicit framework mentions.",
       fieldId,
       suggestion: "Mention applicable standards: GDPR, ISO 27001, SOC2, industry-specific regulations.",
