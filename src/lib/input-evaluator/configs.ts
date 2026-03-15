@@ -45,9 +45,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "A",
     deviationType: "1H",
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "assetFinancials", label: "Asset Financial Parameters", minWords: 40, expectedDataType: "numeric", required: true, expectedKeywords: ["purchase", "lease", "lifespan", "depreciation", "maintenance", "residual"] },
-      { fieldId: "financialContext", label: "Financial Context & Tax Inputs", minWords: 20, expectedDataType: "numeric", required: true, expectedKeywords: ["wacc", "tax", "ifrs", "currency"] },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "assetFinancials", label: "Asset Financial Parameters", minWords: 60, expectedDataType: "numeric", required: true, expectedKeywords: ["purchase", "lease", "lifespan", "depreciation", "maintenance", "residual"] },
+      { fieldId: "financialContext", label: "Financial Context & Tax Inputs", minWords: 30, expectedDataType: "numeric", required: true, expectedKeywords: ["wacc", "tax", "ifrs", "currency"] },
     ],
     scenarioChecks: [],
     financialImpactGap: "A 5% WACC miscalculation on a €500k asset over 5 years = €25k+ misallocated capital.",
