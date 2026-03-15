@@ -368,9 +368,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "D",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "supplierProfile", label: "Supplier/Category Profile", minWords: 30, expectedDataType: "mixed", required: true },
-      { fieldId: "bcpStatus", label: "BCP Status & Response Readiness", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "supplierProfile", label: "Supplier/Category Profile", minWords: 50, expectedDataType: "mixed", required: true },
+      { fieldId: "bcpStatus", label: "BCP Status & Response Readiness", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "85% of Fortune 500 companies experienced a supply chain disruption in the past 3 years.",
