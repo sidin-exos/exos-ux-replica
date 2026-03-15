@@ -702,8 +702,8 @@ serve(async (req) => {
           reasoning: bestCandidate.reasoning,
           persona: selectedPersona.id,
           personaName: selectedPersona.name,
-          requiredFieldCount: schema.required.length,
-          optionalFieldCount: schema.optional.length,
+          requiredFieldCount: fieldGroups.required.length,
+          optionalFieldCount: fieldGroups.optional.length,
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
