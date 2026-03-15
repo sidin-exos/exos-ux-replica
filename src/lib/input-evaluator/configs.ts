@@ -155,9 +155,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "B",
     deviationType: 2,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 15, expectedDataType: "narrative", required: true },
-      { fieldId: "contractText", label: "Contract Text", minWords: 40, expectedDataType: "narrative", required: true },
-      { fieldId: "reviewParameters", label: "Review Parameters", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "contractText", label: "Contract Text", minWords: 60, expectedDataType: "narrative", required: true },
+      { fieldId: "reviewParameters", label: "Review Parameters", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "3.1% of annual contract value lost through commercial clause oversights.",
