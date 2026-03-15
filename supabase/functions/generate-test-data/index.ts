@@ -902,10 +902,10 @@ Include ALL required fields and the optional fields you choose to fill. For unfi
   const user = `Generate test data for "${scenarioType}" scenario.
 
 REQUIRED FIELDS:
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill per persona behavior):
-${schema.optional.map(f => `- ${f}`).join('\n')}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 Context: ${parameters.reasoning}
 ${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
