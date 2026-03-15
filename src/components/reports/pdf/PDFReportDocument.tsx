@@ -503,7 +503,7 @@ function buildDocStyles(c: DocColors) {
     inputValue: {
       fontSize: 10,
       color: c.text,
-      fontFamily: "Courier",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 600,
     },
     footer: {
