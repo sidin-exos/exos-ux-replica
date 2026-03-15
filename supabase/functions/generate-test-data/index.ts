@@ -620,7 +620,8 @@ serve(async (req) => {
     }
 
     // === FULL MODE: Legacy MCTS approach ===
-    const fields = getScenarioFields(scenarioType);
+    const fieldGroups = getScenarioFieldGroups(scenarioType);
+    const fields = fieldGroups.all;
     const industries = Object.keys(COMPATIBILITY_MATRIX);
     
     const selectedIndustry = industry && industries.includes(industry) 
