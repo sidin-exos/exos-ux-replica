@@ -106,7 +106,7 @@ export function checkBoilerplate(
     if (thisText === other) {
       return {
         id: "UNIVERSAL_BOILERPLATE",
-        severity: "WARNING",
+        severity: "CRITICAL",
         message: "This field contains identical text to another field.",
         fieldId,
         suggestion: "Each block should contain different information specific to its purpose.",

@@ -168,7 +168,7 @@ function runGroupDChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasTimeframe(text)) {
     checks.push({
       id: "GROUPD_TEMPORAL_HORIZON",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No planning horizon specified. Strategic analysis needs a timeframe (1-year, 3-year, 5-year).",
       fieldId,
       suggestion: "Specify your planning horizon and key milestones.",
