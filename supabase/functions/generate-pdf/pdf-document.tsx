@@ -667,7 +667,6 @@ const PDFReportDocument = ({
         {showToc && (
           <View style={styles.tocSection}>
             <View style={styles.sectionHeader}>
-              <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
               <Text style={styles.sectionTitle}>Contents</Text>
             </View>
             <View style={styles.sectionContent}>
@@ -677,7 +676,7 @@ const PDFReportDocument = ({
                     <Text style={styles.tocLabel}>{i + 1}. {entry.label}</Text>
                   </Link>
                   <View style={styles.tocLeader} />
-                  <Text style={styles.tocPageHint}>→</Text>
+                  <Text style={styles.tocPageHint}>p. {entry.page}</Text>
                 </View>
               ))}
             </View>
