@@ -826,7 +826,6 @@ const PDFReportDocument = ({
         {/* Executive Summary */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
             <Text style={styles.sectionTitle}>Executive Summary</Text>
           </View>
           <View style={styles.sectionContent}>
