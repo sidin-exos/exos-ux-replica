@@ -817,7 +817,8 @@ async function handleGenerateMode(
   temperature: number,
   selectedPersona: typeof BUYER_PERSONAS[number]
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
-  const fields = getScenarioFields(scenarioType);
+  const fieldGroups = getScenarioFieldGroups(scenarioType);
+  const fields = fieldGroups.all;
   
   // Compute quality tier
   const qualityTier: QualityTier = mapDataQualityToTier(parameters.dataQuality);
