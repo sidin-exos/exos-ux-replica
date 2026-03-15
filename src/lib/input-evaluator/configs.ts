@@ -142,9 +142,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "B",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "serviceDeliverables", label: "Service Deliverables & Uptime", minWords: 30, expectedDataType: "mixed", required: true, expectedKeywords: ["uptime", "delivery", "response", "availability"] },
-      { fieldId: "escalationPenalties", label: "Escalation & Penalty Framework", minWords: 20, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "serviceDeliverables", label: "Service Deliverables & Uptime", minWords: 50, expectedDataType: "mixed", required: true, expectedKeywords: ["uptime", "delivery", "response", "availability"] },
+      { fieldId: "escalationPenalties", label: "Escalation & Penalty Framework", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "An SLA without financial penalties is legally unenforceable.",
