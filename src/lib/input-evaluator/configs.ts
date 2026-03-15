@@ -168,9 +168,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "B",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "negotiationScope", label: "Negotiation Scope & Objectives", minWords: 30, expectedDataType: "mixed", required: true, expectedKeywords: ["target", "objective", "leverage", "position"] },
-      { fieldId: "counterpartyProfile", label: "Counterparty Profile & BATNA", minWords: 20, expectedDataType: "narrative", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "negotiationScope", label: "Negotiation Scope & Objectives", minWords: 50, expectedDataType: "mixed", required: true, expectedKeywords: ["target", "objective", "leverage", "position"] },
+      { fieldId: "counterpartyProfile", label: "Counterparty Profile & BATNA", minWords: 25, expectedDataType: "narrative", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "70% of negotiations with structured prep outperform unstructured ones on final price.",
