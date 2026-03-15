@@ -50,7 +50,7 @@ export function checkS3Critical(formData: Record<string, string>): QualityCheck[
   if (!hasKeyword(financials, ["tax rate", "corporate tax", "tax"])) {
     checks.push({
       id: "S3_TAX_MISSING",
-      severity: "WARNING",
+      severity: "CRITICAL",
       message: "No corporate tax rate specified. Tax treatment significantly affects lease vs. buy calculations.",
       fieldId: "financialContext",
       suggestion: "Include your corporate tax rate (%) for accurate IFRS 16 and depreciation modelling.",
@@ -87,7 +87,7 @@ export function checkS14Critical(formData: Record<string, string>): QualityCheck
   if (!hasKeyword(metrics, ["satisfaction", "score", "rating", "1-5", "out of"])) {
     checks.push({
       id: "S14_SATISFACTION_MISSING",
-      severity: "WARNING",
+      severity: "CRITICAL",
       message: "No stakeholder satisfaction rating detected. Quantitative scores without qualitative context are strategically limited.",
       fieldId: "performanceMetrics",
       suggestion: "Include an overall stakeholder satisfaction score (e.g. '3.5 out of 5').",
@@ -236,7 +236,7 @@ export function runScenarioChecks(
     if (spendData.trim() && !hasListItems(spendData, 3)) {
       checks.push({
         id: "S5_TABULAR_MISSING",
-        severity: "WARNING",
+        severity: "CRITICAL",
         message: "Spend data should be structured (table format with columns). Unstructured text reduces classification accuracy below 60%.",
         fieldId: "rawSpendData",
         suggestion: "Use pipe-separated or bullet-point format: Supplier | Description | Amount | Date",
@@ -261,7 +261,7 @@ export function runScenarioChecks(
   // S16 (sow-critic): check document completeness
   if (scenarioId === "sow-critic") {
     const sow = formData["sowText"] || "";
-    if (sow.trim().split(/\s+/).length < 100) {
+    if (sow.trim().split(/\s+/).length < 200) {
       checks.push({
         id: "S16_DOCUMENT_SHORT",
         severity: "WARNING",

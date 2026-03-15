@@ -34,13 +34,13 @@ function calculateScore(blocks: BlockEvaluation[], allChecks: QualityCheck[]): n
   for (const check of allChecks) {
     switch (check.severity) {
       case "CRITICAL":
-        score -= 15;
+        score -= 25;
         break;
       case "WARNING":
-        score -= 5;
+        score -= 10;
         break;
       case "INFO":
-        score -= 1;
+        score -= 3;
         break;
     }
   }
@@ -49,13 +49,13 @@ function calculateScore(blocks: BlockEvaluation[], allChecks: QualityCheck[]): n
 }
 
 function deriveStatus(score: number): OverallStatus {
-  if (score >= 75) return "READY";
-  if (score >= 40) return "IMPROVABLE";
+  if (score >= 85) return "READY";
+  if (score >= 55) return "IMPROVABLE";
   return "INSUFFICIENT";
 }
 
 function deriveConfidence(score: number, hasCritical: boolean): ConfidenceFlag {
-  if (hasCritical || score < 50) return "LOW";
+  if (hasCritical || score < 65) return "LOW";
   return "HIGH";
 }
 
