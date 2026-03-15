@@ -114,9 +114,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "A",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "specificationText", label: "Current Specification", minWords: 30, expectedDataType: "narrative", required: true, expectedKeywords: ["material", "tolerance", "standard", "grade"] },
-      { fieldId: "specContext", label: "Challenge Parameters", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "specificationText", label: "Current Specification", minWords: 50, expectedDataType: "narrative", required: true, expectedKeywords: ["material", "tolerance", "standard", "grade"] },
+      { fieldId: "specContext", label: "Challenge Parameters", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "Over-specification is the single largest avoidable cost driver: 15–25% cost premium.",
