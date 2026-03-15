@@ -181,9 +181,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "B",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "stakeholderRequirements", label: "Stakeholder Requirements", minWords: 40, expectedDataType: "narrative", required: true },
-      { fieldId: "constraintsPriority", label: "Constraints & Priority Context", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "stakeholderRequirements", label: "Stakeholder Requirements", minWords: 60, expectedDataType: "narrative", required: true },
+      { fieldId: "constraintsPriority", label: "Constraints & Priority Context", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     commonFailureMode: "Over-curated input. Include everything — even messy notes.",
