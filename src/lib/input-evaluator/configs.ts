@@ -262,9 +262,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "C",
     deviationType: 2,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 15, expectedDataType: "narrative", required: true },
-      { fieldId: "documentText", label: "Document for Compliance Check", minWords: 50, expectedDataType: "narrative", required: true },
-      { fieldId: "complianceFramework", label: "Compliance Framework", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "documentText", label: "Document for Compliance Check", minWords: 60, expectedDataType: "narrative", required: true },
+      { fieldId: "complianceFramework", label: "Compliance Framework", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "A missed regulatory requirement in a €5M+ contract can result in complete contract termination.",
