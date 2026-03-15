@@ -130,12 +130,12 @@ function buildDocStyles(c: DocColors) {
       color: c.textMuted,
       fontFamily: "Helvetica",
     },
-    tocSection: { marginBottom: 24 },
-    tocRow: { flexDirection: "row", alignItems: "center", paddingVertical: 6 },
-    tocLabel: { fontSize: 10, color: c.primary, fontFamily: "Helvetica-Bold", textDecoration: "none" },
+    tocSection: { marginBottom: 10 },
+    tocRow: { flexDirection: "row", alignItems: "center", paddingVertical: 3 },
+    tocLabel: { fontSize: 9, color: c.primary, fontFamily: "Helvetica-Bold", textDecoration: "none" },
     tocLeader: { flex: 1, borderBottomWidth: 1, borderBottomStyle: "dashed", borderBottomColor: c.border + "60", marginHorizontal: 10, marginBottom: 3 },
-    tocPageHint: { fontSize: 9, color: c.textMuted, fontFamily: "Helvetica" },
-    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 30, borderBottomWidth: 1, borderBottomColor: c.border, paddingBottom: 20 },
+    tocPageHint: { fontSize: 8, color: c.textMuted, fontFamily: "Helvetica" },
+    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, borderBottomWidth: 1, borderBottomColor: c.border, paddingBottom: 12 },
     logoSection: { flexDirection: "row", alignItems: "center" },
     logoImage: { width: 40, height: 40, marginRight: 12 },
     brandName: { fontSize: 23, fontFamily: "Helvetica-Bold", fontWeight: 700, color: c.text, letterSpacing: 1 },
@@ -144,17 +144,17 @@ function buildDocStyles(c: DocColors) {
     reportBadge: { backgroundColor: c.surfaceLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginBottom: 4 },
     reportBadgeText: { fontSize: 8, color: c.primary, fontWeight: 600 },
     reportDate: { fontSize: 9, color: c.textMuted },
-    titleSection: { marginBottom: 30 },
-    reportTitle: { fontSize: 28, fontFamily: "Helvetica-Bold", fontWeight: 700, color: c.primary, marginBottom: 8, letterSpacing: 0.5 },
-    reportSubtitle: { fontSize: 12, color: c.textMuted },
-    section: { marginBottom: 24 },
-    sectionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-    sectionTitle: { fontSize: 16, fontFamily: "Helvetica-Bold", fontWeight: 600, color: c.text, letterSpacing: 0.5 },
-    sectionContent: { backgroundColor: c.surface, borderRadius: 8, padding: 16, borderWidth: 1, borderColor: c.border },
-    keyPointText: { fontSize: 12, color: c.text, lineHeight: 1.5, marginBottom: 4 },
+    titleSection: { marginBottom: 14 },
+    reportTitle: { fontSize: 22, fontFamily: "Helvetica-Bold", fontWeight: 700, color: c.primary, marginBottom: 4, letterSpacing: 0.5 },
+    reportSubtitle: { fontSize: 10, color: c.textMuted },
+    section: { marginBottom: 14 },
+    sectionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+    sectionTitle: { fontSize: 13, fontFamily: "Helvetica-Bold", fontWeight: 600, color: c.text, letterSpacing: 0.5 },
+    sectionContent: { backgroundColor: c.surface, borderRadius: 8, padding: 10, borderWidth: 1, borderColor: c.border },
+    keyPointText: { fontSize: 9.5, color: c.text, lineHeight: 1.4, marginBottom: 4 },
     analysisText: { fontSize: 12, color: c.text, lineHeight: 1.6, marginBottom: 8 },
     analysisTextHighlight: { fontSize: 12, color: c.primary, lineHeight: 1.6, marginBottom: 8, fontWeight: 700, fontFamily: "Courier-Bold", backgroundColor: c.primary + "15", paddingHorizontal: 6, paddingVertical: 3, borderRadius: 3 },
-    analysisSubHeader: { fontSize: 13, fontFamily: "Helvetica-Bold", fontWeight: 600, color: c.text, marginTop: 10, marginBottom: 6 },
+    analysisSubHeader: { fontSize: 11, fontFamily: "Helvetica-Bold", fontWeight: 600, color: c.text, marginTop: 4, marginBottom: 3 },
     sectionBlockBase: { backgroundColor: c.surface, borderRadius: 8, padding: 16, borderWidth: 1, borderColor: c.border, marginBottom: 15 },
     sectionBlockRecommendations: { backgroundColor: c.surface, borderRadius: 8, padding: 16, borderWidth: 1, borderColor: c.border, borderLeftWidth: 3, borderLeftColor: c.primary, marginBottom: 15 },
     sectionBlockRisks: { backgroundColor: c.destructive + "10", borderRadius: 8, padding: 16, borderWidth: 1, borderColor: c.destructive + "30", marginBottom: 15 },
@@ -650,11 +650,11 @@ const PDFReportDocument = ({
                 {i + 1}. {point}
               </Text>
             ))}
-            <View style={{ height: 12 }} />
+            <View style={{ height: 6 }} />
             <Text style={styles.analysisSubHeader}>Top Recommendations</Text>
-            <View style={{ backgroundColor: colors.warning + "10", borderRadius: 6, padding: 10 }}>
+            <View style={{ backgroundColor: colors.warning + "10", borderRadius: 6, padding: 6 }}>
               {recommendations.map((point, i) => (
-                <Text key={`r-${i}`} style={{ ...styles.keyPointText, marginBottom: 6 }}>
+                <Text key={`r-${i}`} style={{ ...styles.keyPointText, marginBottom: 3 }}>
                   {i + 1}. {point}
                 </Text>
               ))}

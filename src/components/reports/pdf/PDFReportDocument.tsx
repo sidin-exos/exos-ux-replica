@@ -142,15 +142,15 @@ function buildDocStyles(c: DocColors) {
       fontFamily: "Helvetica",
     },
     tocSection: {
-      marginBottom: 24,
+      marginBottom: 10,
     },
     tocRow: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 6,
+      paddingVertical: 3,
     },
     tocLabel: {
-      fontSize: 10,
+      fontSize: 9,
       color: c.primary,
       fontFamily: "Helvetica-Bold",
       textDecoration: "none",
@@ -164,7 +164,7 @@ function buildDocStyles(c: DocColors) {
       marginBottom: 3,
     },
     tocPageHint: {
-      fontSize: 9,
+      fontSize: 8,
       color: c.textMuted,
       fontFamily: "Helvetica",
     },
@@ -172,10 +172,10 @@ function buildDocStyles(c: DocColors) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "flex-start",
-      marginBottom: 30,
+      marginBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
-      paddingBottom: 20,
+      paddingBottom: 12,
     },
     logoSection: {
       flexDirection: "row",
@@ -218,30 +218,30 @@ function buildDocStyles(c: DocColors) {
       color: c.textMuted,
     },
     titleSection: {
-      marginBottom: 30,
+      marginBottom: 14,
     },
     reportTitle: {
-      fontSize: 28,
+      fontSize: 22,
       fontFamily: "Helvetica-Bold",
       fontWeight: 700,
       color: c.primary,
-      marginBottom: 8,
+      marginBottom: 4,
       letterSpacing: 0.5,
     },
     reportSubtitle: {
-      fontSize: 12,
+      fontSize: 10,
       color: c.textMuted,
     },
     section: {
-      marginBottom: 24,
+      marginBottom: 14,
     },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 12,
+      marginBottom: 6,
     },
     sectionTitle: {
-      fontSize: 16,
+      fontSize: 13,
       fontFamily: "Helvetica-Bold",
       fontWeight: 600,
       color: c.text,
@@ -250,7 +250,7 @@ function buildDocStyles(c: DocColors) {
     sectionContent: {
       backgroundColor: c.surface,
       borderRadius: 8,
-      padding: 16,
+      padding: 10,
       borderWidth: 1,
       borderColor: c.border,
     },
@@ -276,9 +276,9 @@ function buildDocStyles(c: DocColors) {
     },
     keyPointText: {
       flex: 1,
-      fontSize: 12,
+      fontSize: 9.5,
       color: c.text,
-      lineHeight: 1.5,
+      lineHeight: 1.4,
     },
     analysisText: {
       fontSize: 12,
@@ -307,12 +307,12 @@ function buildDocStyles(c: DocColors) {
       marginBottom: 8,
     },
     analysisSubHeader: {
-      fontSize: 13,
+      fontSize: 11,
       fontFamily: "Helvetica-Bold",
       fontWeight: 600,
       color: c.text,
-      marginTop: 10,
-      marginBottom: 6,
+      marginTop: 4,
+      marginBottom: 3,
     },
     sectionBlockBase: {
       backgroundColor: c.surface,
@@ -832,12 +832,12 @@ const PDFReportDocument = ({
               </Text>
             ))}
 
-            <View style={{ height: 12 }} />
+            <View style={{ height: 6 }} />
 
             <Text style={styles.analysisSubHeader}>Top Recommendations</Text>
-            <View style={{ backgroundColor: colors.warning + "10", borderRadius: 6, padding: 10 }}>
+            <View style={{ backgroundColor: colors.warning + "10", borderRadius: 6, padding: 6 }}>
               {recommendations.map((point, i) => (
-                <Text key={`r-${i}`} style={{ ...styles.keyPointText, marginBottom: 6 }}>
+                <Text key={`r-${i}`} style={{ ...styles.keyPointText, marginBottom: 3 }}>
                   {i + 1}. {point}
                 </Text>
               ))}
