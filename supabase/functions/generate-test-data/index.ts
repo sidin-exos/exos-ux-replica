@@ -1144,11 +1144,11 @@ function buildGenerationPrompt(
   scenarioType: string,
   industry: string,
   category: string,
-  schema: ScenarioSchema,
+  fieldGroups: ScenarioFieldGroups,
   seed: number,
   selectedPersona: typeof BUYER_PERSONAS[number]
 ): { system: string; user: string } {
-  const fields = getAllFields(schema);
+  const fields = fieldGroups.all;
   const diversityHints = [
     "Focus on a mid-size company with typical procurement challenges.",
     "Consider a large enterprise with complex supply chain requirements.",
