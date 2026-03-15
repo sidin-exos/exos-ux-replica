@@ -142,15 +142,15 @@ function buildDocStyles(c: DocColors) {
       fontFamily: "Helvetica",
     },
     tocSection: {
-      marginBottom: 24,
+      marginBottom: 10,
     },
     tocRow: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 6,
+      paddingVertical: 3,
     },
     tocLabel: {
-      fontSize: 10,
+      fontSize: 9,
       color: c.primary,
       fontFamily: "Helvetica-Bold",
       textDecoration: "none",
@@ -164,7 +164,7 @@ function buildDocStyles(c: DocColors) {
       marginBottom: 3,
     },
     tocPageHint: {
-      fontSize: 9,
+      fontSize: 8,
       color: c.textMuted,
       fontFamily: "Helvetica",
     },
@@ -172,10 +172,10 @@ function buildDocStyles(c: DocColors) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "flex-start",
-      marginBottom: 30,
+      marginBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
-      paddingBottom: 20,
+      paddingBottom: 12,
     },
     logoSection: {
       flexDirection: "row",
