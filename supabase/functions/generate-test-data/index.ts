@@ -1066,10 +1066,10 @@ ${messyPersona.description}
 
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST be filled, even if messily):
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill chaotically per persona, some blank):
-${schema.optional.map(f => `- ${f}`).join('\n')}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with ALL field names as keys. Required fields must have messy data. Optional fields may be empty strings or contain mismatched data.`;
