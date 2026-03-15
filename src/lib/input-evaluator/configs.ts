@@ -236,9 +236,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "C",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "riskEnvironment", label: "Risk Environment & Known Hazards", minWords: 30, expectedDataType: "narrative", required: true, expectedKeywords: ["risk", "hazard", "dependency", "regulatory"] },
-      { fieldId: "existingControls", label: "Existing Controls & Exposure", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "riskEnvironment", label: "Risk Environment & Known Hazards", minWords: 50, expectedDataType: "narrative", required: true, expectedKeywords: ["risk", "hazard", "dependency", "regulatory"] },
+      { fieldId: "existingControls", label: "Existing Controls & Exposure", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "An unmitigated GDPR breach costs €10–20M or 4% of global turnover.",
