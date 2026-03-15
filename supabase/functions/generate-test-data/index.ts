@@ -66,10 +66,35 @@ interface DraftedParameters {
 }
 
 // Dynamic field derivation from block guidance registry
-function getScenarioFields(scenarioType: string): string[] {
+interface ScenarioFieldGroups {
+  required: string[];
+  optional: string[];
+  all: string[];
+}
+
+function getScenarioFieldGroups(scenarioType: string): ScenarioFieldGroups {
   const guidance = SCENARIO_BLOCK_GUIDANCE[scenarioType];
-  if (!guidance) return ["industryContext"];
-  return guidance.map(block => block.fieldId);
+
+  if (!guidance) {
+    return {
+      required: ["industryContext"],
+      optional: [],
+      all: ["industryContext"],
+    };
+  }
+
+  const required = guidance.filter((block) => block.isRequired).map((block) => block.fieldId);
+  const optional = guidance.filter((block) => !block.isRequired).map((block) => block.fieldId);
+
+  return {
+    required,
+    optional,
+    all: [...required, ...optional],
+  };
+}
+
+function getScenarioFields(scenarioType: string): string[] {
+  return getScenarioFieldGroups(scenarioType).all;
 }
 
 // =============================================
