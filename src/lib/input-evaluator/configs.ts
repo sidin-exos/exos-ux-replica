@@ -395,9 +395,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "E",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 15, expectedDataType: "narrative", required: true },
-      { fieldId: "researchQuery", label: "Research Query", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "researchParameters", label: "Research Parameters", minWords: 10, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "researchQuery", label: "Research Query", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "researchParameters", label: "Research Parameters", minWords: 15, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
   },
