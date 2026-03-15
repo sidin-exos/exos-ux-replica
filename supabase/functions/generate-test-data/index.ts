@@ -811,6 +811,11 @@ Return ONLY a valid JSON object with these exact keys:
     parsed.persona = persona.id;
     parsed.personaName = persona.name;
     
+    // Compute and attach qualityTier
+    const qualityTier = mapDataQualityToTier(parsed.dataQuality);
+    (parsed as any).qualityTier = qualityTier;
+    console.log(`[TestDataGen] Draft mode - qualityTier: ${qualityTier} (from dataQuality: ${parsed.dataQuality})`);
+    
     return { success: true, parameters: parsed };
   } catch (error) {
     console.error("[TestDataGen] Failed to parse draft:", error);
