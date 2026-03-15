@@ -129,9 +129,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "B",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 15, expectedDataType: "narrative", required: false },
-      { fieldId: "rawBrief", label: "Procurement Requirement", minWords: 40, expectedDataType: "narrative", required: true },
-      { fieldId: "complianceEvaluation", label: "Compliance & Evaluation Criteria", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: false },
+      { fieldId: "rawBrief", label: "Procurement Requirement", minWords: 60, expectedDataType: "narrative", required: true },
+      { fieldId: "complianceEvaluation", label: "Compliance & Evaluation Criteria", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "A reissued RFP delays award by 3–6 weeks.",
