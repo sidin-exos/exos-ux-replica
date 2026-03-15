@@ -788,7 +788,7 @@ const PDFReportDocument = ({
   const formattedDate = formatDate(timestamp);
   const hasDashboards = selectedDashboards.length > 0;
   const hasParams = Object.keys(formData).length > 0;
-  const tocEntries = buildTocEntries(hasDashboards, hasParams);
+  const tocEntries = buildTocEntries(hasDashboards, hasParams, selectedDashboards.length);
   const showToc = hasDashboards; // proxy for >3 pages
 
   return (
