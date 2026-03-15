@@ -1302,11 +1302,24 @@ function parseGeneratedData(content: string, fields: string[]): Record<string, s
     
     const parsed = JSON.parse(jsonStr.trim());
     
-    // Convert all values to strings
+    // Convert all values to strings (stringify objects/arrays)
     const result: Record<string, string> = {};
     for (const field of fields) {
-      if (parsed[field] !== undefined) {
-        result[field] = String(parsed[field]);
+      if (parsed[field] !== undefined && parsed[field] !== null) {
+        const val = parsed[field];
+        if (typeof val === "object") {
+          // Format structured sub-prompt data as readable text
+          if (Array.isArray(val)) {
+            result[field] = val.map(item => typeof item === "object" ? JSON.stringify(item) : String(item)).join("\n");
+          } else {
+            // Convert key-value object to readable bullet points
+            result[field] = Object.entries(val)
+              .map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`)
+              .join("\n");
+          }
+        } else {
+          result[field] = String(val);
+        }
       }
     }
     
