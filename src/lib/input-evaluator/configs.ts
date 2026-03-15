@@ -59,9 +59,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "A",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "baselinePricing", label: "Baseline & New Pricing", minWords: 30, expectedDataType: "numeric", required: true, expectedKeywords: ["baseline", "price", "volume", "spend"] },
-      { fieldId: "savingsClassification", label: "Savings Classification", minWords: 20, expectedDataType: "mixed", required: true, expectedKeywords: ["hard", "soft", "avoidance", "inflation"] },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "baselinePricing", label: "Baseline & New Pricing", minWords: 50, expectedDataType: "numeric", required: true, expectedKeywords: ["baseline", "price", "volume", "spend"] },
+      { fieldId: "savingsClassification", label: "Savings Classification", minWords: 25, expectedDataType: "mixed", required: true, expectedKeywords: ["hard", "soft", "avoidance", "inflation"] },
     ],
     scenarioChecks: [],
     financialImpactGap: "~40% of reported savings are rejected by Finance due to categorisation errors.",
