@@ -1170,6 +1170,9 @@ function buildGenerationPrompt(
     "Generate data for a company undergoing digital transformation."
   ];
 
+  // Default to OPTIMAL for full mode
+  const blockInstructions = buildBlockInstructions(scenarioType, 'OPTIMAL');
+
   const system = `You are an expert procurement consultant generating realistic test data for procurement analysis software.
 
 BUYER PERSONA:
@@ -1186,11 +1189,12 @@ ${schema.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some as empty strings):
 ${schema.optional.length > 0 ? schema.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+${blockInstructions}
 
 CRITICAL RULES:
 1. All generated data MUST be consistent with the ${industry} industry
 2. All generated data MUST be relevant to the ${category} procurement category
-3. The "industryContext" field MUST be at least 100 words describing a realistic company
+3. ALL blocks must be populated — do not stop after Block 1
 4. All numeric values must be plausible for the industry scale
 5. DO NOT generate illogical combinations (e.g., pharmaceutical procurement for a software company)
 6. ALWAYS fill all REQUIRED fields. For OPTIONAL fields, follow the persona fill rate — include unfilled optional fields as empty strings.
@@ -1210,6 +1214,7 @@ ${fields.map(f => `- ${f}`).join('\n')}
 
 IMPORTANT:
 - "industryContext" must describe a specific, realistic company (100+ words) in the ${industry} sector
+- You MUST generate content for ALL required fields — not just the first one
 - All values must be internally consistent with that company
 - Numbers should be realistic for the company size described
 - Include specific details like certifications, employee counts, and strategic priorities
