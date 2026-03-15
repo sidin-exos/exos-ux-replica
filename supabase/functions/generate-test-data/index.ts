@@ -5,6 +5,16 @@ import { callGoogleAI } from "../_shared/google-ai.ts";
 
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { LangSmithTracer } from "../_shared/langsmith.ts";
+import {
+  SCENARIO_BLOCK_GUIDANCE,
+  QUALITY_TIER_INSTRUCTIONS,
+  DEVIATION_TYPE_RULES,
+  mapDataQualityToTier,
+  getDeviationType,
+  buildBlockInstructions,
+  type QualityTier,
+} from "./block-guidance.ts";
 
 /**
  * AI-Powered Test Data Generation with Drafter-Validator Pattern
