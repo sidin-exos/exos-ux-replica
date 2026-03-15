@@ -147,7 +147,7 @@ function runGroupDChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasStrategicTerms) {
     checks.push({
       id: "GROUPD_STRATEGIC_SPECIFICITY",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No strategic language detected. Strategic scenarios produce better outputs when goals and objectives are explicit.",
       fieldId,
       suggestion: "State your strategic objective: cost leadership, risk reduction, innovation, market expansion, etc.",
