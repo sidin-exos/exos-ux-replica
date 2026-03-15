@@ -1098,7 +1098,7 @@ async function callAI(
       systemPrompt,
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
       temperature,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 8192,
       model: "gemini-3.1-flash-lite-preview",
     });
     return { success: true, content: response.text };
