@@ -307,12 +307,12 @@ function buildDocStyles(c: DocColors) {
       marginBottom: 8,
     },
     analysisSubHeader: {
-      fontSize: 13,
+      fontSize: 11,
       fontFamily: "Helvetica-Bold",
       fontWeight: 600,
       color: c.text,
-      marginTop: 10,
-      marginBottom: 6,
+      marginTop: 4,
+      marginBottom: 3,
     },
     sectionBlockBase: {
       backgroundColor: c.surface,
