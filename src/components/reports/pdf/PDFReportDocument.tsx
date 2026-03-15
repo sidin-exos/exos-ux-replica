@@ -721,15 +721,20 @@ const generateReportHash = (title: string, ts: string): string => {
 interface TocEntry {
   label: string;
   anchor: string;
+  page: number;
 }
 
-const buildTocEntries = (hasDashboards: boolean, hasParams: boolean): TocEntry[] => {
+const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCount: number): TocEntry[] => {
   const entries: TocEntry[] = [];
-  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations" });
-  entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis" });
-  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology" });
-  entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality" });
-  if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters" });
+  // Page 1 = cover. Dashboards start on page 2, each page holds ~2 dashboards.
+  const dashboardPages = hasDashboards ? Math.ceil(dashboardCount / 2) : 0;
+  const detailedAnalysisPage = 2 + dashboardPages;
+
+  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 2 });
+  entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis", page: detailedAnalysisPage });
+  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology", page: detailedAnalysisPage });
+  entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality", page: detailedAnalysisPage });
+  if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters", page: detailedAnalysisPage });
   return entries;
 };
 
@@ -783,7 +788,7 @@ const PDFReportDocument = ({
   const formattedDate = formatDate(timestamp);
   const hasDashboards = selectedDashboards.length > 0;
   const hasParams = Object.keys(formData).length > 0;
-  const tocEntries = buildTocEntries(hasDashboards, hasParams);
+  const tocEntries = buildTocEntries(hasDashboards, hasParams, selectedDashboards.length);
   const showToc = hasDashboards; // proxy for >3 pages
 
   return (
@@ -821,7 +826,6 @@ const PDFReportDocument = ({
         {/* Executive Summary */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
             <Text style={styles.sectionTitle}>Executive Summary</Text>
           </View>
           <View style={styles.sectionContent}>
@@ -848,8 +852,7 @@ const PDFReportDocument = ({
         {/* Table of Contents */}
         {showToc && (
           <View style={styles.tocSection}>
-            <View style={styles.sectionHeader}>
-              <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
+          <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Contents</Text>
             </View>
             <View style={styles.sectionContent}>
@@ -859,7 +862,7 @@ const PDFReportDocument = ({
                     <Text style={styles.tocLabel}>{i + 1}. {entry.label}</Text>
                   </Link>
                   <View style={styles.tocLeader} />
-                  <Text style={styles.tocPageHint}>→</Text>
+                  <Text style={styles.tocPageHint}>p. {entry.page}</Text>
                 </View>
               ))}
             </View>
@@ -905,7 +908,7 @@ const PDFReportDocument = ({
                 : styles.sectionBlockBase;
 
             return (
-              <View key={`section-${si}`} style={{ marginBottom: 15 }}>
+              <View key={`section-${si}`} style={{ marginBottom: 15 }} wrap={false}>
                 {si === 0 && (
                   <View style={styles.sectionHeader} id="section-detailed-analysis">
                     <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
