@@ -161,46 +161,6 @@ const CATEGORY_KPIS: Record<string, string[]> = {
   "capital-equipment": ["Uptime (%)", "Maintenance cost ratio", "ROI period (months)"],
 };
 
-// =============================================
-// SCENARIO_SCHEMAS — required/optional split mirrors src/lib/scenarios.ts
-// Including 3 CEO overrides: annualMaintenance (tco), contractLength (sw-licensing), contractTerm (savings)
-// =============================================
-const SCENARIO_SCHEMAS: Record<string, ScenarioSchema> = {
-  "make-vs-buy": { required: ["industryContext", "projectBrief"], optional: ["makeCosts", "buyCosts", "strategicFactors"] },
-  "cost-breakdown": { required: ["industryContext", "productDescription", "currentCosts"], optional: ["marketFactors"] },
-  "spend-analysis-categorization": { required: ["industryContext", "rawSpendData"], optional: ["timeframe", "businessGoal"] },
-  "tail-spend-sourcing": { required: ["industryContext", "purchaseAmount", "urgency"], optional: ["alternativesExist", "vendorHistory", "technicalSpecs"] },
-  "supplier-review": { required: ["industryContext", "qualityScore", "onTimeDelivery", "spendVolume"], optional: ["communicationScore", "priceVsMarket", "contractStatus", "incidentLog"] },
-  "disruption-management": { required: ["industryContext", "crisisDescription", "impactAssessment"], optional: ["alternativesContext"] },
-  "risk-assessment": { required: ["industryContext", "assessmentSubject", "currentSituation"], optional: ["contractContext", "riskTolerance"] },
-  "tco-analysis": { required: ["industryContext", "assetDescription", "ownershipPeriod", "capexBreakdown", "opexBreakdown"], optional: ["riskFactors"] },
-  "software-licensing": { required: ["industryContext", "softwareDetails", "userMetrics"], optional: ["commercialTerms", "strategicFactors"] },
-  "risk-matrix": { required: ["industryContext", "supplierName", "operationalRisks"], optional: ["commercialRisks"] },
-  "sow-critic": { required: ["industryContext", "sowText"], optional: ["reviewPriorities"] },
-  "sla-definition": { required: ["industryContext", "serviceDescription", "performanceTargets"], optional: ["escalationAndPenalties"] },
-  "rfp-generator": { required: ["rawBrief"], optional: ["industryContext", "budgetRange", "evaluationPriorities", "technicalRequirements", "incumbentData", "additionalInstructions"] },
-  "requirements-gathering": { required: ["industryContext", "businessGoal", "technicalLandscape"], optional: ["featureRequirements"] },
-  "volume-consolidation": { required: ["industryContext", "consolidationScope"], optional: ["logisticsTerms", "growthForecast"] },
-  "capex-vs-opex": { required: ["industryContext", "assetDetails"], optional: ["lifecycleCosts", "financialParameters"] },
-  "savings-calculation": { required: ["industryContext", "savingsScenario", "costAdjustments"], optional: ["reportingRequirements"] },
-  "saas-optimization": { required: ["industryContext", "subscriptionDetails", "usageMetrics"], optional: ["redundancyContext"] },
-  "forecasting-budgeting": { required: ["historicalSpendData", "knownFutureEvents", "forecastHorizon"], optional: ["industryContext", "categoryContext", "budgetConstraints"] },
-  "category-strategy": { required: ["industryContext", "categoryOverview", "marketDynamics"], optional: ["strategicGoals"] },
-  "negotiation-preparation": { required: ["industryContext", "negotiationSubject", "currentSpend", "supplierName", "batna", "negotiationObjectives"], optional: ["relationshipHistory", "mustHaves", "timeline", "spendBreakdown", "leverageContext"] },
-  "procurement-project-planning": { required: ["industryContext", "projectBrief", "constraintsAndResources"], optional: ["risksAndSuccess"] },
-  "pre-flight-audit": { required: ["industryContext", "supplierIdentity", "researchScope"], optional: ["decisionContext"] },
-  "category-risk-evaluator": { required: ["industryContext", "categoryAndTender", "sowAndMarket"], optional: ["historicalRisks"] },
-  "supplier-dependency-planner": { required: ["industryContext", "dependencyContext", "lockInFactors"], optional: ["diversificationGoals"] },
-  "specification-optimizer": { required: ["industryContext", "specificationText", "specContext"], optional: ["optimizationGoals"] },
-  "black-swan-scenario": { required: ["industryContext", "assessmentScope", "riskPosture"], optional: ["scenarioSimulation"] },
-  "market-snapshot": { required: ["region", "analysisScope"], optional: ["industryContext", "successCriteria", "timeframe"] },
-  "contract-template": { required: ["country", "timeTier", "contractBrief", "contractType"], optional: ["industryContext", "contractValue", "specialRequirements"] },
-};
-
-// Helper to get all fields from a schema
-function getAllFields(schema: ScenarioSchema): string[] {
-  return [...schema.required, ...schema.optional];
-}
 
 // Trick Library - scenario-specific training traps
 const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
