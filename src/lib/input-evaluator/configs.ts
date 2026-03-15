@@ -275,9 +275,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "C",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "supplyChainProfile", label: "Supply Chain Profile", minWords: 30, expectedDataType: "mixed", required: true, expectedKeywords: ["supplier", "carbon", "esg", "sustainability", "emission"] },
-      { fieldId: "complianceTargets", label: "Compliance Targets", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "supplyChainProfile", label: "Supply Chain Profile", minWords: 50, expectedDataType: "mixed", required: true, expectedKeywords: ["supplier", "carbon", "esg", "sustainability", "emission"] },
+      { fieldId: "complianceTargets", label: "Compliance Targets", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "CSRD non-compliance risk: financial penalties + reputational damage.",
