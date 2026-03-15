@@ -302,9 +302,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "D",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "categoryOverview", label: "Category Profile & Supply Market", minWords: 40, expectedDataType: "mixed", required: true, expectedKeywords: ["spend", "supplier", "market", "trend"] },
-      { fieldId: "strategicGoals", label: "Strategic Objectives", minWords: 20, expectedDataType: "narrative", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "categoryOverview", label: "Category Profile & Supply Market", minWords: 60, expectedDataType: "mixed", required: true, expectedKeywords: ["spend", "supplier", "market", "trend"] },
+      { fieldId: "strategicGoals", label: "Strategic Objectives", minWords: 25, expectedDataType: "narrative", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "Active category strategies reduce category spend by 6–15% over 3 years.",
