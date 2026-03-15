@@ -1172,10 +1172,10 @@ Adjust your output accordingly:
 
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST always be filled):
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some as empty strings):
-${schema.optional.length > 0 ? schema.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 ${blockInstructions}
 
 CRITICAL RULES:
