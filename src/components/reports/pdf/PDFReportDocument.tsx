@@ -292,7 +292,7 @@ function buildDocStyles(c: DocColors) {
       lineHeight: 1.6,
       marginBottom: 8,
       fontWeight: 700,
-      fontFamily: "Courier-Bold",
+      fontFamily: "Helvetica-Bold",
       backgroundColor: c.primary + "15",
       paddingHorizontal: 6,
       paddingVertical: 3,
@@ -503,7 +503,7 @@ function buildDocStyles(c: DocColors) {
     inputValue: {
       fontSize: 10,
       color: c.text,
-      fontFamily: "Courier",
+      fontFamily: "Helvetica-Bold",
       fontWeight: 600,
     },
     footer: {
