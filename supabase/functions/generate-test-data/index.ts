@@ -1016,8 +1016,7 @@ async function handleMessyMode(
     ? scenarioType
     : HIGH_FRICTION_SCENARIOS[Math.floor(Math.random() * HIGH_FRICTION_SCENARIOS.length)];
 
-  const schema = SCENARIO_SCHEMAS[targetScenario] || { required: ["industryContext"], optional: [] };
-  const fields = getAllFields(schema);
+  const fields = getScenarioFields(targetScenario);
 
   // Messy mode defaults to frustrated-stakeholder but can be overridden
   const messyPersona = selectedPersona.id === "frustrated-stakeholder" || selectedPersona
