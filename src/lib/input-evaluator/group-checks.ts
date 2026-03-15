@@ -158,7 +158,7 @@ function runGroupDChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasAlternatives) {
     checks.push({
       id: "GROUPD_ALTERNATIVES_PRESENT",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No alternatives or comparison options mentioned. Strategic analysis is stronger with multiple options to evaluate.",
       fieldId,
       suggestion: "Describe at least 2 options or alternatives being considered.",
