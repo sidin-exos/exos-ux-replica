@@ -316,9 +316,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "D",
     deviationType: "1H",
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "makeCosts", label: "Internal (Make) Cost & Capability", minWords: 40, expectedDataType: "numeric", required: true, expectedKeywords: ["cost", "capability", "labour", "overhead", "ip"] },
-      { fieldId: "buyCosts", label: "External (Buy) Cost & Contract Risk", minWords: 30, expectedDataType: "numeric", required: true, expectedKeywords: ["quote", "vendor", "contract", "exit", "switching"] },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "makeCosts", label: "Internal (Make) Cost & Capability", minWords: 60, expectedDataType: "numeric", required: true, expectedKeywords: ["cost", "capability", "labour", "overhead", "ip"] },
+      { fieldId: "buyCosts", label: "External (Buy) Cost & Contract Risk", minWords: 50, expectedDataType: "numeric", required: true, expectedKeywords: ["quote", "vendor", "contract", "exit", "switching"] },
     ],
     scenarioChecks: [],
     financialImpactGap: "Hidden internal costs are underestimated by 30-50% when overhead is excluded.",
