@@ -208,9 +208,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "B",
     deviationType: 0,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "projectBrief", label: "Project Scope & Milestones", minWords: 30, expectedDataType: "mixed", required: true, expectedKeywords: ["milestone", "timeline", "phase", "deadline"] },
-      { fieldId: "stakeholderConstraints", label: "Stakeholders & Constraints", minWords: 15, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "projectBrief", label: "Project Scope & Milestones", minWords: 50, expectedDataType: "mixed", required: true, expectedKeywords: ["milestone", "timeline", "phase", "deadline"] },
+      { fieldId: "stakeholderConstraints", label: "Stakeholders & Constraints", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "A 2-week slip on a go-live supporting €1M/month revenue = €500k exposure.",
