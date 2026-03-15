@@ -119,6 +119,12 @@ export const PARAMETER_LABELS: Record<string, Record<string, string>> = {
     "subtle": "Subtle (Careful reading needed)",
     "expert-level": "Expert-Level (Deep analysis required)",
   },
+  qualityTier: {
+    "OPTIMAL": "Optimal (Senior CPO input)",
+    "MINIMUM": "Minimum (Busy buyer)",
+    "DEGRADED": "Degraded (Missing critical data)",
+    "GIBBERISH": "Gibberish (Invalid input)",
+  },
 };
 
 // Human-readable labels for trick categories
