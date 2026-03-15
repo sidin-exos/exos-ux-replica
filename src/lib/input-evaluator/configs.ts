@@ -86,9 +86,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "A",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "historicalSpendData", label: "Historical Spend & Volume Drivers", minWords: 30, expectedDataType: "numeric", required: true, expectedKeywords: ["spend", "prior", "volume", "planning"] },
-      { fieldId: "scenarioAssumptions", label: "Scenario Assumptions", minWords: 20, expectedDataType: "mixed", required: false },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "historicalSpendData", label: "Historical Spend & Volume Drivers", minWords: 50, expectedDataType: "numeric", required: true, expectedKeywords: ["spend", "prior", "volume", "planning"] },
+      { fieldId: "scenarioAssumptions", label: "Scenario Assumptions", minWords: 25, expectedDataType: "mixed", required: false },
     ],
     scenarioChecks: [],
     financialImpactGap: "A 5% CPI under-assumption on a €2M category = €100k unplanned spend.",
