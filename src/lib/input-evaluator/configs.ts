@@ -17,9 +17,9 @@ export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
     group: "A",
     deviationType: 1,
     blocks: [
-      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 20, expectedDataType: "narrative", required: true },
-      { fieldId: "assetDefinition", label: "Asset or Service Definition", minWords: 30, expectedDataType: "mixed", required: true, expectedKeywords: ["asset", "lifecycle", "volume", "capex", "vendor"] },
-      { fieldId: "opexFinancials", label: "OPEX & Financial Parameters", minWords: 30, expectedDataType: "numeric", required: true, expectedKeywords: ["wacc", "maintenance", "inflation", "currency"] },
+      { fieldId: "industryContext", label: "Industry & Business Context", minWords: 30, expectedDataType: "narrative", required: true },
+      { fieldId: "assetDefinition", label: "Asset or Service Definition", minWords: 50, expectedDataType: "mixed", required: true, expectedKeywords: ["asset", "lifecycle", "volume", "capex", "vendor"] },
+      { fieldId: "opexFinancials", label: "OPEX & Financial Parameters", minWords: 50, expectedDataType: "numeric", required: true, expectedKeywords: ["wacc", "maintenance", "inflation", "currency"] },
     ],
     scenarioChecks: [],
     financialImpactGap: "Without lifecycle context, TCO models under-represent total cost by 30–60%.",
