@@ -1114,8 +1114,8 @@ Return ONLY the JSON object.`;
       fieldsExpected: fields.length,
       persona: messyPersona.id,
       personaName: messyPersona.name,
-      requiredFieldCount: schema.required.length,
-      optionalFieldCount: schema.optional.length,
+      requiredFieldCount: fieldGroups.required.length,
+      optionalFieldCount: fieldGroups.optional.length,
     }
   };
 }
