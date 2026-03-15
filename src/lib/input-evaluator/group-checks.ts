@@ -62,7 +62,7 @@ function runGroupAChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasTimeframe(text)) {
     checks.push({
       id: "GROUPA_TIMEFRAME_PRESENT",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No timeframe reference detected. Analytical models need temporal context (years, months, quarters).",
       fieldId,
       suggestion: "Specify the time period: annual figures, contract duration, or planning horizon.",
