@@ -65,9 +65,11 @@ interface DraftedParameters {
   personaName?: string;
 }
 
-interface ScenarioSchema {
-  required: string[];
-  optional: string[];
+// Dynamic field derivation from block guidance registry
+function getScenarioFields(scenarioType: string): string[] {
+  const guidance = SCENARIO_BLOCK_GUIDANCE[scenarioType];
+  if (!guidance) return ["industryContext"];
+  return guidance.map(block => block.fieldId);
 }
 
 // =============================================
