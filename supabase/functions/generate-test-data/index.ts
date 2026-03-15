@@ -833,6 +833,10 @@ async function handleGenerateMode(
   const schema = SCENARIO_SCHEMAS[scenarioType] || { required: ["industryContext"], optional: [] };
   const fields = getAllFields(schema);
   
+  // Compute quality tier
+  const qualityTier: QualityTier = mapDataQualityToTier(parameters.dataQuality);
+  const deviationType = getDeviationType(scenarioType);
+  
   const companySizeDescriptions: Record<CompanySize, string> = {
     "startup": "10-50 employees, Series A/B stage, limited procurement maturity",
     "smb": "50-500 employees, established business, growing procurement needs",
@@ -840,6 +844,9 @@ async function handleGenerateMode(
     "enterprise": "2,000-10,000 employees, multi-national, mature procurement",
     "large-enterprise": "10,000+ employees, global operations, complex procurement"
   };
+
+  // Build block-specific instructions from guidance registry
+  const blockInstructions = buildBlockInstructions(scenarioType, qualityTier);
 
   // Build trick embedding instructions if trick is present
   const trick = parameters.trick;
@@ -874,6 +881,8 @@ STRICT CONTEXT:
 - Strategic Priority: ${parameters.strategicPriority}
 - Market Conditions: ${parameters.marketConditions}
 - Data Quality: ${parameters.dataQuality}
+- Quality Tier: ${qualityTier}
+- Deviation Type: ${deviationType}
 
 BUYER PERSONA:
 You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
@@ -889,13 +898,14 @@ ${schema.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some blank as empty strings):
 ${schema.optional.map(f => `- ${f}`).join('\n')}
+${blockInstructions}
 
 CRITICAL RULES:
 1. ALL data must be consistent with the above context
-2. "industryContext" field MUST be 100+ words describing a specific company matching ALL parameters
+2. ALL blocks must be populated according to the quality tier instructions above
 3. All numeric values must be plausible for the company scale
-5. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
-6. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
+4. If data quality is "partial" or "poor", follow the MINIMUM/DEGRADED tier rules
+5. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
 ${trickInstructions}
 
 OUTPUT FORMAT:
@@ -913,19 +923,36 @@ ${schema.optional.map(f => `- ${f}`).join('\n')}
 Context: ${parameters.reasoning}
 ${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
 
+IMPORTANT: You MUST generate content for ALL required fields — not just the first one. Follow the block-by-block instructions in the system prompt.
+
 Return ONLY the JSON object.`;
 
-  console.log(`[TestDataGen] Generate mode - Trick: ${trick?.category || 'none'}, Target: ${trick?.targetField || 'N/A'}, Persona: ${selectedPersona.id}`);
+  console.log(`[TestDataGen] Generate mode - QualityTier: ${qualityTier}, DeviationType: ${deviationType}, Trick: ${trick?.category || 'none'}, Persona: ${selectedPersona.id}`);
+
+  // LangSmith tracing
+  const tracer = new LangSmithTracer({ env: "production", feature: "test-data-gen" });
+  const runId = tracer.createRun("generate-test-data", "chain", {
+    scenarioType,
+    qualityTier,
+    deviationType,
+    persona: selectedPersona.id,
+    trick: trick?.category || "none",
+  }, {
+    tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`],
+    metadata: { qualityTier, deviationType, persona: selectedPersona.id },
+  });
 
   const response = await callAI(system, user, temperature);
   
   if (!response.success) {
+    tracer.patchRun(runId, undefined, "AI call failed");
     return { success: false, error: "Failed to generate test data" };
   }
 
   const data = parseGeneratedData(response.content, fields);
   
   if (Object.keys(data).length === 0) {
+    tracer.patchRun(runId, undefined, "Failed to parse generated data");
     return { success: false, error: "Failed to parse generated data" };
   }
 
@@ -935,6 +962,12 @@ Return ONLY the JSON object.`;
     trickScore = scoreTrickEmbedding(data, trick);
     console.log(`[TestDataGen] Trick embedding score: ${trickScore.subtletyScore}/100 - ${trickScore.feedback}`);
   }
+
+  tracer.patchRun(runId, {
+    fieldsGenerated: Object.keys(data).length,
+    fieldsExpected: fields.length,
+    qualityTier,
+  });
 
   return {
     success: true,
@@ -951,6 +984,8 @@ Return ONLY the JSON object.`;
       personaName: selectedPersona.name,
       requiredFieldCount: schema.required.length,
       optionalFieldCount: schema.optional.length,
+      qualityTier,
+      deviationType,
     }
   };
 }
