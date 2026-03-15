@@ -733,7 +733,7 @@ const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCo
   if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 2 });
   entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis", page: detailedAnalysisPage });
   entries.push({ label: "Methodology & Limitations", anchor: "section-methodology", page: detailedAnalysisPage });
-  entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality", page: detailedAnalysisPage });
+  
   if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters", page: detailedAnalysisPage });
   return entries;
 };
@@ -968,112 +968,37 @@ const PDFReportDocument = ({
         {(() => {
           const allKeys = Object.keys(formData);
           const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-          const missingKeys = allKeys.filter(k => !formData[k] || formData[k].trim() === "");
           const totalFields = Math.max(allKeys.length, 1);
           const coveragePct = Math.round((filledKeys.length / totalFields) * 100);
           const confidenceLevel = coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low";
           const confidenceColor = coveragePct >= 80 ? colors.success : coveragePct >= 50 ? colors.warning : colors.destructive;
 
           return (
-            <>
-              <View style={styles.section} id="section-methodology" wrap={false}>
-                <View style={styles.sectionHeader}>
-                  <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
-                  <Text style={styles.sectionTitle}>Methodology & Limitations</Text>
-                </View>
-                <View style={styles.sectionContent}>
-                  {/* Analysis Model */}
-                  <View style={styles.methodologyBox}>
-                    <Text style={styles.methodologySubHeader}>Analysis Model</Text>
-                    <Text style={styles.methodologyText}>
-                      Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding.
-                    </Text>
-                  </View>
-
-                  {/* Data Sources */}
-                  <View style={styles.methodologyBox}>
-                    <Text style={styles.methodologySubHeader}>Data Sources</Text>
-                    <Text style={styles.methodologyText}>
-                      Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. Market data is refreshed periodically to reflect current conditions.
-                    </Text>
-                  </View>
-
-                  {/* Confidence Assessment (moved from Data Quality) */}
-                  <View style={styles.methodologyBox}>
-                    <Text style={styles.methodologySubHeader}>Confidence Assessment</Text>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                      <View>
-                        <Text style={{ fontSize: 11, fontWeight: 700, color: colors.text }}>
-                          {filledKeys.length} of {totalFields} parameters provided
-                        </Text>
-                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }}>
-                          {coveragePct}% input coverage
-                        </Text>
-                      </View>
-                      <View style={{ backgroundColor: confidenceColor + "20", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4, borderWidth: 1, borderColor: confidenceColor }}>
-                        <Text style={{ fontSize: 10, fontWeight: 700, color: confidenceColor }}>
-                          {confidenceLevel} Confidence
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={{ height: 8, backgroundColor: colors.surfaceLight, borderRadius: 4, overflow: "hidden" }}>
-                      <View style={{ width: `${coveragePct}%`, height: 8, backgroundColor: confidenceColor, borderRadius: 4 }} />
-                    </View>
-                  </View>
-
-                  {/* Limitations */}
-                  <View style={styles.methodologyBox}>
-                    <Text style={styles.methodologySubHeader}>Limitations</Text>
-                    {[
-                      "This analysis is AI-generated and should be validated by qualified procurement professionals.",
-                      "Cost estimates are indicative and based on available data at time of analysis.",
-                      "Results may vary based on market conditions and data completeness.",
-                    ].map((item, i) => (
-                      <View key={i} style={styles.limitationItem}>
-                        <View style={styles.limitationBullet} />
-                        <Text style={styles.limitationText}>{item}</Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  {/* Audit Trail */}
-                  <View style={styles.auditTrail}>
-                    <Text style={{ fontSize: 8, color: colors.textMuted }}>
-                      Analysis ID: {reportHash} | Timestamp: {new Date(timestamp).toISOString()}
-                    </Text>
-                  </View>
-                </View>
+            <View style={styles.section} id="section-methodology" wrap={false}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Methodology & Limitations</Text>
               </View>
-
-              {/* ── Data Quality Assessment (simplified) ── */}
-              <View style={styles.section} id="section-data-quality">
-                <View style={styles.sectionHeader}>
-                  <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
-                  <Text style={styles.sectionTitle}>Data Quality Assessment</Text>
+              <View style={styles.sectionContent}>
+                <Text style={{ fontSize: 9, color: colors.text, lineHeight: 1.5, marginBottom: 6 }}>
+                  Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals. Cost estimates are indicative based on available data at time of analysis and may vary with market conditions and data completeness.
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <Text style={{ fontSize: 9, color: colors.textMuted }}>
+                    Input coverage: {filledKeys.length}/{totalFields} fields ({coveragePct}%)
+                  </Text>
+                  <View style={{ backgroundColor: confidenceColor + "20", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 3, borderWidth: 1, borderColor: confidenceColor }}>
+                    <Text style={{ fontSize: 8, fontWeight: 700, color: confidenceColor }}>
+                      {confidenceLevel} Confidence
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.sectionContent}>
-                  {missingKeys.length > 0 && (
-                    <View style={{ marginBottom: 8 }}>
-                      <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: 600, marginBottom: 4 }}>Missing parameters:</Text>
-                      <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                        {missingKeys.map(key => (
-                          <View key={key} style={{ backgroundColor: colors.destructive + "15", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3, marginRight: 6, marginBottom: 4 }}>
-                            <Text style={{ fontSize: 9, color: colors.destructive }}>
-                              {key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim()}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                  <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: missingKeys.length > 0 ? 4 : 0 }}>
-                    {missingKeys.length > 0
-                      ? "Provide additional parameters to improve analysis accuracy."
-                      : "All parameters provided — analysis confidence is optimal."}
+                <View style={styles.auditTrail}>
+                  <Text style={{ fontSize: 7, color: colors.textMuted }}>
+                    Analysis ID: {reportHash} | Timestamp: {new Date(timestamp).toISOString()}
                   </Text>
                 </View>
               </View>
-            </>
+            </View>
           );
         })()}
 
