@@ -70,6 +70,7 @@ const NAV_GROUPS = [
       { label: "Dashboards & Analytics", path: "/reports", icon: BarChart3 },
       { label: "Technology & AI", path: "/features#orchestration", icon: Sparkles },
       { label: "Customer Success", path: "/features#success", icon: BookOpen },
+      { label: "LangChain Skills", path: "/langchain-skills", icon: Zap },
       { label: "Pricing", path: "/pricing", icon: DollarSign },
       { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
     ],
