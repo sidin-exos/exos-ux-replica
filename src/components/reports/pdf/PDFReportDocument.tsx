@@ -832,12 +832,12 @@ const PDFReportDocument = ({
               </Text>
             ))}
 
-            <View style={{ height: 12 }} />
+            <View style={{ height: 6 }} />
 
             <Text style={styles.analysisSubHeader}>Top Recommendations</Text>
-            <View style={{ backgroundColor: colors.warning + "10", borderRadius: 6, padding: 10 }}>
+            <View style={{ backgroundColor: colors.warning + "10", borderRadius: 6, padding: 6 }}>
               {recommendations.map((point, i) => (
-                <Text key={`r-${i}`} style={{ ...styles.keyPointText, marginBottom: 6 }}>
+                <Text key={`r-${i}`} style={{ ...styles.keyPointText, marginBottom: 3 }}>
                   {i + 1}. {point}
                 </Text>
               ))}
