@@ -50,7 +50,7 @@ export function checkS3Critical(formData: Record<string, string>): QualityCheck[
   if (!hasKeyword(financials, ["tax rate", "corporate tax", "tax"])) {
     checks.push({
       id: "S3_TAX_MISSING",
-      severity: "WARNING",
+      severity: "CRITICAL",
       message: "No corporate tax rate specified. Tax treatment significantly affects lease vs. buy calculations.",
       fieldId: "financialContext",
       suggestion: "Include your corporate tax rate (%) for accurate IFRS 16 and depreciation modelling.",
