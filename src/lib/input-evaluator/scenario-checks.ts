@@ -236,7 +236,7 @@ export function runScenarioChecks(
     if (spendData.trim() && !hasListItems(spendData, 3)) {
       checks.push({
         id: "S5_TABULAR_MISSING",
-        severity: "WARNING",
+        severity: "CRITICAL",
         message: "Spend data should be structured (table format with columns). Unstructured text reduces classification accuracy below 60%.",
         fieldId: "rawSpendData",
         suggestion: "Use pipe-separated or bullet-point format: Supplier | Description | Amount | Date",
