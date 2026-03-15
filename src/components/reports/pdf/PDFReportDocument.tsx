@@ -733,7 +733,7 @@ const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCo
   if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 2 });
   entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis", page: detailedAnalysisPage });
   entries.push({ label: "Methodology & Limitations", anchor: "section-methodology", page: detailedAnalysisPage });
-  entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality", page: detailedAnalysisPage });
+  
   if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters", page: detailedAnalysisPage });
   return entries;
 };
