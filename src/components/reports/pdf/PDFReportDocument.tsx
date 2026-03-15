@@ -721,15 +721,20 @@ const generateReportHash = (title: string, ts: string): string => {
 interface TocEntry {
   label: string;
   anchor: string;
+  page: number;
 }
 
-const buildTocEntries = (hasDashboards: boolean, hasParams: boolean): TocEntry[] => {
+const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCount: number): TocEntry[] => {
   const entries: TocEntry[] = [];
-  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations" });
-  entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis" });
-  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology" });
-  entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality" });
-  if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters" });
+  // Page 1 = cover. Dashboards start on page 2, each page holds ~2 dashboards.
+  const dashboardPages = hasDashboards ? Math.ceil(dashboardCount / 2) : 0;
+  const detailedAnalysisPage = 2 + dashboardPages;
+
+  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 2 });
+  entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis", page: detailedAnalysisPage });
+  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology", page: detailedAnalysisPage });
+  entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality", page: detailedAnalysisPage });
+  if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters", page: detailedAnalysisPage });
   return entries;
 };
 
