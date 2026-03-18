@@ -126,9 +126,7 @@ async function fetchWithRetry(
       // Retryable error - calculate delay and wait
       if (attempt < config.maxRetries - 1) {
         const delay = config.baseDelayMs * Math.pow(config.backoffFactor, attempt);
-        console.warn(
-          `🔍 LangSmith: HTTP ${response.status}, retry ${attempt + 1}/${config.maxRetries} in ${delay}ms`
-        );
+        // Retry after HTTP error
         await sleep(delay);
       }
     } catch (err) {
@@ -137,9 +135,7 @@ async function fetchWithRetry(
 
       if (attempt < config.maxRetries - 1) {
         const delay = config.baseDelayMs * Math.pow(config.backoffFactor, attempt);
-        console.warn(
-          `🔍 LangSmith: Network error, retry ${attempt + 1}/${config.maxRetries} in ${delay}ms`
-        );
+        // Retry after network error
         await sleep(delay);
       }
     }
@@ -171,12 +167,7 @@ export function getProjectName(): string {
  * Log the current tracing configuration (for debugging)
  */
 export function logTracingConfig(): void {
-  console.log("🔍 LangSmith Tracing Config:", {
-    enabled: TRACING_ENABLED,
-    project: PROJECT,
-    endpoint: ENDPOINT,
-    hasApiKey: !!API_KEY,
-  });
+  // No-op in production — config visible via LangSmith dashboard
 }
 
 /**
@@ -215,8 +206,8 @@ export async function createRun(options: CreateRunOptions): Promise<string> {
       "x-api-key": API_KEY,
     },
     body: JSON.stringify(payload),
-  }).catch((err) => {
-    console.warn("🔍 LangSmith: Failed to create run after retries", options.name, err);
+  }).catch(() => {
+    // Silently ignore — tracing is non-critical
   });
 
   return runId;
@@ -249,7 +240,7 @@ export async function patchRun(runId: string, options: PatchRunOptions): Promise
       "x-api-key": API_KEY,
     },
     body: JSON.stringify(payload),
-  }).catch((err) => {
-    console.warn("🔍 LangSmith: Failed to patch run after retries", runId, err);
+  }).catch(() => {
+    // Silently ignore — tracing is non-critical
   });
 }

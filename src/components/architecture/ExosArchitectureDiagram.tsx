@@ -122,7 +122,7 @@ const ExosArchitectureDiagram: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-lg border border-indigo-200">
                   <Cpu className="w-4 h-4 text-indigo-600" />
-                  <span className="text-xs font-medium text-indigo-700">Lovable Gateway</span>
+                  <span className="text-xs font-medium text-indigo-700">EXOS Gateway</span>
                 </div>
                 <span className="text-xs text-gray-400">← toggle →</span>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-200">

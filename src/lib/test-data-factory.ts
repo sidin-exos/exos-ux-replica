@@ -619,7 +619,7 @@ export function generateTestData(scenarioId: string): Record<string, string> {
   const generator = generators[scenarioId];
   
   if (!generator) {
-    console.warn(`[TestDataFactory] No generator found for scenario: ${scenarioId}`);
+    // No generator for this scenario — return fallback
     // Return minimal fallback data
     return {
       industryContext: getRandomIndustryContext(),
