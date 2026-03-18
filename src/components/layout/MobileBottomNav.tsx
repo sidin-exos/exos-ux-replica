@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { BarChart3, Brain, Home, Sparkles, Tag } from "lucide-react";
 
 const navItems = [
-  { label: "Scenarios", path: "/", icon: Home },
+  { label: "Home", path: "/welcome", icon: Home },
   { label: "Intel", path: "/market-intelligence", icon: Brain },
   { label: "Tech", path: "/features", icon: Sparkles },
   { label: "Dashboards", path: "/reports", icon: BarChart3 },

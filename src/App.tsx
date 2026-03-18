@@ -24,6 +24,7 @@ import FounderDashboard from "./pages/admin/FounderDashboard";
 import RiskPlatform from "./pages/enterprise/RiskPlatform";
 import InflationPlatform from "./pages/enterprise/InflationPlatform";
 import PdfTestPage from "./pages/PdfTestPage";
+import Welcome from "./pages/Welcome";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/layout/MobileBottomNav";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -39,6 +40,7 @@ const App = () => (
           <BrowserRouter>
           <div className="pb-14 md:pb-0">
           <Routes>
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<Features />} />
             <Route path="/reports" element={<Reports />} />
