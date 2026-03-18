@@ -183,7 +183,7 @@ export function extractDashboardData(text: string): DashboardData | null {
 
     return parsed;
   } catch (err) {
-    console.warn('[dashboard-data-parser] Failed to parse dashboard data:', err);
+    // Parse failed — return null to trigger fallback
     return null;
   }
 }

@@ -162,9 +162,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // Sentinel AI pipeline
   const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs } = useSentinel({
-    onProgress: (stage, status) => {
-      console.log(`[Sentinel] ${stage}: ${status}`);
-    },
+    onProgress: () => {},
     onError: (error) => {
       toast.error(`Analysis failed: ${error.message}`);
     },
@@ -441,7 +439,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   const handleFeedbackSubmit = async (rating: number, feedback: string) => {
     try {
-      const { error } = await supabase.from("scenario_feedback" as any).insert({
+      const { error } = await supabase.from("scenario_feedback").insert({
         scenario_id: scenario.id,
         rating,
         feedback_text: feedback || null,

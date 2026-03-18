@@ -60,7 +60,7 @@ export function useShareableReport(): ShareableReportReturn {
 
         // Use the current origin so the share link points to the same
         // environment that stored the payload.
-        const origin = typeof window !== "undefined" ? window.location.origin : "https://localhost:8080";
+        const origin = window.location.origin;
         const shareUrl = `${origin}/report?share=${id}`;
 
         return shareUrl;

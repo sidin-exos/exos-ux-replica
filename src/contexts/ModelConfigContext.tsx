@@ -43,7 +43,7 @@ function loadConfig(): ModelConfig {
       };
     }
   } catch (e) {
-    console.warn("[ModelConfig] Failed to load from localStorage:", e);
+    // silently fall back to defaults
   }
   return DEFAULT_CONFIG;
 }
@@ -52,7 +52,7 @@ function saveConfig(config: ModelConfig): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
   } catch (e) {
-    console.warn("[ModelConfig] Failed to save to localStorage:", e);
+    // silently ignore storage errors
   }
 }
 

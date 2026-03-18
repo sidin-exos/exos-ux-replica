@@ -170,7 +170,7 @@ Risk Assessment and Inflation Analysis tracker modules with setup wizards, file 
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
 | `SUPABASE_DB_URL` | Direct database connection |
 | `SUPABASE_PUBLISHABLE_KEY` | Alias for anon key |
-| `LOVABLE_API_KEY` | Lovable platform integration |
+| ~~`LOVABLE_API_KEY`~~ | Legacy — remove from secrets |
 
 ---
 
@@ -198,9 +198,9 @@ XML template system (`src/lib/ai-context-templates.ts`) structures industry cons
 
 AI-first organization (see `docs/ORG_CHART.md`):
 - **CEO & Pilot:** Human founder
-- **CTO Scope:** Gemini Architect + Gemini Auditor + Lovable Cloud infra
+- **CTO Scope:** Gemini Architect + Gemini Auditor + Cloud infra
 - **Head of AI:** Gemini Tech Lead + LangSmith + Prompt Factory
-- **Delivery:** Lovable Coder + Builder + Human QA
+- **Delivery:** AI-assisted development + Human QA
 - **Growth:** Future hire (currently founder-led)
 
 ---
