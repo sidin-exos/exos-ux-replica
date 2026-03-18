@@ -169,10 +169,10 @@ export function useTestStats(scenarioType?: string) {
           )
         : 0;
 
-      const successReports = reports?.filter(r => r.success && (r as any).total_tokens > 0) || [];
+      const successReports = reports?.filter(r => r.success && (r.total_tokens ?? 0) > 0) || [];
       const avgTotalTokens = successReports.length
         ? Math.round(
-            successReports.reduce((sum, r) => sum + ((r as any).total_tokens || 0), 0) / successReports.length
+            successReports.reduce((sum, r) => sum + (r.total_tokens || 0), 0) / successReports.length
           )
         : 0;
 
