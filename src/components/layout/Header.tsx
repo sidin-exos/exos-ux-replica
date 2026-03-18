@@ -99,7 +99,7 @@ const Header = () => {
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <NavLink to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+        <NavLink to="/welcome" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <div className="flex items-center justify-center h-14 w-14 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md shadow-primary/10">
             <img src={exosLogo} alt="EXOS Logo" className="w-full h-full object-contain" />
           </div>
