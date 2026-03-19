@@ -132,8 +132,16 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
         </Card>
       )}
 
-      {/* Actions */}
+      {/* Export Actions */}
       <Separator />
+      <ReportExportButtons
+        scenarioTitle={`${typeInfo.label} Analysis`}
+        analysisResult={result.summary}
+        formData={{}}
+        timestamp={new Date().toISOString()}
+      />
+
+      {/* Actions */}
       <div className="flex justify-center gap-3">
         <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="gap-2">
           <Database className="w-4 h-4" />
