@@ -159,8 +159,8 @@ const Index = () => {
                 </h1>
                 <p className="text-muted-foreground text-base max-w-2xl mb-4">
                   Critical procurement decisions are often made unprepared due to lack of time, 
-                  knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes—cost 
-                  breakdowns, negotiation scenarios, make-or-buy simulations—all tailored to your business case.
+                  knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes — cost 
+                  breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
                 </p>
                 <p className="text-muted-foreground text-base max-w-2xl mb-4">
                   Your sensitive commercial data is masked before reaching external APIs—then grounded 
