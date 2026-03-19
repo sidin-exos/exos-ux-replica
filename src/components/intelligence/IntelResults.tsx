@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { 
   ExternalLink, 
   Clock, 
-  Cpu, 
   CheckCircle2, 
   Copy,
   Building2, 
@@ -19,8 +18,10 @@ import {
   Coins,
   Database
 } from "lucide-react";
-import { type IntelResult, type QueryType, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
+import { type IntelResult, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
 import { SaveToKnowledgeBaseDialog } from "@/components/intelligence/SaveToKnowledgeBaseDialog";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import { toast } from "sonner";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
