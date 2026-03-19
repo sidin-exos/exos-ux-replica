@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { 
   ExternalLink, 
   Clock, 
-  Cpu, 
   CheckCircle2, 
   Copy,
   Building2, 
@@ -19,8 +18,10 @@ import {
   Coins,
   Database
 } from "lucide-react";
-import { type IntelResult, type QueryType, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
+import { type IntelResult, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
 import { SaveToKnowledgeBaseDialog } from "@/components/intelligence/SaveToKnowledgeBaseDialog";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import { toast } from "sonner";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -59,12 +60,7 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {IconComponent && <IconComponent className="w-5 h-5 text-primary" />}
-              <div>
-                <CardTitle className="text-lg">{typeInfo.label} Analysis</CardTitle>
-                <CardDescription>
-                  Powered by {result.model}
-                </CardDescription>
-              </div>
+              <CardTitle className="text-lg">{typeInfo.label} Analysis</CardTitle>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="gap-1">
@@ -96,11 +92,7 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-              {result.summary}
-            </div>
-          </div>
+          <MarkdownRenderer content={result.summary} className="text-sm" />
         </CardContent>
       </Card>
 
@@ -112,9 +104,9 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
               <ExternalLink className="w-4 h-4" />
               Sources ({result.citations.length})
             </CardTitle>
-            <CardDescription>
+            <p className="text-sm text-muted-foreground">
               Click to view original sources
-            </CardDescription>
+            </p>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -140,8 +132,16 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
         </Card>
       )}
 
-      {/* Actions */}
+      {/* Export Actions */}
       <Separator />
+      <ReportExportButtons
+        scenarioTitle={`${typeInfo.label} Analysis`}
+        analysisResult={result.summary}
+        formData={{}}
+        timestamp={new Date().toISOString()}
+      />
+
+      {/* Actions */}
       <div className="flex justify-center gap-3">
         <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="gap-2">
           <Database className="w-4 h-4" />
