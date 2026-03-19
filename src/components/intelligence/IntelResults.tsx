@@ -104,9 +104,9 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
               <ExternalLink className="w-4 h-4" />
               Sources ({result.citations.length})
             </CardTitle>
-            <CardDescription>
+            <p className="text-sm text-muted-foreground">
               Click to view original sources
-            </CardDescription>
+            </p>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
