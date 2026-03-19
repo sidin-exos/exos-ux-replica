@@ -160,6 +160,7 @@ serve(async (req) => {
     // Build Perplexity API request
     const perplexityBody: Record<string, unknown> = {
       model: "sonar-pro",
+      max_tokens: 5000,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: enrichedQuery }
