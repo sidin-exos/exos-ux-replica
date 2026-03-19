@@ -429,7 +429,7 @@ async function callLLM(
         systemPrompt: sysPrompt,
         contents: [{ role: "user", parts: [{ text: usrPrompt }] }],
         temperature: 0.4,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 5000,
         model: googleModel,
       });
 
@@ -816,7 +816,7 @@ serve(async (req) => {
           systemPrompt,
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           temperature: 0.4,
-          maxOutputTokens: 4096,
+          maxOutputTokens: 5000,
           model: googleModel,
         });
 
