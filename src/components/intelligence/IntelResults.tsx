@@ -60,12 +60,7 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {IconComponent && <IconComponent className="w-5 h-5 text-primary" />}
-              <div>
-                <CardTitle className="text-lg">{typeInfo.label} Analysis</CardTitle>
-                <CardDescription>
-                  Powered by {result.model}
-                </CardDescription>
-              </div>
+              <CardTitle className="text-lg">{typeInfo.label} Analysis</CardTitle>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="gap-1">
@@ -97,11 +92,7 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-              {result.summary}
-            </div>
-          </div>
+          <MarkdownRenderer content={result.summary} className="text-sm" />
         </CardContent>
       </Card>
 
