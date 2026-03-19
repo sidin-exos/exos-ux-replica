@@ -110,8 +110,7 @@ const MarketIntelligence = () => {
             <h1 className="text-3xl font-display font-bold">Market Intelligence</h1>
           </div>
           <p className="text-muted-foreground max-w-2xl">
-            Market Intelligence is part of the EXOS engine, used to improve grounding of your AI reports and provide timely insights. 
-            Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations.
+            Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base improving analytical scenarios results.
           </p>
         </div>
 
