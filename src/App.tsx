@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,30 +6,33 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ModelConfigProvider } from "@/contexts/ModelConfigContext";
-import Index from "./pages/Index";
-import Features from "./pages/Features";
-import Reports from "./pages/Reports";
-import Pricing from "./pages/Pricing";
-import FAQ from "./pages/FAQ";
-import GeneratedReport from "./pages/GeneratedReport";
-import DashboardShowcase from "./pages/DashboardShowcase";
-import MarketIntelligence from "./pages/MarketIntelligence";
-import ArchitectureDiagram from "./pages/ArchitectureDiagram";
-import DevWorkflow from "./pages/DevWorkflow";
-import TestingPipeline from "./pages/TestingPipeline";
-import OrgChart from "./pages/OrgChart";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Account from "./pages/Account";
-import FounderDashboard from "./pages/admin/FounderDashboard";
-import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
-import RiskPlatform from "./pages/enterprise/RiskPlatform";
-import InflationPlatform from "./pages/enterprise/InflationPlatform";
-import PdfTestPage from "./pages/PdfTestPage";
-import Welcome from "./pages/Welcome";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/layout/MobileBottomNav";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PageLoadingFallback from "./components/layout/PageLoadingFallback";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
+
+// Lazy-loaded page components
+const Index = lazy(() => import("./pages/Index"));
+const Welcome = lazy(() => import("./pages/Welcome"));
+const Features = lazy(() => import("./pages/Features"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const GeneratedReport = lazy(() => import("./pages/GeneratedReport"));
+const DashboardShowcase = lazy(() => import("./pages/DashboardShowcase"));
+const MarketIntelligence = lazy(() => import("./pages/MarketIntelligence"));
+const ArchitectureDiagram = lazy(() => import("./pages/ArchitectureDiagram"));
+const DevWorkflow = lazy(() => import("./pages/DevWorkflow"));
+const TestingPipeline = lazy(() => import("./pages/TestingPipeline"));
+const OrgChart = lazy(() => import("./pages/OrgChart"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Account = lazy(() => import("./pages/Account"));
+const FounderDashboard = lazy(() => import("./pages/admin/FounderDashboard"));
+const RiskPlatform = lazy(() => import("./pages/enterprise/RiskPlatform"));
+const InflationPlatform = lazy(() => import("./pages/enterprise/InflationPlatform"));
+const PdfTestPage = lazy(() => import("./pages/PdfTestPage"));
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -40,6 +44,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
           <div className="pb-14 md:pb-0">
+          <Suspense fallback={<PageLoadingFallback />}>
           <Routes>
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/" element={<Index />} />
@@ -65,6 +70,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
           </div>
           <MobileBottomNav />
           </BrowserRouter>
