@@ -86,14 +86,17 @@ const Welcome = () => {
       <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
         <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
         <div className="container relative py-20 md:py-28 flex flex-col items-center text-center gap-6">
-          <Badge variant="outline" className="border-primary/30 text-primary font-medium">
-            AI-Powered Procurement Intelligence
-          </Badge>
+          <div className="flex items-center justify-center h-24 w-24 md:h-32 md:w-32 rounded-2xl overflow-hidden ring-2 ring-primary/20 shadow-lg shadow-primary/10">
+            <img src={exosLogo} alt="EXOS Logo" className="w-full h-full object-contain" />
+          </div>
           <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground max-w-3xl leading-tight">
-            Your Procurement <span className="text-primary">Exoskeleton</span>
+            EXOS
           </h1>
+          <p className="text-base md:text-lg text-muted-foreground font-medium">
+            Your Procurement Exoskeleton
+          </p>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-            Transform complex procurement decisions into structured, data-driven strategies. From cost analysis to risk simulation — EXOS amplifies your expertise.
+            New era of procurement and supply chain decision making has arrived. Industry first scenario-based AI procurement decision making system.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 mt-2">
             <Button size="lg" className="gap-2" onClick={() => navigate("/")}>
