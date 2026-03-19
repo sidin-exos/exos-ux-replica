@@ -75,7 +75,7 @@ const successStories = [
 
 /* ── Page ── */
 const Welcome = () => {
-  const navigate = useNavigate();
+  const exosLogo = useThemedLogo();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
