@@ -6,6 +6,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { useThemedLogo } from "@/hooks/useThemedLogo";
 
 /* ── Video Placeholder ── */
 const VideoPlaceholder = ({ label, id }: { label: string; id: string }) => (
