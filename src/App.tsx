@@ -21,6 +21,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import FounderDashboard from "./pages/admin/FounderDashboard";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import RiskPlatform from "./pages/enterprise/RiskPlatform";
 import InflationPlatform from "./pages/enterprise/InflationPlatform";
 import PdfTestPage from "./pages/PdfTestPage";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute requireSuperAdmin><FounderDashboard /></ProtectedRoute>} />
+            <Route path="/admin/analytics" element={<ProtectedRoute requireSuperAdmin><AnalyticsDashboard /></ProtectedRoute>} />
             <Route path="/enterprise/risk" element={<RiskPlatform />} />
             <Route path="/enterprise/inflation" element={<InflationPlatform />} />
             <Route path="/pdf-test" element={<PdfTestPage />} />
