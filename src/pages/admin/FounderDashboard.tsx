@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Loader2, TrendingUp, Users, AlertTriangle, Clock, Pencil } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Loader2, TrendingUp, Users, AlertTriangle, Clock, Pencil, BarChart3 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useFounderMetrics, useUpdateMetrics, useUpdateHypothesis } from "@/hooks/useFounderMetrics";
 import Header from "@/components/layout/Header";
