@@ -114,26 +114,6 @@ const AnalyticsDashboard = () => {
               <SkeletonBlock className="h-64" />
             ) : (
               <>
-                {/* Scenario chart */}
-                {analytics.scenarioBreakdown.length > 0 && (
-                  <Card className="card-elevated">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Scenario Runs by Type</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={analytics.scenarioBreakdown}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                          <XAxis dataKey="type" className="text-xs fill-muted-foreground" tick={{ fontSize: 11 }} />
-                          <YAxis className="fill-muted-foreground" tick={{ fontSize: 11 }} />
-                          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} labelStyle={{ color: "hsl(var(--foreground))" }} />
-                          <Bar dataKey="count" name="Runs" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="avgTokens" name="Avg Tokens" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* Scenario Breakdown table */}
                 <Card className="card-elevated">
