@@ -127,13 +127,14 @@ const AnalyticsDashboard = () => {
                           <TableHead>Scenario Type</TableHead>
                           <TableHead className="text-right">Runs</TableHead>
                           <TableHead className="text-right">Success Rate</TableHead>
+                          <TableHead className="text-right">Satisfaction</TableHead>
                           <TableHead className="text-right">Avg Time (ms)</TableHead>
                           <TableHead className="text-right">Avg Tokens</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {analytics.scenarioBreakdown.length === 0 ? (
-                          <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No scenario data in this period</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No scenario data in this period</TableCell></TableRow>
                         ) : (
                           analytics.scenarioBreakdown.map((s) => (
                             <TableRow key={s.type}>
@@ -141,6 +142,9 @@ const AnalyticsDashboard = () => {
                               <TableCell className="text-right">{s.count}</TableCell>
                               <TableCell className="text-right">
                                 <Badge variant={s.successRate >= 80 ? "default" : "destructive"}>{s.successRate}%</Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {s.satisfactionRate >= 0 ? `${s.satisfactionRate}%` : "—"}
                               </TableCell>
                               <TableCell className="text-right">{s.avgTimeMs.toLocaleString()}</TableCell>
                               <TableCell className="text-right">{s.avgTokens.toLocaleString()}</TableCell>
