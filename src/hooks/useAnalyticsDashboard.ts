@@ -11,6 +11,7 @@ export interface ScenarioBreakdown {
   successRate: number;
   avgTimeMs: number;
   avgTokens: number;
+  satisfactionRate: number;
 }
 
 export interface IntelBreakdown {
