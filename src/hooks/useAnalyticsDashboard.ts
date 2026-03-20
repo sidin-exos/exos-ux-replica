@@ -311,7 +311,31 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
       };
     });
 
-  // Growth
+  // Recent 20 FAILED runs
+  const recentFailedRuns: RecentRun[] = filteredPrompts
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .filter((p) => {
+      const r = reportByPromptId.get(p.id);
+      return r && !r.success;
+    })
+    .slice(0, 20)
+    .map((p) => {
+      const r = reportByPromptId.get(p.id)!;
+      return {
+        id: p.id,
+        scenario_type: p.scenario_type,
+        industry_slug: p.industry_slug,
+        category_slug: p.category_slug,
+        success: false,
+        processing_time_ms: r.processing_time_ms ?? null,
+        total_tokens: r.total_tokens ?? null,
+        prompt_tokens: r.prompt_tokens ?? null,
+        completion_tokens: r.completion_tokens ?? null,
+        model: r.model ?? "—",
+        created_at: p.created_at,
+      };
+    });
+
   const userGrowth = groupByMonth(profiles);
   const orgGrowth = groupByMonth(orgs);
 
