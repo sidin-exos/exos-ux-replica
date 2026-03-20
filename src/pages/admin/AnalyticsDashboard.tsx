@@ -246,7 +246,47 @@ const AnalyticsDashboard = () => {
                   </CardContent>
                 </Card>
 
-                {/* Intel breakdown */}
+                {/* Recent 20 Failed Runs */}
+                <Card className="card-elevated border-destructive/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-destructive">🐛 Recent 20 Unsuccessful Scenarios</CardTitle>
+                  </CardHeader>
+                  <CardContent className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Scenario Type</TableHead>
+                          <TableHead>Industry</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead className="text-right">Time (ms)</TableHead>
+                          <TableHead className="text-right">Tokens</TableHead>
+                          <TableHead>Model</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {analytics.recentFailedRuns.length === 0 ? (
+                          <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No failed runs in this period 🎉</TableCell></TableRow>
+                        ) : (
+                          analytics.recentFailedRuns.map((run) => (
+                            <TableRow key={run.id}>
+                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                                {new Date(run.created_at).toLocaleString()}
+                              </TableCell>
+                              <TableCell className="font-medium">{run.scenario_type}</TableCell>
+                              <TableCell className="max-w-[120px] truncate">{run.industry_slug || "—"}</TableCell>
+                              <TableCell className="max-w-[120px] truncate">{run.category_slug || "—"}</TableCell>
+                              <TableCell className="text-right">{run.processing_time_ms?.toLocaleString() ?? "—"}</TableCell>
+                              <TableCell className="text-right">{run.total_tokens?.toLocaleString() ?? "—"}</TableCell>
+                              <TableCell className="text-sm">{run.model}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
                 {analytics.intelBreakdown.length > 0 && (
                   <Card className="card-elevated">
                     <CardHeader>
