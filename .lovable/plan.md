@@ -1,73 +1,94 @@
 
 
-# Test Phase Analytics Dashboard — Implementation Plan
+# Analytics Dashboard Enhancements
 
-## Files to Create
+## Summary of Changes
 
-### 1. `src/hooks/useAnalyticsDashboard.ts`
+Six enhancements to the admin analytics dashboard: user satisfaction metrics, recent runs table, industry breakdown, raw data export, time-range filtering, and industry aggregation table.
 
-Custom hook using `useQueries` from `@tanstack/react-query` to run all Supabase queries in parallel:
+## 1. Hook Changes (`src/hooks/useAnalyticsDashboard.ts`)
 
-| Index | Query Key | Table | What it fetches |
-|-------|-----------|-------|-----------------|
-| 0 | `analytics-profiles` | `profiles` | All rows: `id, created_at` — derive total users + monthly signups client-side |
-| 1 | `analytics-orgs` | `organizations` | All rows: `id, created_at` — derive total orgs + monthly signups |
-| 2 | `analytics-prompts` | `test_prompts` | All rows: `id, scenario_type, created_at` — count by scenario_type |
-| 3 | `analytics-reports` | `test_reports` | All rows: `id, prompt_id, success, processing_time_ms, total_tokens, created_at` — success rate, avg time, avg tokens |
-| 4 | `analytics-intel` | `intel_queries` | All rows: `id, query_type, success, processing_time_ms, created_at` — total, by type, success rate |
-| 5 | `analytics-insights` | `market_insights` | Count only via `.select("id", { count: "exact", head: true })` |
-| 6 | `analytics-scenario-feedback` | `scenario_feedback` | All rows: `id, scenario_id, rating, feedback_text, created_at` — rating distribution, latest 5 texts |
-| 7 | `analytics-chat-feedback` | `chat_feedback` | All rows: `id, rating, created_at` — thumbs up/down counts |
-| 8 | `analytics-files` | `user_files` | Count only via head request |
-| 9 | `analytics-trackers` | `enterprise_trackers` | Count only via head request |
+### New queries
+- **test_prompts (expanded)**: Fetch `industry_slug, category_slug` in addition to existing fields
+- **test_reports (expanded)**: Fetch `model, prompt_tokens, completion_tokens` in addition to existing fields
+- **Recent 20 runs**: Derive from the already-fetched prompts + reports data (join client-side, sort by `created_at` desc, take 20)
 
-The hook returns a structured object with derived metrics:
-- `totalUsers`, `totalOrgs`, `totalScenarios`, `totalIntelQueries`
-- `scenarioBreakdown[]` — `{ type, count, successRate, avgTimeMs, avgTokens }`
-- `intelBreakdown[]` — `{ type, count, successRate }`
-- `userGrowth[]` / `orgGrowth[]` — `{ month: string, count: number }`
-- `feedbackDistribution` — `{ [rating]: count }`
-- `avgRating`, `latestFeedback[]`
-- `chatThumbsUp`, `chatThumbsDown`
-- `totalFiles`, `totalInsights`, `totalTrackers`
-- `isLoading` (any query loading), `error` (first error found)
+### New derived data
 
-Scenario breakdown requires joining prompts + reports client-side by `prompt_id`.
+| Return field | Source | Description |
+|---|---|---|
+| `satisfactionRate` | `scenario_feedback` | % of ratings ≥ 7 out of total feedback submissions (scale is 1-10) |
+| `recentRuns[]` (20 items) | `test_prompts` + `test_reports` join | Each item: scenario_type, industry_slug, category_slug, success, processing_time_ms, total_tokens, model, prompt_tokens, completion_tokens, created_at |
+| `industryBreakdown[]` | `test_prompts` + `test_reports` join | Same structure as scenarioBreakdown but grouped by `industry_slug` |
+| `timeFilteredScenarioBreakdown` | Computed from prompts/reports filtered by time range | Same shape as `scenarioBreakdown` but filtered to selected period |
+| `timeFilteredIndustryBreakdown` | Same but for industry | Industry aggregation filtered by time |
 
-### 2. `src/pages/admin/AnalyticsDashboard.tsx`
+### Time range filtering
+- Add a `timeRange` parameter to the hook (or handle filtering client-side since all data is already fetched)
+- Actually: since all prompts/reports are already fetched, filtering will happen in the **component** via a `useState` for time range, and the hook will accept the range to produce filtered breakdowns
+- Better approach: hook returns raw arrays; component filters + derives. But to keep it clean, add a `useMemo`-based approach: the hook takes a `timeRange` state and returns filtered breakdowns.
 
-Layout mirrors FounderDashboard pattern (Header + container):
+**Revised approach**: The hook already fetches all prompts/reports. Add a `timeRange` parameter. The hook will filter prompts by `created_at` before computing `scenarioBreakdown` and `industryBreakdown`. The component passes the selected range.
 
-- **Header row**: "Test Phase Analytics" + `<Button>` with RefreshCw icon that calls `queryClient.invalidateQueries({ queryKey: ["analytics"] })` (all keys prefixed with `analytics-` will be matched by using `predicate` or by nesting under a common prefix).
-  - Actually, use `queryClient.invalidateQueries({ predicate: (q) => (q.queryKey[0] as string).startsWith("analytics-") })`.
+### Raw data export
+- New function `exportRawData()` returned from the hook that builds an XLSX workbook with sheets: "Scenario Runs" (all prompts+reports joined), "Feedback" (all scenario_feedback), "Intel Queries", "Chat Feedback"
+- Uses the already-imported `xlsx` library
 
-- **Top StatCards (4-grid)**: Total Users, Total Orgs, Total Scenarios Run, Total Intel Queries — using the existing `StatCard` component from `src/components/dashboard/StatCard.tsx`.
+## 2. Dashboard UI Changes (`src/pages/admin/AnalyticsDashboard.tsx`)
 
-- **Tabs** (4 tabs using Shadcn Tabs):
-  - **Usage & Performance**: Recharts `BarChart` (scenario types vs count). Table with columns: Scenario Type, Runs, Success Rate, Avg Time (ms), Avg Tokens.
-  - **Growth**: Recharts `LineChart` with two lines (users, orgs) by month.
-  - **Feedback**: Bar chart for rating distribution (1-5). Chat thumbs up/down as two StatCards. Table of latest 5 feedback texts.
-  - **Assets**: StatCards for files uploaded, market insights saved, active trackers.
+### Top StatCards row
+- Add a 5th card: **"Satisfaction Rate"** showing `XX%` (percentage of ratings ≥ 7)
 
-- **Loading state**: Skeleton placeholders when `isLoading` is true.
+### Header area
+- Add **"Export Raw Data"** button next to Refresh button — calls `exportRawData()`
 
-### 3. `src/App.tsx` modifications
+### Time range selector
+- Add a `Select` dropdown above the Usage & Performance tab content with options: "Last 24 hours", "Last 3 days", "Last 7 days" (default), "Last month", "All time"
+- This filters `scenarioBreakdown`, `industryBreakdown`, the chart, and the recent runs
 
-- Add import: `import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";`
-- Add route before the catch-all:
-  ```
-  <Route path="/admin/analytics" element={<ProtectedRoute requireSuperAdmin><AnalyticsDashboard /></ProtectedRoute>} />
-  ```
+### Usage & Performance tab — new sections
+1. **Recent 20 Scenario Runs** table after existing breakdown table:
+   - Columns: Date, Scenario Type, Industry, Category, Success, Time (ms), Tokens, Model
+   - Badge for success/fail, truncated industry/category names
 
-### 4. `src/pages/admin/FounderDashboard.tsx` modifications
+2. **Industry Breakdown** table (new, after recent runs):
+   - Same structure as Scenario Breakdown table but grouped by `industry_slug`
+   - Columns: Industry, Runs, Success Rate, Avg Time (ms), Avg Tokens
 
-- Add a `Link` or `Button` with `useNavigate` to `/admin/analytics` next to the "Command Center" title, labeled "View Analytics".
-- Import `BarChart3` icon from lucide-react for the button.
+### Feedback tab
+- Fix rating chart to use 1-10 scale (currently hardcoded to 1-5)
+- Add satisfaction rate StatCard alongside existing feedback stats
 
-## Technical Notes
+## 3. Technical Details
 
-- `shared_reports` is completely excluded (RLS blocks all SELECT).
-- All queries use the existing `supabase` client; super_admin RLS grants read access.
-- Monthly grouping done client-side by parsing `created_at` and bucketing into `YYYY-MM`.
-- No new migrations, edge functions, or RPCs.
+### Time range filter implementation
+```typescript
+// In component
+const [timeRange, setTimeRange] = useState<string>("7d");
+
+// Filter function
+const getTimeFilterDate = (range: string): Date => {
+  const now = new Date();
+  switch(range) {
+    case "24h": return new Date(now.getTime() - 24*60*60*1000);
+    case "3d": return new Date(now.getTime() - 3*24*60*60*1000);
+    case "7d": return new Date(now.getTime() - 7*24*60*60*1000);
+    case "30d": return new Date(now.getTime() - 30*24*60*60*1000);
+    default: return new Date(0); // all time
+  }
+};
+```
+
+### Export function
+Uses `xlsx` (already in dependencies via `src/lib/report-export-excel.ts`) to build a multi-sheet workbook:
+- Sheet "Scenario Runs": all prompts joined with reports
+- Sheet "Scenario Feedback": all feedback rows
+- Sheet "Intel Queries": all intel rows  
+- Sheet "Chat Feedback": all chat rows
+
+### Files modified
+1. `src/hooks/useAnalyticsDashboard.ts` — expand queries, add industryBreakdown, recentRuns, satisfactionRate, exportRawData, accept timeRange param
+2. `src/pages/admin/AnalyticsDashboard.tsx` — add time filter UI, recent runs table, industry table, satisfaction card, export button, fix rating scale
+
+No new files. No migrations. No edge functions.
 
