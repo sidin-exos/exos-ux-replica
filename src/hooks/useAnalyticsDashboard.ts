@@ -261,8 +261,8 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
   const filteredReports = allReports.filter((r) => filteredPromptIds.has(r.prompt_id));
 
   // Breakdowns (time-filtered)
-  const scenarioBreakdown = buildScenarioBreakdown(filteredPrompts, filteredReports);
-  const industryBreakdown = buildIndustryBreakdown(filteredPrompts, filteredReports);
+  const scenarioBreakdown = buildScenarioBreakdown(filteredPrompts, filteredReports, feedbackRows);
+  const industryBreakdown = buildIndustryBreakdown(filteredPrompts, filteredReports, feedbackRows);
 
   // Intel breakdown (unfiltered — no time dimension requested for intel)
   const intelMap = new Map<string, { count: number; successes: number }>();
