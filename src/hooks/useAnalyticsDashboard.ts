@@ -85,13 +85,13 @@ function getTimeFilterDate(range: TimeRange): Date {
 type PromptRow = { id: string; scenario_type: string; created_at: string; industry_slug: string | null; category_slug: string | null };
 type ReportRow = { id: string; prompt_id: string; success: boolean; processing_time_ms: number | null; total_tokens: number | null; created_at: string; model: string; prompt_tokens: number | null; completion_tokens: number | null };
 
-function buildScenarioBreakdown(prompts: PromptRow[], reports: ReportRow[]): ScenarioBreakdown[] {
+function buildScenarioBreakdown(prompts: PromptRow[], reports: ReportRow[], feedback: FeedbackItem[]): ScenarioBreakdown[] {
   const promptTypeMap = new Map<string, string>();
   for (const p of prompts) promptTypeMap.set(p.id, p.scenario_type);
 
-  const map = new Map<string, { count: number; successes: number; totalTime: number; totalTokens: number; timeCount: number; tokenCount: number }>();
+  const map = new Map<string, { count: number; successes: number; totalTime: number; totalTokens: number; timeCount: number; tokenCount: number; ratings: number[] }>();
   for (const p of prompts) {
-    if (!map.has(p.scenario_type)) map.set(p.scenario_type, { count: 0, successes: 0, totalTime: 0, totalTokens: 0, timeCount: 0, tokenCount: 0 });
+    if (!map.has(p.scenario_type)) map.set(p.scenario_type, { count: 0, successes: 0, totalTime: 0, totalTokens: 0, timeCount: 0, tokenCount: 0, ratings: [] });
     map.get(p.scenario_type)!.count++;
   }
   for (const r of reports) {
@@ -103,23 +103,29 @@ function buildScenarioBreakdown(prompts: PromptRow[], reports: ReportRow[]): Sce
     if (r.processing_time_ms != null) { entry.totalTime += r.processing_time_ms; entry.timeCount++; }
     if (r.total_tokens != null && r.total_tokens > 0) { entry.totalTokens += r.total_tokens; entry.tokenCount++; }
   }
+  for (const f of feedback) {
+    const type = promptTypeMap.get(f.scenario_id);
+    if (!type) continue;
+    map.get(type)?.ratings.push(f.rating);
+  }
   return Array.from(map.entries()).map(([type, s]) => ({
     type,
     count: s.count,
     successRate: s.count > 0 ? Math.round((s.successes / s.count) * 100) : 0,
     avgTimeMs: s.timeCount > 0 ? Math.round(s.totalTime / s.timeCount) : 0,
     avgTokens: s.tokenCount > 0 ? Math.round(s.totalTokens / s.tokenCount) : 0,
+    satisfactionRate: s.ratings.length > 0 ? Math.round((s.ratings.filter(r => r >= 7).length / s.ratings.length) * 100) : -1,
   }));
 }
 
-function buildIndustryBreakdown(prompts: PromptRow[], reports: ReportRow[]): IndustryBreakdown[] {
-  const promptIndustryMap = new Map<string, string | null>();
-  for (const p of prompts) promptIndustryMap.set(p.id, p.industry_slug);
+function buildIndustryBreakdown(prompts: PromptRow[], reports: ReportRow[], feedback: FeedbackItem[]): IndustryBreakdown[] {
+  const promptIndustryMap = new Map<string, string>();
+  for (const p of prompts) promptIndustryMap.set(p.id, p.industry_slug || "Unknown");
 
-  const map = new Map<string, { count: number; successes: number; totalTime: number; totalTokens: number; timeCount: number; tokenCount: number }>();
+  const map = new Map<string, { count: number; successes: number; totalTime: number; totalTokens: number; timeCount: number; tokenCount: number; ratings: number[] }>();
   for (const p of prompts) {
     const industry = p.industry_slug || "Unknown";
-    if (!map.has(industry)) map.set(industry, { count: 0, successes: 0, totalTime: 0, totalTokens: 0, timeCount: 0, tokenCount: 0 });
+    if (!map.has(industry)) map.set(industry, { count: 0, successes: 0, totalTime: 0, totalTokens: 0, timeCount: 0, tokenCount: 0, ratings: [] });
     map.get(industry)!.count++;
   }
   for (const r of reports) {
@@ -130,12 +136,17 @@ function buildIndustryBreakdown(prompts: PromptRow[], reports: ReportRow[]): Ind
     if (r.processing_time_ms != null) { entry.totalTime += r.processing_time_ms; entry.timeCount++; }
     if (r.total_tokens != null && r.total_tokens > 0) { entry.totalTokens += r.total_tokens; entry.tokenCount++; }
   }
+  for (const f of feedback) {
+    const industry = promptIndustryMap.get(f.scenario_id) || "Unknown";
+    map.get(industry)?.ratings.push(f.rating);
+  }
   return Array.from(map.entries()).map(([industry, s]) => ({
     industry,
     count: s.count,
     successRate: s.count > 0 ? Math.round((s.successes / s.count) * 100) : 0,
     avgTimeMs: s.timeCount > 0 ? Math.round(s.totalTime / s.timeCount) : 0,
     avgTokens: s.tokenCount > 0 ? Math.round(s.totalTokens / s.tokenCount) : 0,
+    satisfactionRate: s.ratings.length > 0 ? Math.round((s.ratings.filter(r => r >= 7).length / s.ratings.length) * 100) : -1,
   }));
 }
 
