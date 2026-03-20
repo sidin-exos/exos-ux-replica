@@ -21,6 +21,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import FounderDashboard from "./pages/admin/FounderDashboard";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import RiskPlatform from "./pages/enterprise/RiskPlatform";
 import InflationPlatform from "./pages/enterprise/InflationPlatform";
 import PdfTestPage from "./pages/PdfTestPage";
