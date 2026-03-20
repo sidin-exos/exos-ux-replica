@@ -27,9 +27,7 @@ interface DashboardRendererProps {
 
 const DashboardRenderer = ({
   dashboardType,
-  scenarioTitle,
   analysisResult,
-  formData,
 }: DashboardRendererProps) => {
   const parsedData = useMemo(
     () => extractDashboardData(analysisResult || ''),

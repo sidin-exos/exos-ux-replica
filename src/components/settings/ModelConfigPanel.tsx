@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useModelConfig } from "@/contexts/ModelConfigContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const GOOGLE_MODELS = [
@@ -20,7 +20,6 @@ const GOOGLE_MODELS = [
 
 export function ModelConfigPanel() {
   const { model, lastTested, setModel, markTested } = useModelConfig();
-  const { toast } = useToast();
   const [isTesting, setIsTesting] = useState(false);
 
   const handleTestConnection = async () => {
@@ -45,17 +44,10 @@ export function ModelConfigPanel() {
       }
 
       markTested();
-      toast({
-        title: "Connection Successful",
-        description: `Model ${model} is responding`,
-      });
+      toast.success("Connection Successful", { description: `Model ${model} is responding` });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({
-        title: "Connection Failed",
-        description: message,
-        variant: "destructive",
-      });
+      toast.error("Connection Failed", { description: message });
     } finally {
       setIsTesting(false);
     }

@@ -12,7 +12,6 @@ import {
   Building,
   Calculator,
   Cloud,
-  Wallet,
   PieChart,
   Target,
   Handshake,
@@ -25,7 +24,6 @@ import {
   LogOut,
   Sparkles,
   Feather,
-  Zap,
   ScrollText,
 } from "lucide-react";
 

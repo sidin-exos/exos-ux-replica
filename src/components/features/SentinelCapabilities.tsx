@@ -1,9 +1,7 @@
-import { EyeOff, Database, ShieldCheck, RotateCcw, Brain } from "lucide-react";
+import { EyeOff, Database, ShieldCheck, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useThemedLogo } from "@/hooks/useThemedLogo";
 
 const SentinelCapabilities = () => {
-  const exosLogo = useThemedLogo();
   const capabilities = [
     {
       icon: EyeOff,
@@ -41,7 +39,7 @@ const SentinelCapabilities = () => {
 
       {/* Capabilities Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {capabilities.map((cap, index) => (
+        {capabilities.map((cap, _index) => (
           <Card 
             key={cap.title}
             className="card-elevated border-border/50 overflow-hidden group hover:border-primary/30 transition-colors"

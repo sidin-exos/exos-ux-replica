@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { toPng, toSvg } from "html-to-image";
 import { Download, Image, FileCode, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import { NavLink } from "@/components/NavLink";
@@ -44,6 +45,7 @@ const ArchitectureDiagram = () => {
       link.click();
     } catch (error) {
       console.error("PNG download error:", error);
+      toast.error("Download failed", { description: "Could not generate PNG image." });
     } finally {
       setIsDownloading(false);
     }
@@ -80,6 +82,7 @@ const ArchitectureDiagram = () => {
       link.click();
     } catch (error) {
       console.error("SVG download error:", error);
+      toast.error("Download failed", { description: "Could not generate SVG image." });
     } finally {
       setIsDownloading(false);
     }

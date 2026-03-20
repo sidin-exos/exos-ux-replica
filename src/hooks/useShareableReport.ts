@@ -1,16 +1,10 @@
 import { useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardType } from "@/lib/dashboard-mappings";
+import { ReportDataSchema, safeParseJsonb, type ReportDataParsed } from "@/lib/jsonb-schemas";
+import type { Json } from "@/integrations/supabase/types";
 
-interface ReportData {
-  scenarioTitle: string;
-  scenarioId?: string;
-  analysisResult: string;
-  formData: Record<string, string>;
-  timestamp: string;
-  selectedDashboards?: DashboardType[];
-}
+type ReportData = ReportDataParsed;
 
 interface ShareableReportReturn {
   shareId: string | null;
@@ -47,7 +41,7 @@ export function useShareableReport(): ShareableReportReturn {
         const expiresAt = new Date(Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
         const { data: id, error } = await supabase.rpc("create_shared_report", {
-          p_payload: JSON.parse(JSON.stringify(data)) as unknown as import("@/integrations/supabase/types").Json,
+          p_payload: JSON.parse(JSON.stringify(data)) as Json,
           p_expires_at: expiresAt,
         });
 
@@ -95,16 +89,8 @@ export function useShareableReport(): ShareableReportReturn {
           return null;
         }
 
-        const payload = data as unknown as ReportData;
-
-        return {
-          scenarioTitle: payload.scenarioTitle,
-          scenarioId: payload.scenarioId,
-          analysisResult: payload.analysisResult,
-          formData: payload.formData,
-          timestamp: payload.timestamp,
-          selectedDashboards: payload.selectedDashboards,
-        };
+        const parsed = safeParseJsonb(ReportDataSchema, data, "shared-report", null);
+        return parsed;
       } catch (error) {
         console.error("Failed to load shared report:", error);
         return null;

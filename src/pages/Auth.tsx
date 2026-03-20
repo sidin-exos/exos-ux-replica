@@ -13,7 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import Header from "@/components/layout/Header";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { Loader2, ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { getUserFriendlyError } from "@/lib/error-messages";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Please enter a valid email"),
@@ -41,7 +42,6 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const exosLogo = useThemedLogo();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [view, setView] = useState<"auth" | "forgot-password">("auth");
@@ -63,7 +63,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (searchParams.get("password_reset") === "true") {
-      toast({ title: "Password updated", description: "Sign in with your new password." });
+      toast.success("Password updated", { description: "Sign in with your new password." });
       searchParams.delete("password_reset");
       setSearchParams(searchParams, { replace: true });
     }
@@ -72,7 +72,7 @@ const Auth = () => {
   useEffect(() => {
     const isEmailConfirmation = window.location.hash.includes("type=signup");
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         navigate(isEmailConfirmation ? "/account?confirmed=true" : "/account");
       }
@@ -97,10 +97,10 @@ const Auth = () => {
         password: values.password,
       });
       if (error) {
-        toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+        toast.error("Sign in failed", { description: getUserFriendlyError(error) });
       }
     } catch {
-      toast({ title: "Sign in failed", description: "An unexpected error occurred", variant: "destructive" });
+      toast.error("Sign in failed", { description: "An unexpected error occurred" });
     } finally {
       setIsLoading(false);
     }
@@ -117,13 +117,13 @@ const Auth = () => {
         },
       });
       if (error) {
-        toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+        toast.error("Sign up failed", { description: getUserFriendlyError(error) });
       } else {
-        toast({ title: "Check your email", description: "We sent you a confirmation link to complete your registration." });
+        toast.success("Check your email", { description: "We sent you a confirmation link to complete your registration." });
         signUpForm.reset();
       }
     } catch {
-      toast({ title: "Sign up failed", description: "An unexpected error occurred", variant: "destructive" });
+      toast.error("Sign up failed", { description: "An unexpected error occurred" });
     } finally {
       setIsLoading(false);
     }
@@ -136,14 +136,14 @@ const Auth = () => {
         redirectTo: window.location.origin + "/reset-password",
       });
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        toast.error("Error", { description: getUserFriendlyError(error) });
       } else {
-        toast({ title: "Check your email", description: "We sent you a password reset link." });
+        toast.success("Check your email", { description: "We sent you a password reset link." });
         forgotForm.reset();
         setView("auth");
       }
     } catch {
-      toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
+      toast.error("Error", { description: "An unexpected error occurred" });
     } finally {
       setIsLoading(false);
     }
@@ -159,10 +159,10 @@ const Auth = () => {
         },
       });
       if (error) {
-        toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+        toast.error("Sign in failed", { description: getUserFriendlyError(error) });
       }
     } catch {
-      toast({ title: "Sign in failed", description: "An unexpected error occurred", variant: "destructive" });
+      toast.error("Sign in failed", { description: "An unexpected error occurred" });
     } finally {
       setIsLoading(false);
     }

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Header from "@/components/layout/Header";
 import { User, CreditCard, LogOut, Loader2, Check, Zap, Shield, Building2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useShareableMode } from "@/hooks/useShareableMode";
 import { ModelConfigPanel } from "@/components/settings/ModelConfigPanel";
 import UserFilesManager from "@/components/files/UserFilesManager";
@@ -47,7 +47,6 @@ const subscriptionPlans = [
 const Account = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { toast } = useToast();
   const { showTechnicalDetails } = useShareableMode();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,14 +54,14 @@ const Account = () => {
 
   useEffect(() => {
     if (searchParams.get("confirmed") === "true") {
-      toast({ title: "Account confirmed!", description: "Your email has been verified. Welcome to EXOS!" });
+      toast.success("Account confirmed!", { description: "Your email has been verified. Welcome to EXOS!" });
       searchParams.delete("confirmed");
       setSearchParams(searchParams, { replace: true });
     }
   }, []);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         navigate("/auth");
       } else {
@@ -89,21 +88,14 @@ const Account = () => {
       await supabase.auth.signOut();
       navigate("/auth");
     } catch (error) {
-      toast({
-        title: "Sign out failed",
-        description: "An error occurred while signing out",
-        variant: "destructive",
-      });
+      toast.error("Sign out failed", { description: "An error occurred while signing out" });
     } finally {
       setIsSigningOut(false);
     }
   };
 
-  const handleSubscribe = (planId: string) => {
-    toast({
-      title: "Coming Soon",
-      description: "Stripe payment integration will be configured shortly",
-    });
+  const handleSubscribe = (_planId: string) => {
+    toast("Coming Soon", { description: "Stripe payment integration will be configured shortly" });
   };
 
   if (isLoading) {

@@ -85,7 +85,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
           const score = getRiskScore(risk.impact, risk.probability);
           const severity = getRiskSeverity(score, colors);
           return (
-            <View key={risk.id} style={[tableStyles.dataRow, i === sortedRisks.length - 1 && tableStyles.lastRow]}>
+            <View key={risk.id} style={[tableStyles.dataRow, ...(i === sortedRisks.length - 1 ? [tableStyles.lastRow] : [])]}>
               <View style={tableStyles.colSeverity}>
                 <View style={{ backgroundColor: severity.bgColor, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3, minWidth: 48, alignItems: "center" }}>
                   <Text style={{ fontSize: 9, fontWeight: 700, color: severity.color }}>{severity.label}</Text>

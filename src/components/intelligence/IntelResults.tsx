@@ -4,10 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { 
-  ExternalLink, 
-  Clock, 
-  Cpu, 
-  CheckCircle2, 
+  ExternalLink,
+  Clock,
+  CheckCircle2,
   Copy,
   Building2, 
   TrendingUp, 
@@ -19,7 +18,7 @@ import {
   Coins,
   Database
 } from "lucide-react";
-import { type IntelResult, type QueryType, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
+import { type IntelResult, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
 import { SaveToKnowledgeBaseDialog } from "@/components/intelligence/SaveToKnowledgeBaseDialog";
 import { toast } from "sonner";
 

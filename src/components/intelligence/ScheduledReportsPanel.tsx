@@ -25,7 +25,7 @@ export function ScheduledReportsPanel() {
 
   const { data: industries } = useIndustryContexts();
   const { data: categories } = useProcurementCategories();
-  const { configs, isLoading, loadConfigs, createConfig, deleteConfig, toggleActive } = useSavedIntelConfigs();
+  const { configs, loadConfigs, createConfig, deleteConfig, toggleActive } = useSavedIntelConfigs();
 
   useEffect(() => {
     loadConfigs("scheduled");

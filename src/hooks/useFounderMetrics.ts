@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const QUERY_KEY = ["founder-metrics"];
 
@@ -50,10 +50,10 @@ export function useUpdateMetrics() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      toast({ title: "Metrics updated" });
+      toast.success("Metrics updated");
     },
     onError: (err: Error) => {
-      toast({ title: "Failed to update metrics", description: err.message, variant: "destructive" });
+      toast.error("Failed to update metrics", { description: err.message });
     },
   });
 }
@@ -80,10 +80,10 @@ export function useUpdateHypothesis() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      toast({ title: "Hypothesis updated" });
+      toast.success("Hypothesis updated");
     },
     onError: (err: Error) => {
-      toast({ title: "Failed to update hypothesis", description: err.message, variant: "destructive" });
+      toast.error("Failed to update hypothesis", { description: err.message });
     },
   });
 }

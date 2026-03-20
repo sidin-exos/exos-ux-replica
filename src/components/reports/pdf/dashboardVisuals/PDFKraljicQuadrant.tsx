@@ -38,7 +38,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
       isLastCol && styles.quadrantCellLastCol,
       isLastRow && styles.quadrantCellLastRow,
       { backgroundColor: info.color + "15" },
-    ].filter(Boolean);
+    ].filter(Boolean) as any[];
 
     return (
       <View style={cellStyles}>
@@ -91,7 +91,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
 
       <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
         <Text style={{ fontSize: 9, fontWeight: 600, color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
-        {Object.entries(quadrantInfo).map(([key, info], i) => (
+        {Object.entries(quadrantInfo).map(([_key, info], i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 3 }}>
             <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: info.color, marginRight: 6 }} />
             <Text style={{ fontSize: 9, color: colors.text, fontWeight: 500, width: 60 }}>{info.label}:</Text>

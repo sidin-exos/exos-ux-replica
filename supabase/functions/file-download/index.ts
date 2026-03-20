@@ -15,6 +15,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY } from "../_shared/env.ts";
 import { getUserOrgId } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
@@ -46,8 +47,8 @@ serve(async (req) => {
 
   const token = authHeader.replace("Bearer ", "");
   const authClient = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
   );
 
   const { data: { user: authUser }, error: authError } = await authClient.auth.getUser(token);
@@ -87,8 +88,8 @@ serve(async (req) => {
 
   // 4. Lookup file metadata using service_role (bypasses RLS)
   const serviceClient = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY
   );
 
   const { data: file, error: fileError } = await serviceClient

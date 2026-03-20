@@ -43,7 +43,8 @@ export function ContactForm() {
       if (error) throw error;
       setSubmitted(true);
       toast.success("Message sent successfully!");
-    } catch {
+    } catch (err) {
+      console.error("Contact form submission failed:", err);
       toast.error("Failed to send message. Please try again.");
     } finally {
       setSubmitting(false);

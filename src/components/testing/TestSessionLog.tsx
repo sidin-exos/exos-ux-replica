@@ -87,7 +87,7 @@ function downloadJSON(data: unknown, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-const TestSessionLog = ({ scenarioType, scenarioTitle, isThresholdReached }: TestSessionLogProps) => {
+const TestSessionLog = ({ scenarioType, isThresholdReached }: TestSessionLogProps) => {
   const { data: prompts, isLoading } = useTestPromptsByScenario(scenarioType, 200);
 
   const dateGroups = useMemo(() => groupByDate(prompts || []), [prompts]);

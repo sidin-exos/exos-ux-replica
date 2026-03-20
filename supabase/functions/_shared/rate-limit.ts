@@ -3,6 +3,7 @@
  * Limits requests per authenticated user per endpoint.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "./env.ts";
 
 interface RateLimitResult {
   allowed: boolean;
@@ -22,8 +23,8 @@ export async function checkRateLimit(
   options?: { failClosed?: boolean }
 ): Promise<RateLimitResult> {
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY
   );
 
   const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString();

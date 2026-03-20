@@ -22,14 +22,6 @@ function extractKeyPoints(text: string): string[] {
   );
 }
 
-function sanitize(text: string): string {
-  return text
-    .replace(/<dashboard-data>[\s\S]*?<\/dashboard-data>/g, "")
-    .replace(/\*\*/g, "")
-    .replace(/^[#]+\s*/gm, "")
-    .trim();
-}
-
 /**
  * Formula injection prevention — prefix cell values starting with formula
  * triggers (=, +, -, @) with an apostrophe so Excel won't execute them.

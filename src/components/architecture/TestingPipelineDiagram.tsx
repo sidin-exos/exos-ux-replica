@@ -12,7 +12,6 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
-  SlidersHorizontal,
   GitMerge,
   PlusCircle,
   Sparkles,

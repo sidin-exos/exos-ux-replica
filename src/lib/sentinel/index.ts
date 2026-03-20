@@ -93,8 +93,6 @@ export function prepareAnalysis(
     enableValidation?: boolean;
   }
 ) {
-  const { preparePipelineRequest } = require('./orchestrator');
-  
   const request = {
     rawInput: '',
     scenarioType,

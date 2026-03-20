@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   FileText,
   Download,
-  Share2,
   CheckCircle2,
   Calendar,
   Building2,
@@ -18,7 +17,6 @@ import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import DashboardRenderer from "@/components/reports/DashboardRenderer";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
@@ -110,7 +108,7 @@ const GeneratedReport = () => {
     );
   }
 
-  const { scenarioTitle, scenarioId, analysisResult, formData, timestamp, selectedDashboards = [] } = state;
+  const { scenarioTitle, scenarioId: _scenarioId, analysisResult, formData, timestamp, selectedDashboards = [] } = state;
   
   // Ensure analysisResult is never null for rendering
   const safeAnalysisResult = analysisResult ?? '';

@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
 import type { DashboardData } from "@/lib/dashboard-data-parser";
 
-import { styles, colors, getPdfColors, getPdfStyles, type PdfThemeMode } from "./dashboardVisuals/theme";
+import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./dashboardVisuals/theme";
 import { PDFCostWaterfall } from "./dashboardVisuals/PDFCostWaterfall";
 import { PDFDecisionMatrix } from "./dashboardVisuals/PDFDecisionMatrix";
 import { PDFSensitivityAnalysis } from "./dashboardVisuals/PDFSensitivityTornado";
@@ -195,35 +195,38 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
     return <PDFNoDataPlaceholder name={config?.name || String(dashboardType)} themeMode={themeMode} />;
   }
 
+  // After the guard above, parsedData and its relevant key are guaranteed non-null
+  const data = parsedData as DashboardData;
+
   switch (dashboardType) {
     case "action-checklist":
-      return <PDFActionChecklist data={parsedData!.actionChecklist!} themeMode={themeMode} />;
+      return data.actionChecklist ? <PDFActionChecklist data={data.actionChecklist} themeMode={themeMode} /> : null;
     case "decision-matrix":
-      return <PDFDecisionMatrix data={parsedData!.decisionMatrix!} themeMode={themeMode} />;
+      return data.decisionMatrix ? <PDFDecisionMatrix data={data.decisionMatrix} themeMode={themeMode} /> : null;
     case "cost-waterfall":
-      return <PDFCostWaterfall data={parsedData!.costWaterfall!} themeMode={themeMode} />;
+      return data.costWaterfall ? <PDFCostWaterfall data={data.costWaterfall} themeMode={themeMode} /> : null;
     case "timeline-roadmap":
-      return <PDFTimelineRoadmap data={parsedData!.timelineRoadmap!} themeMode={themeMode} />;
+      return data.timelineRoadmap ? <PDFTimelineRoadmap data={data.timelineRoadmap} themeMode={themeMode} /> : null;
     case "kraljic-quadrant":
-      return <PDFKraljicQuadrant data={parsedData!.kraljicQuadrant!} themeMode={themeMode} />;
+      return data.kraljicQuadrant ? <PDFKraljicQuadrant data={data.kraljicQuadrant} themeMode={themeMode} /> : null;
     case "tco-comparison":
-      return <PDFTCOComparison data={parsedData!.tcoComparison!} themeMode={themeMode} />;
+      return data.tcoComparison ? <PDFTCOComparison data={data.tcoComparison} themeMode={themeMode} /> : null;
     case "license-tier":
-      return <PDFLicenseTier data={parsedData!.licenseTier!} themeMode={themeMode} />;
+      return data.licenseTier ? <PDFLicenseTier data={data.licenseTier} themeMode={themeMode} /> : null;
     case "sensitivity-spider":
-      return <PDFSensitivityAnalysis data={parsedData!.sensitivitySpider!} themeMode={themeMode} />;
+      return data.sensitivitySpider ? <PDFSensitivityAnalysis data={data.sensitivitySpider} themeMode={themeMode} /> : null;
     case "risk-matrix":
-      return <PDFRiskMatrix data={parsedData!.riskMatrix!} themeMode={themeMode} />;
+      return data.riskMatrix ? <PDFRiskMatrix data={data.riskMatrix} themeMode={themeMode} /> : null;
     case "scenario-comparison":
-      return <PDFScenarioComparison data={parsedData!.scenarioComparison!} themeMode={themeMode} />;
+      return data.scenarioComparison ? <PDFScenarioComparison data={data.scenarioComparison} themeMode={themeMode} /> : null;
     case "supplier-scorecard":
-      return <PDFSupplierScorecard data={parsedData!.supplierScorecard!} themeMode={themeMode} />;
+      return data.supplierScorecard ? <PDFSupplierScorecard data={data.supplierScorecard} themeMode={themeMode} /> : null;
     case "sow-analysis":
-      return <PDFSOWAnalysis data={parsedData!.sowAnalysis!} themeMode={themeMode} />;
+      return data.sowAnalysis ? <PDFSOWAnalysis data={data.sowAnalysis} themeMode={themeMode} /> : null;
     case "negotiation-prep":
-      return <PDFNegotiationPrep data={parsedData!.negotiationPrep!} themeMode={themeMode} />;
+      return data.negotiationPrep ? <PDFNegotiationPrep data={data.negotiationPrep} themeMode={themeMode} /> : null;
     case "data-quality":
-      return <PDFDataQuality data={parsedData!.dataQuality!} themeMode={themeMode} />;
+      return data.dataQuality ? <PDFDataQuality data={data.dataQuality} themeMode={themeMode} /> : null;
     default: {
       const config = dashboardConfigs[dashboardType as DashboardType];
       return <PDFDashboardPlaceholder name={config?.name || String(dashboardType)} themeMode={themeMode} />;

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Bot, ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { Message } from '@/hooks/use-exos-chat';
+import type { Message } from '@/hooks/useExosChat';
 
 const timeFormatter = new Intl.DateTimeFormat('en-US', {
   hour: '2-digit',

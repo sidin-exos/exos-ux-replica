@@ -1,23 +1,15 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe } from "lucide-react";
+import { Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAllMarketInsights, useGenerateMarketInsights } from "@/hooks/useMarketInsights";
 
-// Existing 5 combinations (already generated)
-const EXISTING_COMBINATIONS = [
-  { industrySlug: "pharma-life-sciences", categorySlug: "lab-supplies" },
-  { industrySlug: "automotive-oem", categorySlug: "raw-materials-steel" },
-  { industrySlug: "retail", categorySlug: "logistics-small-parcel" },
-  { industrySlug: "saas-enterprise", categorySlug: "it-software-saas" },
-  { industrySlug: "healthcare", categorySlug: "mro-maintenance" },
-];
 
 const EU_COMBINATIONS = [
   { industrySlug: "aerospace-defense", industryName: "Aerospace & Defense", categorySlug: "semiconductors", categoryName: "Semiconductors", geography: "Global" },
@@ -55,7 +47,6 @@ function TableRowSkeleton() {
 }
 
 export function MarketInsightsAdmin() {
-  const { toast } = useToast();
   const { data: insights, isLoading: isLoadingInsights, refetch } = useAllMarketInsights();
   const { generate, isGenerating, generationResult } = useGenerateMarketInsights();
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentItem: string } | null>(null);
@@ -83,8 +74,7 @@ export function MarketInsightsAdmin() {
     }
 
     setBatchProgress(null);
-    toast({
-      title: "Batch Generation Complete",
+    toast.success("Batch Generation Complete", {
       description: `Generated ${successCount} insights. ${failCount > 0 ? `${failCount} failed.` : ""}`,
     });
     refetch();

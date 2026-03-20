@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { generateAITestData, INDUSTRY_CATEGORY_COMPATIBILITY } from "@/lib/ai-test-data-generator";
 import { supabase } from "@/integrations/supabase/client";
 import { isDeepAnalyticsScenario, detectPromptLeakage, LATENCY_BENCHMARKS } from "@/lib/ai/graph";
@@ -89,7 +89,7 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
   // ── Plan Generation ──
   const handleGeneratePlan = useCallback(() => {
     if (!scenarioId) {
-      toast({ title: "Select a scenario first", variant: "destructive" });
+      toast.error("Select a scenario first");
       return;
     }
 
@@ -107,13 +107,13 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
     }
 
     setGeneratedPlan(plan);
-    toast({ title: "Draft plan generated", description: "15 random combinations ready for review." });
+    toast.success("Draft plan generated", { description: "15 random combinations ready for review." });
   }, [scenarioId]);
 
   const handleCopy = useCallback(() => {
     if (!generatedPlan) return;
     navigator.clipboard.writeText(JSON.stringify(generatedPlan, null, 2));
-    toast({ title: "Copied to clipboard" });
+    toast.success("Copied to clipboard");
   }, [generatedPlan]);
 
   const handleDownload = useCallback(() => {
@@ -134,7 +134,7 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
       plan = JSON.parse(importedJson);
       if (!Array.isArray(plan) || plan.length === 0) throw new Error("Empty array");
     } catch {
-      toast({ title: "Invalid JSON", description: "Paste a valid JSON array of test plan items.", variant: "destructive" });
+      toast.error("Invalid JSON", { description: "Paste a valid JSON array of test plan items." });
       return;
     }
 
@@ -228,11 +228,11 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
     const successCount = runResults.filter((r) => r.status === "success").length;
     const failCount = runResults.filter((r) => r.status === "error").length;
 
-    toast({
-      title: "Plan execution complete",
-      description: `${successCount}/${plan.length} succeeded, ${failCount} failed`,
-      variant: failCount > 0 ? "destructive" : "default",
-    });
+    if (failCount > 0) {
+      toast.error("Plan execution complete", { description: `${successCount}/${plan.length} succeeded, ${failCount} failed` });
+    } else {
+      toast.success("Plan execution complete", { description: `${successCount}/${plan.length} succeeded, ${failCount} failed` });
+    }
   }, [importedJson, model, queryClient, scenarioId]);
 
   const successCount = results.filter((r) => r.status === "success").length;

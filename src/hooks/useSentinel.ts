@@ -12,7 +12,6 @@ import type { IndustryContext, ProcurementCategory } from "@/lib/ai-context-temp
 import {
   preparePipelineRequest,
   completePipeline,
-  getPipelineSummary,
   type OrchestratorRequest,
   type OrchestratorResponse,
   type PipelineConfig,

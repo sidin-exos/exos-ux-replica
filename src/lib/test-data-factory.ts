@@ -16,9 +16,6 @@ type TestDataGenerator = () => Record<string, string>;
 const randomChoice = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomNumber = (min: number, max: number): number => 
   Math.floor(Math.random() * (max - min + 1)) + min;
-const randomCurrency = (min: number, max: number): string => 
-  randomNumber(min, max).toString();
-
 // Industry context templates for realistic business descriptions (100+ words each)
 const industryContexts = {
   manufacturing: [

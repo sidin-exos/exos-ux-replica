@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { Brain, Database, ArrowRight, Lock, Quote, TrendingUp, Shield, Users, RefreshCw, Mail } from "lucide-react";
 import Header from "@/components/layout/Header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

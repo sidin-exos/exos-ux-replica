@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useUser } from "@/hooks/useUser";
 import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
 import {
@@ -36,8 +36,6 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
 
   const { user } = useUser();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-
   // Fetch user's files
   const { data, isLoading } = useQuery({
     queryKey: [...QUERY_KEY, { search, fileType, page, pageSize, paginate }],
@@ -108,7 +106,10 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
         throw new Error("Organization not found. Please contact support.");
       }
 
-      const ext = validation.extension!;
+      if (!validation.extension) {
+        throw new Error("Could not determine file extension");
+      }
+      const ext = validation.extension;
 
       // Magic bytes validation — verify file content matches claimed extension
       const magicCheck = await validateMagicBytes(file, ext);
@@ -170,21 +171,14 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      toast({
-        title: "File uploaded",
-        description: "Your file has been uploaded successfully.",
-      });
+      toast.success("File uploaded", { description: "Your file has been uploaded successfully." });
     },
     onError: (err: Error) => {
       if (isAuthError(err)) {
         showAuthErrorToast();
         return;
       }
-      toast({
-        title: "Upload failed",
-        description: err.message,
-        variant: "destructive",
-      });
+      toast.error("Upload failed", { description: err.message });
     },
   });
 
@@ -222,21 +216,14 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      toast({
-        title: "File deleted",
-        description: "The file has been removed.",
-      });
+      toast.success("File deleted", { description: "The file has been removed." });
     },
     onError: (err: Error) => {
       if (isAuthError(err)) {
         showAuthErrorToast();
         return;
       }
-      toast({
-        title: "Delete failed",
-        description: err.message,
-        variant: "destructive",
-      });
+      toast.error("Delete failed", { description: err.message });
     },
   });
 

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
+import { IntelQueryRowSchema, safeParseJsonb } from "@/lib/jsonb-schemas";
 
 export type QueryType = 'supplier' | 'commodity' | 'industry' | 'regulatory' | 'm&a' | 'risk';
 export type RecencyFilter = 'day' | 'week' | 'month' | 'year';
@@ -150,8 +151,10 @@ export function useMarketIntelligence() {
         return;
       }
 
-      // Type assertion since we know the structure matches
-      setRecentQueries((data || []) as unknown as IntelQuery[]);
+      const parsed = (data || [])
+        .map(item => safeParseJsonb(IntelQueryRowSchema, item, "intel-query", null))
+        .filter((item): item is IntelQuery => item !== null);
+      setRecentQueries(parsed);
     } catch (err) {
       console.error("Failed to load recent queries:", err);
     } finally {

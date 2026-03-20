@@ -7,7 +7,6 @@ import {
   YAxis,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from "recharts";
 import type { TCOComparisonData } from "@/lib/dashboard-data-parser";
 

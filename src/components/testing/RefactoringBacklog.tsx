@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { PlusCircle, AlertTriangle, CheckCircle, XCircle, Layers } from "lucide-react";
+import { PlusCircle, AlertTriangle, Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -57,7 +57,7 @@ function extractEvaluations(shadowLog: Record<string, unknown> | null) {
   if (Array.isArray(shadowLog.field_evaluations)) {
     const fieldEvals = (shadowLog.field_evaluations as { field_name?: string; action?: string }[])
       .filter((f) => f.field_name && f.action)
-      .map((f) => ({ field_name: f.field_name!, action: f.action as FieldAction }));
+      .map((f) => ({ field_name: f.field_name as string, action: f.action as FieldAction }));
     const gaps = Array.isArray(shadowLog.schema_gaps) ? (shadowLog.schema_gaps as SchemaGapItem[]) : [];
     return { fields: fieldEvals, gaps, frictionScore: null, inputRecommendation: null };
   }

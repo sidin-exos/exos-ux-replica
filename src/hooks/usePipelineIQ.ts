@@ -26,8 +26,8 @@ export function useAccuracyTrend() {
 
       if (error) throw error;
 
-      return (data ?? []).map((row) => ({
-        batch_date: row.batch_date,
+      return (data ?? []).filter((row) => row.batch_date != null).map((row) => ({
+        batch_date: row.batch_date as string,
         total_runs: Number(row.total_runs),
         accuracy: Number(row.accuracy) / 100, // percentage → decimal
         avg_processing_time_ms: row.avg_processing_time_ms

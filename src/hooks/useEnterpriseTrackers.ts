@@ -1,22 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useUser } from "@/hooks/useUser";
 import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
+import { EnterpriseTrackerRowSchema, safeParseJsonb } from "@/lib/jsonb-schemas";
+import type { z } from "zod";
 
 export type TrackerType = "risk" | "inflation";
 export type TrackerStatus = "setup" | "active" | "paused";
 
-export interface EnterpriseTracker {
-  id: string;
-  user_id: string;
-  tracker_type: TrackerType;
-  name: string;
-  status: TrackerStatus;
-  parameters: Record<string, unknown>;
-  file_references: string[];
-  created_at: string;
-}
+export type EnterpriseTracker = z.infer<typeof EnterpriseTrackerRowSchema>;
 
 interface CreateTrackerInput {
   name: string;
@@ -28,8 +21,6 @@ interface CreateTrackerInput {
 export function useEnterpriseTrackers(trackerType: TrackerType) {
   const { user } = useUser();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-
   const queryKey = ["enterprise_trackers", trackerType];
 
   const { data: trackers = [], isLoading } = useQuery({
@@ -45,7 +36,9 @@ export function useEnterpriseTrackers(trackerType: TrackerType) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data ?? []) as unknown as EnterpriseTracker[];
+      return (data ?? [])
+        .map(item => safeParseJsonb(EnterpriseTrackerRowSchema, item, "enterprise-tracker", null))
+        .filter((item): item is EnterpriseTracker => item !== null);
     },
     enabled: !!user,
   });
@@ -82,25 +75,18 @@ export function useEnterpriseTrackers(trackerType: TrackerType) {
         .single();
 
       if (error) throw error;
-      return data as unknown as EnterpriseTracker;
+      return safeParseJsonb(EnterpriseTrackerRowSchema, data, "enterprise-tracker-create", data as EnterpriseTracker);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast({
-        title: "Tracker activated",
-        description: "Your tracker has been created and is now active.",
-      });
+      toast.success("Tracker activated", { description: "Your tracker has been created and is now active." });
     },
     onError: (err: Error) => {
       if (isAuthError(err)) {
         showAuthErrorToast();
         return;
       }
-      toast({
-        title: "Failed to create tracker",
-        description: err.message,
-        variant: "destructive",
-      });
+      toast.error("Failed to create tracker", { description: err.message });
     },
   });
 

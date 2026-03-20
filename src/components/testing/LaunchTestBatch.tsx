@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { scenarios } from "@/lib/scenarios";
 import { generateAITestData } from "@/lib/ai-test-data-generator";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,7 +57,7 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
 
   const handleLaunch = async () => {
     if (!scenarioId) {
-      toast({ title: "Select a scenario", variant: "destructive" });
+      toast.error("Select a scenario");
       return;
     }
 
@@ -78,11 +78,7 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
       });
 
       if (!result.success) {
-        toast({
-          title: "Generation failed",
-          description: result.error || "Unknown error",
-          variant: "destructive",
-        });
+        toast.error("Generation failed", { description: result.error || "Unknown error" });
         setPhase("idle");
         return;
       }
@@ -90,11 +86,7 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
       generatedData = result.data;
       genScore = result.metadata.score;
     } catch (err) {
-      toast({
-        title: "Generation error",
-        description: err instanceof Error ? err.message : "Unexpected error",
-        variant: "destructive",
-      });
+      toast.error("Generation error", { description: err instanceof Error ? err.message : "Unexpected error" });
       setPhase("idle");
       return;
     }
@@ -120,11 +112,7 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
       );
 
       if (analysisError) {
-        toast({
-          title: "Analysis failed",
-          description: `Generation succeeded (score: ${genScore}), but analysis failed: ${analysisError.message}`,
-          variant: "destructive",
-        });
+        toast.error("Analysis failed", { description: `Generation succeeded (score: ${genScore}), but analysis failed: ${analysisError.message}` });
       } else {
         const totalTokens = analysisResult?.totalTokens ?? analysisResult?.token_usage?.total ?? "—";
         const multiCycle = isDeepAnalyticsScenario(scenarioId);
@@ -132,24 +120,13 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
         const hasLeakage = multiCycle && detectPromptLeakage(analysisResult?.content || "");
 
         if (hasLeakage) {
-          toast({
-            title: "CRITICAL: Prompt leakage detected",
-            description: "Auditor prompt leakage detected in final output. Internal markers ([PASS]/[FAIL]/<draft>/<critique>) were found.",
-            variant: "destructive",
-          });
+          toast.error("CRITICAL: Prompt leakage detected", { description: "Auditor prompt leakage detected in final output. Internal markers ([PASS]/[FAIL]/<draft>/<critique>) were found." });
         } else {
-          toast({
-            title: "Test complete",
-            description: `${cycleLabel} | Gen score: ${genScore} | Tokens: ${totalTokens}`,
-          });
+          toast.success("Test complete", { description: `${cycleLabel} | Gen score: ${genScore} | Tokens: ${totalTokens}` });
         }
       }
     } catch (err) {
-      toast({
-        title: "Analysis error",
-        description: `Generation succeeded (score: ${genScore}), but analysis threw: ${err instanceof Error ? err.message : "Unknown"}`,
-        variant: "destructive",
-      });
+      toast.error("Analysis error", { description: `Generation succeeded (score: ${genScore}), but analysis threw: ${err instanceof Error ? err.message : "Unknown"}` });
     } finally {
       // Invalidate session log & stats queries so they auto-refresh
       queryClient.invalidateQueries({ queryKey: ["test-prompts"] });

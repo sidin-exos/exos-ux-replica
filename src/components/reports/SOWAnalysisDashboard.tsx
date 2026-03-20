@@ -1,6 +1,5 @@
 import { FileText, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { SOWAnalysisData } from "@/lib/dashboard-data-parser";
 

@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
-  AlertTriangle,
   TrendingUp,
   Percent,
   ShieldCheck,
@@ -12,12 +11,7 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
   Tooltip,
-  Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

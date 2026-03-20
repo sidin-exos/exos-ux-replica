@@ -110,7 +110,8 @@ const UserFilesManager = () => {
 
       try {
         await uploadFile.mutateAsync(file);
-      } catch {
+      } catch (err) {
+        console.error(`Upload failed for ${file.name}:`, err);
         failed.push(file);
       }
     }

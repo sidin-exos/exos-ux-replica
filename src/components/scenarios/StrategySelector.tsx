@@ -1,4 +1,4 @@
-import { Shield, ShieldAlert, ShieldCheck, Zap, Clock, Target, LucideIcon } from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, Zap, Target, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type StrategyType = "conservative" | "balanced" | "aggressive";

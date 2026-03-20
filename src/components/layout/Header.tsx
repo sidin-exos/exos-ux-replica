@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Settings, LogIn, User, CreditCard, LogOut, HelpCircle, FileText, Database, Menu, ShieldAlert, TrendingUp, BarChart3, Sparkles, BookOpen, DollarSign, Zap, ClipboardList, AlertTriangle, FileCheck } from "lucide-react";
+import { Settings, LogIn, User, CreditCard, LogOut, HelpCircle, FileText, Database, Menu, ShieldAlert, TrendingUp, BarChart3, Sparkles, BookOpen, DollarSign, ClipboardList, AlertTriangle, FileCheck } from "lucide-react";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useUser } from "@/hooks/useUser";
-import exosLogoFallback from "@/assets/logo-concept-layers.png";
 import {
   DropdownMenu,
   DropdownMenuTrigger,

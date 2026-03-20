@@ -26,7 +26,7 @@ export function useAdminAuth() {
       const { data, error } = await supabase
         .from("profiles")
         .select("role, is_super_admin")
-        .eq("id", userId!)
+        .eq("id", userId as string)
         .maybeSingle();
 
       if (error || !data) return { isAdmin: false, isSuperAdmin: false };

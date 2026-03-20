@@ -3,6 +3,7 @@
  * Validates JWT from Authorization header using getUser() (server-side validation).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY } from "./env.ts";
 
 export interface AuthResult {
   userId: string;
@@ -34,8 +35,8 @@ export async function authenticateRequest(
   // approach (global headers + getUser()) doesn't work reliably in
   // Deno Edge Function runtime ("Auth session missing!" error).
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
   );
 
   const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -62,8 +63,8 @@ export async function requireAdmin(
   opts?: { allowSuperAdmin?: boolean }
 ): Promise<boolean> {
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY
   );
 
   const { data } = await supabase
@@ -82,8 +83,8 @@ export async function requireAdmin(
  */
 export async function requireSuperAdmin(userId: string): Promise<boolean> {
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY
   );
 
   const { data } = await supabase
@@ -102,8 +103,8 @@ export async function requireSuperAdmin(userId: string): Promise<boolean> {
  */
 export async function getUserOrgId(userId: string): Promise<string | null> {
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY
   );
 
   const { data } = await supabase

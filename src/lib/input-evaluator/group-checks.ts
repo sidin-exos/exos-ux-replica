@@ -23,11 +23,6 @@ function hasTimeframe(text: string): boolean {
   return /\b(year|month|week|quarter|Q[1-4]|20\d{2}|annual|monthly|quarterly|daily|weekly)\b/i.test(text);
 }
 
-function hasListStructure(text: string): boolean {
-  // Bullet points, numbered lists, pipe-separated, newline-separated items
-  return /(?:^|\n)\s*[•\-\*\d+\.]\s/m.test(text) || /\|/.test(text);
-}
-
 function countSentences(text: string): number {
   return (text.match(/[.!?]+\s/g) || []).length + 1;
 }

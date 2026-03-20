@@ -1,22 +1,9 @@
 import { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { MarketInsightRowSchema, type MarketInsightParsed, safeParseJsonb } from "@/lib/jsonb-schemas";
 
-export interface MarketInsight {
-  id: string;
-  industry_slug: string;
-  industry_name: string;
-  category_slug: string;
-  category_name: string;
-  confidence_score: number;
-  content: string;
-  citations: Array<{ index: number; url: string }>;
-  key_trends: string[];
-  risk_signals: string[];
-  opportunities: string[];
-  created_at: string;
-  is_active: boolean;
-}
+export type MarketInsight = MarketInsightParsed;
 
 export interface MarketInsightsSummary {
   total: number;
@@ -49,12 +36,8 @@ export function useMarketInsight(industrySlug: string | null, categorySlug: stri
         throw error;
       }
 
-      // Type assertion for the JSONB citations field
       if (data) {
-        return {
-          ...data,
-          citations: (data.citations as unknown as Array<{ index: number; url: string }>) || [],
-        } as MarketInsight;
+        return safeParseJsonb(MarketInsightRowSchema, data, "market-insight", null);
       }
 
       return null;
@@ -82,10 +65,9 @@ export function useAllMarketInsights() {
         throw error;
       }
 
-      return (data || []).map(item => ({
-        ...item,
-        citations: (item.citations as unknown as Array<{ index: number; url: string }>) || [],
-      })) as MarketInsight[];
+      return (data || [])
+        .map(item => safeParseJsonb(MarketInsightRowSchema, item, "market-insights-all", null))
+        .filter((item): item is MarketInsight => item !== null);
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
@@ -113,10 +95,9 @@ export function useMarketInsightHistory(industrySlug: string | null, categorySlu
         throw error;
       }
 
-      return (data || []).map(item => ({
-        ...item,
-        citations: (item.citations as unknown as Array<{ index: number; url: string }>) || [],
-      })) as MarketInsight[];
+      return (data || [])
+        .map(item => safeParseJsonb(MarketInsightRowSchema, item, "market-insight-history", null))
+        .filter((item): item is MarketInsight => item !== null);
     },
     enabled: !!industrySlug && !!categorySlug,
   });

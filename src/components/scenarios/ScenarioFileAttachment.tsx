@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Paperclip, ChevronRight, FileSpreadsheet, FileText, File, Eye } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,8 +73,9 @@ const ScenarioFileAttachment = ({
       const url = await getPreviewUrl(file.storage_path);
       setPreviewUrl(url);
       setPreviewFile(file);
-    } catch {
-      // Silent fail — preview is a nice-to-have here
+    } catch (err) {
+      console.error("File preview failed:", err);
+      toast.error("Preview unavailable", { description: "Could not load file preview." });
     }
   };
 

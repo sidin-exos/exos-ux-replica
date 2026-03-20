@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toPng, toSvg } from "html-to-image";
 import { Download, Image, FileCode, ArrowLeft, Sparkles, Zap, Target, LayoutGrid, Inbox } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -96,6 +97,7 @@ const TestingPipeline = () => {
       link.click();
     } catch (error) {
       console.error("PNG download error:", error);
+      toast.error("Download failed", { description: "Could not generate PNG image." });
     } finally {
       setIsDownloading(false);
     }
@@ -125,6 +127,7 @@ const TestingPipeline = () => {
       link.click();
     } catch (error) {
       console.error("SVG download error:", error);
+      toast.error("Download failed", { description: "Could not generate SVG image." });
     } finally {
       setIsDownloading(false);
     }

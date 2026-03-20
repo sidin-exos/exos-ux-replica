@@ -3,8 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, Send, Bot, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useExosChat } from '@/hooks/use-exos-chat';
+import { useIsMobile } from '@/hooks/useMobile';
+import { useExosChat } from '@/hooks/useExosChat';
 import { ChatMessage } from './ChatMessage';
 
 const SUGGESTIONS = [

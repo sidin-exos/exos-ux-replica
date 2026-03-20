@@ -62,7 +62,7 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
         </View>
 
         {suppliers.map((supplier, i) => (
-          <View key={i} style={[tableStyles.dataRow, i === suppliers.length - 1 && tableStyles.lastRow]}>
+          <View key={i} style={[tableStyles.dataRow, ...(i === suppliers.length - 1 ? [tableStyles.lastRow] : [])]}>
             <View style={tableStyles.colSupplier}><Text style={tableStyles.cellText}>{supplier.name}</Text></View>
             <View style={[tableStyles.colScore, { flexDirection: "row", justifyContent: "center" }]}>
               <View style={{ backgroundColor: getScoreColor(supplier.score, colors) + "30", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 }}>

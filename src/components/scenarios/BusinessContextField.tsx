@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSavedBusinessContexts, SavedBusinessContext } from "@/hooks/useSavedBusinessContexts";
+import { useSavedBusinessContexts } from "@/hooks/useSavedBusinessContexts";
 import { toast } from "sonner";
 
 interface BusinessContextFieldProps {
@@ -73,21 +73,6 @@ export function BusinessContextField({
     setSaveDialogOpen(false);
     setContextName("");
     toast.success(`Context "${saved.name}" saved`);
-  };
-
-  const handleDeleteContext = (ctx: SavedBusinessContext, e: React.MouseEvent) => {
-    e.stopPropagation();
-    deleteContext(ctx.id);
-    if (selectedContextId === ctx.id) {
-      setSelectedContextId(null);
-    }
-    toast.success(`Context "${ctx.name}" deleted`);
-  };
-
-  const handleStartEdit = (ctx: SavedBusinessContext, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingId(ctx.id);
-    setEditingName(ctx.name);
   };
 
   const handleSaveEdit = (e: React.MouseEvent) => {

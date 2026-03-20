@@ -11,7 +11,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import Header from "@/components/layout/Header";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { getUserFriendlyError } from "@/lib/error-messages";
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -26,7 +27,6 @@ type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 const ResetPassword = () => {
   const navigate = useNavigate();
   const exosLogo = useThemedLogo();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ResetPasswordValues>({
@@ -41,14 +41,14 @@ const ResetPassword = () => {
         password: values.password,
       });
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        toast.error("Error", { description: getUserFriendlyError(error) });
       } else {
         await supabase.auth.signOut();
-        toast({ title: "Password updated", description: "Sign in with your new password." });
+        toast.success("Password updated", { description: "Sign in with your new password." });
         navigate("/auth?password_reset=true");
       }
     } catch {
-      toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
+      toast.error("Error", { description: "An unexpected error occurred" });
     } finally {
       setIsLoading(false);
     }
