@@ -142,8 +142,6 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           pipelineConfig
         );
 
-        console.log("[Sentinel]", getPipelineSummary(result));
-
         options.onProgress?.("complete", "success");
         setState({
           isProcessing: false,

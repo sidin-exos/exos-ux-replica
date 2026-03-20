@@ -102,7 +102,6 @@ const MAX_RETRIES = 3;
  * Pass raw query through so the server can anonymize it.
  */
 function stepAnonymize(state: PipelineState): PipelineState {
-  console.log('Pipeline: Skipping client-side anonymization (server handles it)');
   return {
     ...state,
     anonymizedQuery: state.userQuery,
@@ -117,8 +116,6 @@ function stepAnonymize(state: PipelineState): PipelineState {
  */
 async function stepReasoning(state: PipelineState): Promise<PipelineState> {
   const { model } = state.config;
-
-  console.log(`🧠 Pipeline: AI Reasoning (model: ${model})`);
 
   const { data, error } = await supabase.functions.invoke('sentinel-analysis', {
     body: {
@@ -148,11 +145,6 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
 
   // Extract server-side validation if present
   const serverValidation: ServerValidation | null = data?.validation || null;
-  if (serverValidation) {
-    console.log(`✅ Pipeline: Server validation received (passed: ${serverValidation.passed}, confidence: ${serverValidation.confidenceScore}, issues: ${serverValidation.issues.length})`);
-  }
-
-  console.log('✅ Pipeline: Received AI response');
 
   return {
     ...state,
@@ -166,8 +158,6 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
  * Runs client-side token integrity check, then merges with server validation.
  */
 function stepValidate(state: PipelineState): PipelineState {
-  console.log('⚖️ Pipeline: Validating response...');
-
   const maskedTokens = Array.from(state.entityMap.keys());
 
   // Run client-side token integrity check (needs local entity map)
@@ -181,7 +171,6 @@ function stepValidate(state: PipelineState): PipelineState {
   );
 
   if (hasCriticalIssues || !validationResult.passed) {
-    console.log('⚠️ Pipeline: Validation failed, will retry');
     return {
       ...state,
       validationStatus: 'rejected',
@@ -190,7 +179,6 @@ function stepValidate(state: PipelineState): PipelineState {
     };
   }
 
-  console.log('✅ Pipeline: Validation passed');
   return {
     ...state,
     validationStatus: 'approved',
@@ -203,7 +191,6 @@ function stepValidate(state: PipelineState): PipelineState {
  * The AI response is already deanonymized by the edge function.
  */
 function stepDeanonymize(state: PipelineState): PipelineState {
-  console.log('Pipeline: Skipping client-side deanonymization (server already did it)');
   return {
     ...state,
     finalAnswer: state.aiResponse,
@@ -227,8 +214,6 @@ export async function runExosGraph(
   retryCount: number;
 }> {
   const isMultiCycle = scenarioId ? isDeepAnalyticsScenario(scenarioId) : false;
-  console.log(`🚀 Pipeline: Starting (scenarioId: ${scenarioId || 'none'}, multiCycle: ${isMultiCycle})`, config);
-  
   // Log tracing config on first run
   if (isTracingEnabled()) {
     logTracingConfig();
@@ -303,11 +288,9 @@ export async function runExosGraph(
       }
 
       if (state.retryCount >= MAX_RETRIES) {
-        console.log('⚠️ Pipeline: Max retries reached, proceeding with best effort');
         break;
       }
 
-      console.log(`🔄 Pipeline: Retry ${state.retryCount}/${MAX_RETRIES}`);
     }
 
     // Step 4: Deanonymize (traced)
@@ -319,8 +302,6 @@ export async function runExosGraph(
       parentRunId
     );
     state = deanonymizeResult.result;
-
-    console.log(`🏁 Pipeline: Complete (status: ${state.validationStatus}, retries: ${state.retryCount})`);
 
     // End parent trace with success
     await endPipelineTrace(parentRunId, {

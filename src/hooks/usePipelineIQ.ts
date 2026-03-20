@@ -19,15 +19,14 @@ export function useAccuracyTrend() {
   return useQuery({
     queryKey: ["pipeline-iq", "accuracy-trend"],
     queryFn: async (): Promise<AccuracyTrendPoint[]> => {
-      // View isn't in generated types — use raw query via .from() with type assertion
       const { data, error } = await supabase
-        .from("pipeline_iq_stats" as any)
+        .from("pipeline_iq_stats")
         .select("*")
         .order("batch_date", { ascending: true });
 
       if (error) throw error;
 
-      return ((data as any[]) ?? []).map((row) => ({
+      return (data ?? []).map((row) => ({
         batch_date: row.batch_date,
         total_runs: Number(row.total_runs),
         accuracy: Number(row.accuracy) / 100, // percentage → decimal
@@ -45,13 +44,13 @@ export function useEvolutionaryDirectives(limit = 5) {
     queryKey: ["pipeline-iq", "directives", limit],
     queryFn: async (): Promise<EvolutionaryDirective[]> => {
       const { data, error } = await supabase.rpc(
-        "get_evolutionary_directives" as any,
+        "get_evolutionary_directives",
         { limit_num: limit }
       );
 
       if (error) throw error;
 
-      return ((data as any[]) ?? []).map((row) => ({
+      return (data ?? []).map((row) => ({
         target_scenario: row.target_scenario,
         directive_text: row.directive_text,
         source_field_action: row.source_field_action,
