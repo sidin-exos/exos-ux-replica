@@ -1,100 +1,73 @@
 
 
-## Enterprise Platforms — Phase 1 Implementation Plan
+# Test Phase Analytics Dashboard — Implementation Plan
 
-### Overview
+## Files to Create
 
-Build the UI scaffolding, routing, database tables, storage bucket, and Supabase integration for persistent Risk Assessment and Inflation Analysis trackers. No AI processing or Edge Functions in this sprint.
+### 1. `src/hooks/useAnalyticsDashboard.ts`
 
-### 1. Database Migration
+Custom hook using `useQueries` from `@tanstack/react-query` to run all Supabase queries in parallel:
 
-Create `enterprise_trackers` table and `tracker-files` storage bucket in a single migration:
+| Index | Query Key | Table | What it fetches |
+|-------|-----------|-------|-----------------|
+| 0 | `analytics-profiles` | `profiles` | All rows: `id, created_at` — derive total users + monthly signups client-side |
+| 1 | `analytics-orgs` | `organizations` | All rows: `id, created_at` — derive total orgs + monthly signups |
+| 2 | `analytics-prompts` | `test_prompts` | All rows: `id, scenario_type, created_at` — count by scenario_type |
+| 3 | `analytics-reports` | `test_reports` | All rows: `id, prompt_id, success, processing_time_ms, total_tokens, created_at` — success rate, avg time, avg tokens |
+| 4 | `analytics-intel` | `intel_queries` | All rows: `id, query_type, success, processing_time_ms, created_at` — total, by type, success rate |
+| 5 | `analytics-insights` | `market_insights` | Count only via `.select("id", { count: "exact", head: true })` |
+| 6 | `analytics-scenario-feedback` | `scenario_feedback` | All rows: `id, scenario_id, rating, feedback_text, created_at` — rating distribution, latest 5 texts |
+| 7 | `analytics-chat-feedback` | `chat_feedback` | All rows: `id, rating, created_at` — thumbs up/down counts |
+| 8 | `analytics-files` | `user_files` | Count only via head request |
+| 9 | `analytics-trackers` | `enterprise_trackers` | Count only via head request |
 
-```sql
-CREATE TABLE public.enterprise_trackers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  tracker_type text NOT NULL,
-  name text NOT NULL,
-  status text NOT NULL DEFAULT 'setup',
-  parameters jsonb NOT NULL DEFAULT '{}',
-  file_references jsonb NOT NULL DEFAULT '[]',
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+The hook returns a structured object with derived metrics:
+- `totalUsers`, `totalOrgs`, `totalScenarios`, `totalIntelQueries`
+- `scenarioBreakdown[]` — `{ type, count, successRate, avgTimeMs, avgTokens }`
+- `intelBreakdown[]` — `{ type, count, successRate }`
+- `userGrowth[]` / `orgGrowth[]` — `{ month: string, count: number }`
+- `feedbackDistribution` — `{ [rating]: count }`
+- `avgRating`, `latestFeedback[]`
+- `chatThumbsUp`, `chatThumbsDown`
+- `totalFiles`, `totalInsights`, `totalTrackers`
+- `isLoading` (any query loading), `error` (first error found)
 
-ALTER TABLE public.enterprise_trackers ENABLE ROW LEVEL SECURITY;
+Scenario breakdown requires joining prompts + reports client-side by `prompt_id`.
 
--- User CRUD on own trackers
-CREATE POLICY "Users can select own trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own trackers" ON public.enterprise_trackers
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own trackers" ON public.enterprise_trackers
-  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own trackers" ON public.enterprise_trackers
-  FOR DELETE TO authenticated USING (auth.uid() = user_id);
--- Admin read-all
-CREATE POLICY "Admins can read all trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+### 2. `src/pages/admin/AnalyticsDashboard.tsx`
 
--- Storage bucket
-INSERT INTO storage.buckets (id, name, public) VALUES ('tracker-files', 'tracker-files', false);
+Layout mirrors FounderDashboard pattern (Header + container):
 
--- Storage RLS: users can upload/read/delete own files (path starts with user_id)
-CREATE POLICY "Users can upload own tracker files" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can read own tracker files" ON storage.objects
-  FOR SELECT TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can delete own tracker files" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-```
+- **Header row**: "Test Phase Analytics" + `<Button>` with RefreshCw icon that calls `queryClient.invalidateQueries({ queryKey: ["analytics"] })` (all keys prefixed with `analytics-` will be matched by using `predicate` or by nesting under a common prefix).
+  - Actually, use `queryClient.invalidateQueries({ predicate: (q) => (q.queryKey[0] as string).startsWith("analytics-") })`.
 
-### 2. New Files to Create
+- **Top StatCards (4-grid)**: Total Users, Total Orgs, Total Scenarios Run, Total Intel Queries — using the existing `StatCard` component from `src/components/dashboard/StatCard.tsx`.
 
-| File | Purpose |
-|------|---------|
-| `src/pages/enterprise/RiskPlatform.tsx` | Risk Assessment platform page with Tabs (Monitor / Setup / Reports) |
-| `src/pages/enterprise/InflationPlatform.tsx` | Inflation Analysis platform page, same structure |
-| `src/components/enterprise/TrackerSetupWizard.tsx` | 3-step wizard: Parameters → Files & Context (with GDPR checkbox) → Review & Activate |
-| `src/components/enterprise/TrackerList.tsx` | Grid of Card components showing active trackers with status badges |
-| `src/components/enterprise/FileUploadZone.tsx` | Drag-and-drop file upload area for Step 2 |
-| `src/hooks/useEnterpriseTrackers.ts` | Hook for CRUD operations on `enterprise_trackers` table + file upload to `tracker-files` bucket |
+- **Tabs** (4 tabs using Shadcn Tabs):
+  - **Usage & Performance**: Recharts `BarChart` (scenario types vs count). Table with columns: Scenario Type, Runs, Success Rate, Avg Time (ms), Avg Tokens.
+  - **Growth**: Recharts `LineChart` with two lines (users, orgs) by month.
+  - **Feedback**: Bar chart for rating distribution (1-5). Chat thumbs up/down as two StatCards. Table of latest 5 feedback texts.
+  - **Assets**: StatCards for files uploaded, market insights saved, active trackers.
 
-### 3. Files to Edit
+- **Loading state**: Skeleton placeholders when `isLoading` is true.
 
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add routes `/enterprise/risk` and `/enterprise/inflation` |
-| `src/components/layout/Header.tsx` | Add "Enterprise" dropdown with Risk Assessment and Inflation Analysis links (same split-button pattern as existing nav items) |
-| `src/components/layout/MobileBottomNav.tsx` | Not modified — 5 items is already tight. Enterprise is accessed via Header hamburger menu mobile sheet instead. |
+### 3. `src/App.tsx` modifications
 
-### 4. Component Design Details
+- Add import: `import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";`
+- Add route before the catch-all:
+  ```
+  <Route path="/admin/analytics" element={<ProtectedRoute requireSuperAdmin><AnalyticsDashboard /></ProtectedRoute>} />
+  ```
 
-**Platform Pages** (Risk & Inflation share identical layout, differ by `trackerType` prop and icon):
-- Header with icon (`ShieldAlert` for Risk, `TrendingUp` for Inflation), title, description
-- Shadcn `<Tabs>` with 3 tabs: Monitor (default), Setup New Tracker, Reports
-- Monitor tab renders `<TrackerList>`; Setup tab renders `<TrackerSetupWizard>`; Reports tab shows placeholder
+### 4. `src/pages/admin/FounderDashboard.tsx` modifications
 
-**TrackerSetupWizard** (3 steps):
-- Step 1 — Parameters: name field, category/goods/services inputs (varies by tracker type), risk appetite or inflation baseline
-- Step 2 — Files & Context: `<FileUploadZone>` (drag-drop + click), optional context textarea, **mandatory GDPR checkbox** before proceeding
-- Step 3 — Review & Activate: summary card, "Activate" button that uploads files to storage, inserts tracker row, shows toast, switches to Monitor tab
+- Add a `Link` or `Button` with `useNavigate` to `/admin/analytics` next to the "Command Center" title, labeled "View Analytics".
+- Import `BarChart3` icon from lucide-react for the button.
 
-**TrackerList**: queries `enterprise_trackers` filtered by `tracker_type` and `user_id`, renders a responsive grid of Cards with name, status Badge, created_at formatted date, and a "View" button (placeholder for Phase 2 detail view).
+## Technical Notes
 
-**useEnterpriseTrackers hook**:
-- `trackers` state via `useQuery` from `@tanstack/react-query`
-- `createTracker(data)` — uploads files to `tracker-files/${user_id}/${uuid}-${filename}`, then inserts row
-- Uses `supabase` client from `@/integrations/supabase/client`
-
-### 5. Mobile Navigation
-
-The existing mobile Sheet menu in `Header.tsx` will get the Enterprise links added below the existing nav items (before the separator). No changes to `MobileBottomNav.tsx` to avoid overcrowding.
-
-### 6. Security Notes
-
-- All tracker data user-scoped via RLS (`auth.uid() = user_id`)
-- Storage paths enforce user isolation via `(storage.foldername(name))[1] = auth.uid()::text`
-- GDPR checkbox required before file upload proceeds
-- No PII stored in parameters — UI guidance enforced
+- `shared_reports` is completely excluded (RLS blocks all SELECT).
+- All queries use the existing `supabase` client; super_admin RLS grants read access.
+- Monthly grouping done client-side by parsing `created_at` and bucketing into `YYYY-MM`.
+- No new migrations, edge functions, or RPCs.
 
