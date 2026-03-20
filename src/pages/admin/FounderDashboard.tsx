@@ -94,7 +94,14 @@ const FounderDashboard = () => {
     <div className="min-h-screen gradient-hero">
       <Header />
       <main className="container max-w-6xl py-12 space-y-10">
-        <h1 className="font-display text-3xl font-bold text-foreground">Command Center</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="font-display text-3xl font-bold text-foreground">Command Center</h1>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin/analytics">
+              <BarChart3 className="w-4 h-4 mr-1" /> View Analytics
+            </Link>
+          </Button>
+        </div>
 
         {/* Section 1: North Star Metrics */}
         <section className="space-y-4">

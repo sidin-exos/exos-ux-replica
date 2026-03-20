@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
             <Route path="/admin/dashboard" element={<ProtectedRoute requireSuperAdmin><FounderDashboard /></ProtectedRoute>} />
+            <Route path="/admin/analytics" element={<ProtectedRoute requireSuperAdmin><AnalyticsDashboard /></ProtectedRoute>} />
             <Route path="/enterprise/risk" element={<RiskPlatform />} />
             <Route path="/enterprise/inflation" element={<InflationPlatform />} />
             <Route path="/pdf-test" element={<PdfTestPage />} />
