@@ -434,6 +434,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
     industryBreakdown,
     intelBreakdown,
     recentRuns,
+    recentFailedRuns,
     userGrowth,
     orgGrowth,
     feedbackDistribution,
