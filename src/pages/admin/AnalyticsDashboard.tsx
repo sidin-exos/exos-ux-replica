@@ -114,26 +114,6 @@ const AnalyticsDashboard = () => {
               <SkeletonBlock className="h-64" />
             ) : (
               <>
-                {/* Scenario chart */}
-                {analytics.scenarioBreakdown.length > 0 && (
-                  <Card className="card-elevated">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Scenario Runs by Type</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={analytics.scenarioBreakdown}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                          <XAxis dataKey="type" className="text-xs fill-muted-foreground" tick={{ fontSize: 11 }} />
-                          <YAxis className="fill-muted-foreground" tick={{ fontSize: 11 }} />
-                          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} labelStyle={{ color: "hsl(var(--foreground))" }} />
-                          <Bar dataKey="count" name="Runs" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="avgTokens" name="Avg Tokens" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* Scenario Breakdown table */}
                 <Card className="card-elevated">
@@ -147,13 +127,14 @@ const AnalyticsDashboard = () => {
                           <TableHead>Scenario Type</TableHead>
                           <TableHead className="text-right">Runs</TableHead>
                           <TableHead className="text-right">Success Rate</TableHead>
+                          <TableHead className="text-right">Satisfaction</TableHead>
                           <TableHead className="text-right">Avg Time (ms)</TableHead>
                           <TableHead className="text-right">Avg Tokens</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {analytics.scenarioBreakdown.length === 0 ? (
-                          <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No scenario data in this period</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No scenario data in this period</TableCell></TableRow>
                         ) : (
                           analytics.scenarioBreakdown.map((s) => (
                             <TableRow key={s.type}>
@@ -161,6 +142,9 @@ const AnalyticsDashboard = () => {
                               <TableCell className="text-right">{s.count}</TableCell>
                               <TableCell className="text-right">
                                 <Badge variant={s.successRate >= 80 ? "default" : "destructive"}>{s.successRate}%</Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {s.satisfactionRate >= 0 ? `${s.satisfactionRate}%` : "—"}
                               </TableCell>
                               <TableCell className="text-right">{s.avgTimeMs.toLocaleString()}</TableCell>
                               <TableCell className="text-right">{s.avgTokens.toLocaleString()}</TableCell>
@@ -184,13 +168,14 @@ const AnalyticsDashboard = () => {
                           <TableHead>Industry</TableHead>
                           <TableHead className="text-right">Runs</TableHead>
                           <TableHead className="text-right">Success Rate</TableHead>
+                          <TableHead className="text-right">Satisfaction</TableHead>
                           <TableHead className="text-right">Avg Time (ms)</TableHead>
                           <TableHead className="text-right">Avg Tokens</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {analytics.industryBreakdown.length === 0 ? (
-                          <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No industry data in this period</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No industry data in this period</TableCell></TableRow>
                         ) : (
                           analytics.industryBreakdown.map((s) => (
                             <TableRow key={s.industry}>
@@ -198,6 +183,9 @@ const AnalyticsDashboard = () => {
                               <TableCell className="text-right">{s.count}</TableCell>
                               <TableCell className="text-right">
                                 <Badge variant={s.successRate >= 80 ? "default" : "destructive"}>{s.successRate}%</Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {s.satisfactionRate >= 0 ? `${s.satisfactionRate}%` : "—"}
                               </TableCell>
                               <TableCell className="text-right">{s.avgTimeMs.toLocaleString()}</TableCell>
                               <TableCell className="text-right">{s.avgTokens.toLocaleString()}</TableCell>
