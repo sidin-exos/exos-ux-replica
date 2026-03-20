@@ -26,6 +26,7 @@ export interface IndustryBreakdown {
   successRate: number;
   avgTimeMs: number;
   avgTokens: number;
+  satisfactionRate: number;
 }
 
 interface GrowthPoint {
