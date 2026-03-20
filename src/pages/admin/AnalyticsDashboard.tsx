@@ -242,7 +242,7 @@ const AnalyticsDashboard = () => {
                               <TableCell className="max-w-[120px] truncate">{run.category_slug || "—"}</TableCell>
                               <TableCell>
                                 {run.success ? (
-                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                  <CheckCircle className="w-4 h-4 text-success" />
                                 ) : (
                                   <XCircle className="w-4 h-4 text-destructive" />
                                 )}
