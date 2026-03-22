@@ -257,7 +257,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
       {
         queryKey: ["analytics-chatbot-sessions"],
         queryFn: async () => {
-          const { data, error } = await supabase.from("chatbot_sessions")
+          const { data, error } = await (supabase.from as any)("chatbot_sessions")
             .select("id, bot_type, scenario_id, message_count, fields_extracted, fields_applied, navigation_action, error_count, duration_seconds, created_at, ended_at")
             .order("created_at", { ascending: false });
           if (error) throw error;

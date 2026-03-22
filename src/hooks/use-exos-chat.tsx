@@ -48,7 +48,7 @@ export function useExosChat() {
     const sid = sessionIdRef.current;
     if (!sid) return;
     try {
-      await supabase.from('chatbot_sessions').update(fields).eq('id', sid);
+      await (supabase.from as any)('chatbot_sessions').update(fields).eq('id', sid);
     } catch { /* best-effort */ }
   }, []);
 
