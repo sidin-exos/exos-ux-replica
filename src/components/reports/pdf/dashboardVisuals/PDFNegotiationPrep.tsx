@@ -49,7 +49,7 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
             <View key={i} style={{ flexDirection: "row", marginBottom: 8 }}>
               <View style={{ width: 26, alignItems: "center" }}>
                 <View style={{
-                  width: 20, height: 20, borderRadius: 10,
+                  width: 20, height: 20,
                   backgroundColor: s.status === "complete" ? colors.success : s.status === "active" ? colors.primary : colors.surfaceLight,
                   borderWidth: s.status === "upcoming" ? 1 : 0,
                   borderColor: colors.border,
@@ -70,7 +70,7 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
                     <Text style={{ fontSize: 9, color: colors.textMuted, marginTop: 1 }}>{s.details}</Text>
                   </View>
                   {s.meta ? (
-                    <View style={{ paddingHorizontal: 4, paddingVertical: 2, backgroundColor: colors.surfaceLight, borderRadius: 2 }}>
+                    <View style={{ paddingHorizontal: 4, paddingVertical: 2, backgroundColor: colors.surfaceLight }}>
                       <Text style={{ fontSize: 8, color: colors.primary }}>{s.meta}</Text>
                     </View>
                   ) : null}

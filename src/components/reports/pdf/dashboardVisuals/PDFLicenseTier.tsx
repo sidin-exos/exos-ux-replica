@@ -40,21 +40,21 @@ export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; the
             <View key={i} style={{ marginBottom: 8 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 3 }}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: tier.color, marginRight: 6 }} />
+                  <View style={{ width: 9, height: 9, backgroundColor: tier.color, marginRight: 6 }} />
                   <Text style={{ fontSize: 10, color: colors.text, fontWeight: 600 }}>{tier.name}</Text>
                   <Text style={{ fontSize: 9, color: colors.textMuted, marginLeft: 4 }}>({tier.users} users)</Text>
                 </View>
                 <Text style={{ fontSize: 10, color: colors.text, fontWeight: 600 }}>{formatCurrency(tier.totalCost)}</Text>
               </View>
-              <View style={{ height: 16, backgroundColor: colors.surfaceLight, borderRadius: 3, overflow: "hidden", position: "relative" }}>
-                <View style={{ height: 16, borderRadius: 3, backgroundColor: tier.color, width: `${barWidth}%` }} />
+              <View style={{ height: 16, backgroundColor: colors.surfaceLight, overflow: "hidden", position: "relative" }}>
+                <View style={{ height: 16, backgroundColor: tier.color, width: `${barWidth}%` }} />
                 <Text style={{ position: "absolute", left: 6, top: 3, fontSize: 9, color: colors.background, fontWeight: 600 }}>
                   ${tier.costPerUser}/user
                 </Text>
               </View>
               {userDiff !== 0 && (
                 <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
-                  <View style={{ paddingHorizontal: 4, paddingVertical: 1, borderRadius: 2, borderWidth: 1, borderColor: userDiff > 0 ? colors.primary : colors.warning, marginRight: 4 }}>
+                  <View style={{ paddingHorizontal: 4, paddingVertical: 1, borderWidth: 1, borderColor: userDiff > 0 ? colors.primary : colors.warning, marginRight: 4 }}>
                     <Text style={{ fontSize: 8, color: userDiff > 0 ? colors.primary : colors.warning }}>
                       {userDiff > 0 ? `+${userDiff}` : userDiff} users recommended
                     </Text>

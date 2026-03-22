@@ -414,7 +414,7 @@ const GeneratedReport = () => {
             </Card>
 
             {/* Report Metadata */}
-            <Card className="card-elevated bg-primary/5 border-primary/20">
+            <Card className="card-elevated">
               <CardContent className="pt-5">
                 <div className="text-center">
                   <div className="w-10 h-10 rounded-lg gradient-primary mx-auto mb-3 flex items-center justify-center">

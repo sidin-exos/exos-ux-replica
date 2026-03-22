@@ -47,7 +47,7 @@ export const PDFDecisionMatrix = ({ data, themeMode }: { data: DecisionMatrixDat
           <Text style={styles.matrixCell}>Wt%</Text>
           {matrixOptions.map((opt, i) => (
             <View key={i} style={[styles.matrixCell, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]}>
-              <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: opt.color, marginRight: 3 }} />
+              <View style={{ width: 7, height: 7, backgroundColor: opt.color, marginRight: 3 }} />
               <Text style={{ fontSize: 9, color: colors.text }}>{opt.name}</Text>
             </View>
           ))}

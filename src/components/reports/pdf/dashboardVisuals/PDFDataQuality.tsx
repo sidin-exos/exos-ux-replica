@@ -71,14 +71,14 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
             <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.2 }]}>{item.name}</Text>
             <View style={[styles.matrixCell, { alignItems: "center" }]}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ width: 22, height: 5, backgroundColor: colors.surfaceLight, borderRadius: 2, marginRight: 4, overflow: "hidden" }}>
-                  <View style={{ width: `${item.value}%`, height: 5, backgroundColor: getScoreColor(item.value), borderRadius: 2 }} />
+                <View style={{ width: 22, height: 5, backgroundColor: colors.surfaceLight, marginRight: 4, overflow: "hidden" }}>
+                  <View style={{ width: `${item.value}%`, height: 5, backgroundColor: getScoreColor(item.value) }} />
                 </View>
                 <Text style={{ fontSize: 9, color: getScoreColor(item.value), fontWeight: 600 }}>{item.value}%</Text>
               </View>
             </View>
             <View style={[styles.matrixCell, { alignItems: "center" }]}>
-              <View style={{ paddingHorizontal: 4, paddingVertical: 1, backgroundColor: getScoreColor(item.value) + "20", borderRadius: 2 }}>
+              <View style={{ paddingHorizontal: 4, paddingVertical: 1, backgroundColor: getScoreColor(item.value) + "20" }}>
                 <Text style={{ fontSize: 8, color: getScoreColor(item.value) }}>{item.status}</Text>
               </View>
             </View>

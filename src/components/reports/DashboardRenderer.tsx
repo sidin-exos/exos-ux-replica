@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
+import { AlertCircle } from "lucide-react";
 import { DashboardType } from "@/lib/dashboard-mappings";
-import { extractDashboardData } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, type DashboardData } from "@/lib/dashboard-data-parser";
 
 // Dashboard components
 import ActionChecklistDashboard from "./ActionChecklistDashboard";
@@ -17,6 +18,24 @@ import SupplierPerformanceDashboard from "./SupplierPerformanceDashboard";
 import SOWAnalysisDashboard from "./SOWAnalysisDashboard";
 import NegotiationPrepDashboard from "./NegotiationPrepDashboard";
 import DataQualityDashboard from "./DataQualityDashboard";
+
+/** Map dashboard type slug to the corresponding key in DashboardData */
+const dashboardDataKey: Record<string, keyof DashboardData> = {
+  "action-checklist": "actionChecklist",
+  "decision-matrix": "decisionMatrix",
+  "cost-waterfall": "costWaterfall",
+  "timeline-roadmap": "timelineRoadmap",
+  "kraljic-quadrant": "kraljicQuadrant",
+  "tco-comparison": "tcoComparison",
+  "license-tier": "licenseTier",
+  "sensitivity-spider": "sensitivitySpider",
+  "risk-matrix": "riskMatrix",
+  "scenario-comparison": "scenarioComparison",
+  "supplier-scorecard": "supplierScorecard",
+  "sow-analysis": "sowAnalysis",
+  "negotiation-prep": "negotiationPrep",
+  "data-quality": "dataQuality",
+};
 
 interface DashboardRendererProps {
   dashboardType: DashboardType;
@@ -36,49 +55,65 @@ const DashboardRenderer = ({
     [analysisResult]
   );
 
+  const dataKey = dashboardDataKey[dashboardType];
+  const hasRealData = !!(parsedData && dataKey && parsedData[dataKey]);
+
+  const wrapWithFallbackBanner = (element: ReactNode) => {
+    if (hasRealData) return element;
+    return (
+      <div>
+        <div className="bg-warning/10 text-warning border border-warning/30 rounded-lg px-3 py-2 text-xs mb-2 flex items-center gap-2">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          Sample data shown — AI-generated data unavailable for this dashboard.
+        </div>
+        {element}
+      </div>
+    );
+  };
+
   switch (dashboardType) {
     case "action-checklist":
-      return <ActionChecklistDashboard parsedData={parsedData?.actionChecklist} />;
-    
+      return wrapWithFallbackBanner(<ActionChecklistDashboard parsedData={parsedData?.actionChecklist} />);
+
     case "decision-matrix":
-      return <DecisionMatrixDashboard parsedData={parsedData?.decisionMatrix} />;
-    
+      return wrapWithFallbackBanner(<DecisionMatrixDashboard parsedData={parsedData?.decisionMatrix} />);
+
     case "cost-waterfall":
-      return <CostWaterfallDashboard parsedData={parsedData?.costWaterfall} />;
-    
+      return wrapWithFallbackBanner(<CostWaterfallDashboard parsedData={parsedData?.costWaterfall} />);
+
     case "timeline-roadmap":
-      return <TimelineRoadmapDashboard parsedData={parsedData?.timelineRoadmap} />;
-    
+      return wrapWithFallbackBanner(<TimelineRoadmapDashboard parsedData={parsedData?.timelineRoadmap} />);
+
     case "kraljic-quadrant":
-      return <KraljicQuadrantDashboard parsedData={parsedData?.kraljicQuadrant} />;
-    
+      return wrapWithFallbackBanner(<KraljicQuadrantDashboard parsedData={parsedData?.kraljicQuadrant} />);
+
     case "tco-comparison":
-      return <TCOComparisonDashboard parsedData={parsedData?.tcoComparison} />;
-    
+      return wrapWithFallbackBanner(<TCOComparisonDashboard parsedData={parsedData?.tcoComparison} />);
+
     case "license-tier":
-      return <LicenseTierDashboard parsedData={parsedData?.licenseTier} />;
-    
+      return wrapWithFallbackBanner(<LicenseTierDashboard parsedData={parsedData?.licenseTier} />);
+
     case "sensitivity-spider":
-      return <SensitivitySpiderDashboard parsedData={parsedData?.sensitivitySpider} />;
-    
+      return wrapWithFallbackBanner(<SensitivitySpiderDashboard parsedData={parsedData?.sensitivitySpider} />);
+
     case "risk-matrix":
-      return <RiskMatrixDashboard parsedData={parsedData?.riskMatrix} />;
-    
+      return wrapWithFallbackBanner(<RiskMatrixDashboard parsedData={parsedData?.riskMatrix} />);
+
     case "scenario-comparison":
-      return <ScenarioComparisonDashboard parsedData={parsedData?.scenarioComparison} />;
-    
+      return wrapWithFallbackBanner(<ScenarioComparisonDashboard parsedData={parsedData?.scenarioComparison} />);
+
     case "supplier-scorecard":
-      return <SupplierPerformanceDashboard parsedData={parsedData?.supplierScorecard} />;
-    
+      return wrapWithFallbackBanner(<SupplierPerformanceDashboard parsedData={parsedData?.supplierScorecard} />);
+
     case "sow-analysis":
-      return <SOWAnalysisDashboard parsedData={parsedData?.sowAnalysis} />;
-    
+      return wrapWithFallbackBanner(<SOWAnalysisDashboard parsedData={parsedData?.sowAnalysis} />);
+
     case "negotiation-prep":
-      return <NegotiationPrepDashboard parsedData={parsedData?.negotiationPrep} />;
-    
+      return wrapWithFallbackBanner(<NegotiationPrepDashboard parsedData={parsedData?.negotiationPrep} />);
+
     case "data-quality":
-      return <DataQualityDashboard parsedData={parsedData?.dataQuality} />;
-    
+      return wrapWithFallbackBanner(<DataQualityDashboard parsedData={parsedData?.dataQuality} />);
+
     default:
       return (
         <div className="p-4 rounded-lg border border-border bg-secondary/20 text-center">
