@@ -30,9 +30,9 @@ export function useExosChat() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      const { data, error } = await supabase.from('chatbot_sessions').insert({
+      const { data, error } = await (supabase.from as any)('chatbot_sessions').insert({
         user_id: user.id,
-        bot_type: 'guide' as const,
+        bot_type: 'guide',
         message_count: 0,
         error_count: 0,
       }).select('id').single();
