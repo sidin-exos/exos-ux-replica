@@ -1,1 +1,34 @@
 project_id = "qczblwoaiuxgesjzxjvu"
+
+# All edge functions handle JWT verification internally via _shared/auth.ts
+# Disable Supabase platform-level JWT check so requests reach the function code
+
+[functions.chat-copilot]
+verify_jwt = false
+
+[functions.scenario-chat-assistant]
+verify_jwt = false
+
+[functions.generate-test-data]
+verify_jwt = false
+
+[functions.sentinel-analysis]
+verify_jwt = false
+
+[functions.generate-pdf]
+verify_jwt = false
+
+[functions.file-download]
+verify_jwt = false
+
+[functions.market-intelligence]
+verify_jwt = false
+
+[functions.generate-market-insights]
+verify_jwt = false
+
+[functions.market-snapshot]
+verify_jwt = false
+
+[functions.scenario-tutorial]
+verify_jwt = false
