@@ -52,6 +52,62 @@ export type Database = {
           },
         ]
       }
+      chatbot_sessions: {
+        Row: {
+          bot_type: string
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          error_count: number
+          fields_applied: boolean
+          fields_extracted: number
+          id: string
+          message_count: number
+          navigation_action: string | null
+          organization_id: string
+          scenario_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bot_type: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          error_count?: number
+          fields_applied?: boolean
+          fields_extracted?: number
+          id?: string
+          message_count?: number
+          navigation_action?: string | null
+          organization_id: string
+          scenario_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bot_type?: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          error_count?: number
+          fields_applied?: boolean
+          fields_extracted?: number
+          id?: string
+          message_count?: number
+          navigation_action?: string | null
+          organization_id?: string
+          scenario_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_cards: {
         Row: {
           coaching_tips: string
