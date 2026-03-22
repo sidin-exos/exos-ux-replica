@@ -75,8 +75,7 @@ export function useSavedIntelConfigs() {
         return false;
       }
 
-      const { error } = await supabase
-        .from("saved_intel_configs")
+      const { error } = await (supabase.from as any)("saved_intel_configs")
         .insert({
           user_id: user.id,
           config_type: params.config_type,
