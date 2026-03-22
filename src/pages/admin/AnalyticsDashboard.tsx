@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Building2, FlaskConical, Search, RefreshCw, ThumbsUp, ThumbsDown, FileText, Database, Activity, Star, Download, Heart, CheckCircle, XCircle } from "lucide-react";
+import { Users, Building2, FlaskConical, Search, RefreshCw, ThumbsUp, ThumbsDown, FileText, Database, Activity, Star, Download, Heart, CheckCircle, XCircle, MessageSquare, Bot, ArrowRight, Clock } from "lucide-react";
 import Header from "@/components/layout/Header";
 import StatCard from "@/components/dashboard/StatCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -90,6 +90,7 @@ const AnalyticsDashboard = () => {
             <TabsTrigger value="usage">Usage & Performance</TabsTrigger>
             <TabsTrigger value="growth">Growth</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
+            <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
             <TabsTrigger value="assets">Assets</TabsTrigger>
           </TabsList>
 
@@ -114,12 +115,9 @@ const AnalyticsDashboard = () => {
               <SkeletonBlock className="h-64" />
             ) : (
               <>
-
                 {/* Scenario Breakdown table */}
                 <Card className="card-elevated">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Scenario Breakdown</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-lg">Scenario Breakdown</CardTitle></CardHeader>
                   <CardContent>
                     <Table>
                       <TableHeader>
@@ -143,9 +141,7 @@ const AnalyticsDashboard = () => {
                               <TableCell className="text-right">
                                 <Badge variant={s.successRate >= 80 ? "default" : "destructive"}>{s.successRate}%</Badge>
                               </TableCell>
-                              <TableCell className="text-right">
-                                {s.satisfactionRate >= 0 ? `${s.satisfactionRate}%` : "—"}
-                              </TableCell>
+                              <TableCell className="text-right">{s.satisfactionRate >= 0 ? `${s.satisfactionRate}%` : "—"}</TableCell>
                               <TableCell className="text-right">{s.avgTimeMs.toLocaleString()}</TableCell>
                               <TableCell className="text-right">{s.avgTokens.toLocaleString()}</TableCell>
                             </TableRow>
@@ -158,9 +154,7 @@ const AnalyticsDashboard = () => {
 
                 {/* Industry Breakdown table */}
                 <Card className="card-elevated">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Industry Breakdown</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-lg">Industry Breakdown</CardTitle></CardHeader>
                   <CardContent>
                     <Table>
                       <TableHeader>
@@ -184,9 +178,7 @@ const AnalyticsDashboard = () => {
                               <TableCell className="text-right">
                                 <Badge variant={s.successRate >= 80 ? "default" : "destructive"}>{s.successRate}%</Badge>
                               </TableCell>
-                              <TableCell className="text-right">
-                                {s.satisfactionRate >= 0 ? `${s.satisfactionRate}%` : "—"}
-                              </TableCell>
+                              <TableCell className="text-right">{s.satisfactionRate >= 0 ? `${s.satisfactionRate}%` : "—"}</TableCell>
                               <TableCell className="text-right">{s.avgTimeMs.toLocaleString()}</TableCell>
                               <TableCell className="text-right">{s.avgTokens.toLocaleString()}</TableCell>
                             </TableRow>
@@ -199,9 +191,7 @@ const AnalyticsDashboard = () => {
 
                 {/* Recent 20 Scenario Runs */}
                 <Card className="card-elevated">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Recent 20 Scenario Runs</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-lg">Recent 20 Scenario Runs</CardTitle></CardHeader>
                   <CardContent className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -222,19 +212,11 @@ const AnalyticsDashboard = () => {
                         ) : (
                           analytics.recentRuns.map((run) => (
                             <TableRow key={run.id}>
-                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                                {new Date(run.created_at).toLocaleString()}
-                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{new Date(run.created_at).toLocaleString()}</TableCell>
                               <TableCell className="font-medium">{run.scenario_type}</TableCell>
                               <TableCell className="max-w-[120px] truncate">{run.industry_slug || "—"}</TableCell>
                               <TableCell className="max-w-[120px] truncate">{run.category_slug || "—"}</TableCell>
-                              <TableCell>
-                                {run.success ? (
-                                  <CheckCircle className="w-4 h-4 text-success" />
-                                ) : (
-                                  <XCircle className="w-4 h-4 text-destructive" />
-                                )}
-                              </TableCell>
+                              <TableCell>{run.success ? <CheckCircle className="w-4 h-4 text-success" /> : <XCircle className="w-4 h-4 text-destructive" />}</TableCell>
                               <TableCell className="text-right">{run.processing_time_ms?.toLocaleString() ?? "—"}</TableCell>
                               <TableCell className="text-right">{run.total_tokens?.toLocaleString() ?? "—"}</TableCell>
                               <TableCell className="text-sm">{run.model}</TableCell>
@@ -248,9 +230,7 @@ const AnalyticsDashboard = () => {
 
                 {/* Recent 20 Failed Runs */}
                 <Card className="card-elevated border-destructive/30">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-destructive">🐛 Recent 20 Unsuccessful Scenarios</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-lg text-destructive">🐛 Recent 20 Unsuccessful Scenarios</CardTitle></CardHeader>
                   <CardContent className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -270,9 +250,7 @@ const AnalyticsDashboard = () => {
                         ) : (
                           analytics.recentFailedRuns.map((run) => (
                             <TableRow key={run.id}>
-                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                                {new Date(run.created_at).toLocaleString()}
-                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{new Date(run.created_at).toLocaleString()}</TableCell>
                               <TableCell className="font-medium">{run.scenario_type}</TableCell>
                               <TableCell className="max-w-[120px] truncate">{run.industry_slug || "—"}</TableCell>
                               <TableCell className="max-w-[120px] truncate">{run.category_slug || "—"}</TableCell>
@@ -289,9 +267,7 @@ const AnalyticsDashboard = () => {
 
                 {analytics.intelBreakdown.length > 0 && (
                   <Card className="card-elevated">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Intel Query Breakdown</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle className="text-lg">Intel Query Breakdown</CardTitle></CardHeader>
                     <CardContent>
                       <Table>
                         <TableHeader>
@@ -326,9 +302,7 @@ const AnalyticsDashboard = () => {
               <SkeletonBlock className="h-64" />
             ) : growthData.length > 0 ? (
               <Card className="card-elevated">
-                <CardHeader>
-                  <CardTitle className="text-lg">Signups Over Time</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-lg">Signups Over Time</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={growthData}>
@@ -365,9 +339,7 @@ const AnalyticsDashboard = () => {
 
                 {ratingChartData.some((d) => d.count > 0) && (
                   <Card className="card-elevated">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Scenario Rating Distribution (1-10)</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle className="text-lg">Scenario Rating Distribution (1-10)</CardTitle></CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={250}>
                         <BarChart data={ratingChartData}>
@@ -383,9 +355,7 @@ const AnalyticsDashboard = () => {
                 )}
 
                 <Card className="card-elevated">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Latest Feedback</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-lg">Latest Feedback</CardTitle></CardHeader>
                   <CardContent>
                     <Table>
                       <TableHeader>
@@ -415,7 +385,155 @@ const AnalyticsDashboard = () => {
             )}
           </TabsContent>
 
-          {/* Tab 4: Assets */}
+          {/* Tab 4: Chatbot */}
+          <TabsContent value="chatbot" className="space-y-6">
+            {analytics.isLoading ? (
+              <SkeletonBlock className="h-64" />
+            ) : (
+              <>
+                {/* StatCards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatCard title="Total Sessions" value={String(analytics.totalChatbotSessions)} icon={MessageSquare} />
+                  <StatCard title="Avg Messages/Session" value={String(analytics.avgMessagesPerSession)} icon={MessageSquare} />
+                  <StatCard title="Field Extraction Rate" value={`${analytics.fieldExtractionRate}%`} icon={Bot} />
+                  <StatCard title="Error Rate" value={`${analytics.chatbotErrorRate}%`} icon={XCircle} />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatCard title="Guide Sessions" value={String(analytics.guideSessions)} icon={MessageSquare} />
+                  <StatCard title="Assistant Sessions" value={String(analytics.assistantSessions)} icon={Bot} />
+                  <StatCard title="Apply-to-Form Rate" value={`${analytics.applyToFormRate}%`} icon={CheckCircle} />
+                  <StatCard title="Navigation Rate" value={`${analytics.navigationRate}%`} icon={ArrowRight} />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <StatCard title="Avg Session Duration" value={`${analytics.avgSessionDuration}s`} icon={Clock} />
+                  <StatCard title="Avg Fields/Session" value={String(analytics.avgFieldsPerSession)} icon={Bot} />
+                </div>
+
+                {/* Sessions over time chart */}
+                {analytics.sessionsOverTime.length > 0 && (
+                  <Card className="card-elevated">
+                    <CardHeader><CardTitle className="text-lg">Sessions Over Time</CardTitle></CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={analytics.sessionsOverTime}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                          <XAxis dataKey="day" className="fill-muted-foreground" tick={{ fontSize: 11 }} />
+                          <YAxis className="fill-muted-foreground" tick={{ fontSize: 11 }} allowDecimals={false} />
+                          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} labelStyle={{ color: "hsl(var(--foreground))" }} />
+                          <Legend />
+                          <Line type="monotone" dataKey="guide" name="EXOS Guide" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                          <Line type="monotone" dataKey="assistant" name="Scenario Assistant" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Scenario Assistant by Scenario Type */}
+                {analytics.chatbotScenarioBreakdown.length > 0 && (
+                  <Card className="card-elevated">
+                    <CardHeader><CardTitle className="text-lg">Scenario Assistant Usage by Scenario</CardTitle></CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Scenario</TableHead>
+                            <TableHead className="text-right">Sessions</TableHead>
+                            <TableHead className="text-right">Avg Fields</TableHead>
+                            <TableHead className="text-right">Apply Rate</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {analytics.chatbotScenarioBreakdown.map((s) => (
+                            <TableRow key={s.scenario}>
+                              <TableCell className="font-medium">{s.scenario}</TableCell>
+                              <TableCell className="text-right">{s.sessions}</TableCell>
+                              <TableCell className="text-right">{s.avgFields}</TableCell>
+                              <TableCell className="text-right">{s.applyRate}%</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Top Navigation Destinations */}
+                {analytics.topNavigationDestinations.length > 0 && (
+                  <Card className="card-elevated">
+                    <CardHeader><CardTitle className="text-lg">Top Navigation Destinations</CardTitle></CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Path</TableHead>
+                            <TableHead className="text-right">Count</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {analytics.topNavigationDestinations.map((d) => (
+                            <TableRow key={d.path}>
+                              <TableCell className="font-medium">{d.path}</TableCell>
+                              <TableCell className="text-right">{d.count}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Recent 20 Chatbot Sessions */}
+                <Card className="card-elevated">
+                  <CardHeader><CardTitle className="text-lg">Recent 20 Chatbot Sessions</CardTitle></CardHeader>
+                  <CardContent className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Scenario</TableHead>
+                          <TableHead className="text-right">Messages</TableHead>
+                          <TableHead className="text-right">Fields</TableHead>
+                          <TableHead>Applied</TableHead>
+                          <TableHead>Navigation</TableHead>
+                          <TableHead className="text-right">Errors</TableHead>
+                          <TableHead className="text-right">Duration</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {analytics.recentChatbotSessions.length === 0 ? (
+                          <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">No chatbot sessions yet</TableCell></TableRow>
+                        ) : (
+                          analytics.recentChatbotSessions.map((s) => (
+                            <TableRow key={s.id}>
+                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{new Date(s.created_at).toLocaleString()}</TableCell>
+                              <TableCell>
+                                <Badge variant={s.bot_type === "guide" ? "default" : "secondary"}>
+                                  {s.bot_type === "guide" ? "Guide" : "Assistant"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="max-w-[120px] truncate">{s.scenario_id || "—"}</TableCell>
+                              <TableCell className="text-right">{s.message_count}</TableCell>
+                              <TableCell className="text-right">{s.fields_extracted}</TableCell>
+                              <TableCell>{s.fields_applied ? <CheckCircle className="w-4 h-4 text-success" /> : "—"}</TableCell>
+                              <TableCell className="max-w-[120px] truncate">{s.navigation_action || "—"}</TableCell>
+                              <TableCell className="text-right">{s.error_count > 0 ? <Badge variant="destructive">{s.error_count}</Badge> : "0"}</TableCell>
+                              <TableCell className="text-right">{s.duration_seconds != null ? `${s.duration_seconds}s` : "—"}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </TabsContent>
+
+          {/* Tab 5: Assets */}
           <TabsContent value="assets" className="space-y-6">
             {analytics.isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

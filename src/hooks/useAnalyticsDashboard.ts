@@ -56,6 +56,20 @@ export interface RecentRun {
   created_at: string;
 }
 
+export interface ChatbotSessionRow {
+  id: string;
+  bot_type: string;
+  scenario_id: string | null;
+  message_count: number;
+  fields_extracted: number;
+  fields_applied: boolean;
+  navigation_action: string | null;
+  error_count: number;
+  duration_seconds: number | null;
+  created_at: string;
+  ended_at: string | null;
+}
+
 export type TimeRange = "24h" | "3d" | "7d" | "30d" | "all";
 
 // ─── helpers ─────────────────────────────────────────────────────────
@@ -103,7 +117,6 @@ function buildScenarioBreakdown(prompts: PromptRow[], reports: ReportRow[], feed
     if (r.processing_time_ms != null) { entry.totalTime += r.processing_time_ms; entry.timeCount++; }
     if (r.total_tokens != null && r.total_tokens > 0) { entry.totalTokens += r.total_tokens; entry.tokenCount++; }
   }
-  // feedback.scenario_id is the scenario type slug (e.g. "supplier-review"), not a UUID
   for (const f of feedback) {
     const entry = map.get(f.scenario_id);
     if (entry) entry.ratings.push(f.rating);
@@ -120,7 +133,6 @@ function buildScenarioBreakdown(prompts: PromptRow[], reports: ReportRow[], feed
 
 function buildIndustryBreakdown(prompts: PromptRow[], reports: ReportRow[], feedback: FeedbackItem[]): IndustryBreakdown[] {
   const promptIndustryMap = new Map<string, string>();
-  // Build scenario_type -> industry mapping (takes last seen)
   const typeToIndustry = new Map<string, string>();
   for (const p of prompts) {
     promptIndustryMap.set(p.id, p.industry_slug || "Unknown");
@@ -141,7 +153,6 @@ function buildIndustryBreakdown(prompts: PromptRow[], reports: ReportRow[], feed
     if (r.processing_time_ms != null) { entry.totalTime += r.processing_time_ms; entry.timeCount++; }
     if (r.total_tokens != null && r.total_tokens > 0) { entry.totalTokens += r.total_tokens; entry.tokenCount++; }
   }
-  // feedback.scenario_id is scenario type slug; map it to industry via typeToIndustry
   for (const f of feedback) {
     const industry = typeToIndustry.get(f.scenario_id) || "Unknown";
     map.get(industry)?.ratings.push(f.rating);
@@ -243,6 +254,16 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
           return count || 0;
         },
       },
+      {
+        queryKey: ["analytics-chatbot-sessions"],
+        queryFn: async () => {
+          const { data, error } = await supabase.from("chatbot_sessions")
+            .select("id, bot_type, scenario_id, message_count, fields_extracted, fields_applied, navigation_action, error_count, duration_seconds, created_at, ended_at")
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          return data || [];
+        },
+      },
     ],
   });
 
@@ -259,6 +280,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
   const chatRows = (results[7].data || []) as { id: string; rating: string; created_at: string }[];
   const totalFiles = (results[8].data ?? 0) as number;
   const totalTrackers = (results[9].data ?? 0) as number;
+  const chatbotSessions = (results[10].data || []) as ChatbotSessionRow[];
 
   // Time-filtered prompts & reports
   const cutoff = getTimeFilterDate(timeRange);
@@ -270,7 +292,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
   const scenarioBreakdown = buildScenarioBreakdown(filteredPrompts, filteredReports, feedbackRows);
   const industryBreakdown = buildIndustryBreakdown(filteredPrompts, filteredReports, feedbackRows);
 
-  // Intel breakdown (unfiltered — no time dimension requested for intel)
+  // Intel breakdown
   const intelMap = new Map<string, { count: number; successes: number }>();
   for (const q of intelRows) {
     if (!intelMap.has(q.query_type)) intelMap.set(q.query_type, { count: 0, successes: 0 });
@@ -349,7 +371,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
   const avgRating = feedbackRows.length > 0 ? Math.round((ratingSum / feedbackRows.length) * 10) / 10 : 0;
   const latestFeedback = feedbackRows.slice(0, 5);
 
-  // Satisfaction rate: % of ratings >= 7 (scale 1-10)
+  // Satisfaction rate
   const satisfiedCount = feedbackRows.filter((f) => f.rating >= 7).length;
   const satisfactionRate = feedbackRows.length > 0 ? Math.round((satisfiedCount / feedbackRows.length) * 100) : 0;
 
@@ -357,11 +379,82 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
   const chatThumbsUp = chatRows.filter((c) => c.rating === "up").length;
   const chatThumbsDown = chatRows.filter((c) => c.rating === "down").length;
 
+  // ─── Chatbot analytics ─────────────────────────────────────────────
+  const guideSessions = chatbotSessions.filter((s) => s.bot_type === "guide");
+  const assistantSessions = chatbotSessions.filter((s) => s.bot_type === "scenario_assistant");
+
+  const totalChatbotSessions = chatbotSessions.length;
+  const avgMessagesPerSession = chatbotSessions.length > 0
+    ? Math.round((chatbotSessions.reduce((sum, s) => sum + s.message_count, 0) / chatbotSessions.length) * 10) / 10
+    : 0;
+  const fieldExtractionRate = assistantSessions.length > 0
+    ? Math.round((assistantSessions.filter((s) => s.fields_extracted > 0).length / assistantSessions.length) * 100)
+    : 0;
+  const applyToFormRate = assistantSessions.length > 0
+    ? Math.round((assistantSessions.filter((s) => s.fields_applied).length / assistantSessions.length) * 100)
+    : 0;
+  const navigationRate = guideSessions.length > 0
+    ? Math.round((guideSessions.filter((s) => s.navigation_action).length / guideSessions.length) * 100)
+    : 0;
+  const chatbotErrorRate = chatbotSessions.length > 0
+    ? Math.round((chatbotSessions.filter((s) => s.error_count > 0).length / chatbotSessions.length) * 100)
+    : 0;
+  const avgSessionDuration = chatbotSessions.filter((s) => s.duration_seconds != null).length > 0
+    ? Math.round(chatbotSessions.filter((s) => s.duration_seconds != null).reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / chatbotSessions.filter((s) => s.duration_seconds != null).length)
+    : 0;
+  const avgFieldsPerSession = assistantSessions.length > 0
+    ? Math.round((assistantSessions.reduce((sum, s) => sum + s.fields_extracted, 0) / assistantSessions.length) * 10) / 10
+    : 0;
+
+  // Scenario assistant breakdown by scenario_id
+  const scenarioAssistantByType = new Map<string, { count: number; fieldsTotal: number; applied: number }>();
+  for (const s of assistantSessions) {
+    const key = s.scenario_id || "Unknown";
+    if (!scenarioAssistantByType.has(key)) scenarioAssistantByType.set(key, { count: 0, fieldsTotal: 0, applied: 0 });
+    const entry = scenarioAssistantByType.get(key)!;
+    entry.count++;
+    entry.fieldsTotal += s.fields_extracted;
+    if (s.fields_applied) entry.applied++;
+  }
+  const chatbotScenarioBreakdown = Array.from(scenarioAssistantByType.entries()).map(([scenario, s]) => ({
+    scenario,
+    sessions: s.count,
+    avgFields: s.count > 0 ? Math.round((s.fieldsTotal / s.count) * 10) / 10 : 0,
+    applyRate: s.count > 0 ? Math.round((s.applied / s.count) * 100) : 0,
+  }));
+
+  // Top navigation destinations
+  const navDestMap = new Map<string, number>();
+  for (const s of guideSessions) {
+    if (s.navigation_action) navDestMap.set(s.navigation_action, (navDestMap.get(s.navigation_action) || 0) + 1);
+  }
+  const topNavigationDestinations = Array.from(navDestMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([path, count]) => ({ path, count }));
+
+  // Recent 20 chatbot sessions
+  const recentChatbotSessions = chatbotSessions.slice(0, 20);
+
+  // Sessions over time (grouped by day)
+  const sessionsOverTime = (() => {
+    const dayMap = new Map<string, { guide: number; assistant: number }>();
+    for (const s of chatbotSessions) {
+      const day = format(new Date(s.created_at), "yyyy-MM-dd");
+      if (!dayMap.has(day)) dayMap.set(day, { guide: 0, assistant: 0 });
+      const entry = dayMap.get(day)!;
+      if (s.bot_type === "guide") entry.guide++;
+      else entry.assistant++;
+    }
+    return Array.from(dayMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, counts]) => ({ day, ...counts }));
+  })();
+
   // Raw data export
   const exportRawData = () => {
     const wb = XLSX.utils.book_new();
 
-    // Sheet 1: Scenario Runs (all, joined)
     const runsData = allPrompts
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .map((p) => {
@@ -380,11 +473,9 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
         };
       });
     if (runsData.length > 0) {
-      const ws = XLSX.utils.json_to_sheet(runsData);
-      XLSX.utils.book_append_sheet(wb, ws, "Scenario Runs");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(runsData), "Scenario Runs");
     }
 
-    // Sheet 2: Scenario Feedback
     if (feedbackRows.length > 0) {
       const fbData = feedbackRows.map((f) => ({
         Date: new Date(f.created_at).toLocaleString(),
@@ -395,7 +486,6 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fbData), "Scenario Feedback");
     }
 
-    // Sheet 3: Intel Queries
     if (intelRows.length > 0) {
       const intelData = intelRows.map((q) => ({
         Date: new Date(q.created_at).toLocaleString(),
@@ -406,13 +496,28 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(intelData), "Intel Queries");
     }
 
-    // Sheet 4: Chat Feedback
     if (chatRows.length > 0) {
       const chatData = chatRows.map((c) => ({
         Date: new Date(c.created_at!).toLocaleString(),
         Rating: c.rating,
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(chatData), "Chat Feedback");
+    }
+
+    // Chatbot sessions sheet
+    if (chatbotSessions.length > 0) {
+      const sessionData = chatbotSessions.map((s) => ({
+        Date: new Date(s.created_at).toLocaleString(),
+        "Bot Type": s.bot_type,
+        "Scenario": s.scenario_id || "",
+        "Messages": s.message_count,
+        "Fields Extracted": s.fields_extracted,
+        "Fields Applied": s.fields_applied ? "Yes" : "No",
+        "Navigation": s.navigation_action || "",
+        "Errors": s.error_count,
+        "Duration (s)": s.duration_seconds ?? "",
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sessionData), "Chatbot Sessions");
     }
 
     const dateStr = new Date().toISOString().slice(0, 10);
@@ -446,6 +551,21 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
     totalFiles,
     totalInsights,
     totalTrackers,
+    // Chatbot metrics
+    totalChatbotSessions,
+    guideSessions: guideSessions.length,
+    assistantSessions: assistantSessions.length,
+    avgMessagesPerSession,
+    fieldExtractionRate,
+    applyToFormRate,
+    navigationRate,
+    chatbotErrorRate,
+    avgSessionDuration,
+    avgFieldsPerSession,
+    chatbotScenarioBreakdown,
+    topNavigationDestinations,
+    recentChatbotSessions,
+    sessionsOverTime,
     isLoading,
     error,
     refreshAll,
