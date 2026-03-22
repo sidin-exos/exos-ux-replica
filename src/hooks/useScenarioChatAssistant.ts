@@ -39,9 +39,9 @@ export function useScenarioChatAssistant({
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      const { data, error } = await supabase.from('chatbot_sessions').insert({
+      const { data, error } = await (supabase.from as any)('chatbot_sessions').insert({
         user_id: user.id,
-        bot_type: 'scenario_assistant' as const,
+        bot_type: 'scenario_assistant',
         scenario_id: scenarioId,
         message_count: 0,
         fields_extracted: 0,
