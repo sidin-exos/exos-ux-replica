@@ -118,12 +118,12 @@ export function ChatMessage({ message, isLatest, allMessages }: ChatMessageProps
       return;
     }
     const context = (allMessages ?? []).slice(-6).map(({ role, content }) => ({ role, content }));
-    const { error } = await supabase.from('chat_feedback').insert([{
+    const { error } = await (supabase.from as any)('chat_feedback').insert({
       message_id: message.id,
       rating,
-      conversation_messages: context as unknown as Json,
+      conversation_messages: context,
       user_id: userData.user.id,
-    }]);
+    });
     if (error) {
       console.error('Feedback error:', error);
       toast.error('Failed to submit feedback');
