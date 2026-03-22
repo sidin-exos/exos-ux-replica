@@ -44,7 +44,7 @@ export function SaveToKnowledgeBaseDialog({ open, onOpenChange, result }: SaveTo
     try {
       const { data, error } = await supabase.rpc("save_intel_to_knowledge_base", {
         p_content: result.summary,
-        p_citations: result.citations as Json,
+        p_citations: result.citations as unknown as Json,
         p_industry_slug: industrySlug,
         p_industry_name: selectedIndustry?.name || industrySlug,
         p_category_slug: categorySlug,
