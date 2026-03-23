@@ -141,7 +141,7 @@ const Welcome = () => {
       </section>
 
       {/* ───── Architectural Intelligence Heading ───── */}
-      <section className="container py-16 md:py-20">
+      <section className="container py-10 md:py-12">
         <div className="max-w-2xl">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
             Architectural Intelligence
@@ -160,12 +160,12 @@ const Welcome = () => {
         return (
           <section
             key={pillar.number}
-            className={`py-12 md:py-16 ${i % 2 === 1 ? "bg-muted/30" : ""}`}
+            className={`py-8 md:py-10 ${i % 2 === 1 ? "bg-muted/30" : ""}`}
           >
             <div className="container">
-              <div className={`grid md:grid-cols-2 gap-10 lg:gap-16 items-center max-w-6xl mx-auto ${!isEven ? "direction-rtl" : ""}`}>
+              <div className={`grid md:grid-cols-2 gap-8 lg:gap-12 items-center max-w-6xl mx-auto ${!isEven ? "direction-rtl" : ""}`}>
                 {/* Text side */}
-                <div className={`flex flex-col gap-5 ${!isEven ? "md:order-2" : ""}`}>
+                <div className={`flex flex-col gap-3 ${!isEven ? "md:order-2" : ""}`}>
                   <div className="flex items-baseline gap-3">
                     <span className="font-display text-5xl font-bold text-primary/15 select-none">
                       {pillar.number}
@@ -177,9 +177,17 @@ const Welcome = () => {
                   <p className="text-muted-foreground leading-relaxed">
                     {pillar.description}
                   </p>
-                  <Card className="border-primary/20 bg-primary/5 mt-2">
-                    <CardContent className="p-4">
-                      <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">
+                  <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    {pillar.details.map((detail) => (
+                      <li key={detail} className="flex items-start gap-1.5">
+                        <CheckCircle className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                        <span>{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Card className="border-primary/20 bg-primary/5">
+                    <CardContent className="p-3">
+                      <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-0.5">
                         Business Impact
                       </p>
                       <p className="text-sm text-foreground leading-relaxed">
@@ -187,7 +195,7 @@ const Welcome = () => {
                       </p>
                     </CardContent>
                   </Card>
-                  <Button className="gap-2 w-fit mt-2" onClick={() => navigate(pillar.href)}>
+                  <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href)}>
                     {pillar.cta} <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -196,9 +204,9 @@ const Welcome = () => {
                 <div className={`${!isEven ? "md:order-1" : ""}`}>
                   <Card className="overflow-hidden border-border/50 bg-muted/20">
                     <CardContent className="p-0">
-                      <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted">
-                        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
-                          <Icon className="w-10 h-10 text-primary/60" />
+                      <div className="aspect-[16/10] flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                          <Icon className="w-8 h-8 text-primary/60" />
                         </div>
                       </div>
                     </CardContent>
