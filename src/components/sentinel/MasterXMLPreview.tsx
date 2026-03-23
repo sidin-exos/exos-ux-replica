@@ -16,10 +16,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, FileCode, Eye, Code } from "lucide-react";
-import { useShareableMode } from "@/hooks/useShareableMode";
+
+const SUPERADMIN_EMAIL = "andrei.sidin@gmail.com";
 
 interface MasterXMLPreviewProps {
   scenarioType: string;
+  userEmail?: string | null;
 }
 
 /**
