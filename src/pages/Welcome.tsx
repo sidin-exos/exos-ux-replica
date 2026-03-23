@@ -14,6 +14,12 @@ const pillars = [
     title: "Analytical Scenarios",
     description:
       "20+ AI scenario types — from cost optimization to negotiation prep. Provide context, receive actionable dashboards.",
+    details: [
+      "Cost optimization & TCO comparison",
+      "Supplier consolidation & scoring",
+      "Negotiation prep & SOW analysis",
+      "Risk scoring & decision matrices",
+    ],
     impact: "Complex analyses in minutes, not weeks.",
     icon: BarChart3,
     cta: "Explore Scenarios",
@@ -24,6 +30,12 @@ const pillars = [
     title: "Market Intelligence",
     description:
       "Query global supply chain data, commodity pricing, and geopolitical risks in real time. Schedule automated monitoring.",
+    details: [
+      "Commodity price tracking & forecasts",
+      "Geopolitical risk feeds & alerts",
+      "Supplier benchmarking across industries",
+      "Scheduled PDF intelligence reports",
+    ],
     impact: "Benchmark strategy against live industry data.",
     icon: Radar,
     cta: "Open Intelligence Hub",
@@ -34,6 +46,11 @@ const pillars = [
     title: "Enterprise Platforms",
     description:
       "Always-on Risk Assessment and Inflation Analysis platforms with automated alerts and category-level trend tracking.",
+    details: [
+      "Risk Assessment Platform with automated alerts",
+      "Inflation Analysis with category-level trends",
+      "Cross-portfolio monitoring dashboards",
+    ],
     impact: "From periodic reviews to continuous monitoring.",
     icon: Building2,
     cta: "View Platforms",
