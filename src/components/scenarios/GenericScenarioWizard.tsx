@@ -11,6 +11,7 @@ import { DeepAnalysisResult } from "@/components/analysis/DeepAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,6 +94,29 @@ const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: {
         </div>
       </CollapsibleContent>
     </Collapsible>
+  );
+};
+
+const DataRequirementsPanel = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
+  return (
+    <Card className="border-warning/20 bg-warning/5">
+      <CardContent className="pt-4 pb-4 px-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span>💡</span>
+          <span className="text-sm font-semibold text-warning">
+            What data do I need to prepare?
+          </span>
+        </div>
+        <div className="space-y-3">
+          {dataRequirements.sections.map((s, i) => (
+            <div key={i}>
+              <p className="text-sm font-medium text-foreground">{s.heading}</p>
+              <p className="text-sm text-muted-foreground">{s.description}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -553,15 +577,17 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
-            <ScenarioTutorial
-              scenario={scenario}
-              industryName={industryContext?.name ?? null}
-              categoryName={categoryContext?.name ?? null}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ScenarioTutorial
+                scenario={scenario}
+                industryName={industryContext?.name ?? null}
+                categoryName={categoryContext?.name ?? null}
+              />
 
-            {scenario.dataRequirements && (
-              <DataRequirementsCollapsible dataRequirements={scenario.dataRequirements} />
-            )}
+              {scenario.dataRequirements && (
+                <DataRequirementsPanel dataRequirements={scenario.dataRequirements} />
+              )}
+            </div>
 
             <Button
               variant="outline"
