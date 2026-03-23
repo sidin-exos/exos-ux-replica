@@ -308,7 +308,8 @@ const Index = () => {
         ) : null}
 
         {activeView === "dashboard" && (
-          <section className="text-center py-16">
+          <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
+            <SiteFeedbackButton scenarioId="homepage" />
             <a href="/pricing#contact">
               <Button size="lg" className="text-lg px-8 py-6 gap-2">
                 Get in Touch
