@@ -73,7 +73,7 @@ interface ScenarioFieldGroups {
 }
 
 // DB query columns for scenario_field_config
-const FIELD_CONFIG_COLUMNS = "block_id, block_label, is_required, expected_data_type, sub_prompts, deviation_type, block_guidance" as const;
+const FIELD_CONFIG_COLUMNS = "block_id, block_label, is_required, expected_data_type, sub_prompts, deviation_type, block_guidance, optimal_guidance, minimum_guidance, degraded_guidance" as const;
 
 /** Fetch scenario field configs from DB */
 async function fetchFieldConfigs(

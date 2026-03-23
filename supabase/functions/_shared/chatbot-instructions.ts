@@ -49,14 +49,27 @@ export function buildScenarioNavBlock(
 export function buildCoachingBlock(card: CoachingCardRow | null): string {
   if (!card) return "";
 
-  return `## Scenario Coaching Card
+  let block = `## Scenario Coaching Card
 **Purpose**: ${card.purpose}
 **Minimum Required Inputs**: ${card.min_required}
 **Enhanced Inputs** (improve output quality): ${card.enhanced}
 **Common Failure Mode**: ${card.common_failure}
 **Financial Impact of Gap**: ${card.financial_impact}
 **GDPR Guardrail**: ${card.gdpr_guardrail}
+**Confidence Level**: This scenario has ${card.confidence_dependency || "HIGH"} input dependency.${
+    card.confidence_dependency === "HIGH"
+      ? " If Enhanced Inputs are missing, the output will carry a LOW CONFIDENCE watermark."
+      : card.confidence_dependency === "MEDIUM-HIGH"
+        ? " Missing Enhanced Inputs will noticeably degrade output quality."
+        : ""
+  }
 
 ## Coaching Tips for This Scenario
 ${card.coaching_tips}`;
+
+  if (card.example_prompt) {
+    block += `\n\n## Example Guidance Prompt\n${card.example_prompt}`;
+  }
+
+  return block;
 }

@@ -64,7 +64,7 @@ async function buildSystemPrompt(
   const [cardResult, gdprResult] = await Promise.all([
     supabase
       .from("coaching_cards")
-      .select("purpose, min_required, enhanced, common_failure, financial_impact, gdpr_guardrail, coaching_tips")
+      .select("purpose, min_required, enhanced, common_failure, financial_impact, gdpr_guardrail, coaching_tips, example_prompt, confidence_dependency")
       .eq("scenario_slug", scenarioId)
       .single(),
     supabase
