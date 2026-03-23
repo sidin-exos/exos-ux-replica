@@ -1086,7 +1086,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
                 {/* Output Feedback */}
                 <OutputFeedback
-                  onFeedbackSubmit={handleFeedbackSubmit}
+                  onFeedbackSubmit={handleOutputFeedbackSubmit}
                   onGenerateReport={handleGenerateReport}
                   tokenUsage={tokenUsage}
                   processingTimeMs={processingTimeMs}
