@@ -49,7 +49,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
               </div>
 
               {/* Two-column layout */}
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {/* Column 1: About this scenario */}
                 <div>
                   <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2">
@@ -78,7 +78,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
 
                 {/* Column 2: What data do I need */}
                 {scenario.dataRequirements && (
-                  <div className="border-t border-border/30 pt-3">
+                  <div className="border-l border-border/30 pl-4">
                     <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2">
                       What data do I need to prepare?
                     </p>
