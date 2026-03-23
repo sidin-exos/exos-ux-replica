@@ -695,8 +695,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Master XML Template Preview (hidden in shareable mode) */}
-            <MasterXMLPreview scenarioType={scenario.id} />
+            {/* Master XML moved to scenario info panel — see grid above */}
 
             {/* Context Selectors for AI Grounding */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-border bg-card/50">
