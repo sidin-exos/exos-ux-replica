@@ -60,11 +60,11 @@ const SiteFeedbackButton = ({ scenarioId = "general", className }: SiteFeedbackB
     <>
       <Button
         variant="outline"
-        size="lg"
+        size="default"
         onClick={() => setOpen(true)}
-        className={cn("text-lg px-8 py-6 gap-2", className)}
+        className={cn("gap-2 border-border/80 text-muted-foreground hover:text-foreground hover:border-primary/60", className)}
       >
-        <MessageSquare className="w-5 h-5" />
+        <MessageSquare className="w-4 h-4" />
         Leave Feedback
       </Button>
 
