@@ -76,19 +76,6 @@ export function ChatWidget() {
           <Bot className="w-4 h-4 text-primary" />
           <span className="font-display font-semibold text-sm">Navigate scenarios with EXOS Chatbot</span>
         </div>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {SUGGESTIONS.map((s) => (
-            <Button
-              key={s.text}
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={() => handleSuggestion(s.text)}
-            >
-              {s.label}
-            </Button>
-          ))}
-        </div>
         <div className="flex gap-2">
           <div className="flex items-end gap-2 flex-1 relative">
             <Sparkles className="w-4 h-4 text-primary absolute left-3 top-2.5 pointer-events-none" />
