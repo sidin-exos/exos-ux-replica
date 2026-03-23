@@ -1162,6 +1162,37 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 </p>
               </div>
 
+              {/* Feedback Type Selector */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Feedback Type (optional)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "bug", label: "Bug Report", icon: Bug },
+                    { value: "feature", label: "Feature Suggestion", icon: Lightbulb },
+                    { value: "usability", label: "Usability Issue", icon: MousePointerClick },
+                    { value: "data_quality", label: "Data Quality", icon: Database },
+                    { value: "performance", label: "Performance", icon: Gauge },
+                    { value: "visual", label: "Visual / Design", icon: Palette },
+                    { value: "other", label: "Other", icon: HelpCircle },
+                  ].map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => setFeedbackType(feedbackType === value ? "" : value)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                        "border border-border hover:border-primary/50",
+                        feedbackType === value
+                          ? "bg-primary text-primary-foreground border-primary shadow-md"
+                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Optional text feedback */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Comments (optional)</Label>
