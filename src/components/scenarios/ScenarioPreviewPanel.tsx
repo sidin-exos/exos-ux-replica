@@ -78,7 +78,7 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
 
                 {/* Column 2: What data do I need */}
                 {scenario.dataRequirements && (
-                  <div className="border-t border-border/30 pt-3">
+                  <div className="border-l border-border/30 pl-4">
                     <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2">
                       What data do I need to prepare?
                     </p>
