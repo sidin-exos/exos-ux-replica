@@ -101,7 +101,7 @@ const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: {
 
 const DataRequirementsPanel = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   return (
-    <Card className="border-warning/20 bg-warning/5">
+    <Card className="border-warning/30 bg-warning/10 dark:bg-warning/15">
       <CardContent className="pt-4 pb-4 px-5">
         <div className="flex items-center gap-2 mb-3">
           <span>💡</span>
