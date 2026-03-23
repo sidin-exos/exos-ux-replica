@@ -746,6 +746,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   description={strategyPresets[scenario.strategySelector].description}
                   options={strategyPresets[scenario.strategySelector].options}
                 />
+                </div>
               )}
             </div>
 
