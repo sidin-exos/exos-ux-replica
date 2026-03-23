@@ -31,10 +31,10 @@ const CATEGORY_ICON_TEXT: Record<Scenario["category"], string> = {
 };
 
 const CATEGORY_BORDER: Record<Scenario["category"], string> = {
-  analysis: "border-l-4 border-l-blue-500",
-  planning: "border-l-4 border-l-amber-500",
-  risk: "border-l-4 border-l-destructive",
-  documentation: "border-l-4 border-l-purple-500",
+  analysis: "border-l-4 border-l-blue-300/60 dark:border-l-blue-400/40",
+  planning: "border-l-4 border-l-amber-300/60 dark:border-l-amber-400/40",
+  risk: "border-l-4 border-l-red-300/60 dark:border-l-red-400/40",
+  documentation: "border-l-4 border-l-purple-300/60 dark:border-l-purple-400/40",
 };
 
 const CATEGORY_BG: Partial<Record<Scenario["category"], string>> = {
