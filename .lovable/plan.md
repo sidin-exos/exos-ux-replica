@@ -1,66 +1,35 @@
 
 
-## Add "Leave Feedback" Button & Dialog
+## Add Feedback Type Selector to Scenario Feedback Dialog
 
-### Changes to `src/components/scenarios/GenericScenarioWizard.tsx`
+### Summary
+Add a feedback type/category selector to the existing feedback dialog in `GenericScenarioWizard.tsx`. The 7 types (excluding "Documentation Gap" per user request) will be stored in a new `feedback_type` column on the `scenario_feedback` table.
 
-**1. New imports**
-- Add `Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription` from `@/components/ui/dialog`
-- `MessageSquare` is already imported (line 5)
-- `Star` from `lucide-react` for rating display
+### Feedback Types
+1. **Bug Report** -- Something is broken or not working
+2. **Feature Suggestion** -- Ideas for new functionality
+3. **Usability Issue** -- Confusing layout or poor UX flow
+4. **Data Quality** -- Inaccurate results or wrong calculations
+5. **Performance** -- Slow loading, timeouts, or lag
+6. **Visual/Design** -- Styling, contrast, or layout problems
+7. **Other** -- Anything else
 
-**2. New state variables** (after existing state ~line 140)
-- `feedbackDialogOpen: boolean` (default `false`)
-- `feedbackRating: number` (default `0`)
-- `feedbackText: string` (default `""`)
-- `isSubmittingFeedback: boolean` (default `false`)
-
-**3. Submission handler**
-```typescript
-const handleFeedbackSubmit = async () => {
-  setIsSubmittingFeedback(true);
-  const { error } = await supabase.from('scenario_feedback').insert({
-    scenario_id: scenario.id,
-    rating: feedbackRating,
-    feedback_text: feedbackText || null
-  });
-  setIsSubmittingFeedback(false);
-  if (error) {
-    toast.error("Failed to submit feedback");
-  } else {
-    toast.success("Thank you for your feedback!");
-    setFeedbackDialogOpen(false);
-    setFeedbackRating(0);
-    setFeedbackText("");
-  }
-};
+### Database Change
+Add a nullable `feedback_type text` column to `scenario_feedback`:
+```sql
+ALTER TABLE scenario_feedback ADD COLUMN feedback_type text;
 ```
+Nullable so existing rows are unaffected.
 
-**4. Button layout** (line 873)
-Wrap existing "Review Data" button in a flex container and add the feedback button:
-```tsx
-<div className="flex items-center justify-end gap-3">
-  <Button variant="outline" size="default" onClick={() => setFeedbackDialogOpen(true)}>
-    <MessageSquare className="w-4 h-4 mr-2" />
-    Leave Feedback
-  </Button>
-  <Button variant="hero" size="lg" onClick={() => setStep("review")} className="gap-2">
-    Review Data <ArrowRight className="w-4 h-4" />
-  </Button>
-</div>
-```
+### UI Changes (`GenericScenarioWizard.tsx`)
+1. Add `feedbackType` state variable (default `""`)
+2. Insert a feedback type selector between the rating scale and the textarea -- a grid of pill/chip buttons (similar to the rating scale pattern), each showing an icon + label
+3. Update `handleFeedbackSubmit` to include `feedback_type: feedbackType || null` in the insert
+4. Reset `feedbackType` on dialog close
 
-**5. Dialog** (at bottom of component, before closing tags)
-- 1-10 rating scale: row of 10 numbered square buttons, highlighted when selected (same pattern as `OutputFeedback.tsx` line ~120)
-- Optional textarea for comments
-- Submit button disabled when `feedbackRating === 0` or `isSubmittingFeedback`
-- On success: toast, close dialog, reset state
-
-### No database changes needed
-The `scenario_feedback` table already has `scenario_id` (text), `rating` (integer), `feedback_text` (text) columns with an `anyone_can_submit` INSERT policy.
-
-### Technical details
-- Rating scale is 1-10 to match existing Analytics Dashboard satisfaction calculation (ratings >= 7)
-- `scenario.id` is a string matching the table's `scenario_id text` column
-- The button uses `variant="outline"` + `size="default"` for lower visual priority vs the hero "Review Data" button
+### Technical Details
+- Icons from lucide-react: `Bug`, `Lightbulb`, `MousePointerClick`, `Database`, `Gauge`, `Palette`, `HelpCircle`
+- Chips use same styling pattern as rating buttons (outline when unselected, primary when selected)
+- Feedback type is optional -- user can submit without selecting one
+- Grid layout: `grid grid-cols-2 gap-2` to fit cleanly in the dialog
 
