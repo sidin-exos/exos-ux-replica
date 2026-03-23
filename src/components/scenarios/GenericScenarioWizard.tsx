@@ -704,7 +704,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             {/* Context & Strategy — compact 2-column row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Left: Context selectors with inline editors */}
-              <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card shadow-sm space-y-3">
+              <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card dark:bg-secondary/60 shadow-sm space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <IndustrySelector
                     value={industrySlug}
@@ -769,7 +769,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             )}
 
             {/* Two-column: Fields (2/3) + Sidebar (1/3) */}
-            <div className="border border-border rounded-xl bg-card p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="border border-border rounded-xl bg-card dark:bg-surface p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left 2/3: Input fields */}
               <div className="md:col-span-2 space-y-6">
                 {/* Required Fields */}
