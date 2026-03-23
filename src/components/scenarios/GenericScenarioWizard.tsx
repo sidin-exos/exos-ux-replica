@@ -769,7 +769,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                 {/* Required Fields */}
                 <div className="space-y-4">
                   <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                    Required Information
+                    Enter Your Data
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {scenario.requiredFields
