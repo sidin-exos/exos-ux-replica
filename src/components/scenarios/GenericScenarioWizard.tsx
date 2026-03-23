@@ -769,12 +769,12 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             )}
 
             {/* Two-column: Fields (2/3) + Sidebar (1/3) */}
-            <div className="border border-border rounded-xl bg-card dark:bg-surface p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="border border-border/80 rounded-xl bg-card dark:bg-surface p-5 shadow-md grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left 2/3: Input fields */}
               <div className="md:col-span-2 space-y-6">
                 {/* Required Fields */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="space-y-4 bg-secondary/30 dark:bg-secondary/40 rounded-lg p-4 border border-border/50">
+                  <h4 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
                     Enter Your Data
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -819,8 +819,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
                 {/* Optional Fields */}
                 {scenario.requiredFields.some((f) => !f.required) && (
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  <div className="space-y-4 bg-muted/40 dark:bg-muted/20 rounded-lg p-4 border border-border/40">
+                    <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider">
                       Optional Information
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -846,7 +846,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </div>
 
               {/* Right 1/3: Sidebar */}
-              <div className="space-y-4 p-3 rounded-lg border border-iris/15 bg-iris/5 dark:bg-iris/10">
+              <div className="space-y-4 p-3 rounded-lg border border-iris/25 bg-iris/5 dark:bg-iris/15 shadow-sm">
                 <DashboardSelector
                   scenarioId={scenario.id}
                   selectedDashboards={selectedDashboards}
