@@ -763,7 +763,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             )}
 
             {/* Two-column: Fields (2/3) + Sidebar (1/3) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left 2/3: Input fields */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Required Fields */}
