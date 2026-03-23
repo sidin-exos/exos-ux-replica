@@ -5,23 +5,16 @@ import { checkRateLimit } from "../_shared/rate-limit.ts";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
 import { callGoogleAI, convertOpenAITools } from "../_shared/google-ai.ts";
 import {
-  BOT_IDENTITY,
-  CONVERSATION_ARCHITECTURE,
-  GDPR_PROTOCOL,
-  ESCALATION_PROTOCOL,
-  QUICK_REFERENCES,
   buildScenarioNavBlock,
+  type CoachingCardRow,
 } from "../_shared/chatbot-instructions.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 import { corsHeaders } from "../_shared/cors.ts";
 
-// ─── SYSTEM PROMPT ──────────────────────────────────────────────────────────
+// ─── STATIC PROMPT SECTIONS (not methodology content) ───────────────────────
 
-const SYSTEM_PROMPT_BASE = `${BOT_IDENTITY}
-
-${CONVERSATION_ARCHITECTURE}
-
-## Available Pages
+const AVAILABLE_PAGES = `## Available Pages
 
 ### Home (/)
 The main landing page with an overview of all capabilities.
@@ -39,34 +32,72 @@ Overview of the Sentinel AI pipeline and platform capabilities.
 Preview all available dashboard visualizations (Kraljic, Risk Matrix, TCO, etc.).
 
 ### Pricing & FAQ (/pricing)
-Subscription tiers, pricing information, and frequently asked questions. FAQ is at /pricing#faq and contact form at /pricing#contact.
+Subscription tiers, pricing information, and frequently asked questions. FAQ is at /pricing#faq and contact form at /pricing#contact.`;
 
-## Navigation Rules
+const NAVIGATION_RULES = `## Navigation Rules
 1. **NEVER navigate on the first message.** First understand the user's specific challenge through conversation.
 2. Only use the navigate_to_scenario tool after at least 2 exchanges where the user has clearly expressed a specific need AND confirmed they want to go there.
 3. For general questions like "How to use EXOS?" — explain capabilities WITHOUT navigating. List relevant scenarios and ask what resonates.
 4. When you do navigate, prefer /reports for scenario analysis and /market-intelligence for market data.
-5. Keep responses under 150 words unless the user asks for detail.
+5. Keep responses under 150 words unless the user asks for detail.`;
 
-${GDPR_PROTOCOL}
+// ─── SYSTEM PROMPT BUILDER ──────────────────────────────────────────────────
 
-${ESCALATION_PROTOCOL}
-
-${QUICK_REFERENCES}`;
-
-function buildSystemPrompt(
+async function buildSystemPrompt(
   currentPath: string,
   scenarios?: { id: string; title: string; description: string }[]
-): string {
+): Promise<string> {
+  // Fetch methodology config from DB
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const { data: configs, error: configError } = await supabase
+    .from("methodology_config")
+    .select("key, value")
+    .in("key", ["bot_identity", "conversation_architecture", "gdpr_protocol", "escalation_protocol", "quick_references"]);
+
+  if (configError) {
+    console.error("chat-copilot: Failed to fetch methodology config:", configError);
+  }
+
+  const configMap: Record<string, string> = {};
+  (configs || []).forEach((c: { key: string; value: string }) => { configMap[c.key] = c.value; });
+
+  // Build system prompt base from DB values
+  const systemPromptBase = `${configMap["bot_identity"] || ""}
+
+${configMap["conversation_architecture"] || ""}
+
+${AVAILABLE_PAGES}
+
+${NAVIGATION_RULES}
+
+${configMap["gdpr_protocol"] || ""}
+
+${configMap["escalation_protocol"] || ""}
+
+${configMap["quick_references"] || ""}`;
+
+  // Build scenario nav block
   let scenarioBlock: string;
 
   if (scenarios && scenarios.length > 0) {
-    scenarioBlock = "\n\n" + buildScenarioNavBlock(scenarios);
+    const { data: navCards, error: navError } = await supabase
+      .from("coaching_cards")
+      .select("scenario_slug, trigger_phrases, navigation_guidance");
+
+    if (navError) {
+      console.error("chat-copilot: Failed to fetch coaching cards:", navError);
+    }
+
+    scenarioBlock = "\n\n" + buildScenarioNavBlock(scenarios, (navCards || []) as CoachingCardRow[]);
   } else {
     scenarioBlock = "\n\n## Scenarios\nNo scenario catalog was provided. Direct users to /reports to browse the full list.";
   }
 
-  return `${SYSTEM_PROMPT_BASE}${scenarioBlock}\n\nThe user is currently on: ${currentPath || "/"}`;
+  return `${systemPromptBase}${scenarioBlock}\n\nThe user is currently on: ${currentPath || "/"}`;
 }
 
 // ─── TOOLS ──────────────────────────────────────────────────────────────────
@@ -164,7 +195,7 @@ serve(async (req) => {
         .filter((s) => s.id && s.title);
     }
 
-    const systemPrompt = buildSystemPrompt(currentPath || "/", parsedScenarios);
+    const systemPrompt = await buildSystemPrompt(currentPath || "/", parsedScenarios);
 
     // Create LangSmith parent run
     const parentRunId = tracer.createRun("chat-copilot", "chain", {

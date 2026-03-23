@@ -33,6 +33,10 @@ const FounderDashboard = lazy(() => import("./pages/admin/FounderDashboard"));
 const RiskPlatform = lazy(() => import("./pages/enterprise/RiskPlatform"));
 const InflationPlatform = lazy(() => import("./pages/enterprise/InflationPlatform"));
 const PdfTestPage = lazy(() => import("./pages/PdfTestPage"));
+const MethodologyDashboard = lazy(() => import("./pages/admin/MethodologyDashboard"));
+const MethodologyScenarioEdit = lazy(() => import("./pages/admin/MethodologyScenarioEdit"));
+const MethodologyConfig = lazy(() => import("./pages/admin/MethodologyConfig"));
+const MethodologyHistory = lazy(() => import("./pages/admin/MethodologyHistory"));
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -67,6 +71,10 @@ const App = () => (
             <Route path="/enterprise/risk" element={<RiskPlatform />} />
             <Route path="/enterprise/inflation" element={<InflationPlatform />} />
             <Route path="/pdf-test" element={<ProtectedRoute requireSuperAdmin><PdfTestPage /></ProtectedRoute>} />
+            <Route path="/admin/methodology" element={<ProtectedRoute requireSuperAdmin><MethodologyDashboard /></ProtectedRoute>} />
+            <Route path="/admin/methodology/config" element={<ProtectedRoute requireSuperAdmin><MethodologyConfig /></ProtectedRoute>} />
+            <Route path="/admin/methodology/history" element={<ProtectedRoute requireSuperAdmin><MethodologyHistory /></ProtectedRoute>} />
+            <Route path="/admin/methodology/:slug" element={<ProtectedRoute requireSuperAdmin><MethodologyScenarioEdit /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

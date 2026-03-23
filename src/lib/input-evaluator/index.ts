@@ -10,6 +10,7 @@ import {
   QualityCheck,
   OverallStatus,
   ConfidenceFlag,
+  ScenarioEvalConfig,
 } from "./types";
 import { SCENARIO_EVAL_CONFIGS } from "./configs";
 import { runUniversalChecks } from "./universal-checks";
@@ -95,9 +96,10 @@ function buildCoachingMessages(
  */
 export function evaluateInputQuality(
   scenarioId: string,
-  formData: Record<string, string>
+  formData: Record<string, string>,
+  externalConfig?: ScenarioEvalConfig | null
 ): EvaluationResult {
-  const config = SCENARIO_EVAL_CONFIGS[scenarioId];
+  const config = externalConfig ?? SCENARIO_EVAL_CONFIGS[scenarioId];
 
   // If scenario has no config, return a neutral READY result
   if (!config) {

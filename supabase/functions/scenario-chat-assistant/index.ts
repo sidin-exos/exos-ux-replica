@@ -12,11 +12,8 @@ import {
 } from "../_shared/validate.ts";
 import { sanitizeMessages } from "../_shared/anonymizer.ts";
 import { callGoogleAI, convertOpenAITools } from "../_shared/google-ai.ts";
-import {
-  BOT_IDENTITY,
-  GDPR_PROTOCOL,
-  buildCoachingBlock,
-} from "../_shared/chatbot-instructions.ts";
+import { buildCoachingBlock, type CoachingCardRow } from "../_shared/chatbot-instructions.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -41,12 +38,12 @@ PHASE 4 — Confidence Calibration: Let the user know if their inputs meet the M
 
 // ─── SYSTEM PROMPT BUILDER ──────────────────────────────────────────────────
 
-function buildSystemPrompt(
+async function buildSystemPrompt(
   scenarioId: string,
   scenarioFields: { id: string; label: string; description: string; required: boolean; type: string; placeholder?: string }[],
   dataRequirements: string,
   extractedSoFar: Record<string, string>
-): string {
+): Promise<string> {
   const filledIds = Object.keys(extractedSoFar);
   const pending = scenarioFields.filter((f) => !filledIds.includes(f.id));
   const filled = scenarioFields.filter((f) => filledIds.includes(f.id));
@@ -58,8 +55,34 @@ function buildSystemPrompt(
     })
     .join("\n");
 
-  // Get scenario-specific coaching card
-  const coachingBlock = buildCoachingBlock(scenarioId);
+  // Fetch coaching card and GDPR protocol from DB
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const [cardResult, gdprResult] = await Promise.all([
+    supabase
+      .from("coaching_cards")
+      .select("purpose, min_required, enhanced, common_failure, financial_impact, gdpr_guardrail, coaching_tips")
+      .eq("scenario_slug", scenarioId)
+      .single(),
+    supabase
+      .from("methodology_config")
+      .select("value")
+      .eq("key", "gdpr_protocol")
+      .single(),
+  ]);
+
+  if (cardResult.error) {
+    console.error("scenario-chat-assistant: Failed to fetch coaching card for", scenarioId, cardResult.error);
+  }
+  if (gdprResult.error) {
+    console.error("scenario-chat-assistant: Failed to fetch GDPR protocol:", gdprResult.error);
+  }
+
+  const coachingBlock = buildCoachingBlock(cardResult.data as CoachingCardRow | null);
+  const gdprProtocol = gdprResult.data?.value || "";
 
   return `${SCENARIO_BOT_IDENTITY}
 
@@ -77,7 +100,7 @@ ${fieldList}
 ## Data Requirements Context
 ${dataRequirements || "No additional data requirements specified."}
 
-${GDPR_PROTOCOL}
+${gdprProtocol}
 
 ## Operational Rules
 - When the user provides information, extract it into the correct field(s) using the update_fields tool.
@@ -171,7 +194,7 @@ serve(async (req) => {
     const sanitizedMessages = sanitizeMessages(messages);
 
     // Build prompt and tools
-    const systemPrompt = buildSystemPrompt(scenarioId, scenarioFields, dataRequirements, extractedSoFar);
+    const systemPrompt = await buildSystemPrompt(scenarioId, scenarioFields, dataRequirements, extractedSoFar);
     const tools = buildToolSchema(scenarioFields);
 
     // Trace

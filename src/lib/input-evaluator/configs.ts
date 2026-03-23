@@ -1,14 +1,16 @@
 /**
  * INPUT_EVALUATOR — Scenario evaluation configs
  * Constraint #4: Exported as Record<string, ScenarioEvalConfig> for future lazy-load splitting.
+ *
+ * @deprecated Phase 4 Migration: Retained as client-side fallback.
+ * Source of truth is now DB: coaching_cards + scenario_field_config.
+ * When useScenarioEvalConfig() returns data, it takes precedence.
+ * Remove after Phase 5 admin UI is verified.
  */
 
 import { ScenarioEvalConfig } from "./types";
 
-/**
- * All 29 scenario configurations keyed by scenario string ID.
- * Each config maps to group, deviation type, block definitions, and financial impact text.
- */
+/** @deprecated Use useScenarioEvalConfig() hook instead. Retained as fallback. */
 export const SCENARIO_EVAL_CONFIGS: Record<string, ScenarioEvalConfig> = {
   // ═══ GROUP A — ANALYTICAL VALUE (S1–S8) ═══
 

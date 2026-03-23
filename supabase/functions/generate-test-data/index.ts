@@ -6,14 +6,14 @@ import { callGoogleAI } from "../_shared/google-ai.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import {
-  SCENARIO_BLOCK_GUIDANCE,
   QUALITY_TIER_INSTRUCTIONS,
-  DEVIATION_TYPE_RULES,
   mapDataQualityToTier,
-  getDeviationType,
+  getFieldGroups,
   buildBlockInstructions,
   type QualityTier,
+  type ScenarioFieldConfigRow,
 } from "./block-guidance.ts";
 
 /**
@@ -65,32 +65,31 @@ interface DraftedParameters {
   personaName?: string;
 }
 
-// Dynamic field derivation from block guidance registry
+// Field groups type (returned by getFieldGroups from block-guidance.ts)
 interface ScenarioFieldGroups {
   required: string[];
   optional: string[];
   all: string[];
 }
 
-function getScenarioFieldGroups(scenarioType: string): ScenarioFieldGroups {
-  const guidance = SCENARIO_BLOCK_GUIDANCE[scenarioType];
+// DB query columns for scenario_field_config
+const FIELD_CONFIG_COLUMNS = "block_id, block_label, is_required, expected_data_type, sub_prompts, deviation_type, block_guidance" as const;
 
-  if (!guidance) {
-    return {
-      required: ["industryContext"],
-      optional: [],
-      all: ["industryContext"],
-    };
+/** Fetch scenario field configs from DB */
+async function fetchFieldConfigs(
+  supabase: ReturnType<typeof createClient>,
+  scenarioSlug: string
+): Promise<ScenarioFieldConfigRow[]> {
+  const { data, error } = await supabase
+    .from("scenario_field_config")
+    .select(FIELD_CONFIG_COLUMNS)
+    .eq("scenario_slug", scenarioSlug);
+
+  if (error) {
+    console.error(`[TestDataGen] Failed to fetch field config for ${scenarioSlug}:`, error);
+    return [];
   }
-
-  const required = guidance.filter((block) => block.isRequired).map((block) => block.fieldId);
-  const optional = guidance.filter((block) => !block.isRequired).map((block) => block.fieldId);
-
-  return {
-    required,
-    optional,
-    all: [...required, ...optional],
-  };
+  return (data || []) as ScenarioFieldConfigRow[];
 }
 
 
@@ -559,6 +558,12 @@ serve(async (req) => {
     return rateLimitResponse(rateCheck, corsHeaders);
   }
 
+  // Create supabase client for DB reads
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
   try {
     const body = await parseBody(req);
 
@@ -575,6 +580,9 @@ serve(async (req) => {
       ? body.temperature : 0.7;
 
     console.log(`[TestDataGen] Mode: ${mode}, Scenario: ${scenarioType}`);
+
+    // Fetch field configs from DB for this scenario
+    const fieldConfigs = await fetchFieldConfigs(supabase, scenarioType);
 
     // === DRAFT MODE: Propose random consistent parameters ===
     if (mode === "draft") {
@@ -595,7 +603,8 @@ serve(async (req) => {
         scenarioType,
         parameters,
         temperature,
-        selectedPersona
+        selectedPersona,
+        fieldConfigs
       );
       return new Response(
         JSON.stringify(generateResult),
@@ -608,7 +617,8 @@ serve(async (req) => {
       const messyResult = await handleMessyMode(
         scenarioType,
         temperature > 0 ? Math.max(temperature, 0.9) : 0.9,
-        selectedPersona
+        selectedPersona,
+        supabase
       );
       return new Response(
         JSON.stringify(messyResult),
@@ -617,7 +627,7 @@ serve(async (req) => {
     }
 
     // === FULL MODE: Legacy MCTS approach ===
-    const fieldGroups = getScenarioFieldGroups(scenarioType);
+    const fieldGroups = getFieldGroups(fieldConfigs);
     const fields = fieldGroups.all;
     const industries = Object.keys(COMPATIBILITY_MATRIX);
     
@@ -644,7 +654,8 @@ serve(async (req) => {
         selectedCategory,
         fieldGroups,
         iteration,
-        selectedPersona
+        selectedPersona,
+        fieldConfigs
       );
       
       const generationResponse = await callAI(generationPrompt.system, generationPrompt.user, temperature);
@@ -812,14 +823,15 @@ async function handleGenerateMode(
   scenarioType: string,
   parameters: DraftedParameters,
   temperature: number,
-  selectedPersona: typeof BUYER_PERSONAS[number]
+  selectedPersona: typeof BUYER_PERSONAS[number],
+  fieldConfigs: ScenarioFieldConfigRow[]
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
-  const fieldGroups = getScenarioFieldGroups(scenarioType);
+  const fieldGroups = getFieldGroups(fieldConfigs);
   const fields = fieldGroups.all;
-  
+
   // Compute quality tier
   const qualityTier: QualityTier = mapDataQualityToTier(parameters.dataQuality);
-  const deviationType = getDeviationType(scenarioType);
+  const deviationType = fieldConfigs[0]?.deviation_type || "0";
   
   const companySizeDescriptions: Record<CompanySize, string> = {
     "startup": "10-50 employees, Series A/B stage, limited procurement maturity",
@@ -829,8 +841,8 @@ async function handleGenerateMode(
     "large-enterprise": "10,000+ employees, global operations, complex procurement"
   };
 
-  // Build block-specific instructions from guidance registry
-  const blockInstructions = buildBlockInstructions(scenarioType, qualityTier);
+  // Build block-specific instructions from DB field configs
+  const blockInstructions = buildBlockInstructions(fieldConfigs, qualityTier);
 
   // Build trick embedding instructions if trick is present
   const trick = parameters.trick;
@@ -1033,14 +1045,16 @@ const HIGH_FRICTION_SCENARIOS = [
 async function handleMessyMode(
   scenarioType: string,
   temperature: number,
-  selectedPersona: typeof BUYER_PERSONAS[number]
+  selectedPersona: typeof BUYER_PERSONAS[number],
+  supabase: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
   // Default to a random high-friction scenario if the provided one isn't in the list
   const targetScenario = HIGH_FRICTION_SCENARIOS.includes(scenarioType)
     ? scenarioType
     : HIGH_FRICTION_SCENARIOS[Math.floor(Math.random() * HIGH_FRICTION_SCENARIOS.length)];
 
-  const fieldGroups = getScenarioFieldGroups(targetScenario);
+  const messyFieldConfigs = await fetchFieldConfigs(supabase, targetScenario);
+  const fieldGroups = getFieldGroups(messyFieldConfigs);
   const fields = fieldGroups.all;
 
   // Messy mode defaults to frustrated-stakeholder but can be overridden
@@ -1143,7 +1157,8 @@ function buildGenerationPrompt(
   category: string,
   fieldGroups: ScenarioFieldGroups,
   seed: number,
-  selectedPersona: typeof BUYER_PERSONAS[number]
+  selectedPersona: typeof BUYER_PERSONAS[number],
+  fieldConfigs: ScenarioFieldConfigRow[]
 ): { system: string; user: string } {
   const fields = fieldGroups.all;
   const diversityHints = [
@@ -1155,7 +1170,7 @@ function buildGenerationPrompt(
   ];
 
   // Default to OPTIMAL for full mode
-  const blockInstructions = buildBlockInstructions(scenarioType, 'OPTIMAL');
+  const blockInstructions = buildBlockInstructions(fieldConfigs, 'OPTIMAL');
 
   const system = `You are an expert procurement consultant generating realistic test data for procurement analysis software.
 
