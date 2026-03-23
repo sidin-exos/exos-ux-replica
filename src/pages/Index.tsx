@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Quote, TrendingUp, Shield, Users, RefreshCw, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
+import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -308,7 +309,8 @@ const Index = () => {
         ) : null}
 
         {activeView === "dashboard" && (
-          <section className="text-center py-16">
+          <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
+            <SiteFeedbackButton scenarioId="homepage" />
             <a href="/pricing#contact">
               <Button size="lg" className="text-lg px-8 py-6 gap-2">
                 Get in Touch

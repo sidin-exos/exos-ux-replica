@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 
 const MarketIntelligence = () => {
   const [searchParams] = useSearchParams();
@@ -148,7 +149,8 @@ const MarketIntelligence = () => {
           </TabsContent>
         </Tabs>
 
-        <section className="text-center py-16">
+        <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
+          <SiteFeedbackButton scenarioId="market-intelligence" />
           <a href="/pricing#contact">
             <Button size="lg" className="text-lg px-8 py-6 gap-2">
               Get in Touch
