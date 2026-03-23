@@ -198,6 +198,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         setFeedbackDialogOpen(false);
         setFeedbackRating(0);
         setFeedbackText("");
+        setFeedbackType("");
         setFeedbackSubmitted(false);
       }, 1500);
     }
