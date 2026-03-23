@@ -636,7 +636,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-display text-lg font-semibold mb-1">
-                  Enter Your Data
+                  Analysis Settings
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Fields marked with <span className="text-destructive">*</span> are required 
