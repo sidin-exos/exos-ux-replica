@@ -173,6 +173,9 @@ const Welcome = () => {
                       </p>
                     </CardContent>
                   </Card>
+                  <Button className="gap-2 w-fit mt-2" onClick={() => navigate(pillar.href)}>
+                    {pillar.cta} <ArrowRight className="w-4 h-4" />
+                  </Button>
                 </div>
 
                 {/* Visual side — abstract placeholder */}
