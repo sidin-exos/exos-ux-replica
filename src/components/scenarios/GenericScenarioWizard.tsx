@@ -70,6 +70,7 @@ import { ScenarioChatAssistant } from "./ScenarioChatAssistant";
 import ScenarioFileAttachment from "./ScenarioFileAttachment";
 import { useScenarioFileAttachments } from "@/hooks/useScenarioFileAttachments";
 import { useInputEvaluator } from "@/hooks/useInputEvaluator";
+import { useUser } from "@/hooks/useUser";
 
 const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   const [open, setOpen] = useState(false);
@@ -129,6 +130,7 @@ type Step = "input" | "review" | "analyzing" | "results";
 const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const navigate = useNavigate();
   const { showTechnicalDetails } = useShareableMode();
+  const { user } = useUser();
   const [step, setStep] = useState<Step>("input");
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [strategyValue, setStrategyValue] = useState<StrategyType>("balanced");
@@ -578,11 +580,16 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             className="space-y-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ScenarioTutorial
-                scenario={scenario}
-                industryName={industryContext?.name ?? null}
-                categoryName={categoryContext?.name ?? null}
-              />
+              <div className="space-y-4">
+                <ScenarioTutorial
+                  scenario={scenario}
+                  industryName={industryContext?.name ?? null}
+                  categoryName={categoryContext?.name ?? null}
+                />
+
+                {/* Master XML Template Preview — superadmin only */}
+                <MasterXMLPreview scenarioType={scenario.id} userEmail={user?.email} />
+              </div>
 
               {scenario.dataRequirements && (
                 <DataRequirementsPanel dataRequirements={scenario.dataRequirements} />
@@ -688,8 +695,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Master XML Template Preview (hidden in shareable mode) */}
-            <MasterXMLPreview scenarioType={scenario.id} />
+            {/* Master XML moved to scenario info panel — see grid above */}
 
             {/* Context Selectors for AI Grounding */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-border bg-card/50">
