@@ -698,9 +698,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             {/* Master XML moved to scenario info panel — see grid above */}
 
             {/* Context & Strategy — compact 2-column row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Left: Context selectors with inline editors */}
-              <div className="p-3 rounded-lg border border-border bg-card/50 space-y-3">
+              <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card/50 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <IndustrySelector
                     value={industrySlug}
