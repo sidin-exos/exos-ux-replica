@@ -827,7 +827,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                       {scenario.requiredFields
                         .filter((f) => !f.required)
                         .map((field) => (
-                          <div key={field.id} className="space-y-2">
+                          <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
                             <Label className="flex items-center gap-1">
                               {field.label}
                               {field.type === "percentage" && (
