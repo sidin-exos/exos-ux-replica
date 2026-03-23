@@ -580,11 +580,16 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             className="space-y-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ScenarioTutorial
-                scenario={scenario}
-                industryName={industryContext?.name ?? null}
-                categoryName={categoryContext?.name ?? null}
-              />
+              <div className="space-y-4">
+                <ScenarioTutorial
+                  scenario={scenario}
+                  industryName={industryContext?.name ?? null}
+                  categoryName={categoryContext?.name ?? null}
+                />
+
+                {/* Master XML Template Preview — superadmin only */}
+                <MasterXMLPreview scenarioType={scenario.id} userEmail={user?.email} />
+              </div>
 
               {scenario.dataRequirements && (
                 <DataRequirementsPanel dataRequirements={scenario.dataRequirements} />
