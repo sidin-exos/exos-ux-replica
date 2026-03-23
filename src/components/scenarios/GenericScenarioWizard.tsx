@@ -699,16 +699,41 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
             {/* Context & Strategy — compact 2-column row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Left: Context selectors stacked */}
-              <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-border bg-card/50">
-                <IndustrySelector
-                  value={industrySlug}
-                  onChange={handleIndustryChange}
-                />
-                <CategorySelector
-                  value={categorySlug}
-                  onChange={handleCategoryChange}
-                />
+              {/* Left: Context selectors with inline editors */}
+              <div className="p-3 rounded-lg border border-border bg-card/50 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <IndustrySelector
+                    value={industrySlug}
+                    onChange={handleIndustryChange}
+                  />
+                  <CategorySelector
+                    value={categorySlug}
+                    onChange={handleCategoryChange}
+                  />
+                </div>
+
+                {/* Inline context editors & preview — collapsed by default */}
+                {industrySlug && (
+                  <IndustryContextEditor
+                    industrySlug={industrySlug}
+                    overrides={industryOverrides}
+                    onOverridesChange={setIndustryOverrides}
+                  />
+                )}
+                {categorySlug && (
+                  <CategoryContextEditor
+                    categorySlug={categorySlug}
+                    overrides={categoryOverrides}
+                    onOverridesChange={setCategoryOverrides}
+                  />
+                )}
+                {(industrySlug || categorySlug) && (
+                  <ContextPreview
+                    industrySlug={industrySlug}
+                    categorySlug={categorySlug}
+                    showXML={true}
+                  />
+                )}
               </div>
 
               {/* Right: Strategy selector */}
@@ -723,23 +748,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               )}
             </div>
 
-            {/* Interactive Context Editors */}
-            {industrySlug && (
-              <IndustryContextEditor
-                industrySlug={industrySlug}
-                overrides={industryOverrides}
-                onOverridesChange={setIndustryOverrides}
-              />
-            )}
-            
-            {categorySlug && (
-              <CategoryContextEditor
-                categorySlug={categorySlug}
-                overrides={categoryOverrides}
-                onOverridesChange={setCategoryOverrides}
-              />
-            )}
-
             {/* Market Insights Banner */}
             {hasMarketInsights && marketInsight && (
               <MarketInsightsBanner
@@ -751,15 +759,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   });
                 }}
                 isActivated={isMarketInsightsActive}
-              />
-            )}
-
-            {/* Context Preview */}
-            {(industrySlug || categorySlug) && (
-              <ContextPreview
-                industrySlug={industrySlug}
-                categorySlug={categorySlug}
-                showXML={true}
               />
             )}
 
