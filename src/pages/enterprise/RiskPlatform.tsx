@@ -1,35 +1,32 @@
 import { useState } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { ShieldAlert, AlertTriangle, BarChart3, Bell, FileSearch } from "lucide-react";
+import { Activity, Users, TrendingDown, Layers } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
 import TrackerList from "@/components/enterprise/TrackerList";
-import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
+import { useEnterpriseTrackers, MONITOR_TYPE_META, DRS_BAND_META } from "@/hooks/useEnterpriseTrackers";
+import type { MonitorType, DrsBand } from "@/hooks/useEnterpriseTrackers";
 
-const CAPABILITIES = [
+const PRINCIPLES = [
   {
-    icon: AlertTriangle,
-    title: "Supply Chain Disruption Alerts",
-    description: "Get early warnings on geopolitical events, supplier financial health, and logistics disruptions that may impact your categories.",
+    icon: Users,
+    title: "Human-in-the-Loop by Design",
+    description: "Decision-support, not decision-making. Every output is framed as information for consideration — the final judgement always belongs to the human.",
   },
   {
-    icon: FileSearch,
-    title: "Document-Driven Analysis",
-    description: "Upload contracts, supplier reports, and spend data. Our AI extracts risk signals and maps them against market conditions.",
+    icon: TrendingDown,
+    title: "Dynamics over Absolutes",
+    description: "The Δ arrow is always the dominant signal. A DRS of 62 that was 78 last quarter tells a different story than one that was 55. Trajectories over positions.",
   },
   {
-    icon: BarChart3,
-    title: "Continuous Risk Scoring",
-    description: "Each tracker maintains a live risk score across dimensions: supply concentration, price volatility, regulatory exposure, and more.",
-  },
-  {
-    icon: Bell,
-    title: "Scheduled Reports & Triggers",
-    description: "Configure thresholds and receive automated reports when risk levels change — no manual monitoring required.",
+    icon: Layers,
+    title: "Continuous Modelling, Not Advice",
+    description: "The module monitors and models possible risk events. It does not prescribe action plans. When deep analysis is needed, it bridges to point-in-time scenarios.",
   },
 ];
 
@@ -52,8 +49,8 @@ const RiskPlatform = () => {
         <Header />
         <main className="container py-16">
           <AuthPrompt
-            feature="Enterprise Risk Platform"
-            description="Monitor and assess procurement risks across your supply chain"
+            feature="Dynamic Monitoring Module"
+            description="Continuous Δ-first risk monitoring for procurement decision-makers"
           />
         </main>
       </div>
@@ -64,44 +61,84 @@ const RiskPlatform = () => {
     <EnterpriseLayout>
       <Header />
       <main className="container py-8 space-y-6">
+        {/* Header */}
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-lg bg-destructive/10">
-            <ShieldAlert className="w-6 h-6 text-destructive" />
+            <Activity className="w-6 h-6 text-destructive" />
           </div>
           <div>
             <h1 className="text-2xl font-display font-semibold text-foreground">
-              Risk Assessment Platform
+              Dynamic Monitoring Module
             </h1>
             <p className="text-sm text-muted-foreground">
-              Continuous supply-chain & category risk monitoring for enterprise teams.
+              Δ-first continuous risk monitoring — trajectories, not static scores.
             </p>
           </div>
         </div>
 
-        {/* Instructional overview */}
+        {/* Methodology overview */}
         <Card className="border-primary/20 bg-primary/[0.03]">
-          <CardContent className="pt-5 pb-4 space-y-4">
+          <CardContent className="pt-5 pb-4 space-y-5">
             <div>
-              <h2 className="text-base font-semibold text-foreground">How it works</h2>
+              <h2 className="text-base font-semibold text-foreground">Methodology</h2>
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-3xl">
-                Unlike one-off risk scenarios, this platform provides <strong className="text-foreground">persistent monitoring</strong>. 
-                Define the goods, services, or categories you want to track, upload relevant documents 
-                (contracts, spend reports, supplier data), and EXOS will continuously analyse market signals, 
-                supplier health, and regulatory changes — delivering updated risk assessments on a schedule you control.
+                The Dynamic Monitoring Module operates as a parallel system alongside analytical scenarios. 
+                It uses the <strong className="text-foreground">Dynamic Risk Score (DRS, 0–100, 100 = most stable)</strong> with 
+                the <strong className="text-foreground">Δ-First Principle</strong> — every output prioritises direction and velocity 
+                of change over absolute position. Like a seismograph, not a thermometer.
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {CAPABILITIES.map((cap) => (
-                <div key={cap.title} className="flex gap-3 items-start">
+
+            {/* 3 Principles */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              {PRINCIPLES.map((p) => (
+                <div key={p.title} className="flex gap-3 items-start">
                   <div className="p-1.5 rounded-md bg-destructive/10 shrink-0 mt-0.5">
-                    <cap.icon className="w-4 h-4 text-destructive" />
+                    <p.icon className="w-4 h-4 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{cap.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{cap.description}</p>
+                    <p className="text-sm font-medium text-foreground">{p.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Monitoring types grid */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-2">Monitoring Types</h3>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
+                  <div key={id} className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5">
+                    <Badge variant={m.phase === 1 ? "default" : "outline"} className="shrink-0 text-[10px] mt-0.5">
+                      {id}
+                    </Badge>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-foreground leading-tight">
+                        {m.label}
+                        {m.phase === 2 && <span className="text-muted-foreground ml-1.5 font-normal">· Coming Soon</span>}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{m.purpose}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        DRS: {m.drs ? "Applied" : "Not applicable"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* DRS Band legend */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">DRS Bands</h3>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {(Object.entries(DRS_BAND_META) as [DrsBand, typeof DRS_BAND_META["A"]][]).map(([band, meta]) => (
+                  <span key={band} className="text-[11px]">
+                    <span className={`font-semibold ${meta.color}`}>{band}</span>
+                    <span className="text-muted-foreground"> {meta.range} — {meta.label}</span>
+                  </span>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -109,7 +146,7 @@ const RiskPlatform = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="monitor">Monitor</TabsTrigger>
-            <TabsTrigger value="setup">Setup New Tracker</TabsTrigger>
+            <TabsTrigger value="setup">New Monitor</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
 
@@ -129,7 +166,7 @@ const RiskPlatform = () => {
 
           <TabsContent value="reports" className="mt-6">
             <div className="text-center py-16 text-muted-foreground">
-              Reports will be available once trackers generate their first analysis cycle.
+              Reports will be available once monitors generate their first analysis cycle.
             </div>
           </TabsContent>
         </Tabs>
