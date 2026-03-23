@@ -170,6 +170,36 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   // Auth prompt state
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
+  // Feedback dialog state
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  const handleFeedbackSubmit = async () => {
+    if (!feedbackRating) return;
+    setIsSubmittingFeedback(true);
+    const { error } = await supabase.from('scenario_feedback').insert({
+      scenario_id: scenario.id,
+      rating: feedbackRating,
+      feedback_text: feedbackText || null,
+    });
+    setIsSubmittingFeedback(false);
+    if (error) {
+      toast.error("Failed to submit feedback");
+    } else {
+      toast.success("Thank you for your feedback!");
+      setFeedbackSubmitted(true);
+      setTimeout(() => {
+        setFeedbackDialogOpen(false);
+        setFeedbackRating(0);
+        setFeedbackText("");
+        setFeedbackSubmitted(false);
+      }, 1500);
+    }
+  };
+
   // Deep Analysis state (LangGraph pipeline)
   const [isDeepAnalysisRunning, setIsDeepAnalysisRunning] = useState(false);
   const [deepAnalysisStep, setDeepAnalysisStep] = useState(0);
