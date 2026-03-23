@@ -186,7 +186,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       scenario_id: scenario.id,
       rating: feedbackRating,
       feedback_text: feedbackText || null,
-    });
+      feedback_type: feedbackType || null,
+    } as any);
     setIsSubmittingFeedback(false);
     if (error) {
       toast.error("Failed to submit feedback");
