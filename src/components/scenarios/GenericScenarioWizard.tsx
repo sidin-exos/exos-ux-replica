@@ -101,7 +101,7 @@ const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: {
 
 const DataRequirementsPanel = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   return (
-    <Card className="border-warning/20 bg-warning/5">
+    <Card className="border-warning/30 bg-warning/10 dark:bg-warning/15">
       <CardContent className="pt-4 pb-4 px-5">
         <div className="flex items-center gap-2 mb-3">
           <span>💡</span>
@@ -704,7 +704,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             {/* Context & Strategy — compact 2-column row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Left: Context selectors with inline editors */}
-              <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card/50 space-y-3">
+              <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card shadow-sm space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <IndustrySelector
                     value={industrySlug}
@@ -742,7 +742,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
               {/* Right: Strategy selector */}
               {scenario.strategySelector && (
-                <div className="border border-border/50 rounded-xl bg-card/30 p-3">
+                <div className="border border-primary/20 rounded-xl bg-primary/5 dark:bg-primary/10 p-3">
                 <StrategySelector
                   value={strategyValue}
                   onChange={setStrategyValue}
@@ -769,7 +769,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             )}
 
             {/* Two-column: Fields (2/3) + Sidebar (1/3) */}
-            <div className="border border-border/50 rounded-xl bg-card/30 p-5 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="border border-border rounded-xl bg-card p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left 2/3: Input fields */}
               <div className="md:col-span-2 space-y-6">
                 {/* Required Fields */}
@@ -846,7 +846,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </div>
 
               {/* Right 1/3: Sidebar */}
-              <div className="space-y-4">
+              <div className="space-y-4 p-3 rounded-lg border border-iris/15 bg-iris/5 dark:bg-iris/10">
                 <DashboardSelector
                   scenarioId={scenario.id}
                   selectedDashboards={selectedDashboards}
