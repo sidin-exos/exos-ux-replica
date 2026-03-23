@@ -762,105 +762,107 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Required Fields */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Required Information
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {scenario.requiredFields
-                  .filter((f) => f.required)
-                  .map((field) => {
-                    // BusinessContextField renders its own label
-                    if (field.id === "industryContext") {
-                      return (
-                        <div key={field.id} className="md:col-span-2">
-                          {renderField(field)}
-                        </div>
-                      );
-                    }
-                    
-                    const blockEval = evaluation?.blocks.find((b) => b.fieldId === field.id);
-                    return (
-                      <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
-                        <Label className="flex items-center gap-1">
-                          {field.label}
-                          <span className="text-destructive">*</span>
-                          {field.type === "percentage" && (
-                            <span className="text-muted-foreground text-xs">(%)</span>
-                          )}
-                          {field.type === "currency" && (
-                            <span className="text-muted-foreground text-xs">($)</span>
-                          )}
-                          {/* Inline quality indicator */}
-                          {blockEval && blockEval.status === "pass" && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-success ml-1" />
-                          )}
-                          {blockEval && blockEval.status === "warning" && (
-                            <AlertCircle className="w-3.5 h-3.5 text-warning ml-1" />
-                          )}
-                          {blockEval && blockEval.status === "fail" && (
-                            <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-1" />
-                          )}
-                        </Label>
-                        {renderField(field)}
-                      </div>
-                    );
-                  })}
+            {/* Two-column: Fields (2/3) + Sidebar (1/3) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left 2/3: Input fields */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Required Fields */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                    Required Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {scenario.requiredFields
+                      .filter((f) => f.required)
+                      .map((field) => {
+                        if (field.id === "industryContext") {
+                          return (
+                            <div key={field.id} className="md:col-span-2">
+                              {renderField(field)}
+                            </div>
+                          );
+                        }
+                        const blockEval = evaluation?.blocks.find((b) => b.fieldId === field.id);
+                        return (
+                          <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
+                            <Label className="flex items-center gap-1">
+                              {field.label}
+                              <span className="text-destructive">*</span>
+                              {field.type === "percentage" && (
+                                <span className="text-muted-foreground text-xs">(%)</span>
+                              )}
+                              {field.type === "currency" && (
+                                <span className="text-muted-foreground text-xs">($)</span>
+                              )}
+                              {blockEval && blockEval.status === "pass" && (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-success ml-1" />
+                              )}
+                              {blockEval && blockEval.status === "warning" && (
+                                <AlertCircle className="w-3.5 h-3.5 text-warning ml-1" />
+                              )}
+                              {blockEval && blockEval.status === "fail" && (
+                                <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-1" />
+                              )}
+                            </Label>
+                            {renderField(field)}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                {/* Optional Fields */}
+                {scenario.requiredFields.some((f) => !f.required) && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                      Optional Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {scenario.requiredFields
+                        .filter((f) => !f.required)
+                        .map((field) => (
+                          <div key={field.id} className="space-y-2">
+                            <Label className="flex items-center gap-1">
+                              {field.label}
+                              {field.type === "percentage" && (
+                                <span className="text-muted-foreground text-xs">(%)</span>
+                              )}
+                              {field.type === "currency" && (
+                                <span className="text-muted-foreground text-xs">($)</span>
+                              )}
+                            </Label>
+                            {renderField(field)}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right 1/3: Sidebar */}
+              <div className="space-y-4">
+                <DashboardSelector
+                  scenarioId={scenario.id}
+                  selectedDashboards={selectedDashboards}
+                  onSelectionChange={setSelectedDashboards}
+                />
+
+                <ScenarioFileAttachment
+                  selectedFileIds={attachedFileIds}
+                  onSelectionChange={setAttachedFileIds}
+                />
+
+                <ModelSelector value={selectedModel} onChange={setSelectedModel} />
+
+                <FinalXMLPreview
+                  scenarioType={scenario.id}
+                  scenarioData={formData}
+                  industry={industryContext || null}
+                  category={categoryContext || null}
+                  strategyValue={strategyValue}
+                />
               </div>
             </div>
-
-            {/* Optional Fields */}
-            {scenario.requiredFields.some((f) => !f.required) && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                  Optional Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {scenario.requiredFields
-                    .filter((f) => !f.required)
-                    .map((field) => (
-                      <div key={field.id} className="space-y-2">
-                        <Label className="flex items-center gap-1">
-                          {field.label}
-                          {field.type === "percentage" && (
-                            <span className="text-muted-foreground text-xs">(%)</span>
-                          )}
-                          {field.type === "currency" && (
-                            <span className="text-muted-foreground text-xs">($)</span>
-                          )}
-                        </Label>
-                        {renderField(field)}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Dashboard Selector */}
-            <DashboardSelector
-              scenarioId={scenario.id}
-              selectedDashboards={selectedDashboards}
-              onSelectionChange={setSelectedDashboards}
-            />
-
-            {/* File Attachment */}
-            <ScenarioFileAttachment
-              selectedFileIds={attachedFileIds}
-              onSelectionChange={setAttachedFileIds}
-            />
-
-            {/* AI Model Selector - hidden in shareable mode */}
-            <ModelSelector value={selectedModel} onChange={setSelectedModel} />
-
-            {/* Final XML Preview - shows complete XML after form is filled (hidden in shareable mode) */}
-            <FinalXMLPreview
-              scenarioType={scenario.id}
-              scenarioData={formData}
-              industry={industryContext || null}
-              category={categoryContext || null}
-              strategyValue={strategyValue}
-            />
 
             <div className="flex justify-end">
               <Button
