@@ -48,27 +48,54 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
                 </div>
               </div>
 
-              {/* Description */}
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {scenario.previewDescription || scenario.description}
-              </p>
-
-              {/* Outputs */}
-              {scenario.outputs && scenario.outputs.length > 0 && (
+              {/* Two-column layout */}
+              <div className="grid grid-cols-1 gap-4">
+                {/* Column 1: About this scenario */}
                 <div>
                   <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2">
-                    Outputs
+                    About this scenario
                   </p>
-                  <ul className="space-y-1">
-                    {scenario.outputs.slice(0, 5).map((output, i) => (
-                      <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                        <span className="text-copper mt-0.5">•</span>
-                        {output}
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                    {scenario.previewDescription || scenario.description}
+                  </p>
+
+                  {scenario.outputs && scenario.outputs.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-1.5">
+                        Outputs
+                      </p>
+                      <ul className="space-y-1">
+                        {scenario.outputs.slice(0, 4).map((output, i) => (
+                          <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                            <span className="text-copper mt-0.5">•</span>
+                            {output}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Column 2: What data do I need */}
+                {scenario.dataRequirements && (
+                  <div className="border-t border-border/30 pt-3">
+                    <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2">
+                      What data do I need to prepare?
+                    </p>
+                    <ul className="space-y-1.5">
+                      {scenario.dataRequirements.sections.map((section, i) => (
+                        <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                          <span className="text-primary mt-0.5">→</span>
+                          <div>
+                            <span className="font-medium text-foreground/80">{section.heading}</span>
+                            <p className="text-muted-foreground mt-0.5">{section.description}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
 
               {/* Status */}
               {scenario.status === "coming-soon" && (
