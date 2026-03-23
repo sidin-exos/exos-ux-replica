@@ -846,7 +846,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </div>
 
               {/* Right 1/3: Sidebar */}
-              <div className="space-y-4">
+              <div className="space-y-4 p-3 rounded-lg border border-iris/15 bg-iris/5 dark:bg-iris/10">
                 <DashboardSelector
                   scenarioId={scenario.id}
                   selectedDashboards={selectedDashboards}
