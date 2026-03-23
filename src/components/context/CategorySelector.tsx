@@ -25,9 +25,9 @@ export function CategorySelector({
   const { data: categories, isLoading } = useProcurementCategories();
 
   return (
-    <div className="space-y-2">
-      <Label className="flex items-center gap-2 text-sm font-medium">
-        <FolderKanban className="h-4 w-4 text-muted-foreground" />
+    <div className="space-y-1.5">
+      <Label className="flex items-center gap-1.5 text-xs font-medium">
+        <FolderKanban className="h-3.5 w-3.5 text-muted-foreground" />
         {label}
       </Label>
       <Select
@@ -35,7 +35,7 @@ export function CategorySelector({
         onValueChange={(v) => onChange(v === "__none__" ? null : v)}
         disabled={isLoading}
       >
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full h-9">
           <SelectValue placeholder={isLoading ? "Loading..." : placeholder} />
         </SelectTrigger>
         <SelectContent>
@@ -47,10 +47,6 @@ export function CategorySelector({
           ))}
         </SelectContent>
       </Select>
-      <p className="text-xs text-muted-foreground">
-        Select a category to apply specific characteristics and benchmarks to
-        the analysis
-      </p>
     </div>
   );
 }

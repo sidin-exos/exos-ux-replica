@@ -295,9 +295,6 @@ const Index = () => {
                 <span className="text-gradient">{selectedScenario.title}</span>{" "}
                 Analysis
               </h1>
-              <p className="text-muted-foreground max-w-2xl">
-                {selectedScenario.description}
-              </p>
             </div>
 
             <div className="card-elevated rounded-2xl p-6 md:p-8">

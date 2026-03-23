@@ -48,27 +48,31 @@ const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanel
                 </div>
               </div>
 
-              {/* Description */}
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {scenario.previewDescription || scenario.description}
-              </p>
+              {/* About this scenario */}
+              <div>
+                <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2">
+                  About this scenario
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                  {scenario.previewDescription || scenario.description}
+                </p>
 
-              {/* Outputs */}
-              {scenario.outputs && scenario.outputs.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-2">
-                    Outputs
-                  </p>
-                  <ul className="space-y-1">
-                    {scenario.outputs.slice(0, 5).map((output, i) => (
-                      <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
-                        <span className="text-copper mt-0.5">•</span>
-                        {output}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                {scenario.outputs && scenario.outputs.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider mb-1.5">
+                      Outputs
+                    </p>
+                    <ul className="space-y-1">
+                      {scenario.outputs.slice(0, 4).map((output, i) => (
+                        <li key={i} className="text-xs text-foreground/70 flex items-start gap-1.5">
+                          <span className="text-copper mt-0.5">•</span>
+                          {output}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
 
               {/* Status */}
               {scenario.status === "coming-soon" && (

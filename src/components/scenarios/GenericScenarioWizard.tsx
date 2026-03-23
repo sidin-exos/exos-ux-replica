@@ -11,6 +11,7 @@ import { DeepAnalysisResult } from "@/components/analysis/DeepAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,6 +71,7 @@ import ScenarioFileAttachment from "./ScenarioFileAttachment";
 import { useScenarioFileAttachments } from "@/hooks/useScenarioFileAttachments";
 import { useInputEvaluator } from "@/hooks/useInputEvaluator";
 import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
+import { useUser } from "@/hooks/useUser";
 
 const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   const [open, setOpen] = useState(false);
@@ -97,6 +99,29 @@ const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: {
   );
 };
 
+const DataRequirementsPanel = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
+  return (
+    <Card className="border-warning/20 bg-warning/5">
+      <CardContent className="pt-4 pb-4 px-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span>💡</span>
+          <span className="text-sm font-semibold text-warning">
+            What data do I need to prepare?
+          </span>
+        </div>
+        <div className="space-y-3">
+          {dataRequirements.sections.map((s, i) => (
+            <div key={i}>
+              <p className="text-sm font-medium text-foreground">{s.heading}</p>
+              <p className="text-sm text-muted-foreground">{s.description}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 interface GenericScenarioWizardProps {
   scenario: Scenario;
 }
@@ -106,6 +131,7 @@ type Step = "input" | "review" | "analyzing" | "results";
 const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const navigate = useNavigate();
   const { showTechnicalDetails } = useShareableMode();
+  const { user } = useUser();
   const [step, setStep] = useState<Step>("input");
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [strategyValue, setStrategyValue] = useState<StrategyType>("balanced");
@@ -547,34 +573,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   return (
     <div className="space-y-6">
       {/* Progress indicator */}
-      <div className="flex items-center justify-center gap-2">
-        {["input", "review", "results"].map((s, i) => (
-          <div key={s} className="flex items-center">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                step === s || (step === "analyzing" && s === "results")
-                  ? "gradient-primary text-primary-foreground"
-                  : step === "results" || (step === "review" && i === 0)
-                  ? "bg-primary/30 text-primary"
-                  : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              {i + 1}
-            </div>
-            {i < 2 && (
-              <div
-                className={`w-12 h-0.5 mx-2 ${
-                  i === 0 && (step === "review" || step === "analyzing" || step === "results")
-                    ? "bg-primary"
-                    : i === 1 && step === "results"
-                    ? "bg-primary"
-                    : "bg-border"
-                }`}
-              />
-            )}
-          </div>
-        ))}
-      </div>
 
       <AnimatePresence mode="wait">
         {step === "input" && (
@@ -585,15 +583,22 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
-            <ScenarioTutorial
-              scenario={scenario}
-              industryName={industryContext?.name ?? null}
-              categoryName={categoryContext?.name ?? null}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <ScenarioTutorial
+                  scenario={scenario}
+                  industryName={industryContext?.name ?? null}
+                  categoryName={categoryContext?.name ?? null}
+                />
 
-            {scenario.dataRequirements && (
-              <DataRequirementsCollapsible dataRequirements={scenario.dataRequirements} />
-            )}
+                {/* Master XML Template Preview — superadmin only */}
+                <MasterXMLPreview scenarioType={scenario.id} userEmail={user?.email} />
+              </div>
+
+              {scenario.dataRequirements && (
+                <DataRequirementsPanel dataRequirements={scenario.dataRequirements} />
+              )}
+            </div>
 
             <Button
               variant="outline"
@@ -635,7 +640,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-display text-lg font-semibold mb-1">
-                  Enter Your Data
+                  Analysis Settings
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Fields marked with <span className="text-destructive">*</span> are required 
@@ -694,39 +699,62 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Master XML Template Preview (hidden in shareable mode) */}
-            <MasterXMLPreview scenarioType={scenario.id} />
+            {/* Master XML moved to scenario info panel — see grid above */}
 
-            {/* Context Selectors for AI Grounding */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-border bg-card/50">
-              <IndustrySelector
-                value={industrySlug}
-                onChange={handleIndustryChange}
-              />
-              <CategorySelector
-                value={categorySlug}
-                onChange={handleCategoryChange}
-              />
+            {/* Context & Strategy — compact 2-column row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Left: Context selectors with inline editors */}
+              <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card/50 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <IndustrySelector
+                    value={industrySlug}
+                    onChange={handleIndustryChange}
+                  />
+                  <CategorySelector
+                    value={categorySlug}
+                    onChange={handleCategoryChange}
+                  />
+                </div>
+
+                {/* Inline context editors & preview — collapsed by default */}
+                {industrySlug && (
+                  <IndustryContextEditor
+                    industrySlug={industrySlug}
+                    overrides={industryOverrides}
+                    onOverridesChange={setIndustryOverrides}
+                  />
+                )}
+                {categorySlug && (
+                  <CategoryContextEditor
+                    categorySlug={categorySlug}
+                    overrides={categoryOverrides}
+                    onOverridesChange={setCategoryOverrides}
+                  />
+                )}
+                {(industrySlug || categorySlug) && (
+                  <ContextPreview
+                    industrySlug={industrySlug}
+                    categorySlug={categorySlug}
+                    showXML={true}
+                  />
+                )}
+              </div>
+
+              {/* Right: Strategy selector */}
+              {scenario.strategySelector && (
+                <div className="border border-border/50 rounded-xl bg-card/30 p-3">
+                <StrategySelector
+                  value={strategyValue}
+                  onChange={setStrategyValue}
+                  title={strategyPresets[scenario.strategySelector].title}
+                  description={strategyPresets[scenario.strategySelector].description}
+                  options={strategyPresets[scenario.strategySelector].options}
+                />
+                </div>
+              )}
             </div>
 
-            {/* Interactive Context Editors */}
-            {industrySlug && (
-              <IndustryContextEditor
-                industrySlug={industrySlug}
-                overrides={industryOverrides}
-                onOverridesChange={setIndustryOverrides}
-              />
-            )}
-            
-            {categorySlug && (
-              <CategoryContextEditor
-                categorySlug={categorySlug}
-                overrides={categoryOverrides}
-                onOverridesChange={setCategoryOverrides}
-              />
-            )}
-
-            {/* Market Insights Banner - shown when insights are available for this combination */}
+            {/* Market Insights Banner */}
             {hasMarketInsights && marketInsight && (
               <MarketInsightsBanner
                 insight={marketInsight}
@@ -740,127 +768,107 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Context Preview (collapsed by default, XML hidden in shared mode) */}
-            {(industrySlug || categorySlug) && (
-              <ContextPreview
-                industrySlug={industrySlug}
-                categorySlug={categorySlug}
-                showXML={true}
-              />
-            )}
+            {/* Two-column: Fields (2/3) + Sidebar (1/3) */}
+            <div className="border border-border/50 rounded-xl bg-card/30 p-5 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Left 2/3: Input fields */}
+              <div className="md:col-span-2 space-y-6">
+                {/* Required Fields */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                    Enter Your Data
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {scenario.requiredFields
+                      .filter((f) => f.required)
+                      .map((field) => {
+                        if (field.id === "industryContext") {
+                          return (
+                            <div key={field.id} className="md:col-span-2">
+                              {renderField(field)}
+                            </div>
+                          );
+                        }
+                        const blockEval = evaluation?.blocks.find((b) => b.fieldId === field.id);
+                        return (
+                          <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
+                            <Label className="flex items-center gap-1">
+                              {field.label}
+                              <span className="text-destructive">*</span>
+                              {field.type === "percentage" && (
+                                <span className="text-muted-foreground text-xs">(%)</span>
+                              )}
+                              {field.type === "currency" && (
+                                <span className="text-muted-foreground text-xs">($)</span>
+                              )}
+                              {blockEval && blockEval.status === "pass" && (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-success ml-1" />
+                              )}
+                              {blockEval && blockEval.status === "warning" && (
+                                <AlertCircle className="w-3.5 h-3.5 text-warning ml-1" />
+                              )}
+                              {blockEval && blockEval.status === "fail" && (
+                                <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-1" />
+                              )}
+                            </Label>
+                            {renderField(field)}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
 
-            {/* Strategy Selector */}
-            {scenario.strategySelector && (
-              <div className="mb-6">
-                <StrategySelector
-                  value={strategyValue}
-                  onChange={setStrategyValue}
-                  title={strategyPresets[scenario.strategySelector].title}
-                  description={strategyPresets[scenario.strategySelector].description}
-                  options={strategyPresets[scenario.strategySelector].options}
+                {/* Optional Fields */}
+                {scenario.requiredFields.some((f) => !f.required) && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                      Optional Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {scenario.requiredFields
+                        .filter((f) => !f.required)
+                        .map((field) => (
+                          <div key={field.id} className="space-y-2">
+                            <Label className="flex items-center gap-1">
+                              {field.label}
+                              {field.type === "percentage" && (
+                                <span className="text-muted-foreground text-xs">(%)</span>
+                              )}
+                              {field.type === "currency" && (
+                                <span className="text-muted-foreground text-xs">($)</span>
+                              )}
+                            </Label>
+                            {renderField(field)}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right 1/3: Sidebar */}
+              <div className="space-y-4">
+                <DashboardSelector
+                  scenarioId={scenario.id}
+                  selectedDashboards={selectedDashboards}
+                  onSelectionChange={setSelectedDashboards}
+                />
+
+                <ScenarioFileAttachment
+                  selectedFileIds={attachedFileIds}
+                  onSelectionChange={setAttachedFileIds}
+                />
+
+                <ModelSelector value={selectedModel} onChange={setSelectedModel} />
+
+                <FinalXMLPreview
+                  scenarioType={scenario.id}
+                  scenarioData={formData}
+                  industry={industryContext || null}
+                  category={categoryContext || null}
+                  strategyValue={strategyValue}
                 />
               </div>
-            )}
-
-            {/* Required Fields */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Required Information
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {scenario.requiredFields
-                  .filter((f) => f.required)
-                  .map((field) => {
-                    // BusinessContextField renders its own label
-                    if (field.id === "industryContext") {
-                      return (
-                        <div key={field.id} className="md:col-span-2">
-                          {renderField(field)}
-                        </div>
-                      );
-                    }
-                    
-                    const blockEval = evaluation?.blocks.find((b) => b.fieldId === field.id);
-                    return (
-                      <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
-                        <Label className="flex items-center gap-1">
-                          {field.label}
-                          <span className="text-destructive">*</span>
-                          {field.type === "percentage" && (
-                            <span className="text-muted-foreground text-xs">(%)</span>
-                          )}
-                          {field.type === "currency" && (
-                            <span className="text-muted-foreground text-xs">($)</span>
-                          )}
-                          {/* Inline quality indicator */}
-                          {blockEval && blockEval.status === "pass" && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-success ml-1" />
-                          )}
-                          {blockEval && blockEval.status === "warning" && (
-                            <AlertCircle className="w-3.5 h-3.5 text-warning ml-1" />
-                          )}
-                          {blockEval && blockEval.status === "fail" && (
-                            <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-1" />
-                          )}
-                        </Label>
-                        {renderField(field)}
-                      </div>
-                    );
-                  })}
-              </div>
             </div>
-
-            {/* Optional Fields */}
-            {scenario.requiredFields.some((f) => !f.required) && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                  Optional Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {scenario.requiredFields
-                    .filter((f) => !f.required)
-                    .map((field) => (
-                      <div key={field.id} className="space-y-2">
-                        <Label className="flex items-center gap-1">
-                          {field.label}
-                          {field.type === "percentage" && (
-                            <span className="text-muted-foreground text-xs">(%)</span>
-                          )}
-                          {field.type === "currency" && (
-                            <span className="text-muted-foreground text-xs">($)</span>
-                          )}
-                        </Label>
-                        {renderField(field)}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Dashboard Selector */}
-            <DashboardSelector
-              scenarioId={scenario.id}
-              selectedDashboards={selectedDashboards}
-              onSelectionChange={setSelectedDashboards}
-            />
-
-            {/* File Attachment */}
-            <ScenarioFileAttachment
-              selectedFileIds={attachedFileIds}
-              onSelectionChange={setAttachedFileIds}
-            />
-
-            {/* AI Model Selector - hidden in shareable mode */}
-            <ModelSelector value={selectedModel} onChange={setSelectedModel} />
-
-            {/* Final XML Preview - shows complete XML after form is filled (hidden in shareable mode) */}
-            <FinalXMLPreview
-              scenarioType={scenario.id}
-              scenarioData={formData}
-              industry={industryContext || null}
-              category={categoryContext || null}
-              strategyValue={strategyValue}
-            />
 
             <div className="flex justify-end">
               <Button
