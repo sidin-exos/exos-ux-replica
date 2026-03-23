@@ -1,35 +1,31 @@
 
 
-## Add Feedback Type Selector to Scenario Feedback Dialog
+## Replace Welcome Page Pillars with 3 Meta Types
 
 ### Summary
-Add a feedback type/category selector to the existing feedback dialog in `GenericScenarioWizard.tsx`. The 7 types (excluding "Documentation Gap" per user request) will be stored in a new `feedback_type` column on the `scenario_feedback` table.
+Replace the 4 feature pillars on `/welcome` with 3 meta product types that map to the platform's actual product lines. Each pillar gets a CTA button navigating to the relevant section.
 
-### Feedback Types
-1. **Bug Report** -- Something is broken or not working
-2. **Feature Suggestion** -- Ideas for new functionality
-3. **Usability Issue** -- Confusing layout or poor UX flow
-4. **Data Quality** -- Inaccurate results or wrong calculations
-5. **Performance** -- Slow loading, timeouts, or lag
-6. **Visual/Design** -- Styling, contrast, or layout problems
-7. **Other** -- Anything else
+### New Pillars
 
-### Database Change
-Add a nullable `feedback_type text` column to `scenario_feedback`:
-```sql
-ALTER TABLE scenario_feedback ADD COLUMN feedback_type text;
-```
-Nullable so existing rows are unaffected.
+1. **Analytical Scenarios** (icon: `BarChart3`)
+   - Description: AI-powered scenario analysis covering cost optimization, supplier evaluation, risk assessment, negotiation prep, and more. Select from 20+ scenario types, provide your business context, and receive actionable dashboards with data-driven recommendations.
+   - Impact: "Run complex procurement analyses in minutes instead of weeks — with AI that explains the 'why' behind every recommendation."
+   - CTA: "Explore Scenarios" → navigates to `/`
 
-### UI Changes (`GenericScenarioWizard.tsx`)
-1. Add `feedbackType` state variable (default `""`)
-2. Insert a feedback type selector between the rating scale and the textarea -- a grid of pill/chip buttons (similar to the rating scale pattern), each showing an icon + label
-3. Update `handleFeedbackSubmit` to include `feedback_type: feedbackType || null` in the insert
-4. Reset `feedbackType` on dialog close
+2. **Market Intelligence** (icon: `Radar`)
+   - Description: Real-time market intelligence feeds powered by AI. Query global supply chain data, commodity pricing, geopolitical risks, and industry trends. Build custom intelligence reports and schedule automated monitoring.
+   - Impact: "Stay ahead of market shifts with AI-curated intelligence that benchmarks your strategy against real-time industry data."
+   - CTA: "Open Intelligence Hub" → navigates to `/market-intelligence`
 
-### Technical Details
-- Icons from lucide-react: `Bug`, `Lightbulb`, `MousePointerClick`, `Database`, `Gauge`, `Palette`, `HelpCircle`
-- Chips use same styling pattern as rating buttons (outline when unselected, primary when selected)
-- Feedback type is optional -- user can submit without selecting one
-- Grid layout: `grid grid-cols-2 gap-2` to fit cleanly in the dialog
+3. **Enterprise Platforms** (icon: `Building2`)
+   - Description: Persistent monitoring platforms for enterprise teams. The Risk Assessment Platform provides continuous supply-chain risk scoring with automated alerts. The Inflation Analysis Platform tracks cost drivers and pricing trends across your categories.
+   - Impact: "Move from periodic reviews to always-on monitoring — with automated early-warning systems for risk and inflation."
+   - CTA: "View Platforms" → could link to `/enterprise/risk` or show both options
+
+### Technical Changes
+- **File**: `src/pages/Welcome.tsx`
+- Replace the `pillars` array (4 items → 3 items) with new content
+- Add a CTA `Button` inside each pillar's text column (below the impact card)
+- Update icon imports (add `Radar`, keep `BarChart3`, `Building2`; remove `Network`, `ShieldAlert`, `FileText`)
+- Adjust numbering to 01, 02, 03
 
