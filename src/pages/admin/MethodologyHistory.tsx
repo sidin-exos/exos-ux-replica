@@ -48,16 +48,47 @@ function operationBadgeVariant(op: string): "default" | "secondary" | "destructi
   }
 }
 
+/** Fields that always change on every write — hide from diff */
+const NOISE_FIELDS = new Set(["updated_at", "created_at", "id"]);
+
 function getChangedFields(oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) {
   if (!oldData || !newData) return null;
   const changed: { field: string; oldVal: unknown; newVal: unknown }[] = [];
   const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
   for (const key of allKeys) {
+    if (NOISE_FIELDS.has(key)) continue;
     if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
       changed.push({ field: key, oldVal: oldData[key], newVal: newData[key] });
     }
   }
   return changed.length > 0 ? changed : null;
+}
+
+/** Simple word-level diff: highlights the changed portion in old/new strings */
+function wordDiff(oldStr: string, newStr: string): { oldNode: React.ReactNode; newNode: React.ReactNode } | null {
+  if (oldStr === newStr) return null;
+  const oldWords = oldStr.split(/(\s+)/);
+  const newWords = newStr.split(/(\s+)/);
+
+  let i = 0;
+  while (i < oldWords.length && i < newWords.length && oldWords[i] === newWords[i]) i++;
+
+  let j = 0;
+  while (
+    j < oldWords.length - i &&
+    j < newWords.length - i &&
+    oldWords[oldWords.length - 1 - j] === newWords[newWords.length - 1 - j]
+  ) j++;
+
+  const prefix = oldWords.slice(0, i).join("");
+  const oldMiddle = oldWords.slice(i, oldWords.length - (j || undefined)).join("");
+  const newMiddle = newWords.slice(i, newWords.length - (j || undefined)).join("");
+  const suffix = j > 0 ? oldWords.slice(oldWords.length - j).join("") : "";
+
+  return {
+    oldNode: <>{prefix}<mark className="bg-red-200 dark:bg-red-800/60 rounded px-0.5">{oldMiddle}</mark>{suffix}</>,
+    newNode: <>{prefix}<mark className="bg-green-200 dark:bg-green-800/60 rounded px-0.5">{newMiddle}</mark>{suffix}</>,
+  };
 }
 
 function DiffView({ entry }: { entry: ChangeLogEntry }) {
@@ -68,25 +99,32 @@ function DiffView({ entry }: { entry: ChangeLogEntry }) {
   if (changed) {
     return (
       <div className="space-y-3">
-        {changed.map(({ field, oldVal, newVal }) => (
-          <div key={field} className="text-sm">
-            <p className="font-medium text-muted-foreground mb-1">{field}</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-md p-2">
-                <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Before</p>
-                <pre className="text-xs whitespace-pre-wrap break-words">
-                  {typeof oldVal === "string" ? oldVal : JSON.stringify(oldVal, null, 2)}
-                </pre>
-              </div>
-              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-2">
-                <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">After</p>
-                <pre className="text-xs whitespace-pre-wrap break-words">
-                  {typeof newVal === "string" ? newVal : JSON.stringify(newVal, null, 2)}
-                </pre>
+        {changed.map(({ field, oldVal, newVal }) => {
+          const diff =
+            typeof oldVal === "string" && typeof newVal === "string"
+              ? wordDiff(oldVal, newVal)
+              : null;
+
+          return (
+            <div key={field} className="text-sm">
+              <p className="font-medium text-muted-foreground mb-1">{field}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-md p-2">
+                  <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Before</p>
+                  <pre className="text-xs whitespace-pre-wrap break-words">
+                    {diff ? diff.oldNode : typeof oldVal === "string" ? oldVal : JSON.stringify(oldVal, null, 2)}
+                  </pre>
+                </div>
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-2">
+                  <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">After</p>
+                  <pre className="text-xs whitespace-pre-wrap break-words">
+                    {diff ? diff.newNode : typeof newVal === "string" ? newVal : JSON.stringify(newVal, null, 2)}
+                  </pre>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   }
