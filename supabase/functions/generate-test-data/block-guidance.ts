@@ -44,6 +44,9 @@ export interface ScenarioFieldConfigRow {
   sub_prompts: { label: string; is_critical: boolean; data_type: string; realistic_range?: string }[] | null;
   deviation_type: string;
   block_guidance: string | null;
+  optimal_guidance: string | null;
+  minimum_guidance: string | null;
+  degraded_guidance: string | null;
 }
 
 // =============================================
@@ -205,6 +208,14 @@ export function buildBlockInstructions(
     instructions += `Data Type: ${block.expected_data_type}\n`;
     instructions += `Required: ${block.is_required ? 'YES' : 'NO'}\n`;
     instructions += `Guidance: ${block.block_guidance || ''}\n`;
+
+    const tierGuidance =
+      qualityTier === 'OPTIMAL' ? block.optimal_guidance :
+      qualityTier === 'MINIMUM' ? block.minimum_guidance :
+      block.degraded_guidance;
+    if (tierGuidance) {
+      instructions += `${qualityTier} TIER GUIDANCE: ${tierGuidance}\n`;
+    }
 
     const subPrompts = block.sub_prompts || [];
     if (subPrompts.length > 0) {
