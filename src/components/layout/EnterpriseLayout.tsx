@@ -8,7 +8,6 @@ interface EnterpriseLayoutProps {
 const EnterpriseLayout = ({ children }: EnterpriseLayoutProps) => {
   return (
     <div className="min-h-screen bg-background">
-      <TelemetryBar />
       {children}
     </div>
   );
