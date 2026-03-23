@@ -1,4 +1,5 @@
 import { ArrowLeft, Info, Mail } from "lucide-react";
+import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
