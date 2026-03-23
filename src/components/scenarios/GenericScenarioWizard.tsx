@@ -175,6 +175,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackType, setFeedbackType] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
