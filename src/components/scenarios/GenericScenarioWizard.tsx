@@ -901,7 +901,16 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => setFeedbackDialogOpen(true)}
+                className="gap-2"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Leave Feedback
+              </Button>
               <Button
                 variant="hero"
                 size="lg"
