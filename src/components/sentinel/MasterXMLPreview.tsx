@@ -198,13 +198,12 @@ function TemplatePreviewContent({ scenarioType }: { scenarioType: string }) {
   );
 }
 
-export function MasterXMLPreview({ scenarioType }: MasterXMLPreviewProps) {
+export function MasterXMLPreview({ scenarioType, userEmail }: MasterXMLPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"preview" | "xml">("preview");
-  const { showTechnicalDetails } = useShareableMode();
 
-  // Hide entirely in shareable mode
-  if (!showTechnicalDetails) {
+  // Only visible to superadmin
+  if (!userEmail || userEmail.toLowerCase() !== SUPERADMIN_EMAIL) {
     return null;
   }
 
