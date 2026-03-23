@@ -7,6 +7,7 @@ import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useUser } from "@/hooks/useUser";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import exosLogoFallback from "@/assets/logo-concept-layers.png";
 import {
   DropdownMenu,
@@ -82,6 +83,7 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
+  const { isSuperAdmin } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const exosLogo = useThemedLogo();
 
@@ -208,6 +210,29 @@ const Header = () => {
                   >
                     <HelpCircle className="w-4 h-4" /> Help & FAQ
                   </button>
+                  {isSuperAdmin && (
+                    <>
+                      <Separator className="my-2" />
+                      <button
+                        onClick={() => mobileNavigate("/admin/methodology")}
+                        className="text-sm text-muted-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                      >
+                        <BookOpen className="w-4 h-4" /> Methodology
+                      </button>
+                      <button
+                        onClick={() => mobileNavigate("/admin/dashboard")}
+                        className="text-sm text-muted-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                      >
+                        <BarChart3 className="w-4 h-4" /> Command Center
+                      </button>
+                      <button
+                        onClick={() => mobileNavigate("/admin/analytics")}
+                        className="text-sm text-muted-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                      >
+                        <Zap className="w-4 h-4" /> Analytics
+                      </button>
+                    </>
+                  )}
                   <Separator className="my-2" />
                   <button
                     onClick={async () => {
@@ -264,6 +289,20 @@ const Header = () => {
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/pricing#faq")}>
                   <HelpCircle className="w-4 h-4" /> Help & FAQ
                 </DropdownMenuItem>
+                {isSuperAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/admin/methodology")}>
+                      <BookOpen className="w-4 h-4" /> Methodology
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/admin/dashboard")}>
+                      <BarChart3 className="w-4 h-4" /> Command Center
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/admin/analytics")}>
+                      <Zap className="w-4 h-4" /> Analytics
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer gap-2 text-destructive focus:text-destructive"

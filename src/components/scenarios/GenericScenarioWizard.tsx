@@ -69,6 +69,7 @@ import { ScenarioChatAssistant } from "./ScenarioChatAssistant";
 import ScenarioFileAttachment from "./ScenarioFileAttachment";
 import { useScenarioFileAttachments } from "@/hooks/useScenarioFileAttachments";
 import { useInputEvaluator } from "@/hooks/useInputEvaluator";
+import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
 
 const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   const [open, setOpen] = useState(false);
@@ -279,8 +280,11 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   const canProceed = missingRequired.length === 0;
 
+  // Fetch methodology config from DB for input evaluation
+  const { data: dbEvalConfig } = useScenarioEvalConfig(scenario.id);
+
   // Input quality evaluator (debounced 800ms)
-  const evaluation = useInputEvaluator(scenario.id, formData);
+  const evaluation = useInputEvaluator(scenario.id, formData, 800, dbEvalConfig);
 
   // Get model config from settings context
   const { model: configModel } = useModelConfig();
