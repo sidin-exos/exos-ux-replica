@@ -13,9 +13,8 @@ const pillars = [
     number: "01",
     title: "Analytical Scenarios",
     description:
-      "AI-powered scenario analysis covering cost optimization, supplier evaluation, risk assessment, negotiation prep, and more. Select from 20+ scenario types, provide your business context, and receive actionable dashboards with data-driven recommendations.",
-    impact:
-      "Run complex procurement analyses in minutes instead of weeks — with AI that explains the 'why' behind every recommendation.",
+      "20+ AI scenario types — from cost optimization to negotiation prep. Provide context, receive actionable dashboards.",
+    impact: "Complex analyses in minutes, not weeks.",
     icon: BarChart3,
     cta: "Explore Scenarios",
     href: "/",
@@ -24,9 +23,8 @@ const pillars = [
     number: "02",
     title: "Market Intelligence",
     description:
-      "Real-time market intelligence feeds powered by AI. Query global supply chain data, commodity pricing, geopolitical risks, and industry trends. Build custom intelligence reports and schedule automated monitoring.",
-    impact:
-      "Stay ahead of market shifts with AI-curated intelligence that benchmarks your strategy against real-time industry data.",
+      "Query global supply chain data, commodity pricing, and geopolitical risks in real time. Schedule automated monitoring.",
+    impact: "Benchmark strategy against live industry data.",
     icon: Radar,
     cta: "Open Intelligence Hub",
     href: "/market-intelligence",
@@ -35,9 +33,8 @@ const pillars = [
     number: "03",
     title: "Enterprise Platforms",
     description:
-      "Persistent monitoring platforms for enterprise teams. The Risk Assessment Platform provides continuous supply-chain risk scoring with automated alerts. The Inflation Analysis Platform tracks cost drivers and pricing trends across your categories.",
-    impact:
-      "Move from periodic reviews to always-on monitoring — with automated early-warning systems for risk and inflation.",
+      "Always-on Risk Assessment and Inflation Analysis platforms with automated alerts and category-level trend tracking.",
+    impact: "From periodic reviews to continuous monitoring.",
     icon: Building2,
     cta: "View Platforms",
     href: "/enterprise/risk",
