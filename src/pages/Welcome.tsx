@@ -11,39 +11,36 @@ import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 const pillars = [
   {
     number: "01",
-    title: "Analysis & Optimization",
+    title: "Analytical Scenarios",
     description:
-      "Don't just collect data; architect it. Our AI engine identifies structural inefficiencies in your spending patterns that traditional analytics miss. We provide the \"why\" behind the numbers, enabling a shift from reactive reporting to proactive cost governance.",
+      "AI-powered scenario analysis covering cost optimization, supplier evaluation, risk assessment, negotiation prep, and more. Select from 20+ scenario types, provide your business context, and receive actionable dashboards with data-driven recommendations.",
     impact:
-      "Identify 15-20% hidden savings opportunities within the first 30 days of implementation.",
+      "Run complex procurement analyses in minutes instead of weeks — with AI that explains the 'why' behind every recommendation.",
     icon: BarChart3,
+    cta: "Explore Scenarios",
+    href: "/",
   },
   {
     number: "02",
-    title: "Planning & Sourcing",
+    title: "Market Intelligence",
     description:
-      "Strategic sourcing redefined as a collaborative art. EXOS automates the friction of vendor selection while maintaining human-centric decision paths. Access global Market Intelligence feeds to benchmark your sourcing strategy against real-time industry shifts.",
+      "Real-time market intelligence feeds powered by AI. Query global supply chain data, commodity pricing, geopolitical risks, and industry trends. Build custom intelligence reports and schedule automated monitoring.",
     impact:
-      "Reduce sourcing cycle times by 40% while expanding your high-quality vendor pool.",
-    icon: Network,
+      "Stay ahead of market shifts with AI-curated intelligence that benchmarks your strategy against real-time industry data.",
+    icon: Radar,
+    cta: "Open Intelligence Hub",
+    href: "/market-intelligence",
   },
   {
     number: "03",
-    title: "Risk Management",
+    title: "Enterprise Platforms",
     description:
-      "Navigate uncertainty with an automated early-warning system. We monitor global supply chain nodes, financial stability, and geopolitical indicators to protect your operations before the disruption occurs.",
+      "Persistent monitoring platforms for enterprise teams. The Risk Assessment Platform provides continuous supply-chain risk scoring with automated alerts. The Inflation Analysis Platform tracks cost drivers and pricing trends across your categories.",
     impact:
-      "Predict and mitigate supply chain disruptions 3-6 months before they impact the bottom line.",
-    icon: ShieldAlert,
-  },
-  {
-    number: "04",
-    title: "Documentation & Contracts",
-    description:
-      "The end of manual tracking. EXOS uses natural language processing to audit your entire contract repository, surfacing hidden liabilities and renewal opportunities automatically. Modern compliance without the spreadsheet fatigue.",
-    impact:
-      "Eliminate 100% of unattended contract renewals and ensure total compliance across regions.",
-    icon: FileText,
+      "Move from periodic reviews to always-on monitoring — with automated early-warning systems for risk and inflation.",
+    icon: Building2,
+    cta: "View Platforms",
+    href: "/enterprise/risk",
   },
 ];
 
