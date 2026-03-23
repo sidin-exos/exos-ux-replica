@@ -72,6 +72,10 @@ export function ChatWidget() {
         transition={{ duration: 0.3, delay: 0.2 }}
         className="mb-8 glass-effect rounded-xl border border-border/50 p-4"
       >
+        <div className="flex items-center gap-2 mb-3">
+          <Bot className="w-4 h-4 text-primary" />
+          <span className="font-display font-semibold text-sm">Navigate scenarios with EXOS Chatbot</span>
+        </div>
         <div className="flex flex-wrap gap-2 mb-3">
           {SUGGESTIONS.map((s) => (
             <Button
