@@ -738,6 +738,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
               {/* Right: Strategy selector */}
               {scenario.strategySelector && (
+                <div className="border border-border/50 rounded-xl bg-card/30 p-3">
                 <StrategySelector
                   value={strategyValue}
                   onChange={setStrategyValue}
