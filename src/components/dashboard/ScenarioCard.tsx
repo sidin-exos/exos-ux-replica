@@ -61,7 +61,7 @@ const ScenarioCard = ({
       onMouseLeave={onMouseLeave}
       className={cn(
         "group relative w-full p-6 rounded-xl text-left transition-all duration-300",
-        "bg-card border border-border/60 shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]",
+        "bg-card/80 dark:bg-card border border-border/40 shadow-[0_2px_0_0_hsl(var(--border)/0.5),0_4px_12px_-4px_hsl(var(--foreground)/0.06)]",
         "hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5",
         "active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]",
         isActive && "border-primary shadow-[0_2px_0_0_hsl(var(--primary)/0.5),0_6px_20px_-4px_hsl(var(--primary)/0.15)] glow-effect",
