@@ -697,16 +697,30 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
             {/* Master XML moved to scenario info panel — see grid above */}
 
-            {/* Context Selectors for AI Grounding */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-border bg-card/50">
-              <IndustrySelector
-                value={industrySlug}
-                onChange={handleIndustryChange}
-              />
-              <CategorySelector
-                value={categorySlug}
-                onChange={handleCategoryChange}
-              />
+            {/* Context & Strategy — compact 2-column row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Left: Context selectors stacked */}
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-border bg-card/50">
+                <IndustrySelector
+                  value={industrySlug}
+                  onChange={handleIndustryChange}
+                />
+                <CategorySelector
+                  value={categorySlug}
+                  onChange={handleCategoryChange}
+                />
+              </div>
+
+              {/* Right: Strategy selector */}
+              {scenario.strategySelector && (
+                <StrategySelector
+                  value={strategyValue}
+                  onChange={setStrategyValue}
+                  title={strategyPresets[scenario.strategySelector].title}
+                  description={strategyPresets[scenario.strategySelector].description}
+                  options={strategyPresets[scenario.strategySelector].options}
+                />
+              )}
             </div>
 
             {/* Interactive Context Editors */}
@@ -726,7 +740,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Market Insights Banner - shown when insights are available for this combination */}
+            {/* Market Insights Banner */}
             {hasMarketInsights && marketInsight && (
               <MarketInsightsBanner
                 insight={marketInsight}
@@ -740,26 +754,13 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Context Preview (collapsed by default, XML hidden in shared mode) */}
+            {/* Context Preview */}
             {(industrySlug || categorySlug) && (
               <ContextPreview
                 industrySlug={industrySlug}
                 categorySlug={categorySlug}
                 showXML={true}
               />
-            )}
-
-            {/* Strategy Selector */}
-            {scenario.strategySelector && (
-              <div className="mb-6">
-                <StrategySelector
-                  value={strategyValue}
-                  onChange={setStrategyValue}
-                  title={strategyPresets[scenario.strategySelector].title}
-                  description={strategyPresets[scenario.strategySelector].description}
-                  options={strategyPresets[scenario.strategySelector].options}
-                />
-              </div>
             )}
 
             {/* Required Fields */}
