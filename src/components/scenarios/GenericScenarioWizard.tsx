@@ -819,8 +819,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
                 {/* Optional Fields */}
                 {scenario.requiredFields.some((f) => !f.required) && (
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  <div className="space-y-4 bg-muted/40 dark:bg-muted/20 rounded-lg p-4 border border-border/40">
+                    <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider">
                       Optional Information
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
