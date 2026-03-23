@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 
 const MarketIntelligence = () => {
   const [searchParams] = useSearchParams();
