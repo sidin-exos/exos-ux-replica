@@ -543,34 +543,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   return (
     <div className="space-y-6">
       {/* Progress indicator */}
-      <div className="flex items-center justify-center gap-2">
-        {["input", "review", "results"].map((s, i) => (
-          <div key={s} className="flex items-center">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                step === s || (step === "analyzing" && s === "results")
-                  ? "gradient-primary text-primary-foreground"
-                  : step === "results" || (step === "review" && i === 0)
-                  ? "bg-primary/30 text-primary"
-                  : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              {i + 1}
-            </div>
-            {i < 2 && (
-              <div
-                className={`w-12 h-0.5 mx-2 ${
-                  i === 0 && (step === "review" || step === "analyzing" || step === "results")
-                    ? "bg-primary"
-                    : i === 1 && step === "results"
-                    ? "bg-primary"
-                    : "bg-border"
-                }`}
-              />
-            )}
-          </div>
-        ))}
-      </div>
 
       <AnimatePresence mode="wait">
         {step === "input" && (
