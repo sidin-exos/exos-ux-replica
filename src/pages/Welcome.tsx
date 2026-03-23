@@ -1,257 +1,270 @@
 import { useNavigate } from "react-router-dom";
-import { Play, ArrowRight, Settings2, Brain, Zap, BarChart3, Globe, TrendingUp, Shield, Users, Quote } from "lucide-react";
+import { ArrowRight, BarChart3, Network, ShieldAlert, FileText, Quote, Building2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { useThemedLogo } from "@/hooks/useThemedLogo";
+import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 
-/* ── Video Placeholder ── */
-const VideoPlaceholder = ({ label, id }: { label: string; id: string }) => (
-  <Card className="overflow-hidden border-border/50 bg-muted/30" id={id}>
-    <AspectRatio ratio={16 / 9}>
-      <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-muted to-muted/50 gap-3">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/20">
-          <Play className="w-7 h-7 text-primary ml-1" />
-        </div>
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-      </div>
-    </AspectRatio>
-  </Card>
-);
-
-/* ── How it Works Steps ── */
-const steps = [
+/* ── Feature Pillars ── */
+const pillars = [
   {
-    icon: Settings2,
-    title: "Define Context",
-    description: "Select your scenario, set parameters, and provide business context. EXOS adapts to your industry and category.",
+    number: "01",
+    title: "Analysis & Optimization",
+    description:
+      "Don't just collect data; architect it. Our AI engine identifies structural inefficiencies in your spending patterns that traditional analytics miss. We provide the \"why\" behind the numbers, enabling a shift from reactive reporting to proactive cost governance.",
+    impact:
+      "Identify 15-20% hidden savings opportunities within the first 30 days of implementation.",
+    icon: BarChart3,
   },
   {
-    icon: Brain,
-    title: "AI Analysis",
-    description: "Our Sentinel pipeline anonymises data, grounds it with market intelligence, and generates structured insights.",
+    number: "02",
+    title: "Planning & Sourcing",
+    description:
+      "Strategic sourcing redefined as a collaborative art. EXOS automates the friction of vendor selection while maintaining human-centric decision paths. Access global Market Intelligence feeds to benchmark your sourcing strategy against real-time industry shifts.",
+    impact:
+      "Reduce sourcing cycle times by 40% while expanding your high-quality vendor pool.",
+    icon: Network,
   },
   {
-    icon: Zap,
-    title: "Actionable Output",
-    description: "Get dashboards, negotiation playbooks, risk matrices, and exportable reports — ready for stakeholder review.",
+    number: "03",
+    title: "Risk Management",
+    description:
+      "Navigate uncertainty with an automated early-warning system. We monitor global supply chain nodes, financial stability, and geopolitical indicators to protect your operations before the disruption occurs.",
+    impact:
+      "Predict and mitigate supply chain disruptions 3-6 months before they impact the bottom line.",
+    icon: ShieldAlert,
+  },
+  {
+    number: "04",
+    title: "Documentation & Contracts",
+    description:
+      "The end of manual tracking. EXOS uses natural language processing to audit your entire contract repository, surfacing hidden liabilities and renewal opportunities automatically. Modern compliance without the spreadsheet fatigue.",
+    impact:
+      "Eliminate 100% of unattended contract renewals and ensure total compliance across regions.",
+    icon: FileText,
   },
 ];
 
-/* ── Success Stories ── */
-const successStories = [
-  {
-    company: "MedTech Solutions GmbH",
-    industry: "Medical Devices",
-    quote: "EXOS revealed hidden logistics costs we'd been overlooking for years.",
-    person: "Dr. Katrin Schäfer, Head of Strategic Procurement",
-    metric: "18%",
-    metricLabel: "Cost savings",
-    icon: TrendingUp,
-  },
-  {
-    company: "NordSteel Industries AB",
-    industry: "Heavy Industry",
-    quote: "EXOS flagged the risk two months prior. Our production lines kept running.",
-    person: "Erik Lindqvist, VP Supply Chain",
-    metric: "6-week",
-    metricLabel: "Halt avoided",
-    icon: Shield,
-  },
-  {
-    company: "CleanTech Mobility SAS",
-    industry: "Green Mobility",
-    quote: "Going from 47 suppliers to 12 strategic partners in one quarter.",
-    person: "Amélie Durand, CPO",
-    metric: "35%",
-    metricLabel: "Overhead reduction",
-    icon: Users,
-  },
+/* ── Stats ── */
+const stats = [
+  { value: "$12B+", label: "Spend Optimized" },
+  { value: "500+", label: "Enterprise Clients" },
+  { value: "99.9%", label: "Compliance Rate" },
 ];
 
 /* ── Page ── */
 const Welcome = () => {
   const navigate = useNavigate();
-  const exosLogo = useThemedLogo();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
+      {/* ───── Hero ───── */}
+      <section className="relative overflow-hidden border-b border-border/50">
         <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
-        <div className="container relative py-20 md:py-28 flex flex-col items-center text-center gap-6">
-          <div className="flex items-center justify-center h-24 w-24 md:h-32 md:w-32 rounded-2xl overflow-hidden ring-2 ring-primary/20 shadow-lg shadow-primary/10">
-            <img src={exosLogo} alt="EXOS Logo" className="w-full h-full object-contain" />
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground max-w-3xl leading-tight">
-            EXOS
-          </h1>
-          <p className="text-base md:text-lg text-muted-foreground font-medium">
-            Your Procurement Exoskeleton
-          </p>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-            New era of procurement and supply chain decision making has arrived. Industry first scenario-based AI procurement decision making system.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 mt-2">
-            <Button size="lg" className="gap-2" onClick={() => navigate("/")}>
-              Get Started <ArrowRight className="w-4 h-4" />
-            </Button>
-            <Button size="lg" variant="outline" className="gap-2" onClick={() => document.getElementById("promo-video")?.scrollIntoView({ behavior: "smooth" })}>
-              <Play className="w-4 h-4" /> Watch Demo
-            </Button>
-          </div>
-        </div>
-      </section>
+        <div className="container relative py-20 md:py-28 lg:py-32">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left */}
+            <div className="flex flex-col gap-6 max-w-xl">
+              <Badge variant="outline" className="w-fit border-primary/30 text-primary text-xs tracking-wider uppercase">
+                ✦ The Future of Procurement
+              </Badge>
+              <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.1] tracking-tight">
+                Procurement Strategy,{" "}
+                <span className="italic" style={{ color: "hsl(var(--primary))" }}>
+                  Powered by AI
+                </span>
+              </h1>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Transform complex data into surgical precision. Decouple from legacy friction and decide with confidence using real-time market architectural intelligence.
+              </p>
+              <div className="flex flex-wrap gap-3 mt-2">
+                <Button size="lg" className="gap-2 px-6" onClick={() => navigate("/")}>
+                  Get a Demo
+                </Button>
+                <Button size="lg" variant="outline" className="gap-2 px-6" onClick={() => navigate("/features")}>
+                  Explore Solutions
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4 flex items-center gap-2">
+                <span className="uppercase tracking-widest font-medium">Trusted by 500+ Enterprise Teams</span>
+              </p>
+            </div>
 
-      {/* Promo Video */}
-      <section className="container py-12 md:py-16">
-        <div className="max-w-4xl mx-auto">
-          <VideoPlaceholder label="General Overview — Product Demo" id="promo-video" />
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section className="container py-16 md:py-20">
-        <div className="text-center mb-12">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">How It Works</h2>
-          <p className="text-muted-foreground mt-3 max-w-xl mx-auto">Three steps from raw procurement data to boardroom-ready insights.</p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {steps.map((step, i) => {
-            const Icon = step.icon;
-            return (
-              <Card key={i} className="glass-effect border-border/50 relative overflow-hidden group hover:shadow-lg transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-                  <div className="absolute top-3 right-4 text-6xl font-display font-bold text-primary/5 select-none">{i + 1}</div>
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20 group-hover:ring-primary/40 transition-all">
-                    <Icon className="w-6 h-6 text-primary" />
+            {/* Right — Abstract dashboard preview */}
+            <div className="hidden lg:flex justify-end">
+              <Card className="w-full max-w-md border-border/50 shadow-lg overflow-hidden">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">AI Optimization</span>
+                    <Badge className="bg-success/15 text-success border-0 text-xs">Active</Badge>
                   </div>
-                  <h3 className="font-display text-lg font-semibold text-foreground">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+                  <div className="space-y-2">
+                    {[85, 62, 91, 74].map((val, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground w-8">Q{i + 1}</span>
+                        <div className="flex-1 h-2 rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all"
+                            style={{ width: `${val}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-mono text-foreground w-8 text-right">{val}%</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-3 border-t border-border/50">
+                    <p className="text-xs text-muted-foreground">
+                      <CheckCircle className="w-3 h-3 inline mr-1 text-success" />
+                      Savings optimized in 127 dashboard scenarios
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Scenarios Section */}
-      <section className="bg-muted/30 py-16 md:py-20">
-        <div className="container">
-          <div className="grid md:grid-cols-2 gap-10 items-center max-w-6xl mx-auto">
-            <div className="flex flex-col gap-5">
-              <Badge variant="outline" className="w-fit border-primary/30 text-primary">
-                <BarChart3 className="w-3.5 h-3.5 mr-1.5" /> Scenarios Engine
-              </Badge>
-              <h2 className="font-display text-3xl font-bold text-foreground">15+ Procurement Scenarios</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                From TCO analysis and make-or-buy decisions to Black Swan simulations and negotiation prep — each scenario is purpose-built with structured AI prompts, anonymisation, and grounding context.
-              </p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {["Cost Analysis & Benchmarking", "Supplier Risk Assessment", "Contract & SOW Analysis", "Strategic Planning & Simulation"].map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Button variant="outline" className="w-fit gap-2 mt-2" onClick={() => navigate("/")}>
-                Explore Scenarios <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-            <VideoPlaceholder label="Scenarios — Walkthrough" id="scenarios-video" />
-          </div>
-        </div>
-      </section>
-
-      {/* Market Intelligence Section */}
-      <section className="py-16 md:py-20">
-        <div className="container">
-          <div className="grid md:grid-cols-2 gap-10 items-center max-w-6xl mx-auto">
-            <div className="order-2 md:order-1">
-              <VideoPlaceholder label="Market Intelligence — Walkthrough" id="intel-video" />
-            </div>
-            <div className="flex flex-col gap-5 order-1 md:order-2">
-              <Badge variant="outline" className="w-fit border-accent/30 text-accent">
-                <Globe className="w-3.5 h-3.5 mr-1.5" /> Market Intelligence
-              </Badge>
-              <h2 className="font-display text-3xl font-bold text-foreground">Real-Time Market Insights</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Query live market data with AI-powered search. Set up scheduled reports, trigger-based alerts, and build a knowledge base of curated intelligence for your procurement categories.
-              </p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {["AI-grounded market research", "Scheduled & trigger-based reports", "Persistent knowledge base", "Multi-source citation tracking"].map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Button variant="outline" className="w-fit gap-2 mt-2" onClick={() => navigate("/market-intelligence")}>
-                Explore Intelligence <ArrowRight className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="bg-muted/30 py-16 md:py-20">
-        <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">Trusted by Procurement Leaders</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {successStories.map((story) => {
-              const Icon = story.icon;
-              return (
-                <Card key={story.company} className="glass-effect border-border/50 hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6 flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary" className="text-xs">{story.industry}</Badge>
-                      <div className="flex items-center gap-1.5">
-                        <Icon className="w-4 h-4 text-primary" />
-                        <span className="font-display font-bold text-primary text-lg">{story.metric}</span>
+      {/* ───── Architectural Intelligence Heading ───── */}
+      <section className="container py-16 md:py-20">
+        <div className="max-w-2xl">
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+            Architectural Intelligence
+          </h2>
+          <p className="text-muted-foreground mt-3 leading-relaxed">
+            A unified ecosystem designed to replace fragmented legacy tools with high-fidelity procurement workflows.
+          </p>
+        </div>
+      </section>
+
+      {/* ───── Feature Pillars (alternating layout) ───── */}
+      {pillars.map((pillar, i) => {
+        const Icon = pillar.icon;
+        const isEven = i % 2 === 0;
+
+        return (
+          <section
+            key={pillar.number}
+            className={`py-12 md:py-16 ${i % 2 === 1 ? "bg-muted/30" : ""}`}
+          >
+            <div className="container">
+              <div className={`grid md:grid-cols-2 gap-10 lg:gap-16 items-center max-w-6xl mx-auto ${!isEven ? "direction-rtl" : ""}`}>
+                {/* Text side */}
+                <div className={`flex flex-col gap-5 ${!isEven ? "md:order-2" : ""}`}>
+                  <div className="flex items-baseline gap-3">
+                    <span className="font-display text-5xl font-bold text-primary/15 select-none">
+                      {pillar.number}
+                    </span>
+                    <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+                      {pillar.title}
+                    </h3>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {pillar.description}
+                  </p>
+                  <Card className="border-primary/20 bg-primary/5 mt-2">
+                    <CardContent className="p-4">
+                      <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">
+                        Business Impact
+                      </p>
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {pillar.impact}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Visual side — abstract placeholder */}
+                <div className={`${!isEven ? "md:order-1" : ""}`}>
+                  <Card className="overflow-hidden border-border/50 bg-muted/20">
+                    <CardContent className="p-0">
+                      <div className="aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted">
+                        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                          <Icon className="w-10 h-10 text-primary/60" />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Quote className="w-4 h-4 text-muted-foreground/40 shrink-0 mt-0.5" />
-                      <p className="text-sm text-foreground italic leading-relaxed">{story.quote}</p>
-                    </div>
-                    <div className="mt-auto pt-3 border-t border-border/50">
-                      <p className="text-sm font-medium text-foreground">{story.company}</p>
-                      <p className="text-xs text-muted-foreground">{story.person}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })}
+
+      {/* ───── Stats Section ───── */}
+      <section className="py-16 md:py-20">
+        <div className="container">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-12">
+            Empowering Global Procurement Leaders
+          </h2>
+          <div className="flex flex-wrap items-center justify-center gap-12 md:gap-20">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="font-display text-4xl md:text-5xl font-bold" style={{ color: "hsl(var(--primary))" }}>
+                  {stat.value}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1 uppercase tracking-wider">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <section className="py-16 md:py-20">
+      {/* ───── Testimonial ───── */}
+      <section className="bg-muted/30 py-16 md:py-20">
         <div className="container">
-          <Card className="max-w-3xl mx-auto overflow-hidden border-0" style={{ background: "var(--gradient-primary)" }}>
-            <CardContent className="p-8 md:p-12 flex flex-col items-center text-center gap-5">
-              <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-foreground">
-                Ready to transform your procurement?
-              </h2>
-              <p className="text-primary-foreground/80 max-w-lg">
-                Start your first scenario in minutes. No complex setup — just define your context and let EXOS do the heavy lifting.
-              </p>
-              <Button size="lg" variant="secondary" className="gap-2" onClick={() => navigate("/")}>
-                Start Your First Scenario <ArrowRight className="w-4 h-4" />
+          <div className="max-w-3xl mx-auto text-center">
+            <Quote className="w-10 h-10 text-primary/30 mx-auto mb-6" />
+            <blockquote className="text-lg md:text-xl text-foreground italic leading-relaxed">
+              "EXOS didn't just give us another dashboard. They gave us a new way to see our supply chain architecture. The AI-driven insights have transformed our procurement team from a back-office function to a strategic powerhouse."
+            </blockquote>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-foreground">Elena Rodriguez</p>
+                <p className="text-xs text-muted-foreground">Chief Procurement Officer, Global Logistics Corp.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ───── Bottom CTA ───── */}
+      <section className="py-0">
+        <div className="w-full" style={{ background: "var(--gradient-primary)" }}>
+          <div className="container py-16 md:py-20 flex flex-col items-center text-center gap-6">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground leading-tight max-w-lg">
+              Ready to Architect Your Success?
+            </h2>
+            <p className="text-primary-foreground/80 max-w-md">
+              Join the world's most advanced procurement teams and start making high-confidence decisions today.
+            </p>
+            <div className="flex flex-wrap gap-3 mt-2">
+              <Button size="lg" variant="secondary" className="gap-2 px-6" onClick={() => navigate("/")}>
+                Get Started Now
               </Button>
-            </CardContent>
-          </Card>
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2 px-6 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+                onClick={() => navigate("/pricing#contact")}
+              >
+                Contact Sales
+              </Button>
+            </div>
+            <div className="mt-4">
+              <SiteFeedbackButton scenarioId="welcome" />
+            </div>
+          </div>
         </div>
       </section>
 
