@@ -553,15 +553,17 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
-            <ScenarioTutorial
-              scenario={scenario}
-              industryName={industryContext?.name ?? null}
-              categoryName={categoryContext?.name ?? null}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ScenarioTutorial
+                scenario={scenario}
+                industryName={industryContext?.name ?? null}
+                categoryName={categoryContext?.name ?? null}
+              />
 
-            {scenario.dataRequirements && (
-              <DataRequirementsCollapsible dataRequirements={scenario.dataRequirements} />
-            )}
+              {scenario.dataRequirements && (
+                <DataRequirementsPanel dataRequirements={scenario.dataRequirements} />
+              )}
+            </div>
 
             <Button
               variant="outline"
