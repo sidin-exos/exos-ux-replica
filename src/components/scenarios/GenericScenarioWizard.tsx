@@ -773,8 +773,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               {/* Left 2/3: Input fields */}
               <div className="md:col-span-2 space-y-6">
                 {/* Required Fields */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="space-y-4 bg-secondary/30 dark:bg-secondary/40 rounded-lg p-4 border border-border/50">
+                  <h4 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
                     Enter Your Data
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
