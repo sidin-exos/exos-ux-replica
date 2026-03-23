@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface ScenarioTutorialProps {
-  scenario: { title: string; description: string };
+  scenario: { title: string; description: string; previewDescription?: string };
   industryName?: string | null;
   categoryName?: string | null;
 }
