@@ -130,6 +130,7 @@ type Step = "input" | "review" | "analyzing" | "results";
 const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const navigate = useNavigate();
   const { showTechnicalDetails } = useShareableMode();
+  const { user } = useUser();
   const [step, setStep] = useState<Step>("input");
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [strategyValue, setStrategyValue] = useState<StrategyType>("balanced");
