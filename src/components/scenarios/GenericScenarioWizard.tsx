@@ -1117,6 +1117,79 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         feature="AI Procurement Analysis"
         description="Create a free account to get AI-powered insights on your procurement scenarios"
       />
+
+      <Dialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Leave Feedback</DialogTitle>
+            <DialogDescription>
+              Tell us how easy it was to use this scenario form.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!feedbackSubmitted ? (
+            <div className="space-y-5">
+              {/* 1-10 Rating Scale */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Rating</Label>
+                <div className="flex items-center justify-center gap-1">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => setFeedbackRating(value)}
+                      className={cn(
+                        "w-9 h-9 rounded-lg font-medium text-sm transition-all duration-200",
+                        "border border-border hover:border-primary/50",
+                        feedbackRating === value
+                          ? "bg-primary text-primary-foreground border-primary shadow-md"
+                          : feedbackRating > 0 && value <= feedbackRating
+                          ? "bg-primary/20 text-primary border-primary/30"
+                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                      )}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-xs text-muted-foreground">
+                  {feedbackRating === 0
+                    ? "Click to rate from 1 (poor) to 10 (excellent)"
+                    : `${feedbackRating}/10`}
+                </p>
+              </div>
+
+              {/* Optional text feedback */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Comments (optional)</Label>
+                <Textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="What could be improved?"
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <Button
+                onClick={handleFeedbackSubmit}
+                disabled={feedbackRating === 0 || isSubmittingFeedback}
+                className="w-full gap-2"
+              >
+                {isSubmittingFeedback ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                Submit Feedback
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <CheckCircle2 className="w-10 h-10 text-success mx-auto mb-2" />
+              <p className="font-medium">Thank you!</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
