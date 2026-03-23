@@ -95,7 +95,7 @@ const ScenarioTutorial = ({
   }, []);
 
   const isPersonalized = !!aiContent;
-  const displayContent = aiContent || scenario.description;
+  const displayContent = aiContent || scenario.previewDescription || scenario.description;
 
   return (
     <Card className="border-primary/20 bg-primary/5">
