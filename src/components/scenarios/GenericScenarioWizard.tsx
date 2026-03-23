@@ -99,11 +99,11 @@ const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: {
 
 const DataRequirementsPanel = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   return (
-    <Card className="border-amber-500/20 bg-amber-500/5">
+    <Card className="border-warning/20 bg-warning/5">
       <CardContent className="pt-4 pb-4 px-5">
         <div className="flex items-center gap-2 mb-3">
           <span>💡</span>
-          <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+          <span className="text-sm font-semibold text-warning">
             What data do I need to prepare?
           </span>
         </div>
