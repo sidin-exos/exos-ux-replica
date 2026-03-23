@@ -498,7 +498,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     }
   };
 
-  const handleFeedbackSubmit = async (rating: number, feedback: string) => {
+  const handleOutputFeedbackSubmit = async (rating: number, feedback: string) => {
     try {
       const { error } = await supabase.from("scenario_feedback").insert({
         scenario_id: scenario.id,
