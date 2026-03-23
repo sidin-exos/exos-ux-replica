@@ -1,0 +1,1 @@
+ALTER TABLE public.scenario_feedback ADD COLUMN feedback_type text;

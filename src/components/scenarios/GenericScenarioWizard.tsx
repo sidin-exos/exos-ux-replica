@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare, CheckCircle2, AlertCircle, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare, CheckCircle2, AlertCircle, Send, Bug, Lightbulb, MousePointerClick, Database, Gauge, Palette, HelpCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import AuthPrompt from "@/components/auth/AuthPrompt";
@@ -175,6 +175,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackType, setFeedbackType] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
@@ -185,7 +186,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       scenario_id: scenario.id,
       rating: feedbackRating,
       feedback_text: feedbackText || null,
-    });
+      feedback_type: feedbackType || null,
+    } as any);
     setIsSubmittingFeedback(false);
     if (error) {
       toast.error("Failed to submit feedback");
@@ -196,6 +198,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         setFeedbackDialogOpen(false);
         setFeedbackRating(0);
         setFeedbackText("");
+        setFeedbackType("");
         setFeedbackSubmitted(false);
       }, 1500);
     }
@@ -1157,6 +1160,37 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                     ? "Click to rate from 1 (poor) to 10 (excellent)"
                     : `${feedbackRating}/10`}
                 </p>
+              </div>
+
+              {/* Feedback Type Selector */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Feedback Type (optional)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "bug", label: "Bug Report", icon: Bug },
+                    { value: "feature", label: "Feature Suggestion", icon: Lightbulb },
+                    { value: "usability", label: "Usability Issue", icon: MousePointerClick },
+                    { value: "data_quality", label: "Data Quality", icon: Database },
+                    { value: "performance", label: "Performance", icon: Gauge },
+                    { value: "visual", label: "Visual / Design", icon: Palette },
+                    { value: "other", label: "Other", icon: HelpCircle },
+                  ].map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => setFeedbackType(feedbackType === value ? "" : value)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                        "border border-border hover:border-primary/50",
+                        feedbackType === value
+                          ? "bg-primary text-primary-foreground border-primary shadow-md"
+                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Optional text feedback */}
