@@ -167,7 +167,7 @@ const DashboardSelector = ({
             </div>
 
             {/* Dashboard options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-2">
               {availableDashboards.map((dashboardId, index) => {
                 const config = dashboardConfigs[dashboardId];
                 if (!config) return null;
