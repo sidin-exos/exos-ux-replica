@@ -635,6 +635,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               )}
             </div>
 
+            <div className="border-t border-border/40" />
+
             <Button
               variant="outline"
               size="sm"
