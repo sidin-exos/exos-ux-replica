@@ -162,7 +162,7 @@ const StrategySelector = ({
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                "relative p-2.5 rounded-lg text-left transition-all duration-200",
+                "relative p-2.5 rounded-lg text-left transition-all duration-200 flex flex-col",
                 "border border-border/50 hover:border-primary/30",
                 isSelected && "border-primary/60 bg-primary/5"
               )}
@@ -194,7 +194,7 @@ const StrategySelector = ({
               <h4 className="font-medium text-xs text-foreground mb-0.5">
                 {option.label}
               </h4>
-              <p className="text-[10px] text-muted-foreground/70 leading-tight">
+              <p className="text-[10px] text-muted-foreground/70 leading-tight min-h-[2.5em]">
                 {option.description}
               </p>
 
