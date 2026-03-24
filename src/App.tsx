@@ -37,6 +37,7 @@ const MethodologyDashboard = lazy(() => import("./pages/admin/MethodologyDashboa
 const MethodologyScenarioEdit = lazy(() => import("./pages/admin/MethodologyScenarioEdit"));
 const MethodologyConfig = lazy(() => import("./pages/admin/MethodologyConfig"));
 const MethodologyHistory = lazy(() => import("./pages/admin/MethodologyHistory"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/admin/methodology/config" element={<ProtectedRoute requireSuperAdmin><MethodologyConfig /></ProtectedRoute>} />
             <Route path="/admin/methodology/history" element={<ProtectedRoute requireSuperAdmin><MethodologyHistory /></ProtectedRoute>} />
             <Route path="/admin/methodology/:slug" element={<ProtectedRoute requireSuperAdmin><MethodologyScenarioEdit /></ProtectedRoute>} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
