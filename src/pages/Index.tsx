@@ -249,9 +249,9 @@ const Index = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {scenariosByCategory[category]?.map((scenario, index) => (
-                        <div
+                         <div
                           key={scenario.id}
-                          className="animate-fade-up"
+                          className="animate-fade-up h-full"
                           style={{ animationDelay: `${100 + index * 50}ms` }}
                         >
                           <ScenarioCard
