@@ -37,6 +37,7 @@ const MethodologyDashboard = lazy(() => import("./pages/admin/MethodologyDashboa
 const MethodologyScenarioEdit = lazy(() => import("./pages/admin/MethodologyScenarioEdit"));
 const MethodologyConfig = lazy(() => import("./pages/admin/MethodologyConfig"));
 const MethodologyHistory = lazy(() => import("./pages/admin/MethodologyHistory"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const queryClient = new QueryClient();
 
 const App = () => (
