@@ -5,7 +5,7 @@
  * Uses the same `extractDashboardData()` parser as dashboards and PDF.
  */
 
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { extractDashboardData, DashboardData } from "@/lib/dashboard-data-parser";
 
 // ─── helpers ──────────────────────────────────────────────────────────
@@ -20,14 +20,6 @@ function extractKeyPoints(text: string): string[] {
   return (matched.length > 0 ? matched : lines).slice(0, 10).map((l) =>
     l.replace(/^[#\-*>\d.]+\s*/, "").replace(/\*\*/g, "").trim()
   );
-}
-
-function sanitize(text: string): string {
-  return text
-    .replace(/<dashboard-data>[\s\S]*?<\/dashboard-data>/g, "")
-    .replace(/\*\*/g, "")
-    .replace(/^[#]+\s*/gm, "")
-    .trim();
 }
 
 /**
@@ -47,6 +39,31 @@ function sanitizeRow(row: Record<string, unknown>): Record<string, unknown> {
     out[k] = typeof v === "string" ? sanitizeTableCell(v) : v;
   }
   return out;
+}
+
+/** Add rows from an array of objects to an ExcelJS worksheet. */
+function addRowsToSheet(ws: ExcelJS.Worksheet, rows: Record<string, unknown>[]) {
+  if (rows.length === 0) return;
+  const keys = Object.keys(rows[0]);
+  ws.columns = keys.map((key) => ({ header: key, key, width: 20 }));
+  for (const row of rows) {
+    ws.addRow(row);
+  }
+}
+
+/** Trigger a browser download from an ArrayBuffer. */
+function downloadBuffer(buffer: ArrayBuffer, fileName: string) {
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ─── dashboard → rows converters ──────────────────────────────────────
@@ -222,13 +239,13 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
 
 // ─── main export function ─────────────────────────────────────────────
 
-export function exportReportToExcel(
+export async function exportReportToExcel(
   scenarioTitle: string,
   analysisResult: string,
   formData: Record<string, string>,
   timestamp: string,
 ) {
-  const wb = XLSX.utils.book_new();
+  const wb = new ExcelJS.Workbook();
 
   // Sheet 1 — Summary
   const keyPoints = extractKeyPoints(analysisResult);
@@ -238,9 +255,14 @@ export function exportReportToExcel(
     { Field: "Exported At", Value: new Date().toLocaleString() },
     ...keyPoints.map((kp, i) => ({ Field: `Key Point ${i + 1}`, Value: sanitizeTableCell(kp) })),
   ];
-  const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
-  summarySheet["!cols"] = [{ wch: 20 }, { wch: 80 }];
-  XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+  const summarySheet = wb.addWorksheet("Summary");
+  summarySheet.columns = [
+    { header: "Field", key: "Field", width: 20 },
+    { header: "Value", key: "Value", width: 80 },
+  ];
+  for (const row of summaryRows) {
+    summarySheet.addRow(row);
+  }
 
   // Sheet 2 — Analysis Inputs
   const inputEntries = Object.entries(formData);
@@ -249,9 +271,14 @@ export function exportReportToExcel(
       Parameter: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       Value: sanitizeTableCell(value),
     }));
-    const inputSheet = XLSX.utils.json_to_sheet(inputRows);
-    inputSheet["!cols"] = [{ wch: 30 }, { wch: 60 }];
-    XLSX.utils.book_append_sheet(wb, inputSheet, "Analysis Inputs");
+    const inputSheet = wb.addWorksheet("Analysis Inputs");
+    inputSheet.columns = [
+      { header: "Parameter", key: "Parameter", width: 30 },
+      { header: "Value", key: "Value", width: 60 },
+    ];
+    for (const row of inputRows) {
+      inputSheet.addRow(row);
+    }
   }
 
   // Sheet 3+ — Dashboard Data
@@ -260,9 +287,9 @@ export function exportReportToExcel(
     const dashSheets = dashboardToSheets(parsedData);
     dashSheets.forEach(({ name, rows }) => {
       if (rows.length > 0) {
-        const ws = XLSX.utils.json_to_sheet(rows);
-        // truncate sheet name to 31 chars (Excel limit)
-        XLSX.utils.book_append_sheet(wb, ws, name.slice(0, 31));
+        // Truncate sheet name to 31 chars (Excel limit)
+        const ws = wb.addWorksheet(name.slice(0, 31));
+        addRowsToSheet(ws, rows);
       }
     });
   }
@@ -270,5 +297,6 @@ export function exportReportToExcel(
   // Trigger download
   const dateStr = new Date(timestamp).toISOString().slice(0, 10);
   const fileName = `EXOS_${scenarioTitle.replace(/\s+/g, "_").slice(0, 40)}_${dateStr}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+  const buffer = await wb.xlsx.writeBuffer();
+  downloadBuffer(buffer as ArrayBuffer, fileName);
 }

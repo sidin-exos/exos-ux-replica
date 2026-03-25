@@ -1,7 +1,7 @@
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 // ─── types ───────────────────────────────────────────────────────────
 
@@ -451,9 +451,17 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
       .map(([day, counts]) => ({ day, ...counts }));
   })();
 
+  // Helper: add rows from an array of objects to an ExcelJS worksheet
+  const addRowsToSheet = (ws: ExcelJS.Worksheet, rows: Record<string, unknown>[]) => {
+    if (rows.length === 0) return;
+    const keys = Object.keys(rows[0]);
+    ws.columns = keys.map((key) => ({ header: key, key, width: 20 }));
+    for (const row of rows) ws.addRow(row);
+  };
+
   // Raw data export
-  const exportRawData = () => {
-    const wb = XLSX.utils.book_new();
+  const exportRawData = async () => {
+    const wb = new ExcelJS.Workbook();
 
     const runsData = allPrompts
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -473,7 +481,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
         };
       });
     if (runsData.length > 0) {
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(runsData), "Scenario Runs");
+      addRowsToSheet(wb.addWorksheet("Scenario Runs"), runsData);
     }
 
     if (feedbackRows.length > 0) {
@@ -483,7 +491,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
         Rating: f.rating,
         Feedback: f.feedback_text || "",
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fbData), "Scenario Feedback");
+      addRowsToSheet(wb.addWorksheet("Scenario Feedback"), fbData);
     }
 
     if (intelRows.length > 0) {
@@ -493,7 +501,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
         Success: q.success ? "Yes" : "No",
         "Processing Time (ms)": q.processing_time_ms ?? "",
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(intelData), "Intel Queries");
+      addRowsToSheet(wb.addWorksheet("Intel Queries"), intelData);
     }
 
     if (chatRows.length > 0) {
@@ -501,7 +509,7 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
         Date: new Date(c.created_at!).toLocaleString(),
         Rating: c.rating,
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(chatData), "Chat Feedback");
+      addRowsToSheet(wb.addWorksheet("Chat Feedback"), chatData);
     }
 
     // Chatbot sessions sheet
@@ -517,11 +525,22 @@ export function useAnalyticsDashboard(timeRange: TimeRange = "7d") {
         "Errors": s.error_count,
         "Duration (s)": s.duration_seconds ?? "",
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sessionData), "Chatbot Sessions");
+      addRowsToSheet(wb.addWorksheet("Chatbot Sessions"), sessionData);
     }
 
     const dateStr = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `EXOS_Analytics_RawData_${dateStr}.xlsx`);
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `EXOS_Analytics_RawData_${dateStr}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const refreshAll = () => {

@@ -30,9 +30,29 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth note: verify_jwt is FALSE in config.toml because this endpoint must be
+// callable by unauthenticated users (e.g., public contact form submissions).
+// Security is enforced in-code:
+//   1. Templates without a hardcoded `to` field require a valid JWT.
+//   2. Caller-provided recipients are checked against an allowlist.
+//   3. Input fields are length-limited to prevent abuse.
+
+// Allowed recipient addresses for unauthenticated callers.
+// Templates with a hardcoded `to` in the registry bypass this check.
+const RECIPIENT_ALLOWLIST = new Set([
+  'contact@exosproc.com',
+  'support@exosproc.com',
+])
+
+// Maximum size limits to prevent abuse
+const MAX_TEMPLATE_NAME_LEN = 100
+const MAX_EMAIL_LEN = 254
+const MAX_TEMPLATE_DATA_KEYS = 20
+const MAX_TEMPLATE_DATA_VALUE_LEN = 5000
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= MAX_EMAIL_LEN
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -79,9 +99,9 @@ Deno.serve(async (req) => {
     )
   }
 
-  if (!templateName) {
+  if (!templateName || typeof templateName !== 'string' || templateName.length > MAX_TEMPLATE_NAME_LEN) {
     return new Response(
-      JSON.stringify({ error: 'templateName is required' }),
+      JSON.stringify({ error: 'templateName is required and must be a short string' }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -89,15 +109,36 @@ Deno.serve(async (req) => {
     )
   }
 
+  // Validate templateData size
+  const dataKeys = Object.keys(templateData)
+  if (dataKeys.length > MAX_TEMPLATE_DATA_KEYS) {
+    return new Response(
+      JSON.stringify({ error: `templateData must have at most ${MAX_TEMPLATE_DATA_KEYS} keys` }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+  for (const [key, value] of Object.entries(templateData)) {
+    if (typeof value === 'string' && value.length > MAX_TEMPLATE_DATA_VALUE_LEN) {
+      return new Response(
+        JSON.stringify({ error: `templateData.${key} exceeds maximum length` }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+  }
+
   // 1. Look up template from registry (early — needed to resolve recipient)
   const template = TEMPLATES[templateName]
 
   if (!template) {
-    console.error('Template not found in registry', { templateName })
+    // Do not enumerate available templates to unauthenticated callers
     return new Response(
-      JSON.stringify({
-        error: `Template '${templateName}' not found. Available: ${Object.keys(TEMPLATES).join(', ')}`,
-      }),
+      JSON.stringify({ error: 'Template not found' }),
       {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -120,6 +161,44 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
+  }
+
+  // Validate email format
+  if (!isValidEmail(effectiveRecipient)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid recipient email address' }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
+  // Security: if the template does NOT have a hardcoded recipient, the caller
+  // controls who receives the email. In that case, either:
+  //   a) the caller-provided address must be in the allowlist, or
+  //   b) the caller must be authenticated (JWT required).
+  if (!template.to) {
+    const isAllowlisted = RECIPIENT_ALLOWLIST.has(effectiveRecipient.toLowerCase())
+    if (!isAllowlisted) {
+      // Require authentication for non-allowlisted recipients
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required for this template' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      const token = authHeader.replace('Bearer ', '')
+      const authClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!)
+      const { error: authError } = await authClient.auth.getUser(token)
+      if (authError) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid or expired token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
   }
 
   // Create Supabase client with service role (bypasses RLS)
