@@ -105,6 +105,8 @@ Deno.serve(async (req) => {
 3. Risk Signals (emerging concerns or improvements)
 4. Recommended Actions (actionable next steps for the procurement team)
 
+When presenting tables, always place the Direction/Status column as the SECOND column (right after the risk area name). Use exactly one of these bold keywords for direction: **Improving**, **Stable**, **Deteriorating**, **Critical**, **Moderate**, **Low**.
+
 Be factual, cite sources where possible. Flag direction of change (improving/stable/deteriorating) for each risk area. This is a decision-support tool — present information for consideration, never prescribe.`;
 
     const startTime = Date.now();
