@@ -317,7 +317,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
               <div key={i} className="space-y-1.5">
                 <Label className="text-sm font-medium">{d.name}</Label>
                 <Textarea
-                  placeholder="Describe the event that would signal a change (e.g. 'Brent crude rises above $90/barrel')"
+                  placeholder={i === 0 ? "Describe the event that would signal a change (e.g. 'Brent crude rises above $90/barrel')" : "Describe the event that would signal a change"}
                   value={d.trigger}
                   onChange={e => updateTrigger(i, e.target.value)}
                   rows={2}
