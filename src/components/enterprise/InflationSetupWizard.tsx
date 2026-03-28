@@ -302,32 +302,68 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
 
       {/* Step 2: Trigger Definition */}
       {step === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Trigger Definitions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="destructive" className="border-warning/40 bg-warning/5 text-warning">
-              <ShieldAlert className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                This description is sent to public AI. Do not include confidential information.
-              </AlertDescription>
-            </Alert>
-            {acceptedDrivers.map((d, i) => (
-              <div key={i} className="space-y-1.5">
-                <Label className="text-sm font-medium">{d.name}</Label>
-                <Textarea
-                  placeholder={i === 0 ? "Describe the event that would signal a change (e.g. 'Brent crude rises above $90/barrel')" : "Describe the event that would signal a change"}
-                  value={d.trigger}
-                  onChange={e => updateTrigger(i, e.target.value)}
-                  rows={2}
-                />
-              </div>
-            ))}
-            <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button onClick={() => setStep(3)}>Review <ArrowRight className="w-4 h-4 ml-1" /></Button>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Trigger Definitions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert variant="destructive" className="border-warning/40 bg-warning/5 text-warning">
+                  <ShieldAlert className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    This description is sent to public AI. Do not include confidential information.
+                  </AlertDescription>
+                </Alert>
+                {acceptedDrivers.map((d, i) => (
+                  <div key={i} className="space-y-1.5">
+                    <Label className="text-sm font-medium">{d.name}</Label>
+                    <Textarea
+                      placeholder={i === 0 ? "Describe the event that would signal a change (e.g. 'Brent crude rises above $90/barrel')" : "Describe the event that would signal a change"}
+                      value={d.trigger}
+                      onChange={e => updateTrigger(i, e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                ))}
+                <div className="flex justify-between pt-2">
+                  <Button variant="ghost" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+                  <Button onClick={() => setStep(3)}>Review <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card className="border-iris/25 bg-iris/5 dark:bg-surface sticky top-24">
+              <CardHeader>
+                <CardTitle className="text-sm">Trigger Logic</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm text-muted-foreground">
+                <p>
+                  Triggers define the real-world events that signal a price driver is changing. The system uses these descriptions to scan market data sources.
+                </p>
+                <div className="space-y-2">
+                  <p className="font-medium text-foreground text-xs uppercase tracking-wider">How triggers work</p>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">1</Badge>
+                    <p className="text-xs">Each trigger is a plain-language description of a measurable market event.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">2</Badge>
+                    <p className="text-xs">The AI scans public sources periodically to detect whether a trigger has occurred.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">3</Badge>
+                    <p className="text-xs">When detected, the driver status changes and an alert is generated for review.</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground/70">
+                  Be specific but avoid confidential details — triggers are processed by external AI.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
           </CardContent>
         </Card>
       )}
