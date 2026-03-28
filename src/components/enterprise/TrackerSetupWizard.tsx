@@ -22,7 +22,7 @@ interface TrackerSetupWizardProps {
   onComplete: () => void;
 }
 
-const STEP_LABELS = ["Monitor Type", "Input Blocks", "Files & Context", "Review & Activate"];
+const STEP_LABELS = ["Monitoring Type", "Input Blocks", "Files & Context", "Review & Activate"];
 
 const ENTITY_TYPES: { value: EntityType; label: string }[] = [
   { value: "supplier", label: "Supplier" },
