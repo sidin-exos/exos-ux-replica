@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { format } from "date-fns";
-import { FolderPlus, ChevronRight } from "lucide-react";
+import { FolderPlus, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { EnterpriseTracker, MonitorType, MonitorParameters } from "@/hooks/useEnterpriseTrackers";
 
@@ -19,6 +24,27 @@ const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
 };
 
 const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [scanningId, setScanningId] = useState<string | null>(null);
+
+  const handleScanNow = async (e: React.MouseEvent, tracker: EnterpriseTracker) => {
+    e.stopPropagation();
+    setScanningId(tracker.id);
+    try {
+      const { error } = await supabase.functions.invoke("run-monitor-scan", {
+        body: { tracker_id: tracker.id },
+      });
+      if (error) throw error;
+      toast({ title: "Scan complete", description: `Report generated for "${tracker.name}".` });
+      queryClient.invalidateQueries({ queryKey: ["enterprise_trackers"] });
+      queryClient.invalidateQueries({ queryKey: ["monitor_reports", tracker.id] });
+    } catch (err: any) {
+      toast({ title: "Scan failed", description: err.message || "Unknown error", variant: "destructive" });
+    } finally {
+      setScanningId(null);
+    }
+  };
   if (isLoading) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -80,7 +106,19 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
                 <span className="text-xs text-muted-foreground">
                   Created {format(new Date(t.created_at), "MMM d, yyyy")}
                 </span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    disabled={scanningId === t.id}
+                    onClick={(e) => handleScanNow(e, t)}
+                  >
+                    {scanningId === t.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                    Scan Now
+                  </Button>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
               </div>
             </CardContent>
           </Card>
