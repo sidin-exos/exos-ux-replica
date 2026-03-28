@@ -21,7 +21,7 @@ const PRINCIPLES = [
   {
     icon: TrendingDown,
     title: "Dynamics over Absolutes",
-    description: "The Δ arrow is always the dominant signal. A DRS of 62 that was 78 last quarter tells a different story than one that was 55. Trajectories over positions.",
+    description: "The system is designed to save user's time by flagging rising risks for further analysis and decision-making.",
   },
   {
     icon: Layers,
