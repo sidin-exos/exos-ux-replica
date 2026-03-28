@@ -439,14 +439,18 @@ export function MarketInsightsAdmin() {
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>{(generationResult.summary.processingTimeMs / 1000).toFixed(1)}s</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Tokens:</span>
-                      <span>{generationResult.summary.totalTokens.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{generationResult.summary.estimatedCost}</span>
-                    </div>
+                    {isSuperAdmin && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Tokens:</span>
+                          <span>{generationResult.summary.totalTokens.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{generationResult.summary.estimatedCost}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ) : (
