@@ -79,7 +79,7 @@ const RiskPlatform = () => {
             <div>
               <h2 className="text-base font-semibold text-foreground">Methodology</h2>
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-3xl">
-                The Dynamic Risk Monitoring operates as a parallel system alongside analytical scenarios.
+                The Dynamic Risk Monitoring is intended to save your time by constantly analysing risk scenarios set by user, flagging focus areas for futher analysis and decision-making 
               </p>
             </div>
 
