@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { TrendingUp, BarChart3, Rss } from "lucide-react";
+import { TrendingUp, BarChart3, Rss, Newspaper } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
@@ -11,10 +11,27 @@ import InflationSetupWizard from "@/components/enterprise/InflationSetupWizard";
 import InflationTrackerCard from "@/components/enterprise/InflationTrackerCard";
 import { useInflationTrackers } from "@/hooks/useInflationTrackers";
 
+const MOCK_NEWS_FEED = [
+  { title: "Commodity prices stabilise amid mixed economic signals across EU markets", tracker: "DDR5 prices FOB Ningbo", date: "Mar 28, 2026", source: "Reuters" },
+  { title: "Agricultural labour shortages forecast for Southern Europe Q3-Q4", tracker: "Seasonal workers (agriculture)", date: "Mar 27, 2026", source: "Eurostat" },
+  { title: "EU tariff review expected to impact raw material import costs", tracker: "DDR5 prices FOB Ningbo", date: "Mar 26, 2026", source: "FT" },
+  { title: "Greece labour ministry announces seasonal worker visa programme changes", tracker: "Seasonal workers (agriculture)", date: "Mar 25, 2026", source: "Kathimerini" },
+  { title: "DRAM spot prices hold steady as demand normalises post-Q1 surge", tracker: "DDR5 prices FOB Ningbo", date: "Mar 24, 2026", source: "TrendForce" },
+];
+
 const InflationPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
   const [activeTab, setActiveTab] = useState("dashboard");
   const { trackers, isLoading, createTracker } = useInflationTrackers();
+
+  // Build news feed matched to actual tracker names
+  const newsFeed = useMemo(() => {
+    if (trackers.length === 0) return MOCK_NEWS_FEED;
+    return MOCK_NEWS_FEED.map((n, i) => ({
+      ...n,
+      tracker: trackers[i % trackers.length]?.goods_definition ?? n.tracker,
+    }));
+  }, [trackers]);
 
   if (isAuthLoading) {
     return (
@@ -76,16 +93,46 @@ const InflationPlatform = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="dashboard" className="mt-4 space-y-4">
-              {isLoading ? (
-                <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
-              ) : trackers.length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground">
-                  No trackers yet. Create your first tracker to start monitoring.
+            <TabsContent value="dashboard" className="mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* 2/3 — Tracker list */}
+                <div className="lg:col-span-2 space-y-4">
+                  {isLoading ? (
+                    <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
+                  ) : trackers.length === 0 ? (
+                    <div className="text-center py-16 text-muted-foreground">
+                      No trackers yet. Create your first tracker to start monitoring.
+                    </div>
+                  ) : (
+                    trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
+                  )}
                 </div>
-              ) : (
-                trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
-              )}
+
+                {/* 1/3 — News feed sidebar */}
+                <div>
+                  <Card className="border-iris/25 bg-iris/5 dark:bg-surface sticky top-24">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-1.5">
+                        <Newspaper className="w-3.5 h-3.5" /> Market Signals
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {newsFeed.map((n, i) => (
+                        <div key={i} className="space-y-1">
+                          <p className="text-xs font-medium text-foreground leading-snug">{n.title}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{n.tracker}</Badge>
+                            <span className="text-[10px] text-muted-foreground">{n.source} · {n.date}</span>
+                          </div>
+                        </div>
+                      ))}
+                      <p className="text-[10px] text-muted-foreground/60 pt-1">
+                        Signals will auto-update once scanning is live.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="setup" className="mt-4">
