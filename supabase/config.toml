@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.im-driver-propose]
 verify_jwt = false
+
+[functions.run-monitor-scan]
+verify_jwt = false
