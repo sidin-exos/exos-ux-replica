@@ -46,9 +46,9 @@ function renderBodyText(text: string, baseStyle: Record<string, unknown>): React
   return (
     <Text style={baseStyle}>
       {parts.map((part, i) => {
-        const isValue = valueRe.lastIndex = 0, valueRe.test(part);
+        const testRe = /([€$£][\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[€$£]?[\d,.]+(?:\.\d+)?)?%?|[\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[\d,.]+(?:\.\d+)?)?%)/;
+        const isValue = testRe.test(part);
         if (!isValue) return <Text key={i}>{part}</Text>;
-        // Add thin space between currency symbol and digits
         const spaced = part.replace(/([€$£])([\d])/g, "$1\u2009$2");
         return <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>{spaced}</Text>;
       })}
