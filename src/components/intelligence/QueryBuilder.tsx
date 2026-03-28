@@ -47,6 +47,15 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   AlertTriangle,
 };
 
+const TYPE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
+  supplier:   { bg: "bg-blue-500/15 dark:bg-blue-400/15",   border: "border-blue-500 dark:border-blue-400",   text: "text-blue-600 dark:text-blue-400" },
+  commodity:  { bg: "bg-amber-500/15 dark:bg-amber-400/15", border: "border-amber-500 dark:border-amber-400", text: "text-amber-600 dark:text-amber-400" },
+  industry:   { bg: "bg-emerald-500/15 dark:bg-emerald-400/15", border: "border-emerald-500 dark:border-emerald-400", text: "text-emerald-600 dark:text-emerald-400" },
+  regulatory: { bg: "bg-purple-500/15 dark:bg-purple-400/15", border: "border-purple-500 dark:border-purple-400", text: "text-purple-600 dark:text-purple-400" },
+  "m&a":      { bg: "bg-cyan-500/15 dark:bg-cyan-400/15",   border: "border-cyan-500 dark:border-cyan-400",   text: "text-cyan-600 dark:text-cyan-400" },
+  risk:       { bg: "bg-rose-500/15 dark:bg-rose-400/15",   border: "border-rose-500 dark:border-rose-400",   text: "text-rose-600 dark:text-rose-400" },
+};
+
 interface QueryBuilderProps {
   onSubmit: (params: IntelQueryParams) => void;
   isLoading: boolean;
@@ -103,6 +112,7 @@ export function QueryBuilder({ onSubmit, isLoading }: QueryBuilderProps) {
               {(Object.entries(QUERY_TYPE_LABELS) as [QueryType, typeof QUERY_TYPE_LABELS[QueryType]][]).map(([type, info]) => {
                 const Icon = ICONS[info.icon];
                 const isSelected = queryType === type;
+                const colors = TYPE_COLORS[type];
                 return (
                   <button
                     key={type}
@@ -110,13 +120,13 @@ export function QueryBuilder({ onSubmit, isLoading }: QueryBuilderProps) {
                     onClick={() => setQueryType(type)}
                     className={`p-3 rounded-lg border text-left transition-all ${
                       isSelected
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "border-border hover:border-primary/50 hover:bg-secondary/50"
+                        ? `${colors.border} ${colors.bg} text-foreground ring-1 ring-offset-1 ring-offset-background ${colors.border.replace('border-', 'ring-')}`
+                        : "border-border hover:border-muted-foreground/40 hover:bg-secondary/50"
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      {Icon && <Icon className={`w-4 h-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />}
-                      <span className="font-medium text-sm">{info.label}</span>
+                      {Icon && <Icon className={`w-4 h-4 ${isSelected ? colors.text : "text-muted-foreground"}`} />}
+                      <span className={`font-medium text-sm ${isSelected ? colors.text : ""}`}>{info.label}</span>
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       {info.description}
