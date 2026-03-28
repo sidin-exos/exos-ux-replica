@@ -82,10 +82,7 @@ const RiskPlatform = () => {
             <div>
               <h2 className="text-base font-semibold text-foreground">Methodology</h2>
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-3xl">
-                The Dynamic Monitoring Module operates as a parallel system alongside analytical scenarios. 
-                It uses the <strong className="text-foreground">Dynamic Risk Score (DRS, 0–100, 100 = most stable)</strong> with 
-                the <strong className="text-foreground">Δ-First Principle</strong> — every output prioritises direction and velocity 
-                of change over absolute position. Like a seismograph, not a thermometer.
+                The Dynamic Risk Monitoring operates as a parallel system alongside analytical scenarios.
               </p>
             </div>
 
