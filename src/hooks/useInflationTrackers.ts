@@ -152,5 +152,48 @@ export function useInflationTrackers() {
     },
   });
 
-  return { trackers, isLoading, createTracker };
+  const deleteTracker = useMutation({
+    mutationFn: async (trackerId: string) => {
+      // Delete drivers first, then tracker
+      const { error: dErr } = await supabase
+        .from("inflation_drivers")
+        .delete()
+        .eq("tracker_id", trackerId);
+      if (dErr) throw dErr;
+
+      const { error: tErr } = await supabase
+        .from("inflation_trackers")
+        .delete()
+        .eq("id", trackerId);
+      if (tErr) throw tErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast({ title: "Tracker deleted", description: "The inflation tracker has been removed." });
+    },
+    onError: (err: Error) => {
+      if (isAuthError(err)) { showAuthErrorToast(); return; }
+      toast({ title: "Failed to delete tracker", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const updateTracker = useMutation({
+    mutationFn: async ({ trackerId, goods_definition, driver_count_target }: { trackerId: string; goods_definition: string; driver_count_target: number }) => {
+      const { error } = await supabase
+        .from("inflation_trackers")
+        .update({ goods_definition, driver_count_target } as any)
+        .eq("id", trackerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast({ title: "Tracker updated", description: "Changes saved successfully." });
+    },
+    onError: (err: Error) => {
+      if (isAuthError(err)) { showAuthErrorToast(); return; }
+      toast({ title: "Failed to update tracker", description: err.message, variant: "destructive" });
+    },
+  });
+
+  return { trackers, isLoading, createTracker, deleteTracker, updateTracker };
 }

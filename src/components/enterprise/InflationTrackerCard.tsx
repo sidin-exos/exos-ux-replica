@@ -3,12 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Package, Newspaper, RefreshCw, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChevronDown, ChevronRight, Package, Newspaper, RefreshCw, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import InflationDriverCard from "./InflationDriverCard";
 import type { InflationTracker } from "@/hooks/useInflationTrackers";
+import { useInflationTrackers } from "@/hooks/useInflationTrackers";
 
 interface Props {
   tracker: InflationTracker;
@@ -23,8 +29,13 @@ const MOCK_NEWS = [
 const InflationTrackerCard = ({ tracker }: Props) => {
   const [open, setOpen] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editName, setEditName] = useState(tracker.goods_definition);
+  const [editTarget, setEditTarget] = useState(tracker.driver_count_target);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { deleteTracker, updateTracker } = useInflationTrackers();
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
 
   const handleScanNow = async (e: React.MouseEvent) => {
@@ -42,6 +53,20 @@ const InflationTrackerCard = ({ tracker }: Props) => {
     } finally {
       setIsScanning(false);
     }
+  };
+
+  const handleDelete = () => {
+    deleteTracker.mutate(tracker.id);
+    setShowDeleteConfirm(false);
+  };
+
+  const handleSaveEdit = () => {
+    updateTracker.mutate({
+      trackerId: tracker.id,
+      goods_definition: editName,
+      driver_count_target: editTarget,
+    });
+    setShowEditDialog(false);
   };
 
   return (
@@ -75,6 +100,21 @@ const InflationTrackerCard = ({ tracker }: Props) => {
                 <Badge variant="secondary" className="text-xs">
                   {activeDrivers.length} driver{activeDrivers.length !== 1 ? "s" : ""}
                 </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => e.stopPropagation()}>
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditName(tracker.goods_definition); setEditTarget(tracker.driver_count_target); setShowEditDialog(true); }}>
+                      <Pencil className="w-3.5 h-3.5 mr-2" /> Modify Tracker
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}>
+                      <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete Tracker
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
               </div>
             </div>
@@ -120,6 +160,47 @@ const InflationTrackerCard = ({ tracker }: Props) => {
           </div>
         </CollapsibleContent>
       </Card>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Tracker</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{tracker.goods_definition}" and all its drivers. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modify Tracker</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-goods">Goods / Service Definition</Label>
+              <Input id="edit-goods" value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-target">Driver Count Target</Label>
+              <Input id="edit-target" type="number" min={1} max={20} value={editTarget} onChange={(e) => setEditTarget(Number(e.target.value))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={!editName.trim()}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Collapsible>
   );
 };
