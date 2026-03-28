@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { QueryBuilder } from "@/components/intelligence/QueryBuilder";
 import { useIndustryContexts, useProcurementCategories } from "@/hooks/useContextData";
 import { useSavedIntelConfigs, type CreateIntelConfigParams } from "@/hooks/useSavedIntelConfigs";
-import { CalendarClock, Info, Loader2, Trash2 } from "lucide-react";
+import { CalendarClock, CalendarIcon, Info, Loader2, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { IntelQueryParams } from "@/hooks/useMarketIntelligence";
 
 export function ScheduledReportsPanel() {
@@ -19,6 +23,7 @@ export function ScheduledReportsPanel() {
   const [pendingQuery, setPendingQuery] = useState<IntelQueryParams | null>(null);
   const [configName, setConfigName] = useState("");
   const [frequency, setFrequency] = useState("weekly");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [industrySlug, setIndustrySlug] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -94,18 +99,49 @@ export function ScheduledReportsPanel() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Frequency</Label>
-              <Select value={frequency} onValueChange={setFrequency}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Plan a Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Select Frequency</Label>
+                <Select value={frequency} onValueChange={setFrequency}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <Separator />
