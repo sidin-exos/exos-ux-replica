@@ -433,27 +433,33 @@ export type Database = {
       industry_contexts: {
         Row: {
           constraints: string[]
+          constraints_v2: Json | null
           created_at: string
           id: string
           kpis: string[]
+          kpis_v2: Json | null
           name: string
           slug: string
           updated_at: string
         }
         Insert: {
           constraints?: string[]
+          constraints_v2?: Json | null
           created_at?: string
           id?: string
           kpis?: string[]
+          kpis_v2?: Json | null
           name: string
           slug: string
           updated_at?: string
         }
         Update: {
           constraints?: string[]
+          constraints_v2?: Json | null
           created_at?: string
           id?: string
           kpis?: string[]
+          kpis_v2?: Json | null
           name?: string
           slug?: string
           updated_at?: string
@@ -935,30 +941,78 @@ export type Database = {
       }
       procurement_categories: {
         Row: {
+          category_group: string | null
           characteristics: string
+          common_failure_modes: Json | null
           created_at: string
+          eu_regulatory_context: string | null
+          exos_scenarios_primary: Json | null
+          exos_scenarios_secondary: Json | null
           id: string
+          key_cost_drivers: Json | null
           kpis: string[]
+          kpis_v2: Json | null
+          kraljic_position: string | null
+          kraljic_rationale: string | null
+          market_structure: string | null
           name: string
+          negotiation_dynamics: string | null
+          price_volatility: string | null
+          procurement_levers: Json | null
+          should_cost_components: string | null
           slug: string
+          spend_type: string | null
+          supply_concentration: string | null
           updated_at: string
         }
         Insert: {
+          category_group?: string | null
           characteristics: string
+          common_failure_modes?: Json | null
           created_at?: string
+          eu_regulatory_context?: string | null
+          exos_scenarios_primary?: Json | null
+          exos_scenarios_secondary?: Json | null
           id?: string
+          key_cost_drivers?: Json | null
           kpis?: string[]
+          kpis_v2?: Json | null
+          kraljic_position?: string | null
+          kraljic_rationale?: string | null
+          market_structure?: string | null
           name: string
+          negotiation_dynamics?: string | null
+          price_volatility?: string | null
+          procurement_levers?: Json | null
+          should_cost_components?: string | null
           slug: string
+          spend_type?: string | null
+          supply_concentration?: string | null
           updated_at?: string
         }
         Update: {
+          category_group?: string | null
           characteristics?: string
+          common_failure_modes?: Json | null
           created_at?: string
+          eu_regulatory_context?: string | null
+          exos_scenarios_primary?: Json | null
+          exos_scenarios_secondary?: Json | null
           id?: string
+          key_cost_drivers?: Json | null
           kpis?: string[]
+          kpis_v2?: Json | null
+          kraljic_position?: string | null
+          kraljic_rationale?: string | null
+          market_structure?: string | null
           name?: string
+          negotiation_dynamics?: string | null
+          price_volatility?: string | null
+          procurement_levers?: Json | null
+          should_cost_components?: string | null
           slug?: string
+          spend_type?: string | null
+          supply_concentration?: string | null
           updated_at?: string
         }
         Relationships: []
