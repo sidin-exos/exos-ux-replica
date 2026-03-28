@@ -122,18 +122,6 @@ const RiskPlatform = () => {
               </div>
             </div>
 
-            {/* DRS Band legend */}
-            <div>
-              <h3 className="text-sm font-semibold text-foreground mb-1.5">DRS Bands</h3>
-              <div className="flex flex-wrap gap-x-4 gap-y-1">
-                {(Object.entries(DRS_BAND_META) as [DrsBand, typeof DRS_BAND_META["A"]][]).map(([band, meta]) => (
-                  <span key={band} className="text-[11px]">
-                    <span className={`font-semibold ${meta.color}`}>{band}</span>
-                    <span className="text-muted-foreground"> {meta.range} — {meta.label}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
           </CardContent>
         </Card>
 
