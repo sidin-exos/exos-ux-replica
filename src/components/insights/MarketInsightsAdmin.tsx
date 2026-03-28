@@ -185,6 +185,7 @@ function TableRowSkeleton() {
 }
 
 export function MarketInsightsAdmin() {
+  const { isSuperAdmin } = useAdminAuth();
   const { toast } = useToast();
   const { data: insights, isLoading: isLoadingInsights, refetch } = useAllMarketInsights();
   const { generate, isGenerating, generationResult } = useGenerateMarketInsights();
