@@ -211,7 +211,7 @@ const TrackerSetupWizard = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="monitor-name">Monitor Name</Label>
+              <Label htmlFor="monitor-name">Monitoring Name</Label>
               <Input id="monitor-name" placeholder="e.g. Logistics Consolidation Hypothesis" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -238,8 +238,8 @@ const TrackerSetupWizard = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="monitor-name-dm2">Monitor Name</Label>
-              <Input id="monitor-name-dm2" placeholder="e.g. Acme Corp Supplier Risk Monitor" value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="monitor-name-dm2">Monitoring Name</Label>
+              <Input id="monitor-name-dm2" placeholder="e.g. Acme Corp Supplier Risk Monitoring" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -287,7 +287,7 @@ const TrackerSetupWizard = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="monitor-name-dm3">Monitor Name</Label>
+              <Label htmlFor="monitor-name-dm3">Monitoring Name</Label>
               <Input id="monitor-name-dm3" placeholder="e.g. Q2 Supply Chain Risk Trajectory" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -325,8 +325,8 @@ const TrackerSetupWizard = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="monitor-name-dm4">Monitor Name</Label>
-              <Input id="monitor-name-dm4" placeholder="e.g. DACH Region Regulatory Risk Monitor" value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="monitor-name-dm4">Monitoring Name</Label>
+              <Input id="monitor-name-dm4" placeholder="e.g. DACH Region Regulatory Risk Monitoring" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Comparison Period</Label>
@@ -363,8 +363,8 @@ const TrackerSetupWizard = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="monitor-name-dm5">Monitor Name</Label>
-              <Input id="monitor-name-dm5" placeholder="e.g. Semiconductor Industry Risk Monitor" value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="monitor-name-dm5">Monitoring Name</Label>
+              <Input id="monitor-name-dm5" placeholder="e.g. Semiconductor Industry Risk Monitoring" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Comparison Period</Label>
