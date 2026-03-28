@@ -62,7 +62,7 @@ export async function checkRateLimit(
 
   // Opportunistic cleanup (1% chance per request)
   if (Math.random() < 0.01) {
-    supabase.rpc("cleanup_rate_limits").then(() => {}).catch(() => {});
+    void supabase.rpc("cleanup_rate_limits");
   }
 
   return {

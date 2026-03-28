@@ -1,42 +1,20 @@
 import { useState } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { TrendingUp, LineChart, Layers, Globe, CalendarClock } from "lucide-react";
+import { TrendingUp, BarChart3, Rss } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
-import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
-import TrackerList from "@/components/enterprise/TrackerList";
-import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
-
-const CAPABILITIES = [
-  {
-    icon: LineChart,
-    title: "Commodity Price Tracking",
-    description: "Monitor raw material and commodity indices relevant to your procurement categories — metals, energy, chemicals, packaging, and more.",
-  },
-  {
-    icon: Layers,
-    title: "Cost-Structure Decomposition",
-    description: "Upload your cost breakdowns and supplier quotes. EXOS maps each cost component to market indices for granular inflation visibility.",
-  },
-  {
-    icon: Globe,
-    title: "Regional & Sector Intelligence",
-    description: "Track inflation drivers across geographies and industry sectors, including labour costs, logistics rates, and regulatory-driven price shifts.",
-  },
-  {
-    icon: CalendarClock,
-    title: "Trend Forecasting & Alerts",
-    description: "Receive periodic forecasts and threshold-based alerts so you can renegotiate or hedge before price spikes hit your P&L.",
-  },
-];
+import InflationSetupWizard from "@/components/enterprise/InflationSetupWizard";
+import InflationTrackerCard from "@/components/enterprise/InflationTrackerCard";
+import { useInflationTrackers } from "@/hooks/useInflationTrackers";
 
 const InflationPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
-  const [activeTab, setActiveTab] = useState("monitor");
-  const { trackers, isLoading, createTracker } = useEnterpriseTrackers("inflation");
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const { trackers, isLoading, createTracker } = useInflationTrackers();
 
   if (isAuthLoading) {
     return (
@@ -52,8 +30,8 @@ const InflationPlatform = () => {
         <Header />
         <main className="container py-16">
           <AuthPrompt
-            feature="Enterprise Inflation Platform"
-            description="Track and analyze inflation impacts on your procurement portfolio"
+            feature="Inflation Monitor"
+            description="Track and analyze inflation drivers affecting your procurement portfolio"
           />
         </main>
       </div>
@@ -70,66 +48,73 @@ const InflationPlatform = () => {
           </div>
           <div>
             <h1 className="text-2xl font-display font-semibold text-foreground">
-              Inflation Analysis Platform
+              Inflation Monitor — Price Driver Framework
             </h1>
             <p className="text-sm text-muted-foreground">
-              Persistent commodity & cost-index tracking for proactive procurement decisions.
+              Driver-centric inflation intelligence for proactive procurement decisions.
             </p>
           </div>
         </div>
 
-        {/* Instructional overview */}
+        {/* Methodology card */}
         <Card className="border-warning/20 bg-warning/[0.03]">
-          <CardContent className="pt-5 pb-4 space-y-4">
-            <div>
-              <h2 className="text-base font-semibold text-foreground">How it works</h2>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-3xl">
-                Move beyond static price comparisons. This platform provides <strong className="text-foreground">continuous inflation intelligence</strong> — 
-                define the commodities and cost categories you procure, upload historical spend data or supplier quotes, 
-                and EXOS will track relevant market indices, flag emerging price trends, and deliver actionable forecasts 
-                so you can negotiate from a position of data-backed strength.
-              </p>
+          <CardContent className="pt-5 pb-4 space-y-3">
+            <h2 className="text-base font-semibold text-foreground">How it works</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
+              Define the goods or service you procure, and EXOS proposes <strong className="text-foreground">inflation drivers</strong> — 
+              the external factors that move your costs. You configure weights and event triggers, 
+              then the system monitors each driver and classifies its status:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
+                Improving
+              </Badge>
+              <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30">
+                Stable
+              </Badge>
+              <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">
+                Deteriorating
+              </Badge>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {CAPABILITIES.map((cap) => (
-                <div key={cap.title} className="flex gap-3 items-start">
-                  <div className="p-1.5 rounded-md bg-warning/10 shrink-0 mt-0.5">
-                    <cap.icon className="w-4 h-4 text-warning" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{cap.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{cap.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Drivers are enriched periodically and scanned for trigger events at the cadence you define.
+            </p>
           </CardContent>
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="monitor">Monitor</TabsTrigger>
-            <TabsTrigger value="setup">Setup New Tracker</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="dashboard">
+              <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="setup">New Tracker</TabsTrigger>
+            <TabsTrigger value="events">
+              <Rss className="w-4 h-4 mr-1.5" /> Event Feed
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="monitor" className="mt-6">
-            <TrackerList trackers={trackers} isLoading={isLoading} />
+          <TabsContent value="dashboard" className="mt-6 space-y-4">
+            {isLoading ? (
+              <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
+            ) : trackers.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                No trackers yet. Create your first tracker to start monitoring inflation drivers.
+              </div>
+            ) : (
+              trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
+            )}
           </TabsContent>
 
           <TabsContent value="setup" className="mt-6">
-            <TrackerSetupWizard
-              trackerType="inflation"
-              onActivate={(data) =>
-                createTracker.mutateAsync({ ...data, tracker_type: "inflation" })
-              }
-              onComplete={() => setActiveTab("monitor")}
+            <InflationSetupWizard
+              onActivate={(data) => createTracker.mutateAsync(data)}
+              onComplete={() => setActiveTab("dashboard")}
             />
           </TabsContent>
 
-          <TabsContent value="reports" className="mt-6">
+          <TabsContent value="events" className="mt-6">
             <div className="text-center py-16 text-muted-foreground">
-              Reports will be available once trackers generate their first analysis cycle.
+              Event feed will populate once drivers begin their scan cycles.
             </div>
           </TabsContent>
         </Tabs>
