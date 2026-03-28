@@ -113,25 +113,29 @@ const MarketIntelligence = () => {
       <Header />
       
       <main className="container py-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Sparkles className="w-6 h-6 text-primary" />
+        {/* Hero Section */}
+        <div className="relative mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-cyan-600/90 via-primary to-indigo-600/90 p-8 text-white">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.12),transparent_60%)]" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-display font-bold text-white">Market Intelligence</h1>
             </div>
-            <h1 className="text-3xl font-display font-bold">Market Intelligence</h1>
+            <p className="text-white/80 max-w-2xl text-sm leading-relaxed">
+              Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base improving analytical scenarios results.
+            </p>
           </div>
-          <p className="text-muted-foreground max-w-2xl">
-            Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base improving analytical scenarios results.
-          </p>
         </div>
 
         <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="queries" className="flex items-center gap-2">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1">
+            <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
               Ad-hoc Queries
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2">
+            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md">
               <Database className="h-4 w-4" />
               Knowledge Base
             </TabsTrigger>

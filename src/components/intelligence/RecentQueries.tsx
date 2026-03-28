@@ -63,11 +63,11 @@ export function RecentQueries({ queries, isLoading, onLoad }: RecentQueriesProps
   }, [onLoad]);
 
   return (
-    <Card className="h-full">
+    <Card className="h-full border-t-4 border-t-violet-500">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <History className="w-4 h-4" />
+            <History className="w-4 h-4 text-violet-500" />
             Recent Queries
           </CardTitle>
           {hasLoaded && (
