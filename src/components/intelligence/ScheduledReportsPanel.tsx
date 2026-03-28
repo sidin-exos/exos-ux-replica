@@ -124,6 +124,7 @@ export function ScheduledReportsPanel() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="once">Single Request</SelectItem>
                         <SelectItem value="weekly">Weekly</SelectItem>
                         <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>
@@ -193,6 +194,7 @@ export function ScheduledReportsPanel() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="once">Single Request</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
