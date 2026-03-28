@@ -59,7 +59,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "Enterprise",
+    label: "Analytical Platforms",
     items: [
       { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert },
       { label: "Inflation Analysis Platform", path: "/enterprise/inflation", icon: TrendingUp },
