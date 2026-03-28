@@ -18,7 +18,7 @@ const getTrendColor = (trend: string, c: ReturnType<typeof getPdfColors>): strin
 
 function buildTableStyles(c: ReturnType<typeof getPdfColors>) {
   return {
-    tableContainer: { marginTop: 8, borderWidth: 1, borderColor: c.border, borderRadius: 4, overflow: "hidden" as const },
+    tableContainer: { marginTop: 8, borderWidth: 1, borderColor: c.border, overflow: "hidden" as const },
     headerRow: { flexDirection: "row" as const, backgroundColor: c.surfaceLight, borderBottomWidth: 1, borderBottomColor: c.border, paddingVertical: 6, paddingHorizontal: 8 },
     dataRow: { flexDirection: "row" as const, borderBottomWidth: 1, borderBottomColor: c.border, paddingVertical: 6, paddingHorizontal: 8, alignItems: "center" as const },
     lastRow: { borderBottomWidth: 0 },
@@ -65,7 +65,7 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
           <View key={i} style={[tableStyles.dataRow, i === suppliers.length - 1 && tableStyles.lastRow]}>
             <View style={tableStyles.colSupplier}><Text style={tableStyles.cellText}>{supplier.name}</Text></View>
             <View style={[tableStyles.colScore, { flexDirection: "row", justifyContent: "center" }]}>
-              <View style={{ backgroundColor: getScoreColor(supplier.score, colors) + "30", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 }}>
+              <View style={{ backgroundColor: getScoreColor(supplier.score, colors) + "30", paddingHorizontal: 6, paddingVertical: 2 }}>
                 <Text style={{ fontSize: 10, fontWeight: 700, color: getScoreColor(supplier.score, colors) }}>{supplier.score}</Text>
               </View>
             </View>

@@ -45,7 +45,7 @@ export const PDFCostWaterfall = ({ data, themeMode }: { data: CostWaterfallData;
         {costBreakdownData.map((item, i) => (
           <View key={i} style={styles.barRow}>
             <View style={{ flexDirection: "row", alignItems: "center", width: 82 }}>
-              <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: item.color, marginRight: 4 }} />
+              <View style={{ width: 7, height: 7, backgroundColor: item.color, marginRight: 4 }} />
               <Text style={{ fontSize: 10, color: colors.text }}>{item.name}</Text>
             </View>
             <View style={styles.barTrack}>

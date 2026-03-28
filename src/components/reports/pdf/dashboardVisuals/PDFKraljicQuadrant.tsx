@@ -46,7 +46,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
         <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{quadrantItems.length} items</Text>
         {quadrantItems.slice(0, 2).map((item, idx) => (
           <View key={idx} style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-            <View style={{ width: 5, height: 5, borderRadius: 2, backgroundColor: info.color, marginRight: 3 }} />
+            <View style={{ width: 5, height: 5, backgroundColor: info.color, marginRight: 3 }} />
             <Text style={{ fontSize: 8, color: colors.text }}>{item.name}</Text>
           </View>
         ))}
@@ -93,7 +93,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
         <Text style={{ fontSize: 9, fontWeight: 600, color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
         {Object.entries(quadrantInfo).map(([key, info], i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 3 }}>
-            <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: info.color, marginRight: 6 }} />
+            <View style={{ width: 9, height: 9, backgroundColor: info.color, marginRight: 6 }} />
             <Text style={{ fontSize: 9, color: colors.text, fontWeight: 500, width: 60 }}>{info.label}:</Text>
             <Text style={{ fontSize: 9, color: colors.textMuted }}>{info.strategy}</Text>
           </View>

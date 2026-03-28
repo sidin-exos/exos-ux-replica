@@ -45,7 +45,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
       <View style={{ flexDirection: "row", marginTop: 6, marginBottom: 10 }}>
         {options.map((opt, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", marginRight: 12 }}>
-            <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: opt.color, marginRight: 4 }} />
+            <View style={{ width: 9, height: 9, backgroundColor: opt.color, marginRight: 4 }} />
             <Text style={{ fontSize: 9, color: colors.textMuted }}>{opt.name}</Text>
           </View>
         ))}
@@ -58,7 +58,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
               <Text style={{ width: 22, fontSize: 9, color: colors.textMuted }}>{point.year}</Text>
               <View style={{ flex: 1, flexDirection: "row", height: 10, marginLeft: 6 }}>
                 {point.values.map((val, j) => (
-                  <View key={j} style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted, marginTop: j * 2, borderRadius: 1, position: "absolute", left: 0 }} />
+                  <View key={j} style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted, marginTop: j * 2, position: "absolute", left: 0 }} />
                 ))}
               </View>
             </View>
@@ -77,7 +77,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
           return (
             <View key={i} style={styles.matrixRow}>
               <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.5, flexDirection: "row", alignItems: "center" }]}>
-                <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: opt.color, marginRight: 4 }} />
+                <View style={{ width: 7, height: 7, backgroundColor: opt.color, marginRight: 4 }} />
                 <Text style={{ fontSize: 10, color: colors.text }}>{opt.name}</Text>
               </View>
               <Text style={[styles.matrixCell, { fontWeight: 600 }]}>{formatCurrency(opt.totalTCO)}</Text>

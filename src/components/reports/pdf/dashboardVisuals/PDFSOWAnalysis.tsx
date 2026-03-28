@@ -73,11 +73,11 @@ export const PDFSOWAnalysis = ({ data, themeMode }: { data: SOWAnalysisData; the
           <View key={i} style={{ marginBottom: 6 }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: item.color, marginRight: 4 }} />
+                <View style={{ width: 7, height: 7, backgroundColor: item.color, marginRight: 4 }} />
                 <Text style={{ fontSize: 10, color: colors.text }}>{item.name}</Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ paddingHorizontal: 3, paddingVertical: 1, backgroundColor: item.color + "20", borderRadius: 2, marginRight: 6 }}>
+                <View style={{ paddingHorizontal: 3, paddingVertical: 1, backgroundColor: item.color + "20", marginRight: 6 }}>
                   <Text style={{ fontSize: 8, color: item.color }}>{item.status}</Text>
                 </View>
                 <Text style={{ fontSize: 10, fontWeight: 600, color: item.color }}>{item.score}</Text>

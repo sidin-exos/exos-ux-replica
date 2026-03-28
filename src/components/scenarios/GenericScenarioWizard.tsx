@@ -531,7 +531,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   };
 
   const renderField = (field: ScenarioRequiredField, skipBusinessContextField = false) => {
-    const commonClasses = "bg-background";
+    const commonClasses = "bg-card";
 
     // Special handling for industryContext field - use BusinessContextField component
     if (field.id === "industryContext" && !skipBusinessContextField) {

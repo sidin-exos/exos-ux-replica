@@ -157,6 +157,26 @@ export interface DashboardData {
 
 const DASHBOARD_DATA_REGEX = /<dashboard-data>([\s\S]*?)<\/dashboard-data>/;
 
+/** Map snake_case keys the AI might return to the camelCase keys DashboardData expects */
+const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
+  action_checklist: 'actionChecklist',
+  decision_matrix: 'decisionMatrix',
+  cost_waterfall: 'costWaterfall',
+  timeline_roadmap: 'timelineRoadmap',
+  kraljic_quadrant: 'kraljicQuadrant',
+  tco_comparison: 'tcoComparison',
+  license_tier: 'licenseTier',
+  sensitivity_spider: 'sensitivitySpider',
+  risk_matrix: 'riskMatrix',
+  scenario_comparison: 'scenarioComparison',
+  supplier_scorecard: 'supplierScorecard',
+  sow_analysis: 'sowAnalysis',
+  negotiation_prep: 'negotiationPrep',
+  data_quality: 'dataQuality',
+};
+
+const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
+
 /**
  * Extracts structured dashboard data from AI response text.
  * Returns null if no block found or JSON is malformed.
@@ -165,7 +185,12 @@ export function extractDashboardData(text: string): DashboardData | null {
   if (!text) return null;
 
   const match = text.match(DASHBOARD_DATA_REGEX);
-  if (!match?.[1]) return null;
+  if (!match?.[1]) {
+    if (text.length > 200) {
+      console.warn('[dashboard-data] No <dashboard-data> block found in response');
+    }
+    return null;
+  }
 
   try {
     // Sanitize: LLMs often inject markdown code fences inside custom XML tags
@@ -174,16 +199,35 @@ export function extractDashboardData(text: string): DashboardData | null {
       .replace(/```\s*/g, '')
       .trim();
 
-    const parsed = JSON.parse(raw) as DashboardData;
+    const parsed = JSON.parse(raw);
 
     // Basic sanity: must be a non-null object
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return null;
     }
 
-    return parsed;
+    // Normalize snake_case keys to camelCase and validate
+    const normalized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      const camelKey = SNAKE_TO_CAMEL[key] || key;
+      normalized[camelKey] = value;
+    }
+
+    const foundKeys = Object.keys(normalized);
+    const recognized = foundKeys.filter(k => VALID_KEYS.has(k));
+    const unrecognized = foundKeys.filter(k => !VALID_KEYS.has(k));
+
+    if (unrecognized.length > 0) {
+      console.warn('[dashboard-data] Unrecognized keys:', unrecognized, '| Recognized:', recognized);
+    }
+    if (recognized.length === 0) {
+      console.warn('[dashboard-data] No recognized dashboard keys found. Keys present:', foundKeys);
+      return null;
+    }
+
+    return normalized as DashboardData;
   } catch (err) {
-    // Parse failed — return null to trigger fallback
+    console.warn('[dashboard-data] Parse failed:', err);
     return null;
   }
 }
