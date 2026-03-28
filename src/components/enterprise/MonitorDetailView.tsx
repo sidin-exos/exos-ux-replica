@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, RefreshCw, Loader2, FileText, Clock, Tag } from "lucide-react";
+import { ArrowLeft, RefreshCw, Loader2, FileText, Clock, Tag, FileDown } from "lucide-react";
+import PDFPreviewModal from "@/components/reports/pdf/PDFPreviewModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
