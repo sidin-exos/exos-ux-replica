@@ -106,7 +106,19 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
                 <span className="text-xs text-muted-foreground">
                   Created {format(new Date(t.created_at), "MMM d, yyyy")}
                 </span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    disabled={scanningId === t.id}
+                    onClick={(e) => handleScanNow(e, t)}
+                  >
+                    {scanningId === t.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                    Scan Now
+                  </Button>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
               </div>
             </CardContent>
           </Card>
