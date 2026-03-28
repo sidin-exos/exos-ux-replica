@@ -9,8 +9,8 @@ import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
 import TrackerList from "@/components/enterprise/TrackerList";
-import { useEnterpriseTrackers, MONITOR_TYPE_META, DRS_BAND_META } from "@/hooks/useEnterpriseTrackers";
-import type { MonitorType, DrsBand } from "@/hooks/useEnterpriseTrackers";
+import { useEnterpriseTrackers, MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
+import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
 
 const PRINCIPLES = [
   {
@@ -113,9 +113,6 @@ const RiskPlatform = () => {
                         {m.phase === 2 && <span className="text-muted-foreground ml-1.5 font-normal">· Coming Soon</span>}
                       </p>
                       <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{m.purpose}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        DRS: {m.drs ? "Applied" : "Not applicable"}
-                      </p>
                     </div>
                   </div>
                 ))}
