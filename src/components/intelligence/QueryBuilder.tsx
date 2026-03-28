@@ -59,9 +59,10 @@ const TYPE_COLORS: Record<string, { bg: string; border: string; text: string }> 
 interface QueryBuilderProps {
   onSubmit: (params: IntelQueryParams) => void;
   isLoading: boolean;
+  renderBeforeSubmit?: React.ReactNode;
 }
 
-export function QueryBuilder({ onSubmit, isLoading }: QueryBuilderProps) {
+export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryBuilderProps) {
   const [queryType, setQueryType] = useState<QueryType>("supplier");
   const [queryText, setQueryText] = useState("");
   const [recencyFilter, setRecencyFilter] = useState<string>("__none__");
@@ -222,6 +223,8 @@ export function QueryBuilder({ onSubmit, isLoading }: QueryBuilderProps) {
               </div>
             </CollapsibleContent>
           </Collapsible>
+
+          {renderBeforeSubmit}
 
           {/* Submit */}
           <Button
