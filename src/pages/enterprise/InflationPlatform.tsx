@@ -69,9 +69,15 @@ const InflationPlatform = () => {
               <h1 className="text-2xl font-display font-semibold text-foreground">
                 Inflation Monitor
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Price Driver Framework — driver-centric inflation intelligence.
+              <p className="text-sm text-muted-foreground max-w-2xl">
+                A human-in-the-loop AI platform helping you structure inflation monitoring with an easy-to-use framework for decision-making. Not intended to replace enterprise-grade analytical platforms or serve as a tool for commodity traders.
               </p>
+              <ul className="mt-2 space-y-1 text-xs text-muted-foreground max-w-2xl list-disc list-inside">
+                <li>Choose the goods or service you want to monitor</li>
+                <li>EXOS recommends 5 inflation triggers — adjust the list and set relative importance</li>
+                <li>Pick a monitoring schedule to manage your AI usage</li>
+              </ul>
+              <p className="mt-1.5 text-xs font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
             </div>
           </div>
           <div className="flex items-center gap-2 lg:justify-end">
