@@ -104,7 +104,7 @@ export function MarketInsightsAdmin() {
             Market Insights Knowledge Base
           </CardTitle>
           <CardDescription>
-            Generate and manage AI-powered market intelligence for industry+category combinations.
+            Market Insights improve your scenario analysis results. Pick the country and industry you want to analyse, then upload the latest Market Insights into the system.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
