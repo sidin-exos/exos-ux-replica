@@ -136,7 +136,14 @@ const RiskPlatform = () => {
           </TabsList>
 
           <TabsContent value="monitor" className="mt-6">
-            <TrackerList trackers={trackers} isLoading={isLoading} />
+            {selectedTracker ? (
+              <MonitorDetailView
+                tracker={selectedTracker}
+                onBack={() => setSelectedTracker(null)}
+              />
+            ) : (
+              <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
+            )}
           </TabsContent>
 
           <TabsContent value="setup" className="mt-6">
