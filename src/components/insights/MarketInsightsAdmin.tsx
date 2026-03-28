@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
 import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
