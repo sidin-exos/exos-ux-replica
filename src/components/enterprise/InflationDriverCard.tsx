@@ -1,7 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Clock, Radio } from "lucide-react";
 import type { InflationDriver, DriverStatus } from "@/hooks/useInflationTrackers";
 
 const STATUS_META: Record<DriverStatus, { label: string; className: string }> = {
@@ -10,50 +8,71 @@ const STATUS_META: Record<DriverStatus, { label: string; className: string }> = 
   deteriorating: { label: "Deteriorating", className: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 
+const CADENCE_LABELS: Record<string, string> = {
+  daily: "Daily",
+  twice_weekly: "2× / week",
+  weekly: "Weekly",
+  biweekly: "Bi-weekly",
+  monthly: "Monthly",
+};
+
 interface Props {
   driver: InflationDriver;
 }
 
 const InflationDriverCard = ({ driver }: Props) => {
   const status = STATUS_META[driver.current_status] ?? STATUS_META.stable;
+  const cadenceLabel = CADENCE_LABELS[driver.scan_cadence] ?? driver.scan_cadence;
 
   return (
-    <Card className="border-border/60">
-      <CardContent className="pt-4 pb-3 space-y-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-foreground">{driver.driver_name}</p>
-            {driver.rationale && (
-              <p className="text-xs text-muted-foreground line-clamp-2">{driver.rationale}</p>
-            )}
-          </div>
-          <Badge variant="outline" className={`shrink-0 ${status.className}`}>
-            {status.label}
-          </Badge>
+    <div className="rounded-lg border border-border/60 p-4 space-y-3">
+      {/* Header: name + status */}
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">{driver.driver_name}</p>
+        <Badge variant="outline" className={`shrink-0 ${status.className}`}>
+          {status.label}
+        </Badge>
+      </div>
+
+      {/* Monitoring summary */}
+      {driver.context_summary && (
+        <p className="text-xs text-muted-foreground line-clamp-2">{driver.context_summary}</p>
+      )}
+
+      {/* Meta row: frequency, weight, last updated */}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <Radio className="w-3 h-3" />
+          <span>{cadenceLabel}</span>
         </div>
 
         {driver.weight != null && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Weight</span>
-              <span className="text-xs font-medium text-foreground">{driver.weight}</span>
-            </div>
-            <Progress value={driver.weight} className="h-1.5" />
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Weight:</span>
+            <span className="font-medium text-foreground">{driver.weight}</span>
           </div>
         )}
 
-        {driver.context_summary && (
-          <p className="text-xs text-muted-foreground line-clamp-2">{driver.context_summary}</p>
-        )}
-
-        {driver.last_scanned_at && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <CalendarClock className="w-3 h-3" />
-            <span>Last scan: {new Date(driver.last_scanned_at).toLocaleDateString()}</span>
+        {driver.trigger_description && (
+          <div className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            <span>
+              Updated: {driver.last_scanned_at
+                ? new Date(driver.last_scanned_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                : "Pending"}
+            </span>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Trigger */}
+      {driver.trigger_description && (
+        <div className="rounded-md bg-muted/40 px-3 py-2">
+          <p className="text-[11px] text-muted-foreground font-medium mb-0.5">Trigger</p>
+          <p className="text-xs text-foreground">{driver.trigger_description}</p>
+        </div>
+      )}
+    </div>
   );
 };
 
