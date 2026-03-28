@@ -147,6 +147,30 @@ const COUNTRIES = [
   { slug: "ma", name: "Morocco", group: "Middle East & Africa" },
 ];
 
+// Map regions/sub-regions to their member countries for auto-deselection
+const REGION_MEMBERS: Record<string, string[]> = {
+  "eu": ["de", "fr", "it", "es", "nl", "be", "at", "se", "dk", "fi", "pl", "cz", "pt", "ie", "gr", "ro", "hu", "sk", "bg", "hr", "si", "lt", "lv", "ee", "lu", "cy", "mt"],
+  "dach": ["de", "at", "ch"],
+  "southern-europe": ["it", "es", "pt", "gr"],
+  "nordics": ["se", "no", "dk", "fi"],
+  "benelux": ["be", "nl", "lu"],
+  "cee": ["pl", "cz", "ro", "hu", "sk", "bg", "hr", "si"],
+  "baltics": ["ee", "lv", "lt"],
+  "apac": ["cn", "jp", "kr", "in", "au", "sg", "tw", "id", "th", "vn"],
+  "north-america": ["us", "ca", "mx"],
+  "latam": ["br", "ar", "co", "cl", "pe", "ec", "ve", "mx"],
+  "mena": ["ae", "sa", "il", "eg", "tr", "qa", "ma"],
+  "sub-saharan-africa": ["ng", "za", "ke"],
+};
+
+const COUNTRY_TO_REGIONS: Record<string, string[]> = {};
+Object.entries(REGION_MEMBERS).forEach(([region, members]) => {
+  members.forEach(country => {
+    if (!COUNTRY_TO_REGIONS[country]) COUNTRY_TO_REGIONS[country] = [];
+    COUNTRY_TO_REGIONS[country].push(region);
+  });
+});
+
 function TableRowSkeleton() {
   return (
     <TableRow>
@@ -190,7 +214,20 @@ export function MarketInsightsAdmin() {
   };
 
   const toggleCountry = (slug: string) => {
-    setGenCountries(prev => prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]);
+    setGenCountries(prev => {
+      if (prev.includes(slug)) {
+        // Unchecking — just remove
+        return prev.filter(s => s !== slug);
+      }
+      // Checking a region → remove its member countries
+      const members = REGION_MEMBERS[slug];
+      if (members) {
+        return [...prev.filter(s => !members.includes(s)), slug];
+      }
+      // Checking a country → remove any parent region that covers it
+      const parentRegions = COUNTRY_TO_REGIONS[slug] || [];
+      return [...prev.filter(s => !parentRegions.includes(s)), slug];
+    });
   };
 
   const handleGenerate = async () => {
