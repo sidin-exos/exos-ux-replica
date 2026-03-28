@@ -47,7 +47,7 @@ const InflationPlatform = () => {
         <Header />
         <main className="container py-16">
           <AuthPrompt
-            feature="Inflation Monitor"
+            feature="Inflation Monitoring"
             description="Track and analyze inflation drivers affecting your procurement portfolio"
           />
         </main>
@@ -67,7 +67,7 @@ const InflationPlatform = () => {
             </div>
             <div>
               <h1 className="text-2xl font-display font-semibold text-foreground">
-                Inflation Monitor
+                Inflation Monitoring
               </h1>
               <p className="text-sm text-muted-foreground max-w-2xl">
                 A human-in-the-loop AI platform helping you structure inflation monitoring with an easy-to-use framework for decision-making. Not intended to replace enterprise-grade analytical platforms or serve as a tool for commodity traders.

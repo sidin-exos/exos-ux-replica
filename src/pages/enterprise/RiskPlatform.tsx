@@ -130,8 +130,8 @@ const RiskPlatform = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="monitor">Monitor</TabsTrigger>
-            <TabsTrigger value="setup">New Monitor</TabsTrigger>
+            <TabsTrigger value="monitor">Monitoring</TabsTrigger>
+            <TabsTrigger value="setup">New Monitoring</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
 
