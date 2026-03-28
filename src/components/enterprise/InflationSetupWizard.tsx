@@ -300,8 +300,8 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
         </div>
       )}
 
-      {/* Step 4: Trigger Definition */}
-      {step === 4 && (
+      {/* Step 2: Trigger Definition */}
+      {step === 2 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Trigger Definitions</CardTitle>
@@ -325,15 +325,15 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
               </div>
             ))}
             <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep(3)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button onClick={() => setStep(5)}>Review <ArrowRight className="w-4 h-4 ml-1" /></Button>
+              <Button variant="ghost" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button onClick={() => setStep(3)}>Review <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 5: Review & Activate */}
-      {step === 5 && (
+      {/* Step 3: Review & Activate */}
+      {step === 3 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Review & Activate</CardTitle>
@@ -360,7 +360,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
             </div>
 
             <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep(4)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="ghost" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
               <Button onClick={handleSubmit} disabled={isSubmitting}>
                 <Rocket className="w-4 h-4 mr-1" />
                 {isSubmitting ? "Activating…" : "Activate Tracker"}
