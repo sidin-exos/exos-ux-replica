@@ -8,7 +8,7 @@ import { IntelResults } from "@/components/intelligence/IntelResults";
 import { RecentQueries } from "@/components/intelligence/RecentQueries";
 import { IntelScenarioSelector, type IntelScenario } from "@/components/intelligence/IntelScenarioSelector";
 import { ScheduledReportsPanel } from "@/components/intelligence/ScheduledReportsPanel";
-import { EnterpriseTriggerGate } from "@/components/intelligence/EnterpriseTriggerGate";
+
 import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -23,12 +23,12 @@ const MarketIntelligence = () => {
   const modeParam = searchParams.get("mode") as IntelScenario | null;
   
   const defaultTab = tabParam === "insights" ? "insights" : "queries";
-  const defaultScenario: IntelScenario = modeParam && ["adhoc", "regular", "triggered"].includes(modeParam) ? modeParam : "adhoc";
+  const defaultScenario: IntelScenario = modeParam && ["adhoc", "regular"].includes(modeParam) ? modeParam as IntelScenario : "adhoc";
   
   const [selectedScenario, setSelectedScenario] = useState<IntelScenario>(defaultScenario);
   
   useEffect(() => {
-    if (modeParam && ["adhoc", "regular", "triggered"].includes(modeParam)) {
+    if (modeParam && ["adhoc", "regular"].includes(modeParam)) {
       setSelectedScenario(modeParam as IntelScenario);
     }
   }, [modeParam]);
@@ -69,9 +69,6 @@ const MarketIntelligence = () => {
   }
 
   const renderScenarioContent = () => {
-    if (selectedScenario === "triggered") {
-      return <EnterpriseTriggerGate />;
-    }
 
     if (selectedScenario === "regular") {
       return <ScheduledReportsPanel />;
