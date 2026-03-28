@@ -62,6 +62,21 @@ const TrackerSetupWizard = ({
   const [riskData, setRiskData] = useState("");
   const [comparisonPeriod, setComparisonPeriod] = useState<ComparisonPeriod>("MoM");
 
+  // DM-3 fields
+  const [trackingSubject, setTrackingSubject] = useState("");
+  const [baselineContext, setBaselineContext] = useState("");
+  const [historicalData, setHistoricalData] = useState("");
+
+  // DM-4 fields
+  const [countryRegion, setCountryRegion] = useState("");
+  const [geopoliticalContext, setGeopoliticalContext] = useState("");
+  const [regulatoryNotes, setRegulatoryNotes] = useState("");
+
+  // DM-5 fields
+  const [industryScope, setIndustryScope] = useState("");
+  const [marketContext, setMarketContext] = useState("");
+  const [knownDisruptors, setKnownDisruptors] = useState("");
+
   // Step 2 — Files
   const [files, setFiles] = useState<File[]>([]);
   const [additionalContext, setAdditionalContext] = useState("");
@@ -71,9 +86,25 @@ const TrackerSetupWizard = ({
 
   // Validation
   const canProceedStep0 = monitorType !== null;
-  const canProceedStep1 = monitorType === "DM-1"
-    ? name.trim().length > 0 && hypothesis.trim().length > 0 && contextConstraints.trim().length > 0
-    : name.trim().length > 0 && entityContext.trim().length > 0;
+
+  const canProceedStep1 = (() => {
+    if (!name.trim()) return false;
+    switch (monitorType) {
+      case "DM-1":
+        return hypothesis.trim().length > 0 && contextConstraints.trim().length > 0;
+      case "DM-2":
+        return entityContext.trim().length > 0;
+      case "DM-3":
+        return trackingSubject.trim().length > 0 && baselineContext.trim().length > 0;
+      case "DM-4":
+        return countryRegion.trim().length > 0 && geopoliticalContext.trim().length > 0;
+      case "DM-5":
+        return industryScope.trim().length > 0 && marketContext.trim().length > 0;
+      default:
+        return false;
+    }
+  })();
+
   const canProceedStep2 = gdprChecked;
 
   const handleActivate = async () => {
@@ -84,14 +115,32 @@ const TrackerSetupWizard = ({
         default_period: comparisonPeriod,
       };
 
-      if (monitorType === "DM-1") {
-        parameters.hypothesis = hypothesis.trim();
-        parameters.context_constraints = contextConstraints.trim();
-        parameters.existing_evidence = existingEvidence.trim() || undefined;
-      } else {
-        parameters.entity_type = entityType;
-        parameters.entity_context = entityContext.trim();
-        parameters.risk_data = riskData.trim() || undefined;
+      switch (monitorType) {
+        case "DM-1":
+          parameters.hypothesis = hypothesis.trim();
+          parameters.context_constraints = contextConstraints.trim();
+          parameters.existing_evidence = existingEvidence.trim() || undefined;
+          break;
+        case "DM-2":
+          parameters.entity_type = entityType;
+          parameters.entity_context = entityContext.trim();
+          parameters.risk_data = riskData.trim() || undefined;
+          break;
+        case "DM-3":
+          parameters.tracking_subject = trackingSubject.trim();
+          parameters.baseline_context = baselineContext.trim();
+          parameters.historical_data = historicalData.trim() || undefined;
+          break;
+        case "DM-4":
+          parameters.country_region = countryRegion.trim();
+          parameters.geopolitical_context = geopoliticalContext.trim();
+          parameters.regulatory_notes = regulatoryNotes.trim() || undefined;
+          break;
+        case "DM-5":
+          parameters.industry_scope = industryScope.trim();
+          parameters.market_context = marketContext.trim();
+          parameters.known_disruptors = knownDisruptors.trim() || undefined;
+          break;
       }
 
       if (additionalContext.trim()) {
@@ -132,32 +181,24 @@ const TrackerSetupWizard = ({
             <CardTitle className="text-lg">Select Monitoring Type</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => {
-              const disabled = m.phase !== 1;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => setMonitorType(id)}
-                  className={`w-full text-left rounded-lg border p-3 transition-colors ${
-                    monitorType === id
-                      ? "border-primary bg-primary/5"
-                      : disabled
-                        ? "border-border bg-muted/30 opacity-60 cursor-not-allowed"
-                        : "border-border hover:border-primary/40"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Badge variant={m.phase === 1 ? "default" : "outline"} className="text-[10px]">{id}</Badge>
-                    <span className="text-sm font-medium text-foreground">{m.label}</span>
-                    {disabled && <Badge variant="outline" className="text-[10px] ml-auto">Coming Soon</Badge>}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{m.purpose}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">DRS: {m.drs ? "Applied" : "Not applicable"}</p>
-                </button>
-              );
-            })}
+            {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setMonitorType(id)}
+                className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                  monitorType === id
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/40"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Badge variant="default" className="text-[10px]">{id}</Badge>
+                  <span className="text-sm font-medium text-foreground">{m.label}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{m.purpose}</p>
+              </button>
+            ))}
           </CardContent>
         </Card>
       )}
@@ -239,6 +280,120 @@ const TrackerSetupWizard = ({
         </Card>
       )}
 
+      {step === 1 && monitorType === "DM-3" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">DM-3: Risk Dynamics</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="monitor-name-dm3">Monitor Name</Label>
+              <Input id="monitor-name-dm3" placeholder="e.g. Q2 Supply Chain Risk Trajectory" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Comparison Period</Label>
+              <Select value={comparisonPeriod} onValueChange={(v) => setComparisonPeriod(v as ComparisonPeriod)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIODS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tracking-subject">Block 1 — Tracking Subject</Label>
+              <Textarea id="tracking-subject" placeholder="What risk trajectory are you tracking? e.g. 'Single-source dependency for critical electronic components in our automotive division.'" value={trackingSubject} onChange={(e) => setTrackingSubject(e.target.value)} rows={3} />
+              <p className="text-xs text-muted-foreground">Define the specific risk area whose trajectory you want to monitor over time.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="baseline-context">Block 2 — Baseline & Context</Label>
+              <Textarea id="baseline-context" placeholder="Current risk posture, known mitigation measures, historical trends, comparison benchmarks…" value={baselineContext} onChange={(e) => setBaselineContext(e.target.value)} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="historical-data">Block 3 — Historical Data (optional)</Label>
+              <Textarea id="historical-data" placeholder="Past incidents, trend data, previous assessments or audit results…" value={historicalData} onChange={(e) => setHistoricalData(e.target.value)} rows={2} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 1 && monitorType === "DM-4" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">DM-4: Country / Region</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="monitor-name-dm4">Monitor Name</Label>
+              <Input id="monitor-name-dm4" placeholder="e.g. DACH Region Regulatory Risk Monitor" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Comparison Period</Label>
+              <Select value={comparisonPeriod} onValueChange={(v) => setComparisonPeriod(v as ComparisonPeriod)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIODS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="country-region">Block 1 — Country / Region</Label>
+              <Textarea id="country-region" placeholder="Which country or region to monitor? e.g. 'Turkey — key sourcing geography for textiles and automotive components.'" value={countryRegion} onChange={(e) => setCountryRegion(e.target.value)} rows={3} />
+              <p className="text-xs text-muted-foreground">Covers geopolitical, regulatory, logistics, and macroeconomic risk signals for the specified geography.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="geopolitical-context">Block 2 — Geopolitical & Business Context</Label>
+              <Textarea id="geopolitical-context" placeholder="Your exposure in this geography, active suppliers, contracts, trade routes, known regulatory changes…" value={geopoliticalContext} onChange={(e) => setGeopoliticalContext(e.target.value)} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="regulatory-notes">Block 3 — Regulatory Notes (optional)</Label>
+              <Textarea id="regulatory-notes" placeholder="Upcoming legislation, sanctions, tariff changes, trade agreements under negotiation…" value={regulatoryNotes} onChange={(e) => setRegulatoryNotes(e.target.value)} rows={2} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 1 && monitorType === "DM-5" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">DM-5: Industry Dynamics</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="monitor-name-dm5">Monitor Name</Label>
+              <Input id="monitor-name-dm5" placeholder="e.g. Semiconductor Industry Risk Monitor" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Comparison Period</Label>
+              <Select value={comparisonPeriod} onValueChange={(v) => setComparisonPeriod(v as ComparisonPeriod)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIODS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="industry-scope">Block 1 — Industry & Scope</Label>
+              <Textarea id="industry-scope" placeholder="Which industry or sub-sector to monitor? e.g. 'European pharmaceutical packaging — glass vials and pre-filled syringes.'" value={industryScope} onChange={(e) => setIndustryScope(e.target.value)} rows={3} />
+              <p className="text-xs text-muted-foreground">Tracks industry-level risk signals, structural shifts, M&A activity, and capacity changes.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="market-context">Block 2 — Market & Competitive Context</Label>
+              <Textarea id="market-context" placeholder="Your position in this industry, key competitors, supply-demand dynamics, technology shifts…" value={marketContext} onChange={(e) => setMarketContext(e.target.value)} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="known-disruptors">Block 3 — Known Disruptors (optional)</Label>
+              <Textarea id="known-disruptors" placeholder="Emerging technologies, new entrants, regulatory shifts, sustainability mandates…" value={knownDisruptors} onChange={(e) => setKnownDisruptors(e.target.value)} rows={2} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Step 2: Files & Context */}
       {step === 2 && (
         <Card>
@@ -297,6 +452,30 @@ const TrackerSetupWizard = ({
                     <p className="font-medium text-foreground">{comparisonPeriod}</p>
                   </div>
                 </>
+              )}
+              {monitorType === "DM-3" && (
+                <>
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Tracking Subject</span>
+                    <p className="font-medium text-foreground">{trackingSubject}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Period</span>
+                    <p className="font-medium text-foreground">{comparisonPeriod}</p>
+                  </div>
+                </>
+              )}
+              {monitorType === "DM-4" && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Country / Region</span>
+                  <p className="font-medium text-foreground">{countryRegion}</p>
+                </div>
+              )}
+              {monitorType === "DM-5" && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Industry Scope</span>
+                  <p className="font-medium text-foreground">{industryScope}</p>
+                </div>
               )}
               <div className="col-span-2">
                 <span className="text-muted-foreground">Files</span>
