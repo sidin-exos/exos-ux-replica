@@ -190,7 +190,20 @@ export function MarketInsightsAdmin() {
   };
 
   const toggleCountry = (slug: string) => {
-    setGenCountries(prev => prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]);
+    setGenCountries(prev => {
+      if (prev.includes(slug)) {
+        // Unchecking — just remove
+        return prev.filter(s => s !== slug);
+      }
+      // Checking a region → remove its member countries
+      const members = REGION_MEMBERS[slug];
+      if (members) {
+        return [...prev.filter(s => !members.includes(s)), slug];
+      }
+      // Checking a country → remove any parent region that covers it
+      const parentRegions = COUNTRY_TO_REGIONS[slug] || [];
+      return [...prev.filter(s => !parentRegions.includes(s)), slug];
+    });
   };
 
   const handleGenerate = async () => {
