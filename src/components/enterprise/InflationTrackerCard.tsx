@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Package, Newspaper } from "lucide-react";
+import { ChevronDown, ChevronRight, Package, Newspaper, RefreshCw, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import InflationDriverCard from "./InflationDriverCard";
 import type { InflationTracker } from "@/hooks/useInflationTrackers";
 
@@ -18,7 +22,27 @@ const MOCK_NEWS = [
 
 const InflationTrackerCard = ({ tracker }: Props) => {
   const [open, setOpen] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
+
+  const handleScanNow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsScanning(true);
+    try {
+      const { error } = await supabase.functions.invoke("run-inflation-scan", {
+        body: { tracker_id: tracker.id },
+      });
+      if (error) throw error;
+      toast({ title: "Scan complete", description: `Inflation scan completed for "${tracker.goods_definition}".` });
+      queryClient.invalidateQueries({ queryKey: ["inflation_trackers"] });
+    } catch (err: any) {
+      toast({ title: "Scan failed", description: err.message || "Unknown error", variant: "destructive" });
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
