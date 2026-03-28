@@ -127,7 +127,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
     }
   };
 
-  const steps = ["Goods Definition", "Driver Proposal", "Driver Review", "Weights", "Triggers", "Activate"];
+  const steps = ["Goods Definition", "Driver Proposal", "Triggers", "Activate"];
 
   return (
     <div className="space-y-6">
