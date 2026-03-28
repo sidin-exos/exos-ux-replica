@@ -682,10 +682,10 @@ serve(async (req) => {
       try {
         [industryResult, categoryResult, insightResult] = await Promise.all([
           industrySlug
-            ? supabase.from("industry_contexts").select("name, slug, constraints, kpis").eq("slug", industrySlug).single()
+            ? supabase.from("industry_contexts").select("name, slug, constraints, kpis, constraints_v2, kpis_v2").eq("slug", industrySlug).single()
             : Promise.resolve({ data: null, error: null }),
           categorySlug
-            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis").eq("slug", categorySlug).single()
+            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis, category_group, spend_type, kraljic_position, kraljic_rationale, price_volatility, market_structure, supply_concentration, key_cost_drivers, procurement_levers, negotiation_dynamics, should_cost_components, eu_regulatory_context, common_failure_modes, exos_scenarios_primary, exos_scenarios_secondary, kpis_v2").eq("slug", categorySlug).single()
             : Promise.resolve({ data: null, error: null }),
           (industrySlug && categorySlug)
             ? supabase.from("market_insights")

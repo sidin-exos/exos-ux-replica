@@ -44,6 +44,9 @@ export function ContextPreview({
     return null;
   }
 
+  const hasV2Industry = industry?.constraints_v2 && industry.constraints_v2.length > 0;
+  const hasV2Category = category?.kpis_v2 && category.kpis_v2.length > 0;
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card className="border-dashed">
@@ -53,6 +56,9 @@ export function ContextPreview({
               <span className="flex items-center gap-2">
                 <Code className="h-4 w-4" />
                 AI Context Grounding Preview
+                {(hasV2Industry || hasV2Category) && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">v2</span>
+                )}
               </span>
               <div className="flex items-center gap-2">
                 {industry && (
@@ -119,14 +125,24 @@ export function ContextPreview({
                           Key Constraints
                         </p>
                         <ul className="text-xs space-y-1">
-                          {industry.constraints.slice(0, 5).map((c, i) => (
-                            <li key={i} className="text-muted-foreground">
-                              • {c}
-                            </li>
-                          ))}
-                          {industry.constraints.length > 5 && (
+                          {hasV2Industry ? (
+                            industry.constraints_v2!.slice(0, 5).map((c, i) => (
+                              <li key={i} className="text-muted-foreground flex items-center gap-1">
+                                {c.blocker && <span className="text-destructive font-bold">⛔</span>}
+                                {c.tier && <span className="font-semibold text-[10px]">[{c.tier}]</span>}
+                                <span>• {c.label}</span>
+                              </li>
+                            ))
+                          ) : (
+                            industry.constraints.slice(0, 5).map((c, i) => (
+                              <li key={i} className="text-muted-foreground">
+                                • {c}
+                              </li>
+                            ))
+                          )}
+                          {(hasV2Industry ? industry.constraints_v2! : industry.constraints).length > 5 && (
                             <li className="text-muted-foreground italic">
-                              +{industry.constraints.length - 5} more...
+                              +{(hasV2Industry ? industry.constraints_v2! : industry.constraints).length - 5} more...
                             </li>
                           )}
                         </ul>
@@ -154,12 +170,20 @@ export function ContextPreview({
 
                 {category && (
                   <div className="space-y-2">
-                    <h4 className="font-medium text-sm">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
                       Category: {category.name}
+                      {category.kraljic_position && (
+                        <Badge variant="outline" className="text-xs py-0">{category.kraljic_position}</Badge>
+                      )}
                     </h4>
                     <p className="text-xs text-muted-foreground">
                       {category.characteristics}
                     </p>
+                    {category.eu_regulatory_context && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400">
+                        🇪🇺 {category.eu_regulatory_context}
+                      </p>
+                    )}
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">
                         Category KPIs
