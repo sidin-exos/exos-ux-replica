@@ -159,4 +159,5 @@ Both frontend and edge function use:
 - `View`, `Text`, `Page`, `Document`, `Image` primitives (NOT HTML/CSS — these are PDF-specific components)
 - Styles defined via `StyleSheet.create()` — similar to React Native
 
-**Important:** Standard HTML/CSS does not work in PDF rendering. All styling must use `@react-pdf/renderer` style objects.
+**Important:** Standard HTML/CSS does not work in PDF rendering. All styling must use `@react-pdf/renderer` style objects. 
+If you are changing the edge function design, you need to do a deployment as described after every change.
