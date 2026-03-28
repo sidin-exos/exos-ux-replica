@@ -8,16 +8,10 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ShieldAlert, Plus, Trash2, ArrowLeft, ArrowRight, Rocket } from "lucide-react";
+import { ShieldAlert, Plus, Trash2, ArrowLeft, ArrowRight, Rocket, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import type { DriverInput } from "@/hooks/useInflationTrackers";
-
-const MOCK_DRIVERS: { name: string; rationale: string }[] = [
-  { name: "Crude Oil Price", rationale: "Primary energy input affecting logistics, packaging, and petrochemical-derived materials across the supply chain." },
-  { name: "Regional Labour Cost Index", rationale: "Labour is a significant cost component; wage inflation directly impacts unit economics and service delivery." },
-  { name: "Container Freight Rate", rationale: "Shipping costs fluctuate with demand cycles, fuel prices, and geopolitical disruptions affecting trade routes." },
-  { name: "Base Metal Index (Copper/Aluminium)", rationale: "Key industrial metals used in components and packaging; prices driven by mining output and demand cycles." },
-  { name: "Currency Exchange Volatility", rationale: "FX movements affect imported input costs and cross-border procurement competitiveness." },
-];
 
 interface Props {
   onActivate: (data: { goods_definition: string; driver_count_target: number; drivers: DriverInput[] }) => Promise<unknown>;
