@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { QueryBuilder } from "@/components/intelligence/QueryBuilder";
 import { useIndustryContexts, useProcurementCategories } from "@/hooks/useContextData";
 import { useSavedIntelConfigs, type CreateIntelConfigParams } from "@/hooks/useSavedIntelConfigs";
-import { CalendarClock, Info, Loader2, Trash2 } from "lucide-react";
+import { CalendarClock, CalendarIcon, Info, Loader2, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { IntelQueryParams } from "@/hooks/useMarketIntelligence";
 
 export function ScheduledReportsPanel() {
@@ -19,6 +23,7 @@ export function ScheduledReportsPanel() {
   const [pendingQuery, setPendingQuery] = useState<IntelQueryParams | null>(null);
   const [configName, setConfigName] = useState("");
   const [frequency, setFrequency] = useState("weekly");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [industrySlug, setIndustrySlug] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
   const [isSaving, setIsSaving] = useState(false);
