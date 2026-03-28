@@ -31,7 +31,7 @@ function stripMarkdown(text: string): string {
 }
 
 /** Render body text with inline currency/% values bolded */
-function renderBodyText(text: string, baseStyle: object): ReactElement {
+function renderBodyText(text: string, baseStyle: Record<string, unknown>): ReactElement {
   const stripped = stripMarkdown(text);
   const parts = stripped.split(/(€[\d,.]+\.?\d*|[\d,.]+\.?\d*%|\$[\d,.]+\.?\d*|£[\d,.]+\.?\d*)/g);
 
@@ -218,10 +218,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   coverBrandLine: {
-    width: 100,
     height: 2,
     backgroundColor: C.heading,
     marginBottom: SP.sectionGap,
+    marginHorizontal: 0,
   },
   coverTitle: {
     fontSize: 20,

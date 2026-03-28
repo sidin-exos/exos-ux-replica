@@ -233,10 +233,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   coverBrandLine: {
-    width: 100,
     height: 2,
     backgroundColor: C.heading,
     marginBottom: SP.sectionGap,
+    marginHorizontal: 0,
   },
   coverTitle: {
     fontSize: 20,
