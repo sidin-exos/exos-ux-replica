@@ -117,7 +117,6 @@ const InflationTrackerCard = ({ tracker }: Props) => {
                 </DropdownMenu>
                 {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
               </div>
-              </div>
             </div>
           </CardContent>
         </CollapsibleTrigger>
