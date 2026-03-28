@@ -100,7 +100,23 @@ const InflationTrackerCard = ({ tracker }: Props) => {
                 <Badge variant="secondary" className="text-xs">
                   {activeDrivers.length} driver{activeDrivers.length !== 1 ? "s" : ""}
                 </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => e.stopPropagation()}>
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditName(tracker.goods_definition); setEditTarget(tracker.driver_count_target); setShowEditDialog(true); }}>
+                      <Pencil className="w-3.5 h-3.5 mr-2" /> Modify Tracker
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}>
+                      <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete Tracker
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+              </div>
               </div>
             </div>
           </CardContent>
