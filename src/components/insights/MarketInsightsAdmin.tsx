@@ -522,8 +522,7 @@ export function MarketInsightsAdmin() {
                   <TableHead>Industry</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Country</TableHead>
-                  <TableHead>Confidence</TableHead>
-                  <TableHead>Updated</TableHead>
+                   <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -539,7 +538,6 @@ export function MarketInsightsAdmin() {
                   <TableHead>Industry</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Country</TableHead>
-                  <TableHead>Confidence</TableHead>
                   <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
@@ -549,11 +547,6 @@ export function MarketInsightsAdmin() {
                     <TableCell className="font-medium text-xs">{insight.industry_name}</TableCell>
                     <TableCell className="text-xs">{insight.category_name}</TableCell>
                     <TableCell className="text-xs">{(insight as any).country_name || "EU"}</TableCell>
-                    <TableCell>
-                      <Badge variant={insight.confidence_score >= 0.7 ? "default" : "secondary"} className="text-[10px]">
-                        {Math.round(insight.confidence_score * 100)}%
-                      </Badge>
-                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {format(new Date(insight.created_at), "MMM d, yyyy")}
                     </TableCell>
