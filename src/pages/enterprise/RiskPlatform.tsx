@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Activity, Users, TrendingDown, Layers } from "lucide-react";
@@ -9,6 +9,8 @@ import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
 import TrackerList from "@/components/enterprise/TrackerList";
+import MonitorDetailView from "@/components/enterprise/MonitorDetailView";
+import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
 import { useEnterpriseTrackers, MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
 
@@ -33,7 +35,12 @@ const PRINCIPLES = [
 const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
   const [activeTab, setActiveTab] = useState("monitor");
+  const [selectedTracker, setSelectedTracker] = useState<EnterpriseTracker | null>(null);
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
+
+  const handleSelectTracker = useCallback((tracker: EnterpriseTracker) => {
+    setSelectedTracker(tracker);
+  }, []);
 
   if (isAuthLoading) {
     return (
@@ -129,7 +136,14 @@ const RiskPlatform = () => {
           </TabsList>
 
           <TabsContent value="monitor" className="mt-6">
-            <TrackerList trackers={trackers} isLoading={isLoading} />
+            {selectedTracker ? (
+              <MonitorDetailView
+                tracker={selectedTracker}
+                onBack={() => setSelectedTracker(null)}
+              />
+            ) : (
+              <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
+            )}
           </TabsContent>
 
           <TabsContent value="setup" className="mt-6">
