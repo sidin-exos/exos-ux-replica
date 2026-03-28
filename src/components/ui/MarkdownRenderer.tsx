@@ -25,9 +25,59 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
           p: ({ children }) => (
             <p className="mb-4 leading-relaxed">{children}</p>
           ),
-          strong: ({ children }) => (
-            <strong className="font-semibold text-foreground">{children}</strong>
-          ),
+          strong: ({ children }) => {
+            const text = String(children).toLowerCase().trim();
+            // Colorful direction indicators
+            if (text === "deteriorating" || text === "declining" || text === "worsening") {
+              return (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-destructive/10 text-destructive text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
+                  {children}
+                </span>
+              );
+            }
+            if (text === "improving" || text === "growing" || text === "positive") {
+              return (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {children}
+                </span>
+              );
+            }
+            if (text === "stable" || text === "neutral" || text === "unchanged") {
+              return (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  {children}
+                </span>
+              );
+            }
+            if (text === "critical" || text === "high risk" || text === "severe") {
+              return (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-red-600/10 text-red-600 dark:text-red-400 text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                  {children}
+                </span>
+              );
+            }
+            if (text === "moderate" || text === "medium" || text === "watch") {
+              return (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  {children}
+                </span>
+              );
+            }
+            if (text === "low" || text === "minimal" || text === "low risk") {
+              return (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {children}
+                </span>
+              );
+            }
+            return <strong className="font-semibold text-foreground">{children}</strong>;
+          },
           ul: ({ children }) => (
             <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>
           ),
