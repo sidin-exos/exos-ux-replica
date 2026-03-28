@@ -430,7 +430,7 @@ export function MarketInsightsAdmin() {
                     <CheckCircle2 className="h-4 w-4" />
                     <span className="font-medium text-sm">Generation Complete</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-4 text-xs">
+                  <div className={`grid ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-2'} gap-4 text-xs`}>
                     <div className="flex items-center gap-2">
                       <Database className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>{generationResult.summary.successful}/{generationResult.summary.total}</span>
