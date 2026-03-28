@@ -62,6 +62,16 @@ const InflationTrackerCard = ({ tracker }: Props) => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  disabled={isScanning}
+                  onClick={handleScanNow}
+                >
+                  {isScanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  Scan Now
+                </Button>
                 <Badge variant="secondary" className="text-xs">
                   {activeDrivers.length} driver{activeDrivers.length !== 1 ? "s" : ""}
                 </Badge>
