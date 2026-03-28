@@ -31,9 +31,9 @@ export const DRS_BAND_META: Record<DrsBand, { label: string; color: string; rang
 export const MONITOR_TYPE_META: Record<MonitorType, { label: string; purpose: string; drs: boolean; phase: 1 | 2 }> = {
   "DM-1": { label: "Hypothesis Testing", purpose: "Test a procurement hypothesis with balanced for/against evidence", drs: false, phase: 1 },
   "DM-2": { label: "Risk Assessment", purpose: "Scored multi-dimensional risk assessment for a specific entity", drs: true, phase: 1 },
-  "DM-3": { label: "Risk Dynamics", purpose: "Track DRS trajectory over time across comparison periods", drs: true, phase: 2 },
-  "DM-4": { label: "Country / Region", purpose: "Monitor geopolitical, regulatory, and logistics risk by geography", drs: true, phase: 2 },
-  "DM-5": { label: "Industry Dynamics", purpose: "Track industry-level risk signals and structural shifts", drs: true, phase: 2 },
+  "DM-3": { label: "Risk Dynamics", purpose: "Track DRS trajectory over time across comparison periods", drs: true, phase: 1 },
+  "DM-4": { label: "Country / Region", purpose: "Monitor geopolitical, regulatory, and logistics risk by geography", drs: true, phase: 1 },
+  "DM-5": { label: "Industry Dynamics", purpose: "Track industry-level risk signals and structural shifts", drs: true, phase: 1 },
 };
 
 export interface EnterpriseTracker {
