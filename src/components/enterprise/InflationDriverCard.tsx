@@ -34,12 +34,25 @@ const InflationDriverCard = ({ driver }: Props) => {
         </Badge>
       </div>
 
-      {/* Monitoring summary */}
-      {driver.context_summary && (
-        <p className="text-xs text-muted-foreground line-clamp-2">{driver.context_summary}</p>
-      )}
+      {/* Status summary + last update */}
+      <div className="rounded-md bg-muted/40 px-3 py-2.5 space-y-1">
+        <p className="text-xs text-foreground">
+          {driver.context_summary
+            ? driver.context_summary
+            : driver.current_status === "stable"
+              ? "No significant changes detected. Market conditions remain within expected range."
+              : driver.current_status === "improving"
+                ? "Positive trend detected. Conditions are moving favourably."
+                : "Negative trend detected. Conditions require attention."}
+        </p>
+        <p className="text-[11px] text-muted-foreground">
+          Last updated: {driver.last_scanned_at
+            ? new Date(driver.last_scanned_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            : "Awaiting first scan"}
+        </p>
+      </div>
 
-      {/* Meta row: frequency, weight, last updated */}
+      {/* Meta row: frequency, weight */}
       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <Radio className="w-3 h-3" />
@@ -52,23 +65,19 @@ const InflationDriverCard = ({ driver }: Props) => {
             <span className="font-medium text-foreground">{driver.weight}</span>
           </div>
         )}
-
-        {driver.trigger_description && (
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>
-              Updated: {driver.last_scanned_at
-                ? new Date(driver.last_scanned_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-                : "Pending"}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Trigger */}
       {driver.trigger_description && (
-        <div className="rounded-md bg-muted/40 px-3 py-2">
-          <p className="text-[11px] text-muted-foreground font-medium mb-0.5">Trigger</p>
+        <div className="rounded-md border border-border/40 px-3 py-2">
+          <div className="flex items-center justify-between mb-0.5">
+            <p className="text-[11px] text-muted-foreground font-medium">Trigger</p>
+            <p className="text-[10px] text-muted-foreground">
+              {driver.last_scanned_at
+                ? new Date(driver.last_scanned_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+                : "Pending"}
+            </p>
+          </div>
           <p className="text-xs text-foreground">{driver.trigger_description}</p>
         </div>
       )}
