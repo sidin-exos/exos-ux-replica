@@ -212,18 +212,6 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
                         </span>
                       )}
                       <Badge variant="outline" className="text-[10px]">{report.model_used}</Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPdfReport(report);
-                        }}
-                        title="Export as PDF"
-                      >
-                        <FileDown className="w-3.5 h-3.5" />
-                      </Button>
                     </div>
                   </div>
                 </CardHeader>
