@@ -76,10 +76,14 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
-/** Render body text with inline currency/% values bolded */
-function renderBodyText(text: string, baseStyle: object): ReactElement {
+/** Render body text with inline currency/% values bolded.
+ *  Handles ranges like "7-12%", "€42.50-€55.00", "$10-$20" and
+ *  adds a thin space between currency symbols and numbers. */
+function renderBodyText(text: string, baseStyle: Record<string, unknown>): ReactElement {
   const stripped = stripMarkdown(text);
-  const parts = stripped.split(/(€[\d,.]+\.?\d*|[\d,.]+\.?\d*%|\$[\d,.]+\.?\d*|£[\d,.]+\.?\d*)/g);
+  // Match: ranges (7-12%, €10-€20), standalone currency (€42.50), standalone % (12%)
+  const valueRe = /([€$£][\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[€$£]?[\d,.]+(?:\.\d+)?)?%?|[\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[\d,.]+(?:\.\d+)?)?%)/g;
+  const parts = stripped.split(valueRe);
 
   if (parts.length === 1) {
     return <Text style={baseStyle}>{stripped}</Text>;
@@ -87,11 +91,12 @@ function renderBodyText(text: string, baseStyle: object): ReactElement {
 
   return (
     <Text style={baseStyle}>
-      {parts.map((part, i) => {
-        const isValue = /^[€$£]|%$/.test(part);
-        return isValue
-          ? <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>{part}</Text>
-          : <Text key={i}>{part}</Text>;
+      {parts.map((part: string, i: number) => {
+        const testRe = /([€$£][\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[€$£]?[\d,.]+(?:\.\d+)?)?%?|[\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[\d,.]+(?:\.\d+)?)?%)/;
+        const isValue = testRe.test(part);
+        if (!isValue) return <Text key={i}>{part}</Text>;
+        const spaced = part.replace(/([€$£])([\d])/g, "$1\u2009$2");
+        return <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>{spaced}</Text>;
       })}
     </Text>
   );
