@@ -48,6 +48,7 @@ export interface DriverInput {
 interface CreateTrackerInput {
   goods_definition: string;
   driver_count_target: number;
+  scan_cadence?: string;
   drivers: DriverInput[];
 }
 
@@ -111,6 +112,7 @@ export function useInflationTrackers() {
       if (tErr) throw tErr;
 
       if (input.drivers.length > 0) {
+        const cadence = input.scan_cadence || "twice_weekly";
         const driverRows = input.drivers.map(d => ({
           tracker_id: (tracker as any).id,
           driver_name: d.driver_name,
@@ -118,6 +120,7 @@ export function useInflationTrackers() {
           source: d.source,
           weight: d.weight,
           trigger_description: d.trigger_description,
+          scan_cadence: cadence,
         }));
 
         const { error: dErr } = await supabase

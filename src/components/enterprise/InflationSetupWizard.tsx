@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldAlert, Plus, Trash2, ArrowLeft, ArrowRight, Rocket, Loader2 } from "lucide-react";
@@ -14,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { DriverInput } from "@/hooks/useInflationTrackers";
 
 interface Props {
-  onActivate: (data: { goods_definition: string; driver_count_target: number; drivers: DriverInput[] }) => Promise<unknown>;
+  onActivate: (data: { goods_definition: string; driver_count_target: number; scan_cadence: string; drivers: DriverInput[] }) => Promise<unknown>;
   onComplete: () => void;
 }
 
@@ -33,6 +35,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
   const [drivers, setDrivers] = useState<WizardDriver[]>([]);
   const [customName, setCustomName] = useState("");
   const [customRationale, setCustomRationale] = useState("");
+  const [scanCadence, setScanCadence] = useState("twice_weekly");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
@@ -113,6 +116,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
       await onActivate({
         goods_definition: goodsDefinition.trim(),
         driver_count_target: acceptedDrivers.length,
+        scan_cadence: scanCadence,
         drivers: acceptedDrivers.map(d => ({
           driver_name: d.name,
           rationale: d.rationale || null,
@@ -368,40 +372,97 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
 
       {/* Step 3: Review & Activate */}
       {step === 3 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Review & Activate</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-3 rounded-lg bg-muted/50 space-y-1">
-              <p className="text-xs text-muted-foreground">Goods / Service</p>
-              <p className="text-sm font-medium text-foreground">{goodsDefinition}</p>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">{acceptedDrivers.length} Driver{acceptedDrivers.length !== 1 ? "s" : ""}</p>
-              {acceptedDrivers.map((d, i) => (
-                <div key={i} className="p-3 rounded-lg border border-border/60 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground">{d.name}</p>
-                    {d.weight != null && <Badge variant="secondary" className="text-xs">Weight: {d.weight}</Badge>}
-                  </div>
-                  {d.trigger && (
-                    <p className="text-xs text-muted-foreground">Trigger: {d.trigger}</p>
-                  )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Review & Activate</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+                  <p className="text-xs text-muted-foreground">Goods / Service</p>
+                  <p className="text-sm font-medium text-foreground">{goodsDefinition}</p>
                 </div>
-              ))}
-            </div>
 
-            <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                <Rocket className="w-4 h-4 mr-1" />
-                {isSubmitting ? "Activating…" : "Activate Tracker"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">{acceptedDrivers.length} Driver{acceptedDrivers.length !== 1 ? "s" : ""}</p>
+                  {acceptedDrivers.map((d, i) => (
+                    <div key={i} className="p-3 rounded-lg border border-border/60 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-foreground">{d.name}</p>
+                        {d.weight != null && <Badge variant="secondary" className="text-xs">Weight: {d.weight}</Badge>}
+                      </div>
+                      {d.trigger && (
+                        <p className="text-xs text-muted-foreground">Trigger: {d.trigger}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Monitoring Frequency */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Monitoring Frequency</Label>
+                  <RadioGroup value={scanCadence} onValueChange={setScanCadence} className="space-y-2">
+                    {[
+                      { value: "daily", label: "Every day", desc: "Daily scans for fast-moving markets" },
+                      { value: "twice_weekly", label: "2× per week", desc: "Monday morning & Wednesday — recommended" },
+                      { value: "weekly", label: "Weekly", desc: "Monday morning" },
+                      { value: "biweekly", label: "Bi-weekly", desc: "Every two weeks" },
+                      { value: "monthly", label: "Monthly", desc: "Once per month" },
+                    ].map(opt => (
+                      <label key={opt.value} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${scanCadence === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                        <RadioGroupItem value={opt.value} className="mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                          <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                        </div>
+                        {opt.value === "twice_weekly" && <Badge variant="secondary" className="ml-auto text-[10px]">Default</Badge>}
+                      </label>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <div className="flex justify-between pt-2">
+                  <Button variant="ghost" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    <Rocket className="w-4 h-4 mr-1" />
+                    {isSubmitting ? "Activating…" : "Activate Tracker"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card className="border-iris/25 bg-iris/5 dark:bg-surface sticky top-24">
+              <CardHeader>
+                <CardTitle className="text-sm">Activation</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm text-muted-foreground">
+                <p>
+                  Once activated, the system will begin scanning public market sources at your chosen frequency.
+                </p>
+                <div className="space-y-2">
+                  <p className="font-medium text-foreground text-xs uppercase tracking-wider">What happens next</p>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">1</Badge>
+                    <p className="text-xs">AI scans market sources for each driver's trigger event.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">2</Badge>
+                    <p className="text-xs">Driver status updates to Improving, Stable, or Deteriorating.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">3</Badge>
+                    <p className="text-xs">Alerts are generated when significant changes are detected.</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground/70">
+                  You can adjust frequency and drivers at any time from the dashboard.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
     </div>
   );
