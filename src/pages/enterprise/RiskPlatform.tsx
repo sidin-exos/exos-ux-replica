@@ -110,7 +110,12 @@ const RiskPlatform = () => {
               <h3 className="text-sm font-semibold text-foreground mb-2">Monitoring Types</h3>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
-                  <div key={id} className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5">
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setActiveTab("setup")}
+                    className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
+                  >
                     <Badge variant="default" className="shrink-0 text-[10px] mt-0.5">
                       {id}
                     </Badge>
@@ -120,7 +125,7 @@ const RiskPlatform = () => {
                       </p>
                       <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{m.purpose}</p>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
