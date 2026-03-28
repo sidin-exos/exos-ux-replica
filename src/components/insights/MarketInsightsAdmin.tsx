@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
 import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -184,6 +185,7 @@ function TableRowSkeleton() {
 }
 
 export function MarketInsightsAdmin() {
+  const { isSuperAdmin } = useAdminAuth();
   const { toast } = useToast();
   const { data: insights, isLoading: isLoadingInsights, refetch } = useAllMarketInsights();
   const { generate, isGenerating, generationResult } = useGenerateMarketInsights();
@@ -428,7 +430,7 @@ export function MarketInsightsAdmin() {
                     <CheckCircle2 className="h-4 w-4" />
                     <span className="font-medium text-sm">Generation Complete</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-4 text-xs">
+                  <div className={`grid ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-2'} gap-4 text-xs`}>
                     <div className="flex items-center gap-2">
                       <Database className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>{generationResult.summary.successful}/{generationResult.summary.total}</span>
@@ -437,14 +439,18 @@ export function MarketInsightsAdmin() {
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       <span>{(generationResult.summary.processingTimeMs / 1000).toFixed(1)}s</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Tokens:</span>
-                      <span>{generationResult.summary.totalTokens.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{generationResult.summary.estimatedCost}</span>
-                    </div>
+                    {isSuperAdmin && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Tokens:</span>
+                          <span>{generationResult.summary.totalTokens.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{generationResult.summary.estimatedCost}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ) : (
