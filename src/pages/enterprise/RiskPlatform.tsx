@@ -70,9 +70,6 @@ const RiskPlatform = () => {
             <h1 className="text-2xl font-display font-semibold text-foreground">
               Dynamic Monitoring Module
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Δ-first continuous risk monitoring — trajectories, not static scores.
-            </p>
           </div>
         </div>
 
