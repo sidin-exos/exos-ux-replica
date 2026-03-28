@@ -166,8 +166,19 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
               rows={3}
             />
             <div className="flex justify-end">
-              <Button onClick={handleGoodsNext} disabled={!goodsDefinition.trim()}>
-                Next <ArrowRight className="w-4 h-4 ml-1" />
+              <Button onClick={handleGoodsNext} disabled={!goodsDefinition.trim() || isAnalyzing}>
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    Analyzing price drivers…
+                  </>
+                ) : (
+                  <>
+                    Next <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
+              </Button>
+            </div>
               </Button>
             </div>
           </CardContent>
