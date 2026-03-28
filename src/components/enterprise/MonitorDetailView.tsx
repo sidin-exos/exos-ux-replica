@@ -28,7 +28,7 @@ interface MonitorReport {
 }
 
 const PARAM_LABELS: Record<string, string> = {
-  monitor_type: "Monitor Type",
+  monitor_type: "Monitoring Type",
   entity_type: "Entity Type",
   default_period: "Comparison Period",
   hypothesis: "Hypothesis",
@@ -138,7 +138,7 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Tag className="w-4 h-4" /> Monitor Parameters
+              <Tag className="w-4 h-4" /> Monitoring Parameters
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -251,7 +251,7 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
           scenarioTitle={`${tracker.name} — ${monitorType} ${typeMeta?.label || "Report"}`}
           analysisResult={pdfReport.report_content}
           formData={{
-            "Monitor Type": `${monitorType} — ${typeMeta?.label || ""}`,
+            "Monitoring Type": `${monitorType} — ${typeMeta?.label || ""}`,
             "Report Date": format(new Date(pdfReport.created_at), "MMM d, yyyy 'at' HH:mm"),
             "Model": pdfReport.model_used,
             ...(params.entity_type ? { "Entity Type": String(params.entity_type) } : {}),
