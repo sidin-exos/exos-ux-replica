@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { EnterpriseTracker, MonitorType, MonitorParameters } from "@/hooks/useEnterpriseTrackers";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 interface MonitorDetailViewProps {
   tracker: EnterpriseTracker;
