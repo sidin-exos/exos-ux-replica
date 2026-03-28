@@ -64,61 +64,43 @@ const InflationPlatform = () => {
           </div>
         </div>
 
-        {/* Main content: 2/3 workspace + 1/3 methodology */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
-                <TabsTrigger value="dashboard">
-                  <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
-                </TabsTrigger>
-                <TabsTrigger value="setup">New Tracker</TabsTrigger>
-                <TabsTrigger value="events">
-                  <Rss className="w-4 h-4 mr-1.5" /> Events
-                </TabsTrigger>
-              </TabsList>
+        <div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="dashboard">
+                <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="setup">New Tracker</TabsTrigger>
+              <TabsTrigger value="events">
+                <Rss className="w-4 h-4 mr-1.5" /> Events
+              </TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="dashboard" className="mt-4 space-y-4">
-                {isLoading ? (
-                  <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
-                ) : trackers.length === 0 ? (
-                  <div className="text-center py-16 text-muted-foreground">
-                    No trackers yet. Create your first tracker to start monitoring.
-                  </div>
-                ) : (
-                  trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
-                )}
-              </TabsContent>
-
-              <TabsContent value="setup" className="mt-4">
-                <InflationSetupWizard
-                  onActivate={(data) => createTracker.mutateAsync(data)}
-                  onComplete={() => setActiveTab("dashboard")}
-                />
-              </TabsContent>
-
-              <TabsContent value="events" className="mt-4">
+            <TabsContent value="dashboard" className="mt-4 space-y-4">
+              {isLoading ? (
+                <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
+              ) : trackers.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
-                  Event feed will populate once drivers begin their scan cycles.
+                  No trackers yet. Create your first tracker to start monitoring.
                 </div>
-              </TabsContent>
-            </Tabs>
-          </div>
+              ) : (
+                trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
+              )}
+            </TabsContent>
 
-          {/* 1/3 sidebar: methodology */}
-          <div>
-            <Card className="border-warning/20 bg-warning/[0.03] sticky top-24">
-              <CardContent className="pt-5 pb-4 space-y-3">
-                <h2 className="text-sm font-semibold text-foreground">How it works</h2>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Define the goods you procure → EXOS proposes <strong className="text-foreground">inflation drivers</strong> → configure weights & triggers → monitor status changes.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Drivers are enriched periodically and scanned for trigger events at the cadence you define.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+            <TabsContent value="setup" className="mt-4">
+              <InflationSetupWizard
+                onActivate={(data) => createTracker.mutateAsync(data)}
+                onComplete={() => setActiveTab("dashboard")}
+              />
+            </TabsContent>
+
+            <TabsContent value="events" className="mt-4">
+              <div className="text-center py-16 text-muted-foreground">
+                Event feed will populate once drivers begin their scan cycles.
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </EnterpriseLayout>
