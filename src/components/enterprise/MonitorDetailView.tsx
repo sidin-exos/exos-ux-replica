@@ -168,9 +168,22 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
 
         {/* Right: Last 3 Reports (2/3) */}
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <FileText className="w-4 h-4" /> Latest Reports
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <FileText className="w-4 h-4" /> Latest Reports
+            </h3>
+            {reports.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setPdfReport(reports[0])}
+              >
+                <FileDown className="w-4 h-4" />
+                Download PDF
+              </Button>
+            )}
+          </div>
 
           {reportsLoading ? (
             <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">Loading reports…</CardContent></Card>
