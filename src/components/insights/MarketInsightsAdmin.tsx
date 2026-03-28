@@ -301,6 +301,8 @@ export function MarketInsightsAdmin() {
           </CardTitle>
           <CardDescription>
             Market Insights improve your scenario analysis results. Pick the country and industry you want to analyse, then upload the latest Market Insights into the system.
+            <br />
+            Market Insights contain publicly available information, no sensitive information is used. You can pick existing market insights from the system database if they fit your needs.
           </CardDescription>
         </CardHeader>
       </Card>
