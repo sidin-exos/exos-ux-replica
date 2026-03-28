@@ -8,16 +8,10 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ShieldAlert, Plus, Trash2, ArrowLeft, ArrowRight, Rocket } from "lucide-react";
+import { ShieldAlert, Plus, Trash2, ArrowLeft, ArrowRight, Rocket, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import type { DriverInput } from "@/hooks/useInflationTrackers";
-
-const MOCK_DRIVERS: { name: string; rationale: string }[] = [
-  { name: "Crude Oil Price", rationale: "Primary energy input affecting logistics, packaging, and petrochemical-derived materials across the supply chain." },
-  { name: "Regional Labour Cost Index", rationale: "Labour is a significant cost component; wage inflation directly impacts unit economics and service delivery." },
-  { name: "Container Freight Rate", rationale: "Shipping costs fluctuate with demand cycles, fuel prices, and geopolitical disruptions affecting trade routes." },
-  { name: "Base Metal Index (Copper/Aluminium)", rationale: "Key industrial metals used in components and packaging; prices driven by mining output and demand cycles." },
-  { name: "Currency Exchange Volatility", rationale: "FX movements affect imported input costs and cross-border procurement competitiveness." },
-];
 
 interface Props {
   onActivate: (data: { goods_definition: string; driver_count_target: number; drivers: DriverInput[] }) => Promise<unknown>;
@@ -40,21 +34,45 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
   const [customName, setCustomName] = useState("");
   const [customRationale, setCustomRationale] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { toast } = useToast();
 
   const acceptedDrivers = drivers.filter(d => d.accepted);
 
-  // Step 0 → 1: propose drivers
-  const handleGoodsNext = () => {
+  // Step 0 → 1: call Gemini to propose drivers
+  const handleGoodsNext = async () => {
     if (!goodsDefinition.trim()) return;
-    setDrivers(MOCK_DRIVERS.map(d => ({
-      name: d.name,
-      rationale: d.rationale,
-      accepted: true,
-      source: "ai_proposed" as const,
-      weight: null,
-      trigger: "",
-    })));
-    setStep(1);
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("im-driver-propose", {
+        body: { goods_definition: goodsDefinition.trim(), driver_count_target: 5 },
+      });
+
+      if (error) throw error;
+
+      const proposed = (data?.drivers ?? []) as Array<{ name: string; rationale: string }>;
+      if (proposed.length === 0) throw new Error("No drivers returned");
+
+      setDrivers(proposed.map(d => ({
+        name: d.name,
+        rationale: d.rationale,
+        accepted: true,
+        source: "ai_proposed" as const,
+        weight: null,
+        trigger: "",
+      })));
+
+      if (data?.source === "fallback") {
+        toast({ title: "Using default drivers", description: "AI analysis unavailable — default drivers loaded. You can customize them.", variant: "default" });
+      }
+
+      setStep(1);
+    } catch (err) {
+      console.error("Driver proposal failed:", err);
+      toast({ title: "Analysis failed", description: "Could not generate drivers. Please try again.", variant: "destructive" });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const toggleDriver = (idx: number) => {
@@ -148,8 +166,17 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
               rows={3}
             />
             <div className="flex justify-end">
-              <Button onClick={handleGoodsNext} disabled={!goodsDefinition.trim()}>
-                Next <ArrowRight className="w-4 h-4 ml-1" />
+              <Button onClick={handleGoodsNext} disabled={!goodsDefinition.trim() || isAnalyzing}>
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    Analyzing price drivers…
+                  </>
+                ) : (
+                  <>
+                    Next <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>
