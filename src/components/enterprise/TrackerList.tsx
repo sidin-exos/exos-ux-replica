@@ -44,7 +44,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
         <FolderPlus className="w-12 h-12 text-muted-foreground/40 mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-1">No monitors yet</h3>
         <p className="text-sm text-muted-foreground max-w-sm">
-          Create your first monitor from the "New Monitor" tab to start tracking dynamics.
+          Create your first monitor from the "Set up New Monitor" tab to start tracking dynamics.
         </p>
       </div>
     );
