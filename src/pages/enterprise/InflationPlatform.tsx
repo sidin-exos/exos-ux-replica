@@ -42,82 +42,84 @@ const InflationPlatform = () => {
     <EnterpriseLayout>
       <Header />
       <main className="container py-8 space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-warning/10">
-            <TrendingUp className="w-6 h-6 text-warning" />
+        {/* Header row: 2/3 title + 1/3 status badges */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-warning/10">
+              <TrendingUp className="w-6 h-6 text-warning" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-display font-semibold text-foreground">
+                Inflation Monitor
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Price Driver Framework — driver-centric inflation intelligence.
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-display font-semibold text-foreground">
-              Inflation Monitor — Price Driver Framework
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Driver-centric inflation intelligence for proactive procurement decisions.
-            </p>
+          <div className="flex items-center gap-2 lg:justify-end">
+            <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">Improving</Badge>
+            <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30">Stable</Badge>
+            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">Deteriorating</Badge>
           </div>
         </div>
 
-        {/* Methodology card */}
-        <Card className="border-warning/20 bg-warning/[0.03]">
-          <CardContent className="pt-5 pb-4 space-y-3">
-            <h2 className="text-base font-semibold text-foreground">How it works</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
-              Define the goods or service you procure, and EXOS proposes <strong className="text-foreground">inflation drivers</strong> — 
-              the external factors that move your costs. You configure weights and event triggers, 
-              then the system monitors each driver and classifies its status:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
-                Improving
-              </Badge>
-              <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30">
-                Stable
-              </Badge>
-              <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">
-                Deteriorating
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Drivers are enriched periodically and scanned for trigger events at the cadence you define.
-            </p>
-          </CardContent>
-        </Card>
+        {/* Main content: 2/3 workspace + 1/3 methodology */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList>
+                <TabsTrigger value="dashboard">
+                  <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
+                </TabsTrigger>
+                <TabsTrigger value="setup">New Tracker</TabsTrigger>
+                <TabsTrigger value="events">
+                  <Rss className="w-4 h-4 mr-1.5" /> Events
+                </TabsTrigger>
+              </TabsList>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="dashboard">
-              <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="setup">New Tracker</TabsTrigger>
-            <TabsTrigger value="events">
-              <Rss className="w-4 h-4 mr-1.5" /> Event Feed
-            </TabsTrigger>
-          </TabsList>
+              <TabsContent value="dashboard" className="mt-4 space-y-4">
+                {isLoading ? (
+                  <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
+                ) : trackers.length === 0 ? (
+                  <div className="text-center py-16 text-muted-foreground">
+                    No trackers yet. Create your first tracker to start monitoring.
+                  </div>
+                ) : (
+                  trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
+                )}
+              </TabsContent>
 
-          <TabsContent value="dashboard" className="mt-6 space-y-4">
-            {isLoading ? (
-              <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
-            ) : trackers.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                No trackers yet. Create your first tracker to start monitoring inflation drivers.
-              </div>
-            ) : (
-              trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
-            )}
-          </TabsContent>
+              <TabsContent value="setup" className="mt-4">
+                <InflationSetupWizard
+                  onActivate={(data) => createTracker.mutateAsync(data)}
+                  onComplete={() => setActiveTab("dashboard")}
+                />
+              </TabsContent>
 
-          <TabsContent value="setup" className="mt-6">
-            <InflationSetupWizard
-              onActivate={(data) => createTracker.mutateAsync(data)}
-              onComplete={() => setActiveTab("dashboard")}
-            />
-          </TabsContent>
+              <TabsContent value="events" className="mt-4">
+                <div className="text-center py-16 text-muted-foreground">
+                  Event feed will populate once drivers begin their scan cycles.
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
 
-          <TabsContent value="events" className="mt-6">
-            <div className="text-center py-16 text-muted-foreground">
-              Event feed will populate once drivers begin their scan cycles.
-            </div>
-          </TabsContent>
-        </Tabs>
+          {/* 1/3 sidebar: methodology */}
+          <div>
+            <Card className="border-warning/20 bg-warning/[0.03] sticky top-24">
+              <CardContent className="pt-5 pb-4 space-y-3">
+                <h2 className="text-sm font-semibold text-foreground">How it works</h2>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Define the goods you procure → EXOS proposes <strong className="text-foreground">inflation drivers</strong> → configure weights & triggers → monitor status changes.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Drivers are enriched periodically and scanned for trigger events at the cadence you define.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
     </EnterpriseLayout>
   );
