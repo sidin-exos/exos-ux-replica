@@ -1,0 +1,1 @@
+DELETE FROM public.rate_limits WHERE endpoint = 'generate-pdf' AND created_at < now() - interval '5 minutes';
