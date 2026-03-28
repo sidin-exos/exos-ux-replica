@@ -127,7 +127,7 @@ export function MarketInsightsAdmin() {
             </Button>
             <div className="flex-1 text-sm text-muted-foreground">
               <p>Generates EU-focused insights for 20 industry+category combinations.</p>
-              <p className="text-xs">Time: ~5 min (one-by-one to avoid timeouts)</p>
+              
             </div>
           </div>
 
