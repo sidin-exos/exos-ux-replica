@@ -91,7 +91,11 @@ const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor specializing i
 Output your audit as a structured critique with [PASS] or [FAIL] markers for each check.
 At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION].`;
 
-const SYNTHESIZER_SYSTEM_PROMPT = `You are a Senior Procurement Strategist producing the final deliverable for a client.
+function buildSynthesizerPrompt(dashboards: string[] = []): string {
+  const dashboardInstruction = dashboards.length > 0
+    ? `You MUST generate data for these specific dashboards: ${dashboards.join(", ")}`
+    : "Include dashboard keys relevant to the scenario.";
+  return `You are a Senior Procurement Strategist producing the final deliverable for a client.
 
 You are given:
 1. An original analysis draft
@@ -111,12 +115,17 @@ Output ONLY the final polished analysis. Do NOT include:
 
 The output should read as a clean, professional procurement analysis as if it were correct from the start.
 
-IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON with structured visualization data extracted from your analysis. Do NOT wrap the JSON in markdown code blocks.
+IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON. Do NOT wrap the JSON in markdown code blocks. ${dashboardInstruction}
 
-Valid dashboard keys (include only those relevant to the scenario):
-actionChecklist, decisionMatrix, costWaterfall, timelineRoadmap, kraljicQuadrant, tcoComparison, licenseTier, sensitivitySpider, riskMatrix, scenarioComparison, supplierScorecard, sowAnalysis, negotiationPrep, dataQuality
+Required schemas:
+- costWaterfall: {"components":[{"name":"...","value":NUMBER,"type":"cost"|"reduction"}],"currency":"$"}
+- tcoComparison: {"data":[{"year":"Y0","optA":NUMBER,"optB":NUMBER}],"options":[{"id":"optA","name":"...","color":"#1B2A4A","totalTCO":NUMBER}],"currency":"$"}
+- actionChecklist: {"actions":[{"action":"...","priority":"high"|"medium"|"low","status":"pending"|"in-progress"|"done","owner":"..."}]}
+- riskMatrix: {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
+- sensitivitySpider: {"variables":[{"name":"...","baseCase":NUMBER,"lowCase":NUMBER,"highCase":NUMBER}],"currency":"$"}
 
-Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"License Fees","value":120000,"type":"cost"},{"name":"Negotiated Discount","value":18000,"type":"reduction"}],"currency":"$"}}</dashboard-data>`;
+Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"License Fees","value":120000,"type":"cost"},{"name":"Discount","value":18000,"type":"reduction"}],"currency":"$"}}</dashboard-data>`;
+}
 
 // ============================================
 // SERVER-SIDE GROUNDING HELPERS
@@ -435,7 +444,8 @@ function buildServerGroundedPrompts(
   scenarioData: Record<string, unknown>,
   userInput: string,
   injectShadowLog: boolean = false,
-  marketInsight: MarketInsightRow | null = null
+  marketInsight: MarketInsightRow | null = null,
+  selectedDashboards: string[] = []
 ): { systemPrompt: string; userPrompt: string } {
   // Build system prompt with injected context
   const contextParts: string[] = [];
@@ -455,12 +465,26 @@ IMPORTANT RULES:
 6. Only cite specific data points from provided context
 7. Flag uncertainty explicitly with confidence levels
 8. Err on cautious side for savings projections
-9. At the VERY END of your response, you MUST append a <dashboard-data> XML block containing valid JSON with structured data for the relevant dashboards. Do NOT wrap the JSON in markdown code blocks inside the XML tags. Use REAL values from your analysis.
+9. At the VERY END of your response, you MUST append a <dashboard-data> XML block containing valid JSON. Do NOT wrap the JSON in markdown code blocks inside the XML tags. Use REAL values extracted from your analysis.
+${selectedDashboards.length > 0 ? `\nYou MUST generate data for these specific dashboards: ${selectedDashboards.join(", ")}` : "\nInclude dashboard keys relevant to the scenario."}
 
-Valid dashboard keys (include only those relevant):
-actionChecklist, decisionMatrix, costWaterfall, timelineRoadmap, kraljicQuadrant, tcoComparison, licenseTier, sensitivitySpider, riskMatrix, scenarioComparison, supplierScorecard, sowAnalysis, negotiationPrep, dataQuality
+Required schemas for each dashboard key:
+- costWaterfall: {"components":[{"name":"...","value":NUMBER,"type":"cost"|"reduction"}],"currency":"$"}
+- tcoComparison: {"data":[{"year":"Y0","optA":NUMBER,"optB":NUMBER}],"options":[{"id":"optA","name":"...","color":"#1B2A4A","totalTCO":NUMBER}],"currency":"$"}
+- actionChecklist: {"actions":[{"action":"...","priority":"high"|"medium"|"low"|"critical","status":"pending"|"in-progress"|"done"|"blocked","owner":"..."}]}
+- riskMatrix: {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
+- sensitivitySpider: {"variables":[{"name":"...","baseCase":NUMBER,"lowCase":NUMBER,"highCase":NUMBER}],"currency":"$"}
+- decisionMatrix: {"criteria":[{"name":"...","weight":NUMBER}],"options":[{"name":"...","scores":[NUMBER]}]}
+- timelineRoadmap: {"phases":[{"name":"...","startWeek":NUMBER,"endWeek":NUMBER,"status":"completed"|"in-progress"|"upcoming"}]}
+- kraljicQuadrant: {"items":[{"id":"1","name":"...","supplyRisk":NUMBER,"businessImpact":NUMBER}]}
+- scenarioComparison: {"scenarios":[{"id":"a","name":"...","color":"#1B2A4A"}],"radarData":[{"metric":"...","a":NUMBER,"b":NUMBER}],"summary":[{"criteria":"...","a":"...","b":"..."}]}
+- supplierScorecard: {"suppliers":[{"name":"...","score":NUMBER,"trend":"up"|"down"|"stable","spend":"$1M"}]}
+- sowAnalysis: {"clarity":NUMBER,"sections":[{"name":"...","status":"complete"|"partial"|"missing","note":"..."}]}
+- negotiationPrep: {"batna":{"strength":NUMBER,"description":"..."},"leveragePoints":[{"point":"...","tactic":"..."}],"sequence":[{"step":"...","detail":"..."}]}
+- dataQuality: {"fields":[{"field":"...","status":"complete"|"partial"|"missing","coverage":NUMBER}]}
+- licenseTier: {"tiers":[{"name":"...","users":NUMBER,"costPerUser":NUMBER,"totalCost":NUMBER,"color":"#1B2A4A"}]}
 
-Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"Materials","value":225000,"type":"cost"},{"name":"Savings","value":45000,"type":"reduction"}],"currency":"$"},"actionChecklist":{"actions":[{"action":"Renegotiate","priority":"high","status":"pending","owner":"Procurement"}]}}</dashboard-data>
+Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"Materials","value":225000,"type":"cost"},{"name":"Savings","value":45000,"type":"reduction"}],"currency":"$"}}</dashboard-data>
 
 ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
 
@@ -524,7 +548,7 @@ async function callLLM(
         systemPrompt: sysPrompt,
         contents: [{ role: "user", parts: [{ text: usrPrompt }] }],
         temperature: 0.4,
-        maxOutputTokens: 5000,
+        maxOutputTokens: 8192,
         model: googleModel,
       });
 
@@ -612,6 +636,7 @@ serve(async (req) => {
     const anonymizationMetadata = optionalRecord(body.anonymizationMetadata, "anonymizationMetadata", 50);
     const enableTestLogging = optionalBoolean(body.enableTestLogging, "enableTestLogging") ?? true;
     const scenarioId = requireString(body.scenarioId, "scenarioId", { optional: true, maxLength: 100 });
+    const selectedDashboards: string[] = Array.isArray(body.selectedDashboards) ? body.selectedDashboards.filter((d: unknown) => typeof d === "string").slice(0, 20) : [];
     const reqEnv = requireString(body.env, "env", { optional: true, maxLength: 50 });
 
     // === SERVER-SIDE ANONYMIZATION (fail-closed) ===
@@ -735,7 +760,8 @@ serve(async (req) => {
           anonymizedScenarioData || {},
           anonymizedUserPrompt,
           shouldInjectShadowLog,
-          insightResult.data as MarketInsightRow | null
+          insightResult.data as MarketInsightRow | null,
+          selectedDashboards
         );
 
         systemPrompt = grounded.systemPrompt;
@@ -750,6 +776,10 @@ serve(async (req) => {
     } else if (body.systemPrompt) {
       // Legacy path: client sent full prompts (useQuickAnalysis, ModelConfigPanel, etc.)
       systemPrompt = body.systemPrompt;
+      // Append selected dashboards if provided
+      if (selectedDashboards.length > 0) {
+        systemPrompt += `\n\nYou MUST generate <dashboard-data> JSON for these specific dashboards: ${selectedDashboards.join(", ")}`;
+      }
       userPrompt = anonymizedUserPrompt;
       // Inject shadow log for legacy path too if conditions met
       if (enableTestLogging && scenarioType) {
@@ -831,7 +861,7 @@ serve(async (req) => {
 
       // Cycle 3: Synthesizer Final
       const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPrompt}\n</original-request>`;
-      const finalContent = await callLLM(SYNTHESIZER_SYSTEM_PROMPT, synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      const finalContent = await callLLM(buildSynthesizerPrompt(selectedDashboards), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
       console.log(`[Sentinel] Cycle 3 (Synthesizer Final): ${finalContent.length} chars`);
 
       const processingTime = Math.round(performance.now() - startTime);
@@ -911,7 +941,7 @@ serve(async (req) => {
           systemPrompt,
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           temperature: 0.4,
-          maxOutputTokens: 5000,
+          maxOutputTokens: 8192,
           model: googleModel,
         });
 

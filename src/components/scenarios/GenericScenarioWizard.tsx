@@ -419,7 +419,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       industryContext || null,
       categoryContext || null,
       undefined, // config
-      effectiveModel // pass the model from settings
+      effectiveModel, // pass the model from settings
+      selectedDashboards
     );
 
     if (result?.success) {
@@ -483,11 +484,12 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         model: configModel,
       };
 
-      const result = await runExosGraph(queryText, graphConfig, scenario.id);
+      const result = await runExosGraph(queryText, graphConfig, scenario.id, selectedDashboards);
 
       clearInterval(progressInterval);
       setDeepAnalysisStep(4); // Complete all steps
       setDeepAnalysisResult(result);
+      setAnalysisResult(result.finalAnswer);
       setAnalysisTimestamp(new Date().toISOString());
       setStep("results");
       toast.success("Deep Analysis complete!");

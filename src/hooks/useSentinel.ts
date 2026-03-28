@@ -55,7 +55,8 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       industry: IndustryContext | null,
       category: ProcurementCategory | null,
       config?: Partial<PipelineConfig>,
-      model: string = "gemini-3.1-pro-preview"
+      model: string = "gemini-3.1-pro-preview",
+      selectedDashboards: string[] = []
     ): Promise<OrchestratorResponse | null> => {
       setState({
         isProcessing: true,
@@ -109,6 +110,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
               industrySlug: industry?.slug || null,
               categorySlug: category?.slug || null,
               enableTestLogging: true,
+              selectedDashboards,
             },
           }
         );

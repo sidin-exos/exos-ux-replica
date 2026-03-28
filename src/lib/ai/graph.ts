@@ -71,6 +71,7 @@ interface PipelineState {
   userQuery: string;
   config: ModelConfigType;
   scenarioId?: string;
+  selectedDashboards?: string[];
   anonymizedQuery: string;
   entityMap: Map<string, SensitiveEntity>;
   aiResponse: string;
@@ -145,6 +146,7 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
       googleModel: model,
       enableTestLogging: false,
       scenarioId: state.scenarioId,
+      selectedDashboards: state.selectedDashboards || [],
     },
   });
 
@@ -227,7 +229,8 @@ function stepDeanonymize(state: PipelineState): PipelineState {
 export async function runExosGraph(
   userQuery: string,
   config: ModelConfigType,
-  scenarioId?: string
+  scenarioId?: string,
+  selectedDashboards?: string[]
 ): Promise<{
   finalAnswer: string;
   confidenceScore: number;
@@ -253,6 +256,7 @@ export async function runExosGraph(
     userQuery,
     config,
     scenarioId,
+    selectedDashboards,
     anonymizedQuery: '',
     entityMap: new Map(),
     aiResponse: '',

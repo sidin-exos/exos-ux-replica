@@ -39,6 +39,7 @@ export const PDFCostWaterfall = ({ data, themeMode }: { data: CostWaterfallData;
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const currency = data.currency || "$";
+  if (!data.components?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Cost Breakdown: insufficient data</Text></View>;
   const total = data.components.reduce((s, c) => s + Math.abs(c.value), 0) || 1;
   const costBreakdownData = data.components.map(c => ({
     name: c.name,
@@ -111,6 +112,7 @@ export const PDFDecisionMatrix = ({ data, themeMode }: { data: DecisionMatrixDat
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const oc = optionColors(colors);
+  if (!data.criteria?.length || !data.options?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Decision Matrix: insufficient data</Text></View>;
   const matrixCriteria = data.criteria;
   const matrixOptions = data.options.map((opt, idx) => {
     const weighted = matrixCriteria.reduce((sum, c, ci) => sum + ((opt.scores[ci] || 0) * c.weight) / 5, 0);
@@ -180,6 +182,7 @@ export const PDFDecisionMatrix = ({ data, themeMode }: { data: DecisionMatrixDat
 export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
+  if (!data.variables?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Sensitivity Analysis: insufficient data</Text></View>;
   const variables = data.variables.map(v => {
     const baseCase = v.baseCase || 1;
     const low = Math.round(((v.lowCase - baseCase) / baseCase) * 100);
@@ -253,6 +256,7 @@ export const PDFActionChecklist = ({ data, themeMode }: { data: ActionChecklistD
     if (lower === "medium" || lower === "med") return colors.warning;
     return colors.success;
   };
+  if (!data.actions?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Action Checklist: insufficient data</Text></View>;
   const tasks = data.actions
     .slice()
     .sort((a, b) => { const order: Record<string, number> = { high: 0, medium: 1, med: 1, low: 2 }; return (order[a.priority?.toLowerCase()] ?? 3) - (order[b.priority?.toLowerCase()] ?? 3); })
@@ -340,6 +344,7 @@ export const PDFTimelineRoadmap = ({ data, themeMode }: { data: TimelineRoadmapD
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const statusColorMap: Record<string, string> = { complete: colors.primary, completed: colors.primary, active: colors.warning, "in-progress": colors.warning, upcoming: colors.border };
+  if (!data.phases?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Timeline: insufficient data</Text></View>;
   const phases = data.phases.map(p => {
     const status = mapStatus(p.status);
     const duration = p.endWeek - p.startWeek + 1;
@@ -430,6 +435,7 @@ const getRiskSeverity = (score: number, c: PdfColorSet) => {
 export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
+  if (!data.risks?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Risk Matrix: insufficient data</Text></View>;
   const risks = data.risks.map((r, idx) => ({ id: `R${idx + 1}`, name: r.supplier, impact: levelToNum(r.impact), probability: levelToNum(r.probability), category: r.category || "Operations" }));
   const sortedRisks = [...risks].sort((a, b) => getRiskScore(b.impact, b.probability) - getRiskScore(a.impact, a.probability));
   const criticalCount = sortedRisks.filter(r => getRiskScore(r.impact, r.probability) >= 16).length;
@@ -505,6 +511,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
     leverage: { label: "Leverage", color: colors.primary, strategy: "Maximize value, negotiate hard" },
     noncritical: { label: "Non-critical", color: colors.textMuted, strategy: "Simplify, automate" },
   };
+  if (!data.items?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Kraljic Matrix: insufficient data</Text></View>;
   const items = data.items.map(item => ({ name: item.name, quadrant: deriveQuadrant(item.supplyRisk, item.businessImpact), x: item.supplyRisk, y: item.businessImpact, spend: item.spend || "" }));
 
   const renderQuadrant = (quadrant: Quadrant, isLastCol: boolean, isLastRow: boolean) => {
@@ -578,7 +585,8 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const currency = data.currency || "$";
-  const options = data.options;
+  const options = data.options || [];
+  if (options.length === 0) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>TCO Comparison: insufficient data (missing options)</Text></View>;
   const chartData = data.data ? data.data.map(row => { const values = options.map(opt => { const key = ("id" in opt && typeof opt.id === "string") ? opt.id : opt.name; const val = row[key]; return typeof val === "number" ? val : 0; }); return { year: row.year as string, values }; }) : [];
   const lowestTCO = options.reduce((min, opt) => opt.totalTCO < min.totalTCO ? opt : min, options[0]);
   const highestTCO = options.reduce((max, opt) => opt.totalTCO > max.totalTCO ? opt : max, options[0]);
@@ -651,6 +659,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
 export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
+  if (!data.tiers?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>License Distribution: insufficient data</Text></View>;
   const tiers = data.tiers;
   const totalUsers = tiers.reduce((sum, t) => sum + t.users, 0);
   const totalCost = tiers.reduce((sum, t) => sum + t.totalCost, 0);
@@ -799,6 +808,7 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
   const getScColor = (score: number): string => { if (score >= 85) return colors.success; if (score >= 70) return colors.warning; return colors.destructive; };
   const getTrendSymbol = (trend: string): string => { switch (trend) { case "up": return "▲"; case "down": return "▼"; default: return "►"; } };
   const getTrendColor = (trend: string): string => { switch (trend) { case "up": return colors.success; case "down": return colors.destructive; default: return colors.textMuted; } };
+  if (!data.suppliers?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Supplier Scorecard: insufficient data</Text></View>;
   const suppliers = data.suppliers.map(s => ({ name: s.name, score: s.score, trend: s.trend, spend: s.spend, category: "General" }));
   const avgScore = suppliers.length > 0 ? Math.round(suppliers.reduce((sum, s) => sum + s.score, 0) / suppliers.length) : 0;
 
@@ -856,6 +866,7 @@ export const PDFSOWAnalysis = ({ data, themeMode }: { data: SOWAnalysisData; the
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const getScColor = (score: number): string => { if (score >= 70) return colors.success; if (score >= 60) return colors.warning; return colors.destructive; };
+  if (!data.sections?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>SOW Analysis: insufficient data</Text></View>;
   const clauses = data.sections.map(s => {
     const label = s.status === "complete" ? "Strong" : s.status === "partial" ? "Adequate" : "Weak";
     const risk = s.status === "complete" ? "Low" : s.status === "partial" ? "Medium" : "High";
@@ -923,6 +934,7 @@ export const PDFSOWAnalysis = ({ data, themeMode }: { data: SOWAnalysisData; the
 export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
+  if (!data.sequence?.length && !data.leveragePoints?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Negotiation Prep: insufficient data</Text></View>;
   const steps = data.sequence ? data.sequence.map((s, i) => ({ label: s.step, meta: "", details: s.detail, status: i === 0 ? "complete" : i === 1 ? "active" : "upcoming" })) : [];
   const keyMetrics = [
     { label: "BATNA Score", value: `${data.batna?.strength || 0}/100` },
@@ -983,6 +995,7 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const getScColor = (score: number): string => { if (score >= 80) return colors.success; if (score >= 70) return colors.warning; return colors.destructive; };
+  if (!data.fields?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Data Quality: insufficient data</Text></View>;
   const fields = data.fields.map(f => {
     const label = f.status === "complete" ? "Complete" : f.status === "partial" ? "Partial" : "Missing";
     const missing = f.status === "complete" ? "-" : f.status === "partial" ? "Data gaps present" : "Data not available";
