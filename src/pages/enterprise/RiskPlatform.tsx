@@ -104,13 +104,12 @@ const RiskPlatform = () => {
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
                   <div key={id} className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5">
-                    <Badge variant={m.phase === 1 ? "default" : "outline"} className="shrink-0 text-[10px] mt-0.5">
+                    <Badge variant="default" className="shrink-0 text-[10px] mt-0.5">
                       {id}
                     </Badge>
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground leading-tight">
                         {m.label}
-                        {m.phase === 2 && <span className="text-muted-foreground ml-1.5 font-normal">· Coming Soon</span>}
                       </p>
                       <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{m.purpose}</p>
                     </div>
