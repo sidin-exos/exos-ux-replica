@@ -748,6 +748,8 @@ export type Database = {
           citations: Json | null
           confidence_score: number
           content: string
+          country_name: string
+          country_slug: string
           created_at: string
           id: string
           industry_name: string
@@ -766,6 +768,8 @@ export type Database = {
           citations?: Json | null
           confidence_score: number
           content: string
+          country_name?: string
+          country_slug?: string
           created_at?: string
           id?: string
           industry_name: string
@@ -784,6 +788,8 @@ export type Database = {
           citations?: Json | null
           confidence_score?: number
           content?: string
+          country_name?: string
+          country_slug?: string
           created_at?: string
           id?: string
           industry_name?: string
