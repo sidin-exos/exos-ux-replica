@@ -241,7 +241,23 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
             ))
           )}
         </div>
-      </div>
+      {/* PDF Preview Modal */}
+      {pdfReport && (
+        <PDFPreviewModal
+          open={!!pdfReport}
+          onOpenChange={(open) => !open && setPdfReport(null)}
+          scenarioTitle={`${tracker.name} — ${monitorType} ${typeMeta?.label || "Report"}`}
+          analysisResult={pdfReport.report_content}
+          formData={{
+            "Monitor Type": `${monitorType} — ${typeMeta?.label || ""}`,
+            "Report Date": format(new Date(pdfReport.created_at), "MMM d, yyyy 'at' HH:mm"),
+            "Model": pdfReport.model_used,
+            ...(params.entity_type ? { "Entity Type": String(params.entity_type) } : {}),
+            ...(params.default_period ? { "Comparison Period": String(params.default_period) } : {}),
+          }}
+          timestamp={pdfReport.created_at}
+        />
+      )}
     </div>
   );
 };
