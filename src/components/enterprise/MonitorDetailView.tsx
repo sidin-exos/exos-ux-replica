@@ -241,6 +241,8 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
             ))
           )}
         </div>
+      </div>
+
       {/* PDF Preview Modal */}
       {pdfReport && (
         <PDFPreviewModal
