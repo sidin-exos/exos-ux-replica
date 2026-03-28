@@ -148,33 +148,62 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
 
       {/* Step 0: Goods Definition */}
       {step === 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">What goods or service are you monitoring?</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              placeholder="e.g. Industrial-grade polyethylene packaging film for food-contact applications"
-              value={goodsDefinition}
-              onChange={(e) => setGoodsDefinition(e.target.value)}
-              rows={3}
-            />
-            <div className="flex justify-end">
-              <Button onClick={handleGoodsNext} disabled={!goodsDefinition.trim() || isAnalyzing}>
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                    Analyzing price drivers…
-                  </>
-                ) : (
-                  <>
-                    Next <ArrowRight className="w-4 h-4 ml-1" />
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">What goods or service are you monitoring?</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  placeholder="e.g. Industrial-grade polyethylene packaging film for food-contact applications"
+                  value={goodsDefinition}
+                  onChange={(e) => setGoodsDefinition(e.target.value)}
+                  rows={4}
+                />
+                <div className="flex justify-end">
+                  <Button onClick={handleGoodsNext} disabled={!goodsDefinition.trim() || isAnalyzing}>
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        Analyzing price drivers…
+                      </>
+                    ) : (
+                      <>
+                        Next <ArrowRight className="w-4 h-4 ml-1" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card className="border-iris/25 bg-iris/5 dark:bg-surface">
+              <CardHeader>
+                <CardTitle className="text-sm">What happens next</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">1</Badge>
+                  <p>Your description is sent to our AI analyst to identify the key cost drivers.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">2</Badge>
+                  <p>You review, accept or reject each proposed driver and add your own.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">3</Badge>
+                  <p>Assign weights and define trigger events for monitoring.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">4</Badge>
+                  <p>Activate — the platform begins scanning for price-impacting events.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
 
       {/* Step 1: Driver Proposal */}
