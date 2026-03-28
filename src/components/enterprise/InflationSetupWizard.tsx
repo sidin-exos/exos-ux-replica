@@ -34,21 +34,45 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
   const [customName, setCustomName] = useState("");
   const [customRationale, setCustomRationale] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { toast } = useToast();
 
   const acceptedDrivers = drivers.filter(d => d.accepted);
 
-  // Step 0 → 1: propose drivers
-  const handleGoodsNext = () => {
+  // Step 0 → 1: call Gemini to propose drivers
+  const handleGoodsNext = async () => {
     if (!goodsDefinition.trim()) return;
-    setDrivers(MOCK_DRIVERS.map(d => ({
-      name: d.name,
-      rationale: d.rationale,
-      accepted: true,
-      source: "ai_proposed" as const,
-      weight: null,
-      trigger: "",
-    })));
-    setStep(1);
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("im-driver-propose", {
+        body: { goods_definition: goodsDefinition.trim(), driver_count_target: 5 },
+      });
+
+      if (error) throw error;
+
+      const proposed = (data?.drivers ?? []) as Array<{ name: string; rationale: string }>;
+      if (proposed.length === 0) throw new Error("No drivers returned");
+
+      setDrivers(proposed.map(d => ({
+        name: d.name,
+        rationale: d.rationale,
+        accepted: true,
+        source: "ai_proposed" as const,
+        weight: null,
+        trigger: "",
+      })));
+
+      if (data?.source === "fallback") {
+        toast({ title: "Using default drivers", description: "AI analysis unavailable — default drivers loaded. You can customize them.", variant: "default" });
+      }
+
+      setStep(1);
+    } catch (err) {
+      console.error("Driver proposal failed:", err);
+      toast({ title: "Analysis failed", description: "Could not generate drivers. Please try again.", variant: "destructive" });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const toggleDriver = (idx: number) => {
