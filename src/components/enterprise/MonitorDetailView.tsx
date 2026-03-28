@@ -52,6 +52,7 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [pdfReport, setPdfReport] = useState<MonitorReport | null>(null);
 
   const params = tracker.parameters as MonitorParameters;
   const monitorType = (params?.monitor_type ?? "DM-2") as MonitorType;
