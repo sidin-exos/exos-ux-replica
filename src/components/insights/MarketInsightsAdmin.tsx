@@ -465,9 +465,12 @@ export function MarketInsightsAdmin() {
       </Card>
 
       {/* Browse Existing Insights */}
-      <Card>
+      <Card className="border-t-4 border-t-indigo-500">
         <CardHeader>
-          <CardTitle className="text-base">Active Market Insights</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Database className="w-4 h-4 text-indigo-500" />
+            Active Market Insights
+          </CardTitle>
           <CardDescription>
             {filteredInsights.length} of {insights?.length || 0} insights shown
           </CardDescription>
