@@ -47,7 +47,7 @@ const InflationPlatform = () => {
         <Header />
         <main className="container py-16">
           <AuthPrompt
-            feature="Inflation Monitor"
+            feature="Inflation Monitoring"
             description="Track and analyze inflation drivers affecting your procurement portfolio"
           />
         </main>
