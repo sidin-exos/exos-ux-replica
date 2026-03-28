@@ -179,8 +179,6 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                 )}
               </Button>
             </div>
-              </Button>
-            </div>
           </CardContent>
         </Card>
       )}
