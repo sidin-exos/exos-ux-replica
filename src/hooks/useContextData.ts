@@ -11,7 +11,7 @@ export function useIndustryContexts() {
     queryFn: async (): Promise<IndustryContext[]> => {
       const { data, error } = await supabase
         .from("industry_contexts")
-        .select("id, name, slug, constraints, kpis")
+        .select("id, name, slug, constraints, kpis, constraints_v2, kpis_v2")
         .order("name");
 
       if (error) {
@@ -19,7 +19,7 @@ export function useIndustryContexts() {
         throw error;
       }
 
-      return data || [];
+      return (data || []) as unknown as IndustryContext[];
     },
   });
 }
@@ -33,7 +33,7 @@ export function useProcurementCategories() {
     queryFn: async (): Promise<ProcurementCategory[]> => {
       const { data, error } = await supabase
         .from("procurement_categories")
-        .select("id, name, slug, characteristics, kpis")
+        .select("id, name, slug, characteristics, kpis, category_group, spend_type, kraljic_position, kraljic_rationale, price_volatility, market_structure, supply_concentration, key_cost_drivers, procurement_levers, negotiation_dynamics, should_cost_components, eu_regulatory_context, common_failure_modes, exos_scenarios_primary, exos_scenarios_secondary, kpis_v2")
         .order("name");
 
       if (error) {
@@ -41,7 +41,7 @@ export function useProcurementCategories() {
         throw error;
       }
 
-      return data || [];
+      return (data || []) as unknown as ProcurementCategory[];
     },
   });
 }
@@ -57,7 +57,7 @@ export function useIndustryContext(slug: string | null) {
 
       const { data, error } = await supabase
         .from("industry_contexts")
-        .select("id, name, slug, constraints, kpis")
+        .select("id, name, slug, constraints, kpis, constraints_v2, kpis_v2")
         .eq("slug", slug)
         .maybeSingle();
 
@@ -66,7 +66,7 @@ export function useIndustryContext(slug: string | null) {
         throw error;
       }
 
-      return data;
+      return data as unknown as IndustryContext | null;
     },
     enabled: !!slug,
   });
@@ -83,7 +83,7 @@ export function useProcurementCategory(slug: string | null) {
 
       const { data, error } = await supabase
         .from("procurement_categories")
-        .select("id, name, slug, characteristics, kpis")
+        .select("id, name, slug, characteristics, kpis, category_group, spend_type, kraljic_position, kraljic_rationale, price_volatility, market_structure, supply_concentration, key_cost_drivers, procurement_levers, negotiation_dynamics, should_cost_components, eu_regulatory_context, common_failure_modes, exos_scenarios_primary, exos_scenarios_secondary, kpis_v2")
         .eq("slug", slug)
         .maybeSingle();
 
@@ -92,7 +92,7 @@ export function useProcurementCategory(slug: string | null) {
         throw error;
       }
 
-      return data;
+      return data as unknown as ProcurementCategory | null;
     },
     enabled: !!slug,
   });
