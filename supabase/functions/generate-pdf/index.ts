@@ -50,8 +50,8 @@ serve(async (req) => {
       );
     }
 
-    // 2. Rate limit: 20 requests/hour per user
-    const rateCheck = await checkRateLimit(authResult.user.userId, "generate-pdf", 20, 60);
+    // 2. Rate limit: 60 requests/hour per user
+    const rateCheck = await checkRateLimit(authResult.user.userId, "generate-pdf", 60, 60);
     if (!rateCheck.allowed) {
       return rateLimitResponse(rateCheck, corsHeaders, "PDF generation rate limit reached. Please wait before generating another report.");
     }
