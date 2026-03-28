@@ -153,12 +153,6 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
             <CardTitle className="text-base">What goods or service are you monitoring?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert variant="destructive" className="border-warning/40 bg-warning/5 text-warning">
-              <ShieldAlert className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                Do not enter supplier names or confidential data. Use generic terms (e.g. "Industrial packaging film", "IT consulting services").
-              </AlertDescription>
-            </Alert>
             <Textarea
               placeholder="e.g. Industrial-grade polyethylene packaging film for food-contact applications"
               value={goodsDefinition}
