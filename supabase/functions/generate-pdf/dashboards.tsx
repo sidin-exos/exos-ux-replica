@@ -21,14 +21,14 @@ import type {
 // ── Helpers ──
 
 const formatAmount = (value: number, currency: string = "$"): string => {
-  if (value >= 1_000_000) return `${currency}${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1000) return `${currency}${(value / 1000).toFixed(0)}K`;
-  return `${currency}${value}`;
+  if (value >= 1_000_000) return `${currency} ${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1000) return `${currency} ${(value / 1000).toFixed(0)}K`;
+  return `${currency} ${value}`;
 };
 
-const formatCurrency = (value: number): string => {
-  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
-  return `$${value}`;
+const formatCurrency = (value: number, currency: string = "$"): string => {
+  if (value >= 1000) return `${currency} ${(value / 1000).toFixed(0)}K`;
+  return `${currency} ${value}`;
 };
 
 // ══════════════════════════════════════════
@@ -60,23 +60,23 @@ export const PDFCostWaterfall = ({ data, themeMode }: { data: CostWaterfallData;
           <Text style={styles.dashboardSubtitle}>Component analysis</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{totalAmount}</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Helvetica-Bold", color: colors.text }}>{totalAmount}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>total spend</Text>
         </View>
       </View>
       <View style={styles.barContainer}>
         {costBreakdownData.map((item, i) => (
           <View key={i} style={styles.barRow}>
-            <View style={{ flexDirection: "row", alignItems: "center", width: 82 }}>
-              <View style={{ width: 7, height: 7, backgroundColor: item.color, marginRight: 4 }} />
-              <Text style={{ fontSize: 10, color: colors.text }}>{item.name}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", width: 110 }}>
+              <View style={{ width: 7, height: 7, backgroundColor: item.color, marginRight: 5 }} />
+              <Text style={{ fontSize: 9, color: colors.text, lineHeight: 1.3 }}>{item.name}</Text>
             </View>
             <View style={styles.barTrack}>
               <View style={[styles.barFill, { flex: item.value, backgroundColor: item.color }]} />
               <View style={{ flex: Math.max(0, 100 - item.value) }} />
             </View>
-            <View style={{ width: 54, alignItems: "flex-end" }}>
-              <Text style={{ fontSize: 10, color: colors.text, fontWeight: 600 }}>{item.amount}</Text>
+            <View style={{ width: 68, alignItems: "flex-end" }}>
+              <Text style={{ fontSize: 10, color: colors.text, fontFamily: "Helvetica-Bold" }}>{item.amount}</Text>
               <Text style={{ fontSize: 8, color: colors.textMuted }}>{item.value}%</Text>
             </View>
           </View>
@@ -127,7 +127,7 @@ export const PDFDecisionMatrix = ({ data, themeMode }: { data: DecisionMatrixDat
           <Text style={styles.dashboardSubtitle}>Weighted multi-criteria analysis</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 13, fontWeight: 700, color: colors.primary }}>{winner.name}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: colors.primary }}>{winner.name}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>recommended</Text>
         </View>
       </View>
@@ -156,10 +156,10 @@ export const PDFDecisionMatrix = ({ data, themeMode }: { data: DecisionMatrixDat
           </View>
         ))}
         <View style={[styles.matrixRow, { borderBottomWidth: 0, backgroundColor: colors.surfaceLight }]}>
-          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.5, fontWeight: 700, fontSize: 10 }]}>Weighted Score</Text>
-          <Text style={[styles.matrixCell, { fontWeight: 600 }]}>100%</Text>
+          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.5, fontFamily: "Helvetica-Bold", fontSize: 10 }]}>Weighted Score</Text>
+          <Text style={[styles.matrixCell, { fontFamily: "Helvetica-Bold" }]}>100%</Text>
           {matrixOptions.map((opt, i) => (
-            <Text key={i} style={[styles.matrixCell, { fontWeight: 700, fontSize: 11, color: opt.weighted === winner.weighted ? colors.primary : colors.text }]}>{opt.weighted}</Text>
+            <Text key={i} style={[styles.matrixCell, { fontFamily: "Helvetica-Bold", fontSize: 11, color: opt.weighted === winner.weighted ? colors.primary : colors.text }]}>{opt.weighted}</Text>
           ))}
         </View>
       </View>
@@ -198,7 +198,7 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
           <Text style={styles.dashboardSubtitle}>Tornado chart: impact on total cost</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 13, fontWeight: 700, color: colors.primary }}>±{maxImpact}%</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: colors.primary }}>±{maxImpact}%</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>max impact</Text>
         </View>
       </View>
@@ -228,7 +228,7 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
       </View>
       <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
         <Text style={{ fontSize: 9, color: colors.textMuted }}>
-          <Text style={{ color: colors.primary, fontWeight: 600 }}>Key Driver: </Text>
+          <Text style={{ color: colors.primary, fontFamily: "Helvetica-Bold" }}>Key Driver: </Text>
           Volume and Price changes have the highest impact on total cost. Focus negotiation efforts on volume commitments and unit pricing.
         </Text>
       </View>
@@ -280,7 +280,7 @@ export const PDFActionChecklist = ({ data, themeMode }: { data: ActionChecklistD
           <Text style={styles.dashboardSubtitle}>Priority tasks & current status</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 15, fontWeight: 700, color: colors.primary }}>{progressPct}%</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Helvetica-Bold", color: colors.primary }}>{progressPct}%</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>complete</Text>
         </View>
       </View>
@@ -357,7 +357,7 @@ export const PDFTimelineRoadmap = ({ data, themeMode }: { data: TimelineRoadmapD
           <Text style={styles.dashboardSubtitle}>Phases and indicative duration</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 13, fontWeight: 700, color: currentPhase.color }}>{currentPhase.name}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: currentPhase.color }}>{currentPhase.name}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>current phase</Text>
         </View>
       </View>
@@ -444,8 +444,8 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
           <Text style={styles.dashboardSubtitle}>Impact × Probability analysis</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {criticalCount > 0 && <View style={{ backgroundColor: colors.destructive, paddingHorizontal: 6, paddingVertical: 2, marginRight: 4 }}><Text style={{ fontSize: 9, fontWeight: 700, color: colors.badgeText }}>{criticalCount} Critical</Text></View>}
-          {highCount > 0 && <View style={{ backgroundColor: colors.warning, paddingHorizontal: 6, paddingVertical: 2 }}><Text style={{ fontSize: 9, fontWeight: 700, color: colors.badgeText }}>{highCount} High</Text></View>}
+          {criticalCount > 0 && <View style={{ backgroundColor: colors.destructive, paddingHorizontal: 6, paddingVertical: 2, marginRight: 4 }}><Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: colors.badgeText }}>{criticalCount} Critical</Text></View>}
+          {highCount > 0 && <View style={{ backgroundColor: colors.warning, paddingHorizontal: 6, paddingVertical: 2 }}><Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: colors.badgeText }}>{highCount} High</Text></View>}
         </View>
       </View>
       <View style={{ marginTop: 8, borderWidth: 1, borderColor: colors.border, overflow: "hidden" }}>
@@ -461,11 +461,11 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
           const severity = getRiskSeverity(score, colors);
           return (
             <View key={risk.id} style={{ flexDirection: "row", borderBottomWidth: i === sortedRisks.length - 1 ? 0 : 1, borderBottomColor: colors.border, paddingVertical: 6, paddingHorizontal: 8, alignItems: "center", backgroundColor: i % 2 === 1 ? colors.surface : colors.background }}>
-              <View style={{ width: "18%", alignItems: "center" }}><View style={{ backgroundColor: severity.bgColor, paddingHorizontal: 6, paddingVertical: 2, minWidth: 48, alignItems: "center" }}><Text style={{ fontSize: 9, fontWeight: 700, color: severity.color }}>{severity.label}</Text></View></View>
+              <View style={{ width: "18%", alignItems: "center" }}><View style={{ backgroundColor: severity.bgColor, paddingHorizontal: 6, paddingVertical: 2, minWidth: 48, alignItems: "center" }}><Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: severity.color }}>{severity.label}</Text></View></View>
               <View style={{ width: "38%" }}><Text style={{ fontSize: 10, color: colors.text }}>{risk.name}</Text><Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 1 }}>{risk.category}</Text></View>
-              <View style={{ width: "14%", alignItems: "center" }}><Text style={{ fontSize: 10, color: colors.text, fontWeight: 600 }}>{risk.impact}</Text></View>
-              <View style={{ width: "14%", alignItems: "center" }}><Text style={{ fontSize: 10, color: colors.text, fontWeight: 600 }}>{risk.probability}</Text></View>
-              <View style={{ width: "16%", alignItems: "center" }}><Text style={{ fontSize: 10, color: colors.text, fontWeight: 700 }}>{score}</Text></View>
+              <View style={{ width: "14%", alignItems: "center" }}><Text style={{ fontSize: 10, color: colors.text, fontFamily: "Helvetica-Bold" }}>{risk.impact}</Text></View>
+              <View style={{ width: "14%", alignItems: "center" }}><Text style={{ fontSize: 10, color: colors.text, fontFamily: "Helvetica-Bold" }}>{risk.probability}</Text></View>
+              <View style={{ width: "16%", alignItems: "center" }}><Text style={{ fontSize: 10, color: colors.text, fontFamily: "Helvetica-Bold" }}>{score}</Text></View>
             </View>
           );
         })}
@@ -513,7 +513,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
     const cellStyles = [styles.quadrantCell, isLastCol && styles.quadrantCellLastCol, isLastRow && styles.quadrantCellLastRow, { backgroundColor: info.color + "15" }].filter(Boolean);
     return (
       <View style={cellStyles}>
-        <Text style={[styles.quadrantLabel, { color: info.color, fontWeight: 600 }]}>{info.label}</Text>
+        <Text style={[styles.quadrantLabel, { color: info.color, fontFamily: "Helvetica-Bold" }]}>{info.label}</Text>
         <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{quadrantItems.length} items</Text>
         {quadrantItems.slice(0, 2).map((item, idx) => (
           <View key={idx} style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
@@ -534,7 +534,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
           <Text style={styles.dashboardSubtitle}>Supply risk vs business impact</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 13, fontWeight: 700, color: colors.destructive }}>{items.filter(i => i.quadrant === "strategic").length}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: colors.destructive }}>{items.filter(i => i.quadrant === "strategic").length}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>strategic items</Text>
         </View>
       </View>
@@ -557,11 +557,11 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
         </View>
       </View>
       <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, fontWeight: 600, color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
+        <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
         {Object.entries(quadrantInfo).map(([key, info], i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 3 }}>
             <View style={{ width: 9, height: 9, backgroundColor: info.color, marginRight: 6 }} />
-            <Text style={{ fontSize: 9, color: colors.text, fontWeight: 500, width: 60 }}>{info.label}:</Text>
+            <Text style={{ fontSize: 9, color: colors.text, width: 60 }}>{info.label}:</Text>
             <Text style={{ fontSize: 9, color: colors.textMuted }}>{info.strategy}</Text>
           </View>
         ))}
@@ -577,6 +577,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
 export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
+  const currency = data.currency || "$";
   const options = data.options;
   const chartData = data.data ? data.data.map(row => { const values = options.map(opt => { const key = ("id" in opt && typeof opt.id === "string") ? opt.id : opt.name; const val = row[key]; return typeof val === "number" ? val : 0; }); return { year: row.year as string, values }; }) : [];
   const lowestTCO = options.reduce((min, opt) => opt.totalTCO < min.totalTCO ? opt : min, options[0]);
@@ -593,7 +594,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
           <Text style={styles.dashboardSubtitle}>Cumulative cost over time</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 15, fontWeight: 700, color: colors.primary }}>{formatCurrency(savings)}</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Helvetica-Bold", color: colors.primary }}>{formatCurrency(savings, currency)}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>potential savings</Text>
         </View>
       </View>
@@ -603,10 +604,14 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
       {chartData.length > 0 && (
         <View style={{ marginBottom: 10 }}>
           {chartData.map((point, i) => (
-            <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-              <Text style={{ width: 22, fontSize: 9, color: colors.textMuted }}>{point.year}</Text>
-              <View style={{ flex: 1, flexDirection: "row", height: 10, marginLeft: 6 }}>
-                {point.values.map((val, j) => (<View key={j} style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted, marginTop: j * 2, position: "absolute", left: 0 }} />))}
+            <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+              <Text style={{ width: 24, fontSize: 9, color: colors.textMuted }}>{point.year}</Text>
+              <View style={{ flex: 1, marginLeft: 6 }}>
+                {point.values.map((val, j) => (
+                  <View key={j} style={{ flexDirection: "row", alignItems: "center", marginBottom: j < point.values.length - 1 ? 2 : 0 }}>
+                    <View style={{ width: `${(val / maxValue) * 100}%`, height: 6, backgroundColor: options[j]?.color || colors.textMuted }} />
+                  </View>
+                ))}
               </View>
             </View>
           ))}
@@ -626,14 +631,14 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
                 <View style={{ width: 7, height: 7, backgroundColor: opt.color, marginRight: 4 }} />
                 <Text style={{ fontSize: 9, color: colors.text }}>{opt.name}</Text>
               </View>
-              <Text style={[styles.matrixCell, { fontFamily: "Helvetica-Bold" }]}>{formatCurrency(opt.totalTCO)}</Text>
-              <Text style={[styles.matrixCell, { color: diff === 0 ? colors.success : colors.textMuted, fontFamily: diff === 0 ? "Helvetica-Bold" : "Helvetica" }]}>{diff === 0 ? "★ Best" : `+${formatCurrency(diff)}`}</Text>
+              <Text style={[styles.matrixCell, { fontFamily: "Helvetica-Bold" }]}>{formatCurrency(opt.totalTCO, currency)}</Text>
+              <Text style={[styles.matrixCell, { color: diff === 0 ? colors.success : colors.textMuted, fontFamily: diff === 0 ? "Helvetica-Bold" : "Helvetica" }]}>{diff === 0 ? "★ Best" : `+${formatCurrency(diff, currency)}`}</Text>
             </View>
           );
         })}
       </View>
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.primary, fontWeight: 600 }}>Recommendation: </Text>{lowestTCO.name} offers the lowest total cost of ownership</Text>
+        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.primary, fontFamily: "Helvetica-Bold" }}>Recommendation: </Text>{lowestTCO.name} offers the lowest total cost of ownership</Text>
       </View>
     </View>
   );
@@ -662,7 +667,7 @@ export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; the
           <Text style={styles.dashboardSubtitle}>User tier analysis</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{totalUsers}</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Helvetica-Bold", color: colors.text }}>{totalUsers}</Text>
           <Text style={{ fontSize: 9, color: colors.textMuted }}>total users</Text>
         </View>
       </View>
@@ -675,14 +680,14 @@ export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; the
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 3 }}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <View style={{ width: 9, height: 9, backgroundColor: tier.color, marginRight: 6 }} />
-                  <Text style={{ fontSize: 10, color: colors.text, fontWeight: 600 }}>{tier.name}</Text>
+                  <Text style={{ fontSize: 10, color: colors.text, fontFamily: "Helvetica-Bold" }}>{tier.name}</Text>
                   <Text style={{ fontSize: 9, color: colors.textMuted, marginLeft: 4 }}>({tier.users} users)</Text>
                 </View>
-                <Text style={{ fontSize: 10, color: colors.text, fontWeight: 600 }}>{formatCurrency(tier.totalCost)}</Text>
+                <Text style={{ fontSize: 10, color: colors.text, fontFamily: "Helvetica-Bold" }}>{formatCurrency(tier.totalCost)}</Text>
               </View>
               <View style={{ height: 16, backgroundColor: colors.surfaceLight, overflow: "hidden", position: "relative" }}>
                 <View style={{ height: 16, backgroundColor: tier.color, width: `${barWidth}%` }} />
-                <Text style={{ position: "absolute", left: 6, top: 3, fontSize: 9, color: colors.background, fontWeight: 600 }}>${tier.costPerUser}/user</Text>
+                <Text style={{ position: "absolute", left: 6, top: 3, fontSize: 9, color: colors.background, fontFamily: "Helvetica-Bold" }}>{formatCurrency(tier.costPerUser, data.currency || "$")}/user</Text>
               </View>
               {userDiff !== 0 && (
                 <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
@@ -702,7 +707,7 @@ export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; the
         <View style={styles.statItem}><Text style={styles.statLabel}>Potential Savings</Text><Text style={[styles.statValue, { color: colors.primary }]}>{formatCurrency(potentialSavings)}/mo</Text></View>
       </View>
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.primary, fontWeight: 600 }}>Optimization: </Text>Downgrade underutilized users to lower tiers based on usage patterns</Text>
+        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.primary, fontFamily: "Helvetica-Bold" }}>Optimization: </Text>Downgrade underutilized users to lower tiers based on usage patterns</Text>
       </View>
     </View>
   );
@@ -735,7 +740,7 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
           <Text style={styles.dashboardSubtitle}>Score-by-criterion (0–100)</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 13, fontWeight: 700, color: winner.color }}>{winner.name}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: winner.color }}>{winner.name}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>recommended</Text>
         </View>
       </View>
@@ -774,9 +779,9 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
           </View>
         ))}
         <View style={[styles.matrixRow, { backgroundColor: colors.surfaceLight, borderBottomWidth: 0 }]}>
-          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, fontWeight: 700 }]}>Weighted Score</Text>
-          <Text style={[styles.matrixCell, { fontWeight: 700, color: Number(weightedA) >= Number(weightedB) ? colors.primary : colors.text }]}>{weightedA}</Text>
-          <Text style={[styles.matrixCell, { fontWeight: 700, color: Number(weightedB) > Number(weightedA) ? colors.primary : colors.text }]}>{weightedB}</Text>
+          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, fontFamily: "Helvetica-Bold" }]}>Weighted Score</Text>
+          <Text style={[styles.matrixCell, { fontFamily: "Helvetica-Bold", color: Number(weightedA) >= Number(weightedB) ? colors.primary : colors.text }]}>{weightedA}</Text>
+          <Text style={[styles.matrixCell, { fontFamily: "Helvetica-Bold", color: Number(weightedB) > Number(weightedA) ? colors.primary : colors.text }]}>{weightedB}</Text>
         </View>
       </View>
       <View style={styles.legend}><View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.primary }]} /><Text style={styles.legendText}>Higher score wins per criterion</Text></View></View>
@@ -820,7 +825,7 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
             <View style={{ width: "35%" }}><Text style={{ fontSize: 10, color: colors.text }}>{supplier.name}</Text></View>
             <View style={{ width: "15%", alignItems: "center", flexDirection: "row", justifyContent: "center" }}>
               <View style={{ backgroundColor: getScColor(supplier.score) + "30", paddingHorizontal: 6, paddingVertical: 2 }}>
-                <Text style={{ fontSize: 10, fontWeight: 700, color: getScColor(supplier.score) }}>{supplier.score}</Text>
+                <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: getScColor(supplier.score) }}>{supplier.score}</Text>
               </View>
             </View>
             <View style={{ width: "12%", alignItems: "center" }}><Text style={{ fontSize: 11, color: getTrendColor(supplier.trend) }}>{getTrendSymbol(supplier.trend)}</Text></View>
@@ -870,7 +875,7 @@ export const PDFSOWAnalysis = ({ data, themeMode }: { data: SOWAnalysisData; the
           <Text style={styles.dashboardSubtitle}>Clause coverage score (0–100)</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 15, fontWeight: 700, color: getScColor(avgScore) }}>{avgScore}</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Helvetica-Bold", color: getScColor(avgScore) }}>{avgScore}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>avg score</Text>
         </View>
       </View>
@@ -889,7 +894,7 @@ export const PDFSOWAnalysis = ({ data, themeMode }: { data: SOWAnalysisData; the
               </View>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View style={{ paddingHorizontal: 3, paddingVertical: 1, backgroundColor: item.color + "20", marginRight: 6 }}><Text style={{ fontSize: 8, color: item.color }}>{item.status}</Text></View>
-                <Text style={{ fontSize: 10, fontWeight: 600, color: item.color }}>{item.score}</Text>
+                <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: item.color }}>{item.score}</Text>
               </View>
             </View>
             <View style={styles.barTrack}>
@@ -900,7 +905,7 @@ export const PDFSOWAnalysis = ({ data, themeMode }: { data: SOWAnalysisData; the
         ))}
       </View>
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.destructive, fontWeight: 600 }}>Action Required: </Text>{recommendations[0]}</Text>
+        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.destructive, fontFamily: "Helvetica-Bold" }}>Action Required: </Text>{recommendations[0]}</Text>
       </View>
       <View style={styles.legend}>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>≥70 Strong</Text></View>
@@ -934,7 +939,7 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
           <Text style={styles.dashboardSubtitle}>Recommended sequencing</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 13, fontWeight: 700, color: colors.primary }}>{steps.length} Steps</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: colors.primary }}>{steps.length} Steps</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>to success</Text>
         </View>
       </View>
@@ -954,7 +959,7 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
               <View style={{ flex: 1, marginLeft: 8, paddingBottom: 4 }}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <View>
-                    <Text style={{ fontSize: 11, fontWeight: 600, color: colors.text }}>{s.label}</Text>
+                    <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: colors.text }}>{s.label}</Text>
                     <Text style={{ fontSize: 9, color: colors.textMuted, marginTop: 1 }}>{s.details}</Text>
                   </View>
                 </View>
@@ -964,7 +969,7 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
         </View>
       )}
       <View style={{ marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.primary, fontWeight: 600 }}>Tip: </Text>Use as a guide; adjust timing for stakeholder constraints and supplier responsiveness.</Text>
+        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.primary, fontFamily: "Helvetica-Bold" }}>Tip: </Text>Use as a guide; adjust timing for stakeholder constraints and supplier responsiveness.</Text>
       </View>
     </View>
   );
@@ -999,7 +1004,7 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
           <Text style={styles.dashboardSubtitle}>Input coverage and confidence</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 15, fontWeight: 700, color: getScColor(avgQuality) }}>{avgQuality}%</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Helvetica-Bold", color: getScColor(avgQuality) }}>{avgQuality}%</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>avg quality</Text>
         </View>
       </View>
@@ -1019,7 +1024,7 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
             <View style={[styles.matrixCell, { alignItems: "center" }]}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View style={{ width: 22, height: 5, backgroundColor: colors.surfaceLight, marginRight: 4, overflow: "hidden" }}><View style={{ width: `${item.value}%`, height: 5, backgroundColor: getScColor(item.value) }} /></View>
-                <Text style={{ fontSize: 9, color: getScColor(item.value), fontWeight: 600 }}>{item.value}%</Text>
+                <Text style={{ fontSize: 9, color: getScColor(item.value), fontFamily: "Helvetica-Bold" }}>{item.value}%</Text>
               </View>
             </View>
             <View style={[styles.matrixCell, { alignItems: "center" }]}>
@@ -1030,7 +1035,7 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
         ))}
       </View>
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.warning, fontWeight: 600 }}>Data Gap: </Text>Request missing supplier pricing and clarify renewal terms to improve analysis confidence.</Text>
+        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.warning, fontFamily: "Helvetica-Bold" }}>Data Gap: </Text>Request missing supplier pricing and clarify renewal terms to improve analysis confidence.</Text>
       </View>
     </View>
   );

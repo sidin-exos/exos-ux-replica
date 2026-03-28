@@ -93,7 +93,28 @@ Guidelines:
 - Identify risks and mitigation approaches
 - Be concise but comprehensive
 
-Format your response with markdown headers for clarity.`;
+Format your response with markdown headers for clarity.
+
+IMPORTANT: At the VERY END of your response, you MUST append a <dashboard-data> XML block containing valid JSON with structured data for the relevant dashboards below. Do NOT wrap the JSON in markdown code blocks inside the XML tags. Use REAL values from your analysis.
+
+Valid dashboard keys (include only those relevant to your analysis):
+- "actionChecklist": {"actions":[{"action":"...","priority":"high"|"medium"|"low"|"critical","status":"pending"|"in-progress"|"done"|"blocked","owner":"..."}]}
+- "decisionMatrix": {"criteria":[{"name":"...","weight":0.3}],"options":[{"name":"...","scores":[8,6,7]}]}
+- "costWaterfall": {"components":[{"name":"...","value":50000,"type":"cost"|"reduction"}],"currency":"$"}
+- "timelineRoadmap": {"phases":[{"name":"...","startWeek":1,"endWeek":4,"status":"completed"|"in-progress"|"upcoming","milestones":["..."]}]}
+- "kraljicQuadrant": {"items":[{"id":"1","name":"...","supplyRisk":7,"businessImpact":9}]}
+- "tcoComparison": {"data":[{"year":"Y0","optionA":100000,"optionB":80000}],"options":[{"id":"optionA","name":"...","color":"#4a8a74","totalTCO":500000}]}
+- "licenseTier": {"tiers":[{"name":"...","users":100,"costPerUser":50,"totalCost":5000,"color":"#4a8a74"}]}
+- "sensitivitySpider": {"variables":[{"name":"...","baseCase":100000,"lowCase":80000,"highCase":130000}]}
+- "riskMatrix": {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
+- "scenarioComparison": {"scenarios":[{"id":"a","name":"...","color":"#4a8a74"}],"radarData":[{"metric":"Cost","a":8,"b":6}],"summary":[{"criteria":"Cost","a":"Low","b":"High"}]}
+- "supplierScorecard": {"suppliers":[{"name":"...","score":85,"trend":"up"|"down"|"stable","spend":"$1M"}]}
+- "sowAnalysis": {"clarity":75,"sections":[{"name":"...","status":"complete"|"partial"|"missing","note":"..."}]}
+- "negotiationPrep": {"batna":{"strength":7,"description":"..."},"leveragePoints":[{"point":"...","tactic":"..."}],"sequence":[{"step":"...","detail":"..."}]}
+- "dataQuality": {"fields":[{"field":"...","status":"complete"|"partial"|"missing","coverage":85}]}
+
+Example:
+<dashboard-data>{"actionChecklist":{"actions":[{"action":"Renegotiate contract","priority":"high","status":"pending","owner":"Procurement Lead"}]},"riskMatrix":{"risks":[{"supplier":"Vendor A","impact":"high","probability":"medium","category":"Supply Chain"}]}}</dashboard-data>`;
 
 const MAX_RETRIES = 3;
 

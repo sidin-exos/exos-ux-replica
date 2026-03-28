@@ -49,21 +49,7 @@ Verify if the CNC finishing is strictly necessary for functional requirements or
 
 ---
 
-\`\`\`dashboard:cost_waterfall
-Materials: 225000
-Labor: 125000
-Overhead: 85000
-Logistics: 30000
-Profit Margin: 35000
-Total: 500000
-Savings: 45000
-\`\`\`
-
-\`\`\`dashboard:tco_comparison
-Option A (Buy Outright): 485000 [best]
-Option B (3-Year Lease): 520000 [+35000]
-Option C (Subscription): 595000 [+110000]
-\`\`\`
+<dashboard-data>{"costWaterfall":{"components":[{"name":"Raw Materials (ADC12)","value":225000,"type":"cost"},{"name":"Labor & CNC Finishing","value":125000,"type":"cost"},{"name":"Overhead","value":85000,"type":"cost"},{"name":"Logistics","value":30000,"type":"cost"},{"name":"Profit Margin","value":35000,"type":"cost"},{"name":"Negotiated Savings","value":45000,"type":"reduction"}],"currency":"€"},"tcoComparison":{"data":[{"year":"Y0","optionA":200000,"optionB":50000,"optionC":80000},{"year":"Y1","optionA":285000,"optionB":220000,"optionC":240000},{"year":"Y2","optionA":370000,"optionB":370000,"optionC":400000},{"year":"Y3","optionA":420000,"optionB":460000,"optionC":520000},{"year":"Y5","optionA":485000,"optionB":520000,"optionC":595000}],"options":[{"id":"optionA","name":"Buy Outright","color":"#4a8a74","totalTCO":485000},{"id":"optionB","name":"3-Year Lease","color":"#6b9e8a","totalTCO":520000},{"id":"optionC","name":"Subscription","color":"#c9a24d","totalTCO":595000}],"currency":"€"}}</dashboard-data>
 `;
 
 const MOCK_FORM_DATA: Record<string, string> = {

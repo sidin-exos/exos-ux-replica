@@ -121,12 +121,13 @@ function buildStyles(c: PdfColorSet) {
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 1.5,
-      flex: 1,
+      lineHeight: 1.4,
     },
     dashboardSubtitle: {
       fontSize: 9,
       color: c.textMuted,
-      marginTop: 2,
+      marginTop: 3,
+      lineHeight: 1.3,
     },
 
     // ─── Bar charts ────────────────────────────────────────────────────────

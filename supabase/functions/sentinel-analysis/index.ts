@@ -111,7 +111,12 @@ Output ONLY the final polished analysis. Do NOT include:
 
 The output should read as a clean, professional procurement analysis as if it were correct from the start.
 
-IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON with structured visualization data extracted from your analysis. Do NOT wrap the JSON in markdown code blocks. Include only dashboard keys relevant to the scenario.`;
+IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON with structured visualization data extracted from your analysis. Do NOT wrap the JSON in markdown code blocks.
+
+Valid dashboard keys (include only those relevant to the scenario):
+actionChecklist, decisionMatrix, costWaterfall, timelineRoadmap, kraljicQuadrant, tcoComparison, licenseTier, sensitivitySpider, riskMatrix, scenarioComparison, supplierScorecard, sowAnalysis, negotiationPrep, dataQuality
+
+Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"License Fees","value":120000,"type":"cost"},{"name":"Negotiated Discount","value":18000,"type":"reduction"}],"currency":"$"}}</dashboard-data>`;
 
 // ============================================
 // SERVER-SIDE GROUNDING HELPERS
@@ -450,9 +455,12 @@ IMPORTANT RULES:
 6. Only cite specific data points from provided context
 7. Flag uncertainty explicitly with confidence levels
 8. Err on cautious side for savings projections
-9. At the VERY END of your response, append a <dashboard-data> XML block containing valid JSON with structured data for relevant dashboards. Example:
-<dashboard-data>{"actionChecklist":{"actions":[{"action":"...","priority":"high","status":"pending","owner":"..."}]},"riskMatrix":{"risks":[{"supplier":"...","impact":"high","probability":"medium","category":"..."}]}}</dashboard-data>
-Only include dashboard keys relevant to the scenario analysis. Use REAL values from your analysis. Do NOT wrap the JSON in markdown code blocks inside the XML tags.
+9. At the VERY END of your response, you MUST append a <dashboard-data> XML block containing valid JSON with structured data for the relevant dashboards. Do NOT wrap the JSON in markdown code blocks inside the XML tags. Use REAL values from your analysis.
+
+Valid dashboard keys (include only those relevant):
+actionChecklist, decisionMatrix, costWaterfall, timelineRoadmap, kraljicQuadrant, tcoComparison, licenseTier, sensitivitySpider, riskMatrix, scenarioComparison, supplierScorecard, sowAnalysis, negotiationPrep, dataQuality
+
+Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"Materials","value":225000,"type":"cost"},{"name":"Savings","value":45000,"type":"reduction"}],"currency":"$"},"actionChecklist":{"actions":[{"action":"Renegotiate","priority":"high","status":"pending","owner":"Procurement"}]}}</dashboard-data>
 
 ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
 
