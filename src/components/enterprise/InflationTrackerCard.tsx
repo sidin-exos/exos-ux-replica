@@ -29,8 +29,13 @@ const MOCK_NEWS = [
 const InflationTrackerCard = ({ tracker }: Props) => {
   const [open, setOpen] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editName, setEditName] = useState(tracker.goods_definition);
+  const [editTarget, setEditTarget] = useState(tracker.driver_count_target);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { deleteTracker, updateTracker } = useInflationTrackers();
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
 
   const handleScanNow = async (e: React.MouseEvent) => {
@@ -48,6 +53,20 @@ const InflationTrackerCard = ({ tracker }: Props) => {
     } finally {
       setIsScanning(false);
     }
+  };
+
+  const handleDelete = () => {
+    deleteTracker.mutate(tracker.id);
+    setShowDeleteConfirm(false);
+  };
+
+  const handleSaveEdit = () => {
+    updateTracker.mutate({
+      trackerId: tracker.id,
+      goods_definition: editName,
+      driver_count_target: editTarget,
+    });
+    setShowEditDialog(false);
   };
 
   return (
