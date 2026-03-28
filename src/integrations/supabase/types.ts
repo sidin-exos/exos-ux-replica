@@ -861,6 +861,54 @@ export type Database = {
         }
         Relationships: []
       }
+      monitor_reports: {
+        Row: {
+          citations: Json | null
+          created_at: string
+          id: string
+          model_used: string | null
+          organization_id: string
+          processing_time_ms: number | null
+          report_content: string
+          tracker_id: string
+        }
+        Insert: {
+          citations?: Json | null
+          created_at?: string
+          id?: string
+          model_used?: string | null
+          organization_id: string
+          processing_time_ms?: number | null
+          report_content: string
+          tracker_id: string
+        }
+        Update: {
+          citations?: Json | null
+          created_at?: string
+          id?: string
+          model_used?: string | null
+          organization_id?: string
+          processing_time_ms?: number | null
+          report_content?: string
+          tracker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitor_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monitor_reports_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "enterprise_trackers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
