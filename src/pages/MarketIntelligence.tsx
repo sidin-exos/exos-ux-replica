@@ -71,7 +71,20 @@ const MarketIntelligence = () => {
   const renderScenarioContent = () => {
 
     if (selectedScenario === "regular") {
-      return <ScheduledReportsPanel />;
+      return (
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ScheduledReportsPanel />
+          </div>
+          <div className="lg:col-span-1">
+            <RecentQueries
+              queries={recentQueries}
+              isLoading={isLoadingHistory}
+              onLoad={loadRecentQueries}
+            />
+          </div>
+        </div>
+      );
     }
 
     // Ad-hoc flow
