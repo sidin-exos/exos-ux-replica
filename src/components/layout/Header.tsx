@@ -51,14 +51,6 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "Market Intelligence",
-    items: [
-      { label: "Generate a Report", path: "/market-intelligence" },
-      { label: "Scheduled Reports & Triggers", path: "/market-intelligence?tab=queries&mode=regular" },
-      { label: "Knowledge Base", path: "/market-intelligence?tab=insights", icon: Database },
-    ],
-  },
-  {
     label: "Analytical Platforms",
     items: [
       { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert },
@@ -139,6 +131,14 @@ const Header = () => {
                 </NavigationMenuContent>
               </NavigationMenuItem>
             ))}
+            <NavigationMenuItem>
+              <button
+                onClick={() => navigate("/market-intelligence")}
+                className="text-sm font-medium text-muted-foreground px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
+                Market Intelligence
+              </button>
+            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
 
@@ -184,6 +184,14 @@ const Header = () => {
                   </AccordionItem>
                 ))}
               </Accordion>
+
+              <button
+                onClick={() => mobileNavigate("/market-intelligence")}
+                className="text-sm font-medium text-foreground py-2.5 px-3 hover:bg-muted rounded-md text-left flex items-center gap-2 w-full"
+              >
+                <Sparkles className="w-4 h-4 text-primary" />
+                Market Intelligence
+              </button>
 
               <Separator className="my-4" />
 
