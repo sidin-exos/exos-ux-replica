@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, RefreshCw, Loader2, FileText, Clock, Tag } from "lucide-react";
+import { ArrowLeft, RefreshCw, Loader2, FileText, Clock, Tag, FileDown } from "lucide-react";
+import PDFPreviewModal from "@/components/reports/pdf/PDFPreviewModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +52,7 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [pdfReport, setPdfReport] = useState<MonitorReport | null>(null);
 
   const params = tracker.parameters as MonitorParameters;
   const monitorType = (params?.monitor_type ?? "DM-2") as MonitorType;
@@ -197,6 +199,18 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
                         </span>
                       )}
                       <Badge variant="outline" className="text-[10px]">{report.model_used}</Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPdfReport(report);
+                        }}
+                        title="Export as PDF"
+                      >
+                        <FileDown className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -228,6 +242,24 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
           )}
         </div>
       </div>
+
+      {/* PDF Preview Modal */}
+      {pdfReport && (
+        <PDFPreviewModal
+          open={!!pdfReport}
+          onOpenChange={(open) => !open && setPdfReport(null)}
+          scenarioTitle={`${tracker.name} — ${monitorType} ${typeMeta?.label || "Report"}`}
+          analysisResult={pdfReport.report_content}
+          formData={{
+            "Monitor Type": `${monitorType} — ${typeMeta?.label || ""}`,
+            "Report Date": format(new Date(pdfReport.created_at), "MMM d, yyyy 'at' HH:mm"),
+            "Model": pdfReport.model_used,
+            ...(params.entity_type ? { "Entity Type": String(params.entity_type) } : {}),
+            ...(params.default_period ? { "Comparison Period": String(params.default_period) } : {}),
+          }}
+          timestamp={pdfReport.created_at}
+        />
+      )}
     </div>
   );
 };
