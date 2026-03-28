@@ -198,7 +198,7 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "spend-analysis-categorization": ["data-quality", "cost-waterfall"],
 
   // Market Snapshot
-  "market-snapshot": ["data-quality", "action-checklist"],
+  "market-snapshot": [],
 };
 
 // Get dashboards for a scenario with fallback

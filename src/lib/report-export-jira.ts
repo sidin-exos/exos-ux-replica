@@ -10,7 +10,8 @@ import { extractDashboardData } from "@/lib/dashboard-data-parser";
 
 function extractKeyPoints(text: string): string[] {
   if (!text) return [];
-  const lines = text.split("\n").filter((l) => l.trim().length > 0);
+  const cleaned = text.replace(/<dashboard-data>[\s\S]*?<\/dashboard-data>/g, "");
+  const lines = cleaned.split("\n").filter((l) => l.trim().length > 0);
   const keywords = ["recommend", "suggest", "should", "key", "important", "critical", "action"];
   const matched = lines.filter((l) =>
     keywords.some((kw) => l.toLowerCase().includes(kw))
@@ -18,6 +19,18 @@ function extractKeyPoints(text: string): string[] {
   return (matched.length > 0 ? matched : lines).slice(0, 8).map((l) =>
     l.replace(/^[#\-*>\d.]+\s*/, "").replace(/\*\*/g, "").trim()
   );
+}
+
+/**
+ * Escape a value for safe inclusion inside a Jira wiki-markup table cell.
+ * Prevents pipe-based table breakout and wiki macro injection.
+ */
+function sanitizeJiraCell(value: string): string {
+  if (!value) return value;
+  return value
+    .replace(/\|/g, "\\|")      // escape pipe (table cell delimiter)
+    .replace(/\{/g, "\\{")      // escape opening brace (Jira macros: {code}, {panel}, etc.)
+    .replace(/\[/g, "\\[");     // escape bracket (Jira links: [text|url])
 }
 
 export function formatReportForJira(
@@ -53,7 +66,7 @@ export function formatReportForJira(
     sections.push("||Parameter||Value||");
     inputs.forEach(([key, value]) => {
       const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-      sections.push(`|${label}|${value}|`);
+      sections.push(`|${sanitizeJiraCell(label)}|${sanitizeJiraCell(value)}|`);
     });
     sections.push("");
   }

@@ -56,15 +56,15 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
             </View>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-                <View style={{ flex: 1, height: 9, backgroundColor: colors.surfaceLight, borderRadius: 2, overflow: "hidden" }}>
-                  <View style={{ width: `${c.a}%`, height: 9, backgroundColor: scA.color, borderRadius: 2 }} />
+                <View style={{ flex: 1, height: 9, backgroundColor: colors.surfaceLight, overflow: "hidden" }}>
+                  <View style={{ width: `${c.a}%`, height: 9, backgroundColor: scA.color }} />
                 </View>
                 <Text style={{ width: 22, fontSize: 9, color: getScoreColor(c.a, c.b), textAlign: "right", marginLeft: 4 }}>{c.a}</Text>
               </View>
               <View style={{ width: 16 }} />
               <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-                <View style={{ flex: 1, height: 9, backgroundColor: colors.surfaceLight, borderRadius: 2, overflow: "hidden" }}>
-                  <View style={{ width: `${c.b}%`, height: 9, backgroundColor: scB.color, borderRadius: 2 }} />
+                <View style={{ flex: 1, height: 9, backgroundColor: colors.surfaceLight, overflow: "hidden" }}>
+                  <View style={{ width: `${c.b}%`, height: 9, backgroundColor: scB.color }} />
                 </View>
                 <Text style={{ width: 22, fontSize: 9, color: getScoreColor(c.b, c.a), textAlign: "right", marginLeft: 4 }}>{c.b}</Text>
               </View>
@@ -77,11 +77,11 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
         <View style={[styles.matrixRow, styles.matrixHeader]}>
           <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4 }]}>Metric</Text>
           <View style={[styles.matrixCell, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]}>
-            <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: scA.color, marginRight: 3 }} />
+            <View style={{ width: 7, height: 7, backgroundColor: scA.color, marginRight: 3 }} />
             <Text style={{ fontSize: 9 }}>{scA.name}</Text>
           </View>
           <View style={[styles.matrixCell, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]}>
-            <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: scB.color, marginRight: 3 }} />
+            <View style={{ width: 7, height: 7, backgroundColor: scB.color, marginRight: 3 }} />
             <Text style={{ fontSize: 9 }}>{scB.name}</Text>
           </View>
         </View>

@@ -16,10 +16,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, FileCode, Eye, Code } from "lucide-react";
-import { useShareableMode } from "@/hooks/useShareableMode";
+
+const SUPERADMIN_EMAIL = "andrei.sidin@gmail.com";
 
 interface MasterXMLPreviewProps {
   scenarioType: string;
+  userEmail?: string | null;
 }
 
 /**
@@ -196,13 +198,12 @@ function TemplatePreviewContent({ scenarioType }: { scenarioType: string }) {
   );
 }
 
-export function MasterXMLPreview({ scenarioType }: MasterXMLPreviewProps) {
+export function MasterXMLPreview({ scenarioType, userEmail }: MasterXMLPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"preview" | "xml">("preview");
-  const { showTechnicalDetails } = useShareableMode();
 
-  // Hide entirely in shareable mode
-  if (!showTechnicalDetails) {
+  // Only visible to superadmin
+  if (!userEmail || userEmail.toLowerCase() !== SUPERADMIN_EMAIL) {
     return null;
   }
 

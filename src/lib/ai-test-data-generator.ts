@@ -212,7 +212,7 @@ export async function generateTestDataHybrid(
         };
       }
     } catch (err) {
-      console.warn("[TestDataHybrid] AI generation failed, falling back to static");
+      // AI generation failed — fall through to static generator
     }
   }
 

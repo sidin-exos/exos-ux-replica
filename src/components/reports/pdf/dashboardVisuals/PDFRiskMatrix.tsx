@@ -19,7 +19,7 @@ const getRiskSeverity = (score: number, c: ReturnType<typeof getPdfColors>) => {
 
 function buildTableStyles(c: ReturnType<typeof getPdfColors>) {
   return {
-    tableContainer: { marginTop: 8, borderWidth: 1, borderColor: c.border, borderRadius: 4, overflow: "hidden" as const },
+    tableContainer: { marginTop: 8, borderWidth: 1, borderColor: c.border, overflow: "hidden" as const },
     headerRow: { flexDirection: "row" as const, backgroundColor: c.surfaceLight, borderBottomWidth: 1, borderBottomColor: c.border, paddingVertical: 6, paddingHorizontal: 8 },
     dataRow: { flexDirection: "row" as const, borderBottomWidth: 1, borderBottomColor: c.border, paddingVertical: 6, paddingHorizontal: 8, alignItems: "center" as const },
     lastRow: { borderBottomWidth: 0 },
@@ -60,12 +60,12 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
         </View>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           {criticalCount > 0 && (
-            <View style={{ backgroundColor: colors.destructive, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3, marginRight: 4 }}>
+            <View style={{ backgroundColor: colors.destructive, paddingHorizontal: 6, paddingVertical: 2, marginRight: 4 }}>
               <Text style={{ fontSize: 9, fontWeight: 700, color: colors.badgeText }}>{criticalCount} Critical</Text>
             </View>
           )}
           {highCount > 0 && (
-            <View style={{ backgroundColor: colors.warning, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 }}>
+            <View style={{ backgroundColor: colors.warning, paddingHorizontal: 6, paddingVertical: 2 }}>
               <Text style={{ fontSize: 9, fontWeight: 700, color: colors.badgeText }}>{highCount} High</Text>
             </View>
           )}
@@ -87,7 +87,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
           return (
             <View key={risk.id} style={[tableStyles.dataRow, i === sortedRisks.length - 1 && tableStyles.lastRow]}>
               <View style={tableStyles.colSeverity}>
-                <View style={{ backgroundColor: severity.bgColor, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3, minWidth: 48, alignItems: "center" }}>
+                <View style={{ backgroundColor: severity.bgColor, paddingHorizontal: 6, paddingVertical: 2, minWidth: 48, alignItems: "center" }}>
                   <Text style={{ fontSize: 9, fontWeight: 700, color: severity.color }}>{severity.label}</Text>
                 </View>
               </View>

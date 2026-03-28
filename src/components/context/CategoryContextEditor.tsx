@@ -11,9 +11,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, FolderKanban, Plus, X, FileText, Target } from "lucide-react";
+import { ChevronDown, ChevronUp, FolderKanban, Plus, X, FileText, Target, Scale, AlertCircle, TrendingUp, TrendingDown, Minus, Gavel, ShieldAlert } from "lucide-react";
 import { useProcurementCategory } from "@/hooks/useContextData";
-import type { ProcurementCategory } from "@/lib/ai-context-templates";
+import type { ProcurementCategory, KpiV2 } from "@/lib/ai-context-templates";
 
 export interface CategoryContextOverrides {
   characteristicsOverride: string | null;
@@ -53,6 +53,26 @@ export function applyOverridesToCategory(
   };
 }
 
+function DirectionIcon({ direction }: { direction?: string }) {
+  if (!direction) return null;
+  const d = direction.toLowerCase();
+  if (d.includes('min') || d.includes('decrease') || d.includes('lower') || d.includes('↓')) {
+    return <TrendingDown className="h-3 w-3 text-green-500 shrink-0" />;
+  }
+  if (d.includes('max') || d.includes('increase') || d.includes('higher') || d.includes('↑')) {
+    return <TrendingUp className="h-3 w-3 text-blue-500 shrink-0" />;
+  }
+  return <Minus className="h-3 w-3 text-muted-foreground shrink-0" />;
+}
+
+const KRALJIC_COLORS: Record<string, string> = {
+  "Strategic": "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+  "Leverage": "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+  "Bottleneck": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+  "Non-Critical": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  "Routine": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+};
+
 export function CategoryContextEditor({
   categorySlug,
   overrides,
@@ -63,6 +83,9 @@ export function CategoryContextEditor({
   const [isEditingCharacteristics, setIsEditingCharacteristics] = useState(false);
   
   const { data: category } = useProcurementCategory(categorySlug);
+
+  const hasV2Kpis = category?.kpis_v2 && category.kpis_v2.length > 0;
+  const hasEnrichedData = !!(category?.kraljic_position || category?.key_cost_drivers?.length || category?.procurement_levers?.length || category?.eu_regulatory_context);
 
   // Initialize all KPIs as enabled when category changes
   useEffect(() => {
@@ -156,6 +179,11 @@ export function CategoryContextEditor({
                 Fine-tune: {category.name}
               </span>
               <div className="flex items-center gap-2">
+                {category.kraljic_position && (
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${KRALJIC_COLORS[category.kraljic_position] || "bg-muted text-muted-foreground"}`}>
+                    {category.kraljic_position}
+                  </span>
+                )}
                 {overrides.characteristicsOverride && (
                   <Badge variant="secondary" className="text-xs">
                     Modified
@@ -176,6 +204,109 @@ export function CategoryContextEditor({
 
         <CollapsibleContent>
           <CardContent className="pt-0 space-y-6">
+            {/* Enriched Market Profile (read-only) */}
+            {hasEnrichedData && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Scale className="h-4 w-4 text-purple-500" />
+                  <Label className="font-medium">Market Profile</Label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {category.kraljic_position && (
+                    <div className="p-2 rounded-md bg-background">
+                      <span className="text-muted-foreground">Kraljic Position</span>
+                      <div className="mt-1">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${KRALJIC_COLORS[category.kraljic_position] || "bg-muted text-muted-foreground"}`}>
+                          {category.kraljic_position}
+                        </span>
+                      </div>
+                      {category.kraljic_rationale && (
+                        <p className="text-muted-foreground mt-1">{category.kraljic_rationale}</p>
+                      )}
+                    </div>
+                  )}
+                  {category.price_volatility && (
+                    <div className="p-2 rounded-md bg-background">
+                      <span className="text-muted-foreground">Price Volatility</span>
+                      <p className="mt-1 font-medium">{category.price_volatility}</p>
+                    </div>
+                  )}
+                  {category.market_structure && (
+                    <div className="p-2 rounded-md bg-background">
+                      <span className="text-muted-foreground">Market Structure</span>
+                      <p className="mt-1 font-medium">{category.market_structure}</p>
+                    </div>
+                  )}
+                  {category.supply_concentration && (
+                    <div className="p-2 rounded-md bg-background">
+                      <span className="text-muted-foreground">Supply Concentration</span>
+                      <p className="mt-1 font-medium">{category.supply_concentration}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Key Cost Drivers */}
+                {category.key_cost_drivers && category.key_cost_drivers.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground font-medium">Key Cost Drivers</p>
+                    <div className="flex flex-wrap gap-1">
+                      {category.key_cost_drivers.map((d, i) => (
+                        <Badge key={i} variant="outline" className="text-xs py-0">
+                          {d.driver}{d.share_pct ? ` (${d.share_pct})` : ''}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Procurement Levers */}
+                {category.procurement_levers && category.procurement_levers.length > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Gavel className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground font-medium">Procurement Levers</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {category.procurement_levers.map((l, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs py-0">
+                          {l.lever}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* EU Regulatory Context */}
+                {category.eu_regulatory_context && (
+                  <div className="p-2.5 rounded-md bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <ShieldAlert className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">EU Regulatory Context</span>
+                    </div>
+                    <p className="text-xs text-blue-700 dark:text-blue-300/80">{category.eu_regulatory_context}</p>
+                  </div>
+                )}
+
+                {/* Common Failure Modes */}
+                {category.common_failure_modes && category.common_failure_modes.length > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <AlertCircle className="h-3 w-3 text-orange-500" />
+                      <p className="text-xs text-muted-foreground font-medium">Common Failure Modes</p>
+                    </div>
+                    <ul className="space-y-1">
+                      {category.common_failure_modes.map((f, i) => (
+                        <li key={i} className="text-xs text-muted-foreground pl-3">
+                          • {f.mode}{f.mitigation ? ` → ${f.mitigation}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Category Characteristics Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -234,26 +365,58 @@ export function CategoryContextEditor({
               </p>
               
               <div className="space-y-2">
-                {category.kpis.map((kpi, i) => {
-                  const key = `${i}-${kpi.slice(0, 20)}`;
-                  const isEnabled = overrides.enabledKpis[key] !== false;
-                  
-                  return (
-                    <div
-                      key={key}
-                      className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
-                        isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
-                      }`}
-                    >
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={() => toggleKpi(key)}
-                        className="mt-0.5"
-                      />
-                      <span className="text-sm flex-1">{kpi}</span>
-                    </div>
-                  );
-                })}
+                {hasV2Kpis ? (
+                  category.kpis_v2!.map((kv2, i) => {
+                    const legacyText = category.kpis[i] || kv2.label;
+                    const key = `${i}-${legacyText.slice(0, 20)}`;
+                    const isEnabled = overrides.enabledKpis[key] !== false;
+                    
+                    return (
+                      <div
+                        key={key}
+                        className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
+                          isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
+                        }`}
+                      >
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={() => toggleKpi(key)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex items-center gap-2 flex-1 flex-wrap">
+                          <DirectionIcon direction={kv2.direction} />
+                          <span className="text-sm">{kv2.label}</span>
+                          {kv2.exos_lever && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              {kv2.exos_lever}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  category.kpis.map((kpi, i) => {
+                    const key = `${i}-${kpi.slice(0, 20)}`;
+                    const isEnabled = overrides.enabledKpis[key] !== false;
+                    
+                    return (
+                      <div
+                        key={key}
+                        className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
+                          isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
+                        }`}
+                      >
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={() => toggleKpi(key)}
+                          className="mt-0.5"
+                        />
+                        <span className="text-sm flex-1">{kpi}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {/* Custom KPIs */}

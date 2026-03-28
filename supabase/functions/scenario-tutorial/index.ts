@@ -21,7 +21,7 @@ serve(async (req) => {
     }
 
     // Rate limit: 30 requests/hour per user
-    const rateCheck = await checkRateLimit(authResult.user.userId, "scenario-tutorial", 30, 60);
+    const rateCheck = await checkRateLimit(authResult.user.userId, "scenario-tutorial", 30, 60, { failClosed: true });
     if (!rateCheck.allowed) {
       return rateLimitResponse(rateCheck, corsHeaders);
     }
@@ -79,7 +79,7 @@ serve(async (req) => {
     }
     console.error("scenario-tutorial error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

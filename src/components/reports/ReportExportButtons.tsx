@@ -86,9 +86,9 @@ const ReportExportButtons = ({
     });
   };
 
-  const handleExcelExport = () => {
+  const handleExcelExport = async () => {
     try {
-      exportReportToExcel(scenarioTitle, analysisResult, formData, timestamp);
+      await exportReportToExcel(scenarioTitle, analysisResult, formData, timestamp);
       toast.success("Excel report downloaded", {
         description: "Check your downloads folder for the .xlsx file.",
       });

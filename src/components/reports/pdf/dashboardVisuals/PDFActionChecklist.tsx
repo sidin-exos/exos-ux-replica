@@ -43,7 +43,7 @@ export const PDFActionChecklist = ({ data, themeMode }: { data: ActionChecklistD
             {stats.inProgress} in progress
           </Text>
         </View>
-        <View style={{ height: 7, backgroundColor: colors.surfaceLight, borderRadius: 3, overflow: "hidden", flexDirection: "row" }}>
+        <View style={{ height: 7, backgroundColor: colors.surfaceLight, overflow: "hidden", flexDirection: "row" }}>
           <View style={{ width: `${tasks.length > 0 ? (stats.done / tasks.length) * 100 : 0}%`, height: 7, backgroundColor: colors.success }} />
           <View style={{ width: `${tasks.length > 0 ? (stats.inProgress / tasks.length) * 100 : 0}%`, height: 7, backgroundColor: colors.warning }} />
         </View>
@@ -52,7 +52,7 @@ export const PDFActionChecklist = ({ data, themeMode }: { data: ActionChecklistD
       <View style={{ marginTop: 4 }}>
         {tasks.map((t, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "flex-start", marginBottom: 6, paddingBottom: 6, borderBottomWidth: i < tasks.length - 1 ? 1 : 0, borderBottomColor: colors.border }}>
-            <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: t.color + "30", borderWidth: 2, borderColor: t.color, marginRight: 8, marginTop: 1, justifyContent: "center", alignItems: "center" }}>
+            <View style={{ width: 16, height: 16, backgroundColor: t.color + "30", borderWidth: 2, borderColor: t.color, marginRight: 8, marginTop: 1, justifyContent: "center", alignItems: "center" }}>
               {t.status === "Done" && (
                 <Text style={{ fontSize: 10, color: t.color, fontWeight: 700 }}>✓</Text>
               )}
@@ -64,7 +64,7 @@ export const PDFActionChecklist = ({ data, themeMode }: { data: ActionChecklistD
               </View>
             </View>
             <View style={{ alignItems: "flex-end" }}>
-              <View style={{ paddingHorizontal: 4, paddingVertical: 1, borderRadius: 2, backgroundColor: t.color + "20" }}>
+              <View style={{ paddingHorizontal: 4, paddingVertical: 1, backgroundColor: t.color + "20" }}>
                 <Text style={{ fontSize: 8, color: t.color, fontWeight: 600 }}>{t.status}</Text>
               </View>
               <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{t.priority}</Text>

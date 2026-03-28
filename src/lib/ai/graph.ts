@@ -71,6 +71,7 @@ interface PipelineState {
   userQuery: string;
   config: ModelConfigType;
   scenarioId?: string;
+  selectedDashboards?: string[];
   anonymizedQuery: string;
   entityMap: Map<string, SensitiveEntity>;
   aiResponse: string;
@@ -93,7 +94,28 @@ Guidelines:
 - Identify risks and mitigation approaches
 - Be concise but comprehensive
 
-Format your response with markdown headers for clarity.`;
+Format your response with markdown headers for clarity.
+
+IMPORTANT: At the VERY END of your response, you MUST append a <dashboard-data> XML block containing valid JSON with structured data for the relevant dashboards below. Do NOT wrap the JSON in markdown code blocks inside the XML tags. Use REAL values from your analysis.
+
+Valid dashboard keys (include only those relevant to your analysis):
+- "actionChecklist": {"actions":[{"action":"...","priority":"high"|"medium"|"low"|"critical","status":"pending"|"in-progress"|"done"|"blocked","owner":"..."}]}
+- "decisionMatrix": {"criteria":[{"name":"...","weight":0.3}],"options":[{"name":"...","scores":[8,6,7]}]}
+- "costWaterfall": {"components":[{"name":"...","value":50000,"type":"cost"|"reduction"}],"currency":"$"}
+- "timelineRoadmap": {"phases":[{"name":"...","startWeek":1,"endWeek":4,"status":"completed"|"in-progress"|"upcoming","milestones":["..."]}]}
+- "kraljicQuadrant": {"items":[{"id":"1","name":"...","supplyRisk":7,"businessImpact":9}]}
+- "tcoComparison": {"data":[{"year":"Y0","optionA":100000,"optionB":80000}],"options":[{"id":"optionA","name":"...","color":"#4a8a74","totalTCO":500000}]}
+- "licenseTier": {"tiers":[{"name":"...","users":100,"costPerUser":50,"totalCost":5000,"color":"#4a8a74"}]}
+- "sensitivitySpider": {"variables":[{"name":"...","baseCase":100000,"lowCase":80000,"highCase":130000}]}
+- "riskMatrix": {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
+- "scenarioComparison": {"scenarios":[{"id":"a","name":"...","color":"#4a8a74"}],"radarData":[{"metric":"Cost","a":8,"b":6}],"summary":[{"criteria":"Cost","a":"Low","b":"High"}]}
+- "supplierScorecard": {"suppliers":[{"name":"...","score":85,"trend":"up"|"down"|"stable","spend":"$1M"}]}
+- "sowAnalysis": {"clarity":75,"sections":[{"name":"...","status":"complete"|"partial"|"missing","note":"..."}]}
+- "negotiationPrep": {"batna":{"strength":7,"description":"..."},"leveragePoints":[{"point":"...","tactic":"..."}],"sequence":[{"step":"...","detail":"..."}]}
+- "dataQuality": {"fields":[{"field":"...","status":"complete"|"partial"|"missing","coverage":85}]}
+
+Example:
+<dashboard-data>{"actionChecklist":{"actions":[{"action":"Renegotiate contract","priority":"high","status":"pending","owner":"Procurement Lead"}]},"riskMatrix":{"risks":[{"supplier":"Vendor A","impact":"high","probability":"medium","category":"Supply Chain"}]}}</dashboard-data>`;
 
 const MAX_RETRIES = 3;
 
@@ -102,7 +124,6 @@ const MAX_RETRIES = 3;
  * Pass raw query through so the server can anonymize it.
  */
 function stepAnonymize(state: PipelineState): PipelineState {
-  console.log('Pipeline: Skipping client-side anonymization (server handles it)');
   return {
     ...state,
     anonymizedQuery: state.userQuery,
@@ -118,8 +139,6 @@ function stepAnonymize(state: PipelineState): PipelineState {
 async function stepReasoning(state: PipelineState): Promise<PipelineState> {
   const { model } = state.config;
 
-  console.log(`🧠 Pipeline: AI Reasoning (model: ${model})`);
-
   const { data, error } = await supabase.functions.invoke('sentinel-analysis', {
     body: {
       systemPrompt: EXOS_SYSTEM_PROMPT,
@@ -127,6 +146,7 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
       googleModel: model,
       enableTestLogging: false,
       scenarioId: state.scenarioId,
+      selectedDashboards: state.selectedDashboards || [],
     },
   });
 
@@ -148,11 +168,6 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
 
   // Extract server-side validation if present
   const serverValidation: ServerValidation | null = data?.validation || null;
-  if (serverValidation) {
-    console.log(`✅ Pipeline: Server validation received (passed: ${serverValidation.passed}, confidence: ${serverValidation.confidenceScore}, issues: ${serverValidation.issues.length})`);
-  }
-
-  console.log('✅ Pipeline: Received AI response');
 
   return {
     ...state,
@@ -166,8 +181,6 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
  * Runs client-side token integrity check, then merges with server validation.
  */
 function stepValidate(state: PipelineState): PipelineState {
-  console.log('⚖️ Pipeline: Validating response...');
-
   const maskedTokens = Array.from(state.entityMap.keys());
 
   // Run client-side token integrity check (needs local entity map)
@@ -181,7 +194,6 @@ function stepValidate(state: PipelineState): PipelineState {
   );
 
   if (hasCriticalIssues || !validationResult.passed) {
-    console.log('⚠️ Pipeline: Validation failed, will retry');
     return {
       ...state,
       validationStatus: 'rejected',
@@ -190,7 +202,6 @@ function stepValidate(state: PipelineState): PipelineState {
     };
   }
 
-  console.log('✅ Pipeline: Validation passed');
   return {
     ...state,
     validationStatus: 'approved',
@@ -203,7 +214,6 @@ function stepValidate(state: PipelineState): PipelineState {
  * The AI response is already deanonymized by the edge function.
  */
 function stepDeanonymize(state: PipelineState): PipelineState {
-  console.log('Pipeline: Skipping client-side deanonymization (server already did it)');
   return {
     ...state,
     finalAnswer: state.aiResponse,
@@ -219,7 +229,8 @@ function stepDeanonymize(state: PipelineState): PipelineState {
 export async function runExosGraph(
   userQuery: string,
   config: ModelConfigType,
-  scenarioId?: string
+  scenarioId?: string,
+  selectedDashboards?: string[]
 ): Promise<{
   finalAnswer: string;
   confidenceScore: number;
@@ -227,8 +238,6 @@ export async function runExosGraph(
   retryCount: number;
 }> {
   const isMultiCycle = scenarioId ? isDeepAnalyticsScenario(scenarioId) : false;
-  console.log(`🚀 Pipeline: Starting (scenarioId: ${scenarioId || 'none'}, multiCycle: ${isMultiCycle})`, config);
-  
   // Log tracing config on first run
   if (isTracingEnabled()) {
     logTracingConfig();
@@ -247,6 +256,7 @@ export async function runExosGraph(
     userQuery,
     config,
     scenarioId,
+    selectedDashboards,
     anonymizedQuery: '',
     entityMap: new Map(),
     aiResponse: '',
@@ -303,11 +313,9 @@ export async function runExosGraph(
       }
 
       if (state.retryCount >= MAX_RETRIES) {
-        console.log('⚠️ Pipeline: Max retries reached, proceeding with best effort');
         break;
       }
 
-      console.log(`🔄 Pipeline: Retry ${state.retryCount}/${MAX_RETRIES}`);
     }
 
     // Step 4: Deanonymize (traced)
@@ -319,8 +327,6 @@ export async function runExosGraph(
       parentRunId
     );
     state = deanonymizeResult.result;
-
-    console.log(`🏁 Pipeline: Complete (status: ${state.validationStatus}, retries: ${state.retryCount})`);
 
     // End parent trace with success
     await endPipelineTrace(parentRunId, {

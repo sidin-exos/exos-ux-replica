@@ -47,7 +47,7 @@ export function useSavedIntelConfigs() {
       }
 
       let query = supabase
-        .from("saved_intel_configs" as any)
+        .from("saved_intel_configs")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -58,7 +58,7 @@ export function useSavedIntelConfigs() {
 
       const { data, error } = await query;
       if (error) throw error;
-      setConfigs((data as any[]) || []);
+      setConfigs((data ?? []) as SavedIntelConfig[]);
     } catch (err) {
       console.error("Error loading intel configs:", err);
       toast.error("Failed to load saved configurations");
@@ -75,8 +75,7 @@ export function useSavedIntelConfigs() {
         return false;
       }
 
-      const { error } = await supabase
-        .from("saved_intel_configs" as any)
+      const { error } = await (supabase.from as any)("saved_intel_configs")
         .insert({
           user_id: user.id,
           config_type: params.config_type,
@@ -89,7 +88,7 @@ export function useSavedIntelConfigs() {
           schedule_cron: params.schedule_cron || null,
           trigger_instruction: params.trigger_instruction || null,
           grounding_target: params.grounding_target || {},
-        } as any);
+        });
 
       if (error) throw error;
       toast.success("Configuration saved successfully");
@@ -104,7 +103,7 @@ export function useSavedIntelConfigs() {
   const deleteConfig = useCallback(async (id: string): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from("saved_intel_configs" as any)
+        .from("saved_intel_configs")
         .delete()
         .eq("id", id);
 
@@ -122,8 +121,8 @@ export function useSavedIntelConfigs() {
   const toggleActive = useCallback(async (id: string, isActive: boolean): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from("saved_intel_configs" as any)
-        .update({ is_active: isActive } as any)
+        .from("saved_intel_configs")
+        .update({ is_active: isActive })
         .eq("id", id);
 
       if (error) throw error;

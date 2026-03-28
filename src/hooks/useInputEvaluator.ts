@@ -9,12 +9,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { evaluateInputQuality } from "@/lib/input-evaluator";
-import type { EvaluationResult } from "@/lib/input-evaluator/types";
+import type { EvaluationResult, ScenarioEvalConfig } from "@/lib/input-evaluator/types";
 
 export function useInputEvaluator(
   scenarioId: string,
   formData: Record<string, string>,
-  debounceMs = 800
+  debounceMs = 800,
+  externalConfig?: ScenarioEvalConfig | null
 ): EvaluationResult | null {
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const lastSerializedRef = useRef<string>("");
@@ -25,7 +26,7 @@ export function useInputEvaluator(
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
-      const evaluation = evaluateInputQuality(scenarioId, formData);
+      const evaluation = evaluateInputQuality(scenarioId, formData, externalConfig);
       const serialized = JSON.stringify(evaluation);
 
       // Constraint #3: Only update state if the result actually changed
@@ -34,7 +35,7 @@ export function useInputEvaluator(
         setResult(evaluation);
       }
     }, debounceMs);
-  }, [scenarioId, formData, debounceMs]);
+  }, [scenarioId, formData, debounceMs, externalConfig]);
 
   useEffect(() => {
     scheduleEval();

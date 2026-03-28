@@ -188,15 +188,46 @@ export interface DashboardData {
 
 const DASHBOARD_DATA_REGEX = /<dashboard-data>([\s\S]*?)<\/dashboard-data>/;
 
+/** Map snake_case keys the AI might return to the camelCase keys DashboardData expects */
+const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
+  action_checklist: "actionChecklist",
+  decision_matrix: "decisionMatrix",
+  cost_waterfall: "costWaterfall",
+  timeline_roadmap: "timelineRoadmap",
+  kraljic_quadrant: "kraljicQuadrant",
+  tco_comparison: "tcoComparison",
+  license_tier: "licenseTier",
+  sensitivity_spider: "sensitivitySpider",
+  risk_matrix: "riskMatrix",
+  scenario_comparison: "scenarioComparison",
+  supplier_scorecard: "supplierScorecard",
+  sow_analysis: "sowAnalysis",
+  negotiation_prep: "negotiationPrep",
+  data_quality: "dataQuality",
+};
+
+const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
+
 export function extractDashboardData(text: string): DashboardData | null {
   if (!text) return null;
   const match = text.match(DASHBOARD_DATA_REGEX);
   if (!match?.[1]) return null;
   try {
     const raw = match[1].replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-    const parsed = JSON.parse(raw) as DashboardData;
+    const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-    return parsed;
+
+    // Normalize snake_case keys to camelCase (AI often outputs snake_case)
+    const normalized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      const camelKey = SNAKE_TO_CAMEL[key] || key;
+      normalized[camelKey] = value;
+    }
+
+    const recognized = Object.keys(normalized).filter(k => VALID_KEYS.has(k));
+    if (recognized.length === 0) return null;
+
+    return normalized as DashboardData;
   } catch {
     return null;
   }

@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { 
   ExternalLink, 
   Clock, 
-  Cpu, 
   CheckCircle2, 
   Copy,
   Building2, 
@@ -19,8 +18,10 @@ import {
   Coins,
   Database
 } from "lucide-react";
-import { type IntelResult, type QueryType, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
+import { type IntelResult, QUERY_TYPE_LABELS } from "@/hooks/useMarketIntelligence";
 import { SaveToKnowledgeBaseDialog } from "@/components/intelligence/SaveToKnowledgeBaseDialog";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import { toast } from "sonner";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -54,30 +55,25 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <Card className="glass-effect border-primary/20">
+      <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-500/5 to-transparent">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {IconComponent && <IconComponent className="w-5 h-5 text-primary" />}
-              <div>
-                <CardTitle className="text-lg">{typeInfo.label} Analysis</CardTitle>
-                <CardDescription>
-                  Powered by {result.model}
-                </CardDescription>
-              </div>
+              {IconComponent && <IconComponent className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+              <CardTitle className="text-lg">{typeInfo.label} Analysis</CardTitle>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="gap-1">
+              <Badge variant="outline" className="gap-1 border-sky-400/50 text-sky-600 dark:text-sky-400">
                 <Clock className="w-3 h-3" />
                 {(result.processingTimeMs / 1000).toFixed(1)}s
               </Badge>
               {result.tokenUsage && (
-                <Badge variant="outline" className="gap-1">
+                <Badge variant="outline" className="gap-1 border-amber-400/50 text-amber-600 dark:text-amber-400">
                   <Coins className="w-3 h-3" />
                   {result.tokenUsage.totalTokens.toLocaleString()} tokens
                 </Badge>
               )}
-              <Badge variant="default" className="gap-1">
+              <Badge className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
                 <CheckCircle2 className="w-3 h-3" />
                 Complete
               </Badge>
@@ -96,11 +92,7 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-              {result.summary}
-            </div>
-          </div>
+          <MarkdownRenderer content={result.summary} className="text-sm" />
         </CardContent>
       </Card>
 
@@ -112,9 +104,9 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
               <ExternalLink className="w-4 h-4" />
               Sources ({result.citations.length})
             </CardTitle>
-            <CardDescription>
+            <p className="text-sm text-muted-foreground">
               Click to view original sources
-            </CardDescription>
+            </p>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -140,8 +132,16 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
         </Card>
       )}
 
-      {/* Actions */}
+      {/* Export Actions */}
       <Separator />
+      <ReportExportButtons
+        scenarioTitle={`${typeInfo.label} Analysis`}
+        analysisResult={result.summary}
+        formData={{}}
+        timestamp={new Date().toISOString()}
+      />
+
+      {/* Actions */}
       <div className="flex justify-center gap-3">
         <Button variant="outline" onClick={() => setShowSaveDialog(true)} className="gap-2">
           <Database className="w-4 h-4" />

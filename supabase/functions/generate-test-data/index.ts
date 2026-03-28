@@ -3,7 +3,18 @@ import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
 import { parseBody, requireString, requireStringEnum, optionalBoolean, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import {
+  QUALITY_TIER_INSTRUCTIONS,
+  mapDataQualityToTier,
+  getFieldGroups,
+  buildBlockInstructions,
+  type QualityTier,
+  type ScenarioFieldConfigRow,
+} from "./block-guidance.ts";
 
 /**
  * AI-Powered Test Data Generation with Drafter-Validator Pattern
@@ -54,10 +65,33 @@ interface DraftedParameters {
   personaName?: string;
 }
 
-interface ScenarioSchema {
+// Field groups type (returned by getFieldGroups from block-guidance.ts)
+interface ScenarioFieldGroups {
   required: string[];
   optional: string[];
+  all: string[];
 }
+
+// DB query columns for scenario_field_config
+const FIELD_CONFIG_COLUMNS = "block_id, block_label, is_required, expected_data_type, sub_prompts, deviation_type, block_guidance, optimal_guidance, minimum_guidance, degraded_guidance" as const;
+
+/** Fetch scenario field configs from DB */
+async function fetchFieldConfigs(
+  supabase: ReturnType<typeof createClient>,
+  scenarioSlug: string
+): Promise<ScenarioFieldConfigRow[]> {
+  const { data, error } = await supabase
+    .from("scenario_field_config")
+    .select(FIELD_CONFIG_COLUMNS)
+    .eq("scenario_slug", scenarioSlug);
+
+  if (error) {
+    console.error(`[TestDataGen] Failed to fetch field config for ${scenarioSlug}:`, error);
+    return [];
+  }
+  return (data || []) as ScenarioFieldConfigRow[];
+}
+
 
 // =============================================
 // BUYER PERSONAS
@@ -148,46 +182,6 @@ const CATEGORY_KPIS: Record<string, string[]> = {
   "capital-equipment": ["Uptime (%)", "Maintenance cost ratio", "ROI period (months)"],
 };
 
-// =============================================
-// SCENARIO_SCHEMAS — required/optional split mirrors src/lib/scenarios.ts
-// Including 3 CEO overrides: annualMaintenance (tco), contractLength (sw-licensing), contractTerm (savings)
-// =============================================
-const SCENARIO_SCHEMAS: Record<string, ScenarioSchema> = {
-  "make-vs-buy": { required: ["industryContext", "projectBrief"], optional: ["makeCosts", "buyCosts", "strategicFactors"] },
-  "cost-breakdown": { required: ["industryContext", "productDescription", "currentCosts"], optional: ["marketFactors"] },
-  "spend-analysis-categorization": { required: ["industryContext", "rawSpendData"], optional: ["timeframe", "businessGoal"] },
-  "tail-spend-sourcing": { required: ["industryContext", "purchaseAmount", "urgency"], optional: ["alternativesExist", "vendorHistory", "technicalSpecs"] },
-  "supplier-review": { required: ["industryContext", "qualityScore", "onTimeDelivery", "spendVolume"], optional: ["communicationScore", "priceVsMarket", "contractStatus", "incidentLog"] },
-  "disruption-management": { required: ["industryContext", "crisisDescription", "impactAssessment"], optional: ["alternativesContext"] },
-  "risk-assessment": { required: ["industryContext", "assessmentSubject", "currentSituation"], optional: ["contractContext", "riskTolerance"] },
-  "tco-analysis": { required: ["industryContext", "assetDescription", "ownershipPeriod", "capexBreakdown", "opexBreakdown"], optional: ["riskFactors"] },
-  "software-licensing": { required: ["industryContext", "softwareDetails", "userMetrics"], optional: ["commercialTerms", "strategicFactors"] },
-  "risk-matrix": { required: ["industryContext", "supplierName", "operationalRisks"], optional: ["commercialRisks"] },
-  "sow-critic": { required: ["industryContext", "sowText"], optional: ["reviewPriorities"] },
-  "sla-definition": { required: ["industryContext", "serviceDescription", "performanceTargets"], optional: ["escalationAndPenalties"] },
-  "rfp-generator": { required: ["rawBrief"], optional: ["industryContext", "budgetRange", "evaluationPriorities", "technicalRequirements", "incumbentData", "additionalInstructions"] },
-  "requirements-gathering": { required: ["industryContext", "businessGoal", "technicalLandscape"], optional: ["featureRequirements"] },
-  "volume-consolidation": { required: ["industryContext", "consolidationScope"], optional: ["logisticsTerms", "growthForecast"] },
-  "capex-vs-opex": { required: ["industryContext", "assetDetails"], optional: ["lifecycleCosts", "financialParameters"] },
-  "savings-calculation": { required: ["industryContext", "savingsScenario", "costAdjustments"], optional: ["reportingRequirements"] },
-  "saas-optimization": { required: ["industryContext", "subscriptionDetails", "usageMetrics"], optional: ["redundancyContext"] },
-  "forecasting-budgeting": { required: ["historicalSpendData", "knownFutureEvents", "forecastHorizon"], optional: ["industryContext", "categoryContext", "budgetConstraints"] },
-  "category-strategy": { required: ["industryContext", "categoryOverview", "marketDynamics"], optional: ["strategicGoals"] },
-  "negotiation-preparation": { required: ["industryContext", "negotiationSubject", "currentSpend", "supplierName", "batna", "negotiationObjectives"], optional: ["relationshipHistory", "mustHaves", "timeline", "spendBreakdown", "leverageContext"] },
-  "procurement-project-planning": { required: ["industryContext", "projectBrief", "constraintsAndResources"], optional: ["risksAndSuccess"] },
-  "pre-flight-audit": { required: ["industryContext", "supplierIdentity", "researchScope"], optional: ["decisionContext"] },
-  "category-risk-evaluator": { required: ["industryContext", "categoryAndTender", "sowAndMarket"], optional: ["historicalRisks"] },
-  "supplier-dependency-planner": { required: ["industryContext", "dependencyContext", "lockInFactors"], optional: ["diversificationGoals"] },
-  "specification-optimizer": { required: ["industryContext", "specificationText", "specContext"], optional: ["optimizationGoals"] },
-  "black-swan-scenario": { required: ["industryContext", "assessmentScope", "riskPosture"], optional: ["scenarioSimulation"] },
-  "market-snapshot": { required: ["region", "analysisScope"], optional: ["industryContext", "successCriteria", "timeframe"] },
-  "contract-template": { required: ["country", "timeTier", "contractBrief", "contractType"], optional: ["industryContext", "contractValue", "specialRequirements"] },
-};
-
-// Helper to get all fields from a schema
-function getAllFields(schema: ScenarioSchema): string[] {
-  return [...schema.required, ...schema.optional];
-}
 
 // Trick Library - scenario-specific training traps
 const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
@@ -558,6 +552,18 @@ serve(async (req) => {
     );
   }
 
+  // Rate limit: 10 requests/hour per admin user
+  const rateCheck = await checkRateLimit(authResult.user.userId, "generate-test-data", 10, 60, { failClosed: true });
+  if (!rateCheck.allowed) {
+    return rateLimitResponse(rateCheck, corsHeaders);
+  }
+
+  // Create supabase client for DB reads
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
   try {
     const body = await parseBody(req);
 
@@ -574,6 +580,9 @@ serve(async (req) => {
       ? body.temperature : 0.7;
 
     console.log(`[TestDataGen] Mode: ${mode}, Scenario: ${scenarioType}`);
+
+    // Fetch field configs from DB for this scenario
+    const fieldConfigs = await fetchFieldConfigs(supabase, scenarioType);
 
     // === DRAFT MODE: Propose random consistent parameters ===
     if (mode === "draft") {
@@ -594,7 +603,8 @@ serve(async (req) => {
         scenarioType,
         parameters,
         temperature,
-        selectedPersona
+        selectedPersona,
+        fieldConfigs
       );
       return new Response(
         JSON.stringify(generateResult),
@@ -607,7 +617,8 @@ serve(async (req) => {
       const messyResult = await handleMessyMode(
         scenarioType,
         temperature > 0 ? Math.max(temperature, 0.9) : 0.9,
-        selectedPersona
+        selectedPersona,
+        supabase
       );
       return new Response(
         JSON.stringify(messyResult),
@@ -616,8 +627,8 @@ serve(async (req) => {
     }
 
     // === FULL MODE: Legacy MCTS approach ===
-    const schema = SCENARIO_SCHEMAS[scenarioType] || { required: ["industryContext"], optional: [] };
-    const fields = getAllFields(schema);
+    const fieldGroups = getFieldGroups(fieldConfigs);
+    const fields = fieldGroups.all;
     const industries = Object.keys(COMPATIBILITY_MATRIX);
     
     const selectedIndustry = industry && industries.includes(industry) 
@@ -638,12 +649,13 @@ serve(async (req) => {
       console.log(`[TestDataGen] MCTS iteration ${iteration + 1}/${mctsIterations}`);
       
       const generationPrompt = buildGenerationPrompt(
-        scenarioType, 
-        selectedIndustry, 
-        selectedCategory, 
-        schema,
+        scenarioType,
+        selectedIndustry,
+        selectedCategory,
+        fieldGroups,
         iteration,
-        selectedPersona
+        selectedPersona,
+        fieldConfigs
       );
       
       const generationResponse = await callAI(generationPrompt.system, generationPrompt.user, temperature);
@@ -698,8 +710,8 @@ serve(async (req) => {
           reasoning: bestCandidate.reasoning,
           persona: selectedPersona.id,
           personaName: selectedPersona.name,
-          requiredFieldCount: schema.required.length,
-          optionalFieldCount: schema.optional.length,
+          requiredFieldCount: fieldGroups.required.length,
+          optionalFieldCount: fieldGroups.optional.length,
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -794,6 +806,11 @@ Return ONLY a valid JSON object with these exact keys:
     parsed.persona = persona.id;
     parsed.personaName = persona.name;
     
+    // Compute and attach qualityTier
+    const qualityTier = mapDataQualityToTier(parsed.dataQuality);
+    (parsed as any).qualityTier = qualityTier;
+    console.log(`[TestDataGen] Draft mode - qualityTier: ${qualityTier} (from dataQuality: ${parsed.dataQuality})`);
+    
     return { success: true, parameters: parsed };
   } catch (error) {
     console.error("[TestDataGen] Failed to parse draft:", error);
@@ -806,10 +823,15 @@ async function handleGenerateMode(
   scenarioType: string,
   parameters: DraftedParameters,
   temperature: number,
-  selectedPersona: typeof BUYER_PERSONAS[number]
+  selectedPersona: typeof BUYER_PERSONAS[number],
+  fieldConfigs: ScenarioFieldConfigRow[]
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
-  const schema = SCENARIO_SCHEMAS[scenarioType] || { required: ["industryContext"], optional: [] };
-  const fields = getAllFields(schema);
+  const fieldGroups = getFieldGroups(fieldConfigs);
+  const fields = fieldGroups.all;
+
+  // Compute quality tier
+  const qualityTier: QualityTier = mapDataQualityToTier(parameters.dataQuality);
+  const deviationType = fieldConfigs[0]?.deviation_type || "0";
   
   const companySizeDescriptions: Record<CompanySize, string> = {
     "startup": "10-50 employees, Series A/B stage, limited procurement maturity",
@@ -818,6 +840,9 @@ async function handleGenerateMode(
     "enterprise": "2,000-10,000 employees, multi-national, mature procurement",
     "large-enterprise": "10,000+ employees, global operations, complex procurement"
   };
+
+  // Build block-specific instructions from DB field configs
+  const blockInstructions = buildBlockInstructions(fieldConfigs, qualityTier);
 
   // Build trick embedding instructions if trick is present
   const trick = parameters.trick;
@@ -852,6 +877,8 @@ STRICT CONTEXT:
 - Strategic Priority: ${parameters.strategicPriority}
 - Market Conditions: ${parameters.marketConditions}
 - Data Quality: ${parameters.dataQuality}
+- Quality Tier: ${qualityTier}
+- Deviation Type: ${deviationType}
 
 BUYER PERSONA:
 You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
@@ -863,17 +890,18 @@ Adjust your output accordingly:
 
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST always be filled):
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some blank as empty strings):
-${schema.optional.map(f => `- ${f}`).join('\n')}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+${blockInstructions}
 
 CRITICAL RULES:
 1. ALL data must be consistent with the above context
-2. "industryContext" field MUST be 100+ words describing a specific company matching ALL parameters
+2. ALL blocks must be populated according to the quality tier instructions above
 3. All numeric values must be plausible for the company scale
-5. If data quality is "partial" or "poor", leave some optional fields with realistic estimates or ranges
-6. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
+4. If data quality is "partial" or "poor", follow the MINIMUM/DEGRADED tier rules
+5. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
 ${trickInstructions}
 
 OUTPUT FORMAT:
@@ -883,27 +911,44 @@ Include ALL required fields and the optional fields you choose to fill. For unfi
   const user = `Generate test data for "${scenarioType}" scenario.
 
 REQUIRED FIELDS:
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill per persona behavior):
-${schema.optional.map(f => `- ${f}`).join('\n')}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 Context: ${parameters.reasoning}
 ${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
 
+IMPORTANT: You MUST generate content for ALL required fields — not just the first one. Follow the block-by-block instructions in the system prompt.
+
 Return ONLY the JSON object.`;
 
-  console.log(`[TestDataGen] Generate mode - Trick: ${trick?.category || 'none'}, Target: ${trick?.targetField || 'N/A'}, Persona: ${selectedPersona.id}`);
+  console.log(`[TestDataGen] Generate mode - QualityTier: ${qualityTier}, DeviationType: ${deviationType}, Trick: ${trick?.category || 'none'}, Persona: ${selectedPersona.id}`);
+
+  // LangSmith tracing
+  const tracer = new LangSmithTracer({ env: "production", feature: "test-data-gen" });
+  const runId = tracer.createRun("generate-test-data", "chain", {
+    scenarioType,
+    qualityTier,
+    deviationType,
+    persona: selectedPersona.id,
+    trick: trick?.category || "none",
+  }, {
+    tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`],
+    metadata: { qualityTier, deviationType, persona: selectedPersona.id },
+  });
 
   const response = await callAI(system, user, temperature);
   
   if (!response.success) {
+    tracer.patchRun(runId, undefined, "AI call failed");
     return { success: false, error: "Failed to generate test data" };
   }
 
   const data = parseGeneratedData(response.content, fields);
   
   if (Object.keys(data).length === 0) {
+    tracer.patchRun(runId, undefined, "Failed to parse generated data");
     return { success: false, error: "Failed to parse generated data" };
   }
 
@@ -913,6 +958,12 @@ Return ONLY the JSON object.`;
     trickScore = scoreTrickEmbedding(data, trick);
     console.log(`[TestDataGen] Trick embedding score: ${trickScore.subtletyScore}/100 - ${trickScore.feedback}`);
   }
+
+  tracer.patchRun(runId, {
+    fieldsGenerated: Object.keys(data).length,
+    fieldsExpected: fields.length,
+    qualityTier,
+  });
 
   return {
     success: true,
@@ -927,8 +978,10 @@ Return ONLY the JSON object.`;
       trickValidation: trickScore,
       persona: selectedPersona.id,
       personaName: selectedPersona.name,
-      requiredFieldCount: schema.required.length,
-      optionalFieldCount: schema.optional.length,
+      requiredFieldCount: fieldGroups.required.length,
+      optionalFieldCount: fieldGroups.optional.length,
+      qualityTier,
+      deviationType,
     }
   };
 }
@@ -992,15 +1045,17 @@ const HIGH_FRICTION_SCENARIOS = [
 async function handleMessyMode(
   scenarioType: string,
   temperature: number,
-  selectedPersona: typeof BUYER_PERSONAS[number]
+  selectedPersona: typeof BUYER_PERSONAS[number],
+  supabase: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
   // Default to a random high-friction scenario if the provided one isn't in the list
   const targetScenario = HIGH_FRICTION_SCENARIOS.includes(scenarioType)
     ? scenarioType
     : HIGH_FRICTION_SCENARIOS[Math.floor(Math.random() * HIGH_FRICTION_SCENARIOS.length)];
 
-  const schema = SCENARIO_SCHEMAS[targetScenario] || { required: ["industryContext"], optional: [] };
-  const fields = getAllFields(schema);
+  const messyFieldConfigs = await fetchFieldConfigs(supabase, targetScenario);
+  const fieldGroups = getFieldGroups(messyFieldConfigs);
+  const fields = fieldGroups.all;
 
   // Messy mode defaults to frustrated-stakeholder but can be overridden
   const messyPersona = selectedPersona.id === "frustrated-stakeholder" || selectedPersona
@@ -1009,7 +1064,12 @@ async function handleMessyMode(
 
   console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}, Persona: ${messyPersona.id}`);
 
+  // Inject GIBBERISH tier instructions
+  const gibberishInstructions = QUALITY_TIER_INSTRUCTIONS['GIBBERISH'];
+
   const system = `You are a busy, disorganized procurement manager. Generate realistic, messy corporate data for the '${targetScenario}' scenario. Do NOT provide clean, isolated numbers or perfectly formatted text. Instead, generate copy-pasted email threads from suppliers, fragmented meeting notes, or raw CSV strings where pricing, terms, and context are all mixed together in unstructured text. Force this chaotic text into the required scenario schema fields, even if it means shoving a whole email paragraph into a 'currency' or 'number' field, or leaving some fields completely blank. The goal is to simulate maximum UX friction and trigger the shadow logging evaluation.
+
+${gibberishInstructions}
 
 BUYER PERSONA:
 You are generating this messy data from the perspective of: "${messyPersona.name}"
@@ -1017,10 +1077,10 @@ ${messyPersona.description}
 
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST be filled, even if messily):
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill chaotically per persona, some blank):
-${schema.optional.map(f => `- ${f}`).join('\n')}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with ALL field names as keys. Required fields must have messy data. Optional fields may be empty strings or contain mismatched data.`;
@@ -1065,8 +1125,8 @@ Return ONLY the JSON object.`;
       fieldsExpected: fields.length,
       persona: messyPersona.id,
       personaName: messyPersona.name,
-      requiredFieldCount: schema.required.length,
-      optionalFieldCount: schema.optional.length,
+      requiredFieldCount: fieldGroups.required.length,
+      optionalFieldCount: fieldGroups.optional.length,
     }
   };
 }
@@ -1081,7 +1141,7 @@ async function callAI(
       systemPrompt,
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
       temperature,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 8192,
       model: "gemini-3.1-flash-lite-preview",
     });
     return { success: true, content: response.text };
@@ -1095,11 +1155,12 @@ function buildGenerationPrompt(
   scenarioType: string,
   industry: string,
   category: string,
-  schema: ScenarioSchema,
+  fieldGroups: ScenarioFieldGroups,
   seed: number,
-  selectedPersona: typeof BUYER_PERSONAS[number]
+  selectedPersona: typeof BUYER_PERSONAS[number],
+  fieldConfigs: ScenarioFieldConfigRow[]
 ): { system: string; user: string } {
-  const fields = getAllFields(schema);
+  const fields = fieldGroups.all;
   const diversityHints = [
     "Focus on a mid-size company with typical procurement challenges.",
     "Consider a large enterprise with complex supply chain requirements.",
@@ -1107,6 +1168,9 @@ function buildGenerationPrompt(
     "Develop a case for a regulated industry with strict compliance needs.",
     "Generate data for a company undergoing digital transformation."
   ];
+
+  // Default to OPTIMAL for full mode
+  const blockInstructions = buildBlockInstructions(fieldConfigs, 'OPTIMAL');
 
   const system = `You are an expert procurement consultant generating realistic test data for procurement analysis software.
 
@@ -1120,15 +1184,16 @@ Adjust your output accordingly:
 
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST always be filled):
-${schema.required.map(f => `- ${f}`).join('\n')}
+${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
 OPTIONAL FIELDS (fill according to persona behavior — leave some as empty strings):
-${schema.optional.length > 0 ? schema.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+${blockInstructions}
 
 CRITICAL RULES:
 1. All generated data MUST be consistent with the ${industry} industry
 2. All generated data MUST be relevant to the ${category} procurement category
-3. The "industryContext" field MUST be at least 100 words describing a realistic company
+3. ALL blocks must be populated — do not stop after Block 1
 4. All numeric values must be plausible for the industry scale
 5. DO NOT generate illogical combinations (e.g., pharmaceutical procurement for a software company)
 6. ALWAYS fill all REQUIRED fields. For OPTIONAL fields, follow the persona fill rate — include unfilled optional fields as empty strings.
@@ -1148,6 +1213,7 @@ ${fields.map(f => `- ${f}`).join('\n')}
 
 IMPORTANT:
 - "industryContext" must describe a specific, realistic company (100+ words) in the ${industry} sector
+- You MUST generate content for ALL required fields — not just the first one
 - All values must be internally consistent with that company
 - Numbers should be realistic for the company size described
 - Include specific details like certifications, employee counts, and strategic priorities
@@ -1251,11 +1317,24 @@ function parseGeneratedData(content: string, fields: string[]): Record<string, s
     
     const parsed = JSON.parse(jsonStr.trim());
     
-    // Convert all values to strings
+    // Convert all values to strings (stringify objects/arrays)
     const result: Record<string, string> = {};
     for (const field of fields) {
-      if (parsed[field] !== undefined) {
-        result[field] = String(parsed[field]);
+      if (parsed[field] !== undefined && parsed[field] !== null) {
+        const val = parsed[field];
+        if (typeof val === "object") {
+          // Format structured sub-prompt data as readable text
+          if (Array.isArray(val)) {
+            result[field] = val.map(item => typeof item === "object" ? JSON.stringify(item) : String(item)).join("\n");
+          } else {
+            // Convert key-value object to readable bullet points
+            result[field] = Object.entries(val)
+              .map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`)
+              .join("\n");
+          }
+        } else {
+          result[field] = String(val);
+        }
       }
     }
     
