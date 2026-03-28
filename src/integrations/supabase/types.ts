@@ -460,6 +460,228 @@ export type Database = {
         }
         Relationships: []
       }
+      inflation_alerts: {
+        Row: {
+          acknowledged: boolean
+          acknowledged_at: string | null
+          alert_level: string
+          alert_source: string
+          bridge_scenarios: string[] | null
+          created_at: string
+          driver_id: string
+          id: string
+          organization_id: string
+          scan_id: string | null
+        }
+        Insert: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          alert_level: string
+          alert_source: string
+          bridge_scenarios?: string[] | null
+          created_at?: string
+          driver_id: string
+          id?: string
+          organization_id: string
+          scan_id?: string | null
+        }
+        Update: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          alert_level?: string
+          alert_source?: string
+          bridge_scenarios?: string[] | null
+          created_at?: string
+          driver_id?: string
+          id?: string
+          organization_id?: string
+          scan_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inflation_alerts_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "inflation_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inflation_alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inflation_alerts_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "inflation_event_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inflation_drivers: {
+        Row: {
+          context_summary: string | null
+          created_at: string
+          current_status: string
+          driver_name: string
+          enrichment_cadence: string
+          id: string
+          is_active: boolean
+          last_enriched_at: string | null
+          last_scanned_at: string | null
+          organization_id: string
+          rationale: string | null
+          scan_cadence: string
+          source: string
+          tracker_id: string
+          trigger_description: string | null
+          weight: number | null
+        }
+        Insert: {
+          context_summary?: string | null
+          created_at?: string
+          current_status?: string
+          driver_name: string
+          enrichment_cadence?: string
+          id?: string
+          is_active?: boolean
+          last_enriched_at?: string | null
+          last_scanned_at?: string | null
+          organization_id: string
+          rationale?: string | null
+          scan_cadence?: string
+          source?: string
+          tracker_id: string
+          trigger_description?: string | null
+          weight?: number | null
+        }
+        Update: {
+          context_summary?: string | null
+          created_at?: string
+          current_status?: string
+          driver_name?: string
+          enrichment_cadence?: string
+          id?: string
+          is_active?: boolean
+          last_enriched_at?: string | null
+          last_scanned_at?: string | null
+          organization_id?: string
+          rationale?: string | null
+          scan_cadence?: string
+          source?: string
+          tracker_id?: string
+          trigger_description?: string | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inflation_drivers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inflation_drivers_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "inflation_trackers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inflation_event_scans: {
+        Row: {
+          confidence_level: string | null
+          created_at: string
+          driver_id: string
+          event_detected: boolean
+          id: string
+          organization_id: string
+          scan_date: string
+          source_summary: string | null
+          source_urls: string[] | null
+        }
+        Insert: {
+          confidence_level?: string | null
+          created_at?: string
+          driver_id: string
+          event_detected?: boolean
+          id?: string
+          organization_id: string
+          scan_date?: string
+          source_summary?: string | null
+          source_urls?: string[] | null
+        }
+        Update: {
+          confidence_level?: string | null
+          created_at?: string
+          driver_id?: string
+          event_detected?: boolean
+          id?: string
+          organization_id?: string
+          scan_date?: string
+          source_summary?: string | null
+          source_urls?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inflation_event_scans_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "inflation_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inflation_event_scans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inflation_trackers: {
+        Row: {
+          created_at: string
+          created_by: string
+          driver_count_target: number
+          goods_definition: string
+          id: string
+          is_active: boolean
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          driver_count_target?: number
+          goods_definition: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          driver_count_target?: number
+          goods_definition?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inflation_trackers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intel_queries: {
         Row: {
           citations: Json | null
