@@ -51,14 +51,6 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "Market Intelligence",
-    items: [
-      { label: "Generate a Report", path: "/market-intelligence" },
-      { label: "Scheduled Reports & Triggers", path: "/market-intelligence?tab=queries&mode=regular" },
-      { label: "Knowledge Base", path: "/market-intelligence?tab=insights", icon: Database },
-    ],
-  },
-  {
     label: "Analytical Platforms",
     items: [
       { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert },
