@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Bell, Search, ArrowRight } from "lucide-react";
+import { CalendarClock, Search, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type IntelScenario = "adhoc" | "regular" | "triggered";
+export type IntelScenario = "adhoc" | "regular";
 
 interface ScenarioOption {
   id: IntelScenario;
@@ -27,14 +27,6 @@ const scenarios: ScenarioOption[] = [
     description: "Configure recurring intelligence queries — daily, weekly, or monthly briefings saved to your knowledge base",
     icon: CalendarClock,
   },
-  {
-    id: "triggered",
-    title: "Triggered Monitoring",
-    description: "Define monitoring instructions that continuously watch for conditions and initiate full-scale intelligence collection",
-    icon: Bell,
-    badge: "Enterprise",
-    badgeVariant: "default",
-  },
 ];
 
 interface IntelScenarioSelectorProps {
@@ -52,7 +44,7 @@ export function IntelScenarioSelector({ selected, onSelect }: IntelScenarioSelec
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
           {scenarios.map((scenario) => {
             const Icon = scenario.icon;
             const isSelected = selected === scenario.id;
