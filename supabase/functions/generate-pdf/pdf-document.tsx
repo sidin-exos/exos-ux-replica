@@ -731,10 +731,9 @@ interface TocEntry { label: string; anchor: string; page: number; }
 const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCount: number): TocEntry[] => {
   const entries: TocEntry[] = [];
   const dashboardPages = hasDashboards ? Math.ceil(dashboardCount / 2) : 0;
-  const detailedAnalysisPage = 3 + dashboardPages;
+  const detailedAnalysisPage = 2 + dashboardPages;
 
-  entries.push({ label: "Executive Summary", anchor: "section-executive-summary", page: 2 });
-  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 3 });
+  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 2 });
   entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis", page: detailedAnalysisPage });
   if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters", page: detailedAnalysisPage });
   return entries;
