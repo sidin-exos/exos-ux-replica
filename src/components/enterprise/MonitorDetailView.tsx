@@ -157,10 +157,28 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
               <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</p>
               <Badge variant="default" className="mt-1 capitalize">{tracker.status}</Badge>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Created</p>
+                <p className="text-sm text-foreground mt-0.5">
+                  {format(new Date(tracker.created_at), "MMM d, yyyy")}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Updated</p>
+                <p className="text-sm text-foreground mt-0.5">
+                  {reports.length > 0
+                    ? format(new Date(reports[0].created_at), "MMM d, yyyy")
+                    : "—"}
+                </p>
+              </div>
+            </div>
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Created</p>
-              <p className="text-sm text-foreground mt-0.5">
-                {format(new Date(tracker.created_at), "MMM d, yyyy 'at' HH:mm")}
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Update Frequency</p>
+              <p className="text-sm text-foreground mt-0.5 capitalize">
+                {(tracker.parameters as Record<string, unknown>)?.scan_cadence
+                  ? String((tracker.parameters as Record<string, unknown>).scan_cadence)
+                  : "On demand"}
               </p>
             </div>
           </CardContent>
