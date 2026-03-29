@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { Activity } from "lucide-react";
+import { Activity, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +18,44 @@ import MonitorDetailView from "@/components/enterprise/MonitorDetailView";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
 import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
 
+const USE_CASES = [
+  { type: "DM-1", title: "Nearshoring Viability Hypothesis", text: "A CPG company hypothesises that moving textile sourcing from Asia to Turkey will reduce total landed cost. The monitor gathers evidence on Turkish labour costs, EU trade agreements, logistics reliability, and currency trends — surfacing both supporting data and contradicting signals to stress-test the assumption before committing." },
+  { type: "DM-2", title: "Supplier Financial Deterioration", text: "A manufacturer monitors a single-source packaging supplier. The monitor detects a credit rating downgrade and rising payment defaults in public filings, flagging the risk 6 weeks before the supplier misses a delivery commitment." },
+  { type: "DM-3", title: "IT Outsourcing Partner Risk Trajectory", text: "A financial services firm tracks its top 3 IT outsourcing partners over quarterly periods. The monitor reveals that one vendor's risk score is accelerating upward despite still being rated 'moderate' — prompting early engagement with alternative providers before renewal." },
+  { type: "DM-4", title: "Red Sea Shipping Disruption", text: "A European retailer tracks the Suez / Red Sea corridor. The monitor surfaces escalating Houthi attacks and carrier re-routing signals, enabling the procurement team to pre-negotiate alternative freight contracts before spot rates spike." },
+  { type: "DM-5", title: "Semiconductor Capacity Shift", text: "An automotive OEM monitors the semiconductor industry. The tracker detects TSMC and Samsung capacity expansion announcements alongside softening consumer electronics demand, signalling upcoming supply relief and stronger negotiation leverage for chip procurement." },
+];
+
+const UseCaseCard = () => {
+  const [index, setIndex] = useState(0);
+  const current = USE_CASES[index];
+
+  return (
+    <Card className="lg:col-span-1 border-border/50 bg-card/50">
+      <CardContent className="pt-5 pb-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-foreground">Use Case</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setIndex((prev) => (prev + 1) % USE_CASES.length)}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            More Use Cases
+          </Button>
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px]">{current.type}</Badge>
+            <p className="text-xs font-semibold text-foreground">{current.title}</p>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">{current.text}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 
 
@@ -114,48 +153,8 @@ const RiskPlatform = () => {
             </CardContent>
           </Card>
 
-          {/* Right 1/3 — Case Studies */}
-          <Card className="lg:col-span-1 border-border/50 bg-card/50">
-            <CardContent className="pt-5 pb-4 space-y-5">
-              <h2 className="text-base font-semibold text-foreground">Use Cases</h2>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px]">DM-2</Badge>
-                    <p className="text-xs font-semibold text-foreground">Supplier Financial Deterioration</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    A manufacturer monitors a single-source packaging supplier. The monitor detects a credit rating downgrade and rising payment defaults in public filings, flagging the risk 6 weeks before the supplier misses a delivery commitment.
-                  </p>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px]">DM-4</Badge>
-                    <p className="text-xs font-semibold text-foreground">Red Sea Shipping Disruption</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    A European retailer tracks the Suez / Red Sea corridor. The monitor surfaces escalating Houthi attacks and carrier re-routing signals, enabling the procurement team to pre-negotiate alternative freight contracts before spot rates spike.
-                  </p>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px]">DM-5</Badge>
-                    <p className="text-xs font-semibold text-foreground">Semiconductor Capacity Shift</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    An automotive OEM monitors the semiconductor industry. The tracker detects TSMC and Samsung capacity expansion announcements alongside softening consumer electronics demand, signalling upcoming supply relief and stronger negotiation leverage for chip procurement.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Right 1/3 — Use Case */}
+          <UseCaseCard />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
