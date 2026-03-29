@@ -23,7 +23,7 @@ const SentinelCapabilities = () => {
       icon: ShieldCheck,
       title: "Integrity Validator",
       role: "Anti-Hallucination",
-      description: "Checks AI responses for preserved anonymization tokens, reasoning consistency, and factual grounding before output.",
+      description: "Checks AI responses for preserved anonymization tokens, reasoning consistency, and factual grounding before delivery.",
       example: "Verifies all [SUPPLIER_X] tokens remain intact in response"
     },
     {

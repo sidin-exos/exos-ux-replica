@@ -92,7 +92,7 @@ const InflationPlatform = () => {
                 Inflation Monitoring
               </h1>
               <p className="text-sm text-muted-foreground max-w-2xl mt-1">
-                A human-in-the-loop AI platform helping you structure inflation monitoring with an easy-to-use framework for decision-making. Not intended to replace enterprise-grade analytical platforms or serve as a tool for commodity traders.
+                A human-in-the-loop AI platform that helps you structure inflation monitoring with an easy-to-use framework for decision-making. It is not intended to replace enterprise-grade analytical platforms or serve as a tool for commodity traders.
               </p>
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground max-w-2xl list-disc list-inside">
                 <li>Choose the goods or service you want to monitor</li>

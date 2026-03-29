@@ -37,7 +37,7 @@ const successStories = [
     company: "CleanTech Mobility SAS",
     industry: "Automotive / Green Mobility",
     scenarios: ["Consolidation Wizard", "Negotiation Prep"],
-    quote: "Going from 47 component suppliers to 12 strategic partners sounded impossible. EXOS mapped the consolidation path, prepared our negotiation briefs, and we closed the transition in one quarter.",
+    quote: "Going from 47 component suppliers to 12 strategic partners sounded impossible. EXOS mapped the consolidation path, prepared our negotiation briefs, and we completed the transition in one quarter.",
     person: "Amélie Durand, Chief Procurement Officer",
     metric: "35%",
     metricLabel: "Admin overhead reduction",
@@ -274,7 +274,7 @@ const Features = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   EXOS employs an <strong className="text-foreground">agentic structure</strong> where 
                   specialized AI agents collaborate in a server-side <strong className="text-foreground">Chain of Experts</strong> pipeline. 
-                  For financially complex scenarios, a 3-cycle flow — Analyst → Auditor → Synthesizer — ensures 
+                  For complex financial scenarios, a 3-cycle flow — Analyst → Auditor → Synthesizer — ensures 
                   every recommendation is rigorously challenged, mathematically verified, and synthesized into 
                   actionable intelligence before reaching the user.
                 </p>
@@ -292,7 +292,7 @@ const Features = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Every AI output passes through a multi-layer <strong className="text-foreground">anti-hallucination</strong> framework. 
                   Server-side <strong className="text-foreground">grounding</strong> injects live market data, industry KPIs, 
-                  and regulatory context directly into prompts. Post-inference <strong className="text-foreground">results validation</strong> cross-checks 
+                  and regulatory context directly into prompts. Post-inference <strong className="text-foreground">validation</strong> cross-checks 
                   arithmetic (ROI, NPV, break-even), flags unsupported claims, and enforces separation 
                   of hard vs. soft savings — ensuring outputs you can trust in boardroom presentations.
                 </p>

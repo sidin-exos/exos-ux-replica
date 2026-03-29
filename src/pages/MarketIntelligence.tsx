@@ -120,7 +120,7 @@ const MarketIntelligence = () => {
           <h1 className="exos-page-title-hero text-3xl">Market Intelligence</h1>
         </div>
         <p className="text-muted-foreground text-base mb-6">
-          Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base improving analytical scenarios results.
+          Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
         </p>
 
         <Tabs defaultValue={defaultTab} className="space-y-6">
