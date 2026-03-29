@@ -299,4 +299,17 @@
   .animate-float-subtle {
     animation: float-subtle 3s ease-in-out infinite;
   }
+
+  /* EXOS two-tier page title system */
+  .exos-page-title {
+    @apply text-foreground font-bold;
+  }
+  .exos-page-title-hero {
+    @apply text-primary font-bold;
+  }
+
+  /* EXOS unified ALL-CAPS section labels */
+  .exos-label-caps {
+    @apply text-[11px] font-medium tracking-[0.07em] uppercase text-muted-foreground;
+  }
 }

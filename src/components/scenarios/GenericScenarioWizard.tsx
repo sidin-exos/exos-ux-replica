@@ -682,7 +682,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-display text-lg font-semibold mb-1">
+                <h3 className="text-lg exos-page-title mb-1">
                   Analysis Settings
                 </h3>
                 <p className="text-sm text-muted-foreground">
@@ -817,7 +817,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               <div className="md:col-span-2 space-y-6">
                 {/* Required Fields */}
                 <div className="space-y-4 bg-secondary/30 dark:bg-secondary/40 rounded-lg p-4 border border-border/50">
-                  <h4 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                  <h4 className="exos-label-caps">
                     Enter Your Data
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
