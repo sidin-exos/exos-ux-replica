@@ -1,60 +1,102 @@
 
 
-# PDF Layout Restructure — Move Analysis Inputs & Methodology into Parameters Section
+## EXOS Typography Consistency — Fixes 1-4 (Bundled)
 
-## What Changes
+### Files Modified (6 total)
 
-**Current structure (last page):**
-1. Detailed Analysis sections
-2. Methodology & Limitations (separate section)
-3. Analysis Parameters (full table)
-
-**Current Executive Summary page:**
-- KPIs → Key Findings → Recommended Actions → **Analysis Inputs (first 6 params)** ← remove this
-
-**New structure:**
-
-**Executive Summary page:** KPIs → Key Findings → Recommended Actions (no inputs table)
-
-**Last page:**
-1. Detailed Analysis sections
-2. **Analysis Parameters** section containing:
-   - Full parameters table (all params, not just first 6)
-   - Methodology & Limitations text (moved inside, after the table)
-   - Input coverage + confidence badge
-   - Audit trail
-
-## Files to Edit
-
-| File | Change |
-|---|---|
-| `src/components/reports/pdf/PDFReportDocument.tsx` | Remove "Analysis Inputs" block from Exec Summary page; move Methodology into Parameters section |
-| `supabase/functions/generate-pdf/pdf-document.tsx` | Mirror identical changes |
-
-## Detailed Changes (both files)
-
-### 1. Remove Analysis Inputs from Executive Summary (lines ~873-894 frontend, ~1073-1094 edge)
-Delete the entire `{inputEntries.length > 0 && (...)}` block that renders the "Analysis Inputs" table on the Executive Summary page. Also remove the `inputEntries` variable.
-
-### 2. Restructure the Parameters + Methodology section
-Replace the current separate Methodology and Parameters sections with a single combined "Analysis Parameters" section:
-
-```text
-Analysis Parameters (section title)
-├── Parameters table (all entries)
-├── Divider
-├── Methodology & Limitations (sub-header, not section title)
-│   ├── Methodology text
-│   ├── Coverage + Confidence row
-│   └── Audit trail
+**1. `src/index.css`** — Add 3 utility classes in `@layer utilities`:
+```css
+.exos-page-title {
+  @apply text-foreground font-bold;
+}
+.exos-page-title-hero {
+  @apply text-primary font-bold;
+}
+.exos-label-caps {
+  @apply text-[11px] font-medium tracking-[0.07em] uppercase text-muted-foreground;
+}
 ```
 
-### 3. Update TOC
-Remove the separate "Methodology & Limitations" TOC entry — it's now a subsection inside "Analysis Parameters".
+---
 
-### 4. Deploy
-Deploy `generate-pdf` edge function after changes.
+**2. `src/pages/enterprise/RiskPlatform.tsx` line 117** (Fix 1):
+```
+Before: className="text-2xl font-display font-semibold text-foreground"
+After:  className="text-2xl exos-page-title"
+```
 
-## Build Errors
-The existing build errors in other edge functions (`generate-market-insights`, `generate-test-data`, `im-driver-propose`, `market-intelligence`, `sentinel-analysis`) are pre-existing and unrelated to this change. They will not be addressed in this task.
+---
+
+**3. `src/components/scenarios/GenericScenarioWizard.tsx`** (Fix 1 + Fix 2):
+
+Line 685 — h3 "Analysis Settings":
+```
+Before: className="font-display text-lg font-semibold mb-1"
+After:  className="text-lg exos-page-title mb-1"
+```
+
+Line 820 — h4 "Enter Your Data":
+```
+Before: className="text-sm font-semibold text-foreground/80 uppercase tracking-wider"
+After:  className="exos-label-caps"
+```
+
+---
+
+**4. `src/pages/Reports.tsx`** (Fix 1 skipped — text-gradient already handles teal; Fix 2 only):
+
+Line 203 — h2 "What are you trying to decide?":
+```
+Before: className="text-sm font-medium text-foreground/70 uppercase tracking-wide mb-3"
+After:  className="exos-label-caps mb-3"
+```
+
+Line 238 — SelectLabel (mobile sidebar):
+```
+Before: className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+After:  className="exos-label-caps"
+```
+
+Line 266 — h3 sidebar group headers (desktop):
+```
+Before: className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+After:  className="exos-label-caps"
+```
+
+---
+
+**5. `src/components/reports/DecisionMatrixDashboard.tsx` line 94** (Fix 3):
+```
+Before: className="font-display text-base"
+After:  className="text-base font-semibold text-foreground"
+```
+
+---
+
+**6. `src/pages/MarketIntelligence.tsx` lines 117-130** (Fix 4):
+
+Remove the full gradient hero block (lines 117-130) and replace with:
+```tsx
+<div className="flex items-center gap-3 mb-2">
+  <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
+    <Sparkles className="w-5 h-5 text-primary" />
+  </div>
+  <h1 className="exos-page-title-hero text-3xl">Market Intelligence</h1>
+</div>
+<p className="text-muted-foreground text-base mb-6">
+  Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base improving analytical scenarios results.
+</p>
+```
+
+Tab bar and everything below line 132 remains untouched.
+
+---
+
+### Not touched (per spec)
+- Reports.tsx h1 line 187 (text-gradient already produces teal)
+- Pricing page
+- DM chip badges
+- Sidebar count badges
+- Tab bar colors on MarketIntelligence
+- All font-family declarations, layouts, spacing
 
