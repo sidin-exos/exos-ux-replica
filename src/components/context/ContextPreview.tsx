@@ -104,13 +104,6 @@ export function ContextPreview({
               </div>
             )}
             
-            {/* Show notice in shareable mode when XML would normally be available */}
-            {showXML && !showTechnicalDetails && (
-              <div className="flex items-center gap-2 mb-3 p-2 rounded-md bg-muted text-xs text-muted-foreground">
-                <Lock className="h-3 w-3" />
-                Technical details hidden in shared view
-              </div>
-            )}
 
             {viewMode === "preview" || !canShowXML ? (
               <div className="space-y-4">
