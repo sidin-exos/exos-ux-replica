@@ -186,9 +186,9 @@ const TrackerSetupWizard = ({
                 key={id}
                 type="button"
                 onClick={() => setMonitorType(id)}
-                className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                className={`w-full text-left rounded-lg border p-3 transition-colors bg-muted/60 dark:bg-white/5 ${
                   monitorType === id
-                    ? "border-primary bg-primary/5"
+                    ? "border-primary bg-primary/10 dark:bg-primary/10"
                     : "border-border hover:border-primary/40"
                 }`}
               >
