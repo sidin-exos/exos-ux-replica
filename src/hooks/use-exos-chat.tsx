@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import * as Sentry from '@sentry/react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getAIResponse, type ChatRole } from '@/lib/chat-service';
@@ -109,6 +110,7 @@ export function useExosChat() {
       updateSession(updateFields);
     } catch (err) {
       console.error('Chat send error:', err);
+      Sentry.captureException(err, { tags: { feature: "chatbot" } });
       toast.error('Failed to send message');
       errorCountRef.current++;
       updateSession({ message_count: messageCountRef.current, error_count: errorCountRef.current });

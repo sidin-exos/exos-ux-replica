@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback } from "react";
+import * as Sentry from "@sentry/react";
 import { supabase } from "@/integrations/supabase/client";
 import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
 import type { IndustryContext, ProcurementCategory } from "@/lib/ai-context-templates";
@@ -159,6 +160,11 @@ export function useSentinel(options: UseSentinelOptions = {}) {
         const err = error instanceof Error ? error : new Error(String(error));
         if (isAuthError(err)) {
           showAuthErrorToast();
+        } else {
+          Sentry.captureException(err, {
+            tags: { feature: "sentinel", scenarioType },
+            extra: { model },
+          });
         }
         options.onError?.(err);
         setState({

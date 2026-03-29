@@ -69,7 +69,7 @@ const InflationPlatform = () => {
               <h1 className="text-2xl font-display font-semibold text-foreground">
                 Inflation Monitoring
               </h1>
-              <p className="text-sm text-muted-foreground max-w-2xl">
+              <p className="text-sm text-muted-foreground max-w-2xl mt-1">
                 A human-in-the-loop AI platform helping you structure inflation monitoring with an easy-to-use framework for decision-making. Not intended to replace enterprise-grade analytical platforms or serve as a tool for commodity traders.
               </p>
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground max-w-2xl list-disc list-inside">
@@ -80,10 +80,8 @@ const InflationPlatform = () => {
               <p className="mt-1.5 text-xs font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 lg:justify-end">
-            <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">Improving</Badge>
-            <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30">Stable</Badge>
-            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">Deteriorating</Badge>
+          <div className="hidden lg:block w-64 h-32 rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/30 flex items-center justify-center">
+            <span className="text-xs text-muted-foreground/50">Design element placeholder</span>
           </div>
         </div>
 
@@ -127,12 +125,12 @@ const InflationPlatform = () => {
                         <div key={i} className="space-y-1">
                           <p className="text-xs font-medium text-foreground leading-snug">{n.title}</p>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{n.tracker}</Badge>
-                            <span className="text-[10px] text-muted-foreground">{n.source} · {n.date}</span>
+                            <Badge variant="secondary" className="text-xs px-1.5 py-0">{n.tracker}</Badge>
+                            <span className="text-xs text-muted-foreground">{n.source} · {n.date}</span>
                           </div>
                         </div>
                       ))}
-                      <p className="text-[10px] text-muted-foreground/60 pt-1">
+                      <p className="text-xs text-muted-foreground/60 pt-1">
                         Signals will auto-update once scanning is live.
                       </p>
                     </CardContent>

@@ -731,12 +731,10 @@ interface TocEntry { label: string; anchor: string; page: number; }
 const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCount: number): TocEntry[] => {
   const entries: TocEntry[] = [];
   const dashboardPages = hasDashboards ? Math.ceil(dashboardCount / 2) : 0;
-  const detailedAnalysisPage = 3 + dashboardPages;
+  const detailedAnalysisPage = 2 + dashboardPages;
 
-  entries.push({ label: "Executive Summary", anchor: "section-executive-summary", page: 2 });
-  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 3 });
+  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 2 });
   entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis", page: detailedAnalysisPage });
-  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology", page: detailedAnalysisPage });
   if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters", page: detailedAnalysisPage });
   return entries;
 };
@@ -927,6 +925,8 @@ const PDFReportDocument = ({
   timestamp,
   selectedDashboards = [],
   pdfTheme = "light",
+  evaluationScore,
+  evaluationConfidence,
 }: {
   scenarioTitle: string;
   analysisResult: string;
@@ -934,6 +934,8 @@ const PDFReportDocument = ({
   timestamp: string;
   selectedDashboards?: DashboardType[];
   pdfTheme?: PdfThemeMode;
+  evaluationScore?: number;
+  evaluationConfidence?: string;
 }) => {
   const parsedData = extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
@@ -948,11 +950,13 @@ const PDFReportDocument = ({
   const showToc = hasDashboards;
   const orgName = formData["organization"] || formData["Organization"] || formData["company"] || formData["Company"] || formData["org"] || "EXOS";
 
-  // KPIs
+  // Input quality — use real evaluation data when available, fallback to heuristic
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-  const coveragePct = allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0;
-  const confidenceLevel = coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low";
+  const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  const confidenceLevel = evaluationConfidence
+    ? (evaluationConfidence === "HIGH" ? "High" : "Low")
+    : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
   const savingsKpi = extractSavingsKpi(strippedAnalysis);
   const riskKpi = extractRiskKpi(strippedAnalysis);
 
@@ -968,28 +972,34 @@ const PDFReportDocument = ({
   const allParamEntries = Object.entries(formData)
     .filter(([_, v]) => v && v.trim() !== "");
 
-  // Analysis inputs for exec summary (first 6)
-  const inputEntries = allParamEntries.slice(0, 6);
 
   return (
     <Document>
-      {/* ── Page 1: Cover ── */}
-      <Page size="A4" style={styles.page}>
-        <View style={styles.coverSpacer} />
-
-        <Text style={styles.coverBrand}>EXOS</Text>
+      {/* ── Page 1: Cover + Executive Summary (merged) ── */}
+      <Page size="A4" style={styles.page} id="section-executive-summary">
+        {/* Header: EXOS brand left, meta info right */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+          <View>
+            <Text style={styles.coverBrand}>EXOS</Text>
+          </View>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={{ fontSize: 9, color: C.muted, marginBottom: 2 }}>Prepared for {orgName}</Text>
+            <Text style={{ fontSize: 9, color: C.muted, marginBottom: 2 }}>{formattedDate}</Text>
+            <Text style={{ fontSize: 9, color: C.warning }}>Confidential</Text>
+          </View>
+        </View>
         <View style={styles.coverBrandLine} />
 
         <Text style={styles.coverTitle}>{reportTitle}</Text>
         {subtitle ? (
-          <Text style={styles.coverSubtitle}>{subtitle}</Text>
+          <Text style={{ ...styles.coverSubtitle, marginBottom: 16 }}>{subtitle}</Text>
         ) : (
-          <View style={{ height: 48 }} />
+          <View style={{ height: 8 }} />
         )}
 
         {/* TOC */}
         {showToc && (
-          <View style={{ marginBottom: SP.sectionGap }}>
+          <View style={{ marginBottom: SP.afterHeadingLine }}>
             {tocEntries.map((entry, i) => (
               <View key={entry.anchor} style={styles.tocRow}>
                 <Link src={`#${entry.anchor}`}>
@@ -1002,56 +1012,13 @@ const PDFReportDocument = ({
           </View>
         )}
 
-        {/* Bottom section */}
-        <Text style={styles.coverFooterText}>Prepared for {orgName}</Text>
-        <Text style={styles.coverFooterText}>{formattedDate}</Text>
-        <Text style={styles.coverConfidential}>Confidential</Text>
-      </Page>
-
-      {/* ── Page 2: Executive Summary ── */}
-      <Page size="A4" style={styles.pageWithHeader} id="section-executive-summary">
-        <RunningHeader reportTitle={reportTitle} />
-
-        {/* Section title */}
+        {/* Executive Summary section */}
         <View style={styles.sectionTitleWrapper}>
           <Text style={styles.sectionTitleText}>Executive Summary</Text>
         </View>
 
-        {/* KPI row (Fix 8: wrap={false}) */}
-        <View style={styles.kpiRow} wrap={false}>
-          <View style={styles.kpiCell}>
-            <Text style={{ ...styles.kpiValue, color: kpiColor(savingsKpi, "savings") }}>
-              {savingsKpi === "—" ? "Not assessed" : savingsKpi}
-            </Text>
-            <Text style={styles.kpiLabel}>POTENTIAL SAVINGS</Text>
-            <Text style={styles.kpiContext}>Based on analysis inputs</Text>
-          </View>
-          <View style={styles.kpiDivider} />
-          <View style={styles.kpiCell}>
-            <Text style={{
-              ...styles.kpiValue,
-              color: kpiColor(riskKpi, "risk"),
-              fontFamily: riskKpi === "—" ? "Helvetica-Oblique" : "Helvetica-Bold",
-            }}>
-              {riskKpi === "—" ? "Not assessed" : riskKpi}
-            </Text>
-            <Text style={styles.kpiLabel}>RISK LEVEL</Text>
-            <Text style={styles.kpiContext}>Extracted from analysis</Text>
-          </View>
-          <View style={styles.kpiDivider} />
-          <View style={styles.kpiCell}>
-            <Text style={{ ...styles.kpiValue, color: kpiColor(confidenceLevel, "confidence") }}>
-              {confidenceLevel}
-            </Text>
-            <Text style={styles.kpiLabel}>CONFIDENCE</Text>
-            <Text style={styles.kpiContext}>{coveragePct}% input coverage</Text>
-          </View>
-        </View>
-
-        {/* Key Findings (Fix 1: stripMarkdown, Fix 8: wrap={false} per item) */}
-        <View style={styles.sectionTitleWrapper}>
-          <Text style={styles.sectionTitleText}>Key Findings</Text>
-        </View>
+        {/* Key Findings */}
+        <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: C.text, marginBottom: 6 }}>Key Findings</Text>
         {findings.map((point, i) => (
           <View key={`f-${i}`} style={styles.numberedItem} wrap={false}>
             <Text style={styles.numberedPrefix}>{i + 1}.</Text>
@@ -1059,39 +1026,14 @@ const PDFReportDocument = ({
           </View>
         ))}
 
-        {/* Recommended Actions (Fix 1, Fix 8) */}
-        <View style={styles.sectionTitleWrapper}>
-          <Text style={styles.sectionTitleText}>Recommended Actions</Text>
-        </View>
+        {/* Recommended Actions */}
+        <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: C.text, marginTop: 12, marginBottom: 6 }}>Recommended Actions</Text>
         {recommendations.map((point, i) => (
           <View key={`r-${i}`} style={styles.numberedItem} wrap={false}>
             <Text style={styles.numberedPrefix}>{i + 1}.</Text>
             {renderBodyText(point, styles.numberedText)}
           </View>
         ))}
-
-        {/* Analysis Inputs table */}
-        {inputEntries.length > 0 && (
-          <View wrap={false}>
-            <View style={styles.sectionTitleWrapper}>
-              <Text style={styles.sectionTitleText}>Analysis Inputs</Text>
-            </View>
-            <View style={styles.tableHeader}>
-              <Text style={{ ...styles.tableHeaderText, flex: 1 }}>Parameter</Text>
-              <Text style={{ ...styles.tableHeaderText, flex: 1 }}>Value</Text>
-            </View>
-            {inputEntries.map(([key, value], i) => {
-              const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
-              const rowStyle = i % 2 === 0 ? styles.tableRow : styles.tableRowAlt;
-              return (
-                <View key={key} style={rowStyle}>
-                  <Text style={styles.tableCellLabel}>{label}</Text>
-                  <Text style={styles.tableCell}>{summarizeParameter(value, 15)}</Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
 
         <ReportFooter dateStr={formattedDate} orgName={orgName} />
       </Page>
@@ -1189,32 +1131,9 @@ const PDFReportDocument = ({
           });
         })()}
 
-        {/* ── Methodology & Limitations ── */}
-        <View style={styles.section} id="section-methodology" wrap={false}>
-          <View style={styles.sectionTitleWrapper}>
-            <Text style={styles.sectionTitleText}>Methodology & Limitations</Text>
-          </View>
-          <Text style={styles.methodologyText}>
-            Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals. Cost estimates are indicative based on available data at time of analysis and may vary with market conditions and data completeness.
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 9, color: C.muted }}>
-              Input coverage: {filledKeys.length}/{allKeys.length > 0 ? allKeys.length : 1} fields ({coveragePct}%)
-            </Text>
-            <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: kpiColor(confidenceLevel, "confidence") }}>
-              {confidenceLevel} Confidence
-            </Text>
-          </View>
-          <View style={styles.auditTrail}>
-            <Text style={{ fontSize: 7, color: C.muted }}>
-              Analysis ID: {reportHash} | Timestamp: {new Date(timestamp).toISOString()}
-            </Text>
-          </View>
-        </View>
-
-        {/* Fix 3: Analysis Parameters as table, not pills */}
+        {/* ── Analysis Parameters (combined with Methodology) ── */}
         {hasParams && (
-          <View style={styles.section} id="section-parameters" wrap={false}>
+          <View style={styles.section} id="section-parameters">
             <View style={styles.sectionTitleWrapper}>
               <Text style={styles.sectionTitleText}>Analysis Parameters</Text>
             </View>
@@ -1232,6 +1151,28 @@ const PDFReportDocument = ({
                 </View>
               );
             })}
+
+            {/* Methodology & Limitations (sub-section) */}
+            <View style={styles.divider} />
+            <Text style={styles.sectionBlockHeader}>Methodology & Limitations</Text>
+            <Text style={styles.methodologyText}>
+              Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals. Cost estimates are indicative based on available data at time of analysis and may vary with market conditions and data completeness.
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text style={{ fontSize: 9, color: C.muted }}>
+                {evaluationScore != null
+                  ? `Input quality score: ${coveragePct}/100`
+                  : `Input coverage: ${filledKeys.length}/${allKeys.length > 0 ? allKeys.length : 1} fields (${coveragePct}%)`}
+              </Text>
+              <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: kpiColor(confidenceLevel, "confidence") }}>
+                {confidenceLevel} Confidence
+              </Text>
+            </View>
+            <View style={styles.auditTrail}>
+              <Text style={{ fontSize: 7, color: C.muted }}>
+                Analysis ID: {reportHash} | Timestamp: {new Date(timestamp).toISOString()}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -1251,6 +1192,8 @@ export async function generatePdfBuffer(payload: GeneratePdfPayload): Promise<Ui
     timestamp,
     selectedDashboards = [],
     pdfTheme = "light",
+    evaluationScore,
+    evaluationConfidence,
   } = payload;
 
   const doc = (
@@ -1261,6 +1204,8 @@ export async function generatePdfBuffer(payload: GeneratePdfPayload): Promise<Ui
       timestamp={timestamp}
       selectedDashboards={selectedDashboards}
       pdfTheme={pdfTheme}
+      evaluationScore={evaluationScore}
+      evaluationConfidence={evaluationConfidence}
     />
   );
 

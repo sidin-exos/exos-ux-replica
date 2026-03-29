@@ -1,6 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
+
+// Read Sentry build-time env vars before Vite's `define` replaces process.env
+const SENTRY_AUTH_TOKEN = process.env.SENTRY_AUTH_TOKEN;
+const SENTRY_ORG = process.env.SENTRY_ORG;
+const SENTRY_PROJECT = process.env.SENTRY_PROJECT;
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -16,13 +22,28 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    ...(mode === "production" && SENTRY_AUTH_TOKEN
+      ? [
+          sentryVitePlugin({
+            org: SENTRY_ORG,
+            project: SENTRY_PROJECT,
+            authToken: SENTRY_AUTH_TOKEN,
+            sourcemaps: {
+              filesToDeleteAfterUpload: ["./dist/**/*.map"],
+            },
+          }),
+        ]
+      : []),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   build: {
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: {

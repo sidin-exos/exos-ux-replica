@@ -15,6 +15,7 @@ import { callGoogleAI, convertOpenAITools } from "../_shared/google-ai.ts";
 import { buildCoachingBlock, type CoachingCardRow } from "../_shared/chatbot-instructions.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 // ─── ABBREVIATED IDENTITY for scenario context (token-efficient) ────────────
@@ -283,6 +284,11 @@ serve(async (req) => {
     }
   } catch (e) {
     console.error("scenario-chat-assistant error:", e);
+    if (!(e instanceof ValidationError)) {
+      new SentryReporter("scenario-chat-assistant").captureException(e, {
+        userId: authResult && !("error" in authResult) ? authResult.user.userId : undefined,
+      });
+    }
 
     if (tracer.isEnabled() && parentRunId) {
       tracer.patchRun(parentRunId, undefined, e instanceof Error ? e.message : "Unknown error");

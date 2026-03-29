@@ -21,7 +21,7 @@ export const colors = {
   success: "#15803D",       // dark green — positive values
   warning: "#B45309",       // dark amber — caution values
   destructive: "#B91C1C",   // dark red — negative/risk values
-  border: "#E5E7EB",        // light gray — borders, dividers
+  border: "rgba(229, 231, 235, 0.6)",  // semi-transparent borders
   badgeText: "#FFFFFF",     // white text on colored badges
   option2: "#94A3B8",       // slate — secondary chart color
   option3: "#6B7280",       // gray — tertiary chart color

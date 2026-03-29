@@ -22,6 +22,7 @@ import {
   validationErrorResponse,
   ValidationError,
 } from "../_shared/validate.ts";
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { generatePdfBuffer } from "./pdf-document.tsx";
 import type { GeneratePdfPayload } from "./types.ts";
@@ -51,7 +52,7 @@ serve(async (req) => {
     }
 
     // 2. Rate limit: 60 requests/hour per user
-    const rateCheck = await checkRateLimit(authResult.user.userId, "generate-pdf", 60, 60);
+    const rateCheck = await checkRateLimit(authResult.user.userId, "generate-pdf", 120, 60);
     if (!rateCheck.allowed) {
       return rateLimitResponse(rateCheck, corsHeaders, "PDF generation rate limit reached. Please wait before generating another report.");
     }
@@ -69,6 +70,12 @@ serve(async (req) => {
     const pdfTheme = body.pdfTheme !== undefined
       ? requireStringEnum(body.pdfTheme, "pdfTheme", ["light", "dark"] as const)
       : undefined;
+    const evaluationScore = typeof body.evaluationScore === "number"
+      ? Math.max(0, Math.min(100, body.evaluationScore))
+      : undefined;
+    const evaluationConfidence = typeof body.evaluationConfidence === "string"
+      ? body.evaluationConfidence.slice(0, 10)
+      : undefined;
 
     const payload: GeneratePdfPayload = {
       scenarioTitle,
@@ -77,6 +84,8 @@ serve(async (req) => {
       timestamp,
       selectedDashboards: selectedDashboards as GeneratePdfPayload["selectedDashboards"],
       pdfTheme: pdfTheme as GeneratePdfPayload["pdfTheme"],
+      evaluationScore,
+      evaluationConfidence,
     };
 
     // 4. Generate PDF
@@ -103,6 +112,9 @@ serve(async (req) => {
       return validationErrorResponse(err.message);
     }
     console.error("PDF generation failed:", err);
+    new SentryReporter("generate-pdf").captureException(err, {
+      userId: authResult && !("error" in authResult) ? authResult.user.userId : undefined,
+    });
     return new Response(
       JSON.stringify({ error: "PDF generation failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
