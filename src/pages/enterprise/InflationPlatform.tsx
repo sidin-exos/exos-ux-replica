@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { TrendingUp, BarChart3, Rss, Newspaper } from "lucide-react";
@@ -9,7 +9,9 @@ import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import InflationSetupWizard from "@/components/enterprise/InflationSetupWizard";
 import InflationTrackerCard from "@/components/enterprise/InflationTrackerCard";
+import InflationDetailView from "@/components/enterprise/InflationDetailView";
 import { useInflationTrackers } from "@/hooks/useInflationTrackers";
+import type { InflationTracker } from "@/hooks/useInflationTrackers";
 
 const MOCK_NEWS_FEED = [
   { title: "Commodity prices stabilise amid mixed economic signals across EU markets", tracker: "DDR5 prices FOB Ningbo", date: "Mar 28, 2026", source: "Reuters" },
@@ -22,7 +24,12 @@ const MOCK_NEWS_FEED = [
 const InflationPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedTracker, setSelectedTracker] = useState<InflationTracker | null>(null);
   const { trackers, isLoading, createTracker } = useInflationTrackers();
+
+  const handleSelectTracker = useCallback((tracker: InflationTracker) => {
+    setSelectedTracker(tracker);
+  }, []);
 
   // Build news feed matched to actual tracker names
   const newsFeed = useMemo(() => {
@@ -52,6 +59,21 @@ const InflationPlatform = () => {
           />
         </main>
       </div>
+    );
+  }
+
+  // Detail view — replaces the whole page like RiskPlatform
+  if (selectedTracker) {
+    return (
+      <EnterpriseLayout>
+        <Header />
+        <main className="container py-8">
+          <InflationDetailView
+            tracker={selectedTracker}
+            onBack={() => setSelectedTracker(null)}
+          />
+        </main>
+      </EnterpriseLayout>
     );
   }
 
@@ -100,7 +122,7 @@ const InflationPlatform = () => {
             <TabsContent value="dashboard" className="mt-4">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* 2/3 — Tracker list */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="lg:col-span-2 space-y-2">
                   {isLoading ? (
                     <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
                   ) : trackers.length === 0 ? (
@@ -108,7 +130,13 @@ const InflationPlatform = () => {
                       No trackers yet. Create your first tracker to start monitoring.
                     </div>
                   ) : (
-                    trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
+                    trackers.map(t => (
+                      <InflationTrackerCard
+                        key={t.id}
+                        tracker={t}
+                        onSelect={handleSelectTracker}
+                      />
+                    ))
                   )}
                 </div>
 
