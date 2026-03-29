@@ -143,22 +143,15 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
                   {latest.summary}
                 </p>
               )}
-            </div>
-
-            {/* Last update + arrow */}
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="text-right">
-                {latest ? (
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
-                    <FileText className="w-3 h-3" />
-                    {format(new Date(latest.date), "MMM d, yyyy")}
-                  </div>
-                ) : (
-                  <span className="text-[10px] text-muted-foreground/50 italic">No reports</span>
+              <div className="flex items-center gap-4 mt-1.5 text-[10px] text-muted-foreground/70">
+                <span>Created: {format(new Date(t.created_at), "MMM d, yyyy")}</span>
+                {latest && (
+                  <span>Updated: {format(new Date(latest.date), "MMM d, yyyy")}</span>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
+
+            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
           </div>
         );
       })}
