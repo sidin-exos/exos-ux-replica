@@ -465,10 +465,10 @@ export function MarketInsightsAdmin() {
       </Card>
 
       {/* Browse Existing Insights */}
-      <Card className="border-t-4 border-t-indigo-500">
+      <Card className="border-t-4 border-t-iris">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Database className="w-4 h-4 text-indigo-500" />
+            <Database className="w-4 h-4 text-iris" />
             Active Market Insights
           </CardTitle>
           <CardDescription>
