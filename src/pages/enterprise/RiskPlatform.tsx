@@ -111,7 +111,7 @@ const RiskPlatform = () => {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setActiveTab("setup")}
+                    onClick={() => {}}
                     className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
                   >
                     <Badge variant="default" className="shrink-0 text-[10px] mt-0.5">
