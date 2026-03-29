@@ -80,7 +80,7 @@ const RiskPlatform = () => {
         </div>
 
         {/* Monitoring Types — Tabs */}
-        <Card className="border-primary/20 bg-primary/[0.03]">
+        <Card className="border-border/50 bg-card/50">
           <CardContent className="pt-5 pb-4 space-y-4">
             <div>
               <h2 className="text-base font-semibold text-foreground">Methodology</h2>
