@@ -106,27 +106,37 @@ const RiskPlatform = () => {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left 2/3 — Monitoring */}
+          {/* Left 2/3 — Active Monitors */}
           <div className="lg:col-span-2">
-            {selectedTracker ? (
-              <MonitorDetailView
-                tracker={selectedTracker}
-                onBack={() => setSelectedTracker(null)}
-              />
-            ) : (
-              <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
-            )}
+            <Card className="rounded-sm">
+              <CardContent className="pt-5">
+                <h2 className="text-base font-semibold text-foreground mb-4">Active Monitors</h2>
+                {selectedTracker ? (
+                  <MonitorDetailView
+                    tracker={selectedTracker}
+                    onBack={() => setSelectedTracker(null)}
+                  />
+                ) : (
+                  <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right 1/3 — Setup Wizard */}
           <div className="lg:col-span-1 lg:sticky lg:top-8 lg:self-start">
-            <TrackerSetupWizard
-              trackerType="risk"
-              onActivate={(data) =>
-                createTracker.mutateAsync({ ...data, tracker_type: "risk" })
-              }
-              onComplete={() => {}}
-            />
+            <Card className="rounded-sm border-primary/20">
+              <CardContent className="pt-5">
+                <h2 className="text-base font-semibold text-foreground mb-4">Set up New Monitor</h2>
+                <TrackerSetupWizard
+                  trackerType="risk"
+                  onActivate={(data) =>
+                    createTracker.mutateAsync({ ...data, tracker_type: "risk" })
+                  }
+                  onComplete={() => {}}
+                />
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
