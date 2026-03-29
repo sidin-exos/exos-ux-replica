@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { FolderPlus, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import { FolderPlus, ChevronRight, RefreshCw, Loader2, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { EnterpriseTracker, MonitorType, MonitorParameters } from "@/hooks/useEnterpriseTrackers";
@@ -23,10 +23,47 @@ const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
   paused: "outline",
 };
 
+/** Truncate to ~first 2 sentences or 120 chars */
+const summarise = (content: string): string => {
+  const cleaned = content.replace(/^#+\s.+$/gm, "").replace(/\*\*/g, "").trim();
+  const sentences = cleaned.split(/(?<=[.!?])\s+/).slice(0, 2).join(" ");
+  return sentences.length > 140 ? sentences.slice(0, 137) + "…" : sentences;
+};
+
 const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [scanningId, setScanningId] = useState<string | null>(null);
+
+  const trackerIds = trackers.map((t) => t.id);
+
+  // Fetch latest report per tracker in one query
+  const { data: latestReports = {} } = useQuery({
+    queryKey: ["monitor_reports_latest", trackerIds],
+    enabled: trackerIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("monitor_reports" as any)
+        .select("tracker_id, report_content, created_at")
+        .in("tracker_id", trackerIds)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Keep only the latest per tracker
+      const map: Record<string, { summary: string; date: string }> = {};
+      for (const row of data ?? []) {
+        const r = row as any;
+        if (!map[r.tracker_id]) {
+          map[r.tracker_id] = {
+            summary: summarise(r.report_content),
+            date: r.created_at,
+          };
+        }
+      }
+      return map;
+    },
+  });
 
   const handleScanNow = async (e: React.MouseEvent, tracker: EnterpriseTracker) => {
     e.stopPropagation();
@@ -39,12 +76,14 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
       toast({ title: "Scan complete", description: `Report generated for "${tracker.name}".` });
       queryClient.invalidateQueries({ queryKey: ["enterprise_trackers"] });
       queryClient.invalidateQueries({ queryKey: ["monitor_reports", tracker.id] });
+      queryClient.invalidateQueries({ queryKey: ["monitor_reports_latest"] });
     } catch (err: any) {
       toast({ title: "Scan failed", description: err.message || "Unknown error", variant: "destructive" });
     } finally {
       setScanningId(null);
     }
   };
+
   if (isLoading) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -82,6 +121,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
         const params = t.parameters as MonitorParameters;
         const monitorType = (params?.monitor_type ?? "DM-2") as MonitorType;
         const typeMeta = MONITOR_TYPE_META[monitorType];
+        const latest = latestReports[t.id];
 
         return (
           <Card
@@ -92,14 +132,29 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
             <CardHeader className="flex-row items-start justify-between gap-2 space-y-0 pb-2">
               <div className="min-w-0">
                 <CardTitle className="text-base leading-snug group-hover:text-primary transition-colors">{t.name}</CardTitle>
-                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 mt-1 border border-emerald-300 dark:border-emerald-700 rounded px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30">{typeMeta?.label}</span>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 mt-1 border border-emerald-300 dark:border-emerald-700 rounded px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 inline-block">{typeMeta?.label}</span>
               </div>
               <Badge variant={statusVariant[t.status] ?? "secondary"} className="shrink-0 capitalize">
                 {t.status}
               </Badge>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
+            <CardContent className="space-y-2">
+              {/* Latest report summary */}
+              {latest ? (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                    {latest.summary}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
+                    <FileText className="w-3 h-3" />
+                    Last update: {format(new Date(latest.date), "MMM d, yyyy 'at' HH:mm")}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[10px] text-muted-foreground/50 italic">No reports yet</p>
+              )}
+
+              <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-muted-foreground">
                   Created {format(new Date(t.created_at), "MMM d, yyyy")}
                 </span>
