@@ -26,8 +26,8 @@ const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
 /** Truncate to ~first 2 sentences or 120 chars */
 const summarise = (content: string): string => {
   const cleaned = content.replace(/^#+\s.+$/gm, "").replace(/\*\*/g, "").trim();
-  const sentences = cleaned.split(/(?<=[.!?])\s+/).slice(0, 2).join(" ");
-  return sentences.length > 140 ? sentences.slice(0, 137) + "…" : sentences;
+  const sentences = cleaned.split(/(?<=[.!?])\s+/).slice(0, 5).join(" ");
+  return sentences.length > 350 ? sentences.slice(0, 347) + "…" : sentences;
 };
 
 const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps) => {
