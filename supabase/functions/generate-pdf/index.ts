@@ -22,6 +22,7 @@ import {
   validationErrorResponse,
   ValidationError,
 } from "../_shared/validate.ts";
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { generatePdfBuffer } from "./pdf-document.tsx";
 import type { GeneratePdfPayload } from "./types.ts";
@@ -111,6 +112,9 @@ serve(async (req) => {
       return validationErrorResponse(err.message);
     }
     console.error("PDF generation failed:", err);
+    new SentryReporter("generate-pdf").captureException(err, {
+      userId: authResult && !("error" in authResult) ? authResult.user.userId : undefined,
+    });
     return new Response(
       JSON.stringify({ error: "PDF generation failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },

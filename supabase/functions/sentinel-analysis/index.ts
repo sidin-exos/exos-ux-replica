@@ -6,6 +6,7 @@ import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { parseBody, requireString, optionalBoolean, optionalStringOrNull, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { anonymizeText, deanonymizeText, type AnonymizationResultServer } from "../_shared/anonymizer.ts";
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 /**
@@ -646,6 +647,10 @@ serve(async (req) => {
       console.log(`[Sentinel] Anonymized: ${anonymizationResult.metadata.entitiesFound} entities found, confidence=${anonymizationResult.metadata.confidence.toFixed(2)}`);
     } catch (anonymizationError) {
       console.error("[Sentinel] CRITICAL: Anonymization failed, aborting to prevent PII exposure:", anonymizationError);
+      new SentryReporter("sentinel-analysis").captureException(anonymizationError, {
+        userId,
+        tags: { stage: "anonymization", scenarioType: scenarioType || "unknown" },
+      });
       return new Response(
         JSON.stringify({
           error: "Anonymization failed",
@@ -1059,6 +1064,7 @@ serve(async (req) => {
       return validationErrorResponse(error.message);
     }
     console.error("[Sentinel] Error:", error);
+    new SentryReporter("sentinel-analysis").captureException(error, { userId });
     try { tracer?.patchRun(parentRunId!, undefined, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred" }),

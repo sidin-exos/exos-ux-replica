@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import * as Sentry from "@sentry/react";
 import { supabase } from "@/integrations/supabase/client";
 import { isAuthError, showAuthErrorToast } from "@/lib/auth-utils";
 
@@ -126,6 +127,10 @@ export function useMarketIntelligence() {
     } catch (err) {
       if (isAuthError(err)) {
         showAuthErrorToast();
+      } else {
+        Sentry.captureException(err, {
+          tags: { feature: "market-intelligence", queryType: params.queryType },
+        });
       }
       const errorMessage = err instanceof Error ? err.message : "Failed to query market intelligence";
       setError(errorMessage);

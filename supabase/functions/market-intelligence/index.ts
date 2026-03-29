@@ -5,6 +5,7 @@ import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { parseBody, requireString, requireStringEnum, requireArray, validationErrorResponse, ValidationError, filterPromptInjection } from "../_shared/validate.ts";
 
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 type QueryType = 'supplier' | 'commodity' | 'industry' | 'regulatory' | 'm&a' | 'risk';
@@ -280,6 +281,9 @@ serve(async (req) => {
     }
     const processingTimeMs = Date.now() - startTime;
     console.error("Market intelligence error:", error);
+    new SentryReporter("market-intelligence").captureException(error, {
+      userId: authResult.user.userId,
+    });
 
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 

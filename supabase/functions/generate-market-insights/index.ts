@@ -4,6 +4,7 @@ import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
 import { parseBody, requireString, requireArray, optionalBoolean, validationErrorResponse, ValidationError, filterPromptInjection } from "../_shared/validate.ts";
 
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 interface IndustryCategory {
@@ -467,6 +468,9 @@ serve(async (req) => {
       return validationErrorResponse(error.message);
     }
     console.error("Generate market insights error:", error);
+    new SentryReporter("generate-market-insights").captureException(error, {
+      userId: authResult.user.userId,
+    });
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return new Response(
