@@ -2,11 +2,13 @@ import * as Sentry from "@sentry/react";
 
 export function initSentry() {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
-  if (!dsn) return;
+  if (!dsn) {
+    console.warn("[Sentry] VITE_SENTRY_DSN is empty or not set — skipping init");
+    return;
+  }
 
   Sentry.init({
     dsn,
-    enabled: import.meta.env.PROD,
     environment: import.meta.env.MODE,
 
     integrations: [
