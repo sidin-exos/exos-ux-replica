@@ -129,7 +129,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
             className="flex items-center gap-4 p-3 rounded-md border border-border/50 hover:border-primary/40 cursor-pointer transition-colors group"
             onClick={() => onSelectTracker?.(t)}
           >
-            {/* Name + type */}
+            {/* Name + summary */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">{t.name}</span>
@@ -143,12 +143,22 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
                   {latest.summary}
                 </p>
               )}
-              <div className="flex items-center gap-4 mt-1.5 text-[10px] text-muted-foreground/70">
-                <span>Created: {format(new Date(t.created_at), "MMM d, yyyy")}</span>
-                {latest && (
-                  <span>Updated: {format(new Date(latest.date), "MMM d, yyyy")}</span>
-                )}
+            </div>
+
+            {/* Dates column */}
+            <div className="shrink-0 text-right space-y-1">
+              <div className="text-[10px] text-muted-foreground/70">
+                <span className="text-muted-foreground/50">Created</span>
+                <br />
+                {format(new Date(t.created_at), "MMM d, yyyy")}
               </div>
+              {latest && (
+                <div className="text-[10px] text-muted-foreground/70">
+                  <span className="text-muted-foreground/50">Updated</span>
+                  <br />
+                  {format(new Date(latest.date), "MMM d, yyyy")}
+                </div>
+              )}
             </div>
 
             <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
