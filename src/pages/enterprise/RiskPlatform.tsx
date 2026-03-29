@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { Activity, Users, TrendingDown, Layers } from "lucide-react";
+import { Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
@@ -15,23 +15,8 @@ import MonitorDetailView from "@/components/enterprise/MonitorDetailView";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
 import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
 
-const PRINCIPLES = [
-  {
-    icon: Users,
-    title: "Human-in-the-Loop by Design",
-    description: "Decision-support, not decision-making. Every output is framed as information for consideration — the final judgement always belongs to the human.",
-  },
-  {
-    icon: TrendingDown,
-    title: "Dynamics over Absolutes",
-    description: "The system is designed to save user's time by flagging rising risks for further analysis and decision-making.",
-  },
-  {
-    icon: Layers,
-    title: "Continuous Modelling, Not Advice",
-    description: "The module monitors and models possible risk events. It does not prescribe action plans. When deep analysis is needed, it bridges to point-in-time scenarios.",
-  },
-];
+
+
 
 const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
