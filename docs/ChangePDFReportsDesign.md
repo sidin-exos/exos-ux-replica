@@ -108,7 +108,7 @@ supabase functions deploy generate-pdf --no-verify-jwt
 | `supabase/functions/generate-pdf/pdf-document.tsx` | **Main PDF layout**: cover page, executive summary extraction, section categorization, dashboard page arrangement, analysis text pages, parameters page. Contains base64 EXOS logo and dark/light color palettes. |
 | `supabase/functions/generate-pdf/dashboards.tsx` | **All 14 dashboard PDF components**: ActionChecklist, CostWaterfall, DataQuality, DecisionMatrix, KraljicQuadrant, LicenseTier, NegotiationPrep, RiskMatrix, SOWAnalysis, ScenarioComparison, SensitivityTornado, SupplierScorecard, TCOComparison, TimelineRoadmap. Each is a self-contained `@react-pdf/renderer` component. |
 | `supabase/functions/generate-pdf/theme.ts` | **PDF theme system**: color definitions, style factory functions for cards, bars, matrices, legends, headers. Controls ALL visual styling constants. |
-| `supabase/functions/generate-pdf/types.ts` | Dashboard type definitions, `extractDashboardData()` parser, `stripDashboardData()` text cleaner. Data logic only, no visuals. |
+| `supabase/functions/generate-pdf/types.ts` | Dashboard type definitions, `extractDashboardData()` parser, `stripDashboardData()` text cleaner. Data logic only, no visual. |
 
 ## Shared Dependencies
 
