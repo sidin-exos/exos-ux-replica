@@ -33,7 +33,6 @@ const PRINCIPLES = [
 
 const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
-  const [activeTab, setActiveTab] = useState("monitor");
   const [selectedTracker, setSelectedTracker] = useState<EnterpriseTracker | null>(null);
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
 
