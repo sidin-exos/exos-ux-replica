@@ -61,6 +61,20 @@ const RiskPlatform = () => {
     );
   }
 
+  if (selectedTracker) {
+    return (
+      <EnterpriseLayout>
+        <Header />
+        <main className="container py-8">
+          <MonitorDetailView
+            tracker={selectedTracker}
+            onBack={() => setSelectedTracker(null)}
+          />
+        </main>
+      </EnterpriseLayout>
+    );
+  }
+
   return (
     <EnterpriseLayout>
       <Header />
@@ -111,14 +125,7 @@ const RiskPlatform = () => {
             <Card className="rounded-sm">
               <CardContent className="pt-5">
                 <h2 className="text-base font-semibold text-foreground mb-4">Active Monitors</h2>
-                {selectedTracker ? (
-                  <MonitorDetailView
-                    tracker={selectedTracker}
-                    onBack={() => setSelectedTracker(null)}
-                  />
-                ) : (
-                  <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
-                )}
+                <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
               </CardContent>
             </Card>
           </div>
