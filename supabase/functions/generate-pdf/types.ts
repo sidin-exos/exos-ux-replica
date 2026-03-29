@@ -250,6 +250,8 @@ export interface GeneratePdfPayload {
   timestamp: string;
   selectedDashboards?: DashboardType[];
   pdfTheme?: "light" | "dark";
+  evaluationScore?: number;
+  evaluationConfidence?: string;
 }
 
 export type PdfThemeMode = "light" | "dark";

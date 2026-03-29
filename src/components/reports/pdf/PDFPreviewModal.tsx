@@ -41,6 +41,8 @@ interface PDFPreviewModalProps {
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];
+  evaluationScore?: number | null;
+  evaluationConfidence?: string | null;
 }
 
 const PDFPreviewModal = ({
@@ -51,6 +53,8 @@ const PDFPreviewModal = ({
   formData,
   timestamp,
   selectedDashboards = [],
+  evaluationScore,
+  evaluationConfidence,
 }: PDFPreviewModalProps) => {
   // Raw PDF bytes for canvas preview (avoids CSP connect-src restrictions on blob URLs)
   const [pdfData, setPdfData] = useState<{ data: Uint8Array } | null>(null);
@@ -97,7 +101,11 @@ const PDFPreviewModal = ({
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-pdf", {
-        body: { scenarioTitle, analysisResult, formData, timestamp, selectedDashboards, pdfTheme },
+        body: {
+          scenarioTitle, analysisResult, formData, timestamp, selectedDashboards, pdfTheme,
+          evaluationScore: evaluationScore ?? undefined,
+          evaluationConfidence: evaluationConfidence ?? undefined,
+        },
       });
 
       if (error) throw error;

@@ -925,6 +925,8 @@ const PDFReportDocument = ({
   timestamp,
   selectedDashboards = [],
   pdfTheme = "light",
+  evaluationScore,
+  evaluationConfidence,
 }: {
   scenarioTitle: string;
   analysisResult: string;
@@ -932,6 +934,8 @@ const PDFReportDocument = ({
   timestamp: string;
   selectedDashboards?: DashboardType[];
   pdfTheme?: PdfThemeMode;
+  evaluationScore?: number;
+  evaluationConfidence?: string;
 }) => {
   const parsedData = extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
@@ -946,11 +950,13 @@ const PDFReportDocument = ({
   const showToc = hasDashboards;
   const orgName = formData["organization"] || formData["Organization"] || formData["company"] || formData["Company"] || formData["org"] || "EXOS";
 
-  // KPIs
+  // Input quality — use real evaluation data when available, fallback to heuristic
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-  const coveragePct = allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0;
-  const confidenceLevel = coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low";
+  const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  const confidenceLevel = evaluationConfidence
+    ? (evaluationConfidence === "HIGH" ? "High" : "Low")
+    : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
   const savingsKpi = extractSavingsKpi(strippedAnalysis);
   const riskKpi = extractRiskKpi(strippedAnalysis);
 
@@ -1154,7 +1160,9 @@ const PDFReportDocument = ({
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <Text style={{ fontSize: 9, color: C.muted }}>
-                Input coverage: {filledKeys.length}/{allKeys.length > 0 ? allKeys.length : 1} fields ({coveragePct}%)
+                {evaluationScore != null
+                  ? `Input quality score: ${coveragePct}/100`
+                  : `Input coverage: ${filledKeys.length}/${allKeys.length > 0 ? allKeys.length : 1} fields (${coveragePct}%)`}
               </Text>
               <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: kpiColor(confidenceLevel, "confidence") }}>
                 {confidenceLevel} Confidence
@@ -1184,6 +1192,8 @@ export async function generatePdfBuffer(payload: GeneratePdfPayload): Promise<Ui
     timestamp,
     selectedDashboards = [],
     pdfTheme = "light",
+    evaluationScore,
+    evaluationConfidence,
   } = payload;
 
   const doc = (
@@ -1194,6 +1204,8 @@ export async function generatePdfBuffer(payload: GeneratePdfPayload): Promise<Ui
       timestamp={timestamp}
       selectedDashboards={selectedDashboards}
       pdfTheme={pdfTheme}
+      evaluationScore={evaluationScore}
+      evaluationConfidence={evaluationConfidence}
     />
   );
 
