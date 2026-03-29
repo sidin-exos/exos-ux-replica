@@ -1,39 +1,88 @@
 /**
- * Enterprise print-ready theme for PDF dashboard visuals.
- * White background, black text, minimal color — McKinsey/BCG quality.
- *
- * Note: @react-pdf/renderer supports a limited flexbox subset; avoid `gap`.
+ * EXOS Branded PDF theme — dual light/dark mode.
+ * Matches EXOS_Report_Template_Light.pdf and EXOS_Report_Template_Dark.pdf.
  */
 
 import { StyleSheet } from "@react-pdf/renderer";
 
 export type PdfThemeMode = "light" | "dark";
 
-/** Enterprise print palette — used for ALL PDF output */
-export const colors = {
-  primary: "#1B2A4A",       // navy — headings only
-  primaryDark: "#162038",   // darker navy
-  background: "#FFFFFF",    // white — always
-  surface: "#F8FAFC",       // off-white — KPI backgrounds
-  surfaceLight: "#F9FAFB",  // ice gray — alternating rows
+/** Light mode palette — sage page bg, white cards */
+export const lightColors = {
+  primary: "#3D7A6E",       // teal — headings, accents, header bar
+  primaryDark: "#2D5F55",   // darker teal — hover/emphasis
+  background: "#E8F0EA",    // sage/mint page background
+  surface: "#FFFFFF",       // white — card backgrounds
+  surfaceLight: "#F3F7F4",  // light sage — alternating rows
   text: "#1A1A1A",          // near-black — body text
   textMuted: "#6B7280",     // medium gray — labels, captions
+  textOnPrimary: "#FFFFFF", // white text on teal backgrounds
   success: "#15803D",       // dark green — positive values
   warning: "#B45309",       // dark amber — caution values
   destructive: "#B91C1C",   // dark red — negative/risk values
-  border: "rgba(229, 231, 235, 0.6)",  // semi-transparent borders
+  border: "rgba(229, 231, 235, 0.6)", // semi-transparent borders
   badgeText: "#FFFFFF",     // white text on colored badges
   option2: "#94A3B8",       // slate — secondary chart color
   option3: "#6B7280",       // gray — tertiary chart color
+  // Accent colors for cards/borders
+  accent1: "#2D5F55",       // dark teal
+  accent2: "#3B8574",       // medium teal
+  accent3: "#EAB308",       // amber/yellow
+  accent4: "#DC7548",       // coral/orange
+  // Risk severity colors
+  riskCritical: "#B91C1C",
+  riskHigh: "#DC7548",
+  riskMedium: "#3B82F6",
+  // Bottom stripe colors
+  stripe1: "#3D7A6E",
+  stripe2: "#3B82F6",
+  stripe3: "#22C55E",
+  stripe4: "#EAB308",
+  stripe5: "#DC7548",
+  stripe6: "#DC2626",
 } as const;
 
-/** Light colors = same enterprise palette (kept for API compat) */
-export const lightColors = { ...colors } as const;
+/** Dark mode palette — dark charcoal bg, dark cards */
+export const darkColors = {
+  primary: "#4DB6AC",       // bright teal — headings, accents
+  primaryDark: "#3D9B91",   // slightly darker teal
+  background: "#1C2B3A",   // dark charcoal page background
+  surface: "#243447",       // dark card backgrounds
+  surfaceLight: "#2A3B4E",  // slightly lighter — alternating rows
+  text: "#E2E8F0",          // light gray — body text
+  textMuted: "#94A3B8",     // medium slate — labels, captions
+  textOnPrimary: "#FFFFFF", // white text on teal backgrounds
+  success: "#4ADE80",       // bright green — positive values
+  warning: "#FBBF24",       // bright amber — caution values
+  destructive: "#F87171",   // bright red — negative/risk values
+  border: "rgba(148, 163, 184, 0.25)", // semi-transparent borders
+  badgeText: "#FFFFFF",     // white text on colored badges
+  option2: "#64748B",       // slate — secondary chart color
+  option3: "#475569",       // darker slate — tertiary chart color
+  // Accent colors for cards/borders
+  accent1: "#4DB6AC",
+  accent2: "#81C784",
+  accent3: "#FFD54F",
+  accent4: "#FF8A65",
+  // Risk severity colors
+  riskCritical: "#F87171",
+  riskHigh: "#FF8A65",
+  riskMedium: "#60A5FA",
+  // Bottom stripe colors
+  stripe1: "#4DB6AC",
+  stripe2: "#60A5FA",
+  stripe3: "#4ADE80",
+  stripe4: "#FBBF24",
+  stripe5: "#FF8A65",
+  stripe6: "#F87171",
+} as const;
 
-export type PdfColorSet = { [K in keyof typeof colors]: string };
+export const colors = lightColors;
 
-export function getPdfColors(_mode?: PdfThemeMode): PdfColorSet {
-  return colors;
+export type PdfColorSet = { [K in keyof typeof lightColors]: string };
+
+export function getPdfColors(mode?: PdfThemeMode): PdfColorSet {
+  return mode === "dark" ? darkColors : lightColors;
 }
 
 function buildStyles(c: PdfColorSet) {
@@ -42,7 +91,7 @@ function buildStyles(c: PdfColorSet) {
       marginBottom: 20,
     },
     dashboardCard: {
-      backgroundColor: c.background,
+      backgroundColor: c.surface,
       padding: 14,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
@@ -296,12 +345,13 @@ function buildStyles(c: PdfColorSet) {
   });
 }
 
-/** Enterprise styles (single palette) */
-export const styles = buildStyles(colors);
+/** Light styles */
+export const lightStyles = buildStyles(lightColors);
+/** Dark styles */
+export const darkStyles = buildStyles(darkColors);
+/** Default export (light) */
+export const styles = lightStyles;
 
-/** Alias for API compat */
-export const lightStyles = styles;
-
-export function getPdfStyles(_mode?: PdfThemeMode) {
-  return styles;
+export function getPdfStyles(mode?: PdfThemeMode) {
+  return mode === "dark" ? darkStyles : lightStyles;
 }
