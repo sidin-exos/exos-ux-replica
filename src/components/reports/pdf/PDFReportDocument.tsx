@@ -770,8 +770,8 @@ const PDFReportDocument = ({
 
   return (
     <Document>
-      {/* ── Page 1: Cover ── */}
-      <Page size="A4" style={styles.page}>
+      {/* ── Page 1: Cover + Executive Summary (merged) ── */}
+      <Page size="A4" style={styles.page} id="section-executive-summary">
         <View style={styles.coverSpacer} />
 
         <Text style={styles.coverBrand}>EXOS</Text>
@@ -781,12 +781,12 @@ const PDFReportDocument = ({
         {subtitle ? (
           <Text style={styles.coverSubtitle}>{subtitle}</Text>
         ) : (
-          <View style={{ height: 48 }} />
+          <View style={{ height: 24 }} />
         )}
 
         {/* TOC */}
         {showToc && (
-          <View style={{ marginBottom: SP.sectionGap }}>
+          <View style={{ marginBottom: SP.subSectionGap }}>
             {tocEntries.map((entry, i) => (
               <View key={entry.anchor} style={styles.tocRow}>
                 <Link src={`#${entry.anchor}`}>
@@ -799,56 +799,13 @@ const PDFReportDocument = ({
           </View>
         )}
 
-        {/* Bottom section */}
-        <Text style={styles.coverFooterText}>Prepared for {orgName}</Text>
-        <Text style={styles.coverFooterText}>{formattedDate}</Text>
-        <Text style={styles.coverConfidential}>Confidential</Text>
-      </Page>
-
-      {/* ── Page 2: Executive Summary ── */}
-      <Page size="A4" style={styles.pageWithHeader} id="section-executive-summary">
-        <RunningHeader reportTitle={reportTitle} />
-
-        {/* Section title */}
+        {/* Executive Summary section */}
         <View style={styles.sectionTitleWrapper}>
           <Text style={styles.sectionTitleText}>Executive Summary</Text>
         </View>
 
-        {/* KPI row (Fix 8: wrap={false}) */}
-        <View style={styles.kpiRow} wrap={false}>
-          <View style={styles.kpiCell}>
-            <Text style={{ ...styles.kpiValue, color: kpiColor(savingsKpi, "savings") }}>
-              {savingsKpi === "—" ? "Not assessed" : savingsKpi}
-            </Text>
-            <Text style={styles.kpiLabel}>POTENTIAL SAVINGS</Text>
-            <Text style={styles.kpiContext}>Based on analysis inputs</Text>
-          </View>
-          <View style={styles.kpiDivider} />
-          <View style={styles.kpiCell}>
-            <Text style={{
-              ...styles.kpiValue,
-              color: kpiColor(riskKpi, "risk"),
-              fontFamily: riskKpi === "—" ? "Helvetica-Oblique" : "Helvetica-Bold",
-            }}>
-              {riskKpi === "—" ? "Not assessed" : riskKpi}
-            </Text>
-            <Text style={styles.kpiLabel}>RISK LEVEL</Text>
-            <Text style={styles.kpiContext}>Extracted from analysis</Text>
-          </View>
-          <View style={styles.kpiDivider} />
-          <View style={styles.kpiCell}>
-            <Text style={{ ...styles.kpiValue, color: kpiColor(confidenceLevel, "confidence") }}>
-              {confidenceLevel}
-            </Text>
-            <Text style={styles.kpiLabel}>CONFIDENCE</Text>
-            <Text style={styles.kpiContext}>{coveragePct}% input coverage</Text>
-          </View>
-        </View>
-
-        {/* Key Findings (Fix 1: stripMarkdown, Fix 8: wrap={false} per item) */}
-        <View style={styles.sectionTitleWrapper}>
-          <Text style={styles.sectionTitleText}>Key Findings</Text>
-        </View>
+        {/* Key Findings */}
+        <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: C.text, marginBottom: 6 }}>Key Findings</Text>
         {findings.map((point, i) => (
           <View key={`f-${i}`} style={styles.numberedItem} wrap={false}>
             <Text style={styles.numberedPrefix}>{i + 1}.</Text>
@@ -856,10 +813,8 @@ const PDFReportDocument = ({
           </View>
         ))}
 
-        {/* Recommended Actions (Fix 1, Fix 8) */}
-        <View style={styles.sectionTitleWrapper}>
-          <Text style={styles.sectionTitleText}>Recommended Actions</Text>
-        </View>
+        {/* Recommended Actions */}
+        <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: C.text, marginTop: 12, marginBottom: 6 }}>Recommended Actions</Text>
         {recommendations.map((point, i) => (
           <View key={`r-${i}`} style={styles.numberedItem} wrap={false}>
             <Text style={styles.numberedPrefix}>{i + 1}.</Text>
@@ -867,8 +822,12 @@ const PDFReportDocument = ({
           </View>
         ))}
 
-
-        <ReportFooter dateStr={formattedDate} orgName={orgName} />
+        {/* Bottom section */}
+        <View style={{ marginTop: "auto" }}>
+          <Text style={styles.coverFooterText}>Prepared for {orgName}</Text>
+          <Text style={styles.coverFooterText}>{formattedDate}</Text>
+          <Text style={styles.coverConfidential}>Confidential</Text>
+        </View>
       </Page>
 
       {/* ── Dashboard pages ── */}
