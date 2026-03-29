@@ -25,18 +25,30 @@ const InflationDriverCard = ({ driver }: Props) => {
   const cadenceLabel = CADENCE_LABELS[driver.scan_cadence] ?? driver.scan_cadence;
 
   return (
-    <div className="rounded-lg border border-border/60 p-4 space-y-3">
-      {/* Header: name + status */}
+    <div className="rounded-lg border border-border/60 p-3 space-y-2">
+      {/* Header: name + status + meta inline */}
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-foreground">{driver.driver_name}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground">{driver.driver_name}</p>
+          <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1"><Radio className="w-3 h-3" />{cadenceLabel}</span>
+            {driver.weight != null && <span>Weight: <span className="font-medium text-foreground">{driver.weight}</span></span>}
+            {driver.rationale && <span className="hidden sm:inline">· {driver.rationale}</span>}
+          </div>
+        </div>
         <Badge variant="outline" className={`shrink-0 ${status.className}`}>
           {status.label}
         </Badge>
       </div>
 
-      {/* Status summary + last update */}
-      <div className="rounded-md bg-muted/40 px-3 py-2.5 space-y-1">
-        <p className="text-xs text-foreground">
+      {/* Rationale on mobile */}
+      {driver.rationale && (
+        <p className="text-xs text-muted-foreground leading-relaxed sm:hidden">{driver.rationale}</p>
+      )}
+
+      {/* Status summary */}
+      <div className="rounded-md bg-muted/40 px-3 py-2 space-y-0.5">
+        <p className="text-xs text-foreground leading-relaxed">
           {driver.context_summary
             ? driver.context_summary
             : driver.current_status === "stable"
@@ -50,21 +62,6 @@ const InflationDriverCard = ({ driver }: Props) => {
             ? new Date(driver.last_scanned_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
             : "Awaiting first scan"}
         </p>
-      </div>
-
-      {/* Meta row: frequency, weight */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Radio className="w-3 h-3" />
-          <span>{cadenceLabel}</span>
-        </div>
-
-        {driver.weight != null && (
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">Weight:</span>
-            <span className="font-medium text-foreground">{driver.weight}</span>
-          </div>
-        )}
       </div>
 
       {/* Trigger */}
