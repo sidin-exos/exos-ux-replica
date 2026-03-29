@@ -4,7 +4,7 @@ import type { InflationDriver, DriverStatus } from "@/hooks/useInflationTrackers
 
 const STATUS_META: Record<DriverStatus, { label: string; className: string }> = {
   improving: { label: "Improving", className: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" },
-  stable: { label: "Stable", className: "bg-amber-500/15 text-amber-600 border-amber-500/30" },
+  stable: { label: "Stable", className: "bg-slate-500/15 text-slate-600 border-slate-500/30" },
   deteriorating: { label: "Deteriorating", className: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 
