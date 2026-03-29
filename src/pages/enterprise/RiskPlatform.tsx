@@ -3,6 +3,8 @@ import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
