@@ -139,7 +139,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
                 </Badge>
               </div>
               {latest && (
-                <p className="text-xs text-muted-foreground leading-relaxed mt-1 line-clamp-1">
+                <p className="text-xs text-muted-foreground leading-relaxed mt-1 line-clamp-5">
                   {latest.summary}
                 </p>
               )}
