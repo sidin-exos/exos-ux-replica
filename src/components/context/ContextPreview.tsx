@@ -8,7 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Code, Eye, Lock } from "lucide-react";
+import { ChevronDown, ChevronUp, Code, Eye } from "lucide-react";
 import {
   useIndustryContext,
   useProcurementCategory,
