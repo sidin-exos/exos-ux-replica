@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { Activity } from "lucide-react";
+import { Activity, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -114,48 +115,8 @@ const RiskPlatform = () => {
             </CardContent>
           </Card>
 
-          {/* Right 1/3 — Case Studies */}
-          <Card className="lg:col-span-1 border-border/50 bg-card/50">
-            <CardContent className="pt-5 pb-4 space-y-5">
-              <h2 className="text-base font-semibold text-foreground">Use Cases</h2>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px]">DM-2</Badge>
-                    <p className="text-xs font-semibold text-foreground">Supplier Financial Deterioration</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    A manufacturer monitors a single-source packaging supplier. The monitor detects a credit rating downgrade and rising payment defaults in public filings, flagging the risk 6 weeks before the supplier misses a delivery commitment.
-                  </p>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px]">DM-4</Badge>
-                    <p className="text-xs font-semibold text-foreground">Red Sea Shipping Disruption</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    A European retailer tracks the Suez / Red Sea corridor. The monitor surfaces escalating Houthi attacks and carrier re-routing signals, enabling the procurement team to pre-negotiate alternative freight contracts before spot rates spike.
-                  </p>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px]">DM-5</Badge>
-                    <p className="text-xs font-semibold text-foreground">Semiconductor Capacity Shift</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    An automotive OEM monitors the semiconductor industry. The tracker detects TSMC and Samsung capacity expansion announcements alongside softening consumer electronics demand, signalling upcoming supply relief and stronger negotiation leverage for chip procurement.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Right 1/3 — Use Case */}
+          <UseCaseCard />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
