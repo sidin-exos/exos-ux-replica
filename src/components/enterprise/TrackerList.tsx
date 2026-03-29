@@ -145,30 +145,18 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
               )}
             </div>
 
-            {/* Last update */}
-            <div className="text-right shrink-0 hidden sm:block">
-              {latest ? (
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
-                  <FileText className="w-3 h-3" />
-                  {format(new Date(latest.date), "MMM d, yyyy")}
-                </div>
-              ) : (
-                <span className="text-[10px] text-muted-foreground/50 italic">No reports</span>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs gap-1"
-                disabled={scanningId === t.id}
-                onClick={(e) => handleScanNow(e, t)}
-              >
-                {scanningId === t.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                Scan Now
-              </Button>
+            {/* Last update + arrow */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                {latest ? (
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
+                    <FileText className="w-3 h-3" />
+                    {format(new Date(latest.date), "MMM d, yyyy")}
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground/50 italic">No reports</span>
+                )}
+              </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
           </div>
