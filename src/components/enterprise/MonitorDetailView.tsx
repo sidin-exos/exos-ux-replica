@@ -255,8 +255,9 @@ const MonitorDetailView = ({ tracker, onBack }: MonitorDetailViewProps) => {
             "Monitoring Type": `${monitorType} — ${typeMeta?.label || ""}`,
             "Report Date": format(new Date(pdfReport.created_at), "MMM d, yyyy 'at' HH:mm"),
             "Model": pdfReport.model_used,
-            ...(params.entity_type ? { "Entity Type": String(params.entity_type) } : {}),
-            ...(params.default_period ? { "Comparison Period": String(params.default_period) } : {}),
+            ...Object.fromEntries(
+              displayParams.map(([key, value]) => [PARAM_LABELS[key] || key, String(value)])
+            ),
           }}
           timestamp={pdfReport.created_at}
         />
