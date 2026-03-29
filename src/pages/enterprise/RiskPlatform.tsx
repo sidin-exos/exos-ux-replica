@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Activity, Users, TrendingDown, Layers } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
@@ -34,7 +33,6 @@ const PRINCIPLES = [
 
 const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
-  const [activeTab, setActiveTab] = useState("monitor");
   const [selectedTracker, setSelectedTracker] = useState<EnterpriseTracker | null>(null);
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
 
@@ -113,7 +111,7 @@ const RiskPlatform = () => {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setActiveTab("setup")}
+                    onClick={() => {}}
                     className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
                   >
                     <Badge variant="default" className="shrink-0 text-[10px] mt-0.5">
@@ -133,14 +131,9 @@ const RiskPlatform = () => {
           </CardContent>
         </Card>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="monitor">Monitoring</TabsTrigger>
-            <TabsTrigger value="setup">Set up New Monitor</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="monitor" className="mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left 2/3 — Monitoring */}
+          <div className="lg:col-span-2">
             {selectedTracker ? (
               <MonitorDetailView
                 tracker={selectedTracker}
@@ -149,24 +142,19 @@ const RiskPlatform = () => {
             ) : (
               <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
             )}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="setup" className="mt-6">
+          {/* Right 1/3 — Setup Wizard */}
+          <div className="lg:col-span-1 lg:sticky lg:top-8 lg:self-start">
             <TrackerSetupWizard
               trackerType="risk"
               onActivate={(data) =>
                 createTracker.mutateAsync({ ...data, tracker_type: "risk" })
               }
-              onComplete={() => setActiveTab("monitor")}
+              onComplete={() => {}}
             />
-          </TabsContent>
-
-          <TabsContent value="reports" className="mt-6">
-            <div className="text-center py-16 text-muted-foreground">
-              Reports will be available once monitors generate their first analysis cycle.
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </main>
     </EnterpriseLayout>
   );
