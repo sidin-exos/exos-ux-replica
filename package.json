@@ -44,6 +44,8 @@
     "@react-pdf/renderer": "^4.3.2",
     "@supabase/supabase-js": "^2.99.0",
     "@tanstack/react-query": "^5.83.0",
+    "@vitejs/plugin-react": "4.3.4",
+    "@vitejs/plugin-react-swc": "^4.3.0",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -51,6 +53,7 @@
     "date-fns": "^3.6.0",
     "docx": "^9.6.1",
     "embla-carousel-react": "^8.6.0",
+    "exceljs": "^4.4.0",
     "framer-motion": "^12.29.0",
     "html-to-image": "^1.11.13",
     "input-otp": "^1.4.2",
@@ -71,7 +74,6 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
-    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -82,7 +84,6 @@
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",

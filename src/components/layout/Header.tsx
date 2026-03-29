@@ -7,6 +7,7 @@ import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useUser } from "@/hooks/useUser";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import exosLogoFallback from "@/assets/logo-concept-layers.png";
 import {
   DropdownMenu,
@@ -50,22 +51,14 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "Market Intelligence",
-    items: [
-      { label: "Generate a Report", path: "/market-intelligence" },
-      { label: "Scheduled Reports & Triggers", path: "/market-intelligence?tab=queries&mode=regular" },
-      { label: "Knowledge Base", path: "/market-intelligence?tab=insights", icon: Database },
-    ],
-  },
-  {
-    label: "Enterprise",
+    label: "Analytical Platforms",
     items: [
       { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert },
       { label: "Inflation Analysis Platform", path: "/enterprise/inflation", icon: TrendingUp },
     ],
   },
   {
-    label: "Resources",
+    label: "About EXOS",
     items: [
       { label: "Dashboards & Analytics", path: "/reports", icon: BarChart3 },
       { label: "Technology & AI", path: "/features#orchestration", icon: Sparkles },
@@ -82,6 +75,7 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
+  const { isSuperAdmin } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const exosLogo = useThemedLogo();
 
@@ -99,7 +93,7 @@ const Header = () => {
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <NavLink to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+        <NavLink to="/welcome" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <div className="flex items-center justify-center h-14 w-14 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md shadow-primary/10">
             <img src={exosLogo} alt="EXOS Logo" className="w-full h-full object-contain" />
           </div>
@@ -137,6 +131,14 @@ const Header = () => {
                 </NavigationMenuContent>
               </NavigationMenuItem>
             ))}
+            <NavigationMenuItem>
+              <button
+                onClick={() => navigate("/market-intelligence")}
+                className="text-sm font-medium text-muted-foreground px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
+                Market Intelligence
+              </button>
+            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
 
@@ -183,6 +185,14 @@ const Header = () => {
                 ))}
               </Accordion>
 
+              <button
+                onClick={() => mobileNavigate("/market-intelligence")}
+                className="text-sm font-medium text-foreground py-2.5 px-3 hover:bg-muted rounded-md text-left flex items-center gap-2 w-full"
+              >
+                <Sparkles className="w-4 h-4 text-primary" />
+                Market Intelligence
+              </button>
+
               <Separator className="my-4" />
 
               {user ? (
@@ -208,6 +218,29 @@ const Header = () => {
                   >
                     <HelpCircle className="w-4 h-4" /> Help & FAQ
                   </button>
+                  {isSuperAdmin && (
+                    <>
+                      <Separator className="my-2" />
+                      <button
+                        onClick={() => mobileNavigate("/admin/methodology")}
+                        className="text-sm text-muted-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                      >
+                        <BookOpen className="w-4 h-4" /> Methodology
+                      </button>
+                      <button
+                        onClick={() => mobileNavigate("/admin/dashboard")}
+                        className="text-sm text-muted-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                      >
+                        <BarChart3 className="w-4 h-4" /> Command Center
+                      </button>
+                      <button
+                        onClick={() => mobileNavigate("/admin/analytics")}
+                        className="text-sm text-muted-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                      >
+                        <Zap className="w-4 h-4" /> Analytics
+                      </button>
+                    </>
+                  )}
                   <Separator className="my-2" />
                   <button
                     onClick={async () => {
@@ -264,6 +297,20 @@ const Header = () => {
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/pricing#faq")}>
                   <HelpCircle className="w-4 h-4" /> Help & FAQ
                 </DropdownMenuItem>
+                {isSuperAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/admin/methodology")}>
+                      <BookOpen className="w-4 h-4" /> Methodology
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/admin/dashboard")}>
+                      <BarChart3 className="w-4 h-4" /> Command Center
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/admin/analytics")}>
+                      <Zap className="w-4 h-4" /> Analytics
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer gap-2 text-destructive focus:text-destructive"

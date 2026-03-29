@@ -32,7 +32,9 @@ export function ContactForm() {
   const onSubmit = async (values: ContactFormValues) => {
     setSubmitting(true);
     try {
+      const id = crypto.randomUUID();
       const { error } = await supabase.from("contact_submissions").insert({
+        id,
         name: values.name,
         email: values.email,
         company: values.company || null,
@@ -43,6 +45,22 @@ export function ContactForm() {
       if (error) throw error;
       setSubmitted(true);
       toast.success("Message sent successfully!");
+
+      // Non-blocking email notification to the team
+      supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'contact-notification',
+          recipientEmail: 'contact@exosproc.com',
+          idempotencyKey: `contact-notify-${id}`,
+          templateData: {
+            name: values.name,
+            email: values.email,
+            company: values.company || undefined,
+            subject: values.subject,
+            message: values.message,
+          },
+        },
+      }).catch((err) => console.error("Email notification failed:", err));
     } catch {
       toast.error("Failed to send message. Please try again.");
     } finally {

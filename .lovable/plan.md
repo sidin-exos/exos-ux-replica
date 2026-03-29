@@ -1,100 +1,118 @@
 
 
-## Enterprise Platforms — Phase 1 Implementation Plan
+# Enriched AI Context Data Model — Implementation Plan
 
-### Overview
+## Overview
+Add rich JSONB columns to `industry_contexts` and `procurement_categories` tables, then update the Edge Function XML builders, TypeScript types, hooks, and frontend editors to consume the new data.
 
-Build the UI scaffolding, routing, database tables, storage bucket, and Supabase integration for persistent Risk Assessment and Inflation Analysis trackers. No AI processing or Edge Functions in this sprint.
+## Step 1: Database Migration (Schema Only)
 
-### 1. Database Migration
-
-Create `enterprise_trackers` table and `tracker-files` storage bucket in a single migration:
+Create `supabase/migrations/YYYYMMDD_enrich_context_tables.sql`:
 
 ```sql
-CREATE TABLE public.enterprise_trackers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  tracker_type text NOT NULL,
-  name text NOT NULL,
-  status text NOT NULL DEFAULT 'setup',
-  parameters jsonb NOT NULL DEFAULT '{}',
-  file_references jsonb NOT NULL DEFAULT '[]',
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+-- industry_contexts: add enriched JSONB columns
+ALTER TABLE public.industry_contexts
+  ADD COLUMN IF NOT EXISTS constraints_v2 JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS kpis_v2 JSONB DEFAULT '[]';
 
-ALTER TABLE public.enterprise_trackers ENABLE ROW LEVEL SECURITY;
-
--- User CRUD on own trackers
-CREATE POLICY "Users can select own trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own trackers" ON public.enterprise_trackers
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own trackers" ON public.enterprise_trackers
-  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own trackers" ON public.enterprise_trackers
-  FOR DELETE TO authenticated USING (auth.uid() = user_id);
--- Admin read-all
-CREATE POLICY "Admins can read all trackers" ON public.enterprise_trackers
-  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
-
--- Storage bucket
-INSERT INTO storage.buckets (id, name, public) VALUES ('tracker-files', 'tracker-files', false);
-
--- Storage RLS: users can upload/read/delete own files (path starts with user_id)
-CREATE POLICY "Users can upload own tracker files" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can read own tracker files" ON storage.objects
-  FOR SELECT TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "Users can delete own tracker files" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id = 'tracker-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+-- procurement_categories: add all new columns
+ALTER TABLE public.procurement_categories
+  ADD COLUMN IF NOT EXISTS category_group TEXT,
+  ADD COLUMN IF NOT EXISTS spend_type TEXT,
+  ADD COLUMN IF NOT EXISTS kraljic_position TEXT,
+  ADD COLUMN IF NOT EXISTS kraljic_rationale TEXT,
+  ADD COLUMN IF NOT EXISTS price_volatility TEXT,
+  ADD COLUMN IF NOT EXISTS market_structure TEXT,
+  ADD COLUMN IF NOT EXISTS supply_concentration TEXT,
+  ADD COLUMN IF NOT EXISTS key_cost_drivers JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS procurement_levers JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS negotiation_dynamics TEXT,
+  ADD COLUMN IF NOT EXISTS should_cost_components TEXT,
+  ADD COLUMN IF NOT EXISTS eu_regulatory_context TEXT,
+  ADD COLUMN IF NOT EXISTS common_failure_modes JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS exos_scenarios_primary JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS exos_scenarios_secondary JSONB DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS kpis_v2 JSONB DEFAULT '[]';
 ```
 
-### 2. New Files to Create
+No data insertion, no TRUNCATE, no DELETE.
 
-| File | Purpose |
-|------|---------|
-| `src/pages/enterprise/RiskPlatform.tsx` | Risk Assessment platform page with Tabs (Monitor / Setup / Reports) |
-| `src/pages/enterprise/InflationPlatform.tsx` | Inflation Analysis platform page, same structure |
-| `src/components/enterprise/TrackerSetupWizard.tsx` | 3-step wizard: Parameters → Files & Context (with GDPR checkbox) → Review & Activate |
-| `src/components/enterprise/TrackerList.tsx` | Grid of Card components showing active trackers with status badges |
-| `src/components/enterprise/FileUploadZone.tsx` | Drag-and-drop file upload area for Step 2 |
-| `src/hooks/useEnterpriseTrackers.ts` | Hook for CRUD operations on `enterprise_trackers` table + file upload to `tracker-files` bucket |
+## Step 2: Update TypeScript Interfaces
 
-### 3. Files to Edit
+**`src/lib/ai-context-templates.ts`** — extend interfaces:
+
+```typescript
+export interface ConstraintV2 {
+  id?: string; tier?: string; label: string;
+  eu_ref?: string; procurement_impact?: string; blocker?: boolean;
+}
+export interface KpiV2 {
+  id?: string; label: string; direction?: string;
+  exos_lever?: string; benchmark_signal?: string;
+}
+export interface IndustryContext {
+  // ...existing fields...
+  constraints_v2?: ConstraintV2[];
+  kpis_v2?: KpiV2[];
+}
+export interface ProcurementCategory {
+  // ...existing fields + all new TEXT/JSONB fields...
+  category_group?: string; kraljic_position?: string; /* etc. */
+  key_cost_drivers?: Array<{ driver: string; share_pct?: string }>;
+  procurement_levers?: Array<{ lever: string; description?: string }>;
+  common_failure_modes?: Array<{ mode: string; mitigation?: string }>;
+  kpis_v2?: KpiV2[];
+}
+```
+
+Also update `generateIndustryContextXML()` and `generateCategoryContextXML()` in the same file to emit enriched XML when v2 data is present, falling back to legacy arrays.
+
+**`src/integrations/supabase/types.ts`** — cannot be edited manually; it auto-syncs from Supabase after migration runs.
+
+## Step 3: Update Edge Function (`supabase/functions/sentinel-analysis/index.ts`)
+
+1. **Extend `IndustryRow`** (line ~128) with `constraints_v2` and `kpis_v2` optional JSONB fields.
+2. **Extend `CategoryRow`** (line ~136) with all new columns.
+3. **Update SELECT queries** (line ~598-601) to fetch the new columns.
+4. **Update `buildIndustryXML()`** (line ~143):
+   - If `constraints_v2` is a non-empty array, render enriched XML with `<constraint tier="..." blocker="true" eu-ref="...">` attributes. Blockers get a `<!-- HARD GATE -->` comment.
+   - If `kpis_v2` exists, render `<kpi direction="..." exos-lever="..." benchmark="...">`.
+   - Fall back to legacy `constraints`/`kpis` text arrays when v2 is empty.
+5. **Update `buildCategoryXML()`** (line ~162):
+   - Add sections: `<kraljic-position>`, `<key-cost-drivers>`, `<procurement-levers>`, `<eu-regulatory-context>`, `<common-failure-modes>`, `<negotiation-dynamics>`, `<should-cost-components>`.
+   - Add system instruction: blockers and high-volatility items are hard constraints.
+   - Fall back gracefully when new fields are null/empty.
+
+## Step 4: Update Hooks (`src/hooks/useContextData.ts`)
+
+Update all four query functions to select the new columns alongside existing ones (e.g., `constraints_v2, kpis_v2` for industry; all new columns for categories).
+
+## Step 5: Update Frontend Context Editors
+
+**`IndustryContextEditor.tsx`**:
+- When `constraints_v2` exists, render each constraint with a tier badge (`T1`/`T2`/`T3`) and a red "Blocker" badge when `blocker: true`.
+- When `kpis_v2` exists, show direction arrow icon and `exos_lever` as a subtle tag.
+- Graceful fallback: if v2 arrays are empty/null, show legacy flat list (current behavior).
+
+**`CategoryContextEditor.tsx`**:
+- Add read-only sections for Kraljic position (badge), price volatility, market structure, supply concentration.
+- Show key cost drivers and procurement levers as collapsible lists.
+- Show EU regulatory context as a highlighted callout.
+- Show common failure modes with mitigation notes.
+- All new sections hidden if data is null/empty.
+
+**`ContextPreview.tsx`** — update to render the enriched XML structure in the preview panel.
+
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/App.tsx` | Add routes `/enterprise/risk` and `/enterprise/inflation` |
-| `src/components/layout/Header.tsx` | Add "Enterprise" dropdown with Risk Assessment and Inflation Analysis links (same split-button pattern as existing nav items) |
-| `src/components/layout/MobileBottomNav.tsx` | Not modified — 5 items is already tight. Enterprise is accessed via Header hamburger menu mobile sheet instead. |
-
-### 4. Component Design Details
-
-**Platform Pages** (Risk & Inflation share identical layout, differ by `trackerType` prop and icon):
-- Header with icon (`ShieldAlert` for Risk, `TrendingUp` for Inflation), title, description
-- Shadcn `<Tabs>` with 3 tabs: Monitor (default), Setup New Tracker, Reports
-- Monitor tab renders `<TrackerList>`; Setup tab renders `<TrackerSetupWizard>`; Reports tab shows placeholder
-
-**TrackerSetupWizard** (3 steps):
-- Step 1 — Parameters: name field, category/goods/services inputs (varies by tracker type), risk appetite or inflation baseline
-- Step 2 — Files & Context: `<FileUploadZone>` (drag-drop + click), optional context textarea, **mandatory GDPR checkbox** before proceeding
-- Step 3 — Review & Activate: summary card, "Activate" button that uploads files to storage, inserts tracker row, shows toast, switches to Monitor tab
-
-**TrackerList**: queries `enterprise_trackers` filtered by `tracker_type` and `user_id`, renders a responsive grid of Cards with name, status Badge, created_at formatted date, and a "View" button (placeholder for Phase 2 detail view).
-
-**useEnterpriseTrackers hook**:
-- `trackers` state via `useQuery` from `@tanstack/react-query`
-- `createTracker(data)` — uploads files to `tracker-files/${user_id}/${uuid}-${filename}`, then inserts row
-- Uses `supabase` client from `@/integrations/supabase/client`
-
-### 5. Mobile Navigation
-
-The existing mobile Sheet menu in `Header.tsx` will get the Enterprise links added below the existing nav items (before the separator). No changes to `MobileBottomNav.tsx` to avoid overcrowding.
-
-### 6. Security Notes
-
-- All tracker data user-scoped via RLS (`auth.uid() = user_id`)
-- Storage paths enforce user isolation via `(storage.foldername(name))[1] = auth.uid()::text`
-- GDPR checkbox required before file upload proceeds
-- No PII stored in parameters — UI guidance enforced
+| `supabase/migrations/YYYYMMDD_enrich_context_tables.sql` | New migration |
+| `src/lib/ai-context-templates.ts` | Extended interfaces + XML generators |
+| `supabase/functions/sentinel-analysis/index.ts` | Extended types, SELECT, XML builders |
+| `src/hooks/useContextData.ts` | Extended SELECT queries |
+| `src/components/context/IndustryContextEditor.tsx` | V2 badges, blocker indicators |
+| `src/components/context/CategoryContextEditor.tsx` | New enriched data sections |
+| `src/components/context/ContextPreview.tsx` | Updated preview |
+| `src/lib/sentinel/grounding.ts` | Pass-through new fields |
 

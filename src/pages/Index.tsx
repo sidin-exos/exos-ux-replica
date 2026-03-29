@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Quote, TrendingUp, Shield, Users, RefreshCw, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
+import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -159,8 +160,8 @@ const Index = () => {
                 </h1>
                 <p className="text-muted-foreground text-base max-w-2xl mb-4">
                   Critical procurement decisions are often made unprepared due to lack of time, 
-                  knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes—cost 
-                  breakdowns, negotiation scenarios, make-or-buy simulations—all tailored to your business case.
+                  knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes — cost 
+                  breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
                 </p>
                 <p className="text-muted-foreground text-base max-w-2xl mb-4">
                   Your sensitive commercial data is masked before reaching external APIs—then grounded 
@@ -248,9 +249,9 @@ const Index = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {scenariosByCategory[category]?.map((scenario, index) => (
-                        <div
+                         <div
                           key={scenario.id}
-                          className="animate-fade-up"
+                          className="animate-fade-up h-full"
                           style={{ animationDelay: `${100 + index * 50}ms` }}
                         >
                           <ScenarioCard
@@ -295,9 +296,6 @@ const Index = () => {
                 <span className="text-gradient">{selectedScenario.title}</span>{" "}
                 Analysis
               </h1>
-              <p className="text-muted-foreground max-w-2xl">
-                {selectedScenario.description}
-              </p>
             </div>
 
             <div className="card-elevated rounded-2xl p-6 md:p-8">
@@ -311,7 +309,8 @@ const Index = () => {
         ) : null}
 
         {activeView === "dashboard" && (
-          <section className="text-center py-16">
+          <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
+            <SiteFeedbackButton scenarioId="homepage" />
             <a href="/pricing#contact">
               <Button size="lg" className="text-lg px-8 py-6 gap-2">
                 Get in Touch

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIndustryContexts, useProcurementCategories } from "@/hooks/useContextData";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { Database, Loader2 } from "lucide-react";
 import type { IntelResult } from "@/hooks/useMarketIntelligence";
@@ -41,9 +42,9 @@ export function SaveToKnowledgeBaseDialog({ open, onOpenChange, result }: SaveTo
 
     setIsSaving(true);
     try {
-      const { data, error } = await supabase.rpc("save_intel_to_knowledge_base" as any, {
+      const { data, error } = await supabase.rpc("save_intel_to_knowledge_base", {
         p_content: result.summary,
-        p_citations: result.citations as any,
+        p_citations: result.citations as unknown as Json,
         p_industry_slug: industrySlug,
         p_industry_name: selectedIndustry?.name || industrySlug,
         p_category_slug: categorySlug,
@@ -54,7 +55,7 @@ export function SaveToKnowledgeBaseDialog({ open, onOpenChange, result }: SaveTo
         p_model_used: result.model,
         p_confidence_score: 0.8,
         p_processing_time_ms: result.processingTimeMs,
-      } as any);
+      });
 
       if (error) throw error;
 

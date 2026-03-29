@@ -5,7 +5,7 @@
  * Uses the same `extractDashboardData()` parser as dashboards and PDF.
  */
 
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { extractDashboardData, DashboardData } from "@/lib/dashboard-data-parser";
 
 // ─── helpers ──────────────────────────────────────────────────────────
@@ -22,12 +22,48 @@ function extractKeyPoints(text: string): string[] {
   );
 }
 
-function sanitize(text: string): string {
-  return text
-    .replace(/<dashboard-data>[\s\S]*?<\/dashboard-data>/g, "")
-    .replace(/\*\*/g, "")
-    .replace(/^[#]+\s*/gm, "")
-    .trim();
+/**
+ * Formula injection prevention — prefix cell values starting with formula
+ * triggers (=, +, -, @) with an apostrophe so Excel won't execute them.
+ */
+function sanitizeTableCell(value: string): string {
+  if (!value) return value;
+  const s = String(value);
+  if (/^[=+\-@]/.test(s)) return `'${s}`;
+  return s;
+}
+
+function sanitizeRow(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(row)) {
+    out[k] = typeof v === "string" ? sanitizeTableCell(v) : v;
+  }
+  return out;
+}
+
+/** Add rows from an array of objects to an ExcelJS worksheet. */
+function addRowsToSheet(ws: ExcelJS.Worksheet, rows: Record<string, unknown>[]) {
+  if (rows.length === 0) return;
+  const keys = Object.keys(rows[0]);
+  ws.columns = keys.map((key) => ({ header: key, key, width: 20 }));
+  for (const row of rows) {
+    ws.addRow(row);
+  }
+}
+
+/** Trigger a browser download from an ArrayBuffer. */
+function downloadBuffer(buffer: ArrayBuffer, fileName: string) {
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ─── dashboard → rows converters ──────────────────────────────────────
@@ -38,7 +74,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.actionChecklist?.actions?.length) {
     sheets.push({
       name: "Action Checklist",
-      rows: data.actionChecklist.actions.map((a) => ({
+      rows: data.actionChecklist.actions.map((a) => sanitizeRow({
         Action: a.action,
         Priority: a.priority,
         Status: a.status,
@@ -61,7 +97,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
           (sum, c, i) => sum + c.weight * (opt.scores[i] ?? 0),
           0
         );
-        return row;
+        return sanitizeRow(row);
       }),
     });
   }
@@ -69,7 +105,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.costWaterfall?.components?.length) {
     sheets.push({
       name: "Cost Waterfall",
-      rows: data.costWaterfall.components.map((c) => ({
+      rows: data.costWaterfall.components.map((c) => sanitizeRow({
         Component: c.name,
         Value: c.value,
         Type: c.type,
@@ -80,7 +116,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.timelineRoadmap?.phases?.length) {
     sheets.push({
       name: "Timeline Roadmap",
-      rows: data.timelineRoadmap.phases.map((p) => ({
+      rows: data.timelineRoadmap.phases.map((p) => sanitizeRow({
         Phase: p.name,
         "Start Week": p.startWeek,
         "End Week": p.endWeek,
@@ -93,7 +129,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.kraljicQuadrant?.items?.length) {
     sheets.push({
       name: "Kraljic Matrix",
-      rows: data.kraljicQuadrant.items.map((i) => ({
+      rows: data.kraljicQuadrant.items.map((i) => sanitizeRow({
         Name: i.name,
         "Supply Risk": i.supplyRisk,
         "Business Impact": i.businessImpact,
@@ -105,14 +141,14 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.tcoComparison?.data?.length) {
     sheets.push({
       name: "TCO Comparison",
-      rows: data.tcoComparison.data.map((d) => ({ ...d })),
+      rows: data.tcoComparison.data.map((d) => sanitizeRow({ ...d })),
     });
   }
 
   if (data.licenseTier?.tiers?.length) {
     sheets.push({
       name: "License Tiers",
-      rows: data.licenseTier.tiers.map((t) => ({
+      rows: data.licenseTier.tiers.map((t) => sanitizeRow({
         Tier: t.name,
         Users: t.users,
         "Cost/User": t.costPerUser,
@@ -125,7 +161,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.sensitivitySpider?.variables?.length) {
     sheets.push({
       name: "Sensitivity Analysis",
-      rows: data.sensitivitySpider.variables.map((v) => ({
+      rows: data.sensitivitySpider.variables.map((v) => sanitizeRow({
         Variable: v.name,
         "Base Case": v.baseCase,
         "Low Case": v.lowCase,
@@ -138,7 +174,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.riskMatrix?.risks?.length) {
     sheets.push({
       name: "Risk Matrix",
-      rows: data.riskMatrix.risks.map((r) => ({
+      rows: data.riskMatrix.risks.map((r) => sanitizeRow({
         Supplier: r.supplier,
         Impact: r.impact,
         Probability: r.probability,
@@ -150,14 +186,14 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.scenarioComparison?.summary?.length) {
     sheets.push({
       name: "Scenario Comparison",
-      rows: data.scenarioComparison.summary.map((s) => ({ ...s })),
+      rows: data.scenarioComparison.summary.map((s) => sanitizeRow({ ...s })),
     });
   }
 
   if (data.supplierScorecard?.suppliers?.length) {
     sheets.push({
       name: "Supplier Scorecard",
-      rows: data.supplierScorecard.suppliers.map((s) => ({
+      rows: data.supplierScorecard.suppliers.map((s) => sanitizeRow({
         Supplier: s.name,
         Score: s.score,
         Trend: s.trend,
@@ -169,7 +205,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.sowAnalysis?.sections?.length) {
     sheets.push({
       name: "SOW Analysis",
-      rows: data.sowAnalysis.sections.map((s) => ({
+      rows: data.sowAnalysis.sections.map((s) => sanitizeRow({
         Section: s.name,
         Status: s.status,
         Note: s.note,
@@ -180,7 +216,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.negotiationPrep?.sequence?.length) {
     sheets.push({
       name: "Negotiation Prep",
-      rows: data.negotiationPrep.sequence.map((s) => ({
+      rows: data.negotiationPrep.sequence.map((s) => sanitizeRow({
         Step: s.step,
         Detail: s.detail,
       })),
@@ -190,7 +226,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
   if (data.dataQuality?.fields?.length) {
     sheets.push({
       name: "Data Quality",
-      rows: data.dataQuality.fields.map((f) => ({
+      rows: data.dataQuality.fields.map((f) => sanitizeRow({
         Field: f.field,
         Status: f.status,
         "Coverage %": f.coverage,
@@ -203,36 +239,46 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
 
 // ─── main export function ─────────────────────────────────────────────
 
-export function exportReportToExcel(
+export async function exportReportToExcel(
   scenarioTitle: string,
   analysisResult: string,
   formData: Record<string, string>,
   timestamp: string,
 ) {
-  const wb = XLSX.utils.book_new();
+  const wb = new ExcelJS.Workbook();
 
   // Sheet 1 — Summary
   const keyPoints = extractKeyPoints(analysisResult);
   const summaryRows = [
-    { Field: "Report Title", Value: scenarioTitle },
+    { Field: "Report Title", Value: sanitizeTableCell(scenarioTitle) },
     { Field: "Generated At", Value: new Date(timestamp).toLocaleString() },
     { Field: "Exported At", Value: new Date().toLocaleString() },
-    ...keyPoints.map((kp, i) => ({ Field: `Key Point ${i + 1}`, Value: kp })),
+    ...keyPoints.map((kp, i) => ({ Field: `Key Point ${i + 1}`, Value: sanitizeTableCell(kp) })),
   ];
-  const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
-  summarySheet["!cols"] = [{ wch: 20 }, { wch: 80 }];
-  XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+  const summarySheet = wb.addWorksheet("Summary");
+  summarySheet.columns = [
+    { header: "Field", key: "Field", width: 20 },
+    { header: "Value", key: "Value", width: 80 },
+  ];
+  for (const row of summaryRows) {
+    summarySheet.addRow(row);
+  }
 
   // Sheet 2 — Analysis Inputs
   const inputEntries = Object.entries(formData);
   if (inputEntries.length > 0) {
     const inputRows = inputEntries.map(([key, value]) => ({
       Parameter: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-      Value: value,
+      Value: sanitizeTableCell(value),
     }));
-    const inputSheet = XLSX.utils.json_to_sheet(inputRows);
-    inputSheet["!cols"] = [{ wch: 30 }, { wch: 60 }];
-    XLSX.utils.book_append_sheet(wb, inputSheet, "Analysis Inputs");
+    const inputSheet = wb.addWorksheet("Analysis Inputs");
+    inputSheet.columns = [
+      { header: "Parameter", key: "Parameter", width: 30 },
+      { header: "Value", key: "Value", width: 60 },
+    ];
+    for (const row of inputRows) {
+      inputSheet.addRow(row);
+    }
   }
 
   // Sheet 3+ — Dashboard Data
@@ -241,9 +287,9 @@ export function exportReportToExcel(
     const dashSheets = dashboardToSheets(parsedData);
     dashSheets.forEach(({ name, rows }) => {
       if (rows.length > 0) {
-        const ws = XLSX.utils.json_to_sheet(rows);
-        // truncate sheet name to 31 chars (Excel limit)
-        XLSX.utils.book_append_sheet(wb, ws, name.slice(0, 31));
+        // Truncate sheet name to 31 chars (Excel limit)
+        const ws = wb.addWorksheet(name.slice(0, 31));
+        addRowsToSheet(ws, rows);
       }
     });
   }
@@ -251,5 +297,6 @@ export function exportReportToExcel(
   // Trigger download
   const dateStr = new Date(timestamp).toISOString().slice(0, 10);
   const fileName = `EXOS_${scenarioTitle.replace(/\s+/g, "_").slice(0, 40)}_${dateStr}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+  const buffer = await wb.xlsx.writeBuffer();
+  downloadBuffer(buffer as ArrayBuffer, fileName);
 }

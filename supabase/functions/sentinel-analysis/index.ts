@@ -91,7 +91,11 @@ const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor specializing i
 Output your audit as a structured critique with [PASS] or [FAIL] markers for each check.
 At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION].`;
 
-const SYNTHESIZER_SYSTEM_PROMPT = `You are a Senior Procurement Strategist producing the final deliverable for a client.
+function buildSynthesizerPrompt(dashboards: string[] = []): string {
+  const dashboardInstruction = dashboards.length > 0
+    ? `You MUST generate data for these specific dashboards: ${dashboards.join(", ")}`
+    : "Include dashboard keys relevant to the scenario.";
+  return `You are a Senior Procurement Strategist producing the final deliverable for a client.
 
 You are given:
 1. An original analysis draft
@@ -111,7 +115,17 @@ Output ONLY the final polished analysis. Do NOT include:
 
 The output should read as a clean, professional procurement analysis as if it were correct from the start.
 
-IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON with structured visualization data extracted from your analysis. Do NOT wrap the JSON in markdown code blocks. Include only dashboard keys relevant to the scenario.`;
+IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON. Do NOT wrap the JSON in markdown code blocks. ${dashboardInstruction}
+
+Required schemas:
+- costWaterfall: {"components":[{"name":"...","value":NUMBER,"type":"cost"|"reduction"}],"currency":"$"}
+- tcoComparison: {"data":[{"year":"Y0","optA":NUMBER,"optB":NUMBER}],"options":[{"id":"optA","name":"...","color":"#1B2A4A","totalTCO":NUMBER}],"currency":"$"}
+- actionChecklist: {"actions":[{"action":"...","priority":"high"|"medium"|"low","status":"pending"|"in-progress"|"done","owner":"..."}]}
+- riskMatrix: {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
+- sensitivitySpider: {"variables":[{"name":"...","baseCase":NUMBER,"lowCase":NUMBER,"highCase":NUMBER}],"currency":"$"}
+
+Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"License Fees","value":120000,"type":"cost"},{"name":"Discount","value":18000,"type":"reduction"}],"currency":"$"}}</dashboard-data>`;
+}
 
 // ============================================
 // SERVER-SIDE GROUNDING HELPERS
@@ -126,11 +140,19 @@ function escapeXML(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
+interface ConstraintV2Item { id?: string; tier?: string; label: string; eu_ref?: string; procurement_impact?: string; blocker?: boolean; }
+interface KpiV2Item { id?: string; label: string; direction?: string; exos_lever?: string; benchmark_signal?: string; }
+interface CostDriverItem { driver: string; share_pct?: string; }
+interface ProcLeverItem { lever: string; description?: string; }
+interface FailureModeItem { mode: string; mitigation?: string; }
+
 interface IndustryRow {
   name: string;
   slug: string;
   constraints: string[];
   kpis: string[];
+  constraints_v2?: ConstraintV2Item[] | null;
+  kpis_v2?: KpiV2Item[] | null;
 }
 
 interface CategoryRow {
@@ -138,41 +160,120 @@ interface CategoryRow {
   slug: string;
   characteristics: string;
   kpis: string[];
+  category_group?: string | null;
+  spend_type?: string | null;
+  kraljic_position?: string | null;
+  kraljic_rationale?: string | null;
+  price_volatility?: string | null;
+  market_structure?: string | null;
+  supply_concentration?: string | null;
+  key_cost_drivers?: CostDriverItem[] | null;
+  procurement_levers?: ProcLeverItem[] | null;
+  negotiation_dynamics?: string | null;
+  should_cost_components?: string | null;
+  eu_regulatory_context?: string | null;
+  common_failure_modes?: FailureModeItem[] | null;
+  exos_scenarios_primary?: string[] | null;
+  exos_scenarios_secondary?: string[] | null;
+  kpis_v2?: KpiV2Item[] | null;
 }
 
 function buildIndustryXML(industry: IndustryRow): string {
+  const hasV2C = Array.isArray(industry.constraints_v2) && industry.constraints_v2.length > 0;
+  const hasV2K = Array.isArray(industry.kpis_v2) && industry.kpis_v2.length > 0;
+
+  const constraintsXML = hasV2C
+    ? industry.constraints_v2!.map((c, i) => {
+        const attrs = [`priority="${i + 1}"`, c.tier ? `tier="${escapeXML(c.tier)}"` : '', c.blocker ? `blocker="true"` : '', c.eu_ref ? `eu-ref="${escapeXML(c.eu_ref)}"` : ''].filter(Boolean).join(' ');
+        const impact = c.procurement_impact ? `\n        <procurement-impact>${escapeXML(c.procurement_impact)}</procurement-impact>` : '';
+        const blockerComment = c.blocker ? ' <!-- HARD GATE -->' : '';
+        return `      <constraint ${attrs}>${escapeXML(c.label)}${impact}\n      </constraint>${blockerComment}`;
+      }).join('\n')
+    : industry.constraints.map((c, i) => `      <constraint priority="${i + 1}">${escapeXML(c)}</constraint>`).join('\n');
+
+  const kpisXML = hasV2K
+    ? industry.kpis_v2!.map((k, i) => {
+        const attrs = [`index="${i + 1}"`, k.direction ? `direction="${escapeXML(k.direction)}"` : '', k.exos_lever ? `exos-lever="${escapeXML(k.exos_lever)}"` : '', k.benchmark_signal ? `benchmark="${escapeXML(k.benchmark_signal)}"` : ''].filter(Boolean).join(' ');
+        return `      <kpi ${attrs}>${escapeXML(k.label)}</kpi>`;
+      }).join('\n')
+    : industry.kpis.map((k, i) => `      <kpi index="${i + 1}">${escapeXML(k)}</kpi>`).join('\n');
+
   return `<industry-context>
   <industry-name>${escapeXML(industry.name)}</industry-name>
   <industry-id>${escapeXML(industry.slug)}</industry-id>
   <regulatory-constraints>
-    <description>Critical regulatory and operational constraints. All recommendations must account for these.</description>
+    <description>Critical regulatory and operational constraints. All recommendations must account for these. Items flagged as blockers are hard decision gates.</description>
     <constraints>
-${industry.constraints.map((c, i) => `      <constraint priority="${i + 1}">${escapeXML(c)}</constraint>`).join('\n')}
+${constraintsXML}
     </constraints>
   </regulatory-constraints>
   <performance-kpis>
     <description>Standard performance metrics for this industry.</description>
     <kpis>
-${industry.kpis.map((k, i) => `      <kpi index="${i + 1}">${escapeXML(k)}</kpi>`).join('\n')}
+${kpisXML}
     </kpis>
   </performance-kpis>
 </industry-context>`;
 }
 
 function buildCategoryXML(category: CategoryRow): string {
+  const hasV2K = Array.isArray(category.kpis_v2) && category.kpis_v2.length > 0;
+
+  const kpisXML = hasV2K
+    ? category.kpis_v2!.map((k, i) => {
+        const attrs = [`index="${i + 1}"`, k.direction ? `direction="${escapeXML(k.direction)}"` : '', k.exos_lever ? `exos-lever="${escapeXML(k.exos_lever)}"` : '', k.benchmark_signal ? `benchmark="${escapeXML(k.benchmark_signal)}"` : ''].filter(Boolean).join(' ');
+        return `      <kpi ${attrs}>${escapeXML(k.label)}</kpi>`;
+      }).join('\n')
+    : category.kpis.map((k, i) => `      <kpi index="${i + 1}">${escapeXML(k)}</kpi>`).join('\n');
+
+  // Build enriched sections
+  const enriched: string[] = [];
+
+  if (category.kraljic_position) {
+    enriched.push(`  <kraljic-position value="${escapeXML(category.kraljic_position)}">${category.kraljic_rationale ? escapeXML(category.kraljic_rationale) : ''}</kraljic-position>`);
+  }
+  if (category.price_volatility || category.market_structure || category.supply_concentration) {
+    enriched.push(`  <market-dynamics>
+    ${category.price_volatility ? `<price-volatility>${escapeXML(category.price_volatility)}</price-volatility>` : ''}
+    ${category.market_structure ? `<market-structure>${escapeXML(category.market_structure)}</market-structure>` : ''}
+    ${category.supply_concentration ? `<supply-concentration>${escapeXML(category.supply_concentration)}</supply-concentration>` : ''}
+  </market-dynamics>`);
+  }
+  if (Array.isArray(category.key_cost_drivers) && category.key_cost_drivers.length > 0) {
+    enriched.push(`  <key-cost-drivers>\n${category.key_cost_drivers.map(d => `      <driver${d.share_pct ? ` share="${escapeXML(d.share_pct)}"` : ''}>${escapeXML(d.driver)}</driver>`).join('\n')}\n  </key-cost-drivers>`);
+  }
+  if (Array.isArray(category.procurement_levers) && category.procurement_levers.length > 0) {
+    enriched.push(`  <procurement-levers>\n${category.procurement_levers.map(l => `      <lever${l.description ? ` description="${escapeXML(l.description)}"` : ''}>${escapeXML(l.lever)}</lever>`).join('\n')}\n  </procurement-levers>`);
+  }
+  if (category.negotiation_dynamics) {
+    enriched.push(`  <negotiation-dynamics>${escapeXML(category.negotiation_dynamics)}</negotiation-dynamics>`);
+  }
+  if (category.should_cost_components) {
+    enriched.push(`  <should-cost-components>${escapeXML(category.should_cost_components)}</should-cost-components>`);
+  }
+  if (category.eu_regulatory_context) {
+    enriched.push(`  <eu-regulatory-context>${escapeXML(category.eu_regulatory_context)}</eu-regulatory-context>`);
+  }
+  if (Array.isArray(category.common_failure_modes) && category.common_failure_modes.length > 0) {
+    enriched.push(`  <common-failure-modes>\n${category.common_failure_modes.map(f => `      <failure-mode${f.mitigation ? ` mitigation="${escapeXML(f.mitigation)}"` : ''}>${escapeXML(f.mode)}</failure-mode>`).join('\n')}\n  </common-failure-modes>`);
+  }
+
   return `<category-context>
   <category-name>${escapeXML(category.name)}</category-name>
   <category-id>${escapeXML(category.slug)}</category-id>
+  ${category.category_group ? `<category-group>${escapeXML(category.category_group)}</category-group>` : ''}
+  ${category.spend_type ? `<spend-type>${escapeXML(category.spend_type)}</spend-type>` : ''}
   <category-characteristics>
     <description>Key characteristics defining this procurement category.</description>
     <characteristics>${escapeXML(category.characteristics)}</characteristics>
   </category-characteristics>
-  <category-kpis>
+${enriched.length > 0 ? enriched.join('\n') + '\n' : ''}  <category-kpis>
     <description>Standard performance metrics for this category.</description>
     <kpis>
-${category.kpis.map((k, i) => `      <kpi index="${i + 1}">${escapeXML(k)}</kpi>`).join('\n')}
+${kpisXML}
     </kpis>
   </category-kpis>
+  <system-instruction>If an item is flagged as a blocker or price volatility is high, treat it as a hard constraint requiring mitigation.</system-instruction>
 </category-context>`;
 }
 
@@ -343,7 +444,8 @@ function buildServerGroundedPrompts(
   scenarioData: Record<string, unknown>,
   userInput: string,
   injectShadowLog: boolean = false,
-  marketInsight: MarketInsightRow | null = null
+  marketInsight: MarketInsightRow | null = null,
+  selectedDashboards: string[] = []
 ): { systemPrompt: string; userPrompt: string } {
   // Build system prompt with injected context
   const contextParts: string[] = [];
@@ -363,9 +465,26 @@ IMPORTANT RULES:
 6. Only cite specific data points from provided context
 7. Flag uncertainty explicitly with confidence levels
 8. Err on cautious side for savings projections
-9. At the VERY END of your response, append a <dashboard-data> XML block containing valid JSON with structured data for relevant dashboards. Example:
-<dashboard-data>{"actionChecklist":{"actions":[{"action":"...","priority":"high","status":"pending","owner":"..."}]},"riskMatrix":{"risks":[{"supplier":"...","impact":"high","probability":"medium","category":"..."}]}}</dashboard-data>
-Only include dashboard keys relevant to the scenario analysis. Use REAL values from your analysis. Do NOT wrap the JSON in markdown code blocks inside the XML tags.
+9. At the VERY END of your response, you MUST append a <dashboard-data> XML block containing valid JSON. Do NOT wrap the JSON in markdown code blocks inside the XML tags. Use REAL values extracted from your analysis.
+${selectedDashboards.length > 0 ? `\nYou MUST generate data for these specific dashboards: ${selectedDashboards.join(", ")}` : "\nInclude dashboard keys relevant to the scenario."}
+
+Required schemas for each dashboard key:
+- costWaterfall: {"components":[{"name":"...","value":NUMBER,"type":"cost"|"reduction"}],"currency":"$"}
+- tcoComparison: {"data":[{"year":"Y0","optA":NUMBER,"optB":NUMBER}],"options":[{"id":"optA","name":"...","color":"#1B2A4A","totalTCO":NUMBER}],"currency":"$"}
+- actionChecklist: {"actions":[{"action":"...","priority":"high"|"medium"|"low"|"critical","status":"pending"|"in-progress"|"done"|"blocked","owner":"..."}]}
+- riskMatrix: {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
+- sensitivitySpider: {"variables":[{"name":"...","baseCase":NUMBER,"lowCase":NUMBER,"highCase":NUMBER}],"currency":"$"}
+- decisionMatrix: {"criteria":[{"name":"...","weight":NUMBER}],"options":[{"name":"...","scores":[NUMBER]}]}
+- timelineRoadmap: {"phases":[{"name":"...","startWeek":NUMBER,"endWeek":NUMBER,"status":"completed"|"in-progress"|"upcoming"}]}
+- kraljicQuadrant: {"items":[{"id":"1","name":"...","supplyRisk":NUMBER,"businessImpact":NUMBER}]}
+- scenarioComparison: {"scenarios":[{"id":"a","name":"...","color":"#1B2A4A"}],"radarData":[{"metric":"...","a":NUMBER,"b":NUMBER}],"summary":[{"criteria":"...","a":"...","b":"..."}]}
+- supplierScorecard: {"suppliers":[{"name":"...","score":NUMBER,"trend":"up"|"down"|"stable","spend":"$1M"}]}
+- sowAnalysis: {"clarity":NUMBER,"sections":[{"name":"...","status":"complete"|"partial"|"missing","note":"..."}]}
+- negotiationPrep: {"batna":{"strength":NUMBER,"description":"..."},"leveragePoints":[{"point":"...","tactic":"..."}],"sequence":[{"step":"...","detail":"..."}]}
+- dataQuality: {"fields":[{"field":"...","status":"complete"|"partial"|"missing","coverage":NUMBER}]}
+- licenseTier: {"tiers":[{"name":"...","users":NUMBER,"costPerUser":NUMBER,"totalCost":NUMBER,"color":"#1B2A4A"}]}
+
+Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"Materials","value":225000,"type":"cost"},{"name":"Savings","value":45000,"type":"reduction"}],"currency":"$"}}</dashboard-data>
 
 ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
 
@@ -429,7 +548,7 @@ async function callLLM(
         systemPrompt: sysPrompt,
         contents: [{ role: "user", parts: [{ text: usrPrompt }] }],
         temperature: 0.4,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
         model: googleModel,
       });
 
@@ -494,11 +613,15 @@ serve(async (req) => {
     // Validate inputs
     const rawUserPrompt = requireString(body.userPrompt, "userPrompt", { minLength: 1, maxLength: 50000 })!;
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
-    const rawGoogleModel = requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
+    const rawGoogleModel = (requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-3.1-pro-preview";
-    // Strip "google/" prefix if sent from legacy clients
-    const googleModel = rawGoogleModel.replace(/^google\//, "");
+      || "gemini-3.1-pro-preview").replace(/^google\//, "");
+    // Server-side model whitelist — prevents cost amplification and model probing
+    const ALLOWED_MODELS = [
+      "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3-pro-preview",
+      "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
+    ];
+    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-3.1-pro-preview";
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     // Accept but ignore — always use Google AI Studio
@@ -513,6 +636,7 @@ serve(async (req) => {
     const anonymizationMetadata = optionalRecord(body.anonymizationMetadata, "anonymizationMetadata", 50);
     const enableTestLogging = optionalBoolean(body.enableTestLogging, "enableTestLogging") ?? true;
     const scenarioId = requireString(body.scenarioId, "scenarioId", { optional: true, maxLength: 100 });
+    const selectedDashboards: string[] = Array.isArray(body.selectedDashboards) ? body.selectedDashboards.filter((d: unknown) => typeof d === "string").slice(0, 20) : [];
     const reqEnv = requireString(body.env, "env", { optional: true, maxLength: 50 });
 
     // === SERVER-SIDE ANONYMIZATION (fail-closed) ===
@@ -591,10 +715,10 @@ serve(async (req) => {
       try {
         [industryResult, categoryResult, insightResult] = await Promise.all([
           industrySlug
-            ? supabase.from("industry_contexts").select("name, slug, constraints, kpis").eq("slug", industrySlug).single()
+            ? supabase.from("industry_contexts").select("name, slug, constraints, kpis, constraints_v2, kpis_v2").eq("slug", industrySlug).single()
             : Promise.resolve({ data: null, error: null }),
           categorySlug
-            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis").eq("slug", categorySlug).single()
+            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis, category_group, spend_type, kraljic_position, kraljic_rationale, price_volatility, market_structure, supply_concentration, key_cost_drivers, procurement_levers, negotiation_dynamics, should_cost_components, eu_regulatory_context, common_failure_modes, exos_scenarios_primary, exos_scenarios_secondary, kpis_v2").eq("slug", categorySlug).single()
             : Promise.resolve({ data: null, error: null }),
           (industrySlug && categorySlug)
             ? supabase.from("market_insights")
@@ -636,7 +760,8 @@ serve(async (req) => {
           anonymizedScenarioData || {},
           anonymizedUserPrompt,
           shouldInjectShadowLog,
-          insightResult.data as MarketInsightRow | null
+          insightResult.data as MarketInsightRow | null,
+          selectedDashboards
         );
 
         systemPrompt = grounded.systemPrompt;
@@ -651,6 +776,10 @@ serve(async (req) => {
     } else if (body.systemPrompt) {
       // Legacy path: client sent full prompts (useQuickAnalysis, ModelConfigPanel, etc.)
       systemPrompt = body.systemPrompt;
+      // Append selected dashboards if provided
+      if (selectedDashboards.length > 0) {
+        systemPrompt += `\n\nYou MUST generate <dashboard-data> JSON for these specific dashboards: ${selectedDashboards.join(", ")}`;
+      }
       userPrompt = anonymizedUserPrompt;
       // Inject shadow log for legacy path too if conditions met
       if (enableTestLogging && scenarioType) {
@@ -732,7 +861,7 @@ serve(async (req) => {
 
       // Cycle 3: Synthesizer Final
       const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPrompt}\n</original-request>`;
-      const finalContent = await callLLM(SYNTHESIZER_SYSTEM_PROMPT, synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      const finalContent = await callLLM(buildSynthesizerPrompt(selectedDashboards), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
       console.log(`[Sentinel] Cycle 3 (Synthesizer Final): ${finalContent.length} chars`);
 
       const processingTime = Math.round(performance.now() - startTime);
@@ -812,7 +941,7 @@ serve(async (req) => {
           systemPrompt,
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           temperature: 0.4,
-          maxOutputTokens: 4096,
+          maxOutputTokens: 8192,
           model: googleModel,
         });
 
@@ -911,7 +1040,7 @@ serve(async (req) => {
           }
           tracer.patchRun(inferenceRunId, undefined, errorMessage);
           return new Response(
-            JSON.stringify({ error: "AI service error", details: errorMessage }),
+            JSON.stringify({ error: "AI service error", details: "The AI service encountered an error processing your request" }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -932,7 +1061,7 @@ serve(async (req) => {
     console.error("[Sentinel] Error:", error);
     try { tracer?.patchRun(parentRunId!, undefined, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

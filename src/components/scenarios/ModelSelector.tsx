@@ -56,7 +56,7 @@ const modelOptions: ModelOption[] = [
     value: "gemini-3.1-flash-lite-preview",
     label: "Gemini 3.1 Flash Lite",
     description: "Fast & cost-efficient.",
-    icon: <Zap className="w-4 h-4 text-green-500" />,
+    icon: <Zap className="w-4 h-4 text-success" />,
     tier: "fast",
   },
   {
@@ -152,7 +152,7 @@ export function ModelSelector({ value, onChange }: ModelSelectorProps) {
               <span>Fast</span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
-              <Sparkles className="w-3 h-3 text-green-500" />
+              <Sparkles className="w-3 h-3 text-success" />
               <span>Balanced</span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">

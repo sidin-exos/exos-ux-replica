@@ -69,7 +69,7 @@
     --gradient-accent: linear-gradient(135deg, hsl(245, 30%, 58%) 0%, hsl(200, 45%, 48%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(210, 20%, 97%) 100%);
     --gradient-hero: linear-gradient(135deg, hsl(210, 20%, 98%) 0%, hsl(210, 18%, 95%) 50%, hsl(210, 20%, 97%) 100%);
-    --gradient-glow: radial-gradient(ellipse at 50% 0%, hsl(174 40% 36% / 0.06) 0%, transparent 50%);
+    --gradient-glow: radial-gradient(ellipse at 50% 0%, hsl(174 40% 36% / 0.04) 0%, transparent 50%);
 
     /* Shadows — Light */
     --shadow-sm: 0 1px 3px hsl(220 14% 70% / 0.12);
@@ -139,7 +139,7 @@
     --gradient-accent: linear-gradient(135deg, hsl(245, 25%, 65%) 0%, hsl(200, 40%, 55%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(220, 22%, 14%) 0%, hsl(220, 22%, 10%) 100%);
     --gradient-hero: linear-gradient(135deg, hsl(220, 22%, 6%) 0%, hsl(220, 25%, 12%) 50%, hsl(220, 22%, 8%) 100%);
-    --gradient-glow: radial-gradient(ellipse at 50% 0%, hsl(174 35% 48% / 0.18) 0%, transparent 50%);
+    --gradient-glow: radial-gradient(ellipse at 50% 0%, hsl(174 35% 48% / 0.10) 0%, transparent 50%);
 
     --shadow-sm: 0 2px 8px hsl(220 22% 4% / 0.3);
     --shadow-md: 0 4px 16px hsl(220 22% 4% / 0.4);

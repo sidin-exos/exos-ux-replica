@@ -8,13 +8,14 @@ import { IntelResults } from "@/components/intelligence/IntelResults";
 import { RecentQueries } from "@/components/intelligence/RecentQueries";
 import { IntelScenarioSelector, type IntelScenario } from "@/components/intelligence/IntelScenarioSelector";
 import { ScheduledReportsPanel } from "@/components/intelligence/ScheduledReportsPanel";
-import { EnterpriseTriggerGate } from "@/components/intelligence/EnterpriseTriggerGate";
+
 import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 
 const MarketIntelligence = () => {
   const [searchParams] = useSearchParams();
@@ -22,12 +23,12 @@ const MarketIntelligence = () => {
   const modeParam = searchParams.get("mode") as IntelScenario | null;
   
   const defaultTab = tabParam === "insights" ? "insights" : "queries";
-  const defaultScenario: IntelScenario = modeParam && ["adhoc", "regular", "triggered"].includes(modeParam) ? modeParam : "adhoc";
+  const defaultScenario: IntelScenario = modeParam && ["adhoc", "regular"].includes(modeParam) ? modeParam as IntelScenario : "adhoc";
   
   const [selectedScenario, setSelectedScenario] = useState<IntelScenario>(defaultScenario);
   
   useEffect(() => {
-    if (modeParam && ["adhoc", "regular", "triggered"].includes(modeParam)) {
+    if (modeParam && ["adhoc", "regular"].includes(modeParam)) {
       setSelectedScenario(modeParam as IntelScenario);
     }
   }, [modeParam]);
@@ -68,12 +69,22 @@ const MarketIntelligence = () => {
   }
 
   const renderScenarioContent = () => {
-    if (selectedScenario === "triggered") {
-      return <EnterpriseTriggerGate />;
-    }
 
     if (selectedScenario === "regular") {
-      return <ScheduledReportsPanel />;
+      return (
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ScheduledReportsPanel />
+          </div>
+          <div className="lg:col-span-1">
+            <RecentQueries
+              queries={recentQueries}
+              isLoading={isLoadingHistory}
+              onLoad={loadRecentQueries}
+            />
+          </div>
+        </div>
+      );
     }
 
     // Ad-hoc flow
@@ -102,26 +113,29 @@ const MarketIntelligence = () => {
       <Header />
       
       <main className="container py-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Sparkles className="w-6 h-6 text-primary" />
+        {/* Hero Section */}
+        <div className="relative mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-cyan-600/90 via-primary to-indigo-600/90 p-8 text-white">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.12),transparent_60%)]" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-display font-bold text-white">Market Intelligence</h1>
             </div>
-            <h1 className="text-3xl font-display font-bold">Market Intelligence</h1>
+            <p className="text-white/80 max-w-2xl text-sm leading-relaxed">
+              Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base improving analytical scenarios results.
+            </p>
           </div>
-          <p className="text-muted-foreground max-w-2xl">
-            Market Intelligence is part of the EXOS engine, used to improve grounding of your AI reports and provide timely insights. 
-            Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations.
-          </p>
         </div>
 
         <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="queries" className="flex items-center gap-2">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1">
+            <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
               Ad-hoc Queries
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2">
+            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md">
               <Database className="h-4 w-4" />
               Knowledge Base
             </TabsTrigger>
@@ -149,7 +163,8 @@ const MarketIntelligence = () => {
           </TabsContent>
         </Tabs>
 
-        <section className="text-center py-16">
+        <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
+          <SiteFeedbackButton scenarioId="market-intelligence" />
           <a href="/pricing#contact">
             <Button size="lg" className="text-lg px-8 py-6 gap-2">
               Get in Touch

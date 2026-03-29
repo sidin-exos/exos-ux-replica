@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Bell, Search, ArrowRight } from "lucide-react";
+import { CalendarClock, Search, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type IntelScenario = "adhoc" | "regular" | "triggered";
+export type IntelScenario = "adhoc" | "regular";
 
 interface ScenarioOption {
   id: IntelScenario;
@@ -13,6 +13,21 @@ interface ScenarioOption {
   badge?: string;
   badgeVariant?: "default" | "secondary" | "outline";
 }
+
+const SCENARIO_COLORS: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
+  adhoc: {
+    bg: "bg-cyan-500/10 dark:bg-cyan-400/10",
+    border: "border-cyan-500 dark:border-cyan-400",
+    text: "text-cyan-600 dark:text-cyan-400",
+    iconBg: "bg-cyan-500 text-white",
+  },
+  regular: {
+    bg: "bg-amber-500/10 dark:bg-amber-400/10",
+    border: "border-amber-500 dark:border-amber-400",
+    text: "text-amber-600 dark:text-amber-400",
+    iconBg: "bg-amber-500 text-white",
+  },
+};
 
 const scenarios: ScenarioOption[] = [
   {
@@ -26,14 +41,6 @@ const scenarios: ScenarioOption[] = [
     title: "Scheduled Reports",
     description: "Configure recurring intelligence queries — daily, weekly, or monthly briefings saved to your knowledge base",
     icon: CalendarClock,
-  },
-  {
-    id: "triggered",
-    title: "Triggered Monitoring",
-    description: "Define monitoring instructions that continuously watch for conditions and initiate full-scale intelligence collection",
-    icon: Bell,
-    badge: "Enterprise",
-    badgeVariant: "default",
   },
 ];
 
@@ -52,11 +59,12 @@ export function IntelScenarioSelector({ selected, onSelect }: IntelScenarioSelec
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
           {scenarios.map((scenario) => {
             const Icon = scenario.icon;
             const isSelected = selected === scenario.id;
             const isDisabled = scenario.badge === "Coming Soon";
+            const colors = SCENARIO_COLORS[scenario.id];
 
             return (
               <button
@@ -64,13 +72,13 @@ export function IntelScenarioSelector({ selected, onSelect }: IntelScenarioSelec
                 onClick={() => !isDisabled && onSelect(scenario.id)}
                 disabled={isDisabled}
                 className={cn(
-                  "relative p-4 rounded-xl border text-left transition-all duration-300 group",
+                  "relative p-4 rounded-xl border-2 text-left transition-all duration-300 group",
                   "bg-card shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]",
-                  "hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5",
-                  "active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]",
+                  "hover:-translate-y-0.5",
+                  "active:translate-y-0",
                   isSelected && !isDisabled
-                    ? "border-primary bg-primary/10 ring-1 ring-primary/20 shadow-[0_2px_0_0_hsl(var(--primary)/0.5),0_6px_20px_-4px_hsl(var(--primary)/0.15)] glow-effect"
-                    : "border-border/60",
+                    ? cn(colors?.bg, colors?.border, "ring-1 ring-offset-1", `ring-current shadow-lg`)
+                    : "border-border/60 hover:border-muted-foreground/40",
                   isDisabled && "opacity-60 cursor-not-allowed hover:border-border hover:bg-transparent hover:translate-y-0 hover:shadow-none"
                 )}
               >
@@ -86,15 +94,15 @@ export function IntelScenarioSelector({ selected, onSelect }: IntelScenarioSelec
                 <div className="flex items-start gap-3">
                   <div className={cn(
                     "p-2 rounded-lg shrink-0",
-                    isSelected && !isDisabled ? "bg-primary text-primary-foreground" : "bg-muted"
+                    isSelected && !isDisabled ? colors?.iconBg : "bg-muted"
                   )}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-sm">{scenario.title}</h4>
+                      <h4 className={cn("font-medium text-sm", isSelected && !isDisabled && colors?.text)}>{scenario.title}</h4>
                       {isSelected && !isDisabled && (
-                        <ArrowRight className="w-3 h-3 text-primary" />
+                        <ArrowRight className={cn("w-3 h-3", colors?.text)} />
                       )}
                     </div>
                     <p className="text-xs text-foreground/70 line-clamp-2">

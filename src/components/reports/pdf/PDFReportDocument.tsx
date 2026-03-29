@@ -4,42 +4,139 @@ import {
   Text,
   View,
   StyleSheet,
-  Image,
   Link,
 } from "@react-pdf/renderer";
-import exosLogoDark from "@/assets/logo-concept-layers.png";
-import exosLogoLight from "@/assets/logo-concept-layers-light.png";
+import type { ReactElement } from "react";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
 import { extractDashboardData, stripDashboardData } from "@/lib/dashboard-data-parser";
 import { DashboardType } from "@/lib/dashboard-mappings";
 import type { PdfThemeMode } from "./dashboardVisuals/theme";
 
+// ── FIX 1: Strip ALL markdown from AI text ──
+
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*\*(.*?)\*\*\*/g, "$1")   // bold+italic
+    .replace(/\*\*(.*?)\*\*/g, "$1")        // bold
+    .replace(/\*(.*?)\*/g, "$1")            // italic
+    .replace(/__(.*?)__/g, "$1")            // underline-bold
+    .replace(/_(.*?)_/g, "$1")              // underline-italic
+    .replace(/~~(.*?)~~/g, "$1")            // strikethrough
+    .replace(/`(.*?)`/g, "$1")              // inline code
+    .replace(/^#{1,6}\s+/gm, "")           // heading markers
+    .replace(/^[-*+]\s+/gm, "")            // bullet markers
+    .replace(/^- \[[ x]\]\s*/gm, "")       // checkbox syntax (Fix 4)
+    .replace(/^\d+\.\s+/gm, "")            // numbered list prefix
+    .trim();
+}
+
+/** Render body text with inline currency/% values bolded.
+ *  Handles ranges like "7-12%", "€42.50-€55.00", "$10-$20" and
+ *  adds a thin space between currency symbols and numbers. */
+function renderBodyText(text: string, baseStyle: Record<string, unknown>): ReactElement {
+  const stripped = stripMarkdown(text);
+  // Match: ranges (7-12%, €10-€20), standalone currency (€42.50), standalone % (12%)
+  const valueRe = /([€$£][\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[€$£]?[\d,.]+(?:\.\d+)?)?%?|[\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[\d,.]+(?:\.\d+)?)?%)/g;
+  const parts = stripped.split(valueRe);
+
+  if (parts.length === 1) {
+    return <Text style={baseStyle}>{stripped}</Text>;
+  }
+
+  return (
+    <Text style={baseStyle}>
+      {parts.map((part, i) => {
+        const testRe = /([€$£][\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[€$£]?[\d,.]+(?:\.\d+)?)?%?|[\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[\d,.]+(?:\.\d+)?)?%)/;
+        const isValue = testRe.test(part);
+        if (!isValue) return <Text key={i}>{part}</Text>;
+        const spaced = part.replace(/([€$£])([\d])/g, "$1\u2009$2");
+        return <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>{spaced}</Text>;
+      })}
+    </Text>
+  );
+}
+
+// ── FIX 2: Report title without "Analysis Analysis" ──
+
+function getReportTitle(scenarioName: string): string {
+  const suffixes = ["Analysis", "Report", "Review", "Assessment", "Evaluation", "Audit"];
+  const alreadyHasSuffix = suffixes.some(s => scenarioName.trim().endsWith(s));
+  return alreadyHasSuffix ? scenarioName.trim() : `${scenarioName.trim()} Analysis`;
+}
+
+// ── FIX 5: Spacing constants ──
+
+const SP = {
+  sectionGap: 32,
+  subSectionGap: 24,
+  afterHeadingLine: 16,
+  afterSubHeading: 8,
+  betweenItems: 16,
+  betweenParagraphs: 10,
+  pageTopMargin: 56,
+  pageSideMargin: 48,
+  pageBottomMargin: 64,
+};
+
+// ── FIX 6: Parse risk severity ──
+
+function parseRiskSeverity(text: string): { severity: string; cleanText: string } {
+  const match = text.match(/\s*\((High|Medium|Low)\s+Impact\)/i)
+    || text.match(/\s*\((Critical|High|Medium|Low)\)/i);
+  return {
+    severity: match ? match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase() : "Medium",
+    cleanText: text
+      .replace(/\s*\((High|Medium|Low)\s+Impact\)\s*/i, "")
+      .replace(/\s*\((Critical|High|Medium|Low)\)\s*/i, "")
+      .trim(),
+  };
+}
+
+function riskSeverityColor(severity: string): string {
+  if (/high|critical/i.test(severity)) return C.destructive;
+  if (/medium/i.test(severity)) return C.warning;
+  return C.success;
+}
+
+// ── FIX 7: Parse next step title/description ──
+
+function parseNextStep(text: string): { title: string; description: string } {
+  const colonIndex = text.indexOf(":");
+  if (colonIndex > 0 && colonIndex < 50) {
+    return {
+      title: stripMarkdown(text.substring(0, colonIndex)).trim(),
+      description: stripMarkdown(text.substring(colonIndex + 1)).trim(),
+    };
+  }
+  const sentenceEnd = text.search(/[.!?]\s/);
+  if (sentenceEnd > 0) {
+    return {
+      title: stripMarkdown(text.substring(0, sentenceEnd + 1)).trim(),
+      description: stripMarkdown(text.substring(sentenceEnd + 2)).trim(),
+    };
+  }
+  return { title: stripMarkdown(text), description: "" };
+}
+
 // ── Parameter summarization ──
 
-/**
- * Condenses a long parameter value into max 30 words.
- * Extracts key information-dense fragments (numbers, proper nouns, technical terms).
- */
 function summarizeParameter(value: string, maxWords = 30): string {
   const words = value.trim().split(/\s+/);
   if (words.length <= maxWords) return value.trim();
 
-  // Split into fragments by sentences or bullet separators
   const fragments = value.split(/[.•\n]+/).map(s => s.trim()).filter(Boolean);
 
-  // Score fragments: prefer those with numbers, currencies, uppercase words, technical terms
   const scored = fragments.map(f => {
     let score = 0;
-    if (/[\d€$£¥%]/.test(f)) score += 3; // numbers/currencies
-    if (/[A-Z]{2,}/.test(f)) score += 2; // acronyms
-    if (/±|mm|kg|g\b|alloy|CNC|SOC|GDPR|ISO|SaaS|B2B/.test(f)) score += 2; // technical
-    score += (f.match(/[A-Z][a-z]+/g) || []).length; // proper nouns
+    if (/[\d€$£¥%]/.test(f)) score += 3;
+    if (/[A-Z]{2,}/.test(f)) score += 2;
+    if (/±|mm|kg|g\b|alloy|CNC|SOC|GDPR|ISO|SaaS|B2B/.test(f)) score += 2;
+    score += (f.match(/[A-Z][a-z]+/g) || []).length;
     return { text: f, score };
   });
 
   scored.sort((a, b) => b.score - a.score);
 
-  // Collect top fragments until we hit word limit
   const result: string[] = [];
   let wordCount = 0;
   for (const { text } of scored) {
@@ -52,533 +149,385 @@ function summarizeParameter(value: string, maxWords = 30): string {
   return result.join(", ");
 }
 
-// ── Color palettes ──
+// ── Enterprise print palette ──
 
-const darkColors = {
-  primary: "#6b9e8a",
-  primaryDark: "#5a8a76",
-  background: "#1e1e2e",
-  surface: "#262637",
-  surfaceLight: "#2f2f42",
-  text: "#d4d4dc",
-  textMuted: "#8b8b9e",
-  textSemiTransparent: "rgba(212, 212, 220, 0.6)",
-  accent: "#6b9e8a",
-  success: "#6bbf8a",
-  warning: "#c9a24d",
-  destructive: "#c06060",
-  border: "#3a3a4e",
-  footerBrand: "rgba(212, 212, 220, 0.35)",
-  gradientLayer1: "#232338",
-  gradientLayer2: "rgba(107, 158, 138, 0.06)",
-  gradientLayer3: "#1a1a2a",
+const C = {
+  text: "#1A1A1A",
+  heading: "#1B2A4A",
+  success: "#15803D",
+  warning: "#B45309",
+  destructive: "#B91C1C",
+  muted: "#6B7280",
+  border: "#E5E7EB",
+  altRow: "#F9FAFB",
+  kpiBg: "#F8FAFC",
+  background: "#FFFFFF",
 };
 
-const lightColors = {
-  primary: "#4a8a74",
-  primaryDark: "#3d7563",
-  background: "#f8f7f4",
-  surface: "#ffffff",
-  surfaceLight: "#f0efe8",
-  text: "#1e1e2e",
-  textMuted: "#6b6b7e",
-  textSemiTransparent: "rgba(30, 30, 46, 0.5)",
-  accent: "#4a8a74",
-  success: "#3a9960",
-  warning: "#b08930",
-  destructive: "#c04040",
-  border: "#d8d8e0",
-  footerBrand: "rgba(30, 30, 46, 0.25)",
-  gradientLayer1: "#f5f4f0",
-  gradientLayer2: "rgba(74, 138, 116, 0.04)",
-  gradientLayer3: "#efeeea",
-};
+// ── Styles ──
 
-type DocColors = typeof darkColors;
+const styles = StyleSheet.create({
+  // Page layouts
+  page: {
+    backgroundColor: C.background,
+    paddingTop: SP.pageTopMargin,
+    paddingLeft: SP.pageSideMargin,
+    paddingRight: SP.pageSideMargin,
+    paddingBottom: SP.pageBottomMargin,
+    fontFamily: "Helvetica",
+    color: C.text,
+  },
+  pageWithHeader: {
+    backgroundColor: C.background,
+    paddingTop: SP.pageTopMargin,
+    paddingLeft: SP.pageSideMargin,
+    paddingRight: SP.pageSideMargin,
+    paddingBottom: SP.pageBottomMargin,
+    fontFamily: "Helvetica",
+    color: C.text,
+  },
 
-function getDocColors(mode?: PdfThemeMode): DocColors {
-  return mode === "light" ? lightColors : darkColors;
-}
+  // Running header
+  runningHeader: {
+    position: "absolute",
+    top: 0,
+    left: SP.pageSideMargin,
+    right: SP.pageSideMargin,
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  runningHeaderLeft: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: C.heading,
+  },
+  runningHeaderRight: {
+    fontSize: 8,
+    color: C.muted,
+    fontFamily: "Helvetica",
+  },
 
-function getDocLogo(mode?: PdfThemeMode) {
-  return mode === "light" ? exosLogoLight : exosLogoDark;
-}
+  // Cover page
+  coverSpacer: {
+    height: "35%",
+  },
+  coverBrand: {
+    fontSize: 28,
+    fontFamily: "Helvetica-Bold",
+    color: C.heading,
+    marginBottom: 8,
+  },
+  coverBrandLine: {
+    height: 2,
+    backgroundColor: C.heading,
+    marginBottom: SP.sectionGap,
+    marginHorizontal: 0,
+  },
+  coverTitle: {
+    fontSize: 20,
+    fontFamily: "Helvetica-Bold",
+    color: C.heading,
+    marginBottom: 8,
+    lineHeight: 1.3,
+  },
+  coverSubtitle: {
+    fontSize: 12,
+    color: C.muted,
+    marginBottom: 48,
+  },
+  coverFooterText: {
+    fontSize: 10,
+    color: C.muted,
+    marginBottom: 3,
+  },
+  coverConfidential: {
+    fontSize: 10,
+    color: C.warning,
+    marginTop: 4,
+  },
 
-// ── Style factory ──
+  // Section titles (Level 1)
+  sectionTitleWrapper: {
+    borderBottomWidth: 2,
+    borderBottomColor: C.border,
+    marginTop: SP.sectionGap,
+    marginBottom: SP.afterHeadingLine,
+    paddingBottom: 6,
+  },
+  sectionTitleText: {
+    fontSize: 16,
+    fontFamily: "Helvetica-Bold",
+    color: C.heading,
+  },
 
-function buildDocStyles(c: DocColors) {
-  return StyleSheet.create({
-    page: {
-      backgroundColor: c.background,
-      padding: 40,
-      fontFamily: "Helvetica",
-      color: c.text,
-    },
-    pageWithHeader: {
-      backgroundColor: c.background,
-      paddingTop: 50,
-      paddingLeft: 40,
-      paddingRight: 40,
-      paddingBottom: 40,
-      fontFamily: "Helvetica",
-      color: c.text,
-    },
-    runningHeader: {
-      position: "absolute",
-      top: 0,
-      left: 40,
-      right: 40,
-      paddingTop: 10,
-      paddingBottom: 6,
-      borderBottomWidth: 0.5,
-      borderBottomColor: c.border,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
-    runningHeaderText: {
-      fontSize: 8,
-      color: c.textMuted,
-      fontFamily: "Helvetica",
-    },
-    tocSection: {
-      marginBottom: 24,
-    },
-    tocRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingVertical: 6,
-    },
-    tocLabel: {
-      fontSize: 10,
-      color: c.primary,
-      fontFamily: "Helvetica-Bold",
-      textDecoration: "none",
-    },
-    tocLeader: {
-      flex: 1,
-      borderBottomWidth: 1,
-      borderBottomStyle: "dashed",
-      borderBottomColor: c.border + "60",
-      marginHorizontal: 10,
-      marginBottom: 3,
-    },
-    tocPageHint: {
-      fontSize: 9,
-      color: c.textMuted,
-      fontFamily: "Helvetica",
-    },
-    header: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginBottom: 30,
-      borderBottomWidth: 1,
-      borderBottomColor: c.border,
-      paddingBottom: 20,
-    },
-    logoSection: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    logoImage: {
-      width: 40,
-      height: 40,
-      marginRight: 12,
-    },
-    brandName: {
-      fontSize: 23,
-      fontFamily: "Helvetica-Bold",
-      fontWeight: 700,
-      color: c.text,
-      letterSpacing: 1,
-    },
-    brandTagline: {
-      fontSize: 9,
-      color: c.textMuted,
-      marginTop: 2,
-    },
-    reportMeta: {
-      textAlign: "right",
-    },
-    reportBadge: {
-      backgroundColor: c.surfaceLight,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 4,
-      marginBottom: 4,
-    },
-    reportBadgeText: {
-      fontSize: 8,
-      color: c.primary,
-      fontWeight: 600,
-    },
-    reportDate: {
-      fontSize: 9,
-      color: c.textMuted,
-    },
-    titleSection: {
-      marginBottom: 30,
-    },
-    reportTitle: {
-      fontSize: 28,
-      fontFamily: "Helvetica-Bold",
-      fontWeight: 700,
-      color: c.primary,
-      marginBottom: 8,
-      letterSpacing: 0.5,
-    },
-    reportSubtitle: {
-      fontSize: 12,
-      color: c.textMuted,
-    },
-    section: {
-      marginBottom: 24,
-    },
-    sectionHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 12,
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontFamily: "Helvetica-Bold",
-      fontWeight: 600,
-      color: c.text,
-      letterSpacing: 0.5,
-    },
-    sectionContent: {
-      backgroundColor: c.surface,
-      borderRadius: 8,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    keyPointItem: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      marginBottom: 10,
-    },
-    keyPointBullet: {
-      width: 18,
-      height: 18,
-      backgroundColor: c.success,
-      borderRadius: 9,
-      justifyContent: "center",
-      alignItems: "center",
-      marginTop: 2,
-      marginRight: 10,
-    },
-    keyPointBulletText: {
-      color: "#ffffff",
-      fontSize: 9,
-      fontWeight: 700,
-    },
-    keyPointText: {
-      flex: 1,
-      fontSize: 12,
-      color: c.text,
-      lineHeight: 1.5,
-    },
-    analysisText: {
-      fontSize: 12,
-      color: c.text,
-      lineHeight: 1.6,
-      marginBottom: 8,
-    },
-    analysisTextHighlight: {
-      fontSize: 12,
-      color: c.primary,
-      lineHeight: 1.6,
-      marginBottom: 8,
-      fontWeight: 700,
-      fontFamily: "Courier-Bold",
-      backgroundColor: c.primary + "15",
-      paddingHorizontal: 6,
-      paddingVertical: 3,
-      borderRadius: 3,
-    },
-    analysisHeader: {
-      fontSize: 14,
-      fontFamily: "Helvetica-Bold",
-      fontWeight: 700,
-      color: c.text,
-      marginTop: 14,
-      marginBottom: 8,
-    },
-    analysisSubHeader: {
-      fontSize: 13,
-      fontFamily: "Helvetica-Bold",
-      fontWeight: 600,
-      color: c.text,
-      marginTop: 10,
-      marginBottom: 6,
-    },
-    sectionBlockBase: {
-      backgroundColor: c.surface,
-      borderRadius: 8,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: c.border,
-      marginBottom: 15,
-    },
-    sectionBlockRecommendations: {
-      backgroundColor: c.surface,
-      borderRadius: 8,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: c.border,
-      borderLeftWidth: 3,
-      borderLeftColor: c.primary,
-      marginBottom: 15,
-    },
-    sectionBlockRisks: {
-      backgroundColor: c.destructive + "10",
-      borderRadius: 8,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: c.destructive + "30",
-      marginBottom: 15,
-    },
-    sectionBlockNextSteps: {
-      backgroundColor: c.surface,
-      borderRadius: 8,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: c.border,
-      marginBottom: 15,
-    },
-    sectionBlockCostDrivers: {
-      backgroundColor: c.surfaceLight,
-      borderRadius: 8,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: c.border,
-      marginBottom: 15,
-    },
-    sectionBlockHeader: {
-      fontSize: 14,
-      fontFamily: "Helvetica-Bold",
-      fontWeight: 700,
-      color: c.text,
-      marginBottom: 10,
-    },
-    parameterBlock: {
-      marginBottom: 10,
-    },
-    parameterLabel: {
-      fontSize: 9,
-      color: c.textMuted,
-      fontFamily: "Helvetica",
-      textTransform: "uppercase" as const,
-      letterSpacing: 0.5,
-      marginBottom: 2,
-    },
-    parameterValue: {
-      fontSize: 10,
-      color: c.text,
-      fontFamily: "Helvetica-Bold",
-      lineHeight: 1.4,
-    },
-    parameterTagRow: {
-      flexDirection: "row" as const,
-      flexWrap: "wrap" as const,
-      gap: 4,
-      marginTop: 2,
-    },
-    parameterTag: {
-      backgroundColor: c.surfaceLight,
-      borderRadius: 4,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      marginBottom: 2,
-    },
-    parameterTagText: {
-      fontSize: 9,
-      color: c.text,
-      fontFamily: "Helvetica-Bold",
-    },
-    numberedItem: {
-      flexDirection: "row" as const,
-      alignItems: "flex-start" as const,
-      marginBottom: 8,
-    },
-    numberedBullet: {
-      width: 20,
-      height: 20,
-      backgroundColor: c.primary,
-      borderRadius: 10,
-      justifyContent: "center" as const,
-      alignItems: "center" as const,
-      marginRight: 10,
-      marginTop: 1,
-    },
-    numberedBulletText: {
-      color: "#ffffff",
-      fontSize: 9,
-      fontWeight: 700,
-    },
-    checklistItem: {
-      flexDirection: "row" as const,
-      alignItems: "flex-start" as const,
-      marginBottom: 8,
-    },
-    checkBox: {
-      width: 14,
-      height: 14,
-      borderWidth: 1.5,
-      borderColor: c.primary,
-      borderRadius: 2,
-      marginRight: 10,
-      marginTop: 2,
-    },
-    warningIcon: {
-      fontSize: 14,
-      marginRight: 6,
-    },
-    riskHeaderRow: {
-      flexDirection: "row" as const,
-      alignItems: "center" as const,
-      marginBottom: 10,
-    },
-    limitationItem: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      marginBottom: 8,
-    },
-    limitationBullet: {
-      width: 6,
-      height: 6,
-      backgroundColor: c.textMuted,
-      borderRadius: 3,
-      marginTop: 5,
-      marginRight: 8,
-    },
-    limitationText: {
-      flex: 1,
-      fontSize: 10,
-      color: c.textMuted,
-      lineHeight: 1.5,
-    },
-    methodologyBox: {
-      borderWidth: 1,
-      borderColor: c.border,
-      borderRadius: 6,
-      padding: 14,
-      marginBottom: 12,
-    },
-    methodologySubHeader: {
-      fontSize: 11,
-      fontFamily: "Helvetica-Bold",
-      color: c.text,
-      marginBottom: 6,
-    },
-    methodologyText: {
-      fontSize: 10,
-      fontFamily: "Helvetica",
-      color: c.textMuted,
-      lineHeight: 1.5,
-    },
-    auditTrail: {
-      marginTop: 10,
-      paddingTop: 8,
-      borderTopWidth: 0.5,
-      borderTopColor: c.border,
-    },
-    inputsGrid: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-    },
-    inputItem: {
-      width: "48%",
-      marginBottom: 8,
-      marginRight: 12,
-    },
-    inputLabel: {
-      fontSize: 9,
-      color: c.textMuted,
-      marginBottom: 2,
-      textTransform: "capitalize",
-    },
-    inputValue: {
-      fontSize: 10,
-      color: c.text,
-      fontFamily: "Courier",
-      fontWeight: 600,
-    },
-    footer: {
-      position: "absolute",
-      bottom: 30,
-      left: 40,
-      right: 40,
-      flexDirection: "column",
-      alignItems: "center",
-      borderTopWidth: 1,
-      borderTopColor: c.border,
-      paddingTop: 15,
-    },
-    footerBrand: {
-      fontSize: 9,
-      fontFamily: "Helvetica",
-      color: c.footerBrand,
-      fontWeight: 400,
-      marginBottom: 8,
-    },
-    footerRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      width: "100%",
-    },
-    footerText: {
-      fontSize: 9,
-      color: c.textMuted,
-    },
-    pageNumber: {
-      fontSize: 9,
-      color: c.textMuted,
-    },
-    accentBar: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 4,
-      backgroundColor: c.primary,
-    },
-    gradientLayer1: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: "50%",
-      backgroundColor: c.gradientLayer1,
-    },
-    gradientLayer2: {
-      position: "absolute",
-      top: "30%",
-      left: 0,
-      right: 0,
-      bottom: "30%",
-      backgroundColor: c.gradientLayer2,
-    },
-    gradientLayer3: {
-      position: "absolute",
-      top: "50%",
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: c.gradientLayer3,
-    },
-  });
-}
+  // KPI row
+  kpiRow: {
+    flexDirection: "row",
+    backgroundColor: C.kpiBg,
+    marginBottom: SP.subSectionGap,
+  },
+  kpiCell: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  kpiDivider: {
+    width: 1,
+    backgroundColor: C.border,
+  },
+  kpiValue: {
+    fontSize: 16,
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 4,
+  },
+  kpiLabel: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.muted,
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+    marginBottom: 3,
+  },
+  kpiContext: {
+    fontSize: 7,
+    color: C.muted,
+  },
 
-const darkDocStyles = buildDocStyles(darkColors);
-const lightDocStyles = buildDocStyles(lightColors);
+  // Numbered list items
+  numberedItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: SP.betweenItems,
+  },
+  numberedPrefix: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    color: C.heading,
+    width: 24,
+    marginTop: 1,
+  },
+  numberedText: {
+    flex: 1,
+    fontSize: 10,
+    color: C.text,
+    lineHeight: 1.5,
+  },
+  numberedTextBold: {
+    fontFamily: "Helvetica-Bold",
+  },
 
-function getDocStyles(mode?: PdfThemeMode) {
-  return mode === "light" ? lightDocStyles : darkDocStyles;
-}
+  // Tables (Fix 3: used for Analysis Parameters too)
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: C.heading,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  tableHeaderText: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  tableHeaderParam: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    width: "35%",
+  },
+  tableHeaderValue: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    flex: 1,
+  },
+  tableRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  tableRowAlt: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: C.altRow,
+  },
+  tableCellLabel: {
+    fontSize: 9,
+    color: C.text,
+    fontFamily: "Helvetica-Bold",
+    flex: 1,
+  },
+  tableCell: {
+    fontSize: 9,
+    color: C.text,
+    flex: 1,
+  },
+  tableCellParamLabel: {
+    fontSize: 9,
+    color: C.text,
+    fontFamily: "Helvetica-Bold",
+    width: "35%",
+  },
+  tableCellParamValue: {
+    fontSize: 9,
+    color: C.text,
+    flex: 1,
+  },
+
+  // Section content blocks
+  section: {
+    marginBottom: SP.subSectionGap,
+  },
+  sectionBlockBase: {
+    marginBottom: SP.betweenItems,
+  },
+  sectionBlockRecommendations: {
+    marginBottom: SP.betweenItems,
+    borderLeftWidth: 3,
+    borderLeftColor: C.heading,
+    paddingLeft: 12,
+  },
+  sectionBlockRisks: {
+    marginBottom: SP.betweenItems,
+    borderLeftWidth: 3,
+    borderLeftColor: C.destructive,
+    paddingLeft: 12,
+  },
+  sectionBlockNextSteps: {
+    marginBottom: SP.betweenItems,
+  },
+  sectionBlockCostDrivers: {
+    marginBottom: SP.betweenItems,
+  },
+  sectionBlockHeader: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: C.heading,
+    marginBottom: SP.afterSubHeading,
+  },
+  analysisText: {
+    fontSize: 10,
+    color: C.text,
+    lineHeight: 1.5,
+    marginBottom: SP.betweenParagraphs,
+  },
+  analysisTextHighlight: {
+    fontSize: 10,
+    color: C.text,
+    lineHeight: 1.5,
+    marginBottom: SP.betweenParagraphs,
+    fontFamily: "Helvetica-Bold",
+  },
+
+  // Fix 6: Risk items
+  riskItem: {
+    flexDirection: "row",
+    marginBottom: SP.betweenItems,
+  },
+  riskSeverity: {
+    width: 60,
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  riskContent: {
+    flex: 1,
+  },
+  riskName: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 10,
+    color: C.text,
+  },
+  riskDescription: {
+    fontFamily: "Helvetica",
+    fontSize: 10,
+    color: C.text,
+    marginTop: 4,
+    lineHeight: 1.5,
+  },
+
+  // Methodology
+  methodologyText: {
+    fontSize: 10,
+    color: C.muted,
+    lineHeight: 1.5,
+    marginBottom: SP.betweenParagraphs,
+  },
+  auditTrail: {
+    marginTop: SP.betweenParagraphs,
+    paddingTop: 8,
+    borderTopWidth: 0.5,
+    borderTopColor: C.border,
+  },
+
+  // Divider
+  divider: {
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    marginTop: SP.subSectionGap,
+    marginBottom: SP.subSectionGap,
+  },
+
+  // Footer
+  footer: {
+    position: "absolute",
+    bottom: 20,
+    left: SP.pageSideMargin,
+    right: SP.pageSideMargin,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    paddingTop: 8,
+  },
+  footerText: {
+    fontSize: 8,
+    color: C.muted,
+  },
+
+  // TOC
+  tocRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 3,
+  },
+  tocLabel: {
+    fontSize: 9,
+    color: C.heading,
+    fontFamily: "Helvetica-Bold",
+    textDecoration: "none",
+  },
+  tocLeader: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomStyle: "dashed",
+    borderBottomColor: C.border,
+    marginHorizontal: 10,
+    marginBottom: 3,
+  },
+  tocPageHint: {
+    fontSize: 8,
+    color: C.muted,
+    fontFamily: "Helvetica",
+  },
+});
 
 // ── Props ──
 
@@ -599,6 +548,7 @@ const cleanMarkdown = (text: string): string => {
     .replace(/\*\*/g, "")
     .replace(/^\s*\*\s+/gm, "")
     .replace(/^#{1,4}\s*/gm, "")
+    .replace(/^- \[[ x]\]\s*/gm, "")
     .trim();
 };
 
@@ -620,7 +570,6 @@ const extractExecutiveSummary = (text: string): { findings: string[]; recommenda
     if (findings.length >= 3 && recommendations.length >= 3) break;
   }
 
-  // Fallback: split first 6 sentences
   if (findings.length === 0 || recommendations.length === 0) {
     const pool = lines.slice(0, 6);
     const mid = Math.ceil(pool.length / 2);
@@ -672,18 +621,11 @@ const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
       (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."));
 
     if (isHeader) {
-      // Flush previous section if it has lines
-      if (current.lines.length > 0) {
-        sections.push(current);
-      }
+      if (current.lines.length > 0) sections.push(current);
 
-      // Detect type from header text
       let detectedType: SectionType = "general";
       for (const [type, pattern] of Object.entries(sectionPatterns) as [Exclude<SectionType, "general">, RegExp][]) {
-        if (pattern.test(cleanLine)) {
-          detectedType = type;
-          break;
-        }
+        if (pattern.test(cleanLine)) { detectedType = type; break; }
       }
 
       current = { type: detectedType, title: cleanLine.replace(/:$/, ""), lines: [] };
@@ -692,10 +634,7 @@ const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
     }
   }
 
-  if (current.lines.length > 0) {
-    sections.push(current);
-  }
-
+  if (current.lines.length > 0) sections.push(current);
   return sections;
 };
 
@@ -703,7 +642,7 @@ const hasMetricHighlight = (text: string): boolean => {
   return /(\$|€|£)\s*[\d,.]+|[\d,.]+\s*%|\b(aim\s+to|target)\b/i.test(text);
 };
 
-// ── Report hash for traceability ──
+// ── Report hash ──
 
 const generateReportHash = (title: string, ts: string): string => {
   let hash = 0;
@@ -716,48 +655,73 @@ const generateReportHash = (title: string, ts: string): string => {
   return Math.abs(hash).toString(36).toUpperCase().slice(0, 8);
 };
 
-// ── TOC entries ──
+// ── KPI extraction ──
 
-interface TocEntry {
-  label: string;
-  anchor: string;
+function extractSavingsKpi(text: string): string {
+  const m = text.match(/(?:savings?|reduce[sd]?|reduction)[^\d\n]{0,20}([\d,.]+\s*%|[€$£]\s*[\d,.]+[KMBkmb]?)/i)
+    || text.match(/([\d,.]+\s*%|[€$£]\s*[\d,.]+[KMBkmb]?)[^\d\n]{0,20}(?:savings?|reduction|lower)/i);
+  return m ? m[1].trim() : "—";
 }
 
-const buildTocEntries = (hasDashboards: boolean, hasParams: boolean): TocEntry[] => {
+function extractRiskKpi(text: string): string {
+  const m = text.match(/\b(critical|high|medium|low)\s*risk\b/i)
+    || text.match(/risk\s*(?:level\s*)?[:\-]?\s*(critical|high|medium|low)\b/i);
+  if (!m) return "—";
+  return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+}
+
+function kpiColor(value: string, type: "savings" | "risk" | "confidence"): string {
+  if (value === "—") return C.muted;
+  if (type === "savings") return C.success;
+  if (type === "risk") {
+    if (/high|critical/i.test(value)) return C.destructive;
+    if (/medium/i.test(value)) return C.warning;
+    return C.success;
+  }
+  const pct = parseInt(value);
+  if (!isNaN(pct)) {
+    if (pct >= 80) return C.success;
+    if (pct >= 50) return C.warning;
+    return C.destructive;
+  }
+  if (/high/i.test(value)) return C.success;
+  if (/medium/i.test(value)) return C.warning;
+  return C.destructive;
+}
+
+// ── TOC ──
+
+interface TocEntry { label: string; anchor: string; page: number; }
+
+const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCount: number): TocEntry[] => {
   const entries: TocEntry[] = [];
-  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations" });
-  entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis" });
-  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology" });
-  entries.push({ label: "Data Quality Assessment", anchor: "section-data-quality" });
-  if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters" });
+  const dashboardPages = hasDashboards ? Math.ceil(dashboardCount / 2) : 0;
+  const detailedAnalysisPage = 3 + dashboardPages;
+
+  entries.push({ label: "Executive Summary", anchor: "section-executive-summary", page: 2 });
+  if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 3 });
+  entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis", page: detailedAnalysisPage });
+  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology", page: detailedAnalysisPage });
+  if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters", page: detailedAnalysisPage });
   return entries;
 };
 
-// ── Reusable running header ──
+// ── Running header ──
 
-const RunningHeader = ({ scenarioTitle, dateStr, styles: s }: { scenarioTitle: string; dateStr: string; styles: ReturnType<typeof buildDocStyles> }) => (
-  <View style={s.runningHeader} fixed>
-    <Text style={s.runningHeaderText}>EXOS | {scenarioTitle} Analysis</Text>
-    <Text style={s.runningHeaderText}>{dateStr}</Text>
+const RunningHeader = ({ reportTitle }: { reportTitle: string }) => (
+  <View style={styles.runningHeader} fixed>
+    <Text style={styles.runningHeaderLeft}>EXOS</Text>
+    <Text style={styles.runningHeaderRight}>{reportTitle}</Text>
   </View>
 );
 
-// ── Reusable footer ──
+// ── Footer ──
 
-const ReportFooter = ({ reportHash, styles: s }: { reportHash: string; styles: ReturnType<typeof buildDocStyles> }) => (
-  <View style={s.footer} fixed>
-    <Text style={s.footerBrand}>Powered by EXOS Procurement Intelligence</Text>
-    <View style={s.footerRow}>
-      <Text style={s.footerText}>
-        Confidential • For internal use only
-      </Text>
-      <Text
-        style={s.pageNumber}
-        render={({ pageNumber, totalPages }) =>
-          `Page ${pageNumber} of ${totalPages} • ID: ${reportHash}`
-        }
-      />
-    </View>
+const ReportFooter = ({ dateStr, orgName }: { dateStr: string; orgName: string }) => (
+  <View style={styles.footer} fixed>
+    <Text style={styles.footerText}>Confidential — {orgName}</Text>
+    <Text style={styles.footerText} render={({ pageNumber }) => `Page ${pageNumber}`} />
+    <Text style={styles.footerText}>{dateStr}</Text>
   </View>
 );
 
@@ -769,104 +733,167 @@ const PDFReportDocument = ({
   formData,
   timestamp,
   selectedDashboards = [],
-  pdfTheme = "dark",
+  pdfTheme = "light",
 }: PDFReportDocumentProps) => {
   const parsedData = extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
   const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
   const analysisLines = strippedAnalysis.split("\n").filter((line) => line.trim());
 
-  const styles = getDocStyles(pdfTheme);
-  const colors = getDocColors(pdfTheme);
-  const exosLogo = getDocLogo(pdfTheme);
   const reportHash = generateReportHash(scenarioTitle, timestamp);
   const formattedDate = formatDate(timestamp);
   const hasDashboards = selectedDashboards.length > 0;
   const hasParams = Object.keys(formData).length > 0;
-  const tocEntries = buildTocEntries(hasDashboards, hasParams);
-  const showToc = hasDashboards; // proxy for >3 pages
+  const tocEntries = buildTocEntries(hasDashboards, hasParams, selectedDashboards.length);
+  const showToc = hasDashboards;
+  const orgName = formData["organization"] || formData["Organization"] || formData["company"] || formData["Company"] || formData["org"] || "EXOS";
+
+  // KPIs
+  const allKeys = Object.keys(formData);
+  const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
+  const coveragePct = allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0;
+  const confidenceLevel = coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low";
+  const savingsKpi = extractSavingsKpi(strippedAnalysis);
+  const riskKpi = extractRiskKpi(strippedAnalysis);
+
+  // Subtitle
+  const industry = formData["industry"] || formData["Industry"] || formData["sector"] || "";
+  const category = formData["category"] || formData["Category"] || formData["product_category"] || formData["productCategory"] || "";
+  const subtitle = [industry, category].filter(Boolean).join(" — ");
+
+  // Fix 2: report title
+  const reportTitle = getReportTitle(scenarioTitle);
+
+  // All parameters for table (Fix 3)
+  const allParamEntries = Object.entries(formData)
+    .filter(([_, v]) => v && v.trim() !== "");
+
+  // Analysis inputs for exec summary (first 6)
+  const inputEntries = allParamEntries.slice(0, 6);
 
   return (
     <Document>
       {/* ── Page 1: Cover ── */}
       <Page size="A4" style={styles.page}>
-        <View style={styles.gradientLayer1} />
-        <View style={styles.gradientLayer2} />
-        <View style={styles.gradientLayer3} />
-        <View style={styles.accentBar} />
+        <View style={styles.coverSpacer} />
 
-        <View style={styles.header}>
-          <View style={styles.logoSection}>
-            <Image src={exosLogo} style={styles.logoImage} />
-            <View>
-              <Text style={styles.brandName}>EXOS</Text>
-              <Text style={styles.brandTagline}>YOUR PROCUREMENT EXOSKELETON</Text>
-            </View>
-          </View>
-          <View style={styles.reportMeta}>
-            <View style={styles.reportBadge}>
-              <Text style={styles.reportBadgeText}>AI-GENERATED REPORT</Text>
-            </View>
-            <Text style={styles.reportDate}>{formattedDate}</Text>
-          </View>
-        </View>
+        <Text style={styles.coverBrand}>EXOS</Text>
+        <View style={styles.coverBrandLine} />
 
-        <View style={styles.titleSection}>
-          <Text style={styles.reportTitle}>{scenarioTitle} Analysis</Text>
-          <Text style={styles.reportSubtitle}>
-            Strategic procurement analysis powered by EXOS Procurement Intelligence
-          </Text>
-        </View>
+        <Text style={styles.coverTitle}>{reportTitle}</Text>
+        {subtitle ? (
+          <Text style={styles.coverSubtitle}>{subtitle}</Text>
+        ) : (
+          <View style={{ height: 48 }} />
+        )}
 
-        {/* Executive Summary */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
-            <Text style={styles.sectionTitle}>Executive Summary</Text>
-          </View>
-          <View style={styles.sectionContent}>
-            <Text style={styles.analysisSubHeader}>Key Findings</Text>
-            {findings.map((point, i) => (
-              <Text key={`f-${i}`} style={styles.keyPointText}>
-                {i + 1}. {point}
-              </Text>
-            ))}
-
-            <View style={{ height: 12 }} />
-
-            <Text style={styles.analysisSubHeader}>Top Recommendations</Text>
-            <View style={{ backgroundColor: colors.warning + "10", borderRadius: 6, padding: 10 }}>
-              {recommendations.map((point, i) => (
-                <Text key={`r-${i}`} style={{ ...styles.keyPointText, marginBottom: 6 }}>
-                  {i + 1}. {point}
-                </Text>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        {/* Table of Contents */}
+        {/* TOC */}
         {showToc && (
-          <View style={styles.tocSection}>
-            <View style={styles.sectionHeader}>
-              <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
-              <Text style={styles.sectionTitle}>Contents</Text>
-            </View>
-            <View style={styles.sectionContent}>
-              {tocEntries.map((entry, i) => (
-                <View key={entry.anchor} style={styles.tocRow}>
-                  <Link src={`#${entry.anchor}`}>
-                    <Text style={styles.tocLabel}>{i + 1}. {entry.label}</Text>
-                  </Link>
-                  <View style={styles.tocLeader} />
-                  <Text style={styles.tocPageHint}>→</Text>
-                </View>
-              ))}
-            </View>
+          <View style={{ marginBottom: SP.sectionGap }}>
+            {tocEntries.map((entry, i) => (
+              <View key={entry.anchor} style={styles.tocRow}>
+                <Link src={`#${entry.anchor}`}>
+                  <Text style={styles.tocLabel}>{i + 1}. {entry.label}</Text>
+                </Link>
+                <View style={styles.tocLeader} />
+                <Text style={styles.tocPageHint}>p. {entry.page}</Text>
+              </View>
+            ))}
           </View>
         )}
 
-        <ReportFooter reportHash={reportHash} styles={styles} />
+        {/* Bottom section */}
+        <Text style={styles.coverFooterText}>Prepared for {orgName}</Text>
+        <Text style={styles.coverFooterText}>{formattedDate}</Text>
+        <Text style={styles.coverConfidential}>Confidential</Text>
+      </Page>
+
+      {/* ── Page 2: Executive Summary ── */}
+      <Page size="A4" style={styles.pageWithHeader} id="section-executive-summary">
+        <RunningHeader reportTitle={reportTitle} />
+
+        {/* Section title */}
+        <View style={styles.sectionTitleWrapper}>
+          <Text style={styles.sectionTitleText}>Executive Summary</Text>
+        </View>
+
+        {/* KPI row (Fix 8: wrap={false}) */}
+        <View style={styles.kpiRow} wrap={false}>
+          <View style={styles.kpiCell}>
+            <Text style={{ ...styles.kpiValue, color: kpiColor(savingsKpi, "savings") }}>
+              {savingsKpi === "—" ? "Not assessed" : savingsKpi}
+            </Text>
+            <Text style={styles.kpiLabel}>POTENTIAL SAVINGS</Text>
+            <Text style={styles.kpiContext}>Based on analysis inputs</Text>
+          </View>
+          <View style={styles.kpiDivider} />
+          <View style={styles.kpiCell}>
+            <Text style={{
+              ...styles.kpiValue,
+              color: kpiColor(riskKpi, "risk"),
+              fontFamily: riskKpi === "—" ? "Helvetica-Oblique" : "Helvetica-Bold",
+            }}>
+              {riskKpi === "—" ? "Not assessed" : riskKpi}
+            </Text>
+            <Text style={styles.kpiLabel}>RISK LEVEL</Text>
+            <Text style={styles.kpiContext}>Extracted from analysis</Text>
+          </View>
+          <View style={styles.kpiDivider} />
+          <View style={styles.kpiCell}>
+            <Text style={{ ...styles.kpiValue, color: kpiColor(confidenceLevel, "confidence") }}>
+              {confidenceLevel}
+            </Text>
+            <Text style={styles.kpiLabel}>CONFIDENCE</Text>
+            <Text style={styles.kpiContext}>{coveragePct}% input coverage</Text>
+          </View>
+        </View>
+
+        {/* Key Findings (Fix 1: stripMarkdown, Fix 8: wrap={false} per item) */}
+        <View style={styles.sectionTitleWrapper}>
+          <Text style={styles.sectionTitleText}>Key Findings</Text>
+        </View>
+        {findings.map((point, i) => (
+          <View key={`f-${i}`} style={styles.numberedItem} wrap={false}>
+            <Text style={styles.numberedPrefix}>{i + 1}.</Text>
+            {renderBodyText(point, styles.numberedText)}
+          </View>
+        ))}
+
+        {/* Recommended Actions (Fix 1, Fix 8) */}
+        <View style={styles.sectionTitleWrapper}>
+          <Text style={styles.sectionTitleText}>Recommended Actions</Text>
+        </View>
+        {recommendations.map((point, i) => (
+          <View key={`r-${i}`} style={styles.numberedItem} wrap={false}>
+            <Text style={styles.numberedPrefix}>{i + 1}.</Text>
+            {renderBodyText(point, styles.numberedText)}
+          </View>
+        ))}
+
+        {/* Analysis Inputs table */}
+        {inputEntries.length > 0 && (
+          <View wrap={false}>
+            <View style={styles.sectionTitleWrapper}>
+              <Text style={styles.sectionTitleText}>Analysis Inputs</Text>
+            </View>
+            <View style={styles.tableHeader}>
+              <Text style={{ ...styles.tableHeaderText, flex: 1 }}>Parameter</Text>
+              <Text style={{ ...styles.tableHeaderText, flex: 1 }}>Value</Text>
+            </View>
+            {inputEntries.map(([key, value], i) => {
+              const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
+              const rowStyle = i % 2 === 0 ? styles.tableRow : styles.tableRowAlt;
+              return (
+                <View key={key} style={rowStyle}>
+                  <Text style={styles.tableCellLabel}>{label}</Text>
+                  <Text style={styles.tableCell}>{summarizeParameter(value, 15)}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        <ReportFooter dateStr={formattedDate} orgName={orgName} />
       </Page>
 
       {/* ── Dashboard pages ── */}
@@ -881,234 +908,134 @@ const PDFReportDocument = ({
         />
       )}
 
-      {/* ── Detailed Analysis + Data Quality + Parameters ── */}
+      {/* ── Detailed Analysis + Methodology + Parameters ── */}
       <Page size="A4" style={styles.pageWithHeader}>
-        <View style={styles.gradientLayer1} />
-        <View style={styles.gradientLayer2} />
-        <View style={styles.gradientLayer3} />
-        <View style={styles.accentBar} />
-
-        <RunningHeader scenarioTitle={scenarioTitle} dateStr={formattedDate} styles={styles} />
+        <RunningHeader reportTitle={reportTitle} />
 
         {(() => {
           const sections = categorizeAnalysisSections(analysisLines);
           return sections.map((section, si) => {
-            const blockStyle =
-              section.type === "recommendations"
-                ? styles.sectionBlockRecommendations
-                : section.type === "risks"
-                ? styles.sectionBlockRisks
-                : section.type === "nextSteps"
-                ? styles.sectionBlockNextSteps
-                : section.type === "costDrivers"
-                ? styles.sectionBlockCostDrivers
-                : styles.sectionBlockBase;
-
+            // Fix 8: wrap={false} per section block
             return (
-              <View key={`section-${si}`} style={{ marginBottom: 15 }}>
+              <View key={`section-${si}`} style={{ marginBottom: SP.betweenItems }} wrap={false}>
                 {si === 0 && (
-                  <View style={styles.sectionHeader} id="section-detailed-analysis">
-                    <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
-                    <Text style={styles.sectionTitle}>Detailed Analysis</Text>
+                  <View style={styles.sectionTitleWrapper} id="section-detailed-analysis">
+                    <Text style={styles.sectionTitleText}>Detailed Analysis</Text>
                   </View>
                 )}
-                <View style={blockStyle}>
-                  {section.type === "risks" ? (
-                    <View style={styles.riskHeaderRow}>
-                      <Text style={styles.warningIcon}>⚠</Text>
-                      <Text style={styles.sectionBlockHeader}>{section.title}</Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.sectionBlockHeader}>{section.title}</Text>
-                  )}
 
-                  {section.lines.map((line, li) => {
-                    const isHighlight = hasMetricHighlight(line);
-
-                    if (section.type === "recommendations") {
+                {/* Fix 6: Risk items with severity */}
+                {section.type === "risks" ? (
+                  <View style={styles.sectionBlockRisks}>
+                    <Text style={styles.sectionBlockHeader}>{stripMarkdown(section.title)}</Text>
+                    {section.lines.map((line, li) => {
+                      const { severity, cleanText } = parseRiskSeverity(line);
+                      const colonIdx = cleanText.indexOf(":");
+                      const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
+                      const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
                       return (
-                        <View key={`l-${li}`} style={styles.numberedItem}>
-                          <View style={styles.numberedBullet}>
-                            <Text style={styles.numberedBulletText}>{li + 1}</Text>
+                        <View key={`l-${li}`} style={styles.riskItem} wrap={false}>
+                          <Text style={{ ...styles.riskSeverity, color: riskSeverityColor(severity) }}>
+                            {severity}
+                          </Text>
+                          <View style={styles.riskContent}>
+                            {riskName ? <Text style={styles.riskName}>{riskName}</Text> : null}
+                            {renderBodyText(riskDesc, styles.riskDescription)}
                           </View>
-                          <Text style={{ flex: 1, ...(isHighlight ? styles.analysisTextHighlight : styles.analysisText) }}>
-                            {line}
-                          </Text>
                         </View>
                       );
-                    }
-
-                    if (section.type === "nextSteps") {
+                    })}
+                  </View>
+                ) : section.type === "nextSteps" ? (
+                  /* Fix 7: Next steps with numbered title/description */
+                  <View style={styles.sectionBlockNextSteps}>
+                    <Text style={styles.sectionBlockHeader}>{stripMarkdown(section.title)}</Text>
+                    {section.lines.map((line, li) => {
+                      const { title, description } = parseNextStep(line);
                       return (
-                        <View key={`l-${li}`} style={styles.checklistItem}>
-                          <View style={styles.checkBox} />
-                          <Text style={{ flex: 1, ...(isHighlight ? styles.analysisTextHighlight : styles.analysisText) }}>
-                            {line}
-                          </Text>
+                        <View key={`l-${li}`} style={styles.numberedItem} wrap={false}>
+                          <Text style={styles.numberedPrefix}>{li + 1}.</Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: C.text, marginBottom: 4 }}>
+                              {title}
+                            </Text>
+                            {description ? renderBodyText(description, styles.analysisText) : null}
+                          </View>
                         </View>
                       );
-                    }
-
-                    return (
-                      <Text key={`l-${li}`} style={isHighlight ? styles.analysisTextHighlight : styles.analysisText}>
-                        {line}
-                      </Text>
-                    );
-                  })}
-                </View>
+                    })}
+                  </View>
+                ) : section.type === "recommendations" ? (
+                  <View style={styles.sectionBlockRecommendations}>
+                    <Text style={styles.sectionBlockHeader}>{stripMarkdown(section.title)}</Text>
+                    {section.lines.map((line, li) => (
+                      <View key={`l-${li}`} style={styles.numberedItem} wrap={false}>
+                        <Text style={styles.numberedPrefix}>{li + 1}.</Text>
+                        {renderBodyText(line, { flex: 1, ...styles.analysisText })}
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  /* General / findings / costDrivers */
+                  <View style={section.type === "costDrivers" ? styles.sectionBlockCostDrivers : styles.sectionBlockBase}>
+                    <Text style={styles.sectionBlockHeader}>{stripMarkdown(section.title)}</Text>
+                    {section.lines.map((line, li) => (
+                      renderBodyText(line, styles.analysisText)
+                    ))}
+                  </View>
+                )}
               </View>
             );
           });
         })()}
 
         {/* ── Methodology & Limitations ── */}
-        {(() => {
-          const allKeys = Object.keys(formData);
-          const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-          const missingKeys = allKeys.filter(k => !formData[k] || formData[k].trim() === "");
-          const totalFields = Math.max(allKeys.length, 1);
-          const coveragePct = Math.round((filledKeys.length / totalFields) * 100);
-          const confidenceLevel = coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low";
-          const confidenceColor = coveragePct >= 80 ? colors.success : coveragePct >= 50 ? colors.warning : colors.destructive;
+        <View style={styles.section} id="section-methodology" wrap={false}>
+          <View style={styles.sectionTitleWrapper}>
+            <Text style={styles.sectionTitleText}>Methodology & Limitations</Text>
+          </View>
+          <Text style={styles.methodologyText}>
+            Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals. Cost estimates are indicative based on available data at time of analysis and may vary with market conditions and data completeness.
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 9, color: C.muted }}>
+              Input coverage: {filledKeys.length}/{allKeys.length > 0 ? allKeys.length : 1} fields ({coveragePct}%)
+            </Text>
+            <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: kpiColor(confidenceLevel, "confidence") }}>
+              {confidenceLevel} Confidence
+            </Text>
+          </View>
+          <View style={styles.auditTrail}>
+            <Text style={{ fontSize: 7, color: C.muted }}>
+              Analysis ID: {reportHash} | Timestamp: {new Date(timestamp).toISOString()}
+            </Text>
+          </View>
+        </View>
 
-          return (
-            <>
-              <View style={styles.section} id="section-methodology" wrap={false}>
-                <View style={styles.sectionHeader}>
-                  <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
-                  <Text style={styles.sectionTitle}>Methodology & Limitations</Text>
-                </View>
-                <View style={styles.sectionContent}>
-                  {/* Analysis Model */}
-                  <View style={styles.methodologyBox}>
-                    <Text style={styles.methodologySubHeader}>Analysis Model</Text>
-                    <Text style={styles.methodologyText}>
-                      Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding.
-                    </Text>
-                  </View>
-
-                  {/* Data Sources */}
-                  <View style={styles.methodologyBox}>
-                    <Text style={styles.methodologySubHeader}>Data Sources</Text>
-                    <Text style={styles.methodologyText}>
-                      Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. Market data is refreshed periodically to reflect current conditions.
-                    </Text>
-                  </View>
-
-                  {/* Confidence Assessment (moved from Data Quality) */}
-                  <View style={styles.methodologyBox}>
-                    <Text style={styles.methodologySubHeader}>Confidence Assessment</Text>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                      <View>
-                        <Text style={{ fontSize: 11, fontWeight: 700, color: colors.text }}>
-                          {filledKeys.length} of {totalFields} parameters provided
-                        </Text>
-                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }}>
-                          {coveragePct}% input coverage
-                        </Text>
-                      </View>
-                      <View style={{ backgroundColor: confidenceColor + "20", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4, borderWidth: 1, borderColor: confidenceColor }}>
-                        <Text style={{ fontSize: 10, fontWeight: 700, color: confidenceColor }}>
-                          {confidenceLevel} Confidence
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={{ height: 8, backgroundColor: colors.surfaceLight, borderRadius: 4, overflow: "hidden" }}>
-                      <View style={{ width: `${coveragePct}%`, height: 8, backgroundColor: confidenceColor, borderRadius: 4 }} />
-                    </View>
-                  </View>
-
-                  {/* Limitations */}
-                  <View style={styles.methodologyBox}>
-                    <Text style={styles.methodologySubHeader}>Limitations</Text>
-                    {[
-                      "This analysis is AI-generated and should be validated by qualified procurement professionals.",
-                      "Cost estimates are indicative and based on available data at time of analysis.",
-                      "Results may vary based on market conditions and data completeness.",
-                    ].map((item, i) => (
-                      <View key={i} style={styles.limitationItem}>
-                        <View style={styles.limitationBullet} />
-                        <Text style={styles.limitationText}>{item}</Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  {/* Audit Trail */}
-                  <View style={styles.auditTrail}>
-                    <Text style={{ fontSize: 8, color: colors.textMuted }}>
-                      Analysis ID: {reportHash} | Timestamp: {new Date(timestamp).toISOString()}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* ── Data Quality Assessment (simplified) ── */}
-              <View style={styles.section} id="section-data-quality">
-                <View style={styles.sectionHeader}>
-                  <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
-                  <Text style={styles.sectionTitle}>Data Quality Assessment</Text>
-                </View>
-                <View style={styles.sectionContent}>
-                  {missingKeys.length > 0 && (
-                    <View style={{ marginBottom: 8 }}>
-                      <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: 600, marginBottom: 4 }}>Missing parameters:</Text>
-                      <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                        {missingKeys.map(key => (
-                          <View key={key} style={{ backgroundColor: colors.destructive + "15", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3, marginRight: 6, marginBottom: 4 }}>
-                            <Text style={{ fontSize: 9, color: colors.destructive }}>
-                              {key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim()}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                  <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: missingKeys.length > 0 ? 4 : 0 }}>
-                    {missingKeys.length > 0
-                      ? "Provide additional parameters to improve analysis accuracy."
-                      : "All parameters provided — analysis confidence is optimal."}
-                  </Text>
-                </View>
-              </View>
-            </>
-          );
-        })()}
-
+        {/* Fix 3: Analysis Parameters as table, not pills */}
         {hasParams && (
-          <View style={styles.section} id="section-parameters">
-            <View style={styles.sectionHeader}>
-              <View style={{ width: 8, height: 8, backgroundColor: colors.primary, borderRadius: 2, marginRight: 8 }} />
-              <Text style={styles.sectionTitle}>Analysis Parameters</Text>
+          <View style={styles.section} id="section-parameters" wrap={false}>
+            <View style={styles.sectionTitleWrapper}>
+              <Text style={styles.sectionTitleText}>Analysis Parameters</Text>
             </View>
-            <View style={styles.sectionContent}>
-              {Object.entries(formData)
-                .filter(([_, value]) => value && value.trim() !== "")
-                .map(([key, value]) => {
-                  const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
-                  const summary = summarizeParameter(value);
-                  const tags = summary.includes(",") ? summary.split(",").map(t => t.trim()).filter(Boolean) : null;
-                  return (
-                    <View key={key} style={styles.parameterBlock}>
-                      <Text style={styles.parameterLabel}>{label}</Text>
-                      {tags ? (
-                        <View style={styles.parameterTagRow}>
-                          {tags.map((tag, i) => (
-                            <View key={i} style={styles.parameterTag}>
-                              <Text style={styles.parameterTagText}>{tag}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      ) : (
-                        <Text style={styles.parameterValue}>{summary}</Text>
-                      )}
-                    </View>
-                  );
-                })}
+            <View style={styles.tableHeader}>
+              <Text style={styles.tableHeaderParam}>Parameter</Text>
+              <Text style={styles.tableHeaderValue}>Value</Text>
             </View>
+            {allParamEntries.map(([key, value], i) => {
+              const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
+              const rowStyle = i % 2 === 0 ? styles.tableRow : styles.tableRowAlt;
+              return (
+                <View key={key} style={rowStyle}>
+                  <Text style={styles.tableCellParamLabel}>{label}</Text>
+                  <Text style={styles.tableCellParamValue}>{value}</Text>
+                </View>
+              );
+            })}
           </View>
         )}
 
-        <ReportFooter reportHash={reportHash} styles={styles} />
+        <ReportFooter dateStr={formattedDate} orgName={orgName} />
       </Page>
     </Document>
   );

@@ -10,9 +10,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Building2, Plus, X, Shield, Target } from "lucide-react";
+import { ChevronDown, ChevronUp, Building2, Plus, X, Shield, Target, AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useIndustryContext } from "@/hooks/useContextData";
-import type { IndustryContext } from "@/lib/ai-context-templates";
+import type { IndustryContext, ConstraintV2, KpiV2 } from "@/lib/ai-context-templates";
 
 export interface IndustryContextOverrides {
   enabledConstraints: Record<string, boolean>;
@@ -57,6 +57,32 @@ export function applyOverridesToIndustry(
   };
 }
 
+function DirectionIcon({ direction }: { direction?: string }) {
+  if (!direction) return null;
+  const d = direction.toLowerCase();
+  if (d.includes('min') || d.includes('decrease') || d.includes('lower') || d.includes('↓')) {
+    return <TrendingDown className="h-3 w-3 text-green-500 shrink-0" />;
+  }
+  if (d.includes('max') || d.includes('increase') || d.includes('higher') || d.includes('↑')) {
+    return <TrendingUp className="h-3 w-3 text-blue-500 shrink-0" />;
+  }
+  return <Minus className="h-3 w-3 text-muted-foreground shrink-0" />;
+}
+
+function TierBadge({ tier }: { tier?: string }) {
+  if (!tier) return null;
+  const colors: Record<string, string> = {
+    T1: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+    T2: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+    T3: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  };
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${colors[tier] || colors.T3}`}>
+      {tier}
+    </span>
+  );
+}
+
 export function IndustryContextEditor({
   industrySlug,
   overrides,
@@ -67,6 +93,9 @@ export function IndustryContextEditor({
   const [newKpi, setNewKpi] = useState("");
   
   const { data: industry } = useIndustryContext(industrySlug);
+
+  const hasV2Constraints = industry?.constraints_v2 && industry.constraints_v2.length > 0;
+  const hasV2Kpis = industry?.kpis_v2 && industry.kpis_v2.length > 0;
 
   // Initialize all constraints/KPIs as enabled when industry changes
   useEffect(() => {
@@ -166,6 +195,14 @@ export function IndustryContextEditor({
     return overrides.enabledKpis[key] !== false;
   }).length + overrides.customKpis.length;
 
+  const blockerCount = hasV2Constraints
+    ? industry.constraints_v2!.filter((c, i) => {
+        const legacyText = industry.constraints[i] || c.label;
+        const key = `${i}-${legacyText.slice(0, 20)}`;
+        return c.blocker && overrides.enabledConstraints[key] !== false;
+      }).length
+    : 0;
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card className="border-primary/20 bg-primary/5">
@@ -177,6 +214,11 @@ export function IndustryContextEditor({
                 Fine-tune: {industry.name}
               </span>
               <div className="flex items-center gap-2">
+                {blockerCount > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {blockerCount} Blocker{blockerCount > 1 ? 's' : ''}
+                  </Badge>
+                )}
                 <Badge variant="secondary" className="text-xs">
                   {activeConstraints} constraints
                 </Badge>
@@ -206,26 +248,68 @@ export function IndustryContextEditor({
               </p>
               
               <div className="space-y-2">
-                {industry.constraints.map((constraint, i) => {
-                  const key = `${i}-${constraint.slice(0, 20)}`;
-                  const isEnabled = overrides.enabledConstraints[key] !== false;
-                  
-                  return (
-                    <div
-                      key={key}
-                      className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
-                        isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
-                      }`}
-                    >
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={() => toggleConstraint(key)}
-                        className="mt-0.5"
-                      />
-                      <span className="text-sm flex-1">{constraint}</span>
-                    </div>
-                  );
-                })}
+                {hasV2Constraints ? (
+                  industry.constraints_v2!.map((cv2, i) => {
+                    // Use legacy constraint text for the key to maintain compat
+                    const legacyText = industry.constraints[i] || cv2.label;
+                    const key = `${i}-${legacyText.slice(0, 20)}`;
+                    const isEnabled = overrides.enabledConstraints[key] !== false;
+                    
+                    return (
+                      <div
+                        key={key}
+                        className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
+                          isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
+                        } ${cv2.blocker ? "ring-1 ring-destructive/30" : ""}`}
+                      >
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={() => toggleConstraint(key)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <TierBadge tier={cv2.tier} />
+                            {cv2.blocker && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-destructive/10 text-destructive">
+                                <AlertTriangle className="h-3 w-3" />
+                                Blocker
+                              </span>
+                            )}
+                            <span className="text-sm">{cv2.label}</span>
+                          </div>
+                          {cv2.eu_ref && (
+                            <p className="text-[11px] text-muted-foreground">EU Ref: {cv2.eu_ref}</p>
+                          )}
+                          {cv2.procurement_impact && (
+                            <p className="text-[11px] text-muted-foreground">Impact: {cv2.procurement_impact}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  industry.constraints.map((constraint, i) => {
+                    const key = `${i}-${constraint.slice(0, 20)}`;
+                    const isEnabled = overrides.enabledConstraints[key] !== false;
+                    
+                    return (
+                      <div
+                        key={key}
+                        className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
+                          isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
+                        }`}
+                      >
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={() => toggleConstraint(key)}
+                          className="mt-0.5"
+                        />
+                        <span className="text-sm flex-1">{constraint}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {/* Custom Constraints */}
@@ -283,26 +367,58 @@ export function IndustryContextEditor({
               </p>
               
               <div className="space-y-2">
-                {industry.kpis.map((kpi, i) => {
-                  const key = `${i}-${kpi.slice(0, 20)}`;
-                  const isEnabled = overrides.enabledKpis[key] !== false;
-                  
-                  return (
-                    <div
-                      key={key}
-                      className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
-                        isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
-                      }`}
-                    >
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={() => toggleKpi(key)}
-                        className="mt-0.5"
-                      />
-                      <span className="text-sm flex-1">{kpi}</span>
-                    </div>
-                  );
-                })}
+                {hasV2Kpis ? (
+                  industry.kpis_v2!.map((kv2, i) => {
+                    const legacyText = industry.kpis[i] || kv2.label;
+                    const key = `${i}-${legacyText.slice(0, 20)}`;
+                    const isEnabled = overrides.enabledKpis[key] !== false;
+                    
+                    return (
+                      <div
+                        key={key}
+                        className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
+                          isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
+                        }`}
+                      >
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={() => toggleKpi(key)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex items-center gap-2 flex-1 flex-wrap">
+                          <DirectionIcon direction={kv2.direction} />
+                          <span className="text-sm">{kv2.label}</span>
+                          {kv2.exos_lever && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              {kv2.exos_lever}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  industry.kpis.map((kpi, i) => {
+                    const key = `${i}-${kpi.slice(0, 20)}`;
+                    const isEnabled = overrides.enabledKpis[key] !== false;
+                    
+                    return (
+                      <div
+                        key={key}
+                        className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
+                          isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
+                        }`}
+                      >
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={() => toggleKpi(key)}
+                          className="mt-0.5"
+                        />
+                        <span className="text-sm flex-1">{kpi}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {/* Custom KPIs */}

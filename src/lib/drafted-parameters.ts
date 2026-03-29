@@ -42,6 +42,7 @@ export interface DraftedParameters {
   trick?: TrickDefinition;    // Optional training trick
   persona?: string;           // e.g. "rushed-junior"
   personaName?: string;       // e.g. "The Rushed Junior Buyer"
+  qualityTier?: 'OPTIMAL' | 'MINIMUM' | 'DEGRADED' | 'GIBBERISH';
 }
 
 export interface DraftResult {
@@ -117,6 +118,12 @@ export const PARAMETER_LABELS: Record<string, Record<string, string>> = {
     "moderate": "Moderate (Requires attention)",
     "subtle": "Subtle (Careful reading needed)",
     "expert-level": "Expert-Level (Deep analysis required)",
+  },
+  qualityTier: {
+    "OPTIMAL": "Optimal (Senior CPO input)",
+    "MINIMUM": "Minimum (Busy buyer)",
+    "DEGRADED": "Degraded (Missing critical data)",
+    "GIBBERISH": "Gibberish (Invalid input)",
   },
 };
 

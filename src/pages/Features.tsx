@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { Brain, Database, ArrowRight, Lock, Quote, TrendingUp, Shield, Users, RefreshCw, Mail } from "lucide-react";
+import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/NavLink";
@@ -384,7 +385,8 @@ const Features = () => {
           </div>
         </section>
 
-        <section className="text-center py-16">
+        <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
+          <SiteFeedbackButton scenarioId="features" />
           <a href="/pricing#contact">
             <Button size="lg" className="text-lg px-8 py-6 gap-2">
               Get in Touch

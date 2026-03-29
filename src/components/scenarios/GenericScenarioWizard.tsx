@@ -2,7 +2,9 @@ import { useState, useRef } from "react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare, CheckCircle2, AlertCircle, Send, Bug, Lightbulb, MousePointerClick, Database, Gauge, Palette, HelpCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelineAnimation";
@@ -11,6 +13,7 @@ import { DeepAnalysisResult } from "@/components/analysis/DeepAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,6 +72,8 @@ import { ScenarioChatAssistant } from "./ScenarioChatAssistant";
 import ScenarioFileAttachment from "./ScenarioFileAttachment";
 import { useScenarioFileAttachments } from "@/hooks/useScenarioFileAttachments";
 import { useInputEvaluator } from "@/hooks/useInputEvaluator";
+import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
+import { useUser } from "@/hooks/useUser";
 
 const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   const [open, setOpen] = useState(false);
@@ -96,6 +101,29 @@ const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: {
   );
 };
 
+const DataRequirementsPanel = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
+  return (
+    <Card className="border-warning/30 bg-warning/10 dark:bg-warning/15">
+      <CardContent className="pt-4 pb-4 px-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span>💡</span>
+          <span className="text-sm font-semibold text-warning">
+            What data do I need to prepare?
+          </span>
+        </div>
+        <div className="space-y-3">
+          {dataRequirements.sections.map((s, i) => (
+            <div key={i}>
+              <p className="text-sm font-medium text-foreground">{s.heading}</p>
+              <p className="text-sm text-muted-foreground">{s.description}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 interface GenericScenarioWizardProps {
   scenario: Scenario;
 }
@@ -105,6 +133,7 @@ type Step = "input" | "review" | "analyzing" | "results";
 const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const navigate = useNavigate();
   const { showTechnicalDetails } = useShareableMode();
+  const { user } = useUser();
   const [step, setStep] = useState<Step>("input");
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [strategyValue, setStrategyValue] = useState<StrategyType>("balanced");
@@ -142,6 +171,39 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   // Auth prompt state
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
+  // Feedback dialog state
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackType, setFeedbackType] = useState("");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  const handleFeedbackSubmit = async () => {
+    if (!feedbackRating) return;
+    setIsSubmittingFeedback(true);
+    const { error } = await supabase.from('scenario_feedback').insert({
+      scenario_id: scenario.id,
+      rating: feedbackRating,
+      feedback_text: feedbackText || null,
+      feedback_type: feedbackType || null,
+    } as any);
+    setIsSubmittingFeedback(false);
+    if (error) {
+      toast.error("Failed to submit feedback");
+    } else {
+      toast.success("Thank you for your feedback!");
+      setFeedbackSubmitted(true);
+      setTimeout(() => {
+        setFeedbackDialogOpen(false);
+        setFeedbackRating(0);
+        setFeedbackText("");
+        setFeedbackType("");
+        setFeedbackSubmitted(false);
+      }, 1500);
+    }
+  };
+
   // Deep Analysis state (LangGraph pipeline)
   const [isDeepAnalysisRunning, setIsDeepAnalysisRunning] = useState(false);
   const [deepAnalysisStep, setDeepAnalysisStep] = useState(0);
@@ -162,18 +224,31 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // Sentinel AI pipeline
   const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs } = useSentinel({
-    onProgress: (stage, status) => {
-      console.log(`[Sentinel] ${stage}: ${status}`);
-    },
+    onProgress: () => {},
     onError: (error) => {
       toast.error(`Analysis failed: ${error.message}`);
     },
   });
 
   // === DRAFTER-VALIDATOR WORKFLOW ===
+
+  const ensureAuthenticatedForTestData = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setShowAuthPrompt(true);
+      toast.error("Sign in required", {
+        description: "Please sign in to use AI test data generation.",
+      });
+      return false;
+    }
+    return true;
+  };
   
   // Step 1: Draft parameters (1 AI call)
   const handleDraftTestCase = async () => {
+    const isAuthenticated = await ensureAuthenticatedForTestData();
+    if (!isAuthenticated) return;
+
     setIsDrafting(true);
     setDraftedParams(null);
     setTestDataMetadata(null);
@@ -199,6 +274,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // Step 2: Generate with approved parameters (1 AI call)
   const handleApproveAndGenerate = async (params: DraftedParameters) => {
+    const isAuthenticated = await ensureAuthenticatedForTestData();
+    if (!isAuthenticated) return;
+
     setIsGeneratingFromDraft(true);
     
     try {
@@ -263,8 +341,11 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   const canProceed = missingRequired.length === 0;
 
+  // Fetch methodology config from DB for input evaluation
+  const { data: dbEvalConfig } = useScenarioEvalConfig(scenario.id);
+
   // Input quality evaluator (debounced 800ms)
-  const evaluation = useInputEvaluator(scenario.id, formData);
+  const evaluation = useInputEvaluator(scenario.id, formData, 800, dbEvalConfig);
 
   // Get model config from settings context
   const { model: configModel } = useModelConfig();
@@ -338,7 +419,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       industryContext || null,
       categoryContext || null,
       undefined, // config
-      effectiveModel // pass the model from settings
+      effectiveModel, // pass the model from settings
+      selectedDashboards
     );
 
     if (result?.success) {
@@ -402,11 +484,12 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         model: configModel,
       };
 
-      const result = await runExosGraph(queryText, graphConfig, scenario.id);
+      const result = await runExosGraph(queryText, graphConfig, scenario.id, selectedDashboards);
 
       clearInterval(progressInterval);
       setDeepAnalysisStep(4); // Complete all steps
       setDeepAnalysisResult(result);
+      setAnalysisResult(result.finalAnswer);
       setAnalysisTimestamp(new Date().toISOString());
       setStep("results");
       toast.success("Deep Analysis complete!");
@@ -421,9 +504,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     }
   };
 
-  const handleFeedbackSubmit = async (rating: number, feedback: string) => {
+  const handleOutputFeedbackSubmit = async (rating: number, feedback: string) => {
     try {
-      const { error } = await supabase.from("scenario_feedback" as any).insert({
+      const { error } = await supabase.from("scenario_feedback").insert({
         scenario_id: scenario.id,
         rating,
         feedback_text: feedback || null,
@@ -450,7 +533,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   };
 
   const renderField = (field: ScenarioRequiredField, skipBusinessContextField = false) => {
-    const commonClasses = "bg-background";
+    const commonClasses = "bg-card";
 
     // Special handling for industryContext field - use BusinessContextField component
     if (field.id === "industryContext" && !skipBusinessContextField) {
@@ -527,34 +610,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   return (
     <div className="space-y-6">
       {/* Progress indicator */}
-      <div className="flex items-center justify-center gap-2">
-        {["input", "review", "results"].map((s, i) => (
-          <div key={s} className="flex items-center">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                step === s || (step === "analyzing" && s === "results")
-                  ? "gradient-primary text-primary-foreground"
-                  : step === "results" || (step === "review" && i === 0)
-                  ? "bg-primary/30 text-primary"
-                  : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              {i + 1}
-            </div>
-            {i < 2 && (
-              <div
-                className={`w-12 h-0.5 mx-2 ${
-                  i === 0 && (step === "review" || step === "analyzing" || step === "results")
-                    ? "bg-primary"
-                    : i === 1 && step === "results"
-                    ? "bg-primary"
-                    : "bg-border"
-                }`}
-              />
-            )}
-          </div>
-        ))}
-      </div>
 
       <AnimatePresence mode="wait">
         {step === "input" && (
@@ -565,15 +620,24 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
-            <ScenarioTutorial
-              scenario={scenario}
-              industryName={industryContext?.name ?? null}
-              categoryName={categoryContext?.name ?? null}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <ScenarioTutorial
+                  scenario={scenario}
+                  industryName={industryContext?.name ?? null}
+                  categoryName={categoryContext?.name ?? null}
+                />
 
-            {scenario.dataRequirements && (
-              <DataRequirementsCollapsible dataRequirements={scenario.dataRequirements} />
-            )}
+                {/* Master XML Template Preview — superadmin only */}
+                <MasterXMLPreview scenarioType={scenario.id} userEmail={user?.email} />
+              </div>
+
+              {scenario.dataRequirements && (
+                <DataRequirementsPanel dataRequirements={scenario.dataRequirements} />
+              )}
+            </div>
+
+            <div className="border-t border-border/40" />
 
             <Button
               variant="outline"
@@ -615,7 +679,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-display text-lg font-semibold mb-1">
-                  Enter Your Data
+                  Analysis Settings
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Fields marked with <span className="text-destructive">*</span> are required 
@@ -674,39 +738,62 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Master XML Template Preview (hidden in shareable mode) */}
-            <MasterXMLPreview scenarioType={scenario.id} />
+            {/* Master XML moved to scenario info panel — see grid above */}
 
-            {/* Context Selectors for AI Grounding */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border border-border bg-card/50">
-              <IndustrySelector
-                value={industrySlug}
-                onChange={handleIndustryChange}
-              />
-              <CategorySelector
-                value={categorySlug}
-                onChange={handleCategoryChange}
-              />
+            {/* Context & Strategy — compact 2-column row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Left: Context selectors with inline editors */}
+              <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card dark:bg-secondary/60 shadow-sm space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <IndustrySelector
+                    value={industrySlug}
+                    onChange={handleIndustryChange}
+                  />
+                  <CategorySelector
+                    value={categorySlug}
+                    onChange={handleCategoryChange}
+                  />
+                </div>
+
+                {/* Inline context editors & preview — collapsed by default */}
+                {industrySlug && (
+                  <IndustryContextEditor
+                    industrySlug={industrySlug}
+                    overrides={industryOverrides}
+                    onOverridesChange={setIndustryOverrides}
+                  />
+                )}
+                {categorySlug && (
+                  <CategoryContextEditor
+                    categorySlug={categorySlug}
+                    overrides={categoryOverrides}
+                    onOverridesChange={setCategoryOverrides}
+                  />
+                )}
+                {(industrySlug || categorySlug) && (
+                  <ContextPreview
+                    industrySlug={industrySlug}
+                    categorySlug={categorySlug}
+                    showXML={true}
+                  />
+                )}
+              </div>
+
+              {/* Right: Strategy selector */}
+              {scenario.strategySelector && (
+                <div className="border border-iris/25 rounded-xl bg-iris/5 dark:bg-iris/15 p-3 shadow-sm">
+                <StrategySelector
+                  value={strategyValue}
+                  onChange={setStrategyValue}
+                  title={strategyPresets[scenario.strategySelector].title}
+                  description={strategyPresets[scenario.strategySelector].description}
+                  options={strategyPresets[scenario.strategySelector].options}
+                />
+                </div>
+              )}
             </div>
 
-            {/* Interactive Context Editors */}
-            {industrySlug && (
-              <IndustryContextEditor
-                industrySlug={industrySlug}
-                overrides={industryOverrides}
-                onOverridesChange={setIndustryOverrides}
-              />
-            )}
-            
-            {categorySlug && (
-              <CategoryContextEditor
-                categorySlug={categorySlug}
-                overrides={categoryOverrides}
-                onOverridesChange={setCategoryOverrides}
-              />
-            )}
-
-            {/* Market Insights Banner - shown when insights are available for this combination */}
+            {/* Market Insights Banner */}
             {hasMarketInsights && marketInsight && (
               <MarketInsightsBanner
                 insight={marketInsight}
@@ -720,129 +807,118 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             )}
 
-            {/* Context Preview (collapsed by default, XML hidden in shared mode) */}
-            {(industrySlug || categorySlug) && (
-              <ContextPreview
-                industrySlug={industrySlug}
-                categorySlug={categorySlug}
-                showXML={true}
-              />
-            )}
+            {/* Two-column: Fields (2/3) + Sidebar (1/3) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Left 2/3: Input fields */}
+              <div className="md:col-span-2 space-y-6">
+                {/* Required Fields */}
+                <div className="space-y-4 bg-secondary/30 dark:bg-secondary/40 rounded-lg p-4 border border-border/50">
+                  <h4 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                    Enter Your Data
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {scenario.requiredFields
+                      .filter((f) => f.required)
+                      .map((field) => {
+                        if (field.id === "industryContext") {
+                          return (
+                            <div key={field.id} className="md:col-span-2">
+                              {renderField(field)}
+                            </div>
+                          );
+                        }
+                        const blockEval = evaluation?.blocks.find((b) => b.fieldId === field.id);
+                        return (
+                          <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
+                            <Label className="flex items-center gap-1">
+                              {field.label}
+                              <span className="text-destructive">*</span>
+                              {field.type === "percentage" && (
+                                <span className="text-muted-foreground text-xs">(%)</span>
+                              )}
+                              {field.type === "currency" && (
+                                <span className="text-muted-foreground text-xs">($)</span>
+                              )}
+                              {blockEval && blockEval.status === "pass" && (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-success ml-1" />
+                              )}
+                              {blockEval && blockEval.status === "warning" && (
+                                <AlertCircle className="w-3.5 h-3.5 text-warning ml-1" />
+                              )}
+                              {blockEval && blockEval.status === "fail" && (
+                                <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-1" />
+                              )}
+                            </Label>
+                            {renderField(field)}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
 
-            {/* Strategy Selector */}
-            {scenario.strategySelector && (
-              <div className="mb-6">
-                <StrategySelector
-                  value={strategyValue}
-                  onChange={setStrategyValue}
-                  title={strategyPresets[scenario.strategySelector].title}
-                  description={strategyPresets[scenario.strategySelector].description}
-                  options={strategyPresets[scenario.strategySelector].options}
-                />
+                {/* Optional Fields */}
+                {scenario.requiredFields.some((f) => !f.required) && (
+                  <div className="space-y-4 bg-muted/40 dark:bg-muted/20 rounded-lg p-4 border border-border/40">
+                    <h4 className="text-sm font-semibold text-foreground/70 uppercase tracking-wider">
+                      Optional Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {scenario.requiredFields
+                        .filter((f) => !f.required)
+                        .map((field) => (
+                          <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
+                            <Label className="flex items-center gap-1">
+                              {field.label}
+                              {field.type === "percentage" && (
+                                <span className="text-muted-foreground text-xs">(%)</span>
+                              )}
+                              {field.type === "currency" && (
+                                <span className="text-muted-foreground text-xs">($)</span>
+                              )}
+                            </Label>
+                            {renderField(field)}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Required Fields */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Required Information
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {scenario.requiredFields
-                  .filter((f) => f.required)
-                  .map((field) => {
-                    // BusinessContextField renders its own label
-                    if (field.id === "industryContext") {
-                      return (
-                        <div key={field.id} className="md:col-span-2">
-                          {renderField(field)}
-                        </div>
-                      );
-                    }
-                    
-                    const blockEval = evaluation?.blocks.find((b) => b.fieldId === field.id);
-                    return (
-                      <div key={field.id} className={`space-y-2 ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
-                        <Label className="flex items-center gap-1">
-                          {field.label}
-                          <span className="text-destructive">*</span>
-                          {field.type === "percentage" && (
-                            <span className="text-muted-foreground text-xs">(%)</span>
-                          )}
-                          {field.type === "currency" && (
-                            <span className="text-muted-foreground text-xs">($)</span>
-                          )}
-                          {/* Inline quality indicator */}
-                          {blockEval && blockEval.status === "pass" && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-success ml-1" />
-                          )}
-                          {blockEval && blockEval.status === "warning" && (
-                            <AlertCircle className="w-3.5 h-3.5 text-warning ml-1" />
-                          )}
-                          {blockEval && blockEval.status === "fail" && (
-                            <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-1" />
-                          )}
-                        </Label>
-                        {renderField(field)}
-                      </div>
-                    );
-                  })}
+              {/* Right 1/3: Sidebar */}
+              <div className="space-y-4 p-3 rounded-lg border border-iris/25 bg-iris/5 dark:bg-iris/15 shadow-sm">
+                <DashboardSelector
+                  scenarioId={scenario.id}
+                  selectedDashboards={selectedDashboards}
+                  onSelectionChange={setSelectedDashboards}
+                />
+
+                <ScenarioFileAttachment
+                  selectedFileIds={attachedFileIds}
+                  onSelectionChange={setAttachedFileIds}
+                />
+
+                <ModelSelector value={selectedModel} onChange={setSelectedModel} />
+
+                <FinalXMLPreview
+                  scenarioType={scenario.id}
+                  scenarioData={formData}
+                  industry={industryContext || null}
+                  category={categoryContext || null}
+                  strategyValue={strategyValue}
+                />
               </div>
             </div>
 
-            {/* Optional Fields */}
-            {scenario.requiredFields.some((f) => !f.required) && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                  Optional Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {scenario.requiredFields
-                    .filter((f) => !f.required)
-                    .map((field) => (
-                      <div key={field.id} className="space-y-2">
-                        <Label className="flex items-center gap-1">
-                          {field.label}
-                          {field.type === "percentage" && (
-                            <span className="text-muted-foreground text-xs">(%)</span>
-                          )}
-                          {field.type === "currency" && (
-                            <span className="text-muted-foreground text-xs">($)</span>
-                          )}
-                        </Label>
-                        {renderField(field)}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Dashboard Selector */}
-            <DashboardSelector
-              scenarioId={scenario.id}
-              selectedDashboards={selectedDashboards}
-              onSelectionChange={setSelectedDashboards}
-            />
-
-            {/* File Attachment */}
-            <ScenarioFileAttachment
-              selectedFileIds={attachedFileIds}
-              onSelectionChange={setAttachedFileIds}
-            />
-
-            {/* AI Model Selector - hidden in shareable mode */}
-            <ModelSelector value={selectedModel} onChange={setSelectedModel} />
-
-            {/* Final XML Preview - shows complete XML after form is filled (hidden in shareable mode) */}
-            <FinalXMLPreview
-              scenarioType={scenario.id}
-              scenarioData={formData}
-              industry={industryContext || null}
-              category={categoryContext || null}
-              strategyValue={strategyValue}
-            />
-
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => setFeedbackDialogOpen(true)}
+                className="gap-2"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Leave Feedback
+              </Button>
               <Button
                 variant="hero"
                 size="lg"
@@ -1018,7 +1094,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
                 {/* Output Feedback */}
                 <OutputFeedback
-                  onFeedbackSubmit={handleFeedbackSubmit}
+                  onFeedbackSubmit={handleOutputFeedbackSubmit}
                   onGenerateReport={handleGenerateReport}
                   tokenUsage={tokenUsage}
                   processingTimeMs={processingTimeMs}
@@ -1049,6 +1125,110 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         feature="AI Procurement Analysis"
         description="Create a free account to get AI-powered insights on your procurement scenarios"
       />
+
+      <Dialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Leave Feedback</DialogTitle>
+            <DialogDescription>
+              Tell us how easy it was to use this scenario form.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!feedbackSubmitted ? (
+            <div className="space-y-5">
+              {/* 1-10 Rating Scale */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Rating</Label>
+                <div className="flex items-center justify-center gap-1">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => setFeedbackRating(value)}
+                      className={cn(
+                        "w-9 h-9 rounded-lg font-medium text-sm transition-all duration-200",
+                        "border border-border hover:border-primary/50",
+                        feedbackRating === value
+                          ? "bg-primary text-primary-foreground border-primary shadow-md"
+                          : feedbackRating > 0 && value <= feedbackRating
+                          ? "bg-primary/20 text-primary border-primary/30"
+                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                      )}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-xs text-muted-foreground">
+                  {feedbackRating === 0
+                    ? "Click to rate from 1 (poor) to 10 (excellent)"
+                    : `${feedbackRating}/10`}
+                </p>
+              </div>
+
+              {/* Feedback Type Selector */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Feedback Type (optional)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "bug", label: "Bug Report", icon: Bug },
+                    { value: "feature", label: "Feature Suggestion", icon: Lightbulb },
+                    { value: "usability", label: "Usability Issue", icon: MousePointerClick },
+                    { value: "data_quality", label: "Data Quality", icon: Database },
+                    { value: "performance", label: "Performance", icon: Gauge },
+                    { value: "visual", label: "Visual / Design", icon: Palette },
+                    { value: "other", label: "Other", icon: HelpCircle },
+                  ].map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => setFeedbackType(feedbackType === value ? "" : value)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                        "border border-border hover:border-primary/50",
+                        feedbackType === value
+                          ? "bg-primary text-primary-foreground border-primary shadow-md"
+                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Optional text feedback */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Comments (optional)</Label>
+                <Textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="What could be improved?"
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <Button
+                onClick={handleFeedbackSubmit}
+                disabled={feedbackRating === 0 || isSubmittingFeedback}
+                className="w-full gap-2"
+              >
+                {isSubmittingFeedback ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                Submit Feedback
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <CheckCircle2 className="w-10 h-10 text-success mx-auto mb-2" />
+              <p className="font-medium">Thank you!</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

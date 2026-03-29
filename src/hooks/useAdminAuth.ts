@@ -23,7 +23,7 @@ export function useAdminAuth() {
   const { data: profileData, isLoading: roleLoading } = useQuery({
     queryKey: ["admin-role", userId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("profiles")
         .select("role, is_super_admin")
         .eq("id", userId!)

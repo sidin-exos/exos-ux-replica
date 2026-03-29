@@ -52,6 +52,125 @@ export type Database = {
           },
         ]
       }
+      chatbot_sessions: {
+        Row: {
+          bot_type: string
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          error_count: number
+          fields_applied: boolean
+          fields_extracted: number
+          id: string
+          message_count: number
+          navigation_action: string | null
+          organization_id: string
+          scenario_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bot_type: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          error_count?: number
+          fields_applied?: boolean
+          fields_extracted?: number
+          id?: string
+          message_count?: number
+          navigation_action?: string | null
+          organization_id: string
+          scenario_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bot_type?: string
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          error_count?: number
+          fields_applied?: boolean
+          fields_extracted?: number
+          id?: string
+          message_count?: number
+          navigation_action?: string | null
+          organization_id?: string
+          scenario_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_cards: {
+        Row: {
+          coaching_tips: string
+          common_failure: string
+          confidence_dependency: string
+          created_at: string
+          enhanced: string
+          example_prompt: string | null
+          financial_impact: string
+          gdpr_guardrail: string
+          id: string
+          min_required: string
+          navigation_guidance: string
+          purpose: string
+          scenario_group: string
+          scenario_id: number
+          scenario_name: string
+          scenario_slug: string
+          trigger_phrases: string
+          updated_at: string
+        }
+        Insert: {
+          coaching_tips: string
+          common_failure: string
+          confidence_dependency: string
+          created_at?: string
+          enhanced: string
+          example_prompt?: string | null
+          financial_impact: string
+          gdpr_guardrail: string
+          id?: string
+          min_required: string
+          navigation_guidance: string
+          purpose: string
+          scenario_group: string
+          scenario_id: number
+          scenario_name: string
+          scenario_slug: string
+          trigger_phrases: string
+          updated_at?: string
+        }
+        Update: {
+          coaching_tips?: string
+          common_failure?: string
+          confidence_dependency?: string
+          created_at?: string
+          enhanced?: string
+          example_prompt?: string | null
+          financial_impact?: string
+          gdpr_guardrail?: string
+          id?: string
+          min_required?: string
+          navigation_guidance?: string
+          purpose?: string
+          scenario_group?: string
+          scenario_id?: number
+          scenario_name?: string
+          scenario_slug?: string
+          trigger_phrases?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           company: string | null
@@ -79,6 +198,93 @@ export type Database = {
           message?: string
           name?: string
           subject?: string
+        }
+        Relationships: []
+      }
+      email_send_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string | null
+          status: string
+          template_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string | null
+          status?: string
+          template_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string | null
+          status?: string
+          template_name?: string | null
+        }
+        Relationships: []
+      }
+      email_send_state: {
+        Row: {
+          auth_email_ttl_minutes: number
+          batch_size: number
+          id: number
+          retry_after_until: string | null
+          send_delay_ms: number
+          transactional_email_ttl_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_unsubscribe_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          token?: string
+          used_at?: string | null
         }
         Relationships: []
       }
@@ -119,6 +325,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "enterprise_trackers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_access_audit: {
+        Row: {
+          accessed_by: string
+          action: string
+          created_at: string
+          error_message: string | null
+          file_id: string | null
+          id: string
+          ip_address: string | null
+          organization_id: string
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          accessed_by: string
+          action: string
+          created_at?: string
+          error_message?: string | null
+          file_id?: string | null
+          id?: string
+          ip_address?: string | null
+          organization_id: string
+          status: string
+          user_agent?: string | null
+        }
+        Update: {
+          accessed_by?: string
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          file_id?: string | null
+          id?: string
+          ip_address?: string | null
+          organization_id?: string
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_access_audit_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "user_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_file_audit_org"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -173,32 +433,260 @@ export type Database = {
       industry_contexts: {
         Row: {
           constraints: string[]
+          constraints_v2: Json | null
           created_at: string
           id: string
           kpis: string[]
+          kpis_v2: Json | null
           name: string
           slug: string
           updated_at: string
         }
         Insert: {
           constraints?: string[]
+          constraints_v2?: Json | null
           created_at?: string
           id?: string
           kpis?: string[]
+          kpis_v2?: Json | null
           name: string
           slug: string
           updated_at?: string
         }
         Update: {
           constraints?: string[]
+          constraints_v2?: Json | null
           created_at?: string
           id?: string
           kpis?: string[]
+          kpis_v2?: Json | null
           name?: string
           slug?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      inflation_alerts: {
+        Row: {
+          acknowledged: boolean
+          acknowledged_at: string | null
+          alert_level: string
+          alert_source: string
+          bridge_scenarios: string[] | null
+          created_at: string
+          driver_id: string
+          id: string
+          organization_id: string
+          scan_id: string | null
+        }
+        Insert: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          alert_level: string
+          alert_source: string
+          bridge_scenarios?: string[] | null
+          created_at?: string
+          driver_id: string
+          id?: string
+          organization_id: string
+          scan_id?: string | null
+        }
+        Update: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          alert_level?: string
+          alert_source?: string
+          bridge_scenarios?: string[] | null
+          created_at?: string
+          driver_id?: string
+          id?: string
+          organization_id?: string
+          scan_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inflation_alerts_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "inflation_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inflation_alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inflation_alerts_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "inflation_event_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inflation_drivers: {
+        Row: {
+          context_summary: string | null
+          created_at: string
+          current_status: string
+          driver_name: string
+          enrichment_cadence: string
+          id: string
+          is_active: boolean
+          last_enriched_at: string | null
+          last_scanned_at: string | null
+          organization_id: string
+          rationale: string | null
+          scan_cadence: string
+          source: string
+          tracker_id: string
+          trigger_description: string | null
+          weight: number | null
+        }
+        Insert: {
+          context_summary?: string | null
+          created_at?: string
+          current_status?: string
+          driver_name: string
+          enrichment_cadence?: string
+          id?: string
+          is_active?: boolean
+          last_enriched_at?: string | null
+          last_scanned_at?: string | null
+          organization_id: string
+          rationale?: string | null
+          scan_cadence?: string
+          source?: string
+          tracker_id: string
+          trigger_description?: string | null
+          weight?: number | null
+        }
+        Update: {
+          context_summary?: string | null
+          created_at?: string
+          current_status?: string
+          driver_name?: string
+          enrichment_cadence?: string
+          id?: string
+          is_active?: boolean
+          last_enriched_at?: string | null
+          last_scanned_at?: string | null
+          organization_id?: string
+          rationale?: string | null
+          scan_cadence?: string
+          source?: string
+          tracker_id?: string
+          trigger_description?: string | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inflation_drivers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inflation_drivers_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "inflation_trackers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inflation_event_scans: {
+        Row: {
+          confidence_level: string | null
+          created_at: string
+          driver_id: string
+          event_detected: boolean
+          id: string
+          organization_id: string
+          scan_date: string
+          source_summary: string | null
+          source_urls: string[] | null
+        }
+        Insert: {
+          confidence_level?: string | null
+          created_at?: string
+          driver_id: string
+          event_detected?: boolean
+          id?: string
+          organization_id: string
+          scan_date?: string
+          source_summary?: string | null
+          source_urls?: string[] | null
+        }
+        Update: {
+          confidence_level?: string | null
+          created_at?: string
+          driver_id?: string
+          event_detected?: boolean
+          id?: string
+          organization_id?: string
+          scan_date?: string
+          source_summary?: string | null
+          source_urls?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inflation_event_scans_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "inflation_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inflation_event_scans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inflation_trackers: {
+        Row: {
+          created_at: string
+          created_by: string
+          driver_count_target: number
+          goods_definition: string
+          id: string
+          is_active: boolean
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          driver_count_target?: number
+          goods_definition: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          driver_count_target?: number
+          goods_definition?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inflation_trackers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       intel_queries: {
         Row: {
@@ -266,6 +754,8 @@ export type Database = {
           citations: Json | null
           confidence_score: number
           content: string
+          country_name: string
+          country_slug: string
           created_at: string
           id: string
           industry_name: string
@@ -284,6 +774,8 @@ export type Database = {
           citations?: Json | null
           confidence_score: number
           content: string
+          country_name?: string
+          country_slug?: string
           created_at?: string
           id?: string
           industry_name: string
@@ -302,6 +794,8 @@ export type Database = {
           citations?: Json | null
           confidence_score?: number
           content?: string
+          country_name?: string
+          country_slug?: string
           created_at?: string
           id?: string
           industry_name?: string
@@ -315,6 +809,111 @@ export type Database = {
           risk_signals?: string[] | null
         }
         Relationships: []
+      }
+      methodology_change_log: {
+        Row: {
+          change_summary: string | null
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          operation: string
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          change_summary?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation: string
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          change_summary?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation?: string
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
+      methodology_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      monitor_reports: {
+        Row: {
+          citations: Json | null
+          created_at: string
+          id: string
+          model_used: string | null
+          organization_id: string
+          processing_time_ms: number | null
+          report_content: string
+          tracker_id: string
+        }
+        Insert: {
+          citations?: Json | null
+          created_at?: string
+          id?: string
+          model_used?: string | null
+          organization_id: string
+          processing_time_ms?: number | null
+          report_content: string
+          tracker_id: string
+        }
+        Update: {
+          citations?: Json | null
+          created_at?: string
+          id?: string
+          model_used?: string | null
+          organization_id?: string
+          processing_time_ms?: number | null
+          report_content?: string
+          tracker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitor_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monitor_reports_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "enterprise_trackers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organizations: {
         Row: {
@@ -342,30 +941,78 @@ export type Database = {
       }
       procurement_categories: {
         Row: {
+          category_group: string | null
           characteristics: string
+          common_failure_modes: Json | null
           created_at: string
+          eu_regulatory_context: string | null
+          exos_scenarios_primary: Json | null
+          exos_scenarios_secondary: Json | null
           id: string
+          key_cost_drivers: Json | null
           kpis: string[]
+          kpis_v2: Json | null
+          kraljic_position: string | null
+          kraljic_rationale: string | null
+          market_structure: string | null
           name: string
+          negotiation_dynamics: string | null
+          price_volatility: string | null
+          procurement_levers: Json | null
+          should_cost_components: string | null
           slug: string
+          spend_type: string | null
+          supply_concentration: string | null
           updated_at: string
         }
         Insert: {
+          category_group?: string | null
           characteristics: string
+          common_failure_modes?: Json | null
           created_at?: string
+          eu_regulatory_context?: string | null
+          exos_scenarios_primary?: Json | null
+          exos_scenarios_secondary?: Json | null
           id?: string
+          key_cost_drivers?: Json | null
           kpis?: string[]
+          kpis_v2?: Json | null
+          kraljic_position?: string | null
+          kraljic_rationale?: string | null
+          market_structure?: string | null
           name: string
+          negotiation_dynamics?: string | null
+          price_volatility?: string | null
+          procurement_levers?: Json | null
+          should_cost_components?: string | null
           slug: string
+          spend_type?: string | null
+          supply_concentration?: string | null
           updated_at?: string
         }
         Update: {
+          category_group?: string | null
           characteristics?: string
+          common_failure_modes?: Json | null
           created_at?: string
+          eu_regulatory_context?: string | null
+          exos_scenarios_primary?: Json | null
+          exos_scenarios_secondary?: Json | null
           id?: string
+          key_cost_drivers?: Json | null
           kpis?: string[]
+          kpis_v2?: Json | null
+          kraljic_position?: string | null
+          kraljic_rationale?: string | null
+          market_structure?: string | null
           name?: string
+          negotiation_dynamics?: string | null
+          price_volatility?: string | null
+          procurement_levers?: Json | null
+          should_cost_components?: string | null
           slug?: string
+          spend_type?: string | null
+          supply_concentration?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -498,6 +1145,7 @@ export type Database = {
         Row: {
           created_at: string
           feedback_text: string | null
+          feedback_type: string | null
           id: string
           rating: number
           scenario_id: string
@@ -505,6 +1153,7 @@ export type Database = {
         Insert: {
           created_at?: string
           feedback_text?: string | null
+          feedback_type?: string | null
           id?: string
           rating: number
           scenario_id: string
@@ -512,11 +1161,80 @@ export type Database = {
         Update: {
           created_at?: string
           feedback_text?: string | null
+          feedback_type?: string | null
           id?: string
           rating?: number
           scenario_id?: string
         }
         Relationships: []
+      }
+      scenario_field_config: {
+        Row: {
+          block_guidance: string | null
+          block_id: string
+          block_label: string
+          created_at: string
+          degraded_guidance: string | null
+          deviation_type: string
+          expected_data_type: string
+          expected_keywords: string[] | null
+          id: string
+          is_required: boolean
+          min_words: number
+          minimum_guidance: string | null
+          optimal_guidance: string | null
+          scenario_id: number
+          scenario_slug: string
+          sub_prompts: Json | null
+          updated_at: string
+        }
+        Insert: {
+          block_guidance?: string | null
+          block_id: string
+          block_label: string
+          created_at?: string
+          degraded_guidance?: string | null
+          deviation_type: string
+          expected_data_type: string
+          expected_keywords?: string[] | null
+          id?: string
+          is_required?: boolean
+          min_words?: number
+          minimum_guidance?: string | null
+          optimal_guidance?: string | null
+          scenario_id: number
+          scenario_slug: string
+          sub_prompts?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          block_guidance?: string | null
+          block_id?: string
+          block_label?: string
+          created_at?: string
+          degraded_guidance?: string | null
+          deviation_type?: string
+          expected_data_type?: string
+          expected_keywords?: string[] | null
+          id?: string
+          is_required?: boolean
+          min_words?: number
+          minimum_guidance?: string | null
+          optimal_guidance?: string | null
+          scenario_id?: number
+          scenario_slug?: string
+          sub_prompts?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_field_config_scenario_slug_fkey"
+            columns: ["scenario_slug"]
+            isOneToOne: false
+            referencedRelation: "coaching_cards"
+            referencedColumns: ["scenario_slug"]
+          },
+        ]
       }
       scenario_file_attachments: {
         Row: {
@@ -594,6 +1312,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppressed_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          metadata: Json | null
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          reason?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string
+        }
+        Relationships: []
       }
       test_prompts: {
         Row: {
@@ -814,6 +1556,10 @@ export type Database = {
       create_shared_report: {
         Args: { p_expires_at: string; p_payload: Json }
         Returns: string
+      }
+      enqueue_email: {
+        Args: { payload: Json; queue_name: string }
+        Returns: undefined
       }
       get_evolutionary_directives: {
         Args: { limit_num?: number }

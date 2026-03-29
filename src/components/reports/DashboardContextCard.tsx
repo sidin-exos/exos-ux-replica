@@ -15,7 +15,7 @@ const DashboardContextCard = ({ dashboardId, config }: DashboardContextCardProps
   const scenarioCount = getDashboardScenarioCount(dashboardId);
 
   return (
-    <div className="mb-4 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm dark:bg-white/5 dark:border-white/10 overflow-hidden">
+    <div className="mb-4 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm dark:bg-card/60 dark:border-white/10 overflow-hidden">
       {/* Header - always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

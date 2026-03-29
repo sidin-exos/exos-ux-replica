@@ -52,7 +52,7 @@ function runGroupAChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasCurrencySymbol(text) && !hasPercentage(text)) {
     checks.push({
       id: "GROUPA_CURRENCY_CONSISTENCY",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No currency symbols or percentages detected. Financial analysis benefits from explicit monetary values.",
       fieldId,
       suggestion: "Include currency amounts (€, $, £) and percentages where applicable.",
@@ -62,7 +62,7 @@ function runGroupAChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasTimeframe(text)) {
     checks.push({
       id: "GROUPA_TIMEFRAME_PRESENT",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No timeframe reference detected. Analytical models need temporal context (years, months, quarters).",
       fieldId,
       suggestion: "Specify the time period: annual figures, contract duration, or planning horizon.",
@@ -93,7 +93,7 @@ function runGroupBChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasStakeholder) {
     checks.push({
       id: "GROUPB_STAKEHOLDER_REFERENCE",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No stakeholder roles mentioned. Workflow outputs improve when key roles are identified.",
       fieldId,
       suggestion: "Reference key roles: project sponsor, approver, procurement lead, etc.",
@@ -114,7 +114,7 @@ function runGroupCChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasRegulatory) {
     checks.push({
       id: "GROUPC_REGULATORY_REFERENCE",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No regulatory or compliance framework referenced. Risk and compliance scenarios benefit from explicit framework mentions.",
       fieldId,
       suggestion: "Mention applicable standards: GDPR, ISO 27001, SOC2, industry-specific regulations.",
@@ -147,7 +147,7 @@ function runGroupDChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasStrategicTerms) {
     checks.push({
       id: "GROUPD_STRATEGIC_SPECIFICITY",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No strategic language detected. Strategic scenarios produce better outputs when goals and objectives are explicit.",
       fieldId,
       suggestion: "State your strategic objective: cost leadership, risk reduction, innovation, market expansion, etc.",
@@ -158,7 +158,7 @@ function runGroupDChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasAlternatives) {
     checks.push({
       id: "GROUPD_ALTERNATIVES_PRESENT",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No alternatives or comparison options mentioned. Strategic analysis is stronger with multiple options to evaluate.",
       fieldId,
       suggestion: "Describe at least 2 options or alternatives being considered.",
@@ -168,7 +168,7 @@ function runGroupDChecks(fieldId: string, text: string): QualityCheck[] {
   if (!hasTimeframe(text)) {
     checks.push({
       id: "GROUPD_TEMPORAL_HORIZON",
-      severity: "INFO",
+      severity: "WARNING",
       message: "No planning horizon specified. Strategic analysis needs a timeframe (1-year, 3-year, 5-year).",
       fieldId,
       suggestion: "Specify your planning horizon and key milestones.",
