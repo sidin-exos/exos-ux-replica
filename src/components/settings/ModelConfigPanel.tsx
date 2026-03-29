@@ -114,7 +114,7 @@ export function ModelConfigPanel() {
               {isTesting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : lastTested ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <CheckCircle2 className="w-4 h-4 text-success" />
               ) : (
                 <AlertCircle className="w-4 h-4 text-muted-foreground" />
               )}
