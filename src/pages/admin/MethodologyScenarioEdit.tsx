@@ -415,13 +415,13 @@ function FieldConfigTab({ fields, slug }: { fields: FieldConfig[]; slug: string 
                   {block.expected_keywords.map((kw, kwIdx) => (
                     <span
                       key={kwIdx}
-                      className="inline-flex items-center gap-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-0.5"
+                      className="inline-flex items-center gap-1 text-xs font-medium bg-info/10 text-info border border-info/30 rounded px-2 py-0.5"
                     >
                       {kw}
                       <button
                         type="button"
                         onClick={() => removeKeyword(idx, kwIdx)}
-                        className="text-blue-300 hover:text-blue-700"
+                        className="text-info hover:text-info"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -551,8 +551,8 @@ const TIER_META: {
 }[] = [
   { key: "block_guidance", label: "Block Guidance", help: "General guidance for test data generation for this block.", color: "text-foreground" },
   { key: "optimal_guidance", label: "Optimal Tier", help: "What complete, high-quality test input looks like.", color: "text-success" },
-  { key: "minimum_guidance", label: "Minimum Tier", help: "What bare-minimum viable input looks like.", color: "text-amber-600" },
-  { key: "degraded_guidance", label: "Degraded Tier", help: "What poor input looks like — triggers failure mode.", color: "text-red-700" },
+  { key: "minimum_guidance", label: "Minimum Tier", help: "What bare-minimum viable input looks like.", color: "text-warning" },
+  { key: "degraded_guidance", label: "Degraded Tier", help: "What poor input looks like — triggers failure mode.", color: "text-destructive" },
 ];
 
 const TIER_DOT_COLORS: Record<string, string> = {
@@ -702,7 +702,7 @@ const MethodologyScenarioEdit = () => {
           </h1>
           <div className="flex flex-wrap items-center gap-2 mt-2">
             <Badge className={`${groupColor} border-0`}>Group {card.scenario_group}</Badge>
-            <Badge variant="outline" className="border-slate-300 text-muted-foreground">
+            <Badge variant="outline" className="border-border text-muted-foreground">
               {card.confidence_dependency}
             </Badge>
             <span className="text-sm text-muted-foreground">#{card.scenario_id}</span>
@@ -714,19 +714,19 @@ const MethodologyScenarioEdit = () => {
           <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto">
             <TabsTrigger
               value="coaching"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
             >
               Coaching Card
             </TabsTrigger>
             <TabsTrigger
               value="fields"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
             >
               Field Configuration
             </TabsTrigger>
             <TabsTrigger
               value="testdata"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
             >
               Test Data Guidance
             </TabsTrigger>
