@@ -133,7 +133,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">{t.name}</span>
-                <span className="text-xs text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 rounded px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 shrink-0">{typeMeta?.label}</span>
+                <span className="text-xs text-highlight border border-highlight/30 rounded px-1.5 py-0.5 bg-highlight/10 shrink-0">{typeMeta?.label}</span>
                 <Badge variant={statusVariant[t.status] ?? "secondary"} className="capitalize text-xs shrink-0">
                   {t.status}
                 </Badge>

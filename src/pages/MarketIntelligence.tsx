@@ -125,11 +125,11 @@ const MarketIntelligence = () => {
 
         <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1">
-            <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+            <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
               Ad-hoc Queries
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-iris data-[state=active]:text-iris-foreground data-[state=active]:shadow-md">
               <Database className="h-4 w-4" />
               Knowledge Base
             </TabsTrigger>

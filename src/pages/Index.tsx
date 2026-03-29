@@ -60,17 +60,17 @@ const CATEGORY_ICONS: Record<Scenario["category"], LucideIcon> = {
 };
 
 const CATEGORY_ICON_COLOR: Record<Scenario["category"], string> = {
-  analysis: "text-blue-500",
-  planning: "text-amber-500",
+  analysis: "text-info",
+  planning: "text-warning",
   risk: "text-destructive",
-  documentation: "text-purple-500",
+  documentation: "text-iris",
 };
 
 const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
-  analysis: "bg-blue-500/15 text-blue-500",
-  planning: "bg-amber-500/15 text-amber-500",
+  analysis: "bg-info/15 text-info",
+  planning: "bg-warning/15 text-warning",
   risk: "bg-destructive/15 text-destructive",
-  documentation: "bg-purple-500/15 text-purple-500",
+  documentation: "bg-iris/15 text-iris",
 };
 
 const Index = () => {

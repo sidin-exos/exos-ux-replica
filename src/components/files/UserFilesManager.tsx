@@ -45,9 +45,9 @@ const FILE_TYPE_ICONS: Record<string, typeof FileText> = {
 };
 
 const FILE_TYPE_COLORS: Record<string, string> = {
-  xlsx: "text-green-500",
-  docx: "text-blue-500",
-  pdf: "text-red-500",
+  xlsx: "text-success",
+  docx: "text-info",
+  pdf: "text-destructive",
 };
 
 const UserFilesManager = () => {
