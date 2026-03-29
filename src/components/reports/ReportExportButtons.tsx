@@ -64,6 +64,8 @@ interface ReportExportButtonsProps {
   formData?: Record<string, string>;
   timestamp?: string;
   selectedDashboards?: DashboardType[];
+  evaluationScore?: number | null;
+  evaluationConfidence?: string | null;
 }
 
 const ReportExportButtons = ({
@@ -72,6 +74,8 @@ const ReportExportButtons = ({
   formData = {},
   timestamp = new Date().toISOString(),
   selectedDashboards = [],
+  evaluationScore,
+  evaluationConfidence,
 }: ReportExportButtonsProps) => {
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -241,6 +245,8 @@ const ReportExportButtons = ({
         formData={formData}
         timestamp={timestamp}
         selectedDashboards={selectedDashboards}
+        evaluationScore={evaluationScore}
+        evaluationConfidence={evaluationConfidence}
       />
 
       {/* Share Link Dialog */}
