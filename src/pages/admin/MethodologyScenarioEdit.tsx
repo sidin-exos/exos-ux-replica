@@ -38,18 +38,18 @@ import type { CoachingCard, FieldConfig } from "@/hooks/useMethodologyAdmin";
 // Shared style constants
 // ---------------------------------------------------------------------------
 
-const INPUT_CLS = "bg-white border-slate-200 rounded-md focus-visible:ring-teal-600";
-const TEXTAREA_CLS = "bg-white border-slate-200 rounded-md focus-visible:ring-teal-600";
-const LABEL_CLS = "text-sm font-semibold text-slate-900";
-const HELP_CLS = "text-xs text-slate-400 mt-1";
-const CARD_CLS = "bg-white border border-slate-200 rounded-lg shadow-none";
+const INPUT_CLS = "bg-card border-border rounded-md focus-visible:ring-primary";
+const TEXTAREA_CLS = "bg-card border-border rounded-md focus-visible:ring-primary";
+const LABEL_CLS = "text-sm font-semibold text-foreground";
+const HELP_CLS = "text-xs text-muted-foreground mt-1";
+const CARD_CLS = "bg-card border border-border rounded-lg shadow-none";
 
 const GROUP_COLORS: Record<string, string> = {
-  A: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  B: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  C: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-  D: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  E: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
+  A: "bg-info/15 text-info dark:bg-info/30 dark:text-info",
+  B: "bg-success/15 text-success dark:bg-success/30 dark:text-success",
+  C: "bg-copper/15 text-copper dark:bg-copper/30 dark:text-copper",
+  D: "bg-iris/15 text-iris dark:bg-iris/30 dark:text-iris",
+  E: "bg-primary/15 text-primary dark:bg-primary/30 dark:text-primary",
 };
 
 interface SubPrompt {
@@ -75,7 +75,7 @@ function StickySaveBar({
 }) {
   return (
     <div className="sticky bottom-6 z-10 flex justify-end pointer-events-none">
-      <div className="pointer-events-auto bg-white/80 backdrop-blur-sm border border-slate-200 rounded-lg px-4 py-3 shadow-lg">
+      <div className="pointer-events-auto bg-card/80 backdrop-blur-sm border border-border rounded-lg px-4 py-3 shadow-lg">
         <Button
           onClick={onClick}
           disabled={isPending}
@@ -84,7 +84,7 @@ function StickySaveBar({
           {isPending ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
           ) : saved ? (
-            <Check className="w-4 h-4 mr-2 text-green-300" />
+            <Check className="w-4 h-4 mr-2 text-success" />
           ) : (
             <Save className="w-4 h-4 mr-2" />
           )}
@@ -177,10 +177,10 @@ function CoachingCardTab({ card, slug }: { card: CoachingCard; slug: string }) {
         return (
           <div key={field.key}>
             {showDivider && (
-              <Separator className="my-2 bg-slate-200" />
+              <Separator className="my-2 bg-muted" />
             )}
             {showSectionHeader && (
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
                 {SECTION_LABELS[field.section]}
               </p>
             )}
@@ -329,10 +329,10 @@ function FieldConfigTab({ fields, slug }: { fields: FieldConfig[]; slug: string 
         <Card key={block.id} className={CARD_CLS}>
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
-              <CardTitle className="text-base font-semibold text-slate-800">
+              <CardTitle className="text-base font-semibold text-foreground">
                 {block.block_label}
               </CardTitle>
-              <span className="text-xs text-slate-400 font-mono">{block.block_id}</span>
+              <span className="text-xs text-muted-foreground font-mono">{block.block_id}</span>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -452,12 +452,12 @@ function FieldConfigTab({ fields, slug }: { fields: FieldConfig[]; slug: string 
 
             {/* Sub-Prompts (only for deviation_type 1 or 1H) */}
             {(block.deviation_type === "1" || block.deviation_type === "1H") && (
-              <div className="space-y-3 border-t border-slate-200 pt-5">
+              <div className="space-y-3 border-t border-border pt-5">
                 <Label className={LABEL_CLS}>Sub-Prompts</Label>
                 {block.sub_prompts.map((sp, spIdx) => (
                   <div
                     key={spIdx}
-                    className="flex items-start gap-3 p-3 rounded-md border border-slate-200 bg-slate-50"
+                    className="flex items-start gap-3 p-3 rounded-md border border-border bg-background"
                   >
                     <div className="flex-1 space-y-2">
                       <Input
@@ -477,7 +477,7 @@ function FieldConfigTab({ fields, slug }: { fields: FieldConfig[]; slug: string 
                               updateSubPrompt(idx, spIdx, { is_critical: checked === true })
                             }
                           />
-                          <Label htmlFor={`crit-${block.id}-${spIdx}`} className="text-xs text-slate-600">
+                          <Label htmlFor={`crit-${block.id}-${spIdx}`} className="text-xs text-muted-foreground">
                             Critical
                           </Label>
                         </div>
@@ -503,7 +503,7 @@ function FieldConfigTab({ fields, slug }: { fields: FieldConfig[]; slug: string 
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="shrink-0 text-slate-400 hover:text-destructive"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
                       onClick={() => removeSubPrompt(idx, spIdx)}
                     >
                       <X className="w-4 h-4" />
@@ -549,8 +549,8 @@ const TIER_META: {
   help: string;
   color: string;
 }[] = [
-  { key: "block_guidance", label: "Block Guidance", help: "General guidance for test data generation for this block.", color: "text-slate-900" },
-  { key: "optimal_guidance", label: "Optimal Tier", help: "What complete, high-quality test input looks like.", color: "text-green-700" },
+  { key: "block_guidance", label: "Block Guidance", help: "General guidance for test data generation for this block.", color: "text-foreground" },
+  { key: "optimal_guidance", label: "Optimal Tier", help: "What complete, high-quality test input looks like.", color: "text-success" },
   { key: "minimum_guidance", label: "Minimum Tier", help: "What bare-minimum viable input looks like.", color: "text-amber-600" },
   { key: "degraded_guidance", label: "Degraded Tier", help: "What poor input looks like — triggers failure mode.", color: "text-red-700" },
 ];
@@ -606,10 +606,10 @@ function TestDataTab({ fields, slug }: { fields: FieldConfig[]; slug: string }) 
         <Card key={block.id} className={CARD_CLS}>
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
-              <CardTitle className="text-base font-semibold text-slate-800">
+              <CardTitle className="text-base font-semibold text-foreground">
                 {block.block_label}
               </CardTitle>
-              <span className="text-xs text-slate-400 font-mono">{block.block_id}</span>
+              <span className="text-xs text-muted-foreground font-mono">{block.block_id}</span>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -654,7 +654,7 @@ const MethodologyScenarioEdit = () => {
 
   if (cardLoading || fieldsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -662,7 +662,7 @@ const MethodologyScenarioEdit = () => {
 
   if (!card) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="container max-w-6xl py-12">
           <p className="text-muted-foreground">Scenario not found.</p>
@@ -677,56 +677,56 @@ const MethodologyScenarioEdit = () => {
   const groupColor = GROUP_COLORS[card.scenario_group] ?? "";
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container max-w-6xl py-12 space-y-8">
         {/* Breadcrumb */}
         <Breadcrumb>
-          <BreadcrumbList className="text-[13px] text-slate-400">
+          <BreadcrumbList className="text-[13px] text-muted-foreground">
             <BreadcrumbItem>
-              <BreadcrumbLink className="cursor-pointer hover:text-slate-600" onClick={() => navigate("/admin/methodology")}>
+              <BreadcrumbLink className="cursor-pointer hover:text-muted-foreground" onClick={() => navigate("/admin/methodology")}>
                 Methodology
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-slate-600">{card.scenario_name}</BreadcrumbPage>
+              <BreadcrumbPage className="text-muted-foreground">{card.scenario_name}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
 
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {card.scenario_name}
           </h1>
           <div className="flex flex-wrap items-center gap-2 mt-2">
             <Badge className={`${groupColor} border-0`}>Group {card.scenario_group}</Badge>
-            <Badge variant="outline" className="border-slate-300 text-slate-600">
+            <Badge variant="outline" className="border-slate-300 text-muted-foreground">
               {card.confidence_dependency}
             </Badge>
-            <span className="text-sm text-slate-400">#{card.scenario_id}</span>
+            <span className="text-sm text-muted-foreground">#{card.scenario_id}</span>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="coaching">
-          <TabsList className="w-full justify-start bg-transparent border-b border-slate-200 rounded-none p-0 h-auto">
+          <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto">
             <TabsTrigger
               value="coaching"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-slate-900 data-[state=active]:font-semibold text-slate-500 px-4 pb-3 pt-2"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
             >
               Coaching Card
             </TabsTrigger>
             <TabsTrigger
               value="fields"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-slate-900 data-[state=active]:font-semibold text-slate-500 px-4 pb-3 pt-2"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
             >
               Field Configuration
             </TabsTrigger>
             <TabsTrigger
               value="testdata"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-slate-900 data-[state=active]:font-semibold text-slate-500 px-4 pb-3 pt-2"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground data-[state=active]:font-semibold text-muted-foreground px-4 pb-3 pt-2"
             >
               Test Data Guidance
             </TabsTrigger>
