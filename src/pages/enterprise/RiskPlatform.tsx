@@ -114,7 +114,7 @@ const RiskPlatform = () => {
             <Activity className="w-6 h-6 text-destructive" />
           </div>
           <div>
-            <h1 className="text-2xl font-display font-semibold text-foreground">
+            <h1 className="text-2xl exos-page-title">
               Dynamic Monitoring Module
             </h1>
           </div>
