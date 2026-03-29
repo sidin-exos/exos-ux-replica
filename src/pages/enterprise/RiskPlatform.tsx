@@ -3,15 +3,14 @@ import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Activity, Users, TrendingDown, Layers } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
 import TrackerList from "@/components/enterprise/TrackerList";
 import MonitorDetailView from "@/components/enterprise/MonitorDetailView";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
-import { useEnterpriseTrackers, MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
-import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
+import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
 
 const PRINCIPLES = [
   {
