@@ -196,7 +196,11 @@ export function IndustryContextEditor({
   }).length + overrides.customKpis.length;
 
   const blockerCount = hasV2Constraints
-    ? industry.constraints_v2!.filter(c => c.blocker).length
+    ? industry.constraints_v2!.filter((c, i) => {
+        const legacyText = industry.constraints[i] || c.label;
+        const key = `${i}-${legacyText.slice(0, 20)}`;
+        return c.blocker && overrides.enabledConstraints[key] !== false;
+      }).length
     : 0;
 
   return (
