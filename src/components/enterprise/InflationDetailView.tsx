@@ -19,7 +19,7 @@ interface InflationDetailViewProps {
 const STATUS_COLOR: Record<DriverStatus, string> = {
   deteriorating: "text-red-600 dark:text-red-400",
   improving: "text-emerald-600 dark:text-emerald-400",
-  stable: "text-amber-600 dark:text-amber-400",
+  stable: "text-sky-600 dark:text-sky-400",
 };
 
 const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
