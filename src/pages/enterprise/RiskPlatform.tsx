@@ -1,8 +1,11 @@
 import { useState, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { Activity, Users, TrendingDown, Layers } from "lucide-react";
+import { Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
+import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
 
 import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
@@ -12,23 +15,8 @@ import MonitorDetailView from "@/components/enterprise/MonitorDetailView";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
 import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
 
-const PRINCIPLES = [
-  {
-    icon: Users,
-    title: "Human-in-the-Loop by Design",
-    description: "Decision-support, not decision-making. Every output is framed as information for consideration — the final judgement always belongs to the human.",
-  },
-  {
-    icon: TrendingDown,
-    title: "Dynamics over Absolutes",
-    description: "The system is designed to save user's time by flagging rising risks for further analysis and decision-making.",
-  },
-  {
-    icon: Layers,
-    title: "Continuous Modelling, Not Advice",
-    description: "The module monitors and models possible risk events. It does not prescribe action plans. When deep analysis is needed, it bridges to point-in-time scenarios.",
-  },
-];
+
+
 
 const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
@@ -91,31 +79,29 @@ const RiskPlatform = () => {
           </div>
         </div>
 
-        {/* Methodology overview */}
+        {/* Monitoring Types — Tabs */}
         <Card className="border-primary/20 bg-primary/[0.03]">
-          <CardContent className="pt-5 pb-4 space-y-5">
-            <div>
-              <h2 className="text-base font-semibold text-foreground">Methodology</h2>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-3xl">
-                The Dynamic Risk Monitoring is intended to save your time by constantly analysing publicly available information linked to risk scenarios set by user, flagging focus areas for futher investigation and decision-making. 
-              </p>
-            </div>
-
-            {/* 3 Principles */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              {PRINCIPLES.map((p) => (
-                <div key={p.title} className="flex gap-3 items-start">
-                  <div className="p-1.5 rounded-md bg-destructive/10 shrink-0 mt-0.5">
-                    <p.icon className="w-4 h-4 text-destructive" />
+          <CardContent className="pt-5 pb-4 space-y-4">
+            <h2 className="text-base font-semibold text-foreground">Monitoring Scenarios</h2>
+            <Tabs defaultValue="DM-1" className="w-full">
+              <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50">
+                {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
+                  <TabsTrigger key={key} value={key} className="text-xs flex-1 min-w-[120px]">
+                    {key} — {meta.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
+                <TabsContent key={key} value={key} className="mt-3">
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-foreground">{meta.label}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {meta.description}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{p.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>
-                  </div>
-                </div>
+                </TabsContent>
               ))}
-            </div>
-
+            </Tabs>
           </CardContent>
         </Card>
 
