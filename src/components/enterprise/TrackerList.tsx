@@ -92,10 +92,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
             <CardHeader className="flex-row items-start justify-between gap-2 space-y-0 pb-2">
               <div className="min-w-0">
                 <CardTitle className="text-base leading-snug group-hover:text-primary transition-colors">{t.name}</CardTitle>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <Badge variant="secondary" className="text-[10px]">{monitorType}</Badge>
-                  <span className="text-[10px] text-muted-foreground">{typeMeta?.label}</span>
-                </div>
+                <span className="text-[10px] text-muted-foreground mt-1">{typeMeta?.label}</span>
               </div>
               <Badge variant={statusVariant[t.status] ?? "secondary"} className="shrink-0 capitalize">
                 {t.status}
