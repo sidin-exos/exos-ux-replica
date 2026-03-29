@@ -1,43 +1,88 @@
 /**
- * Enterprise print-ready theme for PDF dashboard visuals (server-side).
- * White background, black text, minimal color — McKinsey/BCG quality.
+ * EXOS Branded PDF theme (server-side) — dual light/dark mode.
+ * Matches EXOS_Report_Template_Light.pdf and EXOS_Report_Template_Dark.pdf.
  */
 
 import { StyleSheet } from "npm:@react-pdf/renderer@4";
 import type { PdfThemeMode } from "./types.ts";
 
-/** Enterprise print palette — used for ALL PDF output */
+/** Light mode palette — sage page bg, white cards */
 export const lightColors = {
-  primary: "#1B2A4A",       // navy — headings only
-  primaryDark: "#162038",   // darker navy
-  background: "#FFFFFF",    // white — always
-  surface: "#F8FAFC",       // off-white — KPI backgrounds
-  surfaceLight: "#F9FAFB",  // ice gray — alternating rows
-  text: "#1A1A1A",          // near-black — body text
-  textMuted: "#6B7280",     // medium gray — labels, captions
-  success: "#15803D",       // dark green — positive values
-  warning: "#B45309",       // dark amber — caution values
-  destructive: "#B91C1C",   // dark red — negative/risk values
-  border: "rgba(229, 231, 235, 0.6)",  // semi-transparent borders
-  badgeText: "#FFFFFF",     // white text on colored badges
-  option2: "#94A3B8",       // slate — secondary chart color
-  option3: "#6B7280",       // gray — tertiary chart color
+  primary: "#3D7A6E",
+  primaryDark: "#2D5F55",
+  background: "#E8F0EA",
+  surface: "#FFFFFF",
+  surfaceLight: "#F3F7F4",
+  text: "#1A1A1A",
+  textMuted: "#6B7280",
+  textOnPrimary: "#FFFFFF",
+  success: "#15803D",
+  warning: "#B45309",
+  destructive: "#B91C1C",
+  border: "rgba(229, 231, 235, 0.6)",
+  badgeText: "#FFFFFF",
+  option2: "#94A3B8",
+  option3: "#6B7280",
+  accent1: "#2D5F55",
+  accent2: "#3B8574",
+  accent3: "#EAB308",
+  accent4: "#DC7548",
+  riskCritical: "#B91C1C",
+  riskHigh: "#DC7548",
+  riskMedium: "#3B82F6",
+  stripe1: "#3D7A6E",
+  stripe2: "#3B82F6",
+  stripe3: "#22C55E",
+  stripe4: "#EAB308",
+  stripe5: "#DC7548",
+  stripe6: "#DC2626",
 } as const;
 
-/** Dark colors = same enterprise palette (kept for API compat) */
-export const colors = { ...lightColors } as const;
+/** Dark mode palette — charcoal bg, dark cards */
+export const darkColors = {
+  primary: "#4DB6AC",
+  primaryDark: "#3D9B91",
+  background: "#1C2B3A",
+  surface: "#243447",
+  surfaceLight: "#2A3B4E",
+  text: "#E2E8F0",
+  textMuted: "#94A3B8",
+  textOnPrimary: "#FFFFFF",
+  success: "#4ADE80",
+  warning: "#FBBF24",
+  destructive: "#F87171",
+  border: "rgba(148, 163, 184, 0.25)",
+  badgeText: "#FFFFFF",
+  option2: "#64748B",
+  option3: "#475569",
+  accent1: "#4DB6AC",
+  accent2: "#81C784",
+  accent3: "#FFD54F",
+  accent4: "#FF8A65",
+  riskCritical: "#F87171",
+  riskHigh: "#FF8A65",
+  riskMedium: "#60A5FA",
+  stripe1: "#4DB6AC",
+  stripe2: "#60A5FA",
+  stripe3: "#4ADE80",
+  stripe4: "#FBBF24",
+  stripe5: "#FF8A65",
+  stripe6: "#F87171",
+} as const;
 
-export type PdfColorSet = { [K in keyof typeof colors]: string };
+export const colors = lightColors;
 
-export function getPdfColors(_mode?: PdfThemeMode): PdfColorSet {
-  return lightColors;
+export type PdfColorSet = { [K in keyof typeof lightColors]: string };
+
+export function getPdfColors(mode?: PdfThemeMode): PdfColorSet {
+  return mode === "dark" ? darkColors : lightColors;
 }
 
 function buildStyles(c: PdfColorSet) {
   return StyleSheet.create({
-    // ─── Reusable primitives ───────────────────────────────────────────────
+    // Reusable primitives
     card: {
-      backgroundColor: c.background,
+      backgroundColor: c.surface,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
       padding: 12,
@@ -97,10 +142,10 @@ function buildStyles(c: PdfColorSet) {
       borderTopColor: c.border,
     },
 
-    // ─── Dashboard card structure ──────────────────────────────────────────
+    // Dashboard card structure
     dashboardSection: { marginBottom: 16 },
     dashboardCard: {
-      backgroundColor: c.background,
+      backgroundColor: c.surface,
       padding: 14,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
@@ -130,7 +175,7 @@ function buildStyles(c: PdfColorSet) {
       lineHeight: 1.3,
     },
 
-    // ─── Bar charts ────────────────────────────────────────────────────────
+    // Bar charts
     barContainer: { marginTop: 8 },
     barRow: { flexDirection: "row", alignItems: "center", marginBottom: 5 },
     barLabel: { width: 100, fontSize: 9, color: c.text },
@@ -152,7 +197,7 @@ function buildStyles(c: PdfColorSet) {
       textAlign: "right",
     },
 
-    // ─── Tables / matrices ─────────────────────────────────────────────────
+    // Tables / matrices
     matrixContainer: { marginTop: 8 },
     matrixRow: {
       flexDirection: "row",
@@ -184,7 +229,7 @@ function buildStyles(c: PdfColorSet) {
       color: c.badgeText,
     },
 
-    // ─── Tornado / sensitivity charts ──────────────────────────────────────
+    // Tornado / sensitivity charts
     tornadoRow: { flexDirection: "row", alignItems: "center", marginBottom: 7 },
     tornadoLabel: { width: 90, fontSize: 9, color: c.text },
     tornadoChart: { flex: 1, flexDirection: "row", alignItems: "center", height: 14 },
@@ -199,7 +244,7 @@ function buildStyles(c: PdfColorSet) {
       textAlign: "right",
     },
 
-    // ─── Legend ────────────────────────────────────────────────────────────
+    // Legend
     legend: {
       flexDirection: "row",
       justifyContent: "center",
@@ -213,7 +258,7 @@ function buildStyles(c: PdfColorSet) {
     legendDot: { width: 8, height: 8, marginRight: 4 },
     legendText: { fontSize: 8, color: c.textMuted },
 
-    // ─── Stats row ─────────────────────────────────────────────────────────
+    // Stats row
     statsRow: {
       flexDirection: "row",
       justifyContent: "space-around",
@@ -235,13 +280,13 @@ function buildStyles(c: PdfColorSet) {
       color: c.primary,
     },
 
-    // ─── List rows ─────────────────────────────────────────────────────────
+    // List rows
     listRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 5 },
     listDot: { width: 8, height: 8, marginRight: 8, marginTop: 1 },
     listText: { flex: 1, fontSize: 9, color: c.text },
     listMeta: { fontSize: 8, color: c.textMuted, marginLeft: 8 },
 
-    // ─── Kraljic 2×2 quadrant grid ─────────────────────────────────────────
+    // Kraljic 2×2 quadrant grid
     quadrantGrid: {
       marginTop: 8,
       borderWidth: 1,
@@ -271,8 +316,9 @@ function buildStyles(c: PdfColorSet) {
 }
 
 export const lightStyles = buildStyles(lightColors);
+export const darkStylesBuilt = buildStyles(darkColors);
 export const styles = lightStyles;
 
-export function getPdfStyles(_mode?: PdfThemeMode) {
-  return lightStyles;
+export function getPdfStyles(mode?: PdfThemeMode) {
+  return mode === "dark" ? darkStylesBuilt : lightStyles;
 }
