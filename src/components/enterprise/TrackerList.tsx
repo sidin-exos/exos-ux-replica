@@ -116,7 +116,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-2">
       {trackers.map((t) => {
         const params = t.parameters as MonitorParameters;
         const monitorType = (params?.monitor_type ?? "DM-2") as MonitorType;
@@ -124,56 +124,54 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
         const latest = latestReports[t.id];
 
         return (
-          <Card
+          <div
             key={t.id}
-            className="cursor-pointer hover:border-primary/40 transition-colors group"
+            className="flex items-center gap-4 p-3 rounded-md border border-border/50 hover:border-primary/40 cursor-pointer transition-colors group"
             onClick={() => onSelectTracker?.(t)}
           >
-            <CardHeader className="flex-row items-start justify-between gap-2 space-y-0 pb-2">
-              <div className="min-w-0">
-                <CardTitle className="text-base leading-snug group-hover:text-primary transition-colors">{t.name}</CardTitle>
-                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 mt-1 border border-emerald-300 dark:border-emerald-700 rounded px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 inline-block">{typeMeta?.label}</span>
+            {/* Name + type */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">{t.name}</span>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 rounded px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 shrink-0">{typeMeta?.label}</span>
+                <Badge variant={statusVariant[t.status] ?? "secondary"} className="capitalize text-[10px] shrink-0">
+                  {t.status}
+                </Badge>
               </div>
-              <Badge variant={statusVariant[t.status] ?? "secondary"} className="shrink-0 capitalize">
-                {t.status}
-              </Badge>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {/* Latest report summary */}
+              {latest && (
+                <p className="text-xs text-muted-foreground leading-relaxed mt-1 line-clamp-1">
+                  {latest.summary}
+                </p>
+              )}
+            </div>
+
+            {/* Last update */}
+            <div className="text-right shrink-0 hidden sm:block">
               {latest ? (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
-                    {latest.summary}
-                  </p>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
-                    <FileText className="w-3 h-3" />
-                    Last update: {format(new Date(latest.date), "MMM d, yyyy 'at' HH:mm")}
-                  </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
+                  <FileText className="w-3 h-3" />
+                  {format(new Date(latest.date), "MMM d, yyyy")}
                 </div>
               ) : (
-                <p className="text-[10px] text-muted-foreground/50 italic">No reports yet</p>
+                <span className="text-[10px] text-muted-foreground/50 italic">No reports</span>
               )}
+            </div>
 
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-muted-foreground">
-                  Created {format(new Date(t.created_at), "MMM d, yyyy")}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs gap-1"
-                    disabled={scanningId === t.id}
-                    onClick={(e) => handleScanNow(e, t)}
-                  >
-                    {scanningId === t.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                    Scan Now
-                  </Button>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                disabled={scanningId === t.id}
+                onClick={(e) => handleScanNow(e, t)}
+              >
+                {scanningId === t.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                Scan Now
+              </Button>
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            </div>
+          </div>
         );
       })}
     </div>
