@@ -169,19 +169,19 @@ function TemplatePreviewContent({ scenarioType }: { scenarioType: string }) {
           <p className="text-xs font-medium text-muted-foreground">Chain-of-Experts</p>
           <ul className="text-xs space-y-1">
             <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0" />
               <span>1. Auditor → Verify data</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0" />
               <span>2. Optimizer → Find savings</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0" />
               <span>3. Strategist → Plan actions</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0" />
               <span>4. Validator → Cross-check</span>
             </li>
           </ul>

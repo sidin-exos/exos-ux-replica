@@ -18,11 +18,11 @@ import { useCoachingCards } from "@/hooks/useMethodologyAdmin";
 // ---------------------------------------------------------------------------
 
 const GROUP_META: Record<string, { label: string; color: string }> = {
-  A: { label: "Analytical Value", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
-  B: { label: "Workflow & Documentation", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-  C: { label: "Reliability & Compliance", color: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200" },
-  D: { label: "Strategy", color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200" },
-  E: { label: "Real-Time Knowledge", color: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200" },
+  A: { label: "Analytical Value", color: "bg-info/15 text-info dark:bg-info/30 dark:text-info" },
+  B: { label: "Workflow & Documentation", color: "bg-success/15 text-success dark:bg-success/30 dark:text-success" },
+  C: { label: "Reliability & Compliance", color: "bg-copper/15 text-copper dark:bg-copper/30 dark:text-copper" },
+  D: { label: "Strategy", color: "bg-iris/15 text-iris dark:bg-iris/30 dark:text-iris" },
+  E: { label: "Real-Time Knowledge", color: "bg-primary/15 text-primary dark:bg-primary/30 dark:text-primary" },
 };
 
 const CONNECTION_MAP = [
@@ -57,7 +57,7 @@ const MethodologyDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -72,14 +72,14 @@ const MethodologyDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container max-w-6xl py-12 space-y-10">
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Methodology Management</h1>
-            <p className="text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Methodology Management</h1>
+            <p className="text-muted-foreground mt-1">
               View and edit coaching cards, field configs, and global settings.
             </p>
           </div>
@@ -96,7 +96,7 @@ const MethodologyDashboard = () => {
         {/* Connection Map */}
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Connection Map</h2>
-          <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="rounded-lg border border-border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -142,7 +142,7 @@ const MethodologyDashboard = () => {
                   {groupCards.map((card) => (
                     <div
                       key={card.scenario_slug}
-                      className="bg-white border border-slate-200 rounded-lg p-5 group hover:border-primary/30 transition-all duration-300 cursor-pointer"
+                      className="bg-card border border-border rounded-lg p-5 group hover:border-primary/30 transition-all duration-300 cursor-pointer"
                       onClick={() => navigate(`/admin/methodology/${card.scenario_slug}`)}
                     >
                       <div className="flex items-start justify-between mb-2">

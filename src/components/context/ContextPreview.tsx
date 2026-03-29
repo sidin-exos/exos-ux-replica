@@ -173,7 +173,7 @@ export function ContextPreview({
                       {category.characteristics}
                     </p>
                     {category.eu_regulatory_context && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400">
+                      <p className="text-xs text-info">
                         🇪🇺 {category.eu_regulatory_context}
                       </p>
                     )}

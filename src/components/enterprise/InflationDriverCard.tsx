@@ -3,8 +3,8 @@ import { CalendarClock, Clock, Radio } from "lucide-react";
 import type { InflationDriver, DriverStatus } from "@/hooks/useInflationTrackers";
 
 const STATUS_META: Record<DriverStatus, { label: string; className: string }> = {
-  improving: { label: "Improving", className: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" },
-  stable: { label: "Stable", className: "bg-sky-500/15 text-sky-700 border-sky-500/30 dark:text-sky-400" },
+  improving: { label: "Improving", className: "bg-highlight/15 text-highlight border-highlight/30" },
+  stable: { label: "Stable", className: "bg-info/15 text-info border-info/30" },
   deteriorating: { label: "Deteriorating", className: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 

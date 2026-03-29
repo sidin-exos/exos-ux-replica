@@ -38,40 +38,40 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             }
             if (text === "improving" || text === "growing" || text === "positive") {
               return (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-success/10 text-success text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
                   {children}
                 </span>
               );
             }
             if (text === "stable" || text === "neutral" || text === "unchanged") {
               return (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-warning/10 text-warning text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-warning" />
                   {children}
                 </span>
               );
             }
             if (text === "critical" || text === "high risk" || text === "severe") {
               return (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-red-600/10 text-red-600 dark:text-red-400 text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-destructive/10 text-destructive text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
                   {children}
                 </span>
               );
             }
             if (text === "moderate" || text === "medium" || text === "watch") {
               return (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-copper/10 text-copper text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-copper" />
                   {children}
                 </span>
               );
             }
             if (text === "low" || text === "minimal" || text === "low risk") {
               return (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-success/10 text-success text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
                   {children}
                 </span>
               );

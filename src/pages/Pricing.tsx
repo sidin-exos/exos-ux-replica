@@ -267,7 +267,7 @@ const Pricing = () => {
                           {typeof val === "string" ? (
                             <span className="text-sm text-foreground">{val}</span>
                           ) : val ? (
-                            <Check className="w-5 h-5 text-green-500 mx-auto" />
+                            <Check className="w-5 h-5 text-success mx-auto" />
                           ) : (
                             <Minus className="w-5 h-5 text-muted-foreground mx-auto" />
                           )}
