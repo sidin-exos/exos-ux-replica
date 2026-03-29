@@ -61,10 +61,10 @@ function DirectionIcon({ direction }: { direction?: string }) {
   if (!direction) return null;
   const d = direction.toLowerCase();
   if (d.includes('min') || d.includes('decrease') || d.includes('lower') || d.includes('↓')) {
-    return <TrendingDown className="h-3 w-3 text-green-500 shrink-0" />;
+    return <TrendingDown className="h-3 w-3 text-success shrink-0" />;
   }
   if (d.includes('max') || d.includes('increase') || d.includes('higher') || d.includes('↑')) {
-    return <TrendingUp className="h-3 w-3 text-blue-500 shrink-0" />;
+    return <TrendingUp className="h-3 w-3 text-info shrink-0" />;
   }
   return <Minus className="h-3 w-3 text-muted-foreground shrink-0" />;
 }
@@ -72,9 +72,9 @@ function DirectionIcon({ direction }: { direction?: string }) {
 function TierBadge({ tier }: { tier?: string }) {
   if (!tier) return null;
   const colors: Record<string, string> = {
-    T1: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    T2: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-    T3: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    T1: "bg-destructive/15 text-destructive",
+    T2: "bg-warning/15 text-warning",
+    T3: "bg-info/15 text-info",
   };
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${colors[tier] || colors.T3}`}>
@@ -240,7 +240,7 @@ export function IndustryContextEditor({
             {/* Regulatory Constraints Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-orange-500" />
+                <Shield className="h-4 w-4 text-copper" />
                 <Label className="font-medium">Regulatory Constraints</Label>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -359,7 +359,7 @@ export function IndustryContextEditor({
             {/* Performance KPIs Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-green-500" />
+                <Target className="h-4 w-4 text-success" />
                 <Label className="font-medium">Performance KPIs</Label>
               </div>
               <p className="text-xs text-muted-foreground">
