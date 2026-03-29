@@ -159,7 +159,7 @@ const Index = () => {
                   <span className="text-gradient">Decide With Confidence.</span>
                 </h1>
                 <p className="text-muted-foreground text-base max-w-2xl mb-4">
-                  Critical procurement decisions are often made unprepared due to lack of time, 
+                  Critical procurement decisions are often made without adequate preparation due to lack of time, 
                   knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes — cost 
                   breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
                 </p>
