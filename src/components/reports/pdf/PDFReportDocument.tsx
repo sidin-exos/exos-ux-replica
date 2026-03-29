@@ -960,7 +960,9 @@ const PDFReportDocument = ({
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <Text style={{ fontSize: 9, color: C.muted }}>
-                Input coverage: {filledKeys.length}/{allKeys.length > 0 ? allKeys.length : 1} fields ({coveragePct}%)
+                {evaluationScore != null
+                  ? `Input quality score: ${coveragePct}/100`
+                  : `Input coverage: ${filledKeys.length}/${allKeys.length > 0 ? allKeys.length : 1} fields (${coveragePct}%)`}
               </Text>
               <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: kpiColor(confidenceLevel, "confidence") }}>
                 {confidenceLevel} Confidence
