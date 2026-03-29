@@ -19,7 +19,7 @@ const pricingTiers = [
   {
     id: "smb",
     name: "SMB",
-    subtitle: "For companies without dedicated procurement",
+    subtitle: "For companies without a dedicated procurement function",
     price: "29",
     period: "month",
     icon: Zap,
@@ -47,7 +47,7 @@ const pricingTiers = [
       "Everything in SMB, plus:",
       "Unlimited simulations & scenarios",
       "Full dashboard access",
-      "On demand dashboards and market intelligence",
+      "On-demand dashboards and market intelligence",
       "Validated secure data protocols",
       "Multi-user collaboration",
       "Advanced reporting & exports",
@@ -82,7 +82,7 @@ const faqData = [
   {
     id: "tariff",
     question: "What is the right tariff for me?",
-    answer: `Pick the SMB (small-medium business) option if you're in a small-to-medium sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 best-in-class support.`,
+    answer: `Pick the SMB (small and medium-sized business) option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 best-in-class support.`,
   },
   {
     id: "data-privacy",
@@ -112,7 +112,7 @@ const faqData = [
   {
     id: "fine-tuning",
     question: "Can I get EXOS fine-tuned for my purposes?",
-    answer: `Absolutely. We offer fine-tuning and customisation for every Pro and Enterprise user. Pro users can request one custom scenario and one custom dashboard per month. Enterprise users get fully custom analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
+    answer: `Absolutely. We offer fine-tuning and customisation for every Pro and Enterprise user. Pro users can request one custom scenario and one custom dashboard per month. Enterprise users get fully customized analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
   },
 ];
 

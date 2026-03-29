@@ -128,7 +128,7 @@ const RiskPlatform = () => {
               <div>
                 <h2 className="text-base font-semibold text-foreground">Methodology</h2>
                 <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                  The Dynamic Monitoring Module saves your time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a Δ-first approach — prioritising the direction and velocity of change over static positions — and operates as decision-support, not decision-making.
+                  The Dynamic Monitoring Module saves you time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a Δ-first approach — prioritising the direction and velocity of change over static positions — and operates as a decision-support tool, not a decision-making one.
                 </p>
               </div>
               <Tabs defaultValue="DM-1" className="w-full">

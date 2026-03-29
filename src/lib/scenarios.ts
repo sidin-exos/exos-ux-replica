@@ -232,7 +232,7 @@ export const scenarios: Scenario[] = [
   {
     id: "forecasting-budgeting",
     title: "Predictive Budgeting & Forecasting",
-    description: "Combines your internal historical spend with external Market Intelligence. AI detects hidden seasonality, applies real-time industry inflation trends, and generates Best/Base/Worst case budget scenarios.",
+    description: "Combines your internal historical spend with external Market Intelligence. AI detects hidden seasonality, applies real-time industry inflation trends, and generates Best/Base/Worst-case budget scenarios.",
     tags: ["Forecasting", "Scenarios", "Inflation"],
     previewDescription: "Feed in 2+ years of category spend and the AI detects hidden seasonality, overlays real-time commodity and inflation indices from Market Intelligence, and generates three-scenario budget forecasts (Base/Stress/Upside). Prevents the most common budgeting failure: flat-line extrapolation that ignores macro shifts. A 5% CPI under-assumption on a €2M category = €100k unplanned spend.",
     icon: TrendingUp,
@@ -511,7 +511,7 @@ export const scenarios: Scenario[] = [
   {
     id: "supplier-review",
     title: "Supplier Review",
-    description: "Comprehensive supplier performance evaluation with scorecard and improvement planning.",
+    description: "Comprehensive supplier performance evaluation with a scorecard and improvement planning.",
     tags: ["Scorecard", "KPIs", "QBR"],
     previewDescription: "Build a data-driven supplier scorecard combining quantitative KPIs (delivery, quality, invoice accuracy) with qualitative stakeholder feedback and trend analysis. The AI generates a radar diagram of competencies, identifies performance gaps, and produces a 90-day improvement plan with a QBR discussion script. Moves supplier management from subjective opinions to evidence-based decisions.",
     icon: ClipboardCheck,
@@ -540,7 +540,7 @@ export const scenarios: Scenario[] = [
   {
     id: "procurement-project-planning",
     title: "Procurement Project Planning",
-    description: "Analyze project inputs, outputs, and constraints to set strategic priorities using proven strategic analysis methods.",
+    description: "Analyze project inputs, outputs, and constraints to set strategic priorities using proven analytical methods.",
     tags: ["SWOT", "RACI", "Critical Path"],
     previewDescription: "Map your procurement project from inception to go-live using SWOT, stakeholder mapping, and critical path analysis. The AI identifies decision gates, approval bottlenecks, resource conflicts, and regulatory checkpoints — then produces a prioritised action plan with risk-adjusted timelines. Prevents the most common project delay: missing RACI clarity that stalls approval chains.",
     icon: Target,
