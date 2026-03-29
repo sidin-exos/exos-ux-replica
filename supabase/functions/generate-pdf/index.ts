@@ -69,6 +69,12 @@ serve(async (req) => {
     const pdfTheme = body.pdfTheme !== undefined
       ? requireStringEnum(body.pdfTheme, "pdfTheme", ["light", "dark"] as const)
       : undefined;
+    const evaluationScore = typeof body.evaluationScore === "number"
+      ? Math.max(0, Math.min(100, body.evaluationScore))
+      : undefined;
+    const evaluationConfidence = typeof body.evaluationConfidence === "string"
+      ? body.evaluationConfidence.slice(0, 10)
+      : undefined;
 
     const payload: GeneratePdfPayload = {
       scenarioTitle,
@@ -77,6 +83,8 @@ serve(async (req) => {
       timestamp,
       selectedDashboards: selectedDashboards as GeneratePdfPayload["selectedDashboards"],
       pdfTheme: pdfTheme as GeneratePdfPayload["pdfTheme"],
+      evaluationScore,
+      evaluationConfidence,
     };
 
     // 4. Generate PDF
