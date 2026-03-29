@@ -701,7 +701,6 @@ const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCo
   entries.push({ label: "Executive Summary", anchor: "section-executive-summary", page: 2 });
   if (hasDashboards) entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page: 3 });
   entries.push({ label: "Detailed Analysis", anchor: "section-detailed-analysis", page: detailedAnalysisPage });
-  entries.push({ label: "Methodology & Limitations", anchor: "section-methodology", page: detailedAnalysisPage });
   if (hasParams) entries.push({ label: "Analysis Parameters", anchor: "section-parameters", page: detailedAnalysisPage });
   return entries;
 };
@@ -768,8 +767,6 @@ const PDFReportDocument = ({
   const allParamEntries = Object.entries(formData)
     .filter(([_, v]) => v && v.trim() !== "");
 
-  // Analysis inputs for exec summary (first 6)
-  const inputEntries = allParamEntries.slice(0, 6);
 
   return (
     <Document>
@@ -870,28 +867,6 @@ const PDFReportDocument = ({
           </View>
         ))}
 
-        {/* Analysis Inputs table */}
-        {inputEntries.length > 0 && (
-          <View wrap={false}>
-            <View style={styles.sectionTitleWrapper}>
-              <Text style={styles.sectionTitleText}>Analysis Inputs</Text>
-            </View>
-            <View style={styles.tableHeader}>
-              <Text style={{ ...styles.tableHeaderText, flex: 1 }}>Parameter</Text>
-              <Text style={{ ...styles.tableHeaderText, flex: 1 }}>Value</Text>
-            </View>
-            {inputEntries.map(([key, value], i) => {
-              const label = key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
-              const rowStyle = i % 2 === 0 ? styles.tableRow : styles.tableRowAlt;
-              return (
-                <View key={key} style={rowStyle}>
-                  <Text style={styles.tableCellLabel}>{label}</Text>
-                  <Text style={styles.tableCell}>{summarizeParameter(value, 15)}</Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
 
         <ReportFooter dateStr={formattedDate} orgName={orgName} />
       </Page>
@@ -989,32 +964,9 @@ const PDFReportDocument = ({
           });
         })()}
 
-        {/* ── Methodology & Limitations ── */}
-        <View style={styles.section} id="section-methodology" wrap={false}>
-          <View style={styles.sectionTitleWrapper}>
-            <Text style={styles.sectionTitleText}>Methodology & Limitations</Text>
-          </View>
-          <Text style={styles.methodologyText}>
-            Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals. Cost estimates are indicative based on available data at time of analysis and may vary with market conditions and data completeness.
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 9, color: C.muted }}>
-              Input coverage: {filledKeys.length}/{allKeys.length > 0 ? allKeys.length : 1} fields ({coveragePct}%)
-            </Text>
-            <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: kpiColor(confidenceLevel, "confidence") }}>
-              {confidenceLevel} Confidence
-            </Text>
-          </View>
-          <View style={styles.auditTrail}>
-            <Text style={{ fontSize: 7, color: C.muted }}>
-              Analysis ID: {reportHash} | Timestamp: {new Date(timestamp).toISOString()}
-            </Text>
-          </View>
-        </View>
-
-        {/* Fix 3: Analysis Parameters as table, not pills */}
+        {/* ── Analysis Parameters (combined with Methodology) ── */}
         {hasParams && (
-          <View style={styles.section} id="section-parameters" wrap={false}>
+          <View style={styles.section} id="section-parameters">
             <View style={styles.sectionTitleWrapper}>
               <Text style={styles.sectionTitleText}>Analysis Parameters</Text>
             </View>
@@ -1032,6 +984,26 @@ const PDFReportDocument = ({
                 </View>
               );
             })}
+
+            {/* Methodology & Limitations (sub-section) */}
+            <View style={styles.divider} />
+            <Text style={styles.sectionBlockHeader}>Methodology & Limitations</Text>
+            <Text style={styles.methodologyText}>
+              Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals. Cost estimates are indicative based on available data at time of analysis and may vary with market conditions and data completeness.
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text style={{ fontSize: 9, color: C.muted }}>
+                Input coverage: {filledKeys.length}/{allKeys.length > 0 ? allKeys.length : 1} fields ({coveragePct}%)
+              </Text>
+              <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: kpiColor(confidenceLevel, "confidence") }}>
+                {confidenceLevel} Confidence
+              </Text>
+            </View>
+            <View style={styles.auditTrail}>
+              <Text style={{ fontSize: 7, color: C.muted }}>
+                Analysis ID: {reportHash} | Timestamp: {new Date(timestamp).toISOString()}
+              </Text>
+            </View>
           </View>
         )}
 
