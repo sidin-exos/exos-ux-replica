@@ -971,21 +971,29 @@ const PDFReportDocument = ({
     <Document>
       {/* ── Page 1: Cover + Executive Summary (merged) ── */}
       <Page size="A4" style={styles.page} id="section-executive-summary">
-        <View style={styles.coverSpacer} />
-
-        <Text style={styles.coverBrand}>EXOS</Text>
+        {/* Header: EXOS brand left, meta info right */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+          <View>
+            <Text style={styles.coverBrand}>EXOS</Text>
+          </View>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={{ fontSize: 9, color: C.muted, marginBottom: 2 }}>Prepared for {orgName}</Text>
+            <Text style={{ fontSize: 9, color: C.muted, marginBottom: 2 }}>{formattedDate}</Text>
+            <Text style={{ fontSize: 9, color: C.warning }}>Confidential</Text>
+          </View>
+        </View>
         <View style={styles.coverBrandLine} />
 
         <Text style={styles.coverTitle}>{reportTitle}</Text>
         {subtitle ? (
-          <Text style={styles.coverSubtitle}>{subtitle}</Text>
+          <Text style={{ ...styles.coverSubtitle, marginBottom: 16 }}>{subtitle}</Text>
         ) : (
-          <View style={{ height: 24 }} />
+          <View style={{ height: 8 }} />
         )}
 
         {/* TOC */}
         {showToc && (
-          <View style={{ marginBottom: SP.subSectionGap }}>
+          <View style={{ marginBottom: SP.afterHeadingLine }}>
             {tocEntries.map((entry, i) => (
               <View key={entry.anchor} style={styles.tocRow}>
                 <Link src={`#${entry.anchor}`}>
@@ -1021,12 +1029,7 @@ const PDFReportDocument = ({
           </View>
         ))}
 
-        {/* Bottom section */}
-        <View style={{ marginTop: "auto" }}>
-          <Text style={styles.coverFooterText}>Prepared for {orgName}</Text>
-          <Text style={styles.coverFooterText}>{formattedDate}</Text>
-          <Text style={styles.coverConfidential}>Confidential</Text>
-        </View>
+        <ReportFooter dateStr={formattedDate} orgName={orgName} />
       </Page>
 
       {/* ── Dashboard pages ── */}
