@@ -538,6 +538,8 @@ interface PDFReportDocumentProps {
   timestamp: string;
   selectedDashboards?: DashboardType[];
   pdfTheme?: PdfThemeMode;
+  evaluationScore?: number;
+  evaluationConfidence?: string;
 }
 
 // ── Helpers ──
@@ -732,6 +734,8 @@ const PDFReportDocument = ({
   timestamp,
   selectedDashboards = [],
   pdfTheme = "light",
+  evaluationScore,
+  evaluationConfidence,
 }: PDFReportDocumentProps) => {
   const parsedData = extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
@@ -746,11 +750,13 @@ const PDFReportDocument = ({
   const showToc = hasDashboards;
   const orgName = formData["organization"] || formData["Organization"] || formData["company"] || formData["Company"] || formData["org"] || "EXOS";
 
-  // KPIs
+  // Input quality — use real evaluation data when available, fallback to heuristic
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-  const coveragePct = allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0;
-  const confidenceLevel = coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low";
+  const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  const confidenceLevel = evaluationConfidence
+    ? (evaluationConfidence === "HIGH" ? "High" : "Low")
+    : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
   const savingsKpi = extractSavingsKpi(strippedAnalysis);
   const riskKpi = extractRiskKpi(strippedAnalysis);
 
