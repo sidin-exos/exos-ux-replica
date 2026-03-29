@@ -400,22 +400,6 @@ const GeneratedReport = () => {
               </Card>
             )}
 
-            {/* Quick Actions */}
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle className="font-display text-base">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <Download className="w-4 h-4" />
-                  Download as Word
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <FileText className="w-4 h-4" />
-                  Print Report
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Report Metadata */}
             <Card className="card-elevated">
