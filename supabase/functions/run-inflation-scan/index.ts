@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
@@ -225,6 +226,9 @@ Provide a current market scan for each driver. Focus on recent developments (las
     });
   } catch (error) {
     console.error("run-inflation-scan error:", error);
+    new SentryReporter("run-inflation-scan").captureException(error, {
+      userId: typeof user !== "undefined" ? user?.id : undefined,
+    });
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

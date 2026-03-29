@@ -76,9 +76,11 @@ export const PDFCostWaterfall = ({ data, themeMode }: { data: CostWaterfallData;
               <View style={[styles.barFill, { flex: item.value, backgroundColor: item.color }]} />
               <View style={{ flex: Math.max(0, 100 - item.value) }} />
             </View>
-            <View style={{ width: 68, alignItems: "flex-end" }}>
+            <View style={{ width: 48, alignItems: "flex-end" }}>
               <Text style={{ fontSize: 10, color: colors.text, fontFamily: "Helvetica-Bold" }}>{item.amount}</Text>
-              <Text style={{ fontSize: 8, color: colors.textMuted }}>{item.value}%</Text>
+            </View>
+            <View style={{ width: 32, alignItems: "flex-end" }}>
+              <Text style={{ fontSize: 9, color: colors.textMuted }}>{item.value}%</Text>
             </View>
           </View>
         ))}

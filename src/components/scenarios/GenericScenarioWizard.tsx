@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import * as Sentry from "@sentry/react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -382,6 +383,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         toast.success(`Analysis complete! Completeness: ${data.completenessScore ?? "N/A"}/100`);
       } catch (err) {
         console.error("[MarketSnapshot] Error:", err);
+        Sentry.captureException(err, { tags: { feature: "scenario-wizard", scenario: "market-snapshot" } });
         setStep("review");
         toast.error(err instanceof Error ? err.message : "Market Snapshot failed. Please try again.");
       }
@@ -528,6 +530,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         formData: formData,
         timestamp: analysisTimestamp,
         selectedDashboards: selectedDashboards,
+        evaluationScore: evaluation?.score ?? null,
+        evaluationConfidence: evaluation?.confidenceFlag ?? null,
       },
     });
   };

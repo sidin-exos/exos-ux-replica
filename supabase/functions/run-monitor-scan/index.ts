@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
@@ -161,6 +162,9 @@ Be factual, cite sources where possible. Flag direction of change (improving/sta
     });
   } catch (error) {
     console.error("run-monitor-scan error:", error);
+    new SentryReporter("run-monitor-scan").captureException(error, {
+      userId: typeof user !== "undefined" ? user?.id : undefined,
+    });
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

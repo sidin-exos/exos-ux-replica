@@ -28,12 +28,37 @@ export const DRS_BAND_META: Record<DrsBand, { label: string; color: string; rang
   E: { label: "Critical", color: "text-destructive", range: "0–29" },
 };
 
-export const MONITOR_TYPE_META: Record<MonitorType, { label: string; purpose: string; drs: boolean; phase: 1 | 2 }> = {
-  "DM-1": { label: "Hypothesis Testing", purpose: "Test a procurement hypothesis with balanced for/against evidence", drs: false, phase: 1 },
-  "DM-2": { label: "Risk Assessment", purpose: "Scored multi-dimensional risk assessment for a specific entity", drs: true, phase: 1 },
-  "DM-3": { label: "Risk Dynamics", purpose: "Track DRS trajectory over time across comparison periods", drs: true, phase: 1 },
-  "DM-4": { label: "Country / Region", purpose: "Monitor geopolitical, regulatory, and logistics risk by geography", drs: true, phase: 1 },
-  "DM-5": { label: "Industry Dynamics", purpose: "Track industry-level risk signals and structural shifts", drs: true, phase: 1 },
+export const MONITOR_TYPE_META: Record<MonitorType, { label: string; purpose: string; description: string; drs: boolean; phase: 1 | 2 }> = {
+  "DM-1": {
+    label: "Hypothesis Testing",
+    purpose: "Test a procurement hypothesis with balanced for/against evidence",
+    description: "Hypothesis Testing enables procurement professionals to validate strategic assumptions by systematically gathering and weighing evidence for and against a specific thesis. The monitor continuously scans publicly available sources to surface supporting and contradicting signals, helping decision-makers avoid confirmation bias. Rather than prescribing conclusions, it presents a balanced evidence portfolio that evolves over time, enabling teams to make data-informed decisions about sourcing strategies, supplier relationships, and market positioning with greater confidence and rigour.",
+    drs: false, phase: 1,
+  },
+  "DM-2": {
+    label: "Risk Assessment",
+    purpose: "Scored multi-dimensional risk assessment for a specific entity",
+    description: "Risk Assessment provides a structured, multi-dimensional evaluation of risk exposure for a specific supplier, contract, or procurement entity. The monitor analyses financial stability, operational resilience, compliance posture, and reputational signals from publicly available data. It assigns a Dynamic Risk Score (DRS) that reflects the current risk profile and highlights areas requiring attention. This scenario is ideal for ongoing due diligence, enabling procurement teams to proactively identify vulnerabilities before they materialise into supply chain disruptions or contractual failures.",
+    drs: true, phase: 1,
+  },
+  "DM-3": {
+    label: "Risk Dynamics",
+    purpose: "Track DRS trajectory over time across comparison periods",
+    description: "Risk Dynamics tracks how the Dynamic Risk Score of an entity evolves over defined comparison periods, highlighting the direction and velocity of change rather than static snapshots. By focusing on deltas — whether risk is accelerating, stabilising, or receding — this monitor surfaces early warning signals that absolute scores alone would miss. It is particularly valuable for portfolio-level risk management, enabling procurement leaders to prioritise attention on entities whose risk trajectories are worsening, even when their absolute scores remain within acceptable thresholds.",
+    drs: true, phase: 1,
+  },
+  "DM-4": {
+    label: "Country / Region",
+    purpose: "Monitor geopolitical, regulatory, and logistics risk by geography",
+    description: "Country & Region monitoring provides continuous surveillance of geopolitical, regulatory, and logistical risk factors affecting procurement operations in specific geographies. The monitor tracks political stability, trade policy shifts, sanctions developments, currency volatility, and infrastructure disruptions that could impact supply chains. It is essential for organisations with international sourcing strategies, offering early visibility into country-level risks that could affect lead times, costs, or supplier availability. The Delta-first approach ensures teams focus on emerging changes rather than well-known static conditions.",
+    drs: true, phase: 1,
+  },
+  "DM-5": {
+    label: "Industry Dynamics",
+    purpose: "Track industry-level risk signals and structural shifts",
+    description: "Industry Dynamics monitors sector-wide signals and structural shifts that could reshape procurement landscapes. It tracks consolidation trends, technology disruptions, regulatory changes, capacity constraints, and emerging competitors within a defined industry scope. Unlike entity-specific monitoring, this scenario provides the macro context necessary for strategic category management, helping procurement teams anticipate market movements, adjust sourcing strategies proactively, and identify both risks and opportunities arising from fundamental industry transformations.",
+    drs: true, phase: 1,
+  },
 };
 
 export interface EnterpriseTracker {

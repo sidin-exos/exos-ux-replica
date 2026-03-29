@@ -1,40 +1,66 @@
 import { useState, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { Activity, Users, TrendingDown, Layers } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Activity, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
+import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
+
 import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
 import TrackerList from "@/components/enterprise/TrackerList";
 import MonitorDetailView from "@/components/enterprise/MonitorDetailView";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
-import { useEnterpriseTrackers, MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
-import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
+import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
 
-const PRINCIPLES = [
-  {
-    icon: Users,
-    title: "Human-in-the-Loop by Design",
-    description: "Decision-support, not decision-making. Every output is framed as information for consideration — the final judgement always belongs to the human.",
-  },
-  {
-    icon: TrendingDown,
-    title: "Dynamics over Absolutes",
-    description: "The system is designed to save user's time by flagging rising risks for further analysis and decision-making.",
-  },
-  {
-    icon: Layers,
-    title: "Continuous Modelling, Not Advice",
-    description: "The module monitors and models possible risk events. It does not prescribe action plans. When deep analysis is needed, it bridges to point-in-time scenarios.",
-  },
+const USE_CASES = [
+  { type: "DM-1", title: "Single-Source Supply Chain Vulnerability", text: "By analysing public shipping manifests and trade data, a procurement team identifies suppliers that are the sole source of critical components. Monitoring news and regulatory filings for these suppliers confirms or refutes the hypothesis by revealing M&A activity, production stoppages, or financial distress — enabling proactive risk mitigation." },
+  { type: "DM-2", title: "Geopolitical Risk for Raw Material Sourcing", text: "A procurement organisation assesses regional sourcing risk by aggregating news on political instability, sanctions, and labour disputes alongside government travel advisories. This creates a real-time risk profile informing decisions on supplier diversification or inventory build-up before disruptions materialise." },
+  { type: "DM-3", title: "Supplier Financial Health Trajectory", text: "By continuously monitoring public financial statements and news releases, the platform detects early warning signs such as declining revenue, increasing debt, or negative auditor opinions. Dynamic tracking of these public indicators allows procurement to initiate contingency planning before a crisis impacts supply." },
+  { type: "DM-4", title: "Regional Compliance & Regulatory Shifts", text: "A procurement team monitors government publications and news from specific countries to track changes in environmental regulations, labour laws, or import/export tariffs. This enables proactive adjustment of sourcing strategies and contract terms to ensure compliance and avoid penalties." },
+  { type: "DM-5", title: "Commodity Price Volatility & Supply Shocks", text: "By integrating data from public commodity indices, energy prices, and trade publications, procurement monitors real-time fluctuations and identifies emerging trends in critical raw material markets. This enables timely strategy adjustments — hedging, contract renegotiation, or alternative sourcing — to mitigate cost increases." },
 ];
+
+const UseCaseCard = () => {
+  const [index, setIndex] = useState(0);
+  const current = USE_CASES[index];
+
+  return (
+    <Card className="lg:col-span-1 border-border/50 bg-card/50">
+      <CardContent className="pt-5 pb-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-foreground">Use Case</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setIndex((prev) => (prev + 1) % USE_CASES.length)}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            More Use Cases
+          </Button>
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px]">{current.type}</Badge>
+            <p className="text-xs font-semibold text-foreground">{current.title}</p>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">{current.text}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+
 
 const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
-  const [activeTab, setActiveTab] = useState("monitor");
   const [selectedTracker, setSelectedTracker] = useState<EnterpriseTracker | null>(null);
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
 
@@ -64,6 +90,20 @@ const RiskPlatform = () => {
     );
   }
 
+  if (selectedTracker) {
+    return (
+      <EnterpriseLayout>
+        <Header />
+        <main className="container py-8">
+          <MonitorDetailView
+            tracker={selectedTracker}
+            onBack={() => setSelectedTracker(null)}
+          />
+        </main>
+      </EnterpriseLayout>
+    );
+  }
+
   return (
     <EnterpriseLayout>
       <Header />
@@ -80,93 +120,70 @@ const RiskPlatform = () => {
           </div>
         </div>
 
-        {/* Methodology overview */}
-        <Card className="border-primary/20 bg-primary/[0.03]">
-          <CardContent className="pt-5 pb-4 space-y-5">
-            <div>
-              <h2 className="text-base font-semibold text-foreground">Methodology</h2>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-3xl">
-                The Dynamic Risk Monitoring is intended to save your time by constantly analysing publicly available information linked to risk scenarios set by user, flagging focus areas for futher investigation and decision-making. 
-              </p>
-            </div>
-
-            {/* 3 Principles */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              {PRINCIPLES.map((p) => (
-                <div key={p.title} className="flex gap-3 items-start">
-                  <div className="p-1.5 rounded-md bg-destructive/10 shrink-0 mt-0.5">
-                    <p.icon className="w-4 h-4 text-destructive" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{p.title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Monitoring types grid */}
-            <div>
-              <h3 className="text-sm font-semibold text-foreground mb-2">Monitoring Types</h3>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setActiveTab("setup")}
-                    className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
-                  >
-                    <Badge variant="default" className="shrink-0 text-[10px] mt-0.5">
-                      {id}
-                    </Badge>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground leading-tight">
-                        {m.label}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{m.purpose}</p>
-                    </div>
-                  </button>
-                ))}
+        {/* Methodology + Case Studies */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left 2/3 — Methodology & Tabs */}
+          <Card className="lg:col-span-2 border-border/50 bg-card/50">
+            <CardContent className="pt-5 pb-4 space-y-4">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Methodology</h2>
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                  The Dynamic Monitoring Module saves your time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a Δ-first approach — prioritising the direction and velocity of change over static positions — and operates as decision-support, not decision-making.
+                </p>
               </div>
-            </div>
+              <Tabs defaultValue="DM-1" className="w-full">
+                <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-accent/30 p-1.5 rounded-lg">
+                  {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
+                    <TabsTrigger key={key} value={key} className="text-xs flex-1 min-w-[100px] whitespace-normal leading-tight py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                      {meta.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
+                  <TabsContent key={key} value={key} className="mt-3">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">{meta.label}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {meta.description}
+                      </p>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </CardContent>
+          </Card>
 
-          </CardContent>
-        </Card>
+          {/* Right 1/3 — Use Case */}
+          <UseCaseCard />
+        </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="monitor">Monitoring</TabsTrigger>
-            <TabsTrigger value="setup">Set up New Monitor</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left 2/3 — Active Monitors */}
+          <div className="lg:col-span-2">
+            <Card className="rounded-sm">
+              <CardContent className="pt-5">
+                <h2 className="text-base font-semibold text-foreground mb-4">Active Monitors</h2>
+                <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
+              </CardContent>
+            </Card>
+          </div>
 
-          <TabsContent value="monitor" className="mt-6">
-            {selectedTracker ? (
-              <MonitorDetailView
-                tracker={selectedTracker}
-                onBack={() => setSelectedTracker(null)}
-              />
-            ) : (
-              <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
-            )}
-          </TabsContent>
-
-          <TabsContent value="setup" className="mt-6">
-            <TrackerSetupWizard
-              trackerType="risk"
-              onActivate={(data) =>
-                createTracker.mutateAsync({ ...data, tracker_type: "risk" })
-              }
-              onComplete={() => setActiveTab("monitor")}
-            />
-          </TabsContent>
-
-          <TabsContent value="reports" className="mt-6">
-            <div className="text-center py-16 text-muted-foreground">
-              Reports will be available once monitors generate their first analysis cycle.
-            </div>
-          </TabsContent>
-        </Tabs>
+          {/* Right 1/3 — Setup Wizard */}
+          <div className="lg:col-span-1 lg:sticky lg:top-8 lg:self-start">
+            <Card className="rounded-sm border-primary/20">
+              <CardContent className="pt-5">
+                <h2 className="text-base font-semibold text-foreground mb-4">Set up New Monitor</h2>
+                <TrackerSetupWizard
+                  trackerType="risk"
+                  onActivate={(data) =>
+                    createTracker.mutateAsync({ ...data, tracker_type: "risk" })
+                  }
+                  onComplete={() => {}}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
     </EnterpriseLayout>
   );

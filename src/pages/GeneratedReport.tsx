@@ -32,6 +32,8 @@ interface ReportState {
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];
+  evaluationScore?: number | null;
+  evaluationConfidence?: string | null;
 }
 
 const GeneratedReport = () => {
@@ -110,7 +112,7 @@ const GeneratedReport = () => {
     );
   }
 
-  const { scenarioTitle, scenarioId, analysisResult, formData, timestamp, selectedDashboards = [] } = state;
+  const { scenarioTitle, scenarioId, analysisResult, formData, timestamp, selectedDashboards = [], evaluationScore, evaluationConfidence } = state;
   
   // Ensure analysisResult is never null for rendering
   const safeAnalysisResult = analysisResult ?? '';
@@ -229,6 +231,8 @@ const GeneratedReport = () => {
               formData={formData}
               timestamp={timestamp}
               selectedDashboards={selectedDashboards}
+              evaluationScore={evaluationScore}
+              evaluationConfidence={evaluationConfidence}
             />
           </div>
         </motion.div>
@@ -396,22 +400,6 @@ const GeneratedReport = () => {
               </Card>
             )}
 
-            {/* Quick Actions */}
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle className="font-display text-base">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <Download className="w-4 h-4" />
-                  Download as Word
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <FileText className="w-4 h-4" />
-                  Print Report
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Report Metadata */}
             <Card className="card-elevated">

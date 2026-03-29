@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import * as Sentry from "@sentry/react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,11 +7,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ModelConfigProvider } from "@/contexts/ModelConfigContext";
+import { isAuthError } from "@/lib/auth-utils";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/layout/MobileBottomNav";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageLoadingFallback from "./components/layout/PageLoadingFallback";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
+import SentryErrorFallback from "./components/SentryErrorFallback";
+import SentryUserSync from "./components/SentryUserSync";
 
 // Lazy-loaded page components
 const Index = lazy(() => import("./pages/Index"));
@@ -38,13 +42,27 @@ const MethodologyScenarioEdit = lazy(() => import("./pages/admin/MethodologyScen
 const MethodologyConfig = lazy(() => import("./pages/admin/MethodologyConfig"));
 const MethodologyHistory = lazy(() => import("./pages/admin/MethodologyHistory"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    mutations: {
+      onError: (error) => {
+        if (!isAuthError(error)) {
+          Sentry.captureException(error, {
+            tags: { source: "react-query-mutation" },
+          });
+        }
+      },
+    },
+  },
+});
 
 const App = () => (
+  <Sentry.ErrorBoundary fallback={<SentryErrorFallback />}>
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
     <ModelConfigProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <SentryUserSync />
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -88,6 +106,7 @@ const App = () => (
       </QueryClientProvider>
     </ModelConfigProvider>
   </ThemeProvider>
+  </Sentry.ErrorBoundary>
 );
 
 export default App;

@@ -10,6 +10,7 @@ import {
 } from "../_shared/chatbot-instructions.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 // ─── STATIC PROMPT SECTIONS (not methodology content) ───────────────────────
@@ -266,6 +267,7 @@ serve(async (req) => {
       return validationErrorResponse(error.message);
     }
     console.error("chat-copilot error:", error);
+    new SentryReporter("chat-copilot").captureException(error, { userId });
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return new Response(
