@@ -55,25 +55,25 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-500/5 to-transparent">
+      <Card className="border-l-4 border-l-highlight bg-gradient-to-r from-highlight/5 to-transparent">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {IconComponent && <IconComponent className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+              {IconComponent && <IconComponent className="w-5 h-5 text-highlight" />}
               <CardTitle className="text-lg">{typeInfo.label} Analysis</CardTitle>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="gap-1 border-sky-400/50 text-sky-600 dark:text-sky-400">
+              <Badge variant="outline" className="gap-1 border-info/50 text-info">
                 <Clock className="w-3 h-3" />
                 {(result.processingTimeMs / 1000).toFixed(1)}s
               </Badge>
               {result.tokenUsage && (
-                <Badge variant="outline" className="gap-1 border-amber-400/50 text-amber-600 dark:text-amber-400">
+                <Badge variant="outline" className="gap-1 border-warning/50 text-warning">
                   <Coins className="w-3 h-3" />
                   {result.tokenUsage.totalTokens.toLocaleString()} tokens
                 </Badge>
               )}
-              <Badge className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Badge className="gap-1 bg-highlight hover:bg-highlight/90 text-highlight-foreground">
                 <CheckCircle2 className="w-3 h-3" />
                 Complete
               </Badge>

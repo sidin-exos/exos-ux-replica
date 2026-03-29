@@ -74,7 +74,7 @@ export const DeepAnalysisPipeline = ({
               transition={{ delay: index * 0.1 }}
               className={cn(
                 "flex items-center gap-4 p-4 rounded-lg border transition-all duration-300",
-                isCompleted && "bg-green-500/10 border-green-500/30",
+                isCompleted && "bg-success/10 border-success/30",
                 isActive && "bg-primary/10 border-primary/50",
                 isPending && "bg-muted/30 border-border opacity-50",
                 isError && "bg-destructive/10 border-destructive/50"
@@ -84,7 +84,7 @@ export const DeepAnalysisPipeline = ({
               <div
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                  isCompleted && "bg-green-500/20 text-green-600",
+                  isCompleted && "bg-success/20 text-success",
                   isActive && "bg-primary/20 text-primary",
                   isPending && "bg-muted text-muted-foreground",
                   isError && "bg-destructive/20 text-destructive"
@@ -105,7 +105,7 @@ export const DeepAnalysisPipeline = ({
                   <span
                     className={cn(
                       "font-medium text-sm",
-                      isCompleted && "text-green-600",
+                      isCompleted && "text-success",
                       isActive && "text-primary",
                       isPending && "text-muted-foreground",
                       isError && "text-destructive"

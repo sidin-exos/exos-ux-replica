@@ -80,13 +80,13 @@ export function MarketInsightsBanner({
             {insight.key_trends.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-blue-500" />
+                  <TrendingUp className="h-4 w-4 text-info" />
                   Key Trends
                 </h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {insight.key_trends.slice(0, 3).map((trend, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-blue-500 mt-1">•</span>
+                      <span className="text-info mt-1">•</span>
                       <span>{trend}</span>
                     </li>
                   ))}
@@ -98,13 +98,13 @@ export function MarketInsightsBanner({
             {insight.risk_signals.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <AlertTriangle className="h-4 w-4 text-warning" />
                   Risk Signals
                 </h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {insight.risk_signals.slice(0, 3).map((risk, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-amber-500 mt-1">•</span>
+                      <span className="text-warning mt-1">•</span>
                       <span>{risk}</span>
                     </li>
                   ))}
@@ -116,13 +116,13 @@ export function MarketInsightsBanner({
             {insight.opportunities.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
-                  <Target className="h-4 w-4 text-green-500" />
+                  <Target className="h-4 w-4 text-success" />
                   Opportunities
                 </h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {insight.opportunities.slice(0, 3).map((opp, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-green-500 mt-1">•</span>
+                      <span className="text-success mt-1">•</span>
                       <span>{opp}</span>
                     </li>
                   ))}
