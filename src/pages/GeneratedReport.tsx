@@ -32,6 +32,8 @@ interface ReportState {
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];
+  evaluationScore?: number | null;
+  evaluationConfidence?: string | null;
 }
 
 const GeneratedReport = () => {
@@ -110,7 +112,7 @@ const GeneratedReport = () => {
     );
   }
 
-  const { scenarioTitle, scenarioId, analysisResult, formData, timestamp, selectedDashboards = [] } = state;
+  const { scenarioTitle, scenarioId, analysisResult, formData, timestamp, selectedDashboards = [], evaluationScore, evaluationConfidence } = state;
   
   // Ensure analysisResult is never null for rendering
   const safeAnalysisResult = analysisResult ?? '';
@@ -229,6 +231,8 @@ const GeneratedReport = () => {
               formData={formData}
               timestamp={timestamp}
               selectedDashboards={selectedDashboards}
+              evaluationScore={evaluationScore}
+              evaluationConfidence={evaluationConfidence}
             />
           </div>
         </motion.div>

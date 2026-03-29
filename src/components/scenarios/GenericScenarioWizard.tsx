@@ -528,6 +528,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         formData: formData,
         timestamp: analysisTimestamp,
         selectedDashboards: selectedDashboards,
+        evaluationScore: evaluation?.score ?? null,
+        evaluationConfidence: evaluation?.confidenceFlag ?? null,
       },
     });
   };
