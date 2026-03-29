@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { TrendingUp, BarChart3, Rss, Newspaper } from "lucide-react";
+import signalRadarImg from "@/assets/design_variant_b.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -102,8 +103,8 @@ const InflationPlatform = () => {
               <p className="mt-1.5 text-xs font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
             </div>
           </div>
-          <div className="hidden lg:block w-64 h-32 rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/30 flex items-center justify-center">
-            <span className="text-xs text-muted-foreground/50">Design element placeholder</span>
+          <div className="hidden lg:flex items-center justify-center">
+            <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80" />
           </div>
         </div>
 
