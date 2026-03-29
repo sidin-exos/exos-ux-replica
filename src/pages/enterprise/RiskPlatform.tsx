@@ -103,31 +103,6 @@ const RiskPlatform = () => {
               ))}
             </div>
 
-            {/* Monitoring types grid */}
-            <div>
-              <h3 className="text-sm font-semibold text-foreground mb-2">Monitoring Types</h3>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => {}}
-                    className="flex items-start gap-2 rounded-md border border-border bg-background p-2.5 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
-                  >
-                    <Badge variant="default" className="shrink-0 text-[10px] mt-0.5">
-                      {id}
-                    </Badge>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground leading-tight">
-                        {m.label}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{m.purpose}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
           </CardContent>
         </Card>
 
