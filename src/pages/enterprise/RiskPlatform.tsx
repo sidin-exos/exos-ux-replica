@@ -82,7 +82,12 @@ const RiskPlatform = () => {
         {/* Monitoring Types — Tabs */}
         <Card className="border-primary/20 bg-primary/[0.03]">
           <CardContent className="pt-5 pb-4 space-y-4">
-            <h2 className="text-base font-semibold text-foreground">Monitoring Scenarios</h2>
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Methodology</h2>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-3xl">
+                The Dynamic Monitoring Module saves your time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a Δ-first approach — prioritising the direction and velocity of change over static positions — and operates as decision-support, not decision-making.
+              </p>
+            </div>
             <Tabs defaultValue="DM-1" className="w-full">
               <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50">
                 {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
