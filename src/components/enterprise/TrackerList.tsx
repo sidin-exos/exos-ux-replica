@@ -92,7 +92,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
             <CardHeader className="flex-row items-start justify-between gap-2 space-y-0 pb-2">
               <div className="min-w-0">
                 <CardTitle className="text-base leading-snug group-hover:text-primary transition-colors">{t.name}</CardTitle>
-                <span className="text-[10px] text-muted-foreground mt-1">{typeMeta?.label}</span>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 mt-1 border border-emerald-300 dark:border-emerald-700 rounded px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30">{typeMeta?.label}</span>
               </div>
               <Badge variant={statusVariant[t.status] ?? "secondary"} className="shrink-0 capitalize">
                 {t.status}
