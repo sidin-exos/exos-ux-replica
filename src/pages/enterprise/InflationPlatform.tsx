@@ -80,10 +80,8 @@ const InflationPlatform = () => {
               <p className="mt-1.5 text-xs font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 lg:justify-end">
-            <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">Improving</Badge>
-            <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30">Stable</Badge>
-            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">Deteriorating</Badge>
+          <div className="hidden lg:block w-64 h-32 rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/30 flex items-center justify-center">
+            <span className="text-xs text-muted-foreground/50">Design element placeholder</span>
           </div>
         </div>
 
