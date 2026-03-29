@@ -69,7 +69,7 @@ const InflationPlatform = () => {
               <h1 className="text-2xl font-display font-semibold text-foreground">
                 Inflation Monitoring
               </h1>
-              <p className="text-sm text-muted-foreground max-w-2xl">
+              <p className="text-sm text-muted-foreground max-w-2xl mt-1">
                 A human-in-the-loop AI platform helping you structure inflation monitoring with an easy-to-use framework for decision-making. Not intended to replace enterprise-grade analytical platforms or serve as a tool for commodity traders.
               </p>
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground max-w-2xl list-disc list-inside">
@@ -125,12 +125,12 @@ const InflationPlatform = () => {
                         <div key={i} className="space-y-1">
                           <p className="text-xs font-medium text-foreground leading-snug">{n.title}</p>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{n.tracker}</Badge>
-                            <span className="text-[10px] text-muted-foreground">{n.source} · {n.date}</span>
+                            <Badge variant="secondary" className="text-xs px-1.5 py-0">{n.tracker}</Badge>
+                            <span className="text-xs text-muted-foreground">{n.source} · {n.date}</span>
                           </div>
                         </div>
                       ))}
-                      <p className="text-[10px] text-muted-foreground/60 pt-1">
+                      <p className="text-xs text-muted-foreground/60 pt-1">
                         Signals will auto-update once scanning is live.
                       </p>
                     </CardContent>
