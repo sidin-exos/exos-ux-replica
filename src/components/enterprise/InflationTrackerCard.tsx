@@ -1,207 +1,110 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronRight, Package, Newspaper, RefreshCw, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import InflationDriverCard from "./InflationDriverCard";
+import { ChevronRight, Package } from "lucide-react";
 import type { InflationTracker } from "@/hooks/useInflationTrackers";
-import { useInflationTrackers } from "@/hooks/useInflationTrackers";
 
 interface Props {
   tracker: InflationTracker;
+  onSelect?: (tracker: InflationTracker) => void;
 }
 
-const MOCK_NEWS = [
-  { title: "Commodity prices stabilise amid mixed signals", date: "Mar 27, 2026", source: "Reuters" },
-  { title: "EU tariff review expected to impact raw material costs", date: "Mar 25, 2026", source: "FT" },
-  { title: "Supply chain disruptions ease in Asian ports", date: "Mar 23, 2026", source: "Bloomberg" },
-];
-
-const InflationTrackerCard = ({ tracker }: Props) => {
-  const [open, setOpen] = useState(true);
-  const [isScanning, setIsScanning] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editName, setEditName] = useState(tracker.goods_definition);
-  const [editTarget, setEditTarget] = useState(tracker.driver_count_target);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { deleteTracker, updateTracker } = useInflationTrackers();
+/** Summarise driver info into a short preview string */
+const buildPreview = (tracker: InflationTracker): string => {
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
+  if (activeDrivers.length === 0) return "No active drivers configured yet. Open to set up inflation monitoring.";
 
-  const handleScanNow = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsScanning(true);
-    try {
-      const { error } = await supabase.functions.invoke("run-inflation-scan", {
-        body: { tracker_id: tracker.id },
-      });
-      if (error) throw error;
-      toast({ title: "Scan complete", description: `Inflation scan completed for "${tracker.goods_definition}".` });
-      queryClient.invalidateQueries({ queryKey: ["inflation_trackers"] });
-    } catch (err: any) {
-      toast({ title: "Scan failed", description: err.message || "Unknown error", variant: "destructive" });
-    } finally {
-      setIsScanning(false);
-    }
-  };
+  const driverNames = activeDrivers.slice(0, 3).map(d => d.driver_name).join(", ");
+  const statusCounts = activeDrivers.reduce(
+    (acc, d) => {
+      acc[d.current_status] = (acc[d.current_status] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
-  const handleDelete = () => {
-    deleteTracker.mutate(tracker.id);
-    setShowDeleteConfirm(false);
-  };
+  const statusParts: string[] = [];
+  if (statusCounts.deteriorating) statusParts.push(`${statusCounts.deteriorating} deteriorating`);
+  if (statusCounts.improving) statusParts.push(`${statusCounts.improving} improving`);
+  if (statusCounts.stable) statusParts.push(`${statusCounts.stable} stable`);
 
-  const handleSaveEdit = () => {
-    updateTracker.mutate({
-      trackerId: tracker.id,
-      goods_definition: editName,
-      driver_count_target: editTarget,
-    });
-    setShowEditDialog(false);
-  };
+  const statusSummary = statusParts.length > 0 ? ` Status: ${statusParts.join(", ")}.` : "";
+  const moreCount = activeDrivers.length > 3 ? ` +${activeDrivers.length - 3} more.` : "";
+
+  return `Tracking ${activeDrivers.length} inflation driver${activeDrivers.length !== 1 ? "s" : ""}: ${driverNames}${moreCount}${statusSummary}`;
+};
+
+const InflationTrackerCard = ({ tracker, onSelect }: Props) => {
+  const [expanded, setExpanded] = useState(false);
+  const activeDrivers = tracker.drivers.filter(d => d.is_active);
+  const preview = buildPreview(tracker);
+
+  const lastScanned = activeDrivers
+    .map(d => d.last_scanned_at)
+    .filter(Boolean)
+    .sort()
+    .reverse()[0];
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <Card>
-        <CollapsibleTrigger asChild>
-          <CardContent className="pt-4 pb-3 cursor-pointer hover:bg-muted/30 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-md bg-warning/10">
-                  <Package className="w-4 h-4 text-warning" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{tracker.goods_definition}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Created {new Date(tracker.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  disabled={isScanning}
-                  onClick={handleScanNow}
-                >
-                  {isScanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                  Scan Now
-                </Button>
-                <Badge variant="secondary" className="text-xs">
-                  {activeDrivers.length} driver{activeDrivers.length !== 1 ? "s" : ""}
-                </Badge>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => e.stopPropagation()}>
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditName(tracker.goods_definition); setEditTarget(tracker.driver_count_target); setShowEditDialog(true); }}>
-                      <Pencil className="w-3.5 h-3.5 mr-2" /> Modify Tracker
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}>
-                      <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete Tracker
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-              </div>
-            </div>
-          </CardContent>
-        </CollapsibleTrigger>
+    <div
+      className="flex items-center gap-4 p-3 rounded-md border border-border/50 hover:border-primary/40 cursor-pointer transition-colors group"
+      onClick={() => onSelect?.(tracker)}
+    >
+      {/* Icon */}
+      <div className="p-1.5 rounded-md bg-warning/10 shrink-0">
+        <Package className="w-4 h-4 text-warning" />
+      </div>
 
-        <CollapsibleContent>
-          <div className="px-6 pb-4">
-            {activeDrivers.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No active drivers.</p>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* 2/3 — Driver list */}
-                <div className="lg:col-span-2 space-y-2">
-                  {activeDrivers.map(d => (
-                    <InflationDriverCard key={d.id} driver={d} />
-                  ))}
-                </div>
+      {/* Name + preview */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
+            {tracker.goods_definition}
+          </span>
+          <Badge variant="secondary" className="text-xs shrink-0">
+            {activeDrivers.length} driver{activeDrivers.length !== 1 ? "s" : ""}
+          </Badge>
+        </div>
+        <p
+          className={`text-xs text-muted-foreground leading-relaxed mt-1 ${expanded ? "" : "line-clamp-2"}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setExpanded(!expanded);
+          }}
+        >
+          {preview}
+        </p>
+        {!expanded && preview.length > 120 && (
+          <button
+            className="text-[10px] text-primary hover:underline mt-0.5"
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(true);
+            }}
+          >
+            Show more
+          </button>
+        )}
+      </div>
 
-                {/* 1/3 — Latest news sidebar */}
-                <div>
-                  <Card className="border-iris/25 bg-iris/5 dark:bg-surface sticky top-24">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-1.5">
-                        <Newspaper className="w-3.5 h-3.5" /> Latest Signals
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {MOCK_NEWS.map((n, i) => (
-                        <div key={i} className="space-y-0.5">
-                          <p className="text-xs font-medium text-foreground leading-snug">{n.title}</p>
-                          <p className="text-[11px] text-muted-foreground">{n.source} · {n.date}</p>
-                        </div>
-                      ))}
-                      <p className="text-[10px] text-muted-foreground/60 pt-1">
-                        News will auto-update once scanning is live.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            )}
+      {/* Dates column */}
+      <div className="shrink-0 text-right space-y-1">
+        <div className="text-xs text-muted-foreground/70">
+          <span className="text-muted-foreground/50">Created</span>
+          <br />
+          {format(new Date(tracker.created_at), "MMM d, yyyy")}
+        </div>
+        {lastScanned && (
+          <div className="text-xs text-muted-foreground/70">
+            <span className="text-muted-foreground/50">Updated</span>
+            <br />
+            {format(new Date(lastScanned), "MMM d, yyyy")}
           </div>
-        </CollapsibleContent>
-      </Card>
+        )}
+      </div>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Tracker</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete "{tracker.goods_definition}" and all its drivers. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Edit dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modify Tracker</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit-goods">Goods / Service Definition</Label>
-              <Input id="edit-goods" value={editName} onChange={(e) => setEditName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-target">Driver Count Target</Label>
-              <Input id="edit-target" type="number" min={1} max={20} value={editTarget} onChange={(e) => setEditTarget(Number(e.target.value))} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
-            <Button onClick={handleSaveEdit} disabled={!editName.trim()}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Collapsible>
+      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+    </div>
   );
 };
 
