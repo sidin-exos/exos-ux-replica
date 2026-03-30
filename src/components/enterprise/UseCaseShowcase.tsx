@@ -136,9 +136,7 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
             <div className="pt-2 border-t border-border/40">
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 <span className="font-medium text-foreground">💡 Tip: </span>
-                {current.teachingPoint.length > 120 && !expanded
-                  ? current.teachingPoint.slice(0, 120) + "…"
-                  : current.teachingPoint}
+                {current.teachingPoint}
               </p>
             </div>
           )}
