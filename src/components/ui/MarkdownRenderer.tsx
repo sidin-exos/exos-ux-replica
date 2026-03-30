@@ -46,8 +46,8 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             }
             if (text === "stable" || text === "neutral" || text === "unchanged") {
               return (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-warning/10 text-warning text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-warning" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-accent/15 text-accent text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                   {children}
                 </span>
               );
