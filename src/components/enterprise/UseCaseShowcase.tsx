@@ -95,12 +95,12 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
           </h2>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-primary"
+            size="sm"
+            className="h-7 text-xs text-muted-foreground hover:text-primary gap-1.5"
             onClick={shuffle}
-            aria-label="Show another use case"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-3 h-3" />
+            More Use Cases
           </Button>
         </div>
 
