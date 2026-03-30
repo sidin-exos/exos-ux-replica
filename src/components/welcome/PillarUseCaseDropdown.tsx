@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useCaseLibrary, INDUSTRIES } from "@/lib/use-case-library";
+import { USE_CASE_LIBRARY } from "@/lib/use-case-library";
 import type { UseCase } from "@/lib/use-case-library";
 
 interface Props {
