@@ -179,9 +179,23 @@ function UseCaseCard({ useCase, index }: { useCase: UseCase; index: number }) {
           <Badge variant="outline" className="text-[10px]">{useCase.feature}</Badge>
         </div>
         <h3 className="text-sm font-semibold text-foreground leading-snug">{useCase.title}</h3>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {expanded ? useCase.description : preview}
-        </p>
+        <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
+          {(expanded ? useCase.description : preview)
+            .split(/(?=(?:SITUATION:|HOW TO USE EXOS:|WHAT YOU RECEIVE:|WHY IT MATTERS:))/)
+            .filter(Boolean)
+            .map((paragraph, i) => {
+              const match = paragraph.match(/^(SITUATION:|HOW TO USE EXOS:|WHAT YOU RECEIVE:|WHY IT MATTERS:)\s*/);
+              if (match) {
+                return (
+                  <p key={i}>
+                    <span className="font-semibold text-foreground">{match[1]}</span>{" "}
+                    {paragraph.slice(match[0].length)}
+                  </p>
+                );
+              }
+              return <p key={i}>{paragraph.trim()}</p>;
+            })}
+        </div>
         {useCase.description.length > 180 && (
           <button
             onClick={() => setExpanded(!expanded)}
