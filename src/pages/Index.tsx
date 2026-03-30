@@ -80,11 +80,6 @@ const Index = () => {
   }, [activeView]);
 
   const navigate = useNavigate();
-  const [storyIndex, setStoryIndex] = useState(() => Math.floor(Math.random() * successStories.length));
-
-  const nextStory = useCallback(() => {
-    setStoryIndex((prev) => (prev + 1) % successStories.length);
-  }, []);
 
   const handleScenarioClick = (scenarioId: string) => {
     const scenario = scenarios.find((s) => s.id === scenarioId);
@@ -137,48 +132,9 @@ const Index = () => {
                 </p>
               </div>
 
-              {/* Customer Success Preview */}
+              {/* Use Case Preview */}
               <div className="hidden lg:block">
-                {(() => {
-                  const story = successStories[storyIndex];
-                  const Icon = story.icon;
-                  return (
-                    <Card className="border-border/50 bg-card/80 backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-                      <CardContent className="p-5 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-xs">{story.industry}</Badge>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextStory}>
-                            <RefreshCw className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Icon className="w-5 h-5 text-iris shrink-0" />
-                          <span className="font-semibold text-sm">{story.company}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {story.scenarios.map((s) => (
-                            <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">{s}</Badge>
-                          ))}
-                        </div>
-                        <blockquote className="text-xs text-muted-foreground italic border-l-2 border-iris/30 pl-3">
-                          <Quote className="w-3 h-3 inline mr-1 opacity-50" />
-                          {story.quote}
-                        </blockquote>
-                        <p className="text-[11px] text-muted-foreground">{story.person}</p>
-                        <div className="flex items-baseline gap-1.5 pt-1">
-                          <span className="text-xl font-bold text-iris">{story.metric}</span>
-                          <span className="text-xs text-muted-foreground">{story.metricLabel}</span>
-                        </div>
-                        <button
-                          onClick={() => navigate("/features#success")}
-                          className="text-xs text-iris hover:underline cursor-pointer"
-                        >
-                          See all success stories →
-                        </button>
-                      </CardContent>
-                    </Card>
-                  );
-                })()}
+                <UseCaseShowcase platform="scenarios" variant="card" />
               </div>
             </section>
 
