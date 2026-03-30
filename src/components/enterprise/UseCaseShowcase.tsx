@@ -127,7 +127,7 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
           {current.description.length > 200 && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-[11px] text-primary hover:text-primary/80 transition-colors"
+              className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
             >
               {expanded ? "Show less" : "Read more"}
             </button>
