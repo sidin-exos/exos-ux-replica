@@ -1,11 +1,8 @@
 import { useState, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { Activity, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
@@ -15,47 +12,9 @@ import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
 import TrackerList from "@/components/enterprise/TrackerList";
 import MonitorDetailView from "@/components/enterprise/MonitorDetailView";
+import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
 import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
-
-const USE_CASES = [
-  { type: "DM-1", title: "Single-Source Supply Chain Vulnerability", text: "By analysing public shipping manifests and trade data, a procurement team identifies suppliers that are the sole source of critical components. Monitoring news and regulatory filings for these suppliers confirms or refutes the hypothesis by revealing M&A activity, production stoppages, or financial distress — enabling proactive risk mitigation." },
-  { type: "DM-2", title: "Geopolitical Risk for Raw Material Sourcing", text: "A procurement organisation assesses regional sourcing risk by aggregating news on political instability, sanctions, and labour disputes alongside government travel advisories. This creates a real-time risk profile informing decisions on supplier diversification or inventory build-up before disruptions materialise." },
-  { type: "DM-3", title: "Supplier Financial Health Trajectory", text: "By continuously monitoring public financial statements and news releases, the platform detects early warning signs such as declining revenue, increasing debt, or negative auditor opinions. Dynamic tracking of these public indicators allows procurement to initiate contingency planning before a crisis impacts supply." },
-  { type: "DM-4", title: "Regional Compliance & Regulatory Shifts", text: "A procurement team monitors government publications and news from specific countries to track changes in environmental regulations, labour laws, or import/export tariffs. This enables proactive adjustment of sourcing strategies and contract terms to ensure compliance and avoid penalties." },
-  { type: "DM-5", title: "Commodity Price Volatility & Supply Shocks", text: "By integrating data from public commodity indices, energy prices, and trade publications, procurement monitors real-time fluctuations and identifies emerging trends in critical raw material markets. This enables timely strategy adjustments — hedging, contract renegotiation, or alternative sourcing — to mitigate cost increases." },
-];
-
-const UseCaseCard = () => {
-  const [index, setIndex] = useState(0);
-  const current = USE_CASES[index];
-
-  return (
-    <Card className="lg:col-span-1 border-border/50 bg-card/50">
-      <CardContent className="pt-5 pb-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">Use Case</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => setIndex((prev) => (prev + 1) % USE_CASES.length)}
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            More Use Cases
-          </Button>
-        </div>
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-[10px]">{current.type}</Badge>
-            <p className="text-xs font-semibold text-foreground">{current.title}</p>
-          </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">{current.text}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 
 
@@ -154,7 +113,7 @@ const RiskPlatform = () => {
           </Card>
 
           {/* Right 1/3 — Use Case */}
-          <UseCaseCard />
+          <UseCaseShowcase platform="risk" variant="card" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

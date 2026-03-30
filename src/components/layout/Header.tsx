@@ -62,7 +62,7 @@ const NAV_GROUPS = [
     items: [
       { label: "Dashboards & Analytics", path: "/reports", icon: BarChart3 },
       { label: "Technology & AI", path: "/features#orchestration", icon: Sparkles },
-      { label: "Customer Success", path: "/features#success", icon: BookOpen },
+      { label: "Use Cases", path: "/features#success", icon: BookOpen },
       { label: "Pricing", path: "/pricing", icon: DollarSign },
       { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
     ],
