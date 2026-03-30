@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, BarChart3, Radar, Quote, Building2, CheckCircle } from "lucide-react";
+import PillarUseCaseDropdown from "@/components/welcome/PillarUseCaseDropdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ const pillars = [
     icon: BarChart3,
     cta: "Explore Scenarios",
     href: "/",
+    useCaseType: "scenarios" as const,
   },
   {
     number: "02",
@@ -40,6 +42,7 @@ const pillars = [
     icon: Radar,
     cta: "Open Intelligence Hub",
     href: "/market-intelligence",
+    useCaseType: "scenarios" as const,
   },
   {
     number: "03",
@@ -55,6 +58,7 @@ const pillars = [
     icon: Building2,
     cta: "View Platforms",
     href: "/enterprise/risk",
+    useCaseType: "risk" as const,
   },
 ];
 
@@ -193,6 +197,7 @@ const Welcome = () => {
                       <p className="text-sm text-foreground leading-relaxed">
                         {pillar.impact}
                       </p>
+                      <PillarUseCaseDropdown type={pillar.useCaseType} />
                     </CardContent>
                   </Card>
                   <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href)}>
