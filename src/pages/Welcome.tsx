@@ -58,6 +58,7 @@ const pillars = [
     icon: Building2,
     cta: "View Platforms",
     href: "/enterprise/risk",
+    useCaseType: "risk" as const,
   },
 ];
 
