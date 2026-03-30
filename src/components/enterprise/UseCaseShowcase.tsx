@@ -121,9 +121,23 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
             <Badge variant="secondary" className="text-[10px] shrink-0 mt-0.5">{current.ref}</Badge>
             <p className="text-xs font-semibold text-foreground leading-snug">{current.title}</p>
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {expanded ? current.description : descPreview}
-          </p>
+          <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
+            {(expanded ? current.description : descPreview)
+              .split(/\n\n|(?=(?:SITUATION:|HOW TO USE EXOS:|WHAT YOU RECEIVE:|WHY IT MATTERS:))/)
+              .filter(Boolean)
+              .map((paragraph, i) => {
+                const match = paragraph.match(/^(SITUATION:|HOW TO USE EXOS:|WHAT YOU RECEIVE:|WHY IT MATTERS:)\s*/);
+                if (match) {
+                  return (
+                    <p key={i}>
+                      <span className="font-semibold text-foreground">{match[1]}</span>{" "}
+                      {paragraph.slice(match[0].length)}
+                    </p>
+                  );
+                }
+                return <p key={i}>{paragraph.trim()}</p>;
+              })}
+          </div>
           {current.description.length > 200 && (
             <button
               onClick={() => setExpanded(!expanded)}
