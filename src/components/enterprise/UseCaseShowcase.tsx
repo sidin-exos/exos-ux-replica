@@ -22,7 +22,9 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
 
   const cases = useMemo(() => {
     const lib = USE_CASE_LIBRARY[industry];
-    return platform === "scenarios" ? lib.scenarios : lib.risk;
+    const all = platform === "scenarios" ? lib.scenarios : lib.risk;
+    // For risk platform, only show DM- monitoring scenarios
+    return platform === "risk" ? all.filter((uc) => uc.ref.startsWith("DM-")) : all;
   }, [industry, platform]);
 
   const current = cases[index] || cases[0];
