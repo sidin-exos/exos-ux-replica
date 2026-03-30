@@ -194,9 +194,7 @@ const Auth = () => {
         <Card className="w-full max-w-md card-elevated animate-fade-up">
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="w-20 h-20 overflow-hidden rounded-xl">
-                <img src={exosLogo} alt="EXOS" className="w-full h-full object-contain scale-[1.8]" />
-              </div>
+              <img src={exosLogo} alt="EXOS" className="h-14 w-auto object-contain" />
             </div>
             <CardTitle className="font-display text-2xl">Welcome to EXOS</CardTitle>
             <CardDescription>

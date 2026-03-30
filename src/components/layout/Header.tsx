@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useUser } from "@/hooks/useUser";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import exosLogoFallback from "@/assets/logo-concept-layers.png";
+import exosLogoFallback from "@/assets/exos-logo-dark.png";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -93,14 +93,8 @@ const Header = () => {
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <NavLink to="/welcome" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <div className="flex items-center justify-center h-14 w-14 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md shadow-primary/10">
-            <img src={exosLogo} alt="EXOS Logo" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <h1 className="font-display text-lg font-semibold text-foreground">EXOS</h1>
-            <p className="text-xs text-muted-foreground">Your procurement exoskeleton</p>
-          </div>
+        <NavLink to="/welcome" className="flex items-center hover:opacity-90 transition-opacity">
+          <img src={exosLogo} alt="EXOS Procurement Intelligence" className="h-10 md:h-12 w-auto object-contain" />
         </NavLink>
 
         {/* Desktop Mega-Menu */}

@@ -141,9 +141,7 @@ const Pricing = () => {
         {/* Hero Section */}
         <section className="mb-12 text-center animate-fade-up">
           <div className="flex justify-center mb-6">
-            <div className="w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-xl">
-              <img src={exosLogo} alt="EXOS" className="w-full h-full object-contain scale-[1.8]" />
-            </div>
+            <img src={exosLogo} alt="EXOS" className="h-16 md:h-20 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
             Simple, Transparent <span className="text-gradient">Pricing</span>
