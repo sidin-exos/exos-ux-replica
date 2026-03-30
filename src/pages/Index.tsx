@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Quote, TrendingUp, Shield, Users, RefreshCw, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
+import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,40 +14,7 @@ import { ChatWidget } from "@/components/chat/ChatWidget";
 import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard";
 import ScenarioPreviewPanel from "@/components/scenarios/ScenarioPreviewPanel";
 import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
-
-type ActiveView = "dashboard" | "scenario";
-
-const successStories = [
-  {
-    company: "MedTech Solutions GmbH",
-    industry: "Medical Devices",
-    scenarios: ["TCO Analysis", "Make-or-Buy"],
-    quote: "EXOS revealed hidden logistics costs we'd been overlooking for years.",
-    person: "Dr. Katrin Schäfer, Head of Strategic Procurement",
-    metric: "18%",
-    metricLabel: "Cost savings",
-    icon: TrendingUp,
-  },
-  {
-    company: "NordSteel Industries AB",
-    industry: "Heavy Industry",
-    scenarios: ["Black Swan Simulation", "Supplier Risk"],
-    quote: "EXOS flagged the risk two months prior. Our production lines kept running.",
-    person: "Erik Lindqvist, VP Supply Chain",
-    metric: "6-week",
-    metricLabel: "Halt avoided",
-    icon: Shield,
-  },
-  {
-    company: "CleanTech Mobility SAS",
-    industry: "Green Mobility",
-    scenarios: ["Consolidation Wizard", "Negotiation Prep"],
-    quote: "Going from 47 suppliers to 12 strategic partners in one quarter.",
-    person: "Amélie Durand, CPO",
-    metric: "35%",
-    metricLabel: "Overhead reduction",
-    icon: Users,
-  },
+import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
 ];
 
 const categoryOrder: Scenario["category"][] = ["analysis", "planning", "risk", "documentation"];
