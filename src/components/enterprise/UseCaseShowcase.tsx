@@ -214,7 +214,7 @@ function UseCaseCard({ useCase, index }: { useCase: UseCase; index: number }) {
             </p>
           </div>
         )}
-        <p className="text-[10px] text-muted-foreground/70">{useCase.persona}</p>
+        
       </CardContent>
     </Card>
   );
