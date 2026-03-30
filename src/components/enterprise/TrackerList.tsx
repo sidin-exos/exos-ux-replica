@@ -17,10 +17,26 @@ interface TrackerListProps {
   onSelectTracker?: (tracker: EnterpriseTracker) => void;
 }
 
-const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
-  active: "default",
-  setup: "secondary",
-  paused: "outline",
+const statusConfig: Record<string, { variant: "default" | "secondary" | "outline"; className: string }> = {
+  active: { variant: "default", className: "bg-success/15 text-success border-success/30" },
+  setup: { variant: "secondary", className: "bg-warning/15 text-warning border-warning/30" },
+  paused: { variant: "outline", className: "bg-muted text-muted-foreground border-border" },
+};
+
+const monitorTypeColors: Record<string, string> = {
+  "DM-1": "bg-accent/10 text-accent border-accent/30",
+  "DM-2": "bg-copper/10 text-copper border-copper/30",
+  "DM-3": "bg-iris/10 text-iris border-iris/30",
+  "DM-4": "bg-primary/10 text-primary border-primary/30",
+  "DM-5": "bg-highlight/10 text-highlight border-highlight/30",
+};
+
+const monitorTypeBorderColors: Record<string, string> = {
+  "DM-1": "border-l-accent",
+  "DM-2": "border-l-copper",
+  "DM-3": "border-l-iris",
+  "DM-4": "border-l-primary",
+  "DM-5": "border-l-highlight",
 };
 
 /** Truncate to ~first 2 sentences or 120 chars */
