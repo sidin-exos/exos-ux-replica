@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Brain, Database, ArrowRight, Lock, Quote, TrendingUp, Shield, Users, RefreshCw, Mail } from "lucide-react";
+import { Brain, Database, ArrowRight, Lock, Mail } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,49 +11,12 @@ import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-
-const successStories = [
-  {
-    company: "MedTech Solutions GmbH",
-    industry: "Medical Devices",
-    scenarios: ["TCO Analysis", "Make-or-Buy"],
-    quote: "EXOS revealed hidden logistics costs we'd been overlooking for years. The TCO breakdown across our 12 hospital supply chains was eye-opening—we renegotiated three major contracts within weeks.",
-    person: "Dr. Katrin Schäfer, Head of Strategic Procurement",
-    metric: "18%",
-    metricLabel: "Cost savings on surgical instrument procurement",
-    icon: TrendingUp,
-  },
-  {
-    company: "NordSteel Industries AB",
-    industry: "Heavy Industry",
-    scenarios: ["Black Swan Simulation", "Supplier Risk Assessment"],
-    quote: "When our primary tungsten supplier faced EU regulatory action, EXOS had already flagged the risk two months prior. The contingency plans we'd built using the Black Swan module kept our production lines running.",
-    person: "Erik Lindqvist, VP Supply Chain",
-    metric: "6-week",
-    metricLabel: "Production halt avoided",
-    icon: Shield,
-  },
-  {
-    company: "CleanTech Mobility SAS",
-    industry: "Automotive / Green Mobility",
-    scenarios: ["Consolidation Wizard", "Negotiation Prep"],
-    quote: "Going from 47 component suppliers to 12 strategic partners sounded impossible. EXOS mapped the consolidation path, prepared our negotiation briefs, and we completed the transition in one quarter.",
-    person: "Amélie Durand, Chief Procurement Officer",
-    metric: "35%",
-    metricLabel: "Admin overhead reduction",
-    icon: Users,
-  },
-];
+import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
 
 const Features = () => {
   const exosLogo = useThemedLogo();
   const location = useLocation();
   const { isSuperAdmin } = useAdminAuth();
-  const [storyIndex, setStoryIndex] = useState(() => Math.floor(Math.random() * successStories.length));
-
-  const nextStory = useCallback(() => {
-    setStoryIndex((prev) => (prev + 1) % successStories.length);
-  }, []);
 
   useEffect(() => {
     if (location.hash) {
@@ -63,8 +26,6 @@ const Features = () => {
       }
     }
   }, [location.hash]);
-
-  const story = successStories[storyIndex];
 
   const valuePropositions = [
     {
