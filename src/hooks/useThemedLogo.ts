@@ -1,6 +1,6 @@
 import { useTheme } from "next-themes";
-import exosLogoDark from "@/assets/logo-concept-layers.png";
-import exosLogoLight from "@/assets/logo-concept-layers-light.png";
+import exosLogoDark from "@/assets/exos-logo-dark.png";
+import exosLogoLight from "@/assets/exos-logo-light.png";
 
 export const useThemedLogo = () => {
   const { resolvedTheme } = useTheme();

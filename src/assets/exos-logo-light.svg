@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="496" height="200" viewBox="0 0 496 200">
+  <!--
+    EXOS Logo — Light variant
+    Mark: symmetric 3-layer diamond stack
+    Font: Poppins Bold 700 + Light 300 (Google Fonts)
+  -->
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&amp;display=swap');
+    </style>
+  </defs>
+
+  <!-- background (remove rect for transparent export) -->
+  <rect width="496" height="200" fill="#FFFFFF"/>
+
+  <!-- ── MARK ── -->
+  <g transform="translate(50,50)">
+    <polygon points="40,48 66,74 40,100 14,74" fill="#0C1D2E"/>
+    <polygon points="40,24 66,50 40,76 14,50" fill="#2CC9C0"/>
+    <polygon points="40,0 66,26 40,52 14,26"
+             fill="none" stroke="#0C1D2E" stroke-width="6" stroke-linejoin="round"/>
+  </g>
+
+  <!-- ── DIVIDER ── -->
+  <rect x="152" y="70" width="2" height="60" fill="#0C1D2E" opacity="0.15" rx="1"/>
+
+  <!-- ── WORDMARK ── -->
+  <text x="174" y="96"
+        font-family="Poppins, sans-serif" font-weight="700"
+        font-size="42" letter-spacing="9"
+        fill="#0C1D2E" dominant-baseline="middle">EXOS</text>
+
+  <!-- ── SUB-LABEL ── -->
+  <text x="177" y="127"
+        font-family="Poppins, sans-serif" font-weight="300"
+        font-size="10.5" letter-spacing="3.5"
+        fill="#0C1D2E" opacity="0.38" dominant-baseline="middle">PROCUREMENT INTELLIGENCE</text>
+</svg>
