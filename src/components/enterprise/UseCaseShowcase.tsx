@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Building2, Lightbulb, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Building2, Lightbulb, BookOpen, RefreshCw } from "lucide-react";
 import { USE_CASE_LIBRARY, INDUSTRIES, type UseCase, type IndustryName } from "@/lib/use-case-library";
 
 type Platform = "scenarios" | "risk";
@@ -34,8 +34,11 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
     setExpanded(false);
   };
 
-  const prev = () => { setIndex((i) => (i - 1 + total) % total); setExpanded(false); };
-  const next = () => { setIndex((i) => (i + 1) % total); setExpanded(false); };
+  const shuffle = useCallback(() => {
+    const randomIdx = Math.floor(Math.random() * total);
+    setIndex(randomIdx);
+    setExpanded(false);
+  }, [total]);
 
   if (!current) return null;
 
@@ -88,9 +91,15 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
             <Lightbulb className="w-3.5 h-3.5 text-primary" />
             Use Cases
           </h2>
-          <Badge variant="outline" className="text-[10px]">
-            {index + 1}/{total}
-          </Badge>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-primary"
+            onClick={shuffle}
+            aria-label="Show another use case"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </Button>
         </div>
 
         {/* Industry picker */}
@@ -135,14 +144,6 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
           )}
         </div>
 
-        {/* Nav */}
-        <div className="flex items-center justify-between pt-1">
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={prev}>
-            <ChevronLeft className="w-3 h-3" /> Prev
-          </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={next}>
-            Next <ChevronRight className="w-3 h-3" />
-          </Button>
         </div>
       </CardContent>
     </Card>
