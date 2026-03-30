@@ -130,67 +130,10 @@ const Features = () => {
               ))}
             </div>
 
-            {/* Right 1/3 — Success story preview */}
+            {/* Right 1/3 — Use Case preview */}
             <div className="lg:col-span-1">
               <div className="lg:sticky lg:top-24">
-                <Card className="card-elevated border-border/50 animate-fade-up" style={{ animationDelay: "300ms" }}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Customer Success
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-primary"
-                        onClick={nextStory}
-                        aria-label="Show another story"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="w-9 h-9 rounded-lg bg-copper/15 flex items-center justify-center">
-                        <story.icon className="w-4.5 h-4.5 text-copper" />
-                      </div>
-                      <Badge variant="outline" className="text-iris border-iris/30 bg-iris/10 text-xs">
-                        {story.industry}
-                      </Badge>
-                    </div>
-                    <CardTitle className="font-display text-base mt-2">{story.company}</CardTitle>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {story.scenarios.map((s) => (
-                        <Badge key={s} variant="secondary" className="text-xs bg-info/10 text-info border-info/20">
-                          {s}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="relative pl-3 border-l-2 border-primary/30">
-                      <Quote className="w-3.5 h-3.5 text-muted-foreground/40 absolute -left-2 -top-0.5 bg-card" />
-                      <p className="text-sm text-foreground/80 italic leading-relaxed">
-                        "{story.quote}"
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2 font-medium">
-                        — {story.person}
-                      </p>
-                    </div>
-                    <div className="pt-3 border-t border-border/50 flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-primary font-display">{story.metric}</span>
-                      <span className="text-xs text-muted-foreground">{story.metricLabel}</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const el = document.getElementById("success");
-                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }}
-                      className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
-                    >
-                      View all stories <ArrowRight className="w-3 h-3" />
-                    </button>
-                  </CardContent>
-                </Card>
+                <UseCaseShowcase platform="scenarios" variant="card" />
               </div>
             </div>
           </div>
@@ -289,61 +232,9 @@ const Features = () => {
           <DataFlowDiagram />
         </section>
 
-        {/* Customer Success Stories — Full Section */}
+        {/* Industry Use Cases — Full Section */}
         <section id="success" className="mb-16 animate-fade-up" style={{ animationDelay: "500ms" }}>
-          <div className="text-center mb-10">
-            <h2 className="font-display text-2xl md:text-3xl font-bold mb-3">
-              Customer <span className="text-gradient">Success Stories</span>
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              See how EU procurement teams use EXOS to prevent value leakage, 
-              manage supply chain risk, and drive measurable savings.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {successStories.map((s, index) => (
-              <Card
-                key={s.company}
-                className="card-elevated border-border/50 animate-fade-up"
-                style={{ animationDelay: `${600 + index * 100}ms` }}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-copper/15 flex items-center justify-center">
-                      <s.icon className="w-5 h-5 text-copper" />
-                    </div>
-                    <Badge variant="outline" className="text-iris border-iris/30 bg-iris/10 text-xs">
-                      {s.industry}
-                    </Badge>
-                  </div>
-                  <CardTitle className="font-display text-lg">{s.company}</CardTitle>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {s.scenarios.map((sc) => (
-                      <Badge key={sc} variant="secondary" className="text-xs bg-info/10 text-info border-info/20">
-                        {sc}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="relative pl-4 border-l-2 border-primary/30">
-                    <Quote className="w-4 h-4 text-muted-foreground/40 absolute -left-2 -top-1 bg-card" />
-                    <p className="text-sm text-foreground/80 italic leading-relaxed">
-                      "{s.quote}"
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2 font-medium">
-                      — {s.person}
-                    </p>
-                  </div>
-                  <div className="pt-3 border-t border-border/50 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-primary font-display">{s.metric}</span>
-                    <span className="text-xs text-muted-foreground">{s.metricLabel}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <UseCaseShowcase platform="scenarios" variant="section" />
         </section>
 
         <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
