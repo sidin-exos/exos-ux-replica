@@ -15,7 +15,8 @@ import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard"
 import ScenarioPreviewPanel from "@/components/scenarios/ScenarioPreviewPanel";
 import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
 import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
-];
+
+type ActiveView = "dashboard" | "scenario";
 
 const categoryOrder: Scenario["category"][] = ["analysis", "planning", "risk", "documentation"];
 
