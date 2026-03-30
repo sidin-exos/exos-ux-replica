@@ -74,7 +74,7 @@ const RiskPlatform = () => {
           </div>
           <div>
             <h1 className="text-2xl exos-page-title">
-              Dynamic Monitoring Module
+               Dynamic Risk Monitoring
             </h1>
           </div>
         </div>
