@@ -143,8 +143,6 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
             </div>
           )}
         </div>
-
-        </div>
       </CardContent>
     </Card>
   );
