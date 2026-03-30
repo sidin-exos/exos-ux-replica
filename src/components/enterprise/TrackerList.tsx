@@ -139,23 +139,27 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
         const typeMeta = MONITOR_TYPE_META[monitorType];
         const latest = latestReports[t.id];
 
+        const typeColorClass = monitorTypeColors[monitorType] || "bg-highlight/10 text-highlight border-highlight/30";
+        const borderColorClass = monitorTypeBorderColors[monitorType] || "border-l-highlight";
+        const statusCfg = statusConfig[t.status] || statusConfig.active;
+
         return (
           <div
             key={t.id}
-            className="flex items-center gap-4 p-3 rounded-md border border-border/50 hover:border-primary/40 cursor-pointer transition-colors group"
+            className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderColorClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
             onClick={() => onSelectTracker?.(t)}
           >
             {/* Name + summary */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">{t.name}</span>
-                <span className="text-xs text-highlight border border-highlight/30 rounded px-1.5 py-0.5 bg-highlight/10 shrink-0">{typeMeta?.label}</span>
-                <Badge variant={statusVariant[t.status] ?? "secondary"} className="capitalize text-xs shrink-0">
+                <span className={`text-[10px] font-medium border rounded px-1.5 py-0.5 shrink-0 ${typeColorClass}`}>{typeMeta?.label}</span>
+                <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 capitalize shrink-0 ${statusCfg.className}`}>
                   {t.status}
-                </Badge>
+                </span>
               </div>
               {latest && (
-                <p className="text-xs text-muted-foreground leading-relaxed mt-1 line-clamp-5">
+                <p className="text-xs text-muted-foreground leading-relaxed mt-1.5 line-clamp-5">
                   {latest.summary}
                 </p>
               )}
@@ -163,16 +167,14 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
 
             {/* Dates column */}
             <div className="shrink-0 text-right space-y-1">
-              <div className="text-xs text-muted-foreground/70">
-                <span className="text-muted-foreground/50">Created</span>
-                <br />
-                {format(new Date(t.created_at), "MMM d, yyyy")}
+              <div className="text-[11px]">
+                <span className="text-muted-foreground/60 block">Created</span>
+                <span className="text-muted-foreground">{format(new Date(t.created_at), "MMM d, yyyy")}</span>
               </div>
               {latest && (
-                <div className="text-xs text-muted-foreground/70">
-                  <span className="text-muted-foreground/50">Updated</span>
-                  <br />
-                  {format(new Date(latest.date), "MMM d, yyyy")}
+                <div className="text-[11px]">
+                  <span className="text-muted-foreground/60 block">Updated</span>
+                  <span className="text-muted-foreground">{format(new Date(latest.date), "MMM d, yyyy")}</span>
                 </div>
               )}
             </div>
