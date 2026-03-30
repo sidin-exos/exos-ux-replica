@@ -25,6 +25,7 @@ const pillars = [
     icon: BarChart3,
     cta: "Explore Scenarios",
     href: "/",
+    useCaseType: "scenarios" as const,
   },
   {
     number: "02",
