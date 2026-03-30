@@ -42,6 +42,7 @@ const pillars = [
     icon: Radar,
     cta: "Open Intelligence Hub",
     href: "/market-intelligence",
+    useCaseType: "scenarios" as const,
   },
   {
     number: "03",
