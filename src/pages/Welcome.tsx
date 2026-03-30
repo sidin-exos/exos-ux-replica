@@ -227,7 +227,7 @@ const Welcome = () => {
       <section className="py-16 md:py-20">
         <div className="container">
           <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-12">
-            Empowering Global Procurement Leaders
+            Agentic AI Tailored for Your Needs
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-12 md:gap-20">
             {stats.map((stat) => (
