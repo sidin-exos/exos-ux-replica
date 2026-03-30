@@ -197,6 +197,7 @@ const Welcome = () => {
                       <p className="text-sm text-foreground leading-relaxed">
                         {pillar.impact}
                       </p>
+                      <PillarUseCaseDropdown type={pillar.useCaseType} />
                     </CardContent>
                   </Card>
                   <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href)}>
