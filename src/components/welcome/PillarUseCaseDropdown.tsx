@@ -20,7 +20,7 @@ const PillarUseCaseDropdown = ({ type }: Props) => {
   const cases = useMemo(() => {
     // Gather use cases across all industries
     const all: UseCase[] = [];
-    for (const entry of USE_CASE_LIBRARY) {
+    for (const entry of Object.values(USE_CASE_LIBRARY)) {
       if (type === "scenarios") {
         all.push(...entry.scenarios);
       } else if (type === "risk") {
