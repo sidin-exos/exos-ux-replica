@@ -62,8 +62,8 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             }
             if (text === "moderate" || text === "medium" || text === "watch") {
               return (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-copper/10 text-copper text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-copper" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-warning/10 text-warning text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-warning" />
                   {children}
                 </span>
               );
