@@ -12,6 +12,7 @@ import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelin
 import { DeepAnalysisPipeline } from "@/components/analysis/DeepAnalysisPipeline";
 import { DeepAnalysisResult } from "@/components/analysis/DeepAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
+import { routeFeedback } from "@/lib/route-feedback";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -193,6 +194,15 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     if (error) {
       toast.error("Failed to submit feedback");
     } else {
+      routeFeedback({
+        source: "scenario_feedback",
+        idempotency_key: crypto.randomUUID(),
+        rating: feedbackRating,
+        feedback_type: feedbackType || undefined,
+        feedback_text: feedbackText || undefined,
+        scenario_id: scenario.id,
+        page_url: window.location.href,
+      });
       toast.success("Thank you for your feedback!");
       setFeedbackSubmitted(true);
       setTimeout(() => {
@@ -514,6 +524,14 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         feedback_text: feedback || null,
       });
       if (error) throw error;
+      routeFeedback({
+        source: "output_feedback",
+        idempotency_key: crypto.randomUUID(),
+        rating,
+        feedback_text: feedback || undefined,
+        scenario_id: scenario.id,
+        page_url: window.location.href,
+      });
       toast.success("Thank you for your feedback!");
     } catch (err: any) {
       console.error("Feedback save failed:", err);
