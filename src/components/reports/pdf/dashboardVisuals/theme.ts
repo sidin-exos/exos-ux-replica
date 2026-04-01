@@ -1,80 +1,80 @@
 /**
  * EXOS Branded PDF theme — dual light/dark mode.
- * Matches EXOS_Report_Template_Light.pdf and EXOS_Report_Template_Dark.pdf.
+ * Based on EXOS Brand Book v2.0 — Teal-first, neutral backgrounds.
  */
 
 import { StyleSheet } from "@react-pdf/renderer";
 
 export type PdfThemeMode = "light" | "dark";
 
-/** Light mode palette — sage page bg, white cards */
+/** Light mode palette — neutral backgrounds, teal accents */
 export const lightColors = {
-  primary: "#3D7A6E",       // teal — headings, accents, header bar
-  primaryDark: "#2D5F55",   // darker teal — hover/emphasis
-  background: "#E8F0EA",    // sage/mint page background
+  primary: "#277169",       // teal — headings, accents, header bar
+  primaryDark: "#184d48",   // darker teal — hover/emphasis
+  background: "#f5f7f8",    // neutral light gray (was sage)
   surface: "#FFFFFF",       // white — card backgrounds
-  surfaceLight: "#F3F7F4",  // light sage — alternating rows
-  text: "#1A1A1A",          // near-black — body text
-  textMuted: "#6B7280",     // medium gray — labels, captions
+  surfaceLight: "#edeff2",  // neutral light gray — alternating rows
+  text: "#111621",          // near-black — body text
+  textMuted: "#576274",     // medium gray — labels, captions
   textOnPrimary: "#FFFFFF", // white text on teal backgrounds
-  success: "#15803D",       // dark green — positive values
-  warning: "#B45309",       // dark amber — caution values
-  destructive: "#B91C1C",   // dark red — negative/risk values
-  border: "rgba(229, 231, 235, 0.6)", // semi-transparent borders
+  success: "#277c54",       // dark green — positive values
+  warning: "#ce8b16",       // dark amber — caution values
+  destructive: "#ad2828",   // dark red — negative/risk values
+  border: "#d5d9e1",        // neutral border
   badgeText: "#FFFFFF",     // white text on colored badges
-  option2: "#94A3B8",       // slate — secondary chart color
-  option3: "#6B7280",       // gray — tertiary chart color
+  option2: "#6ba5a8",       // chart-2 teal-family
+  option3: "#5ea090",       // chart-3 teal-family
   // Accent colors for cards/borders
-  accent1: "#2D5F55",       // dark teal
-  accent2: "#3B8574",       // medium teal
-  accent3: "#EAB308",       // amber/yellow
-  accent4: "#DC7548",       // coral/orange
+  accent1: "#184d48",       // dark teal
+  accent2: "#3e988f",       // mid teal
+  accent3: "#ce8b16",       // warning amber
+  accent4: "#9b613a",       // copper (restricted)
   // Risk severity colors
-  riskCritical: "#B91C1C",
-  riskHigh: "#DC7548",
-  riskMedium: "#3B82F6",
-  // Bottom stripe colors
-  stripe1: "#3D7A6E",
-  stripe2: "#3B82F6",
-  stripe3: "#22C55E",
-  stripe4: "#EAB308",
-  stripe5: "#DC7548",
-  stripe6: "#DC2626",
+  riskCritical: "#ad2828",
+  riskHigh: "#9b613a",      // copper
+  riskMedium: "#ce8b16",    // warning
+  // Chart stripe colors — teal-family muted
+  stripe1: "#387e77",       // chart-1
+  stripe2: "#549296",       // chart-2
+  stripe3: "#4d897a",       // chart-3
+  stripe4: "#69949f",       // chart-4
+  stripe5: "#88a9a6",       // chart-5
+  stripe6: "#25544f",       // chart-6
 } as const;
 
-/** Dark mode palette — dark charcoal bg, dark cards */
+/** Dark mode palette — dark neutral bg, dark cards */
 export const darkColors = {
-  primary: "#4DB6AC",       // bright teal — headings, accents
-  primaryDark: "#3D9B91",   // slightly darker teal
-  background: "#1C2B3A",   // dark charcoal page background
-  surface: "#243447",       // dark card backgrounds
-  surfaceLight: "#2A3B4E",  // slightly lighter — alternating rows
-  text: "#E2E8F0",          // light gray — body text
-  textMuted: "#94A3B8",     // medium slate — labels, captions
+  primary: "#49aba1",       // bright teal — headings, accents
+  primaryDark: "#2f7d75",   // slightly darker teal
+  background: "#0d0f16",    // very dark neutral page background
+  surface: "#151922",       // dark card backgrounds
+  surfaceLight: "#212630",  // slightly lighter — alternating rows
+  text: "#ebeff4",          // light gray — body text
+  textMuted: "#96a1b0",     // medium slate — labels, captions
   textOnPrimary: "#FFFFFF", // white text on teal backgrounds
-  success: "#4ADE80",       // bright green — positive values
-  warning: "#FBBF24",       // bright amber — caution values
-  destructive: "#F87171",   // bright red — negative/risk values
-  border: "rgba(148, 163, 184, 0.25)", // semi-transparent borders
+  success: "#379e6e",       // bright green — positive values
+  warning: "#d9931a",       // bright amber — caution values
+  destructive: "#c93535",   // bright red — negative/risk values
+  border: "#2c3443",        // dark neutral border
   badgeText: "#FFFFFF",     // white text on colored badges
-  option2: "#64748B",       // slate — secondary chart color
-  option3: "#475569",       // darker slate — tertiary chart color
+  option2: "#6ba5a8",       // chart-2
+  option3: "#5ea090",       // chart-3
   // Accent colors for cards/borders
-  accent1: "#4DB6AC",
-  accent2: "#81C784",
-  accent3: "#FFD54F",
-  accent4: "#FF8A65",
+  accent1: "#49aba1",
+  accent2: "#5ea090",
+  accent3: "#d9931a",       // warning
+  accent4: "#b78360",       // copper
   // Risk severity colors
-  riskCritical: "#F87171",
-  riskHigh: "#FF8A65",
-  riskMedium: "#60A5FA",
-  // Bottom stripe colors
-  stripe1: "#4DB6AC",
-  stripe2: "#60A5FA",
-  stripe3: "#4ADE80",
-  stripe4: "#FBBF24",
-  stripe5: "#FF8A65",
-  stripe6: "#F87171",
+  riskCritical: "#c93535",
+  riskHigh: "#b78360",      // copper
+  riskMedium: "#d9931a",    // warning
+  // Chart stripe colors — teal-family
+  stripe1: "#4ea69d",       // chart-1
+  stripe2: "#6ba5a8",       // chart-2
+  stripe3: "#5ea090",       // chart-3
+  stripe4: "#7ea0a9",       // chart-4
+  stripe5: "#96b0ad",       // chart-5
+  stripe6: "#3a7c76",       // chart-6
 } as const;
 
 export const colors = lightColors;
