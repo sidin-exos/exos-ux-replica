@@ -2,47 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/layout/Header";
-import { User, CreditCard, LogOut, Loader2, Check, Zap, Shield, Building2 } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useShareableMode } from "@/hooks/useShareableMode";
 import { ModelConfigPanel } from "@/components/settings/ModelConfigPanel";
 import UserFilesManager from "@/components/files/UserFilesManager";
+import ProfileCard from "@/components/account/ProfileCard";
+import PlanUsageCard from "@/components/account/PlanUsageCard";
+import UpgradePlansCard from "@/components/account/UpgradePlansCard";
+import BillingHistoryCard from "@/components/account/BillingHistoryCard";
+import { useAccountData } from "@/hooks/useAccountData";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-
-const subscriptionPlans = [
-  {
-    id: "smb",
-    name: "SMB",
-    price: "€29",
-    period: "/month",
-    icon: Zap,
-    features: ["AI-powered analysis", "SOW review tools", "Email support"],
-    current: false,
-  },
-  {
-    id: "professional",
-    name: "Professional",
-    price: "€99",
-    period: "/month",
-    icon: Shield,
-    features: ["Unlimited simulations", "Full dashboard access", "Priority support"],
-    current: false,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    icon: Building2,
-    features: ["Custom integrations", "SSO & security", "Dedicated manager"],
-    current: false,
-    comingSoon: true,
-  },
-];
 
 const Account = () => {
   const navigate = useNavigate();
@@ -52,6 +25,8 @@ const Account = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const { profile, usage, emptyFieldCount, updateProfile, isLoading: profileLoading } = useAccountData();
 
   useEffect(() => {
     if (searchParams.get("confirmed") === "true") {
@@ -63,20 +38,14 @@ const Account = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-      }
+      if (!session) navigate("/auth");
+      else setUser(session.user);
       setIsLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-      }
+      if (!session) navigate("/auth");
+      else setUser(session.user);
       setIsLoading(false);
     });
 
@@ -88,22 +57,11 @@ const Account = () => {
     try {
       await supabase.auth.signOut();
       navigate("/auth");
-    } catch (error) {
-      toast({
-        title: "Sign out failed",
-        description: "An error occurred while signing out",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Sign out failed", description: "An error occurred while signing out", variant: "destructive" });
     } finally {
       setIsSigningOut(false);
     }
-  };
-
-  const handleSubscribe = (planId: string) => {
-    toast({
-      title: "Coming Soon",
-      description: "Stripe payment integration will be configured shortly",
-    });
   };
 
   if (isLoading) {
@@ -114,169 +72,71 @@ const Account = () => {
     );
   }
 
+  const lastSignIn = user?.last_sign_in_at
+    ? new Date(user.last_sign_in_at).toLocaleDateString("en-GB", {
+        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+      })
+    : null;
+
   return (
     <div className="min-h-screen gradient-hero">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{ background: "var(--gradient-glow)" }}
-      />
-
+      <div className="fixed inset-0 pointer-events-none" style={{ background: "var(--gradient-glow)" }} />
       <Header />
 
       <main className="container py-8 relative">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Account Info Section */}
-          <Card className="card-elevated animate-fade-up">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl sm:text-2xl font-semibold text-primary-foreground flex-shrink-0">
-                    {user?.email?.charAt(0).toUpperCase() || "U"}
-                  </div>
-                  <div className="min-w-0">
-                    <CardTitle className="font-display text-lg sm:text-xl truncate">
-                      {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User"}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2 truncate">
-                      <User className="w-4 h-4 flex-shrink-0" />
-                      <span className="truncate">{user?.email}</span>
-                    </CardDescription>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={handleSignOut}
-                  disabled={isSigningOut}
-                  className="gap-2 w-full sm:w-auto"
-                >
-                  {isSigningOut ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <LogOut className="w-4 h-4" />
-                  )}
-                  Sign Out
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Current Subscription Section */}
-          <Card className="card-elevated animate-fade-up" style={{ animationDelay: "100ms" }}>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-primary" />
-                <CardTitle className="font-display text-lg">Subscription</CardTitle>
-              </div>
-              <CardDescription>
-                Manage your subscription and billing
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
-                <div>
-                  <p className="font-medium text-foreground">Free Plan</p>
-                  <p className="text-sm text-muted-foreground">
-                    Basic access to EXOS features
-                  </p>
-                </div>
-                <Badge variant="secondary">Current Plan</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* File Management */}
-          <UserFilesManager />
-
-          {/* AI Model Configuration Panel (internal users only) */}
-          {showTechnicalDetails && (
-            <ModelConfigPanel />
-          )}
-
-          <Separator className="my-8" />
-
-          {/* Subscription Plans Section */}
-          <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
-            <h2 className="font-display text-2xl font-semibold text-center mb-6">
-              Upgrade Your Plan
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {subscriptionPlans.map((plan, index) => {
-                const Icon = plan.icon;
-                return (
-                  <Card
-                    key={plan.id}
-                    className={`card-elevated relative ${
-                      plan.current ? "border-primary/50 shadow-lg shadow-primary/10" : ""
-                    }`}
-                    style={{ animationDelay: `${300 + index * 100}ms` }}
-                  >
-                    {plan.comingSoon && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <Badge variant="secondary">Coming Soon</Badge>
-                      </div>
-                    )}
-
-                    <CardHeader className="text-center pb-2 pt-8">
-                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-4">
-                        <Icon className="w-6 h-6 text-foreground" />
-                      </div>
-                      <h3 className="font-display text-xl font-semibold text-foreground">
-                        {plan.name}
-                      </h3>
-                    </CardHeader>
-
-                    <CardContent className="pt-4">
-                      <div className="text-center mb-6">
-                        <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-3xl font-display font-bold text-foreground">
-                            {plan.price}
-                          </span>
-                          <span className="text-muted-foreground">{plan.period}</span>
-                        </div>
-                      </div>
-
-                      <ul className="space-y-2 mb-6">
-                        {plan.features.map((feature, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm">
-                            <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                            <span className="text-foreground">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      <Button
-                        className="w-full"
-                        variant={plan.current ? "secondary" : "default"}
-                        disabled={plan.comingSoon || plan.current}
-                        onClick={() => handleSubscribe(plan.id)}
-                      >
-                        {plan.current ? "Current Plan" : plan.comingSoon ? "Coming Soon" : "Subscribe"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+        <div className="max-w-[860px] mx-auto space-y-6">
+          {/* Page header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-up">
+            <div>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">My Account</h1>
+              {lastSignIn && (
+                <p className="text-sm text-muted-foreground mt-1">Last sign-in: {lastSignIn}</p>
+              )}
             </div>
+            <Button variant="outline" onClick={handleSignOut} disabled={isSigningOut} className="gap-2">
+              {isSigningOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+              Sign Out
+            </Button>
           </div>
 
-          {/* Billing History Placeholder */}
-          <Card className="card-elevated animate-fade-up" style={{ animationDelay: "600ms" }}>
-            <CardHeader>
-              <CardTitle className="font-display text-lg">Billing History</CardTitle>
-              <CardDescription>
-                View your past invoices and payments
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No billing history yet</p>
-                <p className="text-sm">
-                  Your invoices will appear here after you subscribe
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Profile */}
+          {profileLoading || !profile ? (
+            <Skeleton className="h-72 w-full rounded-xl" />
+          ) : (
+            <div className="animate-fade-up">
+              <ProfileCard
+                profile={profile}
+                email={user?.email ?? ""}
+                emptyFieldCount={emptyFieldCount}
+                updateProfile={updateProfile}
+              />
+            </div>
+          )}
+
+          {/* Plan & Usage */}
+          <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
+            <PlanUsageCard usage={usage} />
+          </div>
+
+          {/* File Management */}
+          <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
+            <UserFilesManager />
+          </div>
+
+          {/* AI Model Configuration Panel (internal users only) */}
+          {showTechnicalDetails && <ModelConfigPanel />}
+
+          <Separator className="my-4" />
+
+          {/* Upgrade Plans */}
+          <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
+            <UpgradePlansCard />
+          </div>
+
+          {/* Billing History */}
+          <div className="animate-fade-up" style={{ animationDelay: "250ms" }}>
+            <BillingHistoryCard />
+          </div>
         </div>
       </main>
     </div>
