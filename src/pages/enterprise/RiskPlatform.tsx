@@ -1,11 +1,14 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { Activity } from "lucide-react";
+import { Activity, BarChart3, FileText, Gauge } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
@@ -22,6 +25,31 @@ const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
   const [selectedTracker, setSelectedTracker] = useState<EnterpriseTracker | null>(null);
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
+
+  const MAX_REPORTS_PER_MONTH = 50;
+
+  // Count reports generated this month
+  const { data: reportsThisMonth = 0 } = useQuery({
+    queryKey: ["monitor_reports_count_month", "risk"],
+    enabled: !!user,
+    queryFn: async () => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const trackerIds = trackers.map((t) => t.id);
+      if (trackerIds.length === 0) return 0;
+
+      const { count, error } = await supabase
+        .from("monitor_reports" as any)
+        .select("id", { count: "exact", head: true })
+        .in("tracker_id", trackerIds)
+        .gte("created_at", startOfMonth.toISOString());
+
+      if (error) return 0;
+      return count ?? 0;
+    },
+  });
 
   const handleSelectTracker = useCallback((tracker: EnterpriseTracker) => {
     setSelectedTracker(tracker);
@@ -116,19 +144,9 @@ const RiskPlatform = () => {
           <UseCaseShowcase platform="risk" variant="card" />
         </div>
 
+        {/* Setup Wizard (2/3) + Usage Stats (1/3) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left 2/3 — Active Monitors */}
           <div className="lg:col-span-2">
-            <Card className="rounded-sm">
-              <CardContent className="pt-5">
-                <h2 className="text-base font-semibold text-foreground mb-4">Active Monitors</h2>
-                <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right 1/3 — Setup Wizard */}
-          <div className="lg:col-span-1 lg:sticky lg:top-8 lg:self-start">
             <Card className="rounded-sm border-primary/20">
               <CardContent className="pt-5">
                 <h2 className="text-base font-semibold text-foreground mb-4">Set up New Monitor</h2>
@@ -142,7 +160,73 @@ const RiskPlatform = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Right 1/3 — Usage Statistics */}
+          <div className="lg:col-span-1 lg:sticky lg:top-8 lg:self-start">
+            <Card className="rounded-sm border-border/50 bg-card/50">
+              <CardContent className="pt-5 space-y-5">
+                <h2 className="text-base font-semibold text-foreground">Usage Statistics</h2>
+
+                {/* Active Monitors */}
+                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Gauge className="w-4 h-4 text-primary" />
+                    <span className="text-xs text-muted-foreground">Active Monitors</span>
+                  </div>
+                  <p className="text-3xl font-display font-bold text-foreground">
+                    {trackers.filter((t) => t.status === "active").length}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {trackers.length} total ({trackers.filter((t) => t.status === "setup").length} in setup)
+                  </p>
+                </div>
+
+                {/* Reports This Month */}
+                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-4 h-4 text-iris" />
+                    <span className="text-xs text-muted-foreground">Reports This Month</span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <p className="text-3xl font-display font-bold text-foreground">
+                      {reportsThisMonth}
+                    </p>
+                    <span className="text-sm text-muted-foreground">/ {MAX_REPORTS_PER_MONTH}</span>
+                  </div>
+                  <Progress
+                    value={Math.min((reportsThisMonth / MAX_REPORTS_PER_MONTH) * 100, 100)}
+                    className="h-1.5 mt-2"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1.5">
+                    Professional tier · {MAX_REPORTS_PER_MONTH - reportsThisMonth > 0 ? `${MAX_REPORTS_PER_MONTH - reportsThisMonth} remaining` : "Limit reached"}
+                  </p>
+                </div>
+
+                {/* Max Reports */}
+                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BarChart3 className="w-4 h-4 text-copper" />
+                    <span className="text-xs text-muted-foreground">Monthly Report Limit</span>
+                  </div>
+                  <p className="text-3xl font-display font-bold text-foreground">
+                    {MAX_REPORTS_PER_MONTH}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Professional tier allowance
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        {/* Active Monitors — full width below */}
+        <Card className="rounded-sm">
+          <CardContent className="pt-5">
+            <h2 className="text-base font-semibold text-foreground mb-4">Active Monitors</h2>
+            <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
+          </CardContent>
+        </Card>
       </main>
     </EnterpriseLayout>
   );
