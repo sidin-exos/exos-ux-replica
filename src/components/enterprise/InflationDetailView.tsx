@@ -74,10 +74,18 @@ const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
             </div>
           </div>
         </div>
-        <Button onClick={handleScanNow} disabled={isScanning} className="gap-1.5 shrink-0">
-          {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-          Scan Now
-        </Button>
+        <div className="flex items-center gap-2">
+          {activeDrivers.length > 0 && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowPdf(true)}>
+              <FileDown className="w-4 h-4" />
+              Download PDF
+            </Button>
+          )}
+          <Button onClick={handleScanNow} disabled={isScanning} className="gap-1.5 shrink-0">
+            {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Scan Now
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
