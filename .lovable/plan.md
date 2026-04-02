@@ -1,102 +1,69 @@
 
 
-## EXOS Typography Consistency — Fixes 1-4 (Bundled)
+## EXOS Registration Form Upgrade
 
-### Files Modified (6 total)
+### Summary
+Replace the current basic 3-field Sign Up tab (email, password, confirm password) with a professional two-step B2B registration form per the uploaded spec, inside the existing `/auth` page.
 
-**1. `src/index.css`** — Add 3 utility classes in `@layer utilities`:
-```css
-.exos-page-title {
-  @apply text-foreground font-bold;
-}
-.exos-page-title-hero {
-  @apply text-primary font-bold;
-}
-.exos-label-caps {
-  @apply text-[11px] font-medium tracking-[0.07em] uppercase text-muted-foreground;
-}
+### Architecture
+
+```text
+src/pages/Auth.tsx              ← Keep Sign In tab + forgot password unchanged
+                                  Replace Sign Up TabsContent with <SignUpForm />
+src/components/auth/
+  SignUpForm.tsx                 ← NEW: 2-step form orchestrator
+  StepIndicator.tsx             ← NEW: 2-dot progress bar
+  PasswordStrengthMeter.tsx     ← NEW: 3-segment strength bar
+  ConsentBlock.tsx              ← NEW: 3 checkboxes with required/optional badges
+  CountrySelect.tsx             ← NEW: searchable country select with EU priority group
+  JobTitleInput.tsx             ← NEW: text input with typeahead suggestions dropdown
 ```
 
----
+### Step-by-step plan
 
-**2. `src/pages/enterprise/RiskPlatform.tsx` line 117** (Fix 1):
-```
-Before: className="text-2xl font-display font-semibold text-foreground"
-After:  className="text-2xl exos-page-title"
-```
+**1. Create helper components**
 
----
+- **StepIndicator**: Two circles connected by a line. Active = filled teal, inactive = outlined. Labels "Step 1 of 2" / "Step 2 of 2".
+- **PasswordStrengthMeter**: 3 segments (3px height). Evaluates on keystroke: Weak (red, 1/3), Fair (amber, 2/3), Strong (teal, 3/3). Caption text below.
+- **ConsentBlock**: Three shadcn Checkboxes. Consents 1-2 marked "Required" badge, Consent 3 marked "Optional". GDPR tooltip on Consent 2 via info icon.
+- **CountrySelect**: shadcn Command-based searchable select. Priority group (DE, NL, IT, ES, FR, PL, BE, AT, CH, SE) shown first with separator, then EU/EEA alphabetically, then rest of world. Stores ISO alpha-2 codes.
+- **JobTitleInput**: Text input with a dropdown of suggestions (Procurement Manager, CPO, etc.) that appear as the user types. Free text accepted.
 
-**3. `src/components/scenarios/GenericScenarioWizard.tsx`** (Fix 1 + Fix 2):
+**2. Create SignUpForm component**
 
-Line 685 — h3 "Analysis Settings":
-```
-Before: className="font-display text-lg font-semibold mb-1"
-After:  className="text-lg exos-page-title mb-1"
-```
+- Two-step form using `react-hook-form` with zod validation.
+- **Step 1 schema**: fullName, workEmail (with free domain blocklist), companyName, companySize (select), country (searchable select), password (min 10 chars).
+- **Step 2 schema**: jobTitle, industry (select with ICP priority grouping), primaryChallenge (select), referralSource (optional select), consentTerms (required), consentDataProcessing (required), consentMarketing (optional).
+- Validate on blur. Password strength updates on keystroke.
+- Free email domain check: blocklist of 15 domains, inline error on blur.
+- "Continue" button disabled until Step 1 valid. "Create My Account" disabled until Step 2 fields + required consents valid.
+- Back button on Step 2 preserves Step 1 values.
+- On submit: call `supabase.auth.signUp()` with all fields in `options.data` including derived cohort (C1/C2/C3), UTM params from URL.
+- Clear password from state after signUp call.
+- Handle `over_email_send_rate_limit` error gracefully.
+- On success: replace form with confirmation panel (teal checkmark, "Check your inbox", email displayed, "Go back and correct it" link).
 
-Line 820 — h4 "Enter Your Data":
-```
-Before: className="text-sm font-semibold text-foreground/80 uppercase tracking-wider"
-After:  className="exos-label-caps"
-```
+**3. Update Auth.tsx**
 
----
+- Remove the inline sign-up form from the Sign Up `TabsContent`.
+- Import and render `<SignUpForm />` instead.
+- Remove old `signUpSchema`, `signUpForm`, and `handleEmailSignUp` (all moved into SignUpForm).
+- Sign In tab, forgot password flow, and Google OAuth remain untouched.
 
-**4. `src/pages/Reports.tsx`** (Fix 1 skipped — text-gradient already handles teal; Fix 2 only):
+**4. Styling details**
 
-Line 203 — h2 "What are you trying to decide?":
-```
-Before: className="text-sm font-medium text-foreground/70 uppercase tracking-wide mb-3"
-After:  className="exos-label-caps mb-3"
-```
+- Card max-width stays 480px (existing `max-w-md`). Internal padding 40px.
+- Input height: 44px (h-11). Font size 14.5px in inputs.
+- Focus ring: `ring-primary/12` (teal at 12% opacity).
+- Section labels: 11px uppercase with letter-spacing, teal color.
+- Error state: destructive border only, no red background.
+- Dark mode: uses existing CSS variables (--card, --border, --primary).
+- Responsive at 375px mobile.
 
-Line 238 — SelectLabel (mobile sidebar):
-```
-Before: className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-After:  className="exos-label-caps"
-```
-
-Line 266 — h3 sidebar group headers (desktop):
-```
-Before: className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-After:  className="exos-label-caps"
-```
-
----
-
-**5. `src/components/reports/DecisionMatrixDashboard.tsx` line 94** (Fix 3):
-```
-Before: className="font-display text-base"
-After:  className="text-base font-semibold text-foreground"
-```
-
----
-
-**6. `src/pages/MarketIntelligence.tsx` lines 117-130** (Fix 4):
-
-Remove the full gradient hero block (lines 117-130) and replace with:
-```tsx
-<div className="flex items-center gap-3 mb-2">
-  <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
-    <Sparkles className="w-5 h-5 text-primary" />
-  </div>
-  <h1 className="exos-page-title-hero text-3xl">Market Intelligence</h1>
-</div>
-<p className="text-muted-foreground text-base mb-6">
-  Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base improving analytical scenarios results.
-</p>
-```
-
-Tab bar and everything below line 132 remains untouched.
-
----
-
-### Not touched (per spec)
-- Reports.tsx h1 line 187 (text-gradient already produces teal)
-- Pricing page
-- DM chip badges
-- Sidebar count badges
-- Tab bar colors on MarketIntelligence
-- All font-family declarations, layouts, spacing
+### What stays unchanged
+- Sign In tab (untouched)
+- Forgot password flow (untouched)
+- Google OAuth button (untouched)
+- Route structure (`/auth` only)
+- No new database migrations needed — all extra fields go into `raw_user_meta_data` via `options.data`, read by existing `handle_new_user()` trigger.
 
