@@ -394,11 +394,12 @@ const SignUpForm = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {INDUSTRIES.map((i) => (
-                        <SelectItem key={i.value} value={i.value}>
-                          {i.label}
+                      {industryContexts?.map((ic) => (
+                        <SelectItem key={ic.slug} value={ic.slug}>
+                          {ic.name}
                         </SelectItem>
                       ))}
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

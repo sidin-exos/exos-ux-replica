@@ -142,9 +142,10 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
                   <Select value={form[key]} onValueChange={(v) => setForm((f) => ({ ...f, [key]: v }))}>
                     <SelectTrigger className="h-10"><SelectValue placeholder="Select..." /></SelectTrigger>
                     <SelectContent>
-                      {INDUSTRIES.map((i) => (
-                        <SelectItem key={i} value={i}>{i}</SelectItem>
+                      {industryContexts?.map((ic) => (
+                        <SelectItem key={ic.slug} value={ic.slug}>{ic.name}</SelectItem>
                       ))}
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
