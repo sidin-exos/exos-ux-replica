@@ -26,6 +26,31 @@ const RiskPlatform = () => {
   const [selectedTracker, setSelectedTracker] = useState<EnterpriseTracker | null>(null);
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
 
+  const MAX_REPORTS_PER_MONTH = 50;
+
+  // Count reports generated this month
+  const { data: reportsThisMonth = 0 } = useQuery({
+    queryKey: ["monitor_reports_count_month", "risk"],
+    enabled: !!user,
+    queryFn: async () => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const trackerIds = trackers.map((t) => t.id);
+      if (trackerIds.length === 0) return 0;
+
+      const { count, error } = await supabase
+        .from("monitor_reports" as any)
+        .select("id", { count: "exact", head: true })
+        .in("tracker_id", trackerIds)
+        .gte("created_at", startOfMonth.toISOString());
+
+      if (error) return 0;
+      return count ?? 0;
+    },
+  });
+
   const handleSelectTracker = useCallback((tracker: EnterpriseTracker) => {
     setSelectedTracker(tracker);
   }, []);
