@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, Pencil, Check, X, AlertTriangle } from "lucide-react";
 import type { ProfileData } from "@/hooks/useAccountData";
 import type { UseMutationResult } from "@tanstack/react-query";
+import { useIndustryContexts } from "@/hooks/useContextData";
 
 const COUNTRY_NAMES: Record<string, string> = {
   DE: "Germany", NL: "Netherlands", IT: "Italy", ES: "Spain", FR: "France",
@@ -27,12 +28,7 @@ const COMPANY_SIZES = [
   { value: "5001+", label: "5,001+ employees" },
 ];
 
-const INDUSTRIES = [
-  "Automotive", "Chemicals", "Construction", "Consumer Goods", "Energy",
-  "Financial Services", "Food & Beverage", "Healthcare", "Industrial Manufacturing",
-  "Logistics", "Mining & Metals", "Pharma & Life Sciences", "Public Sector",
-  "Retail", "Technology", "Telecom", "Utilities", "Other",
-];
+// Industries are now loaded from the database via useIndustryContexts
 
 interface ProfileCardProps {
   profile: ProfileData;
@@ -42,6 +38,7 @@ interface ProfileCardProps {
 }
 
 const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: ProfileCardProps) => {
+  const { data: industryContexts } = useIndustryContexts();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     full_name: profile.full_name ?? "",
@@ -145,9 +142,10 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
                   <Select value={form[key]} onValueChange={(v) => setForm((f) => ({ ...f, [key]: v }))}>
                     <SelectTrigger className="h-10"><SelectValue placeholder="Select..." /></SelectTrigger>
                     <SelectContent>
-                      {INDUSTRIES.map((i) => (
-                        <SelectItem key={i} value={i}>{i}</SelectItem>
+                      {industryContexts?.map((ic) => (
+                        <SelectItem key={ic.slug} value={ic.slug}>{ic.name}</SelectItem>
                       ))}
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
@@ -163,6 +161,8 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
                     ? COUNTRY_NAMES[profile[key] ?? ""] || profile[key] || "—"
                     : key === "company_size"
                     ? COMPANY_SIZES.find((s) => s.value === profile[key])?.label || profile[key] || "—"
+                    : key === "industry"
+                    ? industryContexts?.find((ic) => ic.slug === profile[key])?.name || profile[key] || "—"
                     : profile[key] || "—"}
                 </p>
               )}

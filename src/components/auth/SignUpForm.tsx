@@ -15,6 +15,7 @@ import PasswordStrengthMeter from "./PasswordStrengthMeter";
 import ConsentBlock from "./ConsentBlock";
 import CountrySelect from "./CountrySelect";
 import JobTitleInput from "./JobTitleInput";
+import { useIndustryContexts } from "@/hooks/useContextData";
 
 const FREE_DOMAINS = [
   "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "hotmail.com",
@@ -57,22 +58,7 @@ const COMPANY_SIZES = [
   { value: "5001+", label: "5,001+ employees" },
 ];
 
-const INDUSTRIES = [
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "automotive", label: "Automotive" },
-  { value: "pharma", label: "Pharmaceuticals & Life Sciences" },
-  { value: "chemicals", label: "Chemicals" },
-  { value: "energy", label: "Energy & Utilities" },
-  { value: "fmcg", label: "FMCG / Consumer Goods" },
-  { value: "logistics", label: "Logistics & Transportation" },
-  { value: "construction", label: "Construction & Engineering" },
-  { value: "technology", label: "Technology & IT" },
-  { value: "financial", label: "Financial Services" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "retail", label: "Retail & E-Commerce" },
-  { value: "public-sector", label: "Public Sector" },
-  { value: "other", label: "Other" },
-];
+// Industries are now loaded from the database via useIndustryContexts
 
 const CHALLENGES = [
   { value: "cost-reduction", label: "Cost reduction & savings tracking" },
@@ -102,6 +88,7 @@ function deriveCohort(companySize: string): string {
 
 const SignUpForm = () => {
   const { toast } = useToast();
+  const { data: industryContexts } = useIndustryContexts();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<1 | 2>(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -407,11 +394,12 @@ const SignUpForm = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {INDUSTRIES.map((i) => (
-                        <SelectItem key={i.value} value={i.value}>
-                          {i.label}
+                      {industryContexts?.map((ic) => (
+                        <SelectItem key={ic.slug} value={ic.slug}>
+                          {ic.name}
                         </SelectItem>
                       ))}
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
