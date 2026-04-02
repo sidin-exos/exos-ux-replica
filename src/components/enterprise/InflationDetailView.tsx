@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { ArrowLeft, RefreshCw, Loader2, Tag, Package } from "lucide-react";
+import { ArrowLeft, RefreshCw, Loader2, Tag, Package, FileDown } from "lucide-react";
+import PDFPreviewModal from "@/components/reports/pdf/PDFPreviewModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isScanning, setIsScanning] = useState(false);
+  const [showPdf, setShowPdf] = useState(false);
 
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
 
@@ -72,10 +74,18 @@ const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
             </div>
           </div>
         </div>
-        <Button onClick={handleScanNow} disabled={isScanning} className="gap-1.5 shrink-0">
-          {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-          Scan Now
-        </Button>
+        <div className="flex items-center gap-2">
+          {activeDrivers.length > 0 && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowPdf(true)}>
+              <FileDown className="w-4 h-4" />
+              Download PDF
+            </Button>
+          )}
+          <Button onClick={handleScanNow} disabled={isScanning} className="gap-1.5 shrink-0">
+            {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Scan Now
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -159,6 +169,50 @@ const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
           )}
         </div>
       </div>
+
+      {/* PDF Preview Modal */}
+      {showPdf && (() => {
+        const statusCounts = { deteriorating: 0, improving: 0, stable: 0 };
+        activeDrivers.forEach(d => { statusCounts[d.current_status]++; });
+
+        const analysisResult = [
+          `## Inflation Monitoring Report\n`,
+          `### Goods / Service: ${tracker.goods_definition}\n`,
+          `**Active Drivers:** ${activeDrivers.length} of ${tracker.driver_count_target} target`,
+          `**Status Summary:** ${statusCounts.deteriorating} deteriorating, ${statusCounts.improving} improving, ${statusCounts.stable} stable\n`,
+          `### Driver Analysis\n`,
+          ...activeDrivers.map(d => [
+            `#### ${d.driver_name}`,
+            `- **Status:** ${d.current_status}`,
+            d.weight ? `- **Weight:** ${d.weight}%` : null,
+            d.rationale ? `- **Rationale:** ${d.rationale}` : null,
+            d.trigger_description ? `- **Trigger:** ${d.trigger_description}` : null,
+            d.context_summary ? `\n${d.context_summary}` : null,
+            d.last_scanned_at ? `\n*Last scanned: ${format(new Date(d.last_scanned_at), "MMM d, yyyy")}*` : null,
+            "",
+          ].filter(Boolean).join("\n")),
+        ].join("\n");
+
+        const formData: Record<string, string> = {
+          "Monitoring Type": "Inflation Monitor",
+          "Goods / Service": tracker.goods_definition,
+          "Driver Target": `${tracker.driver_count_target} drivers`,
+          "Active Drivers": `${activeDrivers.length}`,
+          "Created": format(new Date(tracker.created_at), "MMM d, yyyy"),
+        };
+        if (lastScanned) formData["Last Scanned"] = format(new Date(lastScanned), "MMM d, yyyy");
+
+        return (
+          <PDFPreviewModal
+            open={showPdf}
+            onOpenChange={(open) => !open && setShowPdf(false)}
+            scenarioTitle={`Inflation Monitor — ${tracker.goods_definition}`}
+            analysisResult={analysisResult}
+            formData={formData}
+            timestamp={new Date().toISOString()}
+          />
+        );
+      })()}
     </div>
   );
 };
