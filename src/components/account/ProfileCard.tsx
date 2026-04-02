@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, Pencil, Check, X, AlertTriangle } from "lucide-react";
 import type { ProfileData } from "@/hooks/useAccountData";
 import type { UseMutationResult } from "@tanstack/react-query";
+import { useIndustryContexts } from "@/hooks/useContextData";
 
 const COUNTRY_NAMES: Record<string, string> = {
   DE: "Germany", NL: "Netherlands", IT: "Italy", ES: "Spain", FR: "France",
