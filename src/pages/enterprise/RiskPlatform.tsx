@@ -216,6 +216,12 @@ const RiskPlatform = () => {
                     Professional tier allowance
                   </p>
                 </div>
+
+                {/* Separator */}
+                <div className="border-t border-border" />
+
+                {/* Signal Summary */}
+                <RiskSummaryDashboard trackers={trackers} />
               </CardContent>
             </Card>
           </div>
