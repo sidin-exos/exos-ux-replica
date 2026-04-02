@@ -188,8 +188,7 @@ const SignUpForm = () => {
     }
   };
 
-  const step2CanSubmit =
-    step2Form.formState.isValid && consentTerms && consentDataProcessing;
+  const step2CanSubmit = step2Form.formState.isValid;
 
   // Success confirmation screen
   if (success) {
