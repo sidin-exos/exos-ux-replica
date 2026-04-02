@@ -197,10 +197,11 @@ const UserFilesManager = () => {
 
   return (
     <>
-      <Card className="card-elevated animate-fade-up" style={{ animationDelay: "150ms" }}>
+      <Card className="card-elevated animate-fade-up overflow-hidden" style={{ animationDelay: "150ms" }}>
+        <div className="h-1 bg-gradient-to-r from-accent to-primary" />
         <CardHeader>
           <div className="flex items-center gap-2">
-            <FolderOpen className="w-5 h-5 text-primary" />
+            <FolderOpen className="w-5 h-5 text-accent" />
             <CardTitle className="font-display text-lg">My Files</CardTitle>
           </div>
           <CardDescription>
