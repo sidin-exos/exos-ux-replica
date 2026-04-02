@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,7 +27,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardType } from "@/lib/dashboard-mappings";
 
-// Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
@@ -56,20 +55,107 @@ const PDFPreviewModal = ({
   evaluationScore,
   evaluationConfidence,
 }: PDFPreviewModalProps) => {
-  // Raw PDF bytes for canvas preview (avoids CSP connect-src restrictions on blob URLs)
   const [pdfData, setPdfData] = useState<{ data: Uint8Array } | null>(null);
-  // Blob URL only for download / open-in-tab
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const [pdfTheme, setPdfTheme] = useState<PdfThemeMode>("dark");
-
-  // PDF viewer state
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1.0);
 
+  const lastGeneratedKeyRef = useRef<string | null>(null);
+  const inFlightKeyRef = useRef<string | null>(null);
+
   const fileName = `EXOS_${scenarioTitle.replace(/\s+/g, "_")}_${new Date(timestamp).toISOString().split("T")[0]}.pdf`;
+
+  const generationKey = useMemo(
+    () => JSON.stringify({
+      scenarioTitle,
+      analysisResult,
+      timestamp,
+      pdfTheme,
+      evaluationScore: evaluationScore ?? null,
+      evaluationConfidence: evaluationConfidence ?? null,
+      formData: Object.entries(formData).sort(([a], [b]) => a.localeCompare(b)),
+      selectedDashboards,
+    }),
+    [
+      scenarioTitle,
+      analysisResult,
+      timestamp,
+      pdfTheme,
+      evaluationScore,
+      evaluationConfidence,
+      formData,
+      selectedDashboards,
+    ],
+  );
+
+  const generatePdf = useCallback(async (requestKey = generationKey, force = false) => {
+    if (!force) {
+      if (inFlightKeyRef.current === requestKey) return;
+      if (lastGeneratedKeyRef.current === requestKey) return;
+    }
+
+    inFlightKeyRef.current = requestKey;
+    setIsGenerating(true);
+    setPreviewError(false);
+    setNumPages(0);
+    setCurrentPage(1);
+
+    if (pdfBlobUrl) {
+      URL.revokeObjectURL(pdfBlobUrl);
+      setPdfBlobUrl(null);
+    }
+    setPdfData(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-pdf", {
+        body: {
+          scenarioTitle,
+          analysisResult,
+          formData,
+          timestamp,
+          selectedDashboards,
+          pdfTheme,
+          evaluationScore: evaluationScore ?? undefined,
+          evaluationConfidence: evaluationConfidence ?? undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      const blob = data instanceof Blob ? data : new Blob([data], { type: "application/pdf" });
+      const arrayBuffer = await blob.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+
+      setPdfData({ data: bytes });
+      setPdfBlobUrl(URL.createObjectURL(blob));
+      lastGeneratedKeyRef.current = requestKey;
+    } catch (error: any) {
+      console.error("Failed to generate PDF:", error);
+      const msg = error?.message || "Unknown error";
+      toast.error(`PDF generation failed: ${msg}`);
+      setPreviewError(true);
+    } finally {
+      if (inFlightKeyRef.current === requestKey) {
+        inFlightKeyRef.current = null;
+      }
+      setIsGenerating(false);
+    }
+  }, [
+    analysisResult,
+    evaluationConfidence,
+    evaluationScore,
+    formData,
+    generationKey,
+    pdfBlobUrl,
+    pdfTheme,
+    scenarioTitle,
+    selectedDashboards,
+    timestamp,
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -80,54 +166,13 @@ const PDFPreviewModal = ({
       setNumPages(0);
       setCurrentPage(1);
       setScale(1.0);
+      lastGeneratedKeyRef.current = null;
+      inFlightKeyRef.current = null;
       return;
     }
 
-    if (pdfBlobUrl) {
-      URL.revokeObjectURL(pdfBlobUrl);
-      setPdfBlobUrl(null);
-    }
-    setPdfData(null);
-
-    generatePdf();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, scenarioTitle, analysisResult, timestamp, selectedDashboards, formData, pdfTheme]);
-
-  const generatePdf = async () => {
-    setIsGenerating(true);
-    setPreviewError(false);
-    setNumPages(0);
-    setCurrentPage(1);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-pdf", {
-        body: {
-          scenarioTitle, analysisResult, formData, timestamp, selectedDashboards, pdfTheme,
-          evaluationScore: evaluationScore ?? undefined,
-          evaluationConfidence: evaluationConfidence ?? undefined,
-        },
-      });
-
-      if (error) throw error;
-
-      // Convert response to ArrayBuffer → Uint8Array
-      const blob = data instanceof Blob ? data : new Blob([data], { type: "application/pdf" });
-      const arrayBuffer = await blob.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-
-      // Pass raw bytes to PDF.js (no network fetch needed — bypasses connect-src CSP)
-      setPdfData({ data: bytes });
-      // Keep a blob URL for download / open-in-tab only
-      setPdfBlobUrl(URL.createObjectURL(blob));
-    } catch (error: any) {
-      console.error("Failed to generate PDF:", error);
-      const msg = error?.message || "Unknown error";
-      toast.error(`PDF generation failed: ${msg}`);
-      setPreviewError(true);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+    void generatePdf(generationKey);
+  }, [open, pdfBlobUrl, generationKey, generatePdf]);
 
   const handleDownload = () => {
     if (pdfBlobUrl) {
@@ -157,7 +202,6 @@ const PDFPreviewModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0 gap-0 bg-background border-border">
-        {/* Header */}
         <DialogHeader className="px-6 py-4 border-b border-border flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
@@ -169,7 +213,6 @@ const PDFPreviewModal = ({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Theme Toggle */}
               <div className="flex items-center rounded-md border border-border overflow-hidden">
                 <Button
                   variant={pdfTheme === "light" ? "default" : "ghost"}
@@ -224,7 +267,6 @@ const PDFPreviewModal = ({
           </div>
         </DialogHeader>
 
-        {/* Preview Area */}
         <div className="flex-1 overflow-hidden bg-secondary/30 relative">
           <AnimatePresence mode="wait">
             {isGenerating ? (
@@ -259,7 +301,14 @@ const PDFPreviewModal = ({
                   <p className="text-muted-foreground text-sm mb-4">
                     Something went wrong while generating the PDF. Please try again.
                   </p>
-                  <Button variant="outline" size="sm" onClick={generatePdf}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      lastGeneratedKeyRef.current = null;
+                      void generatePdf(generationKey, true);
+                    }}
+                  >
                     Retry
                   </Button>
                 </div>
@@ -272,7 +321,6 @@ const PDFPreviewModal = ({
                 exit={{ opacity: 0 }}
                 className="w-full h-full flex flex-col"
               >
-                {/* PDF canvas viewer — fed raw bytes, no network fetch needed */}
                 <div className="flex-1 overflow-auto flex justify-center py-4 bg-muted/30">
                   <Document
                     file={pdfData}
@@ -300,10 +348,8 @@ const PDFPreviewModal = ({
                   </Document>
                 </div>
 
-                {/* Bottom toolbar: pagination + zoom */}
                 {numPages > 0 && (
                   <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-background/80 backdrop-blur-sm">
-                    {/* Pagination */}
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPrevPage} disabled={currentPage <= 1}>
                         <ChevronLeft className="w-4 h-4" />
@@ -316,7 +362,6 @@ const PDFPreviewModal = ({
                       </Button>
                     </div>
 
-                    {/* Zoom */}
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomOut} disabled={scale <= 0.4}>
                         <ZoomOut className="w-4 h-4" />
