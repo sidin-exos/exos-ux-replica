@@ -28,12 +28,7 @@ const COMPANY_SIZES = [
   { value: "5001+", label: "5,001+ employees" },
 ];
 
-const INDUSTRIES = [
-  "Automotive", "Chemicals", "Construction", "Consumer Goods", "Energy",
-  "Financial Services", "Food & Beverage", "Healthcare", "Industrial Manufacturing",
-  "Logistics", "Mining & Metals", "Pharma & Life Sciences", "Public Sector",
-  "Retail", "Technology", "Telecom", "Utilities", "Other",
-];
+// Industries are now loaded from the database via useIndustryContexts
 
 interface ProfileCardProps {
   profile: ProfileData;

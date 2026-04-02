@@ -58,22 +58,7 @@ const COMPANY_SIZES = [
   { value: "5001+", label: "5,001+ employees" },
 ];
 
-const INDUSTRIES = [
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "automotive", label: "Automotive" },
-  { value: "pharma", label: "Pharmaceuticals & Life Sciences" },
-  { value: "chemicals", label: "Chemicals" },
-  { value: "energy", label: "Energy & Utilities" },
-  { value: "fmcg", label: "FMCG / Consumer Goods" },
-  { value: "logistics", label: "Logistics & Transportation" },
-  { value: "construction", label: "Construction & Engineering" },
-  { value: "technology", label: "Technology & IT" },
-  { value: "financial", label: "Financial Services" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "retail", label: "Retail & E-Commerce" },
-  { value: "public-sector", label: "Public Sector" },
-  { value: "other", label: "Other" },
-];
+// Industries are now loaded from the database via useIndustryContexts
 
 const CHALLENGES = [
   { value: "cost-reduction", label: "Cost reduction & savings tracking" },
