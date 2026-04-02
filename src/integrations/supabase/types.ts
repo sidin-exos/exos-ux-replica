@@ -1019,29 +1019,50 @@ export type Database = {
       }
       profiles: {
         Row: {
+          company_name: string | null
+          company_size: string | null
+          country: string | null
           created_at: string
           display_name: string | null
+          full_name: string | null
           id: string
+          industry: string | null
           is_super_admin: boolean
+          job_title: string | null
           organization_id: string | null
+          primary_challenge: string | null
           role: Database["public"]["Enums"]["org_role"]
           updated_at: string
         }
         Insert: {
+          company_name?: string | null
+          company_size?: string | null
+          country?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
           id: string
+          industry?: string | null
           is_super_admin?: boolean
+          job_title?: string | null
           organization_id?: string | null
+          primary_challenge?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           updated_at?: string
         }
         Update: {
+          company_name?: string | null
+          company_size?: string | null
+          country?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
           id?: string
+          industry?: string | null
           is_super_admin?: boolean
+          job_title?: string | null
           organization_id?: string | null
+          primary_challenge?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           updated_at?: string
         }
