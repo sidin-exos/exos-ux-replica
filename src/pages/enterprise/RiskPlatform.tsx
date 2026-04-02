@@ -166,6 +166,12 @@ const RiskPlatform = () => {
           <div className="lg:col-span-1 lg:sticky lg:top-8 lg:self-start">
             <Card className="rounded-sm border-border/50 bg-card/50">
               <CardContent className="pt-5 space-y-5">
+                {/* Signal Summary */}
+                <RiskSummaryDashboard trackers={trackers} />
+
+                {/* Separator */}
+                <div className="border-t border-border" />
+
                 <h2 className="text-base font-semibold text-foreground">Usage Statistics</h2>
 
                 {/* Active Monitors */}
@@ -216,12 +222,6 @@ const RiskPlatform = () => {
                     Professional tier allowance
                   </p>
                 </div>
-
-                {/* Separator */}
-                <div className="border-t border-border" />
-
-                {/* Signal Summary */}
-                <RiskSummaryDashboard trackers={trackers} />
               </CardContent>
             </Card>
           </div>
