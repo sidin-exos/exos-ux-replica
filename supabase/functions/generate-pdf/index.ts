@@ -5,7 +5,7 @@
  * Accepts a POST with GeneratePdfPayload and returns binary PDF.
  *
  * Security:
- * - Rate limited: 20 requests/hour per user
+ * - Rate limited: 120 requests/hour per user
  * - Input validated via shared validators (200KB max for analysisResult)
  * - Filename sanitized against header injection
  */
@@ -51,7 +51,7 @@ serve(async (req) => {
       );
     }
 
-    // 2. Rate limit: 60 requests/hour per user
+    // 2. Rate limit: 120 requests/hour per user
     const rateCheck = await checkRateLimit(authResult.user.userId, "generate-pdf", 120, 60);
     if (!rateCheck.allowed) {
       return rateLimitResponse(rateCheck, corsHeaders, "PDF generation rate limit reached. Please wait before generating another report.");
