@@ -13,7 +13,6 @@
  */
 
 import ExcelJS from "exceljs";
-import JSZip from "jszip";
 import { extractDashboardData, stripDashboardData, DashboardData } from "@/lib/dashboard-data-parser";
 
 // ─── EXOS Brand Colours (ARGB) ──────────────────────────────────────
@@ -659,156 +658,10 @@ export async function exportReportToExcel(
     }
   }
 
-  // ── Build column-count map for post-processing ─────────────────────
-  const sheetColCounts: Record<string, number> = {
-    "Summary": 2,
-  };
-  if (inputEntries.length > 0) sheetColCounts["Analysis Inputs"] = 2;
-  if (parsedData) {
-    const dashSheets2 = dashboardToSheets(parsedData);
-    for (const { name, rows } of dashSheets2) {
-      if (rows.length > 0) {
-        sheetColCounts[name.slice(0, 31)] = Object.keys(rows[0]).length;
-      }
-    }
-  }
-
-  // ── Build XLSX buffer, strip phantom columns, download ────────────
-  const rawBuffer = await wb.xlsx.writeBuffer();
-  const cleanBuffer = await stripPhantomColumns(rawBuffer as ArrayBuffer, sheetColCounts);
-
+  // ── Trigger download ────────────────────────────────────────────────
   const dateStr = new Date(timestamp).toISOString().slice(0, 10);
   const fileName = `EXOS_${scenarioTitle.replace(/\s+/g, "_").slice(0, 40)}_${dateStr}.xlsx`;
-  downloadBuffer(cleanBuffer, fileName);
+  const buffer = await wb.xlsx.writeBuffer();
+  downloadBuffer(buffer as ArrayBuffer, fileName);
 }
 
-/**
- * Post-process XLSX buffer to remove phantom empty columns created by
- * ExcelJS's browser bundle (dist/exceljs.min.js — known bug).
- *
- * Opens the zip, patches each sheet XML to trim <cols>, <dimension>,
- * and extra <c> elements beyond the actual data range, then re-zips.
- */
-async function stripPhantomColumns(buffer: ArrayBuffer, sheetColCounts: Record<string, number>): Promise<ArrayBuffer> {
-  const zip = await JSZip.loadAsync(buffer);
-
-  // Map sheet index to name via workbook.xml
-  const wbFile = zip.file("xl/workbook.xml");
-  const sheetNames: string[] = [];
-  if (wbFile) {
-    const wbXml = await wbFile.async("string");
-    const nameMatches = [...wbXml.matchAll(/name="([^"]+)"/g)];
-    for (const m of nameMatches) sheetNames.push(m[1]);
-  }
-
-  const sheetDir = zip.folder("xl")?.folder("worksheets");
-  if (!sheetDir) return buffer;
-
-  const sheetFiles: string[] = [];
-  sheetDir.forEach((relativePath) => {
-    if (relativePath.endsWith(".xml")) sheetFiles.push("xl/worksheets/" + relativePath);
-  });
-  sheetFiles.sort();
-
-  for (let i = 0; i < sheetFiles.length; i++) {
-    const file = zip.file(sheetFiles[i]);
-    if (!file) continue;
-    const name = sheetNames[i] ?? "";
-    const maxCol = sheetColCounts[name];
-    if (!maxCol) continue;
-    const xml = await file.async("string");
-    const fixed = fixSheetXml(xml, maxCol);
-    zip.file(sheetFiles[i], fixed);
-  }
-
-  return zip.generateAsync({
-    type: "arraybuffer",
-    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    compression: "DEFLATE",
-    compressionOptions: { level: 6 },
-  });
-}
-
-/**
- * Fix a single sheet's XML using the KNOWN column count.
- * Uses DOMParser (built into the browser) for reliable XML manipulation
- * instead of fragile regex.
- */
-function fixSheetXml(xml: string, maxCol: number): string {
-  const NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(xml, "application/xml");
-
-  // 1. Remove ALL <c> (cell) elements where column > maxCol
-  const cells = doc.getElementsByTagNameNS(NS, "c");
-  const toRemove: Element[] = [];
-  for (let i = 0; i < cells.length; i++) {
-    const ref = cells[i].getAttribute("r");
-    if (ref) {
-      const colLetter = ref.replace(/\d+/g, "");
-      if (colLetterToNumber(colLetter) > maxCol) {
-        toRemove.push(cells[i]);
-      }
-    }
-  }
-  toRemove.forEach((el) => el.parentNode?.removeChild(el));
-
-  // 2. Fix <dimension> ref
-  const dims = doc.getElementsByTagNameNS(NS, "dimension");
-  if (dims.length > 0) {
-    let maxRow = 0;
-    const rows = doc.getElementsByTagNameNS(NS, "row");
-    for (let i = 0; i < rows.length; i++) {
-      const r = parseInt(rows[i].getAttribute("r") || "0", 10);
-      if (r > maxRow) maxRow = r;
-    }
-    if (maxRow > 0) {
-      dims[0].setAttribute("ref", `A1:${columnToLetter(maxCol)}${maxRow}`);
-    }
-  }
-
-  // 3. Fix <col> definitions — remove beyond maxCol, clamp max, strip style
-  const cols = doc.getElementsByTagNameNS(NS, "col");
-  const colsToRemove: Element[] = [];
-  for (let i = 0; i < cols.length; i++) {
-    const min = parseInt(cols[i].getAttribute("min") || "0", 10);
-    if (min > maxCol) {
-      colsToRemove.push(cols[i]);
-    } else {
-      const max = parseInt(cols[i].getAttribute("max") || "0", 10);
-      if (max > maxCol) {
-        cols[i].setAttribute("max", String(maxCol));
-      }
-      // Remove column-level style — cells have their own styles.
-      // Column style causes Excel to show styled empty cells beyond data.
-      cols[i].removeAttribute("style");
-    }
-  }
-  colsToRemove.forEach((el) => el.parentNode?.removeChild(el));
-
-  // Also remove the entire <cols> parent if empty
-  const colsParent = doc.getElementsByTagNameNS(NS, "cols")[0];
-  if (colsParent && colsParent.getElementsByTagNameNS(NS, "col").length === 0) {
-    colsParent.parentNode?.removeChild(colsParent);
-  }
-
-  // 4. Remove empty <row> elements (no child <c> left)
-  const rowsAfter = doc.getElementsByTagNameNS(NS, "row");
-  const emptyRows: Element[] = [];
-  for (let i = 0; i < rowsAfter.length; i++) {
-    if (rowsAfter[i].getElementsByTagNameNS(NS, "c").length === 0) {
-      emptyRows.push(rowsAfter[i]);
-    }
-  }
-  emptyRows.forEach((el) => el.parentNode?.removeChild(el));
-
-  return new XMLSerializer().serializeToString(doc);
-}
-
-function colLetterToNumber(letters: string): number {
-  let n = 0;
-  for (let i = 0; i < letters.length; i++) {
-    n = n * 26 + (letters.charCodeAt(i) - 64);
-  }
-  return n;
-}
