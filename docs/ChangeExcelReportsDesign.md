@@ -1,61 +1,56 @@
-# Change Excel Export Design — Lovable Knowledge Reference
+# Change Excel Export Design — Knowledge Reference
 
-## Why This Document Exists
-
-The EXOS Excel export is controlled by a single frontend file. Unlike the PDF system (which has dual rendering and requires edge function deployment), Excel changes take effect immediately on the next Lovable deploy. This document tells you exactly what to edit for every type of change.
-
----
-
-## Architecture — Simple
+## Architecture
 
 | What | How |
 |---|---|
-| Where it runs | 100% frontend (browser). No edge functions. No server calls. |
-| Main file | `src/lib/report-export-excel.ts` (302 lines — everything lives here) |
-| UI trigger | `src/components/reports/ReportExportButtons.tsx` (button click) |
-| Data parser | `src/lib/dashboard-data-parser.ts` (shared with dashboards and PDF) |
-| Library | `exceljs` ^4.4.0 |
-| Deploy | No edge function deploy needed. Lovable auto-deploys on push. |
+| Where it runs | **Server-side** — Supabase Edge Function (Deno runtime) |
+| Edge function | `supabase/functions/generate-excel/` |
+| Workbook logic | `supabase/functions/generate-excel/excel-document.ts` |
+| Handler/routing | `supabase/functions/generate-excel/index.ts` |
+| Types & data parser | `supabase/functions/generate-excel/types.ts` |
+| UI trigger | `src/components/reports/ReportExportButtons.tsx` |
+| Library | ExcelJS 4.4.0 (Node.js entry via esm.sh — NOT the browser bundle) |
+| Deploy | `supabase functions deploy generate-excel --no-verify-jwt` |
 
-**One file controls everything.** If you need to change anything about the Excel output, you edit `src/lib/report-export-excel.ts`. Period.
-
----
-
-## Current State — No Styling
-
-The workbook currently has **zero visual formatting**:
-- No fill colors or background colors
-- No custom fonts, no bold headers, no font sizes
-- No borders
-- No text alignment
-- No conditional formatting
-- No frozen panes or auto-filters
-- All column widths are 20 (except Summary and Inputs sheets)
-
-This is plain data-only output. All styling improvements are additive — you're not overwriting existing styles, you're adding them for the first time.
+**Same pattern as PDF export.** Frontend sends data to edge function, edge function generates XLSX binary, frontend downloads it.
 
 ---
 
-## Sheets in the Workbook (16 total)
+## Current State — Full EXOS Brand Book v2.0 Styling
 
-| # | Sheet Name | Data Source | Lines |
-|---|---|---|---|
-| 1 | Summary | Report title, timestamps, key points extracted from analysis | 250–265 |
-| 2 | Analysis Inputs | Form data key/value pairs | 268–282 |
-| 3 | Action Checklist | `dashboardData.actionChecklist` | 74–85 |
-| 4 | Decision Matrix | `dashboardData.decisionMatrix` | 87–103 |
-| 5 | Cost Waterfall | `dashboardData.costWaterfall` | 105–114 |
-| 6 | Timeline Roadmap | `dashboardData.timelineRoadmap` | 116–127 |
-| 7 | Kraljic Matrix | `dashboardData.kraljicQuadrant` | 129–139 |
-| 8 | TCO Comparison | `dashboardData.tcoComparison` | 141–146 |
-| 9 | License Tiers | `dashboardData.licenseTier` | 148–159 |
-| 10 | Sensitivity Analysis | `dashboardData.sensitivitySpider` | 161–172 |
-| 11 | Risk Matrix | `dashboardData.riskMatrix` | 174–184 |
-| 12 | Scenario Comparison | `dashboardData.scenarioComparison` | 186–191 |
-| 13 | Supplier Scorecard | `dashboardData.supplierScorecard` | 193–203 |
-| 14 | SOW Analysis | `dashboardData.sowAnalysis` | 205–214 |
-| 15 | Negotiation Prep | `dashboardData.negotiationPrep` | 216–224 |
-| 16 | Data Quality | `dashboardData.dataQuality` | 226–235 |
+The workbook has complete visual formatting:
+- **Header row**: Deep teal background (`#1b4b47`), white Inter font 13pt bold, bottom border in brand teal
+- **Data rows**: Inter 13pt, thin borders, alternating pale teal (`#dbf0ee`) fill on even rows
+- **Summary sheet**: Brand teal sub-header for Report Title, muted font for timestamps, bold field labels
+- **Status formatting**: Colored cells for status values (red/yellow/green for critical/pending/complete)
+- **Column widths**: Per-sheet presets in `COLUMN_WIDTHS` map
+- **Frozen header row** and **auto-filter** on all sheets
+- **Tab colors**: Deep teal (Summary), mid teal (Inputs), brand teal (dashboards)
+- **Key points**: Extracted numbered recommendations from AI analysis (not headings)
+
+---
+
+## Sheets in the Workbook
+
+| # | Sheet Name | Data Source |
+|---|---|---|
+| 1 | Summary | Report title, timestamps, key points extracted from analysis |
+| 2 | Analysis Inputs | Form data key/value pairs |
+| 3 | Action Checklist | `dashboardData.actionChecklist` |
+| 4 | Decision Matrix | `dashboardData.decisionMatrix` |
+| 5 | Cost Waterfall | `dashboardData.costWaterfall` |
+| 6 | Timeline Roadmap | `dashboardData.timelineRoadmap` |
+| 7 | Kraljic Matrix | `dashboardData.kraljicQuadrant` |
+| 8 | TCO Comparison | `dashboardData.tcoComparison` |
+| 9 | License Tiers | `dashboardData.licenseTier` |
+| 10 | Sensitivity Analysis | `dashboardData.sensitivitySpider` |
+| 11 | Risk Matrix | `dashboardData.riskMatrix` |
+| 12 | Scenario Comparison | `dashboardData.scenarioComparison` |
+| 13 | Supplier Scorecard | `dashboardData.supplierScorecard` |
+| 14 | SOW Analysis | `dashboardData.sowAnalysis` |
+| 15 | Negotiation Prep | `dashboardData.negotiationPrep` |
+| 16 | Data Quality | `dashboardData.dataQuality` |
 
 Dashboard sheets (3–16) only appear if the AI response contains data for that dashboard type.
 
@@ -67,79 +62,78 @@ Dashboard sheets (3–16) only appear if the AI response contains data for that 
 
 | I want to... | Edit |
 |---|---|
-| Change sheet names | `report-export-excel.ts` — find `wb.addWorksheet('SheetName')` for each sheet |
-| Change column headers | `report-export-excel.ts` — modify the object keys in each sheet's `.map()` call inside `dashboardToSheets()` |
-| Change column widths | `report-export-excel.ts` — line 48 (default `width: 20`), lines 260–261 (Summary), lines 276–277 (Inputs) |
-| Add a new sheet | `report-export-excel.ts` — add a new block in `dashboardToSheets()` after line 235, or in `exportReportToExcel()` after line 295 |
-| Remove a sheet | `report-export-excel.ts` — delete the corresponding block in `dashboardToSheets()` |
-| Change which data appears in cells | `report-export-excel.ts` — modify the field mappings in each sheet's `.map()` |
+| Change sheet names | `excel-document.ts` — find `wb.addWorksheet('SheetName')` or the name in `dashboardToSheets()` |
+| Change column headers | `excel-document.ts` — modify the object keys in each sheet's `.map()` call inside `dashboardToSheets()` |
+| Change column widths | `excel-document.ts` — `COLUMN_WIDTHS` map (per-sheet presets), or `NUMERIC_HEADERS` for default 16 vs 25 |
+| Add a new sheet | `excel-document.ts` — add a new block in `dashboardToSheets()` |
+| Remove a sheet | `excel-document.ts` — delete the corresponding block in `dashboardToSheets()` |
+| Change which data appears in cells | `excel-document.ts` — modify the field mappings in each sheet's `.map()` |
 
-### Styling (currently none — all additions)
+### Styling
 
-| I want to... | How |
+| I want to... | Edit |
 |---|---|
-| Add bold header row | After each `addRowsToSheet()` call, access `ws.getRow(1)` and set `eachCell(cell => { cell.font = { bold: true } })` |
-| Add header background color | `ws.getRow(1).eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1a1a2e' } } })` |
-| Add borders | Set `cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} }` |
-| Freeze header row | `ws.views = [{ state: 'frozen', ySplit: 1 }]` |
-| Add auto-filter | `ws.autoFilter = { from: 'A1', to: lastColumnLastRow }` |
-| Change number format | `cell.numFmt = '#,##0.00'` for currency, `'0%'` for percentages |
-| Set text alignment | `cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }` |
-| Add conditional formatting | Use `ws.addConditionalFormatting()` — see ExcelJS docs |
+| Change header colors/fonts | `excel-document.ts` — `HEADER_FONT`, `HEADER_FILL`, `HEADER_BORDER` constants |
+| Change data row styling | `excel-document.ts` — `applyDataStyles()` function |
+| Change alternating row color | `excel-document.ts` — `PALE_TEAL_FILL` constant |
+| Change Summary sheet special rows | `excel-document.ts` — `applySummaryStyles()` function |
+| Change status color coding | `excel-document.ts` — `classifyStatus()` function + `STATUS_STYLES` |
+| Change brand colors | `excel-document.ts` — `COLORS` constant at top of file |
+| Add/remove frozen panes | `excel-document.ts` — `ws.views = [{ state: 'frozen', ySplit: 1 }]` in `applyDataStyles()` |
+| Add/remove auto-filter | `excel-document.ts` — `ws.autoFilter = ...` in `applyDataStyles()` |
+
+### Key Points Extraction
+
+| I want to... | Edit |
+|---|---|
+| Change how key points are extracted | `excel-document.ts` — `extractKeyPoints()` function |
+| Change max number of key points | `excel-document.ts` — `.slice(0, 10)` in `extractKeyPoints()` |
+| Change keyword matching | `excel-document.ts` — `keywords` array in `extractKeyPoints()` |
 
 ### Other
 
 | I want to... | Edit |
 |---|---|
-| Change the filename | `report-export-excel.ts` — line 299 (currently `EXOS_{title}_{date}.xlsx`) |
-| Change export button text or style | `src/components/reports/ReportExportButtons.tsx` — lines 63–70 |
-| Change what data the parser extracts from AI response | `src/lib/dashboard-data-parser.ts` — modify `DashboardData` interface. **Caution:** this file is shared with dashboard rendering and PDF export. Changes affect all three. |
+| Change the filename | `excel-document.ts` — `generateExcelBuffer()` doesn't control filename. Filename is set in `index.ts` (server) and `ReportExportButtons.tsx` (client fallback) |
+| Change export button text/style | `src/components/reports/ReportExportButtons.tsx` |
+| Change rate limiting | `index.ts` — `checkRateLimit()` call (currently 120 req/hour) |
+| Change input validation limits | `index.ts` — `requireString()` calls with `maxLength` |
 
 ---
 
-## ExcelJS Styling Reference
+## Deployment
 
-All styling is done through cell properties. Here's a quick reference for common ExcelJS patterns:
+After editing any file in `supabase/functions/generate-excel/`:
 
-```typescript
-// Bold white text on dark header
-cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11, name: 'Arial' };
-cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1a1a2e' } };
-
-// Thin borders
-cell.border = {
-  top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-  bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-  left: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-  right: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-};
-
-// Currency format
-cell.numFmt = '€#,##0.00';
-
-// Percentage
-cell.numFmt = '0.0%';
-
-// Wrap text
-cell.alignment = { wrapText: true, vertical: 'top' };
+```bash
+supabase functions deploy generate-excel --no-verify-jwt
 ```
 
+The `--no-verify-jwt` flag is required because the function handles auth internally via `authenticateRequest()`.
+
+Frontend changes (`ReportExportButtons.tsx`) deploy automatically via Lovable push.
+
 ---
 
-## Key Difference from PDF Export
+## Architecture Comparison: PDF vs Excel
 
 | | PDF | Excel |
 |---|---|---|
-| Files to edit | Multiple (`src/` + `supabase/functions/generate-pdf/`) | **One file** (`report-export-excel.ts`) |
-| Edge function needed | Yes — must deploy after changes | **No** — frontend only |
-| Current styling | Extensive (colors, fonts, layout) | **None** — plain data |
-| Library | `@react-pdf/renderer` | `exceljs` |
-| Lovable can edit directly | Only frontend preview, not actual PDF | **Yes — everything** |
+| Edge function | `supabase/functions/generate-pdf/` | `supabase/functions/generate-excel/` |
+| Workbook logic | `generate-pdf/pdf-document.tsx` | `generate-excel/excel-document.ts` |
+| Library | `@react-pdf/renderer` | ExcelJS 4.4.0 (via esm.sh) |
+| Rate limiting | 120 req/hour | 120 req/hour |
+| Auth | JWT via `authenticateRequest()` | JWT via `authenticateRequest()` |
+| Deploy needed | Yes | Yes |
+| Current styling | Full Brand Book v2.0 | Full Brand Book v2.0 |
+
+Both follow the identical edge function pattern with shared utilities from `supabase/functions/_shared/`.
 
 ---
 
 ## Common Mistakes to Avoid
 
-1. **Editing `dashboard-data-parser.ts` for Excel-only changes** — This parser is shared with dashboard rendering and PDF export. Only modify it if the data structure itself needs to change across all three outputs.
-2. **Forgetting that dashboard sheets are conditional** — Sheets 3–16 only appear if the AI response contains that dashboard type. If a sheet is missing in the export, the issue is in the AI response, not the Excel code.
-3. **Using column index instead of column key** — ExcelJS supports both, but the current code uses object keys. Stay consistent.
+1. **Editing `src/lib/report-export-excel.ts` instead of the edge function** — The client-side file is legacy. All Excel generation logic is in `supabase/functions/generate-excel/excel-document.ts`.
+2. **Forgetting to deploy** — Unlike frontend changes, edge function changes require `supabase functions deploy generate-excel --no-verify-jwt`.
+3. **Editing `types.ts` without checking PDF** — The types file is a copy of the PDF types. If you change dashboard data structures, update both `generate-pdf/types.ts` and `generate-excel/types.ts`, plus the frontend `dashboard-data-parser.ts`.
+4. **Dashboard sheets are conditional** — Sheets 3–16 only appear if the AI response contains that dashboard type. Missing sheets = AI didn't generate that data.
