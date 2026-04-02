@@ -88,6 +88,7 @@ function deriveCohort(companySize: string): string {
 
 const SignUpForm = () => {
   const { toast } = useToast();
+  const { data: industryContexts } = useIndustryContexts();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<1 | 2>(1);
   const [isLoading, setIsLoading] = useState(false);
