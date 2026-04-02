@@ -38,6 +38,7 @@ interface ProfileCardProps {
 }
 
 const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: ProfileCardProps) => {
+  const { data: industryContexts } = useIndustryContexts();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     full_name: profile.full_name ?? "",
