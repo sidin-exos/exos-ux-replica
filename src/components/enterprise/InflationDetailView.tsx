@@ -27,6 +27,7 @@ const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isScanning, setIsScanning] = useState(false);
+  const [showPdf, setShowPdf] = useState(false);
 
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
 
