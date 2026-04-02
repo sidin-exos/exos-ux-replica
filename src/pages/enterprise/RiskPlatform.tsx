@@ -16,6 +16,7 @@ import TrackerSetupWizard from "@/components/enterprise/TrackerSetupWizard";
 import TrackerList from "@/components/enterprise/TrackerList";
 import MonitorDetailView from "@/components/enterprise/MonitorDetailView";
 import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
+import RiskSummaryDashboard from "@/components/enterprise/RiskSummaryDashboard";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
 import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
 
