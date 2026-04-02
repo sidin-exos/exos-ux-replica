@@ -15,6 +15,7 @@ import PasswordStrengthMeter from "./PasswordStrengthMeter";
 import ConsentBlock from "./ConsentBlock";
 import CountrySelect from "./CountrySelect";
 import JobTitleInput from "./JobTitleInput";
+import { useIndustryContexts } from "@/hooks/useContextData";
 
 const FREE_DOMAINS = [
   "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "hotmail.com",
