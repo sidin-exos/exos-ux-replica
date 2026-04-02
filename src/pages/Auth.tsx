@@ -14,19 +14,11 @@ import Header from "@/components/layout/Header";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import SignUpForm from "@/components/auth/SignUpForm";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Please enter a valid email"),
   password: z.string().min(1, "Password is required"),
-});
-
-const signUpSchema = z.object({
-  email: z.string().trim().email("Please enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(1, "Please confirm your password"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
 });
 
 const forgotPasswordSchema = z.object({
@@ -34,7 +26,6 @@ const forgotPasswordSchema = z.object({
 });
 
 type SignInValues = z.infer<typeof signInSchema>;
-type SignUpValues = z.infer<typeof signUpSchema>;
 type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
 const Auth = () => {
@@ -49,11 +40,6 @@ const Auth = () => {
   const signInForm = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: { email: "", password: "" },
-  });
-
-  const signUpForm = useForm<SignUpValues>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: { email: "", password: "", confirmPassword: "" },
   });
 
   const forgotForm = useForm<ForgotPasswordValues>({
@@ -106,29 +92,6 @@ const Auth = () => {
     }
   };
 
-  const handleEmailSignUp = async (values: SignUpValues) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          emailRedirectTo: window.location.origin + "/auth",
-        },
-      });
-      if (error) {
-        toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Check your email", description: "We sent you a confirmation link to complete your registration." });
-        signUpForm.reset();
-      }
-    } catch {
-      toast({ title: "Sign up failed", description: "An unexpected error occurred", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleForgotPassword = async (values: ForgotPasswordValues) => {
     setIsLoading(true);
     try {
@@ -170,7 +133,6 @@ const Auth = () => {
 
   const handleTabChange = () => {
     signInForm.reset();
-    signUpForm.reset();
   };
 
   if (isCheckingAuth) {
@@ -259,53 +221,8 @@ const Auth = () => {
                     </Form>
                   </TabsContent>
 
-                  <TabsContent value="sign-up" className="space-y-4 mt-4">
-                    <Form {...signUpForm}>
-                      <form onSubmit={signUpForm.handleSubmit(handleEmailSignUp)} className="space-y-4">
-                        <FormField
-                          control={signUpForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input type="email" placeholder="you@example.com" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="At least 6 characters" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpForm.control}
-                          name="confirmPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Confirm Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="Confirm your password" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button type="submit" className="w-full h-12" disabled={isLoading}>
-                          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Account"}
-                        </Button>
-                      </form>
-                    </Form>
+                  <TabsContent value="sign-up" className="mt-4">
+                    <SignUpForm />
                   </TabsContent>
                 </Tabs>
 
