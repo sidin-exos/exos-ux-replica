@@ -350,7 +350,7 @@ const UserFilesManager = () => {
                           </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="outline" className={`text-xs ${FILE_TYPE_BADGE_STYLES[file.file_type] || ""}`}>
                             {getFileTypeLabel(file.file_type as AllowedExtension)}
                           </Badge>
                         </TableCell>
