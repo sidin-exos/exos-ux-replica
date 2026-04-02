@@ -161,6 +161,8 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
                     ? COUNTRY_NAMES[profile[key] ?? ""] || profile[key] || "—"
                     : key === "company_size"
                     ? COMPANY_SIZES.find((s) => s.value === profile[key])?.label || profile[key] || "—"
+                    : key === "industry"
+                    ? industryContexts?.find((ic) => ic.slug === profile[key])?.name || profile[key] || "—"
                     : profile[key] || "—"}
                 </p>
               )}
