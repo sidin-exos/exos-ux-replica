@@ -994,24 +994,11 @@ const PDFReportDocument = ({
 
         <View style={s.coverSpacer} />
 
-        {/* Scenario badge */}
-        <View style={s.coverScenarioBadge}>
-          <Text style={s.coverScenarioBadgeText}>{scenarioLabel}</Text>
-        </View>
-
         {/* Title */}
-        <Text style={s.coverTitle}>Preparing for {reportTitle}</Text>
+        <Text style={s.coverTitle}>{reportTitle}</Text>
 
         {/* Divider */}
         <View style={s.coverDivider} />
-
-        {/* Metadata row */}
-        <View style={s.coverMetaRow}>
-          <View style={s.coverMetaCol}>
-            <Text style={s.coverMetaLabel}>ANALYSIS TYPE</Text>
-            <Text style={s.coverMetaValue}>{scenarioTitle}</Text>
-          </View>
-        </View>
 
         {/* TOC box */}
         <View style={s.tocBox}>

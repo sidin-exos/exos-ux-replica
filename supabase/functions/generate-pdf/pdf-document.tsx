@@ -420,12 +420,8 @@ const PDFReportDocument = ({
         <View style={s.coverLeftStripe} />
         
         <View style={{ height: "8%" }} />
-        <View style={s.coverScenarioBadge}><Text style={s.coverScenarioBadgeText}>{scenarioLabel}</Text></View>
-        <Text style={s.coverTitle}>Preparing for {reportTitle}</Text>
+        <Text style={s.coverTitle}>{reportTitle}</Text>
         <View style={s.coverDivider} />
-        <View style={s.coverMetaRow}>
-          <View style={s.coverMetaCol}><Text style={s.coverMetaLabel}>ANALYSIS TYPE</Text><Text style={s.coverMetaValue}>{scenarioTitle}</Text></View>
-        </View>
         <View style={s.tocBox}>
           <Text style={s.tocTitle}>Contents</Text>
           {tocEntries.map((entry, i) => (
