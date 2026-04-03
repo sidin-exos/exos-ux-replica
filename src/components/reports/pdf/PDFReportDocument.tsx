@@ -965,9 +965,12 @@ const PDFReportDocument = ({
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
   const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
-  const confidenceLevel = evaluationConfidence
-    ? (evaluationConfidence === "HIGH" ? "High" : "Low")
-    : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
+  const confidenceLevel = structuredOutput
+    ? (structuredOutput.confidence_level === "HIGH" ? "High" : structuredOutput.confidence_level === "MEDIUM" ? "Medium" : "Low")
+    : evaluationConfidence
+      ? (evaluationConfidence === "HIGH" ? "High" : "Low")
+      : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
+  const hasLowConfidenceWatermark = structuredOutput?.low_confidence_watermark === true;
 
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
