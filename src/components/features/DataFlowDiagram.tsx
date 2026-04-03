@@ -123,13 +123,21 @@ const DataFlowDiagram = () => {
               <div className="absolute inset-0 bg-gradient-to-b from-primary/60 to-primary/20" />
               <svg className="absolute -left-2 top-0 w-5 h-12" viewBox="0 0 20 48">
                 <path
-                  d="M10 0 L10 48"
+                  d="M10 0 L10 40"
                   fill="none"
                   stroke="hsl(var(--primary))"
                   strokeWidth="2"
                   strokeDasharray="6 6"
                   className="animate-flow-line"
                   style={{ animationDirection: "reverse" }}
+                />
+                <path
+                  d="M6 38 L10 46 L14 38"
+                  fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
               {/* Pulse Dot at bottom */}
