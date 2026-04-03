@@ -157,15 +157,24 @@ const MarketIntelligence = () => {
           </TabsContent>
         </Tabs>
 
-        <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
-          <SiteFeedbackButton scenarioId="market-intelligence" />
-          <a href="/pricing#contact">
-            <Button size="lg" className="text-lg px-8 py-6 gap-2">
-              Get in Touch
-              <Mail className="w-5 h-5" />
-            </Button>
-          </a>
-        </section>
+        <footer className="mt-8 border-t border-border/40 pt-4 pb-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>© {new Date().getFullYear()} EXOS Procurement · Market Intelligence</span>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground" asChild>
+                <a href="/contact">
+                  <Mail className="w-3.5 h-3.5" /> Contact
+                </a>
+              </Button>
+              <Separator orientation="vertical" className="h-4" />
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground" asChild>
+                <a href="/contact?subject=feedback">
+                  <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                </a>
+              </Button>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
