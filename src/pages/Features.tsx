@@ -16,7 +16,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 
 const Features = () => {
-  
+  const { resolvedTheme } = useTheme();
   const location = useLocation();
   const { isSuperAdmin } = useAdminAuth();
 
