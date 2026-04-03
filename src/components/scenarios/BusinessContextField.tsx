@@ -43,6 +43,7 @@ export function BusinessContextField({
   placeholder = "Describe your industry context, company specifics, constraints, and any relevant background...",
 }: BusinessContextFieldProps) {
   const { contexts, saveContext, deleteContext, updateContext } = useSavedBusinessContexts();
+  const { profile } = useAccountData();
   const [selectedContextId, setSelectedContextId] = useState<string | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [contextName, setContextName] = useState("");
