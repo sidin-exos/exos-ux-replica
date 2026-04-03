@@ -188,9 +188,9 @@ const Welcome = () => {
                           </div>
                           {step.sideButton && (
                             <div className="flex items-center gap-1.5 shrink-0">
-                              <svg width="20" height="12" viewBox="0 0 20 12" className="text-primary/40 shrink-0">
-                                <line x1="6" y1="6" x2="20" y2="6" stroke="currentColor" strokeWidth="1.5" />
-                                <path d="M8 2 L2 6 L8 10" fill="currentColor" stroke="none" />
+                              <svg width="24" height="12" viewBox="0 0 24 12" className="text-primary/50 shrink-0">
+                                <path d="M2 6 L8 2 L8 10 Z" fill="currentColor" stroke="none" />
+                                <line x1="8" y1="6" x2="24" y2="6" stroke="currentColor" strokeWidth="2" />
                               </svg>
                               <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border border-accent/40 bg-accent/10 cursor-default transition-all hover:shadow-md hover:border-accent/60 self-stretch">
                                 <div className="w-7 h-7 rounded-lg bg-accent/80 flex items-center justify-center">
@@ -204,15 +204,15 @@ const Welcome = () => {
                         {i < arr.length - 1 && (
                           <div className="flex justify-center py-0.5">
                             {i === 1 ? (
-                              <svg width="20" height="24" viewBox="0 0 20 24" className="text-primary">
-                                <path d="M4 6 L10 0 L16 6" fill="currentColor" stroke="none" />
-                                <line x1="10" y1="5" x2="10" y2="19" stroke="currentColor" strokeWidth="2.5" />
-                                <path d="M4 18 L10 24 L16 18" fill="currentColor" stroke="none" />
+                              <svg width="12" height="24" viewBox="0 0 12 24" className="text-primary">
+                                <path d="M6 0 L10 6 L2 6 Z" fill="currentColor" stroke="none" />
+                                <line x1="6" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" />
+                                <path d="M6 24 L2 18 L10 18 Z" fill="currentColor" stroke="none" />
                               </svg>
                             ) : (
-                              <svg width="16" height="18" viewBox="0 0 16 18" className="text-primary/50">
-                                <line x1="8" y1="0" x2="8" y2="13" stroke="currentColor" strokeWidth="2" />
-                                <path d="M3 11 L8 18 L13 11" fill="currentColor" stroke="none" />
+                              <svg width="12" height="20" viewBox="0 0 12 20" className="text-primary/50">
+                                <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="2" />
+                                <path d="M6 20 L2 14 L10 14 Z" fill="currentColor" stroke="none" />
                               </svg>
                             )}
                           </div>
