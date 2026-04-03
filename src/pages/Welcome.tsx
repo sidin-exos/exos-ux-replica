@@ -65,7 +65,7 @@ const pillars = [
 /* ── Stats ── */
 const stats = [
   { value: "29", label: "Procurement Scenarios" },
-  { value: "30", label: "Enterprise Clients" },
+  { value: "30", label: "Industry Knowledge Bases" },
   { value: "99.9%", label: "Compliance Rate" },
 ];
 
