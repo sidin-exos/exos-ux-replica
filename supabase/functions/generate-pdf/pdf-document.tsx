@@ -147,7 +147,7 @@ function buildStyles(c: PdfColorSet) {
     coverScenarioBadge: { backgroundColor: c.primary, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, alignSelf: "flex-start", marginBottom: 16 },
     coverScenarioBadgeText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 1 },
     coverTitle: { fontSize: 22, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 12, lineHeight: 1.2 },
-    coverDivider: { height: 1, backgroundColor: c.border, marginBottom: 20 },
+    coverDivider: { height: 1, backgroundColor: c.border, marginBottom: 10 },
     coverMetaRow: { flexDirection: "row", marginBottom: 24 },
     coverMetaCol: { flex: 1 },
     coverMetaLabel: { fontSize: 8, fontFamily: "Helvetica-Bold", color: c.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
