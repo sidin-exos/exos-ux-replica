@@ -332,8 +332,39 @@ const VerticalConnector = () => (
   </div>
 );
 
+/* Vertical Bidirectional Connector (up+down arrows) */
+const VerticalBidirectionalConnector = () => (
+  <div className="relative h-12 w-5 my-2">
+    <svg className="w-full h-full" viewBox="0 0 20 48">
+      <path
+        d="M10 6 L10 42"
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth="2"
+        strokeDasharray="6 6"
+        className="animate-flow-line"
+      />
+      <path
+        d="M6 38 L10 46 L14 38"
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 10 L10 2 L14 10"
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </div>
+);
 
-const MobileConnector = () => (
+
   <div className="flex justify-center py-1">
     <div className="relative w-6 h-6">
       <svg className="w-full h-full" viewBox="0 0 24 24">
