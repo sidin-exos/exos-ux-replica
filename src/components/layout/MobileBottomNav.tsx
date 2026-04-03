@@ -5,7 +5,7 @@ const navItems = [
   { label: "Home", path: "/welcome", icon: Home },
   { label: "Intel", path: "/market-intelligence", icon: Brain },
   { label: "Tech", path: "/features", icon: Sparkles },
-  { label: "Dashboards", path: "/reports", icon: BarChart3 },
+  { label: "Dashboards", path: "/features#dashboards", icon: BarChart3 },
   { label: "Pricing", path: "/pricing", icon: Tag },
 ];
 

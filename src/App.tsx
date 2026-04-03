@@ -20,7 +20,7 @@ import SentryUserSync from "./components/SentryUserSync";
 const Index = lazy(() => import("./pages/Index"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const Features = lazy(() => import("./pages/Features"));
-const Reports = lazy(() => import("./pages/Reports"));
+
 const Pricing = lazy(() => import("./pages/Pricing"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const GeneratedReport = lazy(() => import("./pages/GeneratedReport"));
@@ -72,7 +72,7 @@ const App = () => (
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<Features />} />
-            <Route path="/reports" element={<Reports />} />
+            <Route path="/reports" element={<Features />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/report" element={<GeneratedReport />} />

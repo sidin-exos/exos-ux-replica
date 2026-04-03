@@ -61,7 +61,6 @@ const NAV_GROUPS = [
     label: "About EXOS",
     items: [
       { label: "Technology & AI", path: "/features#orchestration", icon: Sparkles },
-      { label: "Dashboards & Analytics", path: "/reports", icon: BarChart3 },
       { label: "Pricing", path: "/pricing", icon: DollarSign },
       { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
     ],
@@ -208,7 +207,7 @@ const Header = () => {
                     <User className="w-4 h-4" /> My Account
                   </button>
                   <button
-                    onClick={() => mobileNavigate("/reports")}
+                    onClick={() => mobileNavigate("/features#dashboards")}
                     className="text-sm text-muted-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
                   >
                     <FileText className="w-4 h-4" /> My Reports
@@ -283,7 +282,7 @@ const Header = () => {
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
                   <User className="w-4 h-4" /> My Account
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/reports")}>
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/features#dashboards")}>
                   <FileText className="w-4 h-4" /> My Reports
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/market-intelligence?tab=insights")}>
