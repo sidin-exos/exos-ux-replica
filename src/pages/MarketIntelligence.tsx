@@ -123,39 +123,47 @@ const MarketIntelligence = () => {
           Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
         </p>
 
-        <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1">
-            <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
-              <Search className="h-4 w-4" />
-              Ad-hoc Queries
-            </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-iris data-[state=active]:text-iris-foreground data-[state=active]:shadow-md">
-              <Database className="h-4 w-4" />
-              Knowledge Base
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Tabs defaultValue={defaultTab} className="space-y-6">
+              <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1">
+                <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
+                  <Search className="h-4 w-4" />
+                  Ad-hoc Queries
+                </TabsTrigger>
+                <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-iris data-[state=active]:text-iris-foreground data-[state=active]:shadow-md">
+                  <Database className="h-4 w-4" />
+                  Knowledge Base
+                </TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="queries" className="space-y-6">
-            <IntelScenarioSelector
-              selected={selectedScenario}
-              onSelect={setSelectedScenario}
-            />
+              <TabsContent value="queries" className="space-y-6">
+                <IntelScenarioSelector
+                  selected={selectedScenario}
+                  onSelect={setSelectedScenario}
+                />
 
-            {error && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Query Failed</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+                {error && (
+                  <Alert variant="destructive" className="mb-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Query Failed</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-            {renderScenarioContent()}
-          </TabsContent>
+                {renderScenarioContent()}
+              </TabsContent>
 
-          <TabsContent value="insights">
-            <MarketInsightsAdmin />
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="insights">
+                <MarketInsightsAdmin />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="lg:col-span-1">
+            {/* Reserved for future content */}
+          </div>
+        </div>
 
         <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
           <SiteFeedbackButton scenarioId="market-intelligence" />
