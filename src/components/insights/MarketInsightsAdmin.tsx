@@ -297,15 +297,22 @@ export function MarketInsightsAdmin() {
       {/* Description */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Market Insights Knowledge Base
-          </CardTitle>
-          <CardDescription>
-            Market Insights improve your scenario analysis results. Pick the country and industry you want to analyse, then upload the latest Market Insights into the system.
-            <br />
-            Market Insights contain publicly available information, no sensitive information is used. You can pick existing market insights from the system database if they fit your needs.
-          </CardDescription>
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <CardTitle className="flex items-center gap-2 mb-2">
+                <Database className="h-5 w-5" />
+                Market Insights Knowledge Base
+              </CardTitle>
+              <CardDescription>
+                Market Insights improve your scenario analysis results. Pick the country and industry you want to analyse, then upload the latest Market Insights into the system.
+                <br />
+                Market Insights contain publicly available information, no sensitive information is used. You can pick existing market insights from the system database if they fit your needs.
+              </CardDescription>
+            </div>
+            <div className="lg:col-span-1 flex items-center justify-center rounded-lg bg-muted/50 min-h-[120px]">
+              <p className="text-sm text-muted-foreground">Image placeholder</p>
+            </div>
+          </div>
         </CardHeader>
       </Card>
 
