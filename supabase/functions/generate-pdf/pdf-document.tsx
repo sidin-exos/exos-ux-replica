@@ -170,7 +170,7 @@ function buildStyles(c: PdfColorSet) {
     sectionTitleWrapper: { marginBottom: SP.afterHeadingLine, paddingBottom: 6 },
     sectionTitleText: { fontSize: 18, fontFamily: "Helvetica-Bold", color: c.text },
     sectionTitleLine: { height: 2, backgroundColor: c.primary, marginTop: 6 },
-    findingCardsRow: { flexDirection: "row", marginBottom: 16 },
+    findingCardsRow: { flexDirection: "row", marginBottom: 8 },
     findingCard: { flex: 1, backgroundColor: c.surface, borderLeftWidth: 3, padding: 8, marginRight: 5 },
     findingCardLast: { marginRight: 0 },
     findingCardNumber: { width: 20, height: 20, borderRadius: 10, justifyContent: "center", alignItems: "center", marginBottom: 6 },
