@@ -42,7 +42,7 @@ export const MONITOR_TYPE_META: Record<MonitorType, { label: string; purpose: st
     drs: true, phase: 1,
   },
   "DM-3": {
-    label: "Regulatory Change Monitor",
+    label: "Regulatory Change",
     purpose: "Track regulatory and compliance changes affecting procurement categories",
     description: "Regulatory Change Monitor provides continuous surveillance of legislative and regulatory developments that impact procurement operations. The monitor tracks the status of relevant frameworks — whether in consultation, adopted, in implementation, or in force — and flags changes that affect your contract portfolio. It cross-references regulatory shifts against your specified procurement categories and supplier agreements, generating compliance gap briefs that explain what each change requires and what procurement action is needed before effective dates. This scenario is essential for organisations operating in regulated environments where non-compliance carries significant financial and operational risk.",
     drs: false, phase: 1,
