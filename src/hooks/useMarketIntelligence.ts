@@ -124,8 +124,9 @@ export function useMarketIntelligence() {
         throw new Error(data.error || "Query failed");
       }
 
-      setResult(data);
-      return data;
+      const resultWithName = { ...data, queryName: params.queryName };
+      setResult(resultWithName);
+      return resultWithName;
     } catch (err) {
       if (isAuthError(err)) {
         showAuthErrorToast();

@@ -140,6 +140,20 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
             </div>
           </div>
 
+          {/* Query Name */}
+          <div className="space-y-2">
+            <Label htmlFor="queryName">Report Title</Label>
+            <Input
+              id="queryName"
+              placeholder="e.g., Q2 Supplier Risk Assessment"
+              value={queryName}
+              onChange={(e) => setQueryName(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              This name will appear as the header in the generated report
+            </p>
+          </div>
+
           {/* Query Input */}
           <div className="space-y-2">
             <Label htmlFor="query">Your Query</Label>

@@ -60,7 +60,7 @@ export function IntelResults({ result, onNewQuery }: IntelResultsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {IconComponent && <IconComponent className="w-5 h-5 text-highlight" />}
-              <CardTitle className="text-lg">{typeInfo.label} Analysis</CardTitle>
+              <CardTitle className="text-lg">{result.queryName || `${typeInfo.label} Analysis`}</CardTitle>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="gap-1 border-info/50 text-info">
