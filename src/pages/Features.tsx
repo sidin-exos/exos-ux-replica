@@ -243,9 +243,6 @@ const Features = () => {
           <p className="text-muted-foreground text-base max-w-2xl mx-auto mb-4">
             Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
           </p>
-          <p className="text-muted-foreground text-sm max-w-xl mx-auto font-medium">
-            EXOS works as three interconnected layers.
-          </p>
         </section>
 
         {/* Value Props */}
