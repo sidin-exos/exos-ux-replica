@@ -121,11 +121,16 @@ const RiskPlatform = () => {
                 </p>
               </div>
               <Tabs defaultValue="DM-1" className="w-full">
-                <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-accent/30 p-1.5 rounded-lg">
-                  {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
-                    <TabsTrigger key={key} value={key} className="text-xs flex-1 min-w-[100px] whitespace-normal leading-tight py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                      {meta.label}
-                    </TabsTrigger>
+                <TabsList className="w-full flex flex-wrap h-auto gap-0 bg-accent/30 p-1 rounded-lg">
+                  {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta], idx, arr) => (
+                    <div key={key} className="flex items-center flex-1 min-w-[100px]">
+                      <TabsTrigger value={key} className="w-full text-xs whitespace-normal leading-tight py-2.5 px-3 border border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary/20 data-[state=inactive]:hover:bg-accent/50 rounded-md transition-colors">
+                        {meta.label}
+                      </TabsTrigger>
+                      {idx < arr.length - 1 && (
+                        <Separator orientation="vertical" className="h-5 mx-0.5 opacity-30" />
+                      )}
+                    </div>
                   ))}
                 </TabsList>
                 {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
