@@ -113,6 +113,8 @@ export const scenarios: Scenario[] = [
       "Break-even Analysis: When does ownership become cost-effective",
       "Decision Recommendation: AI-powered buy/lease/defer guidance",
     ],
+    scenario_id: "S1",
+    group: "A",
   },
 
   // ===== 2. COST BREAKDOWN — TYPE 1 =====
@@ -142,6 +144,8 @@ export const scenarios: Scenario[] = [
       { id: "supplierQuote", label: "Supplier Quote & Benchmark Reference", description: "Supplier pricing, your target, and known benchmarks", type: "textarea", required: true, placeholder: "• Supplier's quoted price per unit (€)\n• Your internal target price or budget (€)\n• Any known alternative quotes from other suppliers\n• Estimated margin the supplier is applying (if known)" },
     ],
     outputs: ["Cost Waterfall: Visual breakdown of cost components", "Should-Cost Model: Bottom-up cost estimate with benchmarks", "Negotiation Leverage Points: Areas where supplier costs may be inflated", "Sensitivity Analysis: Impact of key cost driver changes"],
+    scenario_id: "S2",
+    group: "A",
   },
 
   // ===== 3. CAPEX VS OPEX — TYPE 1H =====
@@ -171,6 +175,8 @@ export const scenarios: Scenario[] = [
       { id: "financialContext", label: "Financial Context & Tax Inputs", description: "WACC, tax rate, IFRS 16 applicability, and currency", type: "textarea", required: true, placeholder: "• WACC or internal hurdle rate (%)\n• Corporate tax rate for this entity (%)\n• IFRS 16 applicability: yes / no / unsure\n• Off-balance-sheet preference: yes / no\n• Currency" },
     ],
     outputs: ["NPV Waterfall Graph: 5-year total cost comparison", "Flexibility Matrix: Upgrade options vs ownership", "CFO Recommendation: Cash flow preservation advice"],
+    scenario_id: "S3",
+    group: "A",
   },
 
   // ===== 4. SAVINGS CALCULATION — TYPE 1 =====
@@ -200,6 +206,8 @@ export const scenarios: Scenario[] = [
       { id: "savingsClassification", label: "Savings Classification & Adjustments", description: "Savings category, inflation adjustment, maverick exclusion", type: "textarea", required: true, placeholder: "• Savings category: Hard Saving / Soft Saving / Cost Avoidance (select one and explain)\n• Inflation adjustment applied: yes / no — if yes, index used (CPI / PPI / commodity)\n• Maverick or off-contract spend excluded from baseline: yes / no — estimated amount if yes (€)\n• Finance sign-off required: yes / no" },
     ],
     outputs: ["Executive Summary: Hard vs Soft savings breakdown", "Progress Dashboard: Annual savings goal tracker", "Audit Report: PDF with inflation adjustment documentation"],
+    scenario_id: "S4",
+    group: "A",
   },
 
   // ===== 5. SPEND ANALYSIS — TYPE 2 =====
@@ -228,6 +236,8 @@ export const scenarios: Scenario[] = [
       { id: "classificationParameters", label: "Classification Parameters", description: "Preferred taxonomy, problem categories, and target output", type: "textarea", required: false, placeholder: "• Preferred taxonomy: UNSPSC / eCl@ss / Custom internal\n• Known problem categories or high-maverick-spend areas\n• Cost-centre or department codes to include\n• Target output: consolidation opportunities / compliance gaps / savings potential (select priority)" },
     ],
     outputs: ["Spend Taxonomy & Categorization Breakdown", "Tail Spend Identification (High volume, low value)", "Vendor Consolidation Opportunities", "Quick Wins & Strategic Next Steps"],
+    scenario_id: "S5",
+    group: "A",
   },
 
   // ===== 6. FORECASTING & BUDGETING — TYPE 1 =====
@@ -263,6 +273,8 @@ export const scenarios: Scenario[] = [
       "Scenario 2: Stress Test (Worst Case & Triggers)",
       "Actionable Budget Optimization Steps",
     ],
+    scenario_id: "S6",
+    group: "A",
   },
 
   // ===== 7. SAAS OPTIMIZATION — TYPE 1 =====
@@ -292,6 +304,8 @@ export const scenarios: Scenario[] = [
       { id: "optimisationParameters", label: "Optimisation Parameters", description: "Overlap, auto-renewal flags, utilisation rates, and optimisation target", type: "textarea", required: false, placeholder: "• Known overlapping tools or feature duplication (describe)\n• Auto-renewal clauses to flag (list tool names)\n• Feature utilisation rate if available from admin portals (tool: utilisation %)\n• Optimisation target: cost reduction / consolidation / compliance audit (select one)" },
     ],
     outputs: ["Kill List: Licenses to remove with user names", "Tier Mismatch Chart: Overpayment for unused features", "Duplicate Matrix: Comparison of overlapping services"],
+    scenario_id: "S7",
+    group: "A",
   },
 
   // ===== 8. SPECIFICATION OPTIMIZER — TYPE 0 =====
@@ -328,6 +342,8 @@ export const scenarios: Scenario[] = [
       "Supplier Market Expansion: How spec changes could increase supplier options",
       "Risk Assessment: What you lose vs. gain with each proposed change",
     ],
+    scenario_id: "S8",
+    group: "A",
   },
 
   // ═══════════════════════════════════════════════════════
@@ -367,6 +383,8 @@ export const scenarios: Scenario[] = [
       "Clarifications & Recommendations (Missing data flags + next steps)",
       "Suggested Attachments & Templates",
     ],
+    scenario_id: "S9",
+    group: "B",
   },
 
   // ===== 10. SLA DEFINITION — TYPE 1 =====
@@ -396,6 +414,8 @@ export const scenarios: Scenario[] = [
       { id: "remedyStructure", label: "Remedy & Escalation Structure", description: "Penalty tiers, escalation path, reporting frequency", type: "textarea", required: false, placeholder: "• Service credit / penalty mechanism — specify tiers:\n  Tier 1 breach at (%) = (% of monthly fee credit)\n  Tier 2 breach at (%) = (% credit)\n  Tier 3 breach = right to terminate\n• Escalation path: Level 1 role / Level 2 role / Level 3 executive\n• Measurement and reporting frequency\n• Known peak demand periods to carve out" },
     ],
     outputs: ["SLA Table: Metrics, targets, and financial penalties", "Decision Tree: Incident response by severity level", "Draft Agreement: Ready-to-use service quality appendix"],
+    scenario_id: "S10",
+    group: "B",
   },
 
   // ===== 11. TAIL SPEND — TYPE 0 =====
@@ -424,6 +444,8 @@ export const scenarios: Scenario[] = [
       { id: "qualityParameters", label: "Quality & Commercial Parameters", description: "Quality standard, budget ceiling, acceptance criteria, preferred supplier type", type: "textarea", required: false, placeholder: "Quality standard or specification required (if applicable).\nBudget ceiling or target unit price (€).\nAcceptance criteria — how will you verify the goods or service meet requirements?\nPreferred supplier characteristics (local, certified, diverse supplier programme)." },
     ],
     outputs: ["Action Plan: Direct 'Buy Here' link or 'Launch Tender' recommendation", "Compliance Alert: Notification if purchase violates procurement policy"],
+    scenario_id: "S11",
+    group: "B",
   },
 
   // ===== 12. CONTRACT TEMPLATE — TYPE 0 =====
@@ -478,6 +500,8 @@ export const scenarios: Scenario[] = [
       "Clause-by-Clause Guidance & Risk Flags [REVIEW WITH LEGAL COUNSEL]",
       "Recommended Next Steps & Legal Review Checklist",
     ],
+    scenario_id: "S12",
+    group: "B",
   },
 
   // ===== 13. REQUIREMENTS GATHERING — TYPE 0 =====
@@ -507,6 +531,8 @@ export const scenarios: Scenario[] = [
       { id: "constraintsPriority", label: "Constraints & Priority Context", description: "Budget, timeline, technical limitations, must-haves vs nice-to-haves", type: "textarea", required: false, placeholder: "Known constraints: budget ceiling, delivery timeline, technical platform limitations.\nPriority guidance: are there known must-haves vs. nice-to-haves?\nKnown dependencies on other projects or systems.\nRegulatory requirements that are non-negotiable." },
     ],
     outputs: ["MoSCoW Matrix: Requirements prioritized by importance", "User Stories: Test scenarios for product validation", "Market Scan: 3-5 solutions matching requirements"],
+    scenario_id: "S13",
+    group: "B",
   },
 
   // ===== 14. SUPPLIER PERFORMANCE REVIEW — TYPE 1H =====
@@ -536,6 +562,8 @@ export const scenarios: Scenario[] = [
       { id: "qualitativeAssessment", label: "Qualitative Assessment & Strategic Context", description: "Stakeholder feedback, trend direction, volume changes, strategic intent", type: "textarea", required: false, placeholder: "• Key qualitative feedback (2–3 observations from stakeholders — use role references, not names)\n• Trend direction: improving / stable / declining — explain why\n• Planned volume changes affecting this supplier (increase / decrease / exit)\n• Strategic intent: develop and grow / maintain / performance-improve or exit" },
     ],
     outputs: ["Supplier Scorecard: Radar diagram of supplier competencies", "PIP Plan: 90-day performance improvement plan", "QBR Script: Scenario for annual business review meeting"],
+    scenario_id: "S14",
+    group: "B",
   },
 
   // ===== 15. PROCUREMENT PROJECT PLANNING — TYPE 0 =====
@@ -565,6 +593,8 @@ export const scenarios: Scenario[] = [
       { id: "stakeholderConstraints", label: "Stakeholders, Approvals & Constraints", description: "Stakeholder roles, approval authority, regulatory gates, resource constraints", type: "textarea", required: false, placeholder: "Key stakeholder roles involved (use generic titles: CPO, IT Security Lead, Legal Counsel, Finance Director).\nApproval authority and financial delegation levels.\nRegulatory approval gates (data privacy review, security assessment, competition law check).\nKnown resource constraints or blackout periods." },
     ],
     outputs: ["SWOT Analysis: Strengths, weaknesses, opportunities, threats for the project", "Priority Matrix: Critical vs nice-to-have activities mapped by effort/impact", "Stakeholder Map: Influence/interest matrix with engagement strategy", "Critical Path: Key milestones and decision points", "Risk Register: Prioritized risks with mitigation strategies"],
+    scenario_id: "S15",
+    group: "B",
   },
 
   // ═══════════════════════════════════════════════════════
@@ -598,6 +628,8 @@ export const scenarios: Scenario[] = [
       { id: "reviewScope", label: "Review Scope & Parameters", description: "Engagement type, regulatory framework, priority review areas", type: "textarea", required: false, placeholder: "• Engagement type: Fixed-price / Time & Materials / Milestone-based / Managed Service\n• Governing regulatory framework: GDPR / SOC2 / ISO 27001 / HIPAA / None\n• Priority review areas: scope definition / payment triggers / IP ownership / penalty clauses / exit provisions\n• Counterparty type: prime contractor / subcontractor / SaaS vendor / consultancy" },
     ],
     outputs: ["Redlining: Track-changes style markup", "Scorecard: Contract protection score (0-100%)", "Checklist: Questions to clarify gray areas"],
+    scenario_id: "S16",
+    group: "C",
   },
 
   // ===== 17. RISK ASSESSMENT — TYPE 0 =====
@@ -635,6 +667,8 @@ export const scenarios: Scenario[] = [
       "Monitoring Dashboard: Key risk indicators to track",
       "Scenario Analysis: Best/worst/likely case outcomes",
     ],
+    scenario_id: "S17",
+    group: "C",
   },
 
   // ===== 18. RISK MATRIX — TYPE 1H =====
@@ -663,6 +697,8 @@ export const scenarios: Scenario[] = [
       { id: "matrixParameters", label: "Matrix Parameters & Targets", description: "Risk appetite, residual targets, review frequency, escalation threshold", type: "textarea", required: false, placeholder: "• Risk appetite statement (tolerate / treat / transfer / terminate at what level?)\n• Target residual risk level after mitigation: High acceptable / Medium acceptable / Low only\n• Review frequency: monthly / quarterly / annually\n• Escalation threshold: at what risk score must the board be notified?" },
     ],
     outputs: ["Risk Heatmap: Probability vs Impact matrix", "Mitigation Plan: Risk reduction action list", "Traffic Light Status: Green/Yellow/Red recommendation"],
+    scenario_id: "S18",
+    group: "C",
   },
 
   // ===== 19. SOFTWARE LICENSING — TYPE 2 =====
@@ -818,6 +854,8 @@ export const scenarios: Scenario[] = [
       "Cross-Category Analogies: Lessons from similar categories in other industries",
       "3-Year Roadmap: Phased implementation plan with milestones",
     ],
+    scenario_id: "S22",
+    group: "D",
   },
 
   // ===== 23. MAKE VS BUY — TYPE 1H =====
@@ -847,6 +885,8 @@ export const scenarios: Scenario[] = [
       { id: "buyCosts", label: "External (Buy) Cost & Contract Risk", description: "Vendor quote, transition cost, capability, contract flexibility, exit risk", type: "textarea", required: true, placeholder: "• External vendor quote or market rate (€ per year or per unit)\n• One-time integration and transition cost estimate (€)\n• Vendor capability and track record: proven / emerging / unknown\n• Contract flexibility: month-to-month / locked-in (term and notice period)\n• Exit risk: data portability / migration complexity / switching cost estimate (€)" },
     ],
     outputs: ["Decision Matrix: Comparison across 5 criteria (Price, Speed, Quality, Risk, Control)", "Break-even Chart: Point where in-house becomes more cost-effective than outsourcing"],
+    scenario_id: "S23",
+    group: "D",
   },
 
   // ===== 24. VOLUME CONSOLIDATION — TYPE 1 =====
@@ -876,6 +916,8 @@ export const scenarios: Scenario[] = [
       { id: "consolidationParameters", label: "Consolidation Parameters & Risk Appetite", description: "Target ratio, max concentration, capacity constraints, logistics cost, timeline", type: "textarea", required: false, placeholder: "• Target consolidation ratio (e.g. 70/30 dual-source / 100% single-source / 80/10/10 three-way split)\n• Maximum single-supplier concentration you are willing to accept (%)\n• Supplier capacity constraints by geography\n• Logistics cost differential between suppliers\n• Timeline: when do current contracts expire?" },
     ],
     outputs: ["Bubble Chart Dashboard: Size = spend, axes = price and risk", "Negotiation Script: Volume discount talking points", "Savings Matrix: Comparison with 1/2/3 suppliers"],
+    scenario_id: "S24",
+    group: "D",
   },
 
   // ===== 25. SUPPLIER DEPENDENCY PLANNER — TYPE 0 =====
@@ -915,6 +957,8 @@ export const scenarios: Scenario[] = [
       "Negotiation Leverage Brief: How exit/diversification options strengthen your position",
       "Risk Mitigation Timeline: Phased approach to reduce dependency while maintaining continuity",
     ],
+    scenario_id: "S25",
+    group: "D",
   },
 
   // ===== 26. DISRUPTION MANAGEMENT — TYPE 0 =====
@@ -944,6 +988,8 @@ export const scenarios: Scenario[] = [
       { id: "resourceConstraints", label: "Resource & Constraint Status", description: "Inventory buffer, alternative suppliers, customer commitments at risk, financial reserves", type: "textarea", required: false, placeholder: "Current inventory buffer (weeks of stock remaining).\nAlternative suppliers already identified: yes / no — if yes, briefly describe.\nCustomer contractual commitments at immediate risk (describe, do not include confidential contract values).\nFinancial reserve available for emergency sourcing (€ range).\nCross-functional team available: procurement / operations / finance / legal / comms." },
     ],
     outputs: ["Emergency Map: Step-by-step supply chain recovery algorithm", "Impact Table: Financial losses under different delay scenarios", "Draft Letter: Claim letter or partner assistance request"],
+    scenario_id: "S26",
+    group: "D",
   },
 
   // ===== 27. BLACK SWAN SCENARIO — TYPE 1 =====
@@ -984,6 +1030,8 @@ export const scenarios: Scenario[] = [
       "Investment Recommendation: Cost-benefit analysis of preventive measures",
       "Monitoring Dashboard: Key risk indicators and trigger points",
     ],
+    scenario_id: "S27",
+    group: "D",
   },
 
   // ═══════════════════════════════════════════════════════
