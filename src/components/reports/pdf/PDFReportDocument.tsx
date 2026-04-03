@@ -373,7 +373,7 @@ function buildStyles(c: PdfColorSet) {
     // Finding cards (3-column)
     findingCardsRow: {
       flexDirection: "row",
-      marginBottom: 16,
+      marginBottom: 8,
     },
     findingCard: {
       flex: 1,
