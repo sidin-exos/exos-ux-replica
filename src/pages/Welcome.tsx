@@ -157,7 +157,7 @@ const Welcome = () => {
 
                   <div className="space-y-1.5">
                     {[
-                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", highlight: false },
+                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", highlight: false, sideButton: { icon: Database, label: "Risk & Inflation Platforms" } },
                       { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", highlight: true },
                       { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", highlight: false },
                       { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", highlight: false },
