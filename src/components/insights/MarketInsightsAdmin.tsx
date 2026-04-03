@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import marketInsightsPreview from "@/assets/market-insights-preview.png";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
 import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles } from "lucide-react";
@@ -309,8 +310,10 @@ export function MarketInsightsAdmin() {
                 Market Insights contain publicly available information, no sensitive information is used. You can pick existing market insights from the system database if they fit your needs.
               </CardDescription>
             </div>
-            <div className="lg:col-span-1 flex items-center justify-center rounded-lg bg-muted/50 min-h-[120px]">
-              <p className="text-sm text-muted-foreground">Image placeholder</p>
+            <div className="lg:col-span-1 relative overflow-hidden rounded-lg min-h-[120px]">
+              <img src={marketInsightsPreview} alt="Market Insights Preview" className="w-full h-full object-cover rounded-lg" />
+              <div className="absolute inset-0 bg-gradient-to-r from-card via-card/60 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-card/40 to-transparent pointer-events-none" />
             </div>
           </div>
         </CardHeader>
