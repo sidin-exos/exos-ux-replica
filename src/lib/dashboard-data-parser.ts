@@ -1,10 +1,14 @@
 /**
  * Dashboard Data Parser
  * 
- * Extracts structured JSON from <dashboard-data> blocks appended by the AI
- * at the end of analysis responses. Each dashboard type has a typed interface.
+ * Extracts structured JSON from AI responses. Supports two formats:
+ * 1. EXOS Output Schema v1.0 (structured JSON envelope with schema_version: "1.0")
+ * 2. @deprecated Legacy <dashboard-data> XML blocks
+ * 
  * If parsing fails, returns null so dashboards fall back to hardcoded defaults.
  */
+
+import type { ExosOutput } from "@/lib/sentinel/types";
 
 // ============================================
 // Per-dashboard data interfaces
