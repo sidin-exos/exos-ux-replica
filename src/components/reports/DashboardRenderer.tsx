@@ -49,12 +49,21 @@ const DashboardRenderer = ({
   dashboardType,
   scenarioTitle,
   analysisResult,
+  structuredData,
   formData,
 }: DashboardRendererProps) => {
-  const parsedData = useMemo(
-    () => extractDashboardData(analysisResult || ''),
-    [analysisResult]
-  );
+  const parsedData = useMemo(() => {
+    // Prefer structured envelope data when available
+    if (structuredData) {
+      try {
+        const envelope = JSON.parse(structuredData);
+        if (envelope?.schema_version === '1.0') {
+          return extractFromEnvelope(envelope);
+        }
+      } catch { /* fall through to legacy */ }
+    }
+    return extractDashboardData(analysisResult || '');
+  }, [structuredData, analysisResult]);
 
   const dataKey = dashboardDataKey[dashboardType];
   const hasRealData = !!(parsedData && dataKey && parsedData[dataKey]);
