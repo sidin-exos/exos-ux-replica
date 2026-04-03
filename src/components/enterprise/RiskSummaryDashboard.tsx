@@ -11,6 +11,7 @@ interface SignalItem {
   monitorLabel: string;
   signal: string;
   trackerId: string;
+  reportDate: string;
 }
 
 const DETERIORATING_KEYWORDS = [
