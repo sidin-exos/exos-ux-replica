@@ -20,7 +20,7 @@ import SentryUserSync from "./components/SentryUserSync";
 const Index = lazy(() => import("./pages/Index"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const Features = lazy(() => import("./pages/Features"));
-const Reports = lazy(() => import("./pages/Reports"));
+
 const Pricing = lazy(() => import("./pages/Pricing"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const GeneratedReport = lazy(() => import("./pages/GeneratedReport"));

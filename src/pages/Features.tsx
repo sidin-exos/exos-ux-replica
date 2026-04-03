@@ -367,6 +367,137 @@ const Features = () => {
         </section>
 
 
+        {/* Dashboards Section */}
+        <section id="dashboards" className="mb-20 animate-fade-up" style={{ animationDelay: "450ms" }}>
+          <div className="text-center mb-10">
+            <h2 className="font-display text-2xl md:text-3xl font-bold mb-3">
+              <span className="text-gradient">Dashboards</span>
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              EXOS dashboards — empowering your decision-making with transparency.
+            </p>
+            <a href="/samples/EXOS_Specification_Optimizer_2026-02-28.pdf" download="EXOS_Report_Sample.pdf" className="inline-block mt-4">
+              <Button variant="outline" size="sm" className="gap-2 shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)] hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)] transition-all duration-300">
+                <FileText className="h-4 w-4" />
+                Download Report Sample
+              </Button>
+            </a>
+          </div>
+
+          {!isAuthLoading && !user ? (
+            <AuthPrompt
+              feature="Reports & Dashboards"
+              description="View your procurement analysis reports and performance dashboards"
+            />
+          ) : (
+            <>
+              {/* Guide Me — 4-category cards */}
+              <div className="mb-8">
+                <h3 className="exos-label-caps mb-3">What are you trying to decide?</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {dashboardCategories.map((cat) => {
+                    const Icon = cat.icon;
+                    const isActive = cat.dashboards.some((d) => d.id === selectedDashboard);
+                    return (
+                      <button
+                        key={cat.label}
+                        onClick={() => setSelectedDashboard(cat.dashboards[0].id)}
+                        className={`group rounded-xl border p-3 text-left transition-all duration-300
+                          bg-card shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]
+                          hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5
+                          active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]
+                          ${isActive ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30" : "border-border/60"}`}
+                      >
+                        <Icon className={`h-5 w-5 mb-2 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"}`} />
+                        <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                        <p className="text-xs text-muted-foreground mt-1 hidden md:block">{cat.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Mobile: Grouped select dropdown */}
+              <div className="md:hidden mb-6">
+                <Select value={selectedDashboard} onValueChange={(v) => setSelectedDashboard(v as DashboardType)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dashboardCategories.map((cat) => (
+                      <SelectGroup key={cat.label}>
+                        <SelectLabel className="exos-label-caps">{cat.label}</SelectLabel>
+                        {cat.dashboards.map((d) => {
+                          const config = dashboardConfigs[d.id];
+                          const count = getDashboardScenarioCount(d.id);
+                          return (
+                            <SelectItem key={d.id} value={d.id}>
+                              {config.name}{count > 0 ? ` (${count})` : ""}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Desktop: Master-detail layout */}
+              <div className="hidden md:grid md:grid-cols-4 md:gap-8 mb-8">
+                <nav className="md:col-span-1 space-y-6">
+                  {dashboardCategories.map((cat) => {
+                    const Icon = cat.icon;
+                    return (
+                      <div key={cat.label}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                          <h3 className="exos-label-caps">{cat.label}</h3>
+                        </div>
+                        <div className="space-y-0.5">
+                          {cat.dashboards.map((d) => {
+                            const isActive = selectedDashboard === d.id;
+                            const config = dashboardConfigs[d.id];
+                            const count = getDashboardScenarioCount(d.id);
+                            return (
+                              <button
+                                key={d.id}
+                                onClick={() => setSelectedDashboard(d.id)}
+                                className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border-l-2 ${
+                                  isActive
+                                    ? "border-l-primary bg-muted text-foreground"
+                                    : "border-l-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium">{config.name}</span>
+                                  {count > 0 && (
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">{count}</Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5">{d.subtitle}</p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </nav>
+                <div className="md:col-span-3">
+                  <DashboardContextCard dashboardId={selectedDashboard} config={dashboardConfigs[selectedDashboard]} />
+                  {renderDashboard(selectedDashboard)}
+                </div>
+              </div>
+
+              {/* Mobile content */}
+              <div className="md:hidden mb-8">
+                <DashboardContextCard dashboardId={selectedDashboard} config={dashboardConfigs[selectedDashboard]} />
+                {renderDashboard(selectedDashboard)}
+              </div>
+            </>
+          )}
+        </section>
+
         <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
           <SiteFeedbackButton scenarioId="features" />
           <a href="/pricing#contact">
