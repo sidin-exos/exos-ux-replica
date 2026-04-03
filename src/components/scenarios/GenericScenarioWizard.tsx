@@ -225,7 +225,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const { isAvailable: hasMarketInsights, insight: marketInsight } = useMarketInsightsAvailability(industrySlug, categorySlug);
 
   // Sentinel AI pipeline
-  const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs } = useSentinel({
+  const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs, structuredEnvelope: sentinelEnvelope } = useSentinel({
     onProgress: () => {},
     onError: (error) => {
       toast.error(`Analysis failed: ${error.message}`);
