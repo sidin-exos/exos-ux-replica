@@ -41,6 +41,7 @@ interface DashboardRendererProps {
   dashboardType: DashboardType;
   scenarioTitle?: string;
   analysisResult?: string;
+  structuredData?: string;
   formData?: Record<string, string>;
 }
 
