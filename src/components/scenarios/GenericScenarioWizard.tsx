@@ -145,7 +145,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [selectedModel, setSelectedModel] = useState<AIModel>(DEFAULT_MODEL);
   const [selectedDashboards, setSelectedDashboards] = useState<DashboardType[]>([]);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
-  const [structuredEnvelope, setStructuredEnvelope] = useState<Record<string, unknown> | null>(null);
   const [analysisTimestamp, setAnalysisTimestamp] = useState<string | null>(null);
   
   // Drafter-Validator state
