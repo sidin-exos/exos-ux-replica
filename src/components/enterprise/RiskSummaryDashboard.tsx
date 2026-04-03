@@ -102,7 +102,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
         const impSignals = extractSignals(content, IMPROVING_KEYWORDS, 1);
         for (const s of impSignals) {
           if (improving.length < 3) {
-            improving.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id });
+            improving.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id, reportDate: report.created_at });
           }
         }
       }
