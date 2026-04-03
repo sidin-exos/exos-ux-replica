@@ -299,7 +299,7 @@ function kpiColor(value: string, type: "savings" | "risk" | "confidence", c: Pdf
 interface TocEntry { label: string; anchor: string; page: number; }
 const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCount: number): TocEntry[] => {
   const entries: TocEntry[] = [];
-  let page = 2;
+  let page = 1;
   entries.push({ label: "Executive Summary", anchor: "section-executive-summary", page });
   page++;
   if (hasDashboards) { entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page }); page += Math.ceil(dashboardCount / 2); }
