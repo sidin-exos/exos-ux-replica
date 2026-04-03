@@ -166,6 +166,7 @@ function buildStyles(c: PdfColorSet) {
     stripeSegment: { flex: 1, height: 10 },
     sectionBadge: { backgroundColor: c.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, alignSelf: "flex-start", marginBottom: 10 },
     sectionBadgeText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 0.8 },
+    sectionTitleWrapperCompact: { marginBottom: 8, paddingBottom: 4 },
     sectionTitleWrapper: { marginBottom: SP.afterHeadingLine, paddingBottom: 6 },
     sectionTitleText: { fontSize: 18, fontFamily: "Helvetica-Bold", color: c.text },
     sectionTitleLine: { height: 2, backgroundColor: c.primary, marginTop: 6 },
