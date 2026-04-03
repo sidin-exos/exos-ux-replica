@@ -226,7 +226,7 @@ serve(async (req) => {
     if (injectionResult.flagged) {
       console.warn("Prompt injection detected in Perplexity response:", injectionResult.matches);
     }
-    const summary = injectionResult.cleaned;
+    const cleanedContent = injectionResult.cleaned;
     const citations = data.citations || [];
     
     // Extract token usage
@@ -236,12 +236,37 @@ serve(async (req) => {
       totalTokens: data.usage.total_tokens || 0,
     } : null;
 
+    // Attempt to parse structured EXOS Output Schema v1.0
+    const parsedEnvelope = parseAIResponse(cleanedContent);
+    let summary = cleanedContent;
+    let structured: Record<string, unknown> | undefined;
+
+    if (parsedEnvelope?.schema_version === '1.0') {
+      // Schema version validated
+      summary = buildMarkdownFromEnvelope(parsedEnvelope);
+      structured = parsedEnvelope as unknown as Record<string, unknown>;
+
+      // GDPR flag logging
+      if (parsedEnvelope.gdpr_flags?.length > 0) {
+        console.warn('[MARKET-INTEL] GDPR flags in AI output', {
+          scenario_id: parsedEnvelope.scenario_id,
+          flag_count: parsedEnvelope.gdpr_flags.length,
+        });
+      }
+    }
+
     // Trace child LLM run (fire-and-forget)
     const llmRunId = tracer.createRun("perplexity-sonar-pro", "llm", {
       model: "sonar-pro", queryType,
     }, { parentRunId });
     tracer.patchRun(llmRunId, {
       summaryLength: summary.length, citationCount: citations.length, tokenUsage, processingTimeMs,
+      ...(parsedEnvelope?.schema_version === '1.0' ? {
+        schema_version: '1.0',
+        confidence_level: parsedEnvelope.confidence_level,
+        data_gaps_count: parsedEnvelope.data_gaps?.length ?? 0,
+        gdpr_flags_count: parsedEnvelope.gdpr_flags?.length ?? 0,
+      } : {}),
     });
 
     // Format citations as structured objects
