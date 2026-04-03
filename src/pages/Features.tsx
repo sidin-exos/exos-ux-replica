@@ -490,7 +490,8 @@ const Features = () => {
                 {renderDashboard(selectedDashboard)}
               </div>
             </>
-          )}
+          ) return null;
+          })()}
         </section>
 
         <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
