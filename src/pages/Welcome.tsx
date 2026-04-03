@@ -178,8 +178,11 @@ const Welcome = () => {
                           </div>
                         </div>
                         {i < arr.length - 1 && (
-                          <div className="flex justify-start pl-[18px]">
-                            <div className={`w-px h-3 ${i === 0 || i === 1 ? "bg-primary/50" : "bg-primary/30"}`} />
+                          <div className="flex justify-start pl-[14px]">
+                            <svg width="12" height="16" viewBox="0 0 12 16" className="text-primary">
+                              <line x1="6" y1="0" x2="6" y2="12" stroke="currentColor" strokeWidth="2" />
+                              <path d="M2 10 L6 16 L10 10" fill="currentColor" stroke="none" />
+                            </svg>
                           </div>
                         )}
                       </div>
