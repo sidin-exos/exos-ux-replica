@@ -283,7 +283,7 @@ const TrackerSetupWizard = ({
       {step === 1 && monitorType === "DM-3" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">DM-3: Risk Dynamics</CardTitle>
+            <CardTitle className="text-lg">DM-3: Regulatory Change Monitor</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
