@@ -34,12 +34,13 @@ export function ContextPreview({
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"preview" | "xml">("preview");
   const { showTechnicalDetails } = useShareableMode();
+  const { isSuperAdmin } = useAdminAuth();
 
   const { data: industry } = useIndustryContext(industrySlug);
   const { data: category } = useProcurementCategory(categorySlug);
 
-  // Hide XML option in shareable mode
-  const canShowXML = showXML && showTechnicalDetails;
+  // Hide XML option for non-super-admin users and in shareable mode
+  const canShowXML = showXML && showTechnicalDetails && isSuperAdmin;
 
   if (!industry && !category) {
     return null;
