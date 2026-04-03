@@ -355,6 +355,10 @@ function buildStyles(c: PdfColorSet) {
     },
 
     // Section titles
+    sectionTitleWrapperCompact: {
+      marginBottom: 8,
+      paddingBottom: 4,
+    },
     sectionTitleWrapper: {
       marginBottom: SP.afterHeadingLine,
       paddingBottom: 6,
