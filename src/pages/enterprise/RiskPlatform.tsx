@@ -165,7 +165,6 @@ const RiskPlatform = () => {
           <div className="lg:col-span-2">
             <Card className="rounded-sm border-primary/20">
               <CardContent className="pt-5">
-                <h2 className="text-base font-semibold text-foreground mb-4">Set up New Monitor</h2>
                 <TrackerSetupWizard
                   trackerType="risk"
                   onActivate={(data) =>
