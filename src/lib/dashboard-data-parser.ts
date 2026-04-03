@@ -182,12 +182,148 @@ const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
 const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
 
 /**
+ * Check whether a raw AI response string is EXOS Output Schema v1.0.
+ */
+export function isStructuredOutput(raw: string): boolean {
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed?.schema_version === '1.0';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Extract DashboardData from an EXOS Output Schema v1.0 envelope.
+ * Maps payload fields to existing dashboard component interfaces.
+ */
+export function extractFromEnvelope(parsed: ExosOutput): DashboardData | null {
+  if (!parsed?.payload) return null;
+
+  const result: DashboardData = {};
+  const payload = parsed.payload as Record<string, unknown>;
+  const scenarioSpecific = (payload.scenario_specific ?? {}) as Record<string, unknown>;
+
+  // Action checklist from recommendations
+  if (parsed.recommendations?.length > 0) {
+    result.actionChecklist = {
+      actions: parsed.recommendations.map(r => ({
+        action: r.action,
+        priority: r.priority.toLowerCase() as "critical" | "high" | "medium" | "low",
+        status: "pending" as const,
+        owner: undefined,
+        dueDate: undefined,
+      })),
+    };
+  }
+
+  // Group A: financial_model → costWaterfall, sensitivitySpider
+  const financialModel = payload.financial_model as Record<string, unknown> | undefined;
+  if (financialModel?.cost_breakdown && Array.isArray(financialModel.cost_breakdown)) {
+    result.costWaterfall = {
+      components: (financialModel.cost_breakdown as Array<Record<string, unknown>>).map(cb => ({
+        name: String(cb.category ?? ''),
+        value: Number(cb.amount ?? 0),
+        type: 'cost' as const,
+      })),
+      currency: String(financialModel.currency ?? 'EUR'),
+    };
+  }
+
+  // Group C: risk_summary → riskMatrix
+  const riskSummary = payload.risk_summary as Record<string, unknown> | undefined;
+  if (riskSummary) {
+    const riskItems = (scenarioSpecific.risk_register ?? scenarioSpecific.risk_items ?? []) as Array<Record<string, unknown>>;
+    if (Array.isArray(riskItems) && riskItems.length > 0) {
+      result.riskMatrix = {
+        risks: riskItems.map(r => ({
+          supplier: String(r.risk_name ?? r.supplier ?? r.item ?? ''),
+          impact: String(r.impact ?? r.severity ?? 'medium').toLowerCase() as "high" | "medium" | "low",
+          probability: String(r.probability ?? r.likelihood ?? 'medium').toLowerCase() as "high" | "medium" | "low",
+          category: String(r.category ?? r.type ?? ''),
+        })),
+      };
+    }
+  }
+
+  // Group D: negotiation-prep → negotiationPrep
+  if (scenarioSpecific.batna || scenarioSpecific.zopa) {
+    const leverageAnalysis = (scenarioSpecific.leverage_analysis ?? []) as Array<Record<string, unknown>>;
+    result.negotiationPrep = {
+      batna: {
+        strength: Number((scenarioSpecific.batna as Record<string, unknown>)?.strength ?? 50),
+        description: String((scenarioSpecific.batna as Record<string, unknown>)?.description ?? ''),
+      },
+      leveragePoints: leverageAnalysis.map(l => ({
+        point: String(l.point ?? l.lever ?? ''),
+        tactic: String(l.tactic ?? l.approach ?? ''),
+      })),
+      sequence: [],
+    };
+  }
+
+  // Group B: document → sowAnalysis (for SOW Critic)
+  if (scenarioSpecific.issues || scenarioSpecific.missing_clauses) {
+    const sections = (scenarioSpecific.issues ?? scenarioSpecific.missing_clauses ?? []) as Array<Record<string, unknown>>;
+    result.sowAnalysis = {
+      clarity: Number(scenarioSpecific.clarity_score ?? 50),
+      sections: sections.map(s => ({
+        name: String(s.section ?? s.clause ?? s.name ?? ''),
+        status: String(s.status ?? 'partial') as "complete" | "partial" | "missing",
+        note: String(s.note ?? s.description ?? s.issue ?? ''),
+      })),
+    };
+  }
+
+  // Data quality from data_gaps
+  if (parsed.data_gaps?.length > 0) {
+    result.dataQuality = {
+      fields: parsed.data_gaps.map(g => ({
+        field: g.field,
+        status: 'missing' as const,
+        coverage: 0,
+      })),
+      limitations: parsed.data_gaps.map(g => ({
+        title: g.field,
+        impact: g.impact,
+      })),
+    };
+  }
+
+  // Supplier scorecard from scenario_specific
+  if (scenarioSpecific.scorecard && Array.isArray(scenarioSpecific.scorecard)) {
+    result.supplierScorecard = {
+      suppliers: (scenarioSpecific.scorecard as Array<Record<string, unknown>>).map(s => ({
+        name: String(s.name ?? s.supplier ?? ''),
+        score: Number(s.score ?? s.overall_score ?? 0),
+        trend: String(s.trend ?? 'stable') as "up" | "down" | "stable",
+        spend: String(s.spend ?? ''),
+      })),
+    };
+  }
+
+  const hasData = Object.keys(result).length > 0;
+  return hasData ? result : null;
+}
+
+/**
  * Extracts structured dashboard data from AI response text.
- * Returns null if no block found or JSON is malformed.
+ * Tries EXOS Output Schema v1.0 first, falls back to legacy XML.
+ * @deprecated Legacy XML path — new responses use schema_version: "1.0"
  */
 export function extractDashboardData(text: string): DashboardData | null {
   if (!text) return null;
 
+  // Try structured EXOS Output Schema v1.0 first
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed?.schema_version === '1.0') {
+      return extractFromEnvelope(parsed as ExosOutput);
+    }
+  } catch { /* not JSON, fall through to legacy */ }
+
+  // Legacy XML path
   const match = text.match(DASHBOARD_DATA_REGEX);
   if (!match?.[1]) {
     if (text.length > 200) {
@@ -197,7 +333,6 @@ export function extractDashboardData(text: string): DashboardData | null {
   }
 
   try {
-    // Sanitize: LLMs often inject markdown code fences inside custom XML tags
     const raw = match[1]
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/g, '')
@@ -205,12 +340,10 @@ export function extractDashboardData(text: string): DashboardData | null {
 
     const parsed = JSON.parse(raw);
 
-    // Basic sanity: must be a non-null object
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return null;
     }
 
-    // Normalize snake_case keys to camelCase and validate
     const normalized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(parsed)) {
       const camelKey = SNAKE_TO_CAMEL[key] || key;

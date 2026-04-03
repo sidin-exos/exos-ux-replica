@@ -311,6 +311,7 @@ serve(async (req) => {
         processingTimeMs,
         model: "sonar-pro",
         tokenUsage,
+        structured,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
