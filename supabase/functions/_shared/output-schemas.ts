@@ -244,8 +244,10 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
   if (parsed.recommendations?.length > 0) {
     parts.push('### Recommendations');
     parsed.recommendations.forEach((r, i) => {
-      const impact = r.financial_impact ? ` — ${r.financial_impact}` : '';
-      parts.push(`${i + 1}. **[${r.priority}]** ${r.action}${impact}`);
+      const priority = r?.priority ?? 'Medium';
+      const action = r?.action ?? (typeof r === 'string' ? r : 'See details');
+      const impact = r?.financial_impact ? ` — ${r.financial_impact}` : '';
+      parts.push(`${i + 1}. **[${priority}]** ${action}${impact}`);
     });
     parts.push('');
   }
@@ -253,7 +255,10 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
   if (parsed.data_gaps?.length > 0) {
     parts.push('### Data Gaps');
     parsed.data_gaps.forEach(g => {
-      parts.push(`- **${g.field}**: ${g.impact} → ${g.resolution}`);
+      const field = g?.field ?? 'Unknown field';
+      const impact = g?.impact ?? 'Impact not specified';
+      const resolution = g?.resolution ?? 'Provide missing data';
+      parts.push(`- **${field}**: ${impact} → ${resolution}`);
     });
     parts.push('');
   }
