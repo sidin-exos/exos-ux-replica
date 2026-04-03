@@ -207,7 +207,7 @@ function buildStyles(c: PdfColorSet) {
 
     // Cover page
     coverSpacer: {
-      height: "28%",
+      height: "8%",
     },
     coverLeftStripe: {
       position: "absolute",
@@ -1009,14 +1009,6 @@ const PDFReportDocument = ({
           <View style={s.coverMetaCol}>
             <Text style={s.coverMetaLabel}>ANALYSIS TYPE</Text>
             <Text style={s.coverMetaValue}>{scenarioTitle}</Text>
-          </View>
-          <View style={s.coverMetaCol}>
-            <Text style={s.coverMetaLabel}>ANALYSIS ID</Text>
-            <Text style={s.coverMetaValue}>{reportHash}</Text>
-          </View>
-          <View style={s.coverMetaCol}>
-            <Text style={s.coverMetaLabel}>DATE</Text>
-            <Text style={s.coverMetaValue}>{formattedDate}</Text>
           </View>
         </View>
 
