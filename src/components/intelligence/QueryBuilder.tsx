@@ -64,6 +64,7 @@ interface QueryBuilderProps {
 
 export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryBuilderProps) {
   const [queryType, setQueryType] = useState<QueryType>("supplier");
+  const [queryName, setQueryName] = useState("");
   const [queryText, setQueryText] = useState("");
   const [recencyFilter, setRecencyFilter] = useState<string>("__none__");
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
