@@ -180,10 +180,7 @@ const TrackerSetupWizard = ({
       {/* Step 0: Monitor type selection */}
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Select Monitoring Type</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="pt-5 space-y-3">
             {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
               <button
                 key={id}
