@@ -421,13 +421,13 @@ function buildStyles(c: PdfColorSet) {
       marginBottom: 5,
     },
     actionNumber: {
-      width: 22,
-      height: 22,
-      borderRadius: 11,
+      width: 18,
+      height: 18,
+      borderRadius: 9,
       backgroundColor: c.primary,
       justifyContent: "center",
       alignItems: "center",
-      marginRight: 10,
+      marginRight: 8,
     },
     actionNumberText: {
       fontSize: 9,
