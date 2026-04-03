@@ -1011,12 +1011,26 @@ serve(async (req) => {
           }
         }
 
-        tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog });
+        // Try to parse structured envelope from single-pass
+        const singleParsedEnvelope = parseAIResponse(content);
+        let responseContent = singleDeanon.restoredText;
+        if (singleParsedEnvelope?.schema_version === '1.0') {
+          responseContent = buildMarkdownFromEnvelope(singleParsedEnvelope);
+          if (singleParsedEnvelope.gdpr_flags?.length > 0) {
+            console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: singleParsedEnvelope.scenario_id, flag_count: singleParsedEnvelope.gdpr_flags.length });
+          }
+        }
+
+        tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog,
+          ...(singleParsedEnvelope?.schema_version === '1.0' ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: '1.0' } : {}),
+        });
         tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
 
         return new Response(
           JSON.stringify({
-            content: singleDeanon.restoredText, validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
+            content: responseContent,
+            structured: singleParsedEnvelope?.schema_version === '1.0' ? singleParsedEnvelope : undefined,
+            validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
