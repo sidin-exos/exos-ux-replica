@@ -13,6 +13,7 @@ export interface Citation {
 
 export interface IntelQueryParams {
   queryType: QueryType;
+  queryName?: string;
   query: string;
   recencyFilter?: RecencyFilter;
   domainFilter?: string[];
