@@ -13,6 +13,7 @@ export interface ProfileData {
   country: string | null;
   industry: string | null;
   primary_challenge: string | null;
+  business_context: string | null;
   organization_id: string | null;
   role: string;
   created_at: string;

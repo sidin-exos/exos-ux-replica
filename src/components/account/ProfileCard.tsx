@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Pencil, Check, X, AlertTriangle } from "lucide-react";
+import { User, Pencil, Check, X, AlertTriangle, Info } from "lucide-react";
 import type { ProfileData } from "@/hooks/useAccountData";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { useIndustryContexts } from "@/hooks/useContextData";
@@ -48,6 +49,7 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
     country: profile.country ?? "",
     industry: profile.industry ?? "",
     primary_challenge: profile.primary_challenge ?? "",
+    business_context: profile.business_context ?? "",
   });
 
   const startEdit = () => {
@@ -59,6 +61,7 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
       country: profile.country ?? "",
       industry: profile.industry ?? "",
       primary_challenge: profile.primary_challenge ?? "",
+      business_context: profile.business_context ?? "",
     });
     setIsEditing(true);
   };
@@ -168,6 +171,34 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
               )}
             </div>
           ))}
+        </div>
+
+        {/* Business Context Section */}
+        <div className="space-y-2 pt-2 border-t border-border">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+            <div>
+              <span className="text-[11px] uppercase tracking-wider text-primary font-medium">
+                Business Context
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                This business context will be used to tailor AI analysis results for your company. You will be able to select it in analysis scenarios.
+              </p>
+            </div>
+          </div>
+          {isEditing ? (
+            <Textarea
+              value={form.business_context}
+              onChange={(e) => setForm((f) => ({ ...f, business_context: e.target.value }))}
+              placeholder="Describe your industry context, company specifics, constraints, and any relevant background…"
+              className="min-h-[100px]"
+              rows={4}
+            />
+          ) : (
+            <p className="text-sm text-foreground whitespace-pre-wrap">
+              {profile.business_context || <span className="text-muted-foreground italic">No business context set. Click Edit to add one.</span>}
+            </p>
+          )}
         </div>
 
         {isEditing && (
