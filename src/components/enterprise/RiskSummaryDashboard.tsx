@@ -160,9 +160,11 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
                     {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
                   </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                </span>
+                {item.reportDate && (
+                  <span className="text-[10px] text-muted-foreground shrink-0">
+                    {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
                 {item.signal}
@@ -191,9 +193,11 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
                     {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
                   </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                </span>
+                {item.reportDate && (
+                  <span className="text-[10px] text-muted-foreground shrink-0">
+                    {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
                 {item.signal}
