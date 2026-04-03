@@ -243,7 +243,7 @@ function buildStyles(c: PdfColorSet) {
     coverDivider: {
       height: 1,
       backgroundColor: c.border,
-      marginBottom: 20,
+      marginBottom: 10,
     },
     coverMetaRow: {
       flexDirection: "row",
