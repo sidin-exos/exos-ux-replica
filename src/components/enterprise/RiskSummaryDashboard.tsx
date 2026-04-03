@@ -89,7 +89,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
         const tracker = trackerMap.get(report.tracker_id);
         const trackerName = tracker?.name || "Unknown";
         const monitorType = (tracker?.parameters as any)?.monitor_type as MonitorType | undefined;
-        const monitorLabel = monitorType ? (MONITOR_TYPE_META[monitorType]?.label || monitorType) : "";
+        const monitorLabel = monitorType || "";
 
         const detSignals = extractSignals(content, DETERIORATING_KEYWORDS, 1);
         for (const s of detSignals) {
