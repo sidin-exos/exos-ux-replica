@@ -24,7 +24,7 @@ const DataFlowDiagram = () => {
       items: ["Auditor Agent", "Optimizer Agent", "Strategist Agent"],
     },
     output: {
-      title: "Output",
+      title: "User Interface",
       subtitle: "Layer 4",
       icon: FileCheck,
       items: ["Validated Report", "Interactive Dashboards", "Action Roadmaps"],
