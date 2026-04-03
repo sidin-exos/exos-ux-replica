@@ -250,9 +250,9 @@ const SignUpForm = () => {
               name="workEmail"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Work Email</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="jane@acmecorp.com" className="h-11" {...field} />
+                    <Input type="email" placeholder="Add your e-mail" className="h-11" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
