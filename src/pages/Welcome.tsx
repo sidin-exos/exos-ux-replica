@@ -105,7 +105,11 @@ const Welcome = () => {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-4 flex items-center gap-2">
-                <span className="uppercase tracking-widest font-medium">Trusted by 500+ Enterprise Teams</span>
+                <span className="uppercase tracking-widest font-medium">
+                  29 fine-tuned procurement scenarios
+                  <br />
+                  30 industries 70 procurement categories
+                </span>
               </p>
             </div>
 
