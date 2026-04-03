@@ -100,7 +100,7 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
             onClick={shuffle}
           >
             <RefreshCw className="w-3 h-3" />
-            More Use Cases
+            See more
           </Button>
         </div>
 
