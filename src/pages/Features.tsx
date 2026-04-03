@@ -125,7 +125,6 @@ const Features = () => {
               </Card>
             ))}
           </div>
-          </div>
         </section>
 
         {/* Sentinel Capabilities Section */}
