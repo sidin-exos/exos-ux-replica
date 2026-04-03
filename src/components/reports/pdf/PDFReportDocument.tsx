@@ -455,7 +455,7 @@ function buildStyles(c: PdfColorSet) {
       borderWidth: 1,
       borderColor: c.border,
       borderRadius: 4,
-      marginTop: 20,
+      marginTop: 8,
     },
     kpiCell: {
       flex: 1,
