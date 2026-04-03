@@ -425,7 +425,10 @@ const SignUpForm = () => {
               name="primaryChallenge"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Primary Challenge</FormLabel>
+                  <FormLabel>
+                    Main Procurement Challenge{" "}
+                    <span className="text-muted-foreground text-xs">(optional)</span>
+                  </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-11">
