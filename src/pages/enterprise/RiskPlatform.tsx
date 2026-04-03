@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Activity, BarChart3, FileText, Gauge } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -143,6 +144,13 @@ const RiskPlatform = () => {
 
           {/* Right 1/3 — Use Case */}
           <UseCaseShowcase platform="risk" variant="card" />
+        </div>
+
+
+        {/* Workspace separator */}
+        <div className="flex items-center gap-4 my-2">
+          <h2 className="text-sm font-semibold text-muted-foreground whitespace-nowrap uppercase tracking-wide">Your Workspace</h2>
+          <Separator className="flex-1" />
         </div>
 
         {/* Setup Wizard (2/3) + Usage Stats (1/3) */}

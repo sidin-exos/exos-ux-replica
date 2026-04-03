@@ -4,6 +4,7 @@ import AuthPrompt from "@/components/auth/AuthPrompt";
 import { TrendingUp, BarChart3, Rss, Newspaper } from "lucide-react";
 import signalRadarImg from "@/assets/design_variant_b.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
@@ -106,6 +107,12 @@ const InflationPlatform = () => {
           <div className="hidden lg:flex items-center justify-center">
             <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80" />
           </div>
+        </div>
+
+        {/* Workspace separator */}
+        <div className="flex items-center gap-4 my-2">
+          <h2 className="text-sm font-semibold text-muted-foreground whitespace-nowrap uppercase tracking-wide">Your Workspace</h2>
+          <Separator className="flex-1" />
         </div>
 
         <div>
