@@ -77,7 +77,7 @@ const Features = () => {
         {/* Hero heading */}
         <section className="mb-10 animate-fade-up text-center">
           <div className="flex justify-center mb-4">
-            <img src={exosLogo} alt="EXOS" className="h-14 md:h-18 w-auto object-contain" />
+            <img src={exosLogo} alt="EXOS" className="h-20 md:h-24 w-auto object-contain opacity-90 mix-blend-multiply dark:mix-blend-screen" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
             How <span className="text-gradient">EXOS</span> Works
