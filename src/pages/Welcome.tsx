@@ -196,12 +196,6 @@ const Welcome = () => {
                       </div>
                     ))}
                   </div>
-
-                  <div className="mt-4 pt-3 border-t border-primary/15 text-center">
-                    <p className="text-[10px] text-muted-foreground italic">
-                      Your data never reaches external APIs in raw form
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
