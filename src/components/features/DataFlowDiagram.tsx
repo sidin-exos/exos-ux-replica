@@ -365,6 +365,8 @@ const VerticalBidirectionalConnector = () => (
 );
 
 
+/* Mobile Vertical Connector */
+const MobileConnector = () => (
   <div className="flex justify-center py-1">
     <div className="relative w-6 h-6">
       <svg className="w-full h-full" viewBox="0 0 24 24">
