@@ -8,9 +8,9 @@
   </defs>
 
   <g transform="translate(10,5)">
-    <polygon points="40,48 66,74 40,100 14,74" fill="#0D3D3D"/>
-    <polygon points="40,24 66,50 40,76 14,50" fill="#19A49C"/>
+    <polygon points="40,48 66,74 40,100 14,74" fill="#122F47"/>
+    <polygon points="40,24 66,50 40,76 14,50" fill="url(#tg)"/>
     <polygon points="40,0 66,26 40,52 14,26"
-             fill="none" stroke="#47DDD4" stroke-width="6" stroke-linejoin="round"/>
+             fill="none" stroke="#0C1D2E" stroke-width="6" stroke-linejoin="round"/>
   </g>
 </svg>
