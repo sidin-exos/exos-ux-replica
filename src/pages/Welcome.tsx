@@ -93,12 +93,12 @@ const Welcome = () => {
                   Decide With Confidence.
                 </span>
               </h1>
-              <p className="text-muted-foreground text-xl leading-relaxed font-medium">
-                AI-powered procurement analysis in minutes — <span className="text-foreground">cost breakdowns</span>, <span className="text-foreground">negotiation scenarios</span>, <span className="text-foreground">risk assessments</span> — enriched with industry knowledge and live market intelligence.
-              </p>
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
                 <p>
-                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS works as <strong className="text-foreground font-semibold">three interconnected layers</strong>:
+                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you <span className="text-foreground font-medium">AI-powered analysis in minutes</span> — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and live market intelligence.
+                </p>
+                <p>
+                  EXOS works as <strong className="text-foreground font-semibold">three interconnected layers</strong>:
                 </p>
                 <ul className="space-y-2 pl-1">
                   <li className="flex items-start gap-2">
