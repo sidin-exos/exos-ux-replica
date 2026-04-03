@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { TrendingUp, BarChart3, Rss, Newspaper, Mail, MessageSquare } from "lucide-react";
-import signalRadarImg from "@/assets/design_variant_b.png";
+import signalRadarImg from "@/assets/signal-radar.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
