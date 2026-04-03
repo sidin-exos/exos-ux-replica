@@ -146,13 +146,26 @@ export function BusinessContextField({
           <SelectTrigger className="flex-1">
             <SelectValue placeholder="Select saved context or enter manually..." />
           </SelectTrigger>
-          <SelectContent>
+           <SelectContent>
             <SelectItem value="__manual__">
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
                 Enter manually
               </span>
             </SelectItem>
+            {profile?.business_context && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  My Account Context
+                </div>
+                <SelectItem value="__profile__">
+                  <span className="flex items-center gap-2">
+                    <User className="h-3.5 w-3.5" />
+                    My company context
+                  </span>
+                </SelectItem>
+              </>
+            )}
             {contexts.length > 0 && (
               <>
                 <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
