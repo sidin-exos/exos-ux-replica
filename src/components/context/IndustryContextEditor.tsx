@@ -211,7 +211,7 @@ export function IndustryContextEditor({
             <CardTitle className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-primary" />
-                Fine-tune: {industry.name}
+                AI Settings: {industry.name}
               </span>
               <div className="flex items-center gap-2">
                 {blockerCount > 0 && (
