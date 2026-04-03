@@ -332,46 +332,6 @@ const AnimatedConnector = ({ direction, className, bidirectional = false }: { di
     </div>
   );
 };
-  return (
-    <div className={cn("w-16 h-8 flex items-center", className)}>
-      <svg className="w-full h-full" viewBox="0 0 64 32">
-        {/* Gradient Definition */}
-        <defs>
-          <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-          </linearGradient>
-        </defs>
-        {/* Static Line */}
-        <path
-          d="M0 16 L64 16"
-          fill="none"
-          stroke="url(#flowGradient)"
-          strokeWidth="2"
-        />
-        {/* Animated Dashes */}
-        <path
-          d="M0 16 L64 16"
-          fill="none"
-          stroke="hsl(var(--primary))"
-          strokeWidth="2"
-          strokeDasharray="8 8"
-          className="animate-flow-line"
-        />
-        {/* Arrow */}
-        <path
-          d={direction === "right" ? "M56 12 L64 16 L56 20" : "M8 12 L0 16 L8 20"}
-          fill="none"
-          stroke="hsl(var(--primary))"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  );
-};
 
 /* Mobile Vertical Connector */
 const MobileConnector = () => (
