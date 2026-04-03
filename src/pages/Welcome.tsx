@@ -157,15 +157,15 @@ const Welcome = () => {
 
                   <div className="space-y-1">
                     {[
-                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", tag: "Layer 1" },
-                      { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", tag: "Layer 2" },
-                      { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", tag: "Layer 3" },
-                      { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", tag: "Layer 4" },
+                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", highlight: false },
+                      { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", highlight: true },
+                      { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", highlight: false },
+                      { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", highlight: false },
                     ].map((step, i, arr) => (
                       <div key={step.label}>
-                        <div className="flex items-start gap-3 py-2">
+                        <div className={`flex items-start gap-3 py-2.5 px-3 rounded-xl transition-all ${step.highlight ? "bg-primary/10 border border-primary/30 shadow-sm shadow-primary/10" : ""}`}>
                           <div className="relative shrink-0 mt-0.5">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm ${step.highlight ? "bg-primary ring-2 ring-primary/30 ring-offset-1 ring-offset-background" : "bg-gradient-to-br from-primary to-accent"}`}>
                               <step.icon className="w-4 h-4 text-primary-foreground" />
                             </div>
                             <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-background border border-primary text-[9px] font-bold text-primary flex items-center justify-center">
@@ -173,16 +173,13 @@ const Welcome = () => {
                             </span>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-foreground leading-tight">{step.label}</p>
-                              <span className="text-[9px] text-muted-foreground font-mono">{step.tag}</span>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{step.desc}</p>
+                            <p className={`font-semibold leading-tight ${step.highlight ? "text-sm text-primary" : "text-xs text-foreground"}`}>{step.label}</p>
+                            <p className={`leading-snug mt-0.5 ${step.highlight ? "text-[11px] text-foreground/80" : "text-[10px] text-muted-foreground"}`}>{step.desc}</p>
                           </div>
                         </div>
                         {i < arr.length - 1 && (
                           <div className="flex justify-start pl-[18px]">
-                            <div className="w-px h-3 bg-primary/30" />
+                            <div className={`w-px h-3 ${i === 0 || i === 1 ? "bg-primary/50" : "bg-primary/30"}`} />
                           </div>
                         )}
                       </div>
