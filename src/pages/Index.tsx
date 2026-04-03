@@ -104,6 +104,11 @@ const Index = () => {
     return acc;
   }, {} as Record<Scenario["category"], Scenario[]>);
 
+  // Redirect unauthenticated users to /welcome
+  if (!isUserLoading && !user) {
+    return <Navigate to="/welcome" replace />;
+  }
+
   return (
     <div className="min-h-screen gradient-hero">
       <div
