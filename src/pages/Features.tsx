@@ -36,10 +36,133 @@ import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
 import { LucideIcon } from "lucide-react";
 
 
+// -- Dashboard sample data & config (moved from Reports) ---------------------
+
+const volumeConsolidationActions = [
+  { id: 1, action: "Identify overlapping SKUs across suppliers", priority: "critical" as const, status: "done" as const, owner: "Category Lead", dueDate: "Completed" },
+  { id: 2, action: "Request volume discount proposals from top 3 suppliers", priority: "critical" as const, status: "in-progress" as const, owner: "Sourcing", dueDate: "This week" },
+  { id: 3, action: "Analyze transition risks for supplier consolidation", priority: "high" as const, status: "pending" as const, owner: "Risk Team", dueDate: "Next week" },
+  { id: 4, action: "Develop dual-sourcing contingency plan", priority: "high" as const, status: "pending" as const, owner: "Operations", dueDate: "2 weeks" },
+  { id: 5, action: "Negotiate extended payment terms", priority: "medium" as const, status: "pending" as const, owner: "Finance", dueDate: "3 weeks" },
+];
+
+const makeVsBuyCriteria = [
+  { name: "Total Cost (5yr)", weight: 35 },
+  { name: "Quality Control", weight: 25 },
+  { name: "Time to Market", weight: 20 },
+  { name: "Strategic Fit", weight: 12 },
+  { name: "Flexibility", weight: 8 },
+];
+
+const makeVsBuyOptions = [
+  { id: "make", name: "In-House", scores: [3, 5, 2, 4, 3] },
+  { id: "buy", name: "Outsource", scores: [4, 4, 5, 3, 5] },
+  { id: "hybrid", name: "Hybrid Model", scores: [4, 4, 4, 4, 4] },
+];
+
+const tcoCostBreakdown = [
+  { name: "Equipment Purchase", value: 320000, type: "cost" as const },
+  { name: "Installation", value: 45000, type: "cost" as const },
+  { name: "Training", value: 28000, type: "cost" as const },
+  { name: "Annual Maintenance (5yr)", value: 85000, type: "cost" as const },
+  { name: "Energy Costs (5yr)", value: 62000, type: "cost" as const },
+  { name: "Early Payment Discount", value: -16000, type: "reduction" as const },
+  { name: "Trade-in Credit", value: -35000, type: "reduction" as const },
+];
+
+interface DashboardCategory {
+  label: string;
+  icon: LucideIcon;
+  description: string;
+  dashboards: { id: DashboardType; subtitle: string }[];
+}
+
+const dashboardCategories: DashboardCategory[] = [
+  {
+    label: "Decision Support",
+    icon: Scale,
+    description: "Evaluate vendors, make-vs-buy, or strategic alternatives",
+    dashboards: [
+      { id: "decision-matrix", subtitle: "Weighted criteria scoring" },
+      { id: "scenario-comparison", subtitle: "Side-by-side scenario analysis" },
+      { id: "kraljic-quadrant", subtitle: "Supplier strategic positioning" },
+      { id: "negotiation-prep", subtitle: "Leverage & BATNA planning" },
+    ],
+  },
+  {
+    label: "Cost Analysis",
+    icon: DollarSign,
+    description: "Break down spend, model TCO, and stress-test assumptions",
+    dashboards: [
+      { id: "cost-waterfall", subtitle: "Component cost breakdown" },
+      { id: "tco-comparison", subtitle: "Total cost of ownership" },
+      { id: "license-tier", subtitle: "License cost distribution" },
+      { id: "sensitivity-spider", subtitle: "Assumption stress testing" },
+    ],
+  },
+  {
+    label: "Risk & Compliance",
+    icon: ShieldAlert,
+    description: "Assess supply risks, contract gaps, and data reliability",
+    dashboards: [
+      { id: "risk-matrix", subtitle: "Probability × impact mapping" },
+      { id: "sow-analysis", subtitle: "Scope & contract gap analysis" },
+      { id: "data-quality", subtitle: "Analysis reliability scoring" },
+    ],
+  },
+  {
+    label: "Planning & Performance",
+    icon: CalendarClock,
+    description: "Build timelines, track actions, and monitor suppliers",
+    dashboards: [
+      { id: "action-checklist", subtitle: "Prioritized action tracking" },
+      { id: "timeline-roadmap", subtitle: "Implementation milestones" },
+      { id: "supplier-scorecard", subtitle: "Supplier performance metrics" },
+    ],
+  },
+];
+
+const renderDashboard = (id: DashboardType) => {
+  switch (id) {
+    case "action-checklist":
+      return <ActionChecklistDashboard title="Volume Consolidation Actions" subtitle="Supplier rationalization roadmap" actions={volumeConsolidationActions} />;
+    case "decision-matrix":
+      return <DecisionMatrixDashboard title="Make vs Buy Analysis" subtitle="Strategic sourcing decision" criteria={makeVsBuyCriteria} options={makeVsBuyOptions} />;
+    case "cost-waterfall":
+      return <CostWaterfallDashboard title="TCO Analysis: Industrial Equipment" subtitle="5-year total cost of ownership" components={tcoCostBreakdown} currency="$" />;
+    case "timeline-roadmap":
+      return <TimelineRoadmapDashboard />;
+    case "kraljic-quadrant":
+      return <KraljicQuadrantDashboard />;
+    case "tco-comparison":
+      return <TCOComparisonDashboard />;
+    case "license-tier":
+      return <LicenseTierDashboard />;
+    case "sensitivity-spider":
+      return <SensitivitySpiderDashboard />;
+    case "risk-matrix":
+      return <RiskMatrixDashboard />;
+    case "scenario-comparison":
+      return <ScenarioComparisonDashboard />;
+    case "supplier-scorecard":
+      return <SupplierPerformanceDashboard />;
+    case "sow-analysis":
+      return <SOWAnalysisDashboard />;
+    case "negotiation-prep":
+      return <NegotiationPrepDashboard />;
+    case "data-quality":
+      return <DataQualityDashboard />;
+    default:
+      return null;
+  }
+};
+
 const Features = () => {
   const { resolvedTheme } = useTheme();
   const location = useLocation();
   const { isSuperAdmin } = useAdminAuth();
+  const { user, isLoading: isAuthLoading } = useUser();
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardType>("decision-matrix");
 
   useEffect(() => {
     if (location.hash) {
