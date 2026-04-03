@@ -32,8 +32,8 @@
         fill="#0C1D2E" dominant-baseline="middle">EXOS</text>
 
   <!-- ── SUB-LABEL ── -->
-  <text x="177" y="128"
+  <text x="177" y="130"
         font-family="'Space Grotesk', sans-serif" font-weight="500"
-        font-size="12" letter-spacing="4"
-        fill="#0C1D2E" opacity="0.55" dominant-baseline="middle">PROCUREMENT INTELLIGENCE</text>
+        font-size="14.5" letter-spacing="4.5"
+        fill="#0C1D2E" opacity="0.45" dominant-baseline="middle">PROCUREMENT INTELLIGENCE</text>
 </svg>
