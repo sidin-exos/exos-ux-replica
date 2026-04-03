@@ -133,7 +133,7 @@ const DataFlowDiagram = () => {
                 />
               </svg>
               {/* Pulse Dot at bottom */}
-              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary animate-pulse-dot" />
+              
             </div>
 
             {/* Output Card */}
