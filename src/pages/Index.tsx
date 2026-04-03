@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Navigate } from "react-router-dom";
+import { useUser } from "@/hooks/useUser";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
