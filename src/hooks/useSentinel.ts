@@ -178,6 +178,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           error: err,
           tokenUsage: null,
           processingTimeMs: null,
+          structuredEnvelope: null,
         });
         return null;
       }
