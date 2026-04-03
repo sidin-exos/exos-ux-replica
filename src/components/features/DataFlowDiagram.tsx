@@ -45,13 +45,18 @@ const DataFlowDiagram = () => {
 
           {/* Main Flow - Vertical Layout */}
           <div className="flex flex-col items-center">
-            {/* Layer 2: EXOS Intelligence (Top Center) */}
+            {/* Layer 1: User Input */}
+            <div className="w-full max-w-sm">
+              <LayerCard layer={layers.input} centered />
+            </div>
+
+            {/* Down Arrow: Input → Core Engine */}
+            <VerticalConnector />
+
+            {/* Layer 2: EXOS Intelligence (Core Engine) */}
             <div className="relative z-20 w-full max-w-2xl">
               <div className="relative rounded-2xl border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 backdrop-blur-sm">
-                {/* Glow Effect */}
                 <div className="absolute inset-0 rounded-2xl bg-primary/5 blur-xl -z-10" />
-                
-                {/* Header */}
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 mb-2">
                     <Shield className="w-4 h-4 text-primary" />
@@ -67,33 +72,25 @@ const DataFlowDiagram = () => {
                 <div className="flex items-center justify-between gap-2">
                   {pipelineSteps.map((step, index) => (
                     <div key={step.id} className="flex items-center">
-                      {/* Step Node */}
                       <div className="group relative flex flex-col items-center">
                         <div className="relative">
-                          {/* Pulse Ring */}
                           <div className="absolute inset-0 rounded-full bg-primary/30 animate-pulse-dot" />
-                          {/* Step Circle */}
                           <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow">
                             <step.icon className="w-4 h-4 text-primary-foreground" />
                           </div>
-                          {/* Step Number */}
                           <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-background border border-primary text-[10px] font-bold text-primary flex items-center justify-center">
                             {step.id}
                           </div>
                         </div>
-                        {/* Label */}
                         <span className="text-[10px] font-medium text-foreground mt-2 text-center whitespace-nowrap">
                           {step.name}
                         </span>
-                        {/* Tooltip on hover */}
                         <div className="absolute -bottom-8 opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="text-[9px] text-muted-foreground whitespace-nowrap">
                             {step.desc}
                           </span>
                         </div>
                       </div>
-
-                      {/* Connector Line */}
                       {index < pipelineSteps.length - 1 && (
                         <div className="w-6 h-px bg-gradient-to-r from-primary/60 to-primary/30 mx-1" />
                       )}
@@ -103,27 +100,19 @@ const DataFlowDiagram = () => {
               </div>
             </div>
 
-            {/* Two Down Arrows Side by Side */}
-            <div className="grid grid-cols-2 gap-32 w-full max-w-2xl">
-              <div className="flex justify-center">
-                <VerticalConnector />
-              </div>
-              <div className="flex justify-center">
-                <VerticalConnector />
-              </div>
+            {/* Bidirectional Arrow: Core Engine ↔ Cloud AI */}
+            <VerticalBidirectionalConnector />
+
+            {/* Layer 3: Cloud AI */}
+            <div className="w-full max-w-sm">
+              <LayerCard layer={layers.cloud} centered />
             </div>
 
-            {/* Input and Cloud Cards Side by Side */}
-            <div className="grid grid-cols-2 gap-8 w-full max-w-2xl">
-              <LayerCard layer={layers.input} />
-              <LayerCard layer={layers.cloud} />
-            </div>
-
-            {/* Down Arrow to Output */}
+            {/* Down Arrow: Cloud AI → User Interface */}
             <VerticalConnector />
 
-            {/* Output Card */}
-            <div className="w-80 mt-2">
+            {/* Layer 4: User Interface */}
+            <div className="w-full max-w-sm">
               <LayerCard layer={layers.output} centered />
             </div>
           </div>
