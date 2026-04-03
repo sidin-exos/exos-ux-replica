@@ -409,53 +409,20 @@ const PDFReportDocument = ({
 
   return (
     <Document>
-      {/* Cover Page */}
-      <Page size="A4" style={s.page}>
+      {/* Page 1: Cover + Executive Summary (merged) */}
+      <Page size="A4" style={s.page} id="section-executive-summary">
         <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
           <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: c.textOnPrimary }}>EXOS · Confidential</Text>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential</Text>
             <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Prepared for EXOS · {formattedDate}</Text>
           </View>
         </View>
         <View style={s.coverLeftStripe} />
-        
-        <View style={{ height: "8%" }} />
+        <View style={{ height: "4%" }} />
         <Text style={s.coverTitle}>{reportTitle}</Text>
         <View style={s.coverDivider} />
-        <View style={s.tocBox}>
-          <Text style={s.tocTitle}>Contents</Text>
-          {tocEntries.map((entry, i) => (
-            <View key={entry.anchor} style={s.tocRow}>
-              <Text style={s.tocNumber}>{i + 1}.</Text>
-              <Link src={`#${entry.anchor}`}><Text style={s.tocLabel}>{entry.label}</Text></Link>
-              <Text style={s.tocPageHint}>p. {entry.page}</Text>
-            </View>
-          ))}
-        </View>
-        <View style={s.coverBadgeRow}>
-          <View style={s.coverBadge}><Text style={s.coverBadgeLabel}>CONF.</Text><Text style={{ ...s.coverBadgeValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
-          <View style={s.coverBadge}><Text style={s.coverBadgeLabel}>INPUT</Text><Text style={{ ...s.coverBadgeValue, color: c.primary }}>{coveragePct}/100</Text></View>
-        </View>
-        <View style={{ ...s.footer, borderTopWidth: 0 }}><Text style={s.footerText}>Confidential — EXOS</Text><Text style={s.footerText}>Page 1</Text></View>
-        <View style={s.bottomStripe}>
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe1 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe2 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe3 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe4 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe5 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe6 }} />
-        </View>
-      </Page>
 
-      {/* Executive Summary */}
-      <Page size="A4" style={s.pageWithHeader} id="section-executive-summary">
-        <View style={s.headerBar} fixed>
-          <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
-          <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
-        </View>
-        <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>EXECUTIVE SUMMARY</Text></View>
-        <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Key Findings</Text><View style={s.sectionTitleLine} /></View>
+        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Key Findings</Text><View style={s.sectionTitleLine} /></View>
         <View style={s.findingCardsRow}>
           {findings.slice(0, 3).map((point, i) => {
             const { title, body } = parseFindingTitle(point);
@@ -469,7 +436,8 @@ const PDFReportDocument = ({
             );
           })}
         </View>
-        <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Recommended Actions</Text><View style={s.sectionTitleLine} /></View>
+
+        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Recommended Actions</Text><View style={s.sectionTitleLine} /></View>
         {recommendations.slice(0, 4).map((point, i) => {
           const { title, body } = parseFindingTitle(point);
           return (
@@ -479,13 +447,23 @@ const PDFReportDocument = ({
             </View>
           );
         })}
+
         <View style={s.kpiRow}>
           <View style={s.kpiCell}><Text style={s.kpiLabel}>BATNA SCORE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coveragePct} / 100</Text></View>
           <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>3-Year Commitment</Text></View>
           <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>{extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A"}</Text></View>
           <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>CONFIDENCE</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
         </View>
+
         <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+        <View style={s.bottomStripe}>
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe1 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe2 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe3 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe4 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe5 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe6 }} />
+        </View>
       </Page>
 
       {/* Dashboard pages */}
