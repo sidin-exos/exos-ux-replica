@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import StepIndicator from "./StepIndicator";
 import PasswordStrengthMeter from "./PasswordStrengthMeter";
 import ConsentBlock from "./ConsentBlock";
@@ -39,7 +39,7 @@ const step1Schema = z.object({
 const step2Schema = z.object({
   jobTitle: z.string().trim().min(2, "Job title is required").max(200),
   industry: z.string().min(1, "Please select an industry"),
-  primaryChallenge: z.string().min(1, "Please select a challenge"),
+  primaryChallenge: z.string().optional(),
   referralSource: z.string().optional(),
 });
 
@@ -88,6 +88,7 @@ const SignUpForm = () => {
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<1 | 2>(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
 
@@ -249,9 +250,9 @@ const SignUpForm = () => {
               name="workEmail"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Work Email</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="jane@acmecorp.com" className="h-11" {...field} />
+                    <Input type="email" placeholder="Add your e-mail" className="h-11" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -265,7 +266,24 @@ const SignUpForm = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Minimum 10 characters" className="h-11" {...field} />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Minimum 10 characters"
+                        className="h-11 pr-10"
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-11 w-10 px-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowPassword((v) => !v)}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
                   </FormControl>
                   <PasswordStrengthMeter password={watchPassword} />
                   <FormMessage />
@@ -407,7 +425,10 @@ const SignUpForm = () => {
               name="primaryChallenge"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Primary Challenge</FormLabel>
+                  <FormLabel>
+                    Main Procurement Challenge{" "}
+                    <span className="text-muted-foreground text-xs">(optional)</span>
+                  </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-11">
