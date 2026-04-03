@@ -189,8 +189,8 @@ const Welcome = () => {
                           {step.sideButton && (
                             <div className="flex items-center gap-1.5 shrink-0">
                               <svg width="20" height="12" viewBox="0 0 20 12" className="text-primary/40 shrink-0">
-                                <line x1="0" y1="6" x2="14" y2="6" stroke="currentColor" strokeWidth="1.5" />
-                                <path d="M12 2 L18 6 L12 10" fill="currentColor" stroke="none" />
+                                <line x1="6" y1="6" x2="20" y2="6" stroke="currentColor" strokeWidth="1.5" />
+                                <path d="M8 2 L2 6 L8 10" fill="currentColor" stroke="none" />
                               </svg>
                               <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border border-accent/40 bg-accent/10 cursor-default transition-all hover:shadow-md hover:border-accent/60">
                                 <div className="w-7 h-7 rounded-lg bg-accent/80 flex items-center justify-center">
