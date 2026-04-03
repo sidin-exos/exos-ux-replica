@@ -288,6 +288,7 @@ const GeneratedReport = () => {
                         dashboardType={dashboardType}
                         scenarioTitle={scenarioTitle}
                         analysisResult={safeAnalysisResult}
+                        structuredData={structuredData}
                         formData={formData}
                       />
                     </motion.div>
