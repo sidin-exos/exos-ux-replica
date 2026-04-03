@@ -8,6 +8,16 @@ import { parseBody, requireString, requireStringEnum, requireArray, validationEr
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
+import {
+  GROUP_AI_INSTRUCTIONS,
+  GROUP_SCHEMAS,
+  AI_PROMPT_CONTRACT,
+  parseAIResponse,
+  buildMarkdownFromEnvelope,
+  SCENARIO_ID_REGISTRY,
+  GROUP_LABELS,
+} from "../_shared/output-schemas.ts";
+
 type QueryType = 'supplier' | 'commodity' | 'industry' | 'regulatory' | 'm&a' | 'risk';
 type RecencyFilter = 'day' | 'week' | 'month' | 'year';
 
