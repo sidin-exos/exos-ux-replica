@@ -60,7 +60,7 @@ const Auth = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate(isEmailConfirmation ? "/account?confirmed=true" : "/welcome");
+        navigate(isEmailConfirmation ? "/account?confirmed=true" : "/");
       }
       setIsCheckingAuth(false);
     });
