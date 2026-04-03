@@ -156,7 +156,7 @@ const DataFlowDiagram = () => {
       <div className="lg:hidden">
         <div className="text-center mb-6">
           <span className="text-xs font-mono text-muted-foreground tracking-[0.2em] uppercase">
-            EXOS Architecture v3.0
+            EXOS Architecture
           </span>
         </div>
 
