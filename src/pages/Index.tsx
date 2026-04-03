@@ -137,7 +137,7 @@ const Index = () => {
                   EXOS works as three interconnected layers.
                 </p>
                 <ul className="text-muted-foreground text-base max-w-2xl mb-4 space-y-2 list-disc pl-5">
-                  <li>Scenarios are pre-defined agentic flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.</li>
+                  <li>Scenarios are pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.</li>
                   <li>Market Intelligence and the Market Insights Knowledge Base inject live market context directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.</li>
                   <li>Inflation Monitor and Risk Assessment Platform continuously track the noise, surface what's changed, and flag only what requires your decision.</li>
                 </ul>
