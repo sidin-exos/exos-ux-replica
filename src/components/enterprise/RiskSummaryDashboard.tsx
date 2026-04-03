@@ -86,19 +86,22 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
         seen.add(report.tracker_id);
 
         const content = report.report_content || "";
-        const trackerName = trackerMap.get(report.tracker_id) || "Unknown";
+        const tracker = trackerMap.get(report.tracker_id);
+        const trackerName = tracker?.name || "Unknown";
+        const monitorType = (tracker?.parameters as any)?.monitor_type as MonitorType | undefined;
+        const monitorLabel = monitorType ? (MONITOR_TYPE_META[monitorType]?.label || monitorType) : "";
 
         const detSignals = extractSignals(content, DETERIORATING_KEYWORDS, 1);
         for (const s of detSignals) {
           if (deteriorating.length < 3) {
-            deteriorating.push({ trackerName, signal: s, trackerId: report.tracker_id });
+            deteriorating.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id });
           }
         }
 
         const impSignals = extractSignals(content, IMPROVING_KEYWORDS, 1);
         for (const s of impSignals) {
           if (improving.length < 3) {
-            improving.push({ trackerName, signal: s, trackerId: report.tracker_id });
+            improving.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id });
           }
         }
       }
