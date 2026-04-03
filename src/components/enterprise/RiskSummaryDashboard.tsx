@@ -184,10 +184,15 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
               key={i}
               className="rounded-md border border-emerald-600/20 bg-emerald-600/5 p-2.5 space-y-1"
             >
-              <div className="flex items-center gap-1.5">
-                <TrendingUp className="w-3 h-3 text-emerald-600 flex-shrink-0" />
-                <span className="text-[11px] font-medium text-emerald-600 truncate">
-                  {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <TrendingUp className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                  <span className="text-[11px] font-medium text-emerald-600 truncate">
+                    {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
