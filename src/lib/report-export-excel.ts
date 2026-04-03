@@ -602,10 +602,121 @@ export async function exportReportToExcel(
 ) {
   const wb = new ExcelJS.Workbook();
 
-  // ── Sheet 1: Summary ──────────────────────────────────────────────
+  // ── Single consolidated sheet ─────────────────────────────────────
+  const ws = wb.addWorksheet("Report");
+  ws.properties.tabColor = { argb: COLORS.deepTeal };
+
+  let currentRow = 1;
+
+  // Helper: write a section title row (merged, branded)
+  const writeSectionTitle = (title: string) => {
+    const row = ws.getRow(currentRow);
+    row.getCell(1).value = title;
+    row.getCell(1).font = { name: "Inter", family: 2, size: 14, bold: true, color: { argb: COLORS.white } };
+    row.getCell(1).fill = { ...BRAND_TEAL_FILL };
+    row.getCell(1).alignment = { vertical: "middle" };
+    row.getCell(1).border = { ...THIN_BORDER };
+    // Extend fill across columns
+    for (let c = 2; c <= 8; c++) {
+      row.getCell(c).fill = { ...BRAND_TEAL_FILL };
+      row.getCell(c).border = { ...THIN_BORDER };
+    }
+    row.height = 30;
+    currentRow++;
+  };
+
+  // Helper: write a table with headers and data, return range for styling
+  const writeTableAtRow = (
+    headers: string[],
+    dataRows: unknown[][],
+    sheetName?: string,
+  ): SheetRange => {
+    const startRow = currentRow;
+
+    // Header row
+    const headerRow = ws.getRow(currentRow);
+    headers.forEach((h, i) => {
+      const cell = headerRow.getCell(i + 1);
+      cell.value = h;
+      cell.font = { ...HEADER_FONT };
+      cell.fill = { ...HEADER_FILL };
+      cell.border = { ...HEADER_BORDER };
+      cell.alignment = { vertical: "middle", horizontal: "left" };
+    });
+    headerRow.height = 28;
+    currentRow++;
+
+    // Data rows
+    for (const row of dataRows) {
+      const wsRow = ws.getRow(currentRow);
+      row.forEach((val, i) => {
+        const cell = wsRow.getCell(i + 1);
+        cell.value = val as any;
+      });
+      currentRow++;
+    }
+
+    const range: SheetRange = { cols: headers.length, rows: 1 + dataRows.length };
+
+    // Apply data styling (skip header, already styled)
+    const numericCols = new Set<number>();
+    const wrapColSet = new Set<number>();
+    for (let c = 1; c <= range.cols; c++) {
+      const header = headers[c - 1];
+      if (NUMERIC_HEADERS.has(header)) numericCols.add(c);
+      if (WRAP_HEADERS.has(header) && sheetName !== "Analysis Inputs") wrapColSet.add(c);
+    }
+
+    for (let r = startRow + 1; r < currentRow; r++) {
+      const row = ws.getRow(r);
+      const isEven = (r - startRow) % 2 === 0;
+      for (let c = 1; c <= range.cols; c++) {
+        const cell = row.getCell(c);
+        cell.font = { ...DATA_FONT };
+        cell.border = { ...THIN_BORDER };
+        cell.alignment = {
+          vertical: "top",
+          horizontal: numericCols.has(c) ? "right" : "left",
+          wrapText: wrapColSet.has(c),
+        };
+        if (isEven) {
+          cell.fill = { ...PALE_TEAL_FILL };
+        }
+      }
+    }
+
+    // Status formatting
+    const statusCols: { col: number; header: string }[] = [];
+    for (let c = 1; c <= range.cols; c++) {
+      if (STATUS_COLUMNS.has(headers[c - 1])) statusCols.push({ col: c, header: headers[c - 1] });
+    }
+    if (statusCols.length > 0) {
+      for (let r = startRow + 1; r < currentRow; r++) {
+        const row = ws.getRow(r);
+        for (const { col, header } of statusCols) {
+          const cell = row.getCell(col);
+          const raw = String(cell.value ?? "").trim();
+          if (!raw) continue;
+          const level = classifyStatus(raw, header);
+          if (!level) continue;
+          const style = STATUS_STYLES[level];
+          cell.font = { name: "Inter", family: 2, size: 13, bold: true, color: { argb: style.font } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: style.bg } };
+        }
+      }
+    }
+
+    return range;
+  };
+
+  // Helper: add spacing rows between sections
+  const addSpacing = (rows = 2) => {
+    currentRow += rows;
+  };
+
+  // ── Section 1: Summary ──────────────────────────────────────────────
   const keyPoints = extractKeyPoints(analysisResult);
-  const summaryWs = wb.addWorksheet("Summary");
-  summaryWs.properties.tabColor = { argb: COLORS.deepTeal };
+  writeSectionTitle("Summary");
 
   const summaryData: [string, string][] = [
     ["Report Title", sanitizeTableCell(scenarioTitle)],
@@ -613,50 +724,49 @@ export async function exportReportToExcel(
     ["Exported At", new Date().toLocaleString()],
     ...keyPoints.map((kp, i): [string, string] => [`Key Point ${i + 1}`, sanitizeTableCell(kp)]),
   ];
-  const summaryRange = writeTable(summaryWs, ["Field", "Value"], summaryData, undefined);
-  summaryWs.getColumn(1).width = 20;
-  summaryWs.getColumn(2).width = 80;
+  writeTableAtRow(["Field", "Value"], summaryData);
 
-  applyHeaderStyle(summaryWs, summaryRange);
-  applySummaryStyles(summaryWs, summaryRange);
-  summaryWs.views = [{ state: "frozen" as const, ySplit: 1, xSplit: 0, topLeftCell: "A2", activeCell: "A2" }];
-  summaryWs.autoFilter = { from: "A1", to: `B${summaryRange.rows}` };
+  addSpacing(3);
 
-  // ── Sheet 2: Analysis Inputs ──────────────────────────────────────
+  // ── Section 2: Analysis Inputs ──────────────────────────────────────
   const inputEntries = Object.entries(formData);
   if (inputEntries.length > 0) {
-    const inputWs = wb.addWorksheet("Analysis Inputs");
-    inputWs.properties.tabColor = { argb: COLORS.midTeal };
+    writeSectionTitle("Analysis Inputs");
 
     const inputData = inputEntries.map(([key, value]): [string, string] => [
       key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       sanitizeTableCell(value),
     ]);
-    const inputRange = writeTable(inputWs, ["Parameter", "Value"], inputData, undefined);
-    inputWs.getColumn(1).width = 30;
-    inputWs.getColumn(2).width = 60;
+    writeTableAtRow(["Parameter", "Value"], inputData, "Analysis Inputs");
 
-    applyHeaderStyle(inputWs, inputRange);
-    applyDataStyles(inputWs, inputRange, "Analysis Inputs");
+    addSpacing(3);
   }
 
-  // ── Sheet 3+: Dashboard Data ──────────────────────────────────────
+  // ── Section 3+: Dashboard Data ──────────────────────────────────────
   const parsedData = extractDashboardData(analysisResult);
   if (parsedData) {
     const dashSheets = dashboardToSheets(parsedData);
     for (const { name, rows } of dashSheets) {
       if (rows.length === 0) continue;
-      const ws = wb.addWorksheet(name.slice(0, 31));
-      ws.properties.tabColor = { argb: COLORS.brandTeal };
+
+      writeSectionTitle(name);
 
       const { headers, dataRows } = objectsToArrays(rows);
-      const range = writeTable(ws, headers, dataRows, name);
+      writeTableAtRow(headers, dataRows, name);
 
-      applyHeaderStyle(ws, range);
-      applyDataStyles(ws, range, name);
-      applyStatusFormatting(ws, range);
+      addSpacing(3);
     }
   }
+
+  // ── Set column widths ───────────────────────────────────────────────
+  ws.getColumn(1).width = 35;
+  ws.getColumn(2).width = 60;
+  for (let c = 3; c <= 8; c++) {
+    ws.getColumn(c).width = 20;
+  }
+
+  // Freeze first row is not useful here since we have multiple tables
+  // No autoFilter since multiple tables on one sheet
 
   // ── Trigger download ────────────────────────────────────────────────
   const dateStr = new Date(timestamp).toISOString().slice(0, 10);
