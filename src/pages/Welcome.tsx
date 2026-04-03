@@ -93,9 +93,26 @@ const Welcome = () => {
                   Powered by AI
                 </span>
               </h1>
-              <p className="text-muted-foreground text-lg leading-relaxed">
-                Transform complex data into surgical precision. Decouple from legacy friction and decide with confidence using real-time market architectural intelligence.
-              </p>
+              <div className="text-muted-foreground text-lg leading-relaxed space-y-4">
+                <p>
+                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
+                </p>
+                <p>EXOS works as three interconnected layers.</p>
+                <div className="space-y-2">
+                  <p>
+                    Scenarios are pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.
+                  </p>
+                  <p>
+                    Market Intelligence and the Market Insights Knowledge Base inject live market context directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.
+                  </p>
+                  <p>
+                    Inflation Monitor and Risk Assessment Platform continuously track the noise, surface what's changed, and flag only what requires your decision.
+                  </p>
+                  <p>
+                    Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.
+                  </p>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-3 mt-2">
                 <Button size="lg" className="gap-2 px-6" onClick={() => navigate("/auth")}>
                   Try EXOS
