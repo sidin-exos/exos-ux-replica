@@ -53,7 +53,12 @@ export function BusinessContextField({
   const handleSelectContext = (contextId: string) => {
     if (contextId === "__manual__") {
       setSelectedContextId(null);
-      // Don't clear the value - let user type freely
+      return;
+    }
+
+    if (contextId === "__profile__") {
+      setSelectedContextId("__profile__");
+      onChange(profile?.business_context ?? "");
       return;
     }
 
