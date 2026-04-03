@@ -8,6 +8,12 @@ import { callGoogleAI } from "../_shared/google-ai.ts";
 import { anonymizeText, deanonymizeText, type AnonymizationResultServer } from "../_shared/anonymizer.ts";
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import {
+  SCENARIO_GROUP_REGISTRY, SCENARIO_ID_REGISTRY, GROUP_LABELS,
+  GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
+  parseAIResponse, buildMarkdownFromEnvelope,
+  type ExosOutputParsed,
+} from "../_shared/output-schemas.ts";
 
 /**
  * EXOS Sentinel Analysis Edge Function
