@@ -29,11 +29,7 @@ const step1Schema = z.object({
     .string()
     .trim()
     .email("Please enter a valid email")
-    .max(255)
-    .refine(
-      (val) => !FREE_DOMAINS.some((d) => val.toLowerCase().endsWith("@" + d)),
-      "Please use your work email"
-    ),
+    .max(255),
   companyName: z.string().trim().min(2, "Company name is required").max(200),
   companySize: z.string().min(1, "Please select company size"),
   country: z.string().min(1, "Please select a country"),
@@ -102,7 +98,7 @@ const SignUpForm = () => {
 
   const step1Form = useForm<Step1Values>({
     resolver: zodResolver(step1Schema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       fullName: "",
       workEmail: "",
@@ -115,7 +111,7 @@ const SignUpForm = () => {
 
   const step2Form = useForm<Step2Values>({
     resolver: zodResolver(step2Schema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       jobTitle: "",
       industry: "",
