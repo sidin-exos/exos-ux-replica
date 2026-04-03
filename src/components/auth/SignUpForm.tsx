@@ -266,7 +266,24 @@ const SignUpForm = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Minimum 10 characters" className="h-11" {...field} />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Minimum 10 characters"
+                        className="h-11 pr-10"
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-11 w-10 px-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowPassword((v) => !v)}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
                   </FormControl>
                   <PasswordStrengthMeter password={watchPassword} />
                   <FormMessage />
