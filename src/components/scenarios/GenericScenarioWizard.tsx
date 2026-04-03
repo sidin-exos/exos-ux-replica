@@ -340,7 +340,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const missingRequired = getMissingRequiredFields(scenario.id, formData);
   const missingOptional = getMissingOptionalFields(scenario.id, formData);
 
-  const canProceed = missingRequired.length === 0;
+  const canProceed = true;
 
   // Fetch methodology config from DB for input evaluation
   const { data: dbEvalConfig } = useScenarioEvalConfig(scenario.id);
