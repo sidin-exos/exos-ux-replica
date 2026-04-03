@@ -851,6 +851,7 @@ serve(async (req) => {
       console.log(`[Sentinel] Multi-cycle Chain-of-Experts for scenario: ${scenarioId}`);
 
       const llmOpts = { googleModel, tracer, parentRunId: parentRunId!, spanName: "" };
+      const scenarioGroup = scenarioId ? SCENARIO_GROUP_REGISTRY[scenarioId] : null;
 
       // Cycle 1: Analyst Draft
       const draft = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
@@ -861,9 +862,9 @@ serve(async (req) => {
       const critique = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
       console.log(`[Sentinel] Cycle 2 (Auditor Critique): ${critique.length} chars`);
 
-      // Cycle 3: Synthesizer Final
+      // Cycle 3: Synthesizer Final (with schema injection)
       const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPrompt}\n</original-request>`;
-      const finalContent = await callLLM(buildSynthesizerPrompt(selectedDashboards), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      const finalContent = await callLLM(buildSynthesizerPrompt(scenarioGroup, scenarioId), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
       console.log(`[Sentinel] Cycle 3 (Synthesizer Final): ${finalContent.length} chars`);
 
       const processingTime = Math.round(performance.now() - startTime);
