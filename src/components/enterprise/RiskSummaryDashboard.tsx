@@ -3,9 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrendingDown, TrendingUp, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
+import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
+import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
 
 interface SignalItem {
   trackerName: string;
+  monitorLabel: string;
   signal: string;
   trackerId: string;
 }
