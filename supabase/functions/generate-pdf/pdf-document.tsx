@@ -417,7 +417,7 @@ const PDFReportDocument = ({
           </View>
         </View>
         <View style={s.coverLeftStripe} />
-        <Text style={s.verticalLabel}>{scenarioLabel}</Text>
+        
         <View style={{ height: "28%" }} />
         <View style={s.coverScenarioBadge}><Text style={s.coverScenarioBadgeText}>{scenarioLabel}</Text></View>
         <Text style={s.coverTitle}>Preparing for {reportTitle}</Text>

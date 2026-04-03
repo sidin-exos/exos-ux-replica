@@ -990,8 +990,6 @@ const PDFReportDocument = ({
         {/* Left teal stripe */}
         <View style={s.coverLeftStripe} />
 
-        {/* Vertical label */}
-        <Text style={s.verticalLabel}>{scenarioLabel}</Text>
 
         <View style={s.coverSpacer} />
 
