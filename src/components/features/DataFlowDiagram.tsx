@@ -43,16 +43,10 @@ const DataFlowDiagram = () => {
             </span>
           </div>
 
-          {/* Main Flow - Three Column Layout */}
-          <div className="grid grid-cols-[1fr_2fr_1fr] gap-0 items-center relative">
-            {/* Layer 1: User Input */}
-            <LayerCard layer={layers.input} />
-
-            {/* Animated Connector: Input → EXOS */}
-            <AnimatedConnector direction="right" className="absolute left-[calc(33.33%-40px)] top-1/2 -translate-y-1/2 z-10" />
-
-            {/* Layer 2: EXOS Intelligence (Center) */}
-            <div className="relative z-20">
+          {/* Main Flow - Vertical Layout */}
+          <div className="flex flex-col items-center">
+            {/* Layer 2: EXOS Intelligence (Top Center) */}
+            <div className="relative z-20 w-full max-w-2xl">
               <div className="relative rounded-2xl border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 backdrop-blur-sm">
                 {/* Glow Effect */}
                 <div className="absolute inset-0 rounded-2xl bg-primary/5 blur-xl -z-10" />
@@ -109,40 +103,24 @@ const DataFlowDiagram = () => {
               </div>
             </div>
 
-            {/* Animated Connector: EXOS → Cloud */}
-            <AnimatedConnector direction="right" bidirectional className="absolute right-[calc(33.33%-40px)] top-1/2 -translate-y-1/2 z-10" />
-
-            {/* Layer 3: Cloud AI */}
-            <LayerCard layer={layers.cloud} />
-          </div>
-
-          {/* Output Layer - Below Center */}
-          <div className="flex flex-col items-center mt-8">
-            {/* Animated Vertical Connector */}
-            <div className="relative h-12 w-px">
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/60 to-primary/20" />
-              <svg className="absolute -left-2 top-0 w-5 h-12" viewBox="0 0 20 48">
-                <path
-                  d="M10 0 L10 40"
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2"
-                  strokeDasharray="6 6"
-                  className="animate-flow-line"
-                  style={{ animationDirection: "reverse" }}
-                />
-                <path
-                  d="M6 38 L10 46 L14 38"
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {/* Pulse Dot at bottom */}
-              
+            {/* Two Down Arrows Side by Side */}
+            <div className="grid grid-cols-2 gap-32 w-full max-w-2xl">
+              <div className="flex justify-center">
+                <VerticalConnector />
+              </div>
+              <div className="flex justify-center">
+                <VerticalConnector />
+              </div>
             </div>
+
+            {/* Input and Cloud Cards Side by Side */}
+            <div className="grid grid-cols-2 gap-8 w-full max-w-2xl">
+              <LayerCard layer={layers.input} />
+              <LayerCard layer={layers.cloud} />
+            </div>
+
+            {/* Down Arrow to Output */}
+            <VerticalConnector />
 
             {/* Output Card */}
             <div className="w-80 mt-2">
