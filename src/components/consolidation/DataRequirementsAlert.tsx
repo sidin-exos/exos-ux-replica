@@ -145,17 +145,18 @@ const DataRequirementsAlert = ({
           </div>
         )}
 
-        {/* Still show missing required fields if any */}
+        {/* Show missing fields as suggestions, not blockers */}
         {hasRequiredMissing && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+          <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+              <Info className="w-5 h-5 text-warning mt-0.5" />
               <div className="flex-1">
-                <h4 className="font-semibold text-destructive">Required Fields Missing</h4>
-                <ul className="space-y-1 mt-2">
+                <h4 className="font-semibold text-warning">Suggested Fields</h4>
+                <p className="text-xs text-muted-foreground mt-1 mb-2">Adding these will improve analysis accuracy:</p>
+                <ul className="space-y-1">
                   {missingRequired.map((field) => (
                     <li key={field.id} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-2 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-warning mt-2 shrink-0" />
                       <button
                         onClick={() => onFieldClick?.(field.id)}
                         className={cn("text-left text-sm hover:underline", onFieldClick && "cursor-pointer")}
