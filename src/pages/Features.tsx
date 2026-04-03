@@ -11,7 +11,7 @@ import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
+
 
 const Features = () => {
   const exosLogo = useThemedLogo();
@@ -87,53 +87,43 @@ const Features = () => {
           </p>
         </section>
 
-        {/* 2/3 Value Props + 1/3 Success Story */}
+        {/* Value Props */}
         <section className="mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left 2/3 — Value proposition cards */}
-            <div className="lg:col-span-2 space-y-4">
-              {valuePropositions.map((prop, index) => (
-                <Card 
-                  key={prop.title} 
-                  className="card-elevated animate-fade-up border-border/50"
-                  style={{ animationDelay: `${100 + index * 80}ms` }}
-                >
-                  <div className="flex items-start gap-4 p-5">
-                    <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <prop.icon className="w-5 h-5 text-primary-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-display text-lg font-semibold mb-1">{prop.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1">
-                        {prop.highlights.map((h) => (
-                          <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70">
-                            <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
-                            {h}
-                          </span>
-                        ))}
-                      </div>
-                      {"link" in prop && prop.link && (
-                        <NavLink
-                          to={prop.link as string}
-                          className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
-                        >
-                          Learn about EXOS architecture
-                          <ArrowRight className="w-3 h-3" />
-                        </NavLink>
-                      )}
-                    </div>
+          <div className="space-y-4">
+            {valuePropositions.map((prop, index) => (
+              <Card 
+                key={prop.title} 
+                className="card-elevated animate-fade-up border-border/50"
+                style={{ animationDelay: `${100 + index * 80}ms` }}
+              >
+                <div className="flex items-start gap-4 p-5">
+                  <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <prop.icon className="w-5 h-5 text-primary-foreground" />
                   </div>
-                </Card>
-              ))}
-            </div>
-
-            {/* Right 1/3 — Use Case preview */}
-            <div className="lg:col-span-1">
-              <div className="lg:sticky lg:top-24">
-                <UseCaseShowcase platform="scenarios" variant="card" />
-              </div>
-            </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display text-lg font-semibold mb-1">{prop.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {prop.highlights.map((h) => (
+                        <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70">
+                          <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                    {"link" in prop && prop.link && (
+                      <NavLink
+                        to={prop.link as string}
+                        className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
+                      >
+                        Learn about EXOS architecture
+                        <ArrowRight className="w-3 h-3" />
+                      </NavLink>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         </section>
 
@@ -230,10 +220,6 @@ const Features = () => {
           <DataFlowDiagram />
         </section>
 
-        {/* Industry Use Cases — Full Section */}
-        <section id="success" className="mb-16 animate-fade-up" style={{ animationDelay: "500ms" }}>
-          <UseCaseShowcase platform="scenarios" variant="section" />
-        </section>
 
         <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
           <SiteFeedbackButton scenarioId="features" />
