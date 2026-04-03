@@ -147,37 +147,44 @@ const Welcome = () => {
             {/* Right — Abstract dashboard preview */}
             <div className="hidden lg:flex justify-end">
               <div className="w-full max-w-md">
-                {/* Mini pipeline diagram */}
                 <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-5 backdrop-blur-sm">
-                  <div className="text-center mb-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20 mb-2">
+                  <div className="text-center mb-5">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20 mb-1">
                       <Shield className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Privacy-First Pipeline</span>
+                      <span className="text-[10px] font-mono text-primary uppercase tracking-wider">How EXOS Works</span>
                     </div>
                   </div>
 
-                  {/* Pipeline steps */}
-                  <div className="space-y-2.5">
+                  <div className="space-y-1">
                     {[
-                      { icon: Lock, label: "Anonymiser", desc: "Sensitive data masked before leaving your environment" },
-                      { icon: Compass, label: "Grounding", desc: "Industry & category context injected" },
-                      { icon: Globe, label: "Market Intel", desc: "Live benchmarks, pricing signals, risk feeds" },
-                      { icon: CheckCircle, label: "Validator", desc: "Anti-hallucination checks applied" },
-                      { icon: RefreshCw, label: "Restorer", desc: "Data de-anonymised for your report" },
-                    ].map((step, i) => (
-                      <div key={step.label} className="flex items-center gap-3">
-                        <div className="relative shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
-                            <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
+                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", tag: "Layer 1" },
+                      { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", tag: "Layer 2" },
+                      { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", tag: "Layer 3" },
+                      { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", tag: "Layer 4" },
+                    ].map((step, i, arr) => (
+                      <div key={step.label}>
+                        <div className="flex items-start gap-3 py-2">
+                          <div className="relative shrink-0 mt-0.5">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
+                              <step.icon className="w-4 h-4 text-primary-foreground" />
+                            </div>
+                            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-background border border-primary text-[9px] font-bold text-primary flex items-center justify-center">
+                              {i + 1}
+                            </span>
                           </div>
-                          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-background border border-primary text-[9px] font-bold text-primary flex items-center justify-center">
-                            {i + 1}
-                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold text-foreground leading-tight">{step.label}</p>
+                              <span className="text-[9px] text-muted-foreground font-mono">{step.tag}</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{step.desc}</p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-foreground leading-tight">{step.label}</p>
-                          <p className="text-[10px] text-muted-foreground leading-tight">{step.desc}</p>
-                        </div>
+                        {i < arr.length - 1 && (
+                          <div className="flex justify-start pl-[18px]">
+                            <div className="w-px h-3 bg-primary/30" />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
