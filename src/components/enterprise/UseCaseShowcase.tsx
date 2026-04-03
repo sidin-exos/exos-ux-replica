@@ -89,9 +89,9 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
     <Card className={`border-border/50 bg-card/50 ${className || ""}`}>
       <CardContent className="pt-5 pb-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-            <Lightbulb className="w-3.5 h-3.5 text-primary" />
-            Use Cases
+          <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-primary" />
+            Use Case Examples
           </h2>
           <Button
             variant="ghost"
