@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Navigate } from "react-router-dom";
+import { useUser } from "@/hooks/useUser";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
@@ -42,6 +43,7 @@ const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
 };
 
 const Index = () => {
+  const { user, isLoading: isUserLoading } = useUser();
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
@@ -101,6 +103,11 @@ const Index = () => {
     acc[category].push(scenario);
     return acc;
   }, {} as Record<Scenario["category"], Scenario[]>);
+
+  // Redirect unauthenticated users to /welcome
+  if (!isUserLoading && !user) {
+    return <Navigate to="/welcome" replace />;
+  }
 
   return (
     <div className="min-h-screen gradient-hero">
