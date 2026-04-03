@@ -25,7 +25,15 @@ const IMPROVING_KEYWORDS = [
 ];
 
 function extractSignals(content: string, keywords: string[], maxCount: number): string[] {
-  const sentences = content.split(/[.!?\n]/).filter((s) => s.trim().length > 20);
+  const sentences = content.split(/[.!?\n]/).filter((s) => {
+    const t = s.trim();
+    // Skip table rows, headers, short fragments, and markdown artifacts
+    if (t.length < 20 || t.length > 180) return false;
+    if (t.startsWith("|") || t.includes(" | ")) return false;
+    if (t.startsWith("#")) return false;
+    if (t.startsWith("---") || t.startsWith("***")) return false;
+    return true;
+  });
   const matches: string[] = [];
 
   for (const sentence of sentences) {
@@ -34,7 +42,7 @@ function extractSignals(content: string, keywords: string[], maxCount: number): 
     const found = keywords.some((kw) => new RegExp(kw, "i").test(lower));
     if (found) {
       const trimmed = sentence.trim().replace(/^[-–•*#>\s]+/, "").trim();
-      if (trimmed.length > 15 && trimmed.length < 200) {
+      if (trimmed.length > 15) {
         matches.push(trimmed);
       }
     }
