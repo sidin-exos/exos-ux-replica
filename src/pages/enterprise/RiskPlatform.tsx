@@ -255,15 +255,14 @@ const RiskPlatform = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
             <span>© {new Date().getFullYear()} EXOS Procurement · Dynamic Risk Monitoring</span>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground" asChild>
-                <a href="/contact">
-                  <Mail className="w-3.5 h-3.5" /> Contact
+              <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+                <a href="/contact?subject=feedback">
+                  <MessageSquare className="w-4 h-4" /> Leave Feedback
                 </a>
               </Button>
-              <Separator orientation="vertical" className="h-4" />
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground" asChild>
-                <a href="/contact?subject=feedback">
-                  <MessageSquare className="w-3.5 h-3.5" /> Feedback
+              <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+                <a href="/contact">
+                  Get in Touch <Mail className="w-4 h-4" />
                 </a>
               </Button>
             </div>
