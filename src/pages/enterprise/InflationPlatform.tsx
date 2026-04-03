@@ -109,6 +109,12 @@ const InflationPlatform = () => {
           </div>
         </div>
 
+        {/* Workspace separator */}
+        <div className="flex items-center gap-4 my-2">
+          <h2 className="text-sm font-semibold text-muted-foreground whitespace-nowrap uppercase tracking-wide">Your Workspace</h2>
+          <Separator className="flex-1" />
+        </div>
+
         <div>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
