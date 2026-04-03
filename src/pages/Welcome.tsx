@@ -120,7 +120,7 @@ const Welcome = () => {
               </div>
               <div className="flex flex-wrap gap-3 mt-2">
                 <Button size="lg" className="gap-2 px-8 font-semibold" onClick={() => navigate("/auth")}>
-                  Start Free Analysis <ArrowRight className="w-4 h-4" />
+                  Start Free Trial <ArrowRight className="w-4 h-4" />
                 </Button>
                 <Button size="lg" variant="outline" className="gap-2 px-6" onClick={() => navigate("/features")}>
                   Explore Solutions
