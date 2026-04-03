@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, BarChart3, Radar, Quote, Building2, CheckCircle } from "lucide-react";
+import { ArrowRight, BarChart3, Radar, Quote, Building2, CheckCircle, Lock, Compass, Globe, RefreshCw, Shield } from "lucide-react";
 import PillarUseCaseDropdown from "@/components/welcome/PillarUseCaseDropdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -146,34 +146,49 @@ const Welcome = () => {
 
             {/* Right — Abstract dashboard preview */}
             <div className="hidden lg:flex justify-end">
-              <Card className="w-full max-w-md border-border/50 shadow-lg overflow-hidden">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">AI Optimization</span>
-                    <Badge className="bg-success/15 text-success border-0 text-xs">Active</Badge>
+              <div className="w-full max-w-md">
+                {/* Mini pipeline diagram */}
+                <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-5 backdrop-blur-sm">
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20 mb-2">
+                      <Shield className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-[10px] font-mono text-primary uppercase tracking-wider">Privacy-First Pipeline</span>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    {[85, 62, 91, 74].map((val, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground w-8">Q{i + 1}</span>
-                        <div className="flex-1 h-2 rounded-full bg-muted">
-                          <div
-                            className="h-full rounded-full bg-primary transition-all"
-                            style={{ width: `${val}%` }}
-                          />
+
+                  {/* Pipeline steps */}
+                  <div className="space-y-2.5">
+                    {[
+                      { icon: Lock, label: "Anonymiser", desc: "Sensitive data masked before leaving your environment" },
+                      { icon: Compass, label: "Grounding", desc: "Industry & category context injected" },
+                      { icon: Globe, label: "Market Intel", desc: "Live benchmarks, pricing signals, risk feeds" },
+                      { icon: CheckCircle, label: "Validator", desc: "Anti-hallucination checks applied" },
+                      { icon: RefreshCw, label: "Restorer", desc: "Data de-anonymised for your report" },
+                    ].map((step, i) => (
+                      <div key={step.label} className="flex items-center gap-3">
+                        <div className="relative shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
+                            <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
+                          </div>
+                          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-background border border-primary text-[9px] font-bold text-primary flex items-center justify-center">
+                            {i + 1}
+                          </span>
                         </div>
-                        <span className="text-xs font-mono text-foreground w-8 text-right">{val}%</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-foreground leading-tight">{step.label}</p>
+                          <p className="text-[10px] text-muted-foreground leading-tight">{step.desc}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
-                  <div className="pt-3 border-t border-border/50">
-                    <p className="text-xs text-muted-foreground">
-                      <CheckCircle className="w-3 h-3 inline mr-1 text-success" />
-                      Savings optimized in 127 dashboard scenarios
+
+                  <div className="mt-4 pt-3 border-t border-primary/15 text-center">
+                    <p className="text-[10px] text-muted-foreground italic">
+                      Your data never reaches external APIs in raw form
                     </p>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>
