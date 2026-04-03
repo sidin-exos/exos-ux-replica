@@ -77,6 +77,7 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
 
     onSubmit({
       queryType,
+      queryName: queryName.trim() || undefined,
       query: queryText.trim(),
       recencyFilter: recencyFilter === "__none__" ? undefined : recencyFilter as RecencyFilter,
       domainFilter: selectedDomains.length > 0 ? selectedDomains : undefined,
