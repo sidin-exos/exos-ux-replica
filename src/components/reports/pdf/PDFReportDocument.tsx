@@ -979,22 +979,20 @@ const PDFReportDocument = ({
 
   return (
     <Document>
-      {/* ── Page 1: Cover ── */}
-      <Page size="A4" style={s.page}>
+      {/* ── Page 1: Cover + Executive Summary (merged) ── */}
+      <Page size="A4" style={s.page} id="section-executive-summary">
         {/* Teal header bar */}
         <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
           <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: c.textOnPrimary }}>
             EXOS · Confidential
           </Text>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential</Text>
             <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Prepared for EXOS · {formattedDate}</Text>
           </View>
         </View>
 
         {/* Left teal stripe */}
         <View style={s.coverLeftStripe} />
-
 
         <View style={s.coverSpacer} />
 
@@ -1004,53 +1002,9 @@ const PDFReportDocument = ({
         {/* Divider */}
         <View style={s.coverDivider} />
 
-        {/* TOC box */}
-        <View style={s.tocBox}>
-          <Text style={s.tocTitle}>Contents</Text>
-          {tocEntries.map((entry, i) => (
-            <View key={entry.anchor} style={s.tocRow}>
-              <Text style={s.tocNumber}>{i + 1}.</Text>
-              <Link src={`#${entry.anchor}`}>
-                <Text style={s.tocLabel}>{entry.label}</Text>
-              </Link>
-              <Text style={s.tocPageHint}>p. {entry.page}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Bottom-left badges */}
-        <View style={s.coverBadgeRow}>
-          <View style={s.coverBadge}>
-            <Text style={s.coverBadgeLabel}>CONF.</Text>
-            <Text style={{ ...s.coverBadgeValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text>
-          </View>
-          <View style={s.coverBadge}>
-            <Text style={s.coverBadgeLabel}>INPUT</Text>
-            <Text style={{ ...s.coverBadgeValue, color: c.primary }}>{coveragePct}/100</Text>
-          </View>
-        </View>
-
-        {/* Footer */}
-        <View style={{ ...s.footer, borderTopWidth: 0 }}>
-          <Text style={s.footerText}>Confidential — EXOS</Text>
-          <Text style={s.footerText}>Page 1</Text>
-        </View>
-
-        {/* Bottom color stripe */}
-        <BottomStripe c={c} />
-      </Page>
-
-      {/* ── Page 2: Executive Summary ── */}
-      <Page size="A4" style={s.pageWithHeader} id="section-executive-summary">
-        <BrandedHeaderBar scenarioLabel={scenarioLabel} dateStr={formattedDate} c={c} />
-
-        <View style={s.sectionBadge}>
-          <Text style={s.sectionBadgeText}>EXECUTIVE SUMMARY</Text>
-        </View>
-
         {/* Key Findings */}
-        <View style={s.sectionTitleWrapper}>
-          <Text style={s.sectionTitleText}>Key Findings</Text>
+        <View style={s.sectionTitleWrapperCompact}>
+          <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Key Findings</Text>
           <View style={s.sectionTitleLine} />
         </View>
 
@@ -1071,8 +1025,8 @@ const PDFReportDocument = ({
         </View>
 
         {/* Recommended Actions */}
-        <View style={s.sectionTitleWrapper}>
-          <Text style={s.sectionTitleText}>Recommended Actions</Text>
+        <View style={s.sectionTitleWrapperCompact}>
+          <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Recommended Actions</Text>
           <View style={s.sectionTitleLine} />
         </View>
 
@@ -1113,7 +1067,11 @@ const PDFReportDocument = ({
           </View>
         </View>
 
+        {/* Footer */}
         <BrandedFooter dateStr={formattedDate} orgName={orgName} c={c} />
+
+        {/* Bottom color stripe */}
+        <BottomStripe c={c} />
       </Page>
 
       {/* ── Dashboard pages ── */}
