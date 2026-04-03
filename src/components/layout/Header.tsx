@@ -94,7 +94,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <NavLink to="/welcome" className="flex items-center hover:opacity-90 transition-opacity">
-          <img src={exosLogo} alt="EXOS Procurement Intelligence" className="h-14 md:h-16 w-auto object-contain" />
+          <img src={exosLogo} alt="EXOS" className="h-10 md:h-12 w-auto object-contain" />
         </NavLink>
 
         {/* Desktop Mega-Menu */}
