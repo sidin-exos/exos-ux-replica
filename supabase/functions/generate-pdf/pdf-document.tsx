@@ -424,8 +424,6 @@ const PDFReportDocument = ({
         <View style={s.coverDivider} />
         <View style={s.coverMetaRow}>
           <View style={s.coverMetaCol}><Text style={s.coverMetaLabel}>ANALYSIS TYPE</Text><Text style={s.coverMetaValue}>{scenarioTitle}</Text></View>
-          <View style={s.coverMetaCol}><Text style={s.coverMetaLabel}>ANALYSIS ID</Text><Text style={s.coverMetaValue}>{reportHash}</Text></View>
-          <View style={s.coverMetaCol}><Text style={s.coverMetaLabel}>DATE</Text><Text style={s.coverMetaValue}>{formattedDate}</Text></View>
         </View>
         <View style={s.tocBox}>
           <Text style={s.tocTitle}>Contents</Text>
