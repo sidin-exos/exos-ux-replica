@@ -64,7 +64,7 @@ const pillars = [
 
 /* ── Stats ── */
 const stats = [
-  { value: "29", label: "Spend Optimized" },
+  { value: "29", label: "Procurement Scenarios" },
   { value: "500+", label: "Enterprise Clients" },
   { value: "99.9%", label: "Compliance Rate" },
 ];
