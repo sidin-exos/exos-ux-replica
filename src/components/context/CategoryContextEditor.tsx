@@ -176,7 +176,7 @@ export function CategoryContextEditor({
             <CardTitle className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <FolderKanban className="h-4 w-4 text-accent-foreground" />
-                Fine-tune: {category.name}
+                AI Settings: {category.name}
               </span>
               <div className="flex items-center gap-2">
                 {category.kraljic_position && (
