@@ -146,8 +146,8 @@ function buildStyles(c: PdfColorSet) {
     coverLeftStripe: { position: "absolute", top: 36, left: 0, width: 5, bottom: 50, backgroundColor: c.primary },
     coverScenarioBadge: { backgroundColor: c.primary, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, alignSelf: "flex-start", marginBottom: 16 },
     coverScenarioBadgeText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 1 },
-    coverTitle: { fontSize: 26, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 24, lineHeight: 1.3 },
-    coverDivider: { height: 1, backgroundColor: c.border, marginBottom: 20 },
+    coverTitle: { fontSize: 22, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 12, lineHeight: 1.2 },
+    coverDivider: { height: 1, backgroundColor: c.border, marginBottom: 10 },
     coverMetaRow: { flexDirection: "row", marginBottom: 24 },
     coverMetaCol: { flex: 1 },
     coverMetaLabel: { fontSize: 8, fontFamily: "Helvetica-Bold", color: c.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
@@ -166,24 +166,25 @@ function buildStyles(c: PdfColorSet) {
     stripeSegment: { flex: 1, height: 10 },
     sectionBadge: { backgroundColor: c.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, alignSelf: "flex-start", marginBottom: 10 },
     sectionBadgeText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 0.8 },
+    sectionTitleWrapperCompact: { marginBottom: 8, paddingBottom: 4 },
     sectionTitleWrapper: { marginBottom: SP.afterHeadingLine, paddingBottom: 6 },
     sectionTitleText: { fontSize: 18, fontFamily: "Helvetica-Bold", color: c.text },
     sectionTitleLine: { height: 2, backgroundColor: c.primary, marginTop: 6 },
-    findingCardsRow: { flexDirection: "row", marginBottom: 16 },
-    findingCard: { flex: 1, backgroundColor: c.surface, borderLeftWidth: 4, padding: 10, marginRight: 6 },
+    findingCardsRow: { flexDirection: "row", marginBottom: 8 },
+    findingCard: { flex: 1, backgroundColor: c.surface, borderLeftWidth: 3, padding: 8, marginRight: 5 },
     findingCardLast: { marginRight: 0 },
     findingCardNumber: { width: 20, height: 20, borderRadius: 10, justifyContent: "center", alignItems: "center", marginBottom: 6 },
     findingCardNumberText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.textOnPrimary },
     findingCardTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 4 },
     findingCardBody: { fontSize: 8, color: c.textMuted, lineHeight: 1.4 },
-    actionItem: { flexDirection: "row", alignItems: "flex-start", backgroundColor: c.surface, borderLeftWidth: 4, borderLeftColor: c.primary, padding: 10, marginBottom: 8 },
-    actionNumber: { width: 22, height: 22, borderRadius: 11, backgroundColor: c.primary, justifyContent: "center", alignItems: "center", marginRight: 10 },
+    actionItem: { flexDirection: "row", alignItems: "flex-start", backgroundColor: c.surface, borderLeftWidth: 3, borderLeftColor: c.primary, padding: 7, marginBottom: 5 },
+    actionNumber: { width: 18, height: 18, borderRadius: 9, backgroundColor: c.primary, justifyContent: "center", alignItems: "center", marginRight: 8 },
     actionNumberText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.textOnPrimary },
     actionContent: { flex: 1 },
     actionTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 3 },
     actionBody: { fontSize: 9, color: c.textMuted, lineHeight: 1.5 },
-    kpiRow: { flexDirection: "row", borderWidth: 1, borderColor: c.border, borderRadius: 4, marginTop: 20 },
-    kpiCell: { flex: 1, paddingVertical: 10, paddingHorizontal: 10, alignItems: "center", borderRightWidth: 1, borderRightColor: c.border },
+    kpiRow: { flexDirection: "row", borderWidth: 1, borderColor: c.border, borderRadius: 4, marginTop: 8 },
+    kpiCell: { flex: 1, paddingVertical: 6, paddingHorizontal: 6, alignItems: "center", borderRightWidth: 1, borderRightColor: c.border },
     kpiCellLast: { borderRightWidth: 0 },
     kpiLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: c.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
     kpiValue: { fontSize: 11, fontFamily: "Helvetica-Bold", color: c.primary },
@@ -299,7 +300,7 @@ function kpiColor(value: string, type: "savings" | "risk" | "confidence", c: Pdf
 interface TocEntry { label: string; anchor: string; page: number; }
 const buildTocEntries = (hasDashboards: boolean, hasParams: boolean, dashboardCount: number): TocEntry[] => {
   const entries: TocEntry[] = [];
-  let page = 2;
+  let page = 1;
   entries.push({ label: "Executive Summary", anchor: "section-executive-summary", page });
   page++;
   if (hasDashboards) { entries.push({ label: "Analysis Visualizations", anchor: "section-visualizations", page }); page += Math.ceil(dashboardCount / 2); }
@@ -408,53 +409,20 @@ const PDFReportDocument = ({
 
   return (
     <Document>
-      {/* Cover Page */}
-      <Page size="A4" style={s.page}>
+      {/* Page 1: Cover + Executive Summary (merged) */}
+      <Page size="A4" style={s.page} id="section-executive-summary">
         <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
           <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: c.textOnPrimary }}>EXOS · Confidential</Text>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential</Text>
             <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Prepared for EXOS · {formattedDate}</Text>
           </View>
         </View>
         <View style={s.coverLeftStripe} />
-        
-        <View style={{ height: "8%" }} />
+        <View style={{ height: "4%" }} />
         <Text style={s.coverTitle}>{reportTitle}</Text>
         <View style={s.coverDivider} />
-        <View style={s.tocBox}>
-          <Text style={s.tocTitle}>Contents</Text>
-          {tocEntries.map((entry, i) => (
-            <View key={entry.anchor} style={s.tocRow}>
-              <Text style={s.tocNumber}>{i + 1}.</Text>
-              <Link src={`#${entry.anchor}`}><Text style={s.tocLabel}>{entry.label}</Text></Link>
-              <Text style={s.tocPageHint}>p. {entry.page}</Text>
-            </View>
-          ))}
-        </View>
-        <View style={s.coverBadgeRow}>
-          <View style={s.coverBadge}><Text style={s.coverBadgeLabel}>CONF.</Text><Text style={{ ...s.coverBadgeValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
-          <View style={s.coverBadge}><Text style={s.coverBadgeLabel}>INPUT</Text><Text style={{ ...s.coverBadgeValue, color: c.primary }}>{coveragePct}/100</Text></View>
-        </View>
-        <View style={{ ...s.footer, borderTopWidth: 0 }}><Text style={s.footerText}>Confidential — EXOS</Text><Text style={s.footerText}>Page 1</Text></View>
-        <View style={s.bottomStripe}>
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe1 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe2 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe3 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe4 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe5 }} />
-          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe6 }} />
-        </View>
-      </Page>
 
-      {/* Executive Summary */}
-      <Page size="A4" style={s.pageWithHeader} id="section-executive-summary">
-        <View style={s.headerBar} fixed>
-          <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
-          <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
-        </View>
-        <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>EXECUTIVE SUMMARY</Text></View>
-        <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Key Findings</Text><View style={s.sectionTitleLine} /></View>
+        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Key Findings</Text><View style={s.sectionTitleLine} /></View>
         <View style={s.findingCardsRow}>
           {findings.slice(0, 3).map((point, i) => {
             const { title, body } = parseFindingTitle(point);
@@ -468,7 +436,8 @@ const PDFReportDocument = ({
             );
           })}
         </View>
-        <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Recommended Actions</Text><View style={s.sectionTitleLine} /></View>
+
+        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Recommended Actions</Text><View style={s.sectionTitleLine} /></View>
         {recommendations.slice(0, 4).map((point, i) => {
           const { title, body } = parseFindingTitle(point);
           return (
@@ -478,13 +447,23 @@ const PDFReportDocument = ({
             </View>
           );
         })}
+
         <View style={s.kpiRow}>
           <View style={s.kpiCell}><Text style={s.kpiLabel}>BATNA SCORE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coveragePct} / 100</Text></View>
           <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>3-Year Commitment</Text></View>
           <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>{extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A"}</Text></View>
           <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>CONFIDENCE</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
         </View>
+
         <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+        <View style={s.bottomStripe}>
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe1 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe2 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe3 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe4 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe5 }} />
+          <View style={{ ...s.stripeSegment, backgroundColor: c.stripe6 }} />
+        </View>
       </Page>
 
       {/* Dashboard pages */}
