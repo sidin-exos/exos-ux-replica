@@ -54,9 +54,10 @@ function renderBodyText(text: string, baseStyle: Record<string, unknown>): React
 }
 
 function getReportTitle(scenarioName: string): string {
-  const suffixes = ["Analysis", "Report", "Review", "Assessment", "Evaluation", "Audit"];
-  const alreadyHasSuffix = suffixes.some(s => scenarioName.trim().endsWith(s));
-  return alreadyHasSuffix ? scenarioName.trim() : `${scenarioName.trim()} Analysis`;
+  const name = scenarioName.trim();
+  if (name.toLowerCase().endsWith("report")) return name;
+  const base = name.replace(/\s*Analysis\s*$/i, "").replace(/\s*Report\s*$/i, "").trim();
+  return `${base} Analysis Report`;
 }
 
 function getScenarioTypeLabel(scenarioName: string): string {
