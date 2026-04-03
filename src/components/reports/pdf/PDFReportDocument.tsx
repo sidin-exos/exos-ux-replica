@@ -378,9 +378,9 @@ function buildStyles(c: PdfColorSet) {
     findingCard: {
       flex: 1,
       backgroundColor: c.surface,
-      borderLeftWidth: 4,
-      padding: 10,
-      marginRight: 6,
+      borderLeftWidth: 3,
+      padding: 8,
+      marginRight: 5,
     },
     findingCardLast: {
       marginRight: 0,
