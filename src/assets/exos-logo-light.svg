@@ -1,21 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg"
-     width="496" height="200" viewBox="0 0 496 200">
-  <!--
-    EXOS Logo — Light variant
-    Mark: symmetric 3-layer diamond stack
-    Font: Poppins Bold 700 + Light 300 (Google Fonts)
-  -->
+     width="340" height="120" viewBox="0 0 340 120">
   <defs>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&amp;family=Space+Grotesk:wght@500&amp;display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&amp;display=swap');
     </style>
   </defs>
 
-  <!-- background (remove rect for transparent export) -->
-  <rect width="496" height="200" fill="#FFFFFF"/>
+  <!-- background -->
+  <rect width="340" height="120" fill="#FFFFFF"/>
 
   <!-- ── MARK ── -->
-  <g transform="translate(50,50)">
+  <g transform="translate(20,10)">
     <polygon points="40,48 66,74 40,100 14,74" fill="#0C1D2E"/>
     <polygon points="40,24 66,50 40,76 14,50" fill="#2CC9C0"/>
     <polygon points="40,0 66,26 40,52 14,26"
@@ -23,17 +18,11 @@
   </g>
 
   <!-- ── DIVIDER ── -->
-  <rect x="152" y="70" width="2" height="60" fill="#0C1D2E" opacity="0.15" rx="1"/>
+  <rect x="116" y="30" width="2" height="60" fill="#0C1D2E" opacity="0.15" rx="1"/>
 
   <!-- ── WORDMARK ── -->
-  <text x="174" y="96"
+  <text x="138" y="65"
         font-family="Poppins, sans-serif" font-weight="700"
-        font-size="42" letter-spacing="9"
+        font-size="46" letter-spacing="10"
         fill="#0C1D2E" dominant-baseline="middle">EXOS</text>
-
-  <!-- ── SUB-LABEL ── -->
-  <text x="177" y="130"
-        font-family="'Space Grotesk', sans-serif" font-weight="500"
-        font-size="14.5" letter-spacing="4.5"
-        fill="#0C1D2E" opacity="0.45" dominant-baseline="middle">PROCUREMENT INTELLIGENCE</text>
 </svg>
