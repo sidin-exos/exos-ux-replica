@@ -179,10 +179,18 @@ const Welcome = () => {
                         </div>
                         {i < arr.length - 1 && (
                           <div className="flex justify-start pl-[14px]">
-                            <svg width="12" height="16" viewBox="0 0 12 16" className="text-primary">
-                              <line x1="6" y1="0" x2="6" y2="12" stroke="currentColor" strokeWidth="2" />
-                              <path d="M2 10 L6 16 L10 10" fill="currentColor" stroke="none" />
-                            </svg>
+                            {i === 1 ? (
+                              <svg width="12" height="20" viewBox="0 0 12 20" className="text-primary">
+                                <path d="M2 4 L6 0 L10 4" fill="currentColor" stroke="none" />
+                                <line x1="6" y1="4" x2="6" y2="16" stroke="currentColor" strokeWidth="2" />
+                                <path d="M2 16 L6 20 L10 16" fill="currentColor" stroke="none" />
+                              </svg>
+                            ) : (
+                              <svg width="12" height="16" viewBox="0 0 12 16" className="text-primary">
+                                <line x1="6" y1="0" x2="6" y2="12" stroke="currentColor" strokeWidth="2" />
+                                <path d="M2 10 L6 16 L10 10" fill="currentColor" stroke="none" />
+                              </svg>
+                            )}
                           </div>
                         )}
                       </div>
