@@ -1,7 +1,7 @@
 import { type ReactNode, useMemo } from "react";
 import { AlertCircle } from "lucide-react";
 import { DashboardType } from "@/lib/dashboard-mappings";
-import { extractDashboardData, type DashboardData } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, extractFromEnvelope, type DashboardData } from "@/lib/dashboard-data-parser";
 
 // Dashboard components
 import ActionChecklistDashboard from "./ActionChecklistDashboard";
