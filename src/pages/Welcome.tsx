@@ -191,7 +191,7 @@ const Welcome = () => {
                               <div className="w-7 h-7 rounded-lg bg-accent/80 flex items-center justify-center">
                                 <step.sideButton.icon className="w-3.5 h-3.5 text-accent-foreground" />
                               </div>
-                              <p className="text-[10px] font-semibold text-accent-foreground/90 leading-tight max-w-[5rem]">{step.sideButton.label}</p>
+                              <p className="text-[10px] font-semibold text-foreground leading-tight max-w-[5rem]">{step.sideButton.label}</p>
                             </div>
                           )}
                         </div>
