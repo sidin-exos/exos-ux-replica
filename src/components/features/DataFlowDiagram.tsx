@@ -318,8 +318,32 @@ const AnimatedConnector = ({ direction, className, bidirectional = false }: { di
     </div>
   );
 };
+/* Vertical Down Arrow Connector */
+const VerticalConnector = () => (
+  <div className="relative h-12 w-5 my-2">
+    <svg className="w-full h-full" viewBox="0 0 20 48">
+      <path
+        d="M10 0 L10 40"
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth="2"
+        strokeDasharray="6 6"
+        className="animate-flow-line"
+        style={{ animationDirection: "reverse" }}
+      />
+      <path
+        d="M6 38 L10 46 L14 38"
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </div>
+);
 
-/* Mobile Vertical Connector */
+
 const MobileConnector = () => (
   <div className="flex justify-center py-1">
     <div className="relative w-6 h-6">
