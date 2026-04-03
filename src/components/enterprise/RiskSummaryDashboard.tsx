@@ -119,11 +119,6 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Latest Signals</h3>
-        {data?.lastUpdate && (
-          <span className="text-[10px] text-muted-foreground">
-            {new Date(data.lastUpdate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-          </span>
-        )}
       </div>
 
       {isLoading && (
