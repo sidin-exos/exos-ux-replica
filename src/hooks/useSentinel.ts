@@ -156,6 +156,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           error: null,
           tokenUsage: data.usage || null,
           processingTimeMs: data.processingTimeMs || null,
+          structuredEnvelope: data.structured || null,
         });
 
         return result;
