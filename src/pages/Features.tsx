@@ -11,7 +11,7 @@ import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
+
 
 const Features = () => {
   const exosLogo = useThemedLogo();
