@@ -415,10 +415,10 @@ function buildStyles(c: PdfColorSet) {
       flexDirection: "row",
       alignItems: "flex-start",
       backgroundColor: c.surface,
-      borderLeftWidth: 4,
+      borderLeftWidth: 3,
       borderLeftColor: c.primary,
-      padding: 10,
-      marginBottom: 8,
+      padding: 7,
+      marginBottom: 5,
     },
     actionNumber: {
       width: 22,
