@@ -110,7 +110,7 @@ const DataFlowDiagram = () => {
             </div>
 
             {/* Animated Connector: EXOS → Cloud */}
-            <AnimatedConnector direction="right" className="absolute right-[calc(33.33%-40px)] top-1/2 -translate-y-1/2 z-10" />
+            <AnimatedConnector direction="right" bidirectional className="absolute right-[calc(33.33%-40px)] top-1/2 -translate-y-1/2 z-10" />
 
             {/* Layer 3: Cloud AI */}
             <LayerCard layer={layers.cloud} />
