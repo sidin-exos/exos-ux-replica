@@ -74,11 +74,13 @@ const Header = () => {
   const location = useLocation();
   const { user } = useUser();
   const { isSuperAdmin } = useAdminAuth();
+  const [desktopMenuValue, setDesktopMenuValue] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const exosLogo = useThemedLogo();
 
-  // Close mobile menu on navigation
+  // Close transient navigation UI on route changes
   useEffect(() => {
+    setDesktopMenuValue("");
     setMobileOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
@@ -96,7 +98,11 @@ const Header = () => {
         </NavLink>
 
         {/* Desktop Mega-Menu */}
-        <NavigationMenu className="hidden md:flex">
+        <NavigationMenu
+          className="hidden md:flex"
+          value={desktopMenuValue}
+          onValueChange={setDesktopMenuValue}
+        >
           <NavigationMenuList>
             {NAV_GROUPS.map((group) => (
               <NavigationMenuItem key={group.label}>
@@ -104,6 +110,7 @@ const Header = () => {
                   className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
                   onClick={() => {
                     if (group.label === "Scenarios") {
+                      setDesktopMenuValue("");
                       navigate("/");
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }
@@ -119,6 +126,7 @@ const Header = () => {
                         <li key={item.path}>
                           <button
                             onClick={() => navigate(item.path)}
+                            type="button"
                             className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
                           >
                             {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
