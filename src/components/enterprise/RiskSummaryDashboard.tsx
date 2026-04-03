@@ -74,7 +74,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
 
       if (error || !reports) return { deteriorating: [], improving: [], lastUpdate: null };
 
-      const trackerMap = new Map(trackers.map((t) => [t.id, t.name]));
+      const trackerMap = new Map(trackers.map((t) => [t.id, t]));
       const seen = new Set<string>();
       const deteriorating: SignalItem[] = [];
       const improving: SignalItem[] = [];
