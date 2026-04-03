@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { TrendingUp, BarChart3, Rss, Newspaper, Mail, MessageSquare } from "lucide-react";
-import signalRadarImg from "@/assets/signal-radar.png";
+import signalRadarImg from "@/assets/design_variant_b.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,7 +106,7 @@ const InflationPlatform = () => {
             </div>
           </div>
           <div className="hidden lg:flex items-center justify-center">
-            <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={512} height={512} className="w-64 h-auto object-contain opacity-70" />
+            <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80 mix-blend-multiply dark:mix-blend-screen dark:invert dark:brightness-90 dark:hue-rotate-180" />
           </div>
         </div>
 
