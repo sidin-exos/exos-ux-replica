@@ -64,9 +64,6 @@ const DataRequirementsAlert = ({
                 <h4 className={cn("font-semibold", statusConfig.titleColor)}>
                   {statusConfig.title}
                 </h4>
-                <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", statusConfig.badgeBg)}>
-                  {score}/100
-                </span>
               </div>
 
               {/* Coaching messages */}
