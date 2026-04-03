@@ -428,6 +428,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
     if (result?.success) {
       setAnalysisResult(result.result);
+      setStructuredEnvelope(sentinelEnvelope);
       setAnalysisTimestamp(new Date().toISOString());
       setStep("results");
       toast.success("Analysis complete!");
