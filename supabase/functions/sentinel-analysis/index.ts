@@ -8,6 +8,7 @@ import { callGoogleAI } from "../_shared/google-ai.ts";
 import { anonymizeText, deanonymizeText, type AnonymizationResultServer } from "../_shared/anonymizer.ts";
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { trackEvent, trackOnceEvent, trackDailyEvent } from "../_shared/track.ts";
 import {
   SCENARIO_GROUP_REGISTRY, SCENARIO_ID_REGISTRY, GROUP_LABELS,
   GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
@@ -601,6 +602,33 @@ serve(async (req) => {
     );
   }
 
+  // Funnel: session_returned (CP6) — fire at most once/day if user signed up >= 7 days ago
+  trackDailyEvent({
+    userId,
+    event: "session_returned",
+    checkpoint: "CP6",
+    computeProps: async (supabase) => {
+      const { data } = await supabase
+        .from("user_funnel_events")
+        .select("created_at")
+        .eq("user_id", userId)
+        .eq("event_name", "user_signed_up")
+        .limit(1)
+        .maybeSingle();
+      if (!data) return null;
+      const daysSince = Math.floor(
+        (Date.now() - new Date(data.created_at).getTime()) / (1000 * 60 * 60 * 24),
+      );
+      if (daysSince < 7) return null;
+      const { count } = await supabase
+        .from("user_funnel_events")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("event_name", "session_returned");
+      return { days_since_signup: daysSince, session_number: (count ?? 0) + 1 };
+    },
+  });
+
   // Declare tracer and parentRunId at function scope for error handler
   let tracer: LangSmithTracer | undefined;
   let parentRunId: string | undefined;
@@ -923,6 +951,11 @@ serve(async (req) => {
         });
       }
 
+      // Funnel: first_action_completed (CP3) — only first analysis ever
+      trackOnceEvent({ userId, event: "first_action_completed", checkpoint: "CP3", properties: { action_type: "scenario_started" } });
+      // Funnel: report_generated (CP4)
+      trackEvent({ userId, event: "report_generated", checkpoint: "CP4", properties: { report_type: scenarioType, scenario_id: scenarioId } });
+
       return new Response(
         JSON.stringify({
           content: responseContent,
@@ -1025,6 +1058,11 @@ serve(async (req) => {
           ...(singleParsedEnvelope?.schema_version === '1.0' ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: '1.0' } : {}),
         });
         tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
+
+        // Funnel: first_action_completed (CP3) — only first analysis ever
+        trackOnceEvent({ userId, event: "first_action_completed", checkpoint: "CP3", properties: { action_type: "scenario_started" } });
+        // Funnel: report_generated (CP4)
+        trackEvent({ userId, event: "report_generated", checkpoint: "CP4", properties: { report_type: scenarioType, scenario_id: scenarioId } });
 
         return new Response(
           JSON.stringify({

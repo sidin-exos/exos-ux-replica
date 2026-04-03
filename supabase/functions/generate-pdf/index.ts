@@ -25,6 +25,7 @@ import {
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { generatePdfBuffer } from "./pdf-document.tsx";
+import { trackEvent } from "../_shared/track.ts";
 import type { GeneratePdfPayload } from "./types.ts";
 
 serve(async (req) => {
@@ -90,6 +91,9 @@ serve(async (req) => {
 
     // 4. Generate PDF
     const pdfBytes = await generatePdfBuffer(payload);
+
+    // Funnel: report_exported (CP4)
+    trackEvent({ userId: authResult.user.userId, event: "report_exported", checkpoint: "CP4", properties: { format: "pdf" } });
 
     // Sanitize filename to prevent Content-Disposition header injection
     const safeTitle = scenarioTitle

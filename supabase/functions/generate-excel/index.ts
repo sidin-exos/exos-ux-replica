@@ -23,6 +23,7 @@ import {
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { generateExcelBuffer } from "./excel-document.ts";
+import { trackEvent } from "../_shared/track.ts";
 import type { GenerateExcelPayload } from "./types.ts";
 
 let authResult: { user: { userId: string } } | { error: { status: number; message: string } };
@@ -74,6 +75,9 @@ serve(async (req) => {
 
     // 4. Generate Excel
     const xlsxBytes = await generateExcelBuffer(payload);
+
+    // Funnel: report_exported (CP4)
+    trackEvent({ userId: authResult.user.userId, event: "report_exported", checkpoint: "CP4", properties: { format: "xlsx" } });
 
     // Sanitize filename to prevent Content-Disposition header injection
     const safeTitle = scenarioTitle
