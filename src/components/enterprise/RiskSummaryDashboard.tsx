@@ -160,7 +160,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
               <div className="flex items-center gap-1.5">
                 <TrendingDown className="w-3 h-3 text-destructive flex-shrink-0" />
                 <span className="text-[11px] font-medium text-destructive truncate">
-                  {item.trackerName}
+                  {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
