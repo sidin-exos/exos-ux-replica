@@ -385,13 +385,7 @@ const Features = () => {
             </a>
           </div>
 
-          {!isAuthLoading && !user ? (
-            <AuthPrompt
-              feature="Reports & Dashboards"
-              description="View your procurement analysis reports and performance dashboards"
-            />
-          ) : (
-            <>
+          {(() => {
               {/* Guide Me — 4-category cards */}
               <div className="mb-8">
                 <h3 className="exos-label-caps mb-3">What are you trying to decide?</h3>
