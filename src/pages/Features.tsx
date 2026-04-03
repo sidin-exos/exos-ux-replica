@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
-import { useThemedLogo } from "@/hooks/useThemedLogo";
+import exosMark from "@/assets/exos-mark.svg";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 
