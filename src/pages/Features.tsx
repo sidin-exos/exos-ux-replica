@@ -221,10 +221,6 @@ const Features = () => {
           <DataFlowDiagram />
         </section>
 
-        {/* Industry Use Cases — Full Section */}
-        <section id="success" className="mb-16 animate-fade-up" style={{ animationDelay: "500ms" }}>
-          <UseCaseShowcase platform="scenarios" variant="section" />
-        </section>
 
         <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
           <SiteFeedbackButton scenarioId="features" />
