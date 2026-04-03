@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText } from "lucide-react";
+import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText, Layers, TrendingUp } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -176,20 +176,20 @@ const Features = () => {
 
   const valuePropositions = [
     {
-      icon: Brain,
-      title: "29 Procurement Scenarios",
-      description: "Purpose-built AI models for high-stakes procurement decisions — from cost optimization to risk simulation.",
+      icon: Layers,
+      title: "Scenarios",
+      description: "Pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.",
       highlights: [
-        "Make-or-Buy & TCO analysis",
-        "Supplier dependency & exit planning",
-        "Black Swan scenario simulation",
-        "SOW & specification optimization"
+        "29 procurement-specific AI scenarios",
+        "Multi-cycle Chain of Experts pipeline",
+        "Methodology-driven agentic loops",
+        "Custom LLM settings per scenario"
       ]
     },
     {
       icon: Database,
-      title: "Real-Time Market Intelligence",
-      description: "Ground every analysis with live market data — supplier news, M&A activity, commodity trends, and regulatory changes.",
+      title: "Market Intelligence & Knowledge Base",
+      description: "Inject live market context directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
       highlights: [
         "Live supplier & category intelligence",
         "30+ industry grounding profiles",
@@ -198,9 +198,20 @@ const Features = () => {
       ]
     },
     {
+      icon: TrendingUp,
+      title: "Inflation Monitor & Risk Assessment Platform",
+      description: "Continuously track the noise, surface what's changed, and flag only what requires your decision.",
+      highlights: [
+        "Automated inflation driver scanning",
+        "Risk event detection & alerting",
+        "Bridge scenario recommendations",
+        "Continuous monitoring cadence"
+      ]
+    },
+    {
       icon: Lock,
       title: "Commercial Data Safety",
-      description: "Sensitive commercial data is semantically anonymized before reaching any external API, then restored on return.",
+      description: "Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.",
       highlights: [
         "Semantic anonymization of commercial data",
         "PII and financial identifier masking",
@@ -227,10 +238,13 @@ const Features = () => {
             <img src={resolvedTheme === 'dark' ? exosMarkDark : exosMark} alt="EXOS" className="h-24 md:h-32 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-            How <span className="text-gradient">EXOS</span> Works
+            Do More With Less. <span className="text-gradient">Decide With Confidence.</span>
           </h1>
-          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-            Enterprise-grade AI analysis with privacy-first architecture.
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto mb-4">
+            Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
+          </p>
+          <p className="text-muted-foreground text-sm max-w-xl mx-auto font-medium">
+            EXOS works as three interconnected layers.
           </p>
         </section>
 
