@@ -29,6 +29,7 @@ interface ReportState {
   scenarioTitle: string;
   scenarioId?: string;
   analysisResult: string;
+  structuredData?: string;
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];
