@@ -95,7 +95,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
         const detSignals = extractSignals(content, DETERIORATING_KEYWORDS, 1);
         for (const s of detSignals) {
           if (deteriorating.length < 3) {
-            deteriorating.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id });
+            deteriorating.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id, reportDate: report.created_at });
           }
         }
 
