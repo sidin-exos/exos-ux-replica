@@ -98,10 +98,15 @@ const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor specializing i
 Output your audit as a structured critique with [PASS] or [FAIL] markers for each check.
 At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION].`;
 
-function buildSynthesizerPrompt(dashboards: string[] = []): string {
-  const dashboardInstruction = dashboards.length > 0
-    ? `You MUST generate data for these specific dashboards: ${dashboards.join(", ")}`
-    : "Include dashboard keys relevant to the scenario.";
+function buildSynthesizerPrompt(scenarioGroup: string | null, scenarioId: string | null): string {
+  // Synthesizer uses structured JSON output via schema injection
+  const schemaInjection = scenarioGroup
+    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + GROUP_SCHEMAS[scenarioGroup]
+    : '';
+
+  const sid = scenarioId ? SCENARIO_ID_REGISTRY[scenarioId] || scenarioId : 'unknown';
+  const groupLabel = scenarioGroup ? GROUP_LABELS[scenarioGroup] || scenarioGroup : 'unknown';
+
   return `You are a Senior Procurement Strategist producing the final deliverable for a client.
 
 You are given:
@@ -122,16 +127,9 @@ Output ONLY the final polished analysis. Do NOT include:
 
 The output should read as a clean, professional procurement analysis as if it were correct from the start.
 
-IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON. Do NOT wrap the JSON in markdown code blocks. ${dashboardInstruction}
+Use scenario_id "${sid}" and group "${scenarioGroup}" with group_label "${groupLabel}" in the envelope.
 
-Required schemas:
-- costWaterfall: {"components":[{"name":"...","value":NUMBER,"type":"cost"|"reduction"}],"currency":"$"}
-- tcoComparison: {"data":[{"year":"Y0","optA":NUMBER,"optB":NUMBER}],"options":[{"id":"optA","name":"...","color":"#1B2A4A","totalTCO":NUMBER}],"currency":"$"}
-- actionChecklist: {"actions":[{"action":"...","priority":"high"|"medium"|"low","status":"pending"|"in-progress"|"done","owner":"..."}]}
-- riskMatrix: {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
-- sensitivitySpider: {"variables":[{"name":"...","baseCase":NUMBER,"lowCase":NUMBER,"highCase":NUMBER}],"currency":"$"}
-
-Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"License Fees","value":120000,"type":"cost"},{"name":"Discount","value":18000,"type":"reduction"}],"currency":"$"}}</dashboard-data>`;
+${schemaInjection}`;
 }
 
 // ============================================
