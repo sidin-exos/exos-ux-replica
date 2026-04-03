@@ -13,7 +13,8 @@
  */
 
 import ExcelJS from "exceljs";
-import { extractDashboardData, stripDashboardData, DashboardData } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, stripDashboardData, isStructuredOutput, DashboardData } from "@/lib/dashboard-data-parser";
+import type { ExosOutput } from "@/lib/sentinel/types";
 
 // ─── EXOS Brand Colours (ARGB) ──────────────────────────────────────
 
