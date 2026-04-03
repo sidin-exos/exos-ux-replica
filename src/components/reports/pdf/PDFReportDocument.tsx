@@ -938,6 +938,15 @@ const PDFReportDocument = ({
 }: PDFReportDocumentProps) => {
   const c = getPdfColors(pdfTheme);
   const s = buildStyles(c);
+
+  // Try structured EXOS Output Schema v1.0
+  let structuredOutput: ExosOutput | null = null;
+  if (isStructuredOutput(analysisResult)) {
+    try {
+      structuredOutput = JSON.parse(analysisResult) as ExosOutput;
+    } catch { /* fall through */ }
+  }
+
   const parsedData = extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
   const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
