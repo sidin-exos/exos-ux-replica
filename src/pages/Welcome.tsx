@@ -186,17 +186,17 @@ const Welcome = () => {
                           </div>
                         </div>
                         {i < arr.length - 1 && (
-                          <div className="flex justify-center">
+                          <div className="flex justify-center py-0.5">
                             {i === 1 ? (
-                              <svg width="12" height="14" viewBox="0 0 12 14" className="text-primary/60">
-                                <path d="M2 3 L6 0 L10 3" fill="currentColor" stroke="none" />
-                                <line x1="6" y1="3" x2="6" y2="11" stroke="currentColor" strokeWidth="1.5" />
-                                <path d="M2 11 L6 14 L10 11" fill="currentColor" stroke="none" />
+                              <svg width="20" height="24" viewBox="0 0 20 24" className="text-primary">
+                                <path d="M4 6 L10 0 L16 6" fill="currentColor" stroke="none" />
+                                <line x1="10" y1="5" x2="10" y2="19" stroke="currentColor" strokeWidth="2.5" />
+                                <path d="M4 18 L10 24 L16 18" fill="currentColor" stroke="none" />
                               </svg>
                             ) : (
-                              <svg width="12" height="12" viewBox="0 0 12 12" className="text-primary/60">
-                                <line x1="6" y1="0" x2="6" y2="8" stroke="currentColor" strokeWidth="1.5" />
-                                <path d="M2 7 L6 12 L10 7" fill="currentColor" stroke="none" />
+                              <svg width="16" height="18" viewBox="0 0 16 18" className="text-primary/50">
+                                <line x1="8" y1="0" x2="8" y2="13" stroke="currentColor" strokeWidth="2" />
+                                <path d="M3 11 L8 18 L13 11" fill="currentColor" stroke="none" />
                               </svg>
                             )}
                           </div>
