@@ -508,6 +508,7 @@ const Features = () => {
           </a>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };
