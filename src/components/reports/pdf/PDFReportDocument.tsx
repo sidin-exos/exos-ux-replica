@@ -234,11 +234,11 @@ function buildStyles(c: PdfColorSet) {
       letterSpacing: 1,
     },
     coverTitle: {
-      fontSize: 26,
+      fontSize: 22,
       fontFamily: "Helvetica-Bold",
       color: c.text,
-      marginBottom: 24,
-      lineHeight: 1.3,
+      marginBottom: 12,
+      lineHeight: 1.2,
     },
     coverDivider: {
       height: 1,
