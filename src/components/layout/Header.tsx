@@ -101,7 +101,15 @@ const Header = () => {
           <NavigationMenuList>
             {NAV_GROUPS.map((group) => (
               <NavigationMenuItem key={group.label}>
-                <NavigationMenuTrigger className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
+                <NavigationMenuTrigger
+                  className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                  onClick={() => {
+                    if (group.label === "Scenarios") {
+                      navigate("/");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }
+                  }}
+                >
                   {group.label}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
