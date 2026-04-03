@@ -737,6 +737,8 @@ export const scenarios: Scenario[] = [
       "Scenario Comparison Table: Side-by-side financial projections",
       "Risk-adjusted Recommendation: AI-powered optimal licensing strategy",
     ],
+    scenario_id: "S19",
+    group: "C",
   },
 
   // ===== 20. CATEGORY RISK EVALUATOR — TYPE 1 =====
@@ -775,6 +777,8 @@ export const scenarios: Scenario[] = [
       "Recommended Contract Terms: Key clauses to include based on category risks",
       "Decision Readiness Score: Assessment of whether tender should proceed",
     ],
+    scenario_id: "S20",
+    group: "C",
   },
 
   // ═══════════════════════════════════════════════════════
@@ -817,6 +821,8 @@ export const scenarios: Scenario[] = [
       "Walk-away Scenario Plan: When and how to exit negotiations",
       "Value Creation Opportunities: Win-win options to explore",
     ],
+    scenario_id: "S21",
+    group: "D",
   },
 
   // ===== 22. CATEGORY STRATEGY — TYPE 0 =====
@@ -1077,6 +1083,8 @@ export const scenarios: Scenario[] = [
       "Gap Analysis & Clarification Requests",
       "Recommended Sources for Further Discovery",
     ],
+    scenario_id: "S28",
+    group: "E",
   },
 
   // ===== 29. PRE-FLIGHT AUDIT — TYPE 1H =====
@@ -1112,6 +1120,8 @@ export const scenarios: Scenario[] = [
       "Negotiation Brief: Key leverage points and talking points for meetings",
       "Due Diligence Checklist: Items to verify during formal evaluation",
     ],
+    scenario_id: "S29",
+    group: "E",
   },
 ];
 
