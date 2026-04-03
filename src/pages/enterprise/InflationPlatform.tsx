@@ -106,7 +106,7 @@ const InflationPlatform = () => {
             </div>
           </div>
           <div className="hidden lg:flex items-center justify-center">
-            <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80 mix-blend-multiply dark:mix-blend-screen dark:invert dark:brightness-90 dark:hue-rotate-180" />
+            <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80 mix-blend-multiply dark:mix-blend-lighten dark:opacity-60" />
           </div>
         </div>
 
