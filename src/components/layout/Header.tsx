@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useUser } from "@/hooks/useUser";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import exosLogoFallback from "@/assets/exos-logo-dark.png";
+import exosLogoFallback from "@/assets/exos-logo-dark.svg";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
