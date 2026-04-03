@@ -110,7 +110,7 @@ const DataFlowDiagram = () => {
             </div>
 
             {/* Animated Connector: EXOS → Cloud */}
-            <AnimatedConnector direction="right" className="absolute right-[calc(33.33%-40px)] top-1/2 -translate-y-1/2 z-10" />
+            <AnimatedConnector direction="right" bidirectional className="absolute right-[calc(33.33%-40px)] top-1/2 -translate-y-1/2 z-10" />
 
             {/* Layer 3: Cloud AI */}
             <LayerCard layer={layers.cloud} />
@@ -280,7 +280,7 @@ const MobileLayerCard = ({ layer }: { layer: LayerCardProps["layer"] }) => {
 };
 
 /* Animated Horizontal Connector */
-const AnimatedConnector = ({ direction, className }: { direction: "left" | "right"; className?: string }) => {
+const AnimatedConnector = ({ direction, className, bidirectional = false }: { direction: "left" | "right"; className?: string; bidirectional?: boolean }) => {
   return (
     <div className={cn("w-16 h-8 flex items-center", className)}>
       <svg className="w-full h-full" viewBox="0 0 64 32">
@@ -308,15 +308,26 @@ const AnimatedConnector = ({ direction, className }: { direction: "left" | "righ
           strokeDasharray="8 8"
           className="animate-flow-line"
         />
-        {/* Arrow */}
+        {/* Right Arrow */}
         <path
-          d={direction === "right" ? "M56 12 L64 16 L56 20" : "M8 12 L0 16 L8 20"}
+          d={direction === "right" || bidirectional ? "M56 12 L64 16 L56 20" : "M8 12 L0 16 L8 20"}
           fill="none"
           stroke="hsl(var(--primary))"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+        {/* Left Arrow (for bidirectional) */}
+        {bidirectional && (
+          <path
+            d="M8 12 L0 16 L8 20"
+            fill="none"
+            stroke="hsl(var(--primary))"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        )}
       </svg>
     </div>
   );
