@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
-import { useThemedLogo } from "@/hooks/useThemedLogo";
+import exosMark from "@/assets/exos-mark.svg";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 
 const Features = () => {
-  const exosLogo = useThemedLogo();
+  
   const location = useLocation();
   const { isSuperAdmin } = useAdminAuth();
 
@@ -77,7 +77,7 @@ const Features = () => {
         {/* Hero heading */}
         <section className="mb-10 animate-fade-up text-center">
           <div className="flex justify-center mb-4">
-            <img src={exosLogo} alt="EXOS" className="h-20 md:h-24 w-auto object-contain opacity-90 mix-blend-multiply dark:mix-blend-screen" />
+            <img src={exosMark} alt="EXOS" className="h-24 md:h-32 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
             How <span className="text-gradient">EXOS</span> Works
