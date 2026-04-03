@@ -7,7 +7,7 @@
   </defs>
 
   <!-- background -->
-  <rect width="340" height="120" fill="#FFFFFF"/>
+  <rect width="340" height="120" fill="none"/>
 
   <!-- ── MARK ── -->
   <g transform="translate(20,10)">
