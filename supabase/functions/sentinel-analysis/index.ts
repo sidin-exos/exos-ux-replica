@@ -450,7 +450,7 @@ function buildServerGroundedPrompts(
   userInput: string,
   injectShadowLog: boolean = false,
   marketInsight: MarketInsightRow | null = null,
-  selectedDashboards: string[] = []
+  _selectedDashboards: string[] = []
 ): { systemPrompt: string; userPrompt: string } {
   // Build system prompt with injected context
   const contextParts: string[] = [];
@@ -459,37 +459,30 @@ function buildServerGroundedPrompts(
   if (category) contextParts.push(buildCategoryXML(category));
   if (marketInsight) contextParts.push(buildMarketIntelligenceXML(marketInsight));
 
+  // Derive scenario group server-side
+  const scenarioGroup = SCENARIO_GROUP_REGISTRY[scenarioType];
+  const scenarioCode = SCENARIO_ID_REGISTRY[scenarioType] || scenarioType;
+  const groupLabel = scenarioGroup ? GROUP_LABELS[scenarioGroup] || scenarioGroup : 'unknown';
+
+  // Build schema injection (replaces legacy <dashboard-data> XML instructions)
+  const schemaInjection = scenarioGroup
+    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + GROUP_SCHEMAS[scenarioGroup]
+    : '';
+
   const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
 
 IMPORTANT RULES:
 1. Maintain all masked tokens exactly as provided (e.g., [SUPPLIER_A], [AMOUNT_B])
 2. Do not attempt to guess or reveal masked information
 3. Base recommendations on the provided industry/category context
-4. Structure your response with clear sections: Analysis, Recommendations, Risks, Next Steps
-5. Quantify recommendations with specific percentages or ranges when possible
-6. Only cite specific data points from provided context
-7. Flag uncertainty explicitly with confidence levels
-8. Err on cautious side for savings projections
-9. At the VERY END of your response, you MUST append a <dashboard-data> XML block containing valid JSON. Do NOT wrap the JSON in markdown code blocks inside the XML tags. Use REAL values extracted from your analysis.
-${selectedDashboards.length > 0 ? `\nYou MUST generate data for these specific dashboards: ${selectedDashboards.join(", ")}` : "\nInclude dashboard keys relevant to the scenario."}
+4. Quantify recommendations with specific percentages or ranges when possible
+5. Only cite specific data points from provided context
+6. Flag uncertainty explicitly with confidence levels
+7. Err on cautious side for savings projections
 
-Required schemas for each dashboard key:
-- costWaterfall: {"components":[{"name":"...","value":NUMBER,"type":"cost"|"reduction"}],"currency":"$"}
-- tcoComparison: {"data":[{"year":"Y0","optA":NUMBER,"optB":NUMBER}],"options":[{"id":"optA","name":"...","color":"#1B2A4A","totalTCO":NUMBER}],"currency":"$"}
-- actionChecklist: {"actions":[{"action":"...","priority":"high"|"medium"|"low"|"critical","status":"pending"|"in-progress"|"done"|"blocked","owner":"..."}]}
-- riskMatrix: {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
-- sensitivitySpider: {"variables":[{"name":"...","baseCase":NUMBER,"lowCase":NUMBER,"highCase":NUMBER}],"currency":"$"}
-- decisionMatrix: {"criteria":[{"name":"...","weight":NUMBER}],"options":[{"name":"...","scores":[NUMBER]}]}
-- timelineRoadmap: {"phases":[{"name":"...","startWeek":NUMBER,"endWeek":NUMBER,"status":"completed"|"in-progress"|"upcoming"}]}
-- kraljicQuadrant: {"items":[{"id":"1","name":"...","supplyRisk":NUMBER,"businessImpact":NUMBER}]}
-- scenarioComparison: {"scenarios":[{"id":"a","name":"...","color":"#1B2A4A"}],"radarData":[{"metric":"...","a":NUMBER,"b":NUMBER}],"summary":[{"criteria":"...","a":"...","b":"..."}]}
-- supplierScorecard: {"suppliers":[{"name":"...","score":NUMBER,"trend":"up"|"down"|"stable","spend":"$1M"}]}
-- sowAnalysis: {"clarity":NUMBER,"sections":[{"name":"...","status":"complete"|"partial"|"missing","note":"..."}]}
-- negotiationPrep: {"batna":{"strength":NUMBER,"description":"..."},"leveragePoints":[{"point":"...","tactic":"..."}],"sequence":[{"step":"...","detail":"..."}]}
-- dataQuality: {"fields":[{"field":"...","status":"complete"|"partial"|"missing","coverage":NUMBER}]}
-- licenseTier: {"tiers":[{"name":"...","users":NUMBER,"costPerUser":NUMBER,"totalCost":NUMBER,"color":"#1B2A4A"}]}
+Use scenario_id "${scenarioCode}", scenario_name based on the analysis type, group "${scenarioGroup || 'A'}", and group_label "${groupLabel}" in the envelope.
 
-Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"Materials","value":225000,"type":"cost"},{"name":"Savings","value":45000,"type":"reduction"}],"currency":"$"}}</dashboard-data>
+${schemaInjection}
 
 ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
 
