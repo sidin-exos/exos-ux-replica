@@ -39,7 +39,7 @@ const step1Schema = z.object({
 const step2Schema = z.object({
   jobTitle: z.string().trim().min(2, "Job title is required").max(200),
   industry: z.string().min(1, "Please select an industry"),
-  primaryChallenge: z.string().min(1, "Please select a challenge"),
+  primaryChallenge: z.string().optional(),
   referralSource: z.string().optional(),
 });
 
