@@ -4,6 +4,7 @@ import AuthPrompt from "@/components/auth/AuthPrompt";
 import { TrendingUp, BarChart3, Rss, Newspaper } from "lucide-react";
 import signalRadarImg from "@/assets/design_variant_b.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";

@@ -146,6 +146,13 @@ const RiskPlatform = () => {
           <UseCaseShowcase platform="risk" variant="card" />
         </div>
 
+
+        {/* Workspace separator */}
+        <div className="flex items-center gap-4 my-2">
+          <h2 className="text-sm font-semibold text-muted-foreground whitespace-nowrap uppercase tracking-wide">Your Workspace</h2>
+          <Separator className="flex-1" />
+        </div>
+
         {/* Setup Wizard (2/3) + Usage Stats (1/3) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
