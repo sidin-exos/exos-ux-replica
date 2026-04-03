@@ -108,7 +108,9 @@ const Welcome = () => {
                 <span className="uppercase tracking-widest font-medium">
                   29 fine-tuned procurement scenarios
                   <br />
-                  30 industries 70 procurement categories
+                  30 industries
+                  <br />
+                  70 procurement categories
                 </span>
               </p>
             </div>
