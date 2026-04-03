@@ -1019,6 +1019,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          business_context: string | null
           company_name: string | null
           company_size: string | null
           country: string | null
@@ -1035,6 +1036,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          business_context?: string | null
           company_name?: string | null
           company_size?: string | null
           country?: string | null
@@ -1051,6 +1053,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          business_context?: string | null
           company_name?: string | null
           company_size?: string | null
           country?: string | null
