@@ -49,6 +49,7 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
     country: profile.country ?? "",
     industry: profile.industry ?? "",
     primary_challenge: profile.primary_challenge ?? "",
+    business_context: profile.business_context ?? "",
   });
 
   const startEdit = () => {
