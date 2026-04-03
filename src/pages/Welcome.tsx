@@ -85,7 +85,7 @@ const Welcome = () => {
             {/* Left */}
             <div className="flex flex-col gap-6 max-w-xl">
               <Badge variant="outline" className="w-fit border-primary/30 text-primary text-xs tracking-wider uppercase">
-                ✦ The Future of Procurement
+                ✦ AGENTIC AI procurement analytical platform
               </Badge>
               <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.1] tracking-tight">
                 Procurement Strategy,{" "}
