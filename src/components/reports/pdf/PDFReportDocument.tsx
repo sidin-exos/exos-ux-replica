@@ -208,7 +208,7 @@ function buildStyles(c: PdfColorSet) {
 
     // Cover page
     coverSpacer: {
-      height: "8%",
+      height: "4%",
     },
     coverLeftStripe: {
       position: "absolute",
