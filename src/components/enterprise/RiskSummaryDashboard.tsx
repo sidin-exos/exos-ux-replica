@@ -11,6 +11,7 @@ interface SignalItem {
   monitorLabel: string;
   signal: string;
   trackerId: string;
+  reportDate: string;
 }
 
 const DETERIORATING_KEYWORDS = [
@@ -94,14 +95,14 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
         const detSignals = extractSignals(content, DETERIORATING_KEYWORDS, 1);
         for (const s of detSignals) {
           if (deteriorating.length < 3) {
-            deteriorating.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id });
+            deteriorating.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id, reportDate: report.created_at });
           }
         }
 
         const impSignals = extractSignals(content, IMPROVING_KEYWORDS, 1);
         for (const s of impSignals) {
           if (improving.length < 3) {
-            improving.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id });
+            improving.push({ trackerName, monitorLabel, signal: s, trackerId: report.tracker_id, reportDate: report.created_at });
           }
         }
       }
@@ -118,11 +119,6 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Latest Signals</h3>
-        {data?.lastUpdate && (
-          <span className="text-[10px] text-muted-foreground">
-            {new Date(data.lastUpdate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-          </span>
-        )}
       </div>
 
       {isLoading && (
@@ -157,10 +153,15 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
               key={i}
               className="rounded-md border border-destructive/20 bg-destructive/5 p-2.5 space-y-1"
             >
-              <div className="flex items-center gap-1.5">
-                <TrendingDown className="w-3 h-3 text-destructive flex-shrink-0" />
-                <span className="text-[11px] font-medium text-destructive truncate">
-                  {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <TrendingDown className="w-3 h-3 text-destructive flex-shrink-0" />
+                  <span className="text-[11px] font-medium text-destructive truncate">
+                    {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
@@ -183,10 +184,15 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
               key={i}
               className="rounded-md border border-emerald-600/20 bg-emerald-600/5 p-2.5 space-y-1"
             >
-              <div className="flex items-center gap-1.5">
-                <TrendingUp className="w-3 h-3 text-emerald-600 flex-shrink-0" />
-                <span className="text-[11px] font-medium text-emerald-600 truncate">
-                  {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <TrendingUp className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                  <span className="text-[11px] font-medium text-emerald-600 truncate">
+                    {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.trackerName}
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
