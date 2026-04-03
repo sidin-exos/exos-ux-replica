@@ -203,3 +203,54 @@ export interface ShadowLog {
   scenario_type?: string;
   detected_input_format?: 'structured' | 'semi-structured' | 'raw_text' | 'mixed';
 }
+
+// ============================================
+// 8. EXOS OUTPUT SCHEMA v1.0 — UNIVERSAL ENVELOPE
+// ============================================
+
+export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+export type RAGStatus = 'RED' | 'AMBER' | 'GREEN';
+
+export interface ConfidenceFlag {
+  field: string;
+  reason: string;
+  severity: 'CRITICAL' | 'WARNING' | 'INFO';
+}
+
+export interface DataGap {
+  field: string;
+  impact: string;
+  resolution: string;
+}
+
+export interface Recommendation {
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  action: string;
+  financial_impact: string | null;
+  next_scenario: string | null;
+}
+
+export interface ExportMetadata {
+  generated_at: string;
+  grounding_sources: string[];
+  model_used: string;
+  langsmith_trace_id: string | null;
+}
+
+export interface ExosOutput {
+  schema_version: '1.0';
+  scenario_id: string;
+  scenario_name: string;
+  group: 'A' | 'B' | 'C' | 'D' | 'E';
+  group_label: string;
+  confidence_level: ConfidenceLevel;
+  low_confidence_watermark: boolean;
+  confidence_flags: ConfidenceFlag[];
+  summary: string;
+  executive_bullets: string[];
+  data_gaps: DataGap[];
+  recommendations: Recommendation[];
+  gdpr_flags: string[];
+  export_metadata: ExportMetadata;
+  payload: Record<string, unknown>;
+}

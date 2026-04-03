@@ -68,6 +68,8 @@ export interface Scenario {
     title: string;
     sections: { heading: string; description: string }[];
   };
+  scenario_id: string;
+  group: 'A' | 'B' | 'C' | 'D' | 'E';
 }
 
 export const scenarios: Scenario[] = [
