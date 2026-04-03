@@ -18,6 +18,7 @@ import {
   generateCategoryContextXML,
 } from "@/lib/ai-context-templates";
 import { useShareableMode } from "@/hooks/useShareableMode";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 interface ContextPreviewProps {
   industrySlug: string | null;
