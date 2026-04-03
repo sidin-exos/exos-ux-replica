@@ -155,7 +155,7 @@ const Welcome = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {[
                       { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", highlight: false },
                       { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", highlight: true },
@@ -163,12 +163,20 @@ const Welcome = () => {
                       { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", highlight: false },
                     ].map((step, i, arr) => (
                       <div key={step.label}>
-                        <div className={`flex items-start gap-3 py-2.5 px-3 rounded-xl transition-all ${step.highlight ? "bg-primary/10 border border-primary/30 shadow-sm shadow-primary/10" : ""}`}>
-                          <div className="relative shrink-0 mt-0.5">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm ${step.highlight ? "bg-primary ring-2 ring-primary/30 ring-offset-1 ring-offset-background" : "bg-gradient-to-br from-primary to-accent"}`}>
-                              <step.icon className="w-4 h-4 text-primary-foreground" />
+                        <div className={`flex items-center gap-3 py-2.5 px-4 rounded-lg border cursor-default transition-all hover:shadow-md ${
+                          step.highlight
+                            ? "bg-primary/10 border-primary/40 shadow-sm shadow-primary/10"
+                            : "bg-muted/60 dark:bg-white/5 border-border/50 hover:border-primary/30"
+                        }`}>
+                          <div className="relative shrink-0">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              step.highlight
+                                ? "bg-primary shadow-sm shadow-primary/20"
+                                : "bg-gradient-to-br from-primary/80 to-accent/80"
+                            }`}>
+                              <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
                             </div>
-                            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-background border border-primary text-[9px] font-bold text-primary flex items-center justify-center">
+                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-background border border-primary text-[8px] font-bold text-primary flex items-center justify-center">
                               {i + 1}
                             </span>
                           </div>
@@ -178,17 +186,17 @@ const Welcome = () => {
                           </div>
                         </div>
                         {i < arr.length - 1 && (
-                          <div className="flex justify-start pl-[14px]">
+                          <div className="flex justify-center">
                             {i === 1 ? (
-                              <svg width="12" height="20" viewBox="0 0 12 20" className="text-primary">
-                                <path d="M2 4 L6 0 L10 4" fill="currentColor" stroke="none" />
-                                <line x1="6" y1="4" x2="6" y2="16" stroke="currentColor" strokeWidth="2" />
-                                <path d="M2 16 L6 20 L10 16" fill="currentColor" stroke="none" />
+                              <svg width="12" height="14" viewBox="0 0 12 14" className="text-primary/60">
+                                <path d="M2 3 L6 0 L10 3" fill="currentColor" stroke="none" />
+                                <line x1="6" y1="3" x2="6" y2="11" stroke="currentColor" strokeWidth="1.5" />
+                                <path d="M2 11 L6 14 L10 11" fill="currentColor" stroke="none" />
                               </svg>
                             ) : (
-                              <svg width="12" height="16" viewBox="0 0 12 16" className="text-primary">
-                                <line x1="6" y1="0" x2="6" y2="12" stroke="currentColor" strokeWidth="2" />
-                                <path d="M2 10 L6 16 L10 10" fill="currentColor" stroke="none" />
+                              <svg width="12" height="12" viewBox="0 0 12 12" className="text-primary/60">
+                                <line x1="6" y1="0" x2="6" y2="8" stroke="currentColor" strokeWidth="1.5" />
+                                <path d="M2 7 L6 12 L10 7" fill="currentColor" stroke="none" />
                               </svg>
                             )}
                           </div>
