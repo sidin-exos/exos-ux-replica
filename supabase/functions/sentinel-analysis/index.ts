@@ -776,14 +776,14 @@ serve(async (req) => {
         });
       }
     } else if (body.systemPrompt) {
-      // Legacy path: client sent full prompts (useQuickAnalysis, ModelConfigPanel, etc.)
+      // Legacy path: client sent full prompts
       systemPrompt = body.systemPrompt;
-      // Append selected dashboards if provided
-      if (selectedDashboards.length > 0) {
-        systemPrompt += `\n\nYou MUST generate <dashboard-data> JSON for these specific dashboards: ${selectedDashboards.join(", ")}`;
+      // Inject schema for structured output if scenario type is known
+      const legacyGroup = scenarioType ? SCENARIO_GROUP_REGISTRY[scenarioType] : null;
+      if (legacyGroup) {
+        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[legacyGroup] + '\n\n' + GROUP_SCHEMAS[legacyGroup];
       }
       userPrompt = anonymizedUserPrompt;
-      // Inject shadow log for legacy path too if conditions met
       if (enableTestLogging && scenarioType) {
         systemPrompt += SHADOW_LOG_INSTRUCTION;
       }
