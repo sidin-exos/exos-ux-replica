@@ -31,6 +31,7 @@ export interface IntelResult {
   summary: string;
   citations: Citation[];
   queryType: QueryType;
+  queryName?: string;
   processingTimeMs: number;
   model: string;
   tokenUsage?: TokenUsage | null;
