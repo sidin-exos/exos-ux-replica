@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bookmark, Plus, Save, Trash2, Edit2, Check, X } from "lucide-react";
+import { Bookmark, Plus, Save, Trash2, Edit2, Check, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSavedBusinessContexts, SavedBusinessContext } from "@/hooks/useSavedBusinessContexts";
+import { useAccountData } from "@/hooks/useAccountData";
 import { toast } from "sonner";
 
 interface BusinessContextFieldProps {
