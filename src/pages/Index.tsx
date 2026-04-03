@@ -43,6 +43,7 @@ const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
 };
 
 const Index = () => {
+  const { user, isLoading: isUserLoading } = useUser();
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
