@@ -178,7 +178,7 @@ function buildStyles(c: PdfColorSet) {
     findingCardTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 4 },
     findingCardBody: { fontSize: 8, color: c.textMuted, lineHeight: 1.4 },
     actionItem: { flexDirection: "row", alignItems: "flex-start", backgroundColor: c.surface, borderLeftWidth: 3, borderLeftColor: c.primary, padding: 7, marginBottom: 5 },
-    actionNumber: { width: 22, height: 22, borderRadius: 11, backgroundColor: c.primary, justifyContent: "center", alignItems: "center", marginRight: 10 },
+    actionNumber: { width: 18, height: 18, borderRadius: 9, backgroundColor: c.primary, justifyContent: "center", alignItems: "center", marginRight: 8 },
     actionNumberText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.textOnPrimary },
     actionContent: { flex: 1 },
     actionTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 3 },
