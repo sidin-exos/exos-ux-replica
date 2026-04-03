@@ -157,19 +157,19 @@ const TrackerSetupWizard = ({
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Step indicators */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap">
         {STEP_LABELS.map((label, i) => (
-          <div key={label} className="flex items-center gap-2">
+          <div key={label} className="flex items-center gap-1">
             <Badge
               variant={i === step ? "default" : i < step ? "secondary" : "outline"}
-              className="text-xs"
+              className="text-[10px] h-4 w-4 p-0 flex items-center justify-center"
             >
               {i + 1}
             </Badge>
-            <span className={`text-sm ${i === step ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+            <span className={`text-xs ${i === step ? "font-medium text-foreground" : "text-muted-foreground"}`}>
               {label}
             </span>
-            {i < STEP_LABELS.length - 1 && <span className="text-muted-foreground">→</span>}
+            {i < STEP_LABELS.length - 1 && <span className="text-muted-foreground/50 text-xs">→</span>}
           </div>
         ))}
       </div>
