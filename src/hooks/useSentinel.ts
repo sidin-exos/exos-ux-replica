@@ -37,6 +37,7 @@ interface SentinelState {
   error: Error | null;
   tokenUsage: TokenUsage | null;
   processingTimeMs: number | null;
+  structuredEnvelope: Record<string, unknown> | null;
 }
 
 export function useSentinel(options: UseSentinelOptions = {}) {
