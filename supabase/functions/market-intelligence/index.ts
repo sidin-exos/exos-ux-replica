@@ -157,10 +157,17 @@ serve(async (req) => {
       queryType, queryLength: query?.length || 0, recencyFilter, domainFilter,
     }, { tags: ["model:sonar-pro"] });
 
-    const systemPrompt = QUERY_TYPE_PROMPTS[queryType];
-    if (!systemPrompt) {
+    const baseSystemPrompt = QUERY_TYPE_PROMPTS[queryType];
+    if (!baseSystemPrompt) {
       throw new Error(`Invalid queryType: ${queryType}`);
     }
+
+    // Inject EXOS Output Schema v1.0 contract for Group E
+    const schemaInjection = AI_PROMPT_CONTRACT
+      + GROUP_AI_INSTRUCTIONS['E']
+      + '\n\n'
+      + GROUP_SCHEMAS['E'];
+    const systemPrompt = baseSystemPrompt + '\n\n' + schemaInjection;
 
     // Build enriched query with optional context
     let enrichedQuery = query;
