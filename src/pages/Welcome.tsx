@@ -84,52 +84,64 @@ const Welcome = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left */}
             <div className="flex flex-col gap-6 max-w-xl">
-              <Badge variant="outline" className="w-fit border-primary/30 text-primary text-xs tracking-wider uppercase">
-                ✦ AGENTIC AI procurement analytical platform
+              <Badge variant="outline" className="w-fit border-primary/30 text-primary text-xs tracking-wider uppercase animate-in fade-in slide-in-from-bottom-2 duration-500">
+                ✦ Agentic AI Procurement Analytical Platform
               </Badge>
               <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.1] tracking-tight">
-                Procurement Strategy,{" "}
+                Do More With Less.{" "}
                 <span className="italic" style={{ color: "hsl(var(--primary))" }}>
-                  Powered by AI
+                  Decide With Confidence.
                 </span>
               </h1>
-              <div className="text-muted-foreground text-lg leading-relaxed space-y-4">
+              <p className="text-muted-foreground text-xl leading-relaxed font-medium">
+                AI-powered procurement analysis in minutes — <span className="text-foreground">cost breakdowns</span>, <span className="text-foreground">negotiation scenarios</span>, <span className="text-foreground">risk assessments</span> — enriched with industry knowledge and live market intelligence.
+              </p>
+              <div className="text-muted-foreground text-base leading-relaxed space-y-3">
                 <p>
-                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
+                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS works as <strong className="text-foreground font-semibold">three interconnected layers</strong>:
                 </p>
-                <p>EXOS works as three interconnected layers.</p>
-                <div className="space-y-2">
-                  <p>
-                    Scenarios are pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.
-                  </p>
-                  <p>
-                    Market Intelligence and the Market Insights Knowledge Base inject live market context directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.
-                  </p>
-                  <p>
-                    Inflation Monitor and Risk Assessment Platform continuously track the noise, surface what's changed, and flag only what requires your decision.
-                  </p>
-                  <p>
-                    Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.
-                  </p>
-                </div>
+                <ul className="space-y-2 pl-1">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+                    <span><strong className="text-foreground">Scenarios</strong> — pre-defined agentic AI flows with procurement methodology, agentic loops, and custom LLM settings.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+                    <span><strong className="text-foreground">Market Intelligence</strong> — live market context injected into AI results: benchmarks, risks, pricing signals, regulatory shifts.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+                    <span><strong className="text-foreground">Continuous Monitoring</strong> — Inflation and Risk platforms that surface what's changed and flag only what requires your decision.</span>
+                  </li>
+                </ul>
+                <p className="text-sm border-l-2 border-primary/30 pl-3 text-muted-foreground/80 italic">
+                  Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.
+                </p>
               </div>
               <div className="flex flex-wrap gap-3 mt-2">
-                <Button size="lg" className="gap-2 px-6" onClick={() => navigate("/auth")}>
-                  Try EXOS
+                <Button size="lg" className="gap-2 px-8 font-semibold" onClick={() => navigate("/auth")}>
+                  Start Free Analysis <ArrowRight className="w-4 h-4" />
                 </Button>
                 <Button size="lg" variant="outline" className="gap-2 px-6" onClick={() => navigate("/features")}>
                   Explore Solutions
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-4 flex items-center gap-2">
-                <span className="uppercase tracking-widest font-medium">
-                  29 fine-tuned procurement scenarios
-                  <br />
-                  30 industries
-                  <br />
-                  70 procurement categories
+              <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="font-display text-lg font-bold text-foreground">29</span>
+                  <span className="uppercase tracking-wider">Scenarios</span>
                 </span>
-              </p>
+                <span className="w-px h-4 bg-border" />
+                <span className="flex items-center gap-1.5">
+                  <span className="font-display text-lg font-bold text-foreground">30</span>
+                  <span className="uppercase tracking-wider">Industries</span>
+                </span>
+                <span className="w-px h-4 bg-border" />
+                <span className="flex items-center gap-1.5">
+                  <span className="font-display text-lg font-bold text-foreground">70</span>
+                  <span className="uppercase tracking-wider">Categories</span>
+                </span>
+              </div>
             </div>
 
             {/* Right — Abstract dashboard preview */}
