@@ -907,9 +907,26 @@ serve(async (req) => {
         validationConfidence: validation.confidenceScore,
       });
 
+      // Try to parse structured envelope
+      const parsedEnvelope = parseAIResponse(finalContent);
+      let responseContent = multiDeanon.restoredText;
+      if (parsedEnvelope?.schema_version === '1.0') {
+        responseContent = buildMarkdownFromEnvelope(parsedEnvelope);
+        // GDPR flag logging
+        if (parsedEnvelope.gdpr_flags?.length > 0) {
+          console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: parsedEnvelope.scenario_id, flag_count: parsedEnvelope.gdpr_flags.length });
+        }
+        tracer.patchRun(parentRunId!, {
+          scenario_id: parsedEnvelope.scenario_id, confidence_level: parsedEnvelope.confidence_level,
+          data_gaps_count: parsedEnvelope.data_gaps?.length ?? 0, gdpr_flags_count: parsedEnvelope.gdpr_flags?.length ?? 0,
+          schema_version: parsedEnvelope.schema_version,
+        });
+      }
+
       return new Response(
         JSON.stringify({
-          content: multiDeanon.restoredText,
+          content: responseContent,
+          structured: parsedEnvelope?.schema_version === '1.0' ? parsedEnvelope : undefined,
           validation,
           model: googleModel,
           source: "google_ai_studio",
