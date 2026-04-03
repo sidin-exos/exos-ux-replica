@@ -98,7 +98,7 @@ const SignUpForm = () => {
 
   const step1Form = useForm<Step1Values>({
     resolver: zodResolver(step1Schema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       fullName: "",
       workEmail: "",
