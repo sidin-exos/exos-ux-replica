@@ -64,6 +64,7 @@ interface QueryBuilderProps {
 
 export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryBuilderProps) {
   const [queryType, setQueryType] = useState<QueryType>("supplier");
+  const [queryName, setQueryName] = useState("");
   const [queryText, setQueryText] = useState("");
   const [recencyFilter, setRecencyFilter] = useState<string>("__none__");
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
@@ -76,6 +77,7 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
 
     onSubmit({
       queryType,
+      queryName: queryName.trim() || undefined,
       query: queryText.trim(),
       recencyFilter: recencyFilter === "__none__" ? undefined : recencyFilter as RecencyFilter,
       domainFilter: selectedDomains.length > 0 ? selectedDomains : undefined,
@@ -136,6 +138,20 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
                 );
               })}
             </div>
+          </div>
+
+          {/* Query Name */}
+          <div className="space-y-2">
+            <Label htmlFor="queryName">Report Title</Label>
+            <Input
+              id="queryName"
+              placeholder="e.g., Q2 Supplier Risk Assessment"
+              value={queryName}
+              onChange={(e) => setQueryName(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              This name will appear as the header in the generated report
+            </p>
           </div>
 
           {/* Query Input */}
