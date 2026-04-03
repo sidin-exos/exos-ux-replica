@@ -459,8 +459,8 @@ function buildStyles(c: PdfColorSet) {
     },
     kpiCell: {
       flex: 1,
-      paddingVertical: 10,
-      paddingHorizontal: 10,
+      paddingVertical: 6,
+      paddingHorizontal: 6,
       alignItems: "center",
       borderRightWidth: 1,
       borderRightColor: c.border,
