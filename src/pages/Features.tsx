@@ -189,7 +189,7 @@ const Features = () => {
     {
       icon: Database,
       title: "Market Intelligence & Knowledge Base",
-      description: "Inject live market context directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
+      description: "Use Market Intelligence as a self-sufficient tool or inject live market context from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
       highlights: [
         "Live supplier & category intelligence",
         "30+ industry grounding profiles",
