@@ -282,7 +282,7 @@ const Header = () => {
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
                   <User className="w-4 h-4" /> My Account
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/reports")}>
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/features#dashboards")}>
                   <FileText className="w-4 h-4" /> My Reports
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/market-intelligence?tab=insights")}>
