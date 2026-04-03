@@ -151,7 +151,7 @@ const Welcome = () => {
                   <div className="text-center mb-5">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20 mb-1">
                       <Shield className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-[10px] font-mono text-primary uppercase tracking-wider">How EXOS Works</span>
+                      <span className="text-[10px] font-mono text-primary uppercase tracking-wider">EXOS Agentic AI workflow</span>
                     </div>
                   </div>
 
