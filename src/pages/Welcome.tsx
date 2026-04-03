@@ -192,7 +192,7 @@ const Welcome = () => {
                                 <line x1="6" y1="6" x2="20" y2="6" stroke="currentColor" strokeWidth="1.5" />
                                 <path d="M8 2 L2 6 L8 10" fill="currentColor" stroke="none" />
                               </svg>
-                              <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border border-accent/40 bg-accent/10 cursor-default transition-all hover:shadow-md hover:border-accent/60">
+                              <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border border-accent/40 bg-accent/10 cursor-default transition-all hover:shadow-md hover:border-accent/60 self-stretch">
                                 <div className="w-7 h-7 rounded-lg bg-accent/80 flex items-center justify-center">
                                   <step.sideButton.icon className="w-3.5 h-3.5 text-accent-foreground" />
                                 </div>
