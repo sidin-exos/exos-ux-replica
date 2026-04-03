@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/badge";
@@ -508,6 +509,7 @@ const Features = () => {
           </a>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };

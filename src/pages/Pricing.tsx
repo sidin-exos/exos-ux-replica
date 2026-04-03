@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail } from "lucide-react";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -331,6 +332,7 @@ const Pricing = () => {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };
