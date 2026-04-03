@@ -130,11 +130,18 @@ const Index = () => {
                 </h1>
                 <p className="text-muted-foreground text-base max-w-2xl mb-4">
                   Critical procurement decisions are often made without adequate preparation due to lack of time, 
-                  knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes — cost 
+                  knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost 
                   breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
                 </p>
                 <p className="text-muted-foreground text-base max-w-2xl mb-4">
-                  Your sensitive commercial data is masked before reaching external APIs—then grounded 
+                  EXOS works as three interconnected layers. The first keeps your analysis sharp: Market Intelligence 
+                  and the Market Insights Knowledge Base inject live market context directly into AI results — benchmarks, 
+                  risks, pricing signals, regulatory shifts. The second keeps your attention focused: the Inflation Monitor 
+                  and Risk Assessment Platform continuously track the noise, surface what's changed, and flag only what 
+                  requires your decision.
+                </p>
+                <p className="text-muted-foreground text-base max-w-2xl mb-4">
+                  Your sensitive commercial data is masked before reaching external APIs — then grounded 
                   and validated on the way back.
                 </p>
               </div>
