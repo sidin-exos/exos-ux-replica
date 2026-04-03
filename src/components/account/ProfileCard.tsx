@@ -173,6 +173,34 @@ const ProfileCard = ({ profile, email, emptyFieldCount, updateProfile }: Profile
           ))}
         </div>
 
+        {/* Business Context Section */}
+        <div className="space-y-2 pt-2 border-t border-border">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+            <div>
+              <span className="text-[11px] uppercase tracking-wider text-primary font-medium">
+                Business Context
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                This business context will be used to tailor AI analysis results for your company. You will be able to select it in analysis scenarios.
+              </p>
+            </div>
+          </div>
+          {isEditing ? (
+            <Textarea
+              value={form.business_context}
+              onChange={(e) => setForm((f) => ({ ...f, business_context: e.target.value }))}
+              placeholder="Describe your industry context, company specifics, constraints, and any relevant background…"
+              className="min-h-[100px]"
+              rows={4}
+            />
+          ) : (
+            <p className="text-sm text-foreground whitespace-pre-wrap">
+              {profile.business_context || <span className="text-muted-foreground italic">No business context set. Click Edit to add one.</span>}
+            </p>
+          )}
+        </div>
+
         {isEditing && (
           <div className="flex items-center gap-3 pt-2">
             <Button onClick={handleSave} disabled={updateProfile.isPending} className="gap-1.5">
