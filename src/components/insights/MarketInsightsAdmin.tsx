@@ -312,8 +312,8 @@ export function MarketInsightsAdmin() {
             </div>
             <div className="lg:col-span-1 relative overflow-hidden rounded-lg min-h-[120px]">
               <img src={marketInsightsPreview} alt="Market Insights Preview" className="w-full h-full object-cover rounded-lg" />
-              <div className="absolute inset-0 bg-gradient-to-r from-card via-card/60 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-t from-card/40 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-card/40 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent pointer-events-none" />
             </div>
           </div>
         </CardHeader>
