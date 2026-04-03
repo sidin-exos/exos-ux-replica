@@ -529,6 +529,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         scenarioTitle: scenario.title,
         scenarioId: scenario.id,
         analysisResult: analysisResult,
+        structuredData: structuredEnvelope ? JSON.stringify(structuredEnvelope) : undefined,
         formData: formData,
         timestamp: analysisTimestamp,
         selectedDashboards: selectedDashboards,
