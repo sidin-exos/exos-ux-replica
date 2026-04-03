@@ -204,10 +204,11 @@ const Welcome = () => {
                         {i < arr.length - 1 && (
                           <div className="flex justify-center py-0.5">
                             {i === 1 ? (
-                              <svg width="12" height="24" viewBox="0 0 12 24" className="text-primary">
-                                <path d="M6 0 L10 6 L2 6 Z" fill="currentColor" stroke="none" />
-                                <line x1="6" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2.5" />
-                                <path d="M6 24 L2 18 L10 18 Z" fill="currentColor" stroke="none" />
+                              <svg width="24" height="28" viewBox="0 0 24 28" className="text-primary">
+                                {/* Up arrow */}
+                                <path d="M12 0 L18 7 L14 7 L14 12 L10 12 L10 7 L6 7 Z" fill="currentColor" />
+                                {/* Down arrow */}
+                                <path d="M12 28 L6 21 L10 21 L10 16 L14 16 L14 21 L18 21 Z" fill="currentColor" />
                               </svg>
                             ) : (
                               <svg width="12" height="20" viewBox="0 0 12 20" className="text-primary/50">
