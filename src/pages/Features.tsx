@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Brain, Database, ArrowRight, Lock, Mail } from "lucide-react";
+import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,27 @@ import exosMark from "@/assets/exos-mark.svg";
 import exosMarkDark from "@/assets/exos-mark-dark.svg";
 import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useUser } from "@/hooks/useUser";
+import AuthPrompt from "@/components/auth/AuthPrompt";
+import { dashboardConfigs, DashboardType } from "@/lib/dashboard-mappings";
+import { getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
+import DashboardContextCard from "@/components/reports/DashboardContextCard";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ActionChecklistDashboard from "@/components/reports/ActionChecklistDashboard";
+import DecisionMatrixDashboard from "@/components/reports/DecisionMatrixDashboard";
+import CostWaterfallDashboard from "@/components/reports/CostWaterfallDashboard";
+import TimelineRoadmapDashboard from "@/components/reports/TimelineRoadmapDashboard";
+import KraljicQuadrantDashboard from "@/components/reports/KraljicQuadrantDashboard";
+import TCOComparisonDashboard from "@/components/reports/TCOComparisonDashboard";
+import LicenseTierDashboard from "@/components/reports/LicenseTierDashboard";
+import SensitivitySpiderDashboard from "@/components/reports/SensitivitySpiderDashboard";
+import RiskMatrixDashboard from "@/components/reports/RiskMatrixDashboard";
+import ScenarioComparisonDashboard from "@/components/reports/ScenarioComparisonDashboard";
+import SupplierPerformanceDashboard from "@/components/reports/SupplierPerformanceDashboard";
+import SOWAnalysisDashboard from "@/components/reports/SOWAnalysisDashboard";
+import NegotiationPrepDashboard from "@/components/reports/NegotiationPrepDashboard";
+import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
+import { LucideIcon } from "lucide-react";
 
 
 const Features = () => {
