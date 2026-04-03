@@ -157,33 +157,53 @@ const Welcome = () => {
 
                   <div className="space-y-1.5">
                     {[
-                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", highlight: false, sideButton: { icon: Database, label: "Risk & Inflation Platforms" } },
-                      { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", highlight: true, sideButton: { icon: Radar, label: "Market Intelligence" } },
-                      { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", highlight: false },
-                      { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", highlight: false },
-                    ].map((step, i, arr) => (
+                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", tier: "input" as const, sideButton: { icon: Database, label: "Risk & Inflation Platforms" } },
+                      { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", tier: "engine" as const, sideButton: { icon: Radar, label: "Market Intelligence" } },
+                      { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", tier: "cloud" as const },
+                      { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", tier: "output" as const },
+                    ].map((step, i, arr) => {
+                      const tierStyles = {
+                        input: {
+                          card: "bg-accent/8 border-accent/40 shadow-sm shadow-accent/10",
+                          icon: "bg-accent shadow-sm shadow-accent/30",
+                          label: "text-xs text-accent font-bold",
+                          badge: "border-accent bg-accent text-accent-foreground",
+                        },
+                        engine: {
+                          card: "bg-primary/10 border-primary/40 shadow-md shadow-primary/15 ring-1 ring-primary/20",
+                          icon: "bg-primary shadow-md shadow-primary/30",
+                          label: "text-sm text-primary font-bold",
+                          badge: "border-primary bg-primary text-primary-foreground",
+                        },
+                        cloud: {
+                          card: "bg-iris/8 border-iris/40 shadow-sm shadow-iris/10",
+                          icon: "bg-iris shadow-sm shadow-iris/30",
+                          label: "text-xs text-iris font-bold",
+                          badge: "border-iris bg-iris text-white",
+                        },
+                        output: {
+                          card: "bg-positive/8 border-positive/40 shadow-sm shadow-positive/10",
+                          icon: "bg-positive shadow-sm shadow-positive/30",
+                          label: "text-xs text-positive font-bold",
+                          badge: "border-positive bg-positive text-white",
+                        },
+                      };
+                      const s = tierStyles[step.tier];
+                      return (
                       <div key={step.label}>
                         <div className="flex items-stretch gap-2">
-                          <div className={`flex items-center gap-3 py-2.5 px-4 rounded-lg border cursor-default transition-all hover:shadow-md flex-1 ${
-                            step.highlight
-                              ? "bg-primary/10 border-primary/40 shadow-sm shadow-primary/10"
-                              : "bg-muted/60 dark:bg-white/5 border-border/50 hover:border-primary/30"
-                          }`}>
+                          <div className={`flex items-center gap-3 py-2.5 px-4 rounded-lg border cursor-default transition-all hover:shadow-lg flex-1 ${s.card}`}>
                             <div className="relative shrink-0">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                step.highlight
-                                  ? "bg-primary shadow-sm shadow-primary/20"
-                                  : "bg-gradient-to-br from-primary/80 to-accent/80"
-                              }`}>
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.icon}`}>
                                 <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
                               </div>
-                              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-background border border-primary text-[8px] font-bold text-primary flex items-center justify-center">
+                              <span className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[8px] font-bold flex items-center justify-center ${s.badge}`}>
                                 {i + 1}
                               </span>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className={`font-semibold leading-tight ${step.highlight ? "text-sm text-primary" : "text-xs text-foreground"}`}>{step.label}</p>
-                              <p className={`leading-snug mt-0.5 ${step.highlight ? "text-[11px] text-foreground/80" : "text-[10px] text-muted-foreground"}`}>{step.desc}</p>
+                              <p className={`leading-tight ${s.label}`}>{step.label}</p>
+                              <p className={`leading-snug mt-0.5 ${step.tier === "engine" ? "text-[11px] text-foreground/80" : "text-[10px] text-muted-foreground"}`}>{step.desc}</p>
                             </div>
                           </div>
                           {step.sideButton && (
@@ -192,11 +212,11 @@ const Welcome = () => {
                                 <path d="M2 6 L8 2 L8 10 Z" fill="currentColor" stroke="none" />
                                 <line x1="8" y1="6" x2="24" y2="6" stroke="currentColor" strokeWidth="2" />
                               </svg>
-                              <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border border-accent/40 bg-accent/10 cursor-default transition-all hover:shadow-md hover:border-accent/60 self-stretch">
-                                <div className="w-7 h-7 rounded-lg bg-accent/80 flex items-center justify-center">
-                                  <step.sideButton.icon className="w-3.5 h-3.5 text-accent-foreground" />
+                              <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border-2 border-copper/50 bg-copper/10 cursor-default transition-all hover:shadow-lg hover:border-copper/70 self-stretch shadow-sm shadow-copper/10">
+                                <div className="w-7 h-7 rounded-lg bg-copper shadow-sm shadow-copper/30 flex items-center justify-center">
+                                  <step.sideButton.icon className="w-3.5 h-3.5 text-white" />
                                 </div>
-                                <p className="text-[10px] font-semibold text-foreground leading-tight max-w-[5rem]">{step.sideButton.label}</p>
+                                <p className="text-[10px] font-bold text-foreground leading-tight max-w-[5rem]">{step.sideButton.label}</p>
                               </div>
                             </div>
                           )}
@@ -205,9 +225,7 @@ const Welcome = () => {
                           <div className="flex justify-center py-0.5">
                             {i === 1 ? (
                               <svg width="24" height="28" viewBox="0 0 24 28" className="text-primary">
-                                {/* Up arrow */}
                                 <path d="M12 0 L18 7 L14 7 L14 12 L10 12 L10 7 L6 7 Z" fill="currentColor" />
-                                {/* Down arrow */}
                                 <path d="M12 28 L6 21 L10 21 L10 16 L14 16 L14 21 L18 21 Z" fill="currentColor" />
                               </svg>
                             ) : (
@@ -219,7 +237,8 @@ const Welcome = () => {
                           </div>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
