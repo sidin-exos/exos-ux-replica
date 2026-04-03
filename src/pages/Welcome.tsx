@@ -163,27 +163,37 @@ const Welcome = () => {
                       { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", highlight: false },
                     ].map((step, i, arr) => (
                       <div key={step.label}>
-                        <div className={`flex items-center gap-3 py-2.5 px-4 rounded-lg border cursor-default transition-all hover:shadow-md ${
-                          step.highlight
-                            ? "bg-primary/10 border-primary/40 shadow-sm shadow-primary/10"
-                            : "bg-muted/60 dark:bg-white/5 border-border/50 hover:border-primary/30"
-                        }`}>
-                          <div className="relative shrink-0">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                              step.highlight
-                                ? "bg-primary shadow-sm shadow-primary/20"
-                                : "bg-gradient-to-br from-primary/80 to-accent/80"
-                            }`}>
-                              <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
+                        <div className="flex items-stretch gap-2">
+                          <div className={`flex items-center gap-3 py-2.5 px-4 rounded-lg border cursor-default transition-all hover:shadow-md flex-1 ${
+                            step.highlight
+                              ? "bg-primary/10 border-primary/40 shadow-sm shadow-primary/10"
+                              : "bg-muted/60 dark:bg-white/5 border-border/50 hover:border-primary/30"
+                          }`}>
+                            <div className="relative shrink-0">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                step.highlight
+                                  ? "bg-primary shadow-sm shadow-primary/20"
+                                  : "bg-gradient-to-br from-primary/80 to-accent/80"
+                              }`}>
+                                <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
+                              </div>
+                              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-background border border-primary text-[8px] font-bold text-primary flex items-center justify-center">
+                                {i + 1}
+                              </span>
                             </div>
-                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-background border border-primary text-[8px] font-bold text-primary flex items-center justify-center">
-                              {i + 1}
-                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className={`font-semibold leading-tight ${step.highlight ? "text-sm text-primary" : "text-xs text-foreground"}`}>{step.label}</p>
+                              <p className={`leading-snug mt-0.5 ${step.highlight ? "text-[11px] text-foreground/80" : "text-[10px] text-muted-foreground"}`}>{step.desc}</p>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className={`font-semibold leading-tight ${step.highlight ? "text-sm text-primary" : "text-xs text-foreground"}`}>{step.label}</p>
-                            <p className={`leading-snug mt-0.5 ${step.highlight ? "text-[11px] text-foreground/80" : "text-[10px] text-muted-foreground"}`}>{step.desc}</p>
-                          </div>
+                          {step.sideButton && (
+                            <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border border-accent/40 bg-accent/10 cursor-default transition-all hover:shadow-md hover:border-accent/60 shrink-0">
+                              <div className="w-7 h-7 rounded-lg bg-accent/80 flex items-center justify-center">
+                                <step.sideButton.icon className="w-3.5 h-3.5 text-accent-foreground" />
+                              </div>
+                              <p className="text-[10px] font-semibold text-accent-foreground/90 leading-tight max-w-[5rem]">{step.sideButton.label}</p>
+                            </div>
+                          )}
                         </div>
                         {i < arr.length - 1 && (
                           <div className="flex justify-center py-0.5">
