@@ -67,7 +67,7 @@ const Auth = () => {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate(isEmailConfirmation ? "/account?confirmed=true" : "/welcome");
+        navigate(isEmailConfirmation ? "/account?confirmed=true" : "/");
       }
       setIsCheckingAuth(false);
     });
