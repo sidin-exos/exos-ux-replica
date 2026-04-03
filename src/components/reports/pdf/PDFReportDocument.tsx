@@ -8,10 +8,11 @@ import {
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
-import { extractDashboardData, stripDashboardData } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, stripDashboardData, isStructuredOutput } from "@/lib/dashboard-data-parser";
 import { DashboardType } from "@/lib/dashboard-mappings";
 import type { PdfThemeMode, PdfColorSet } from "./dashboardVisuals/theme";
 import { getPdfColors } from "./dashboardVisuals/theme";
+import type { ExosOutput } from "@/lib/sentinel/types";
 
 // ── FIX 1: Strip ALL markdown from AI text ──
 
