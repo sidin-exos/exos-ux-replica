@@ -14,7 +14,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 
 const Features = () => {
-  const exosLogo = useThemedLogo();
+  const _ = exosMark; // mark imported above
   const location = useLocation();
   const { isSuperAdmin } = useAdminAuth();
 
