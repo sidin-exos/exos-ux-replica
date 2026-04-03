@@ -121,12 +121,12 @@ const RiskPlatform = () => {
                 </p>
               </div>
               <Tabs defaultValue="DM-1" className="w-full">
-                <TabsList className="w-full flex flex-wrap h-auto gap-1.5 bg-accent/20 p-2 rounded-lg border border-border/40">
+                <TabsList className="w-full grid grid-cols-5 h-auto gap-1.5 bg-accent/20 p-2 rounded-lg border border-border/40">
                   {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
                     <TabsTrigger
                       key={key}
                       value={key}
-                      className="flex-1 min-w-[100px] text-xs whitespace-normal leading-tight py-2.5 px-3 rounded-md transition-all
+                      className="text-xs whitespace-normal leading-tight py-2.5 px-2 rounded-md transition-all
                         border border-border/50 bg-card shadow-sm
                         hover:bg-accent/60 hover:shadow-md hover:border-border
                         data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary/30 data-[state=active]:shadow-[0_2px_8px_-2px_hsl(var(--primary)/0.4)] data-[state=active]:ring-1 data-[state=active]:ring-primary/20"
