@@ -8,10 +8,11 @@ import {
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
-import { extractDashboardData, stripDashboardData } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, stripDashboardData, isStructuredOutput } from "@/lib/dashboard-data-parser";
 import { DashboardType } from "@/lib/dashboard-mappings";
 import type { PdfThemeMode, PdfColorSet } from "./dashboardVisuals/theme";
 import { getPdfColors } from "./dashboardVisuals/theme";
+import type { ExosOutput } from "@/lib/sentinel/types";
 
 // ── FIX 1: Strip ALL markdown from AI text ──
 
@@ -937,6 +938,15 @@ const PDFReportDocument = ({
 }: PDFReportDocumentProps) => {
   const c = getPdfColors(pdfTheme);
   const s = buildStyles(c);
+
+  // Try structured EXOS Output Schema v1.0
+  let structuredOutput: ExosOutput | null = null;
+  if (isStructuredOutput(analysisResult)) {
+    try {
+      structuredOutput = JSON.parse(analysisResult) as ExosOutput;
+    } catch { /* fall through */ }
+  }
+
   const parsedData = extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
   const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
@@ -955,9 +965,12 @@ const PDFReportDocument = ({
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
   const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
-  const confidenceLevel = evaluationConfidence
-    ? (evaluationConfidence === "HIGH" ? "High" : "Low")
-    : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
+  const confidenceLevel = structuredOutput
+    ? (structuredOutput.confidence_level === "HIGH" ? "High" : structuredOutput.confidence_level === "MEDIUM" ? "Medium" : "Low")
+    : evaluationConfidence
+      ? (evaluationConfidence === "HIGH" ? "High" : "Low")
+      : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
+  const hasLowConfidenceWatermark = structuredOutput?.low_confidence_watermark === true;
 
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
@@ -977,19 +990,45 @@ const PDFReportDocument = ({
 
   const findingColors = [c.accent1, c.accent2, c.accent4];
 
+  // Confidence badge colors
+  const confidenceBadgeColor = confidenceLevel === "High" ? "#3d8b63" : confidenceLevel === "Medium" ? "#cc8a14" : "#ab3232";
+  const confidenceBadgeBg = confidenceLevel === "High" ? "#E8F5E8" : confidenceLevel === "Medium" ? "#FFF4E0" : "#FDE8E8";
+
   return (
     <Document>
       {/* ── Page 1: Cover + Executive Summary (merged) ── */}
       <Page size="A4" style={s.page} id="section-executive-summary">
-        {/* Teal header bar */}
+        {/* Teal header bar with confidence badge */}
         <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
-          <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: c.textOnPrimary }}>
-            EXOS · Confidential
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 10 }}>
+              EXOS · Confidential
+            </Text>
+            {structuredOutput && (
+              <View style={{ backgroundColor: confidenceBadgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: confidenceBadgeColor }}>
+                  {confidenceLevel.toUpperCase()} CONFIDENCE
+                </Text>
+              </View>
+            )}
+          </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Prepared for EXOS · {formattedDate}</Text>
+            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>
+              {structuredOutput?.export_metadata?.generated_at
+                ? `Generated ${new Date(structuredOutput.export_metadata.generated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`
+                : `Prepared for EXOS · ${formattedDate}`}
+            </Text>
           </View>
         </View>
+
+        {/* Low confidence watermark */}
+        {hasLowConfidenceWatermark && (
+          <View style={{ position: "absolute", top: "40%", left: "15%", transform: "rotate(-30deg)", opacity: 0.08 }}>
+            <Text style={{ fontSize: 48, fontFamily: "Helvetica-Bold", color: "#ab3232" }}>
+              LOW CONFIDENCE
+            </Text>
+          </View>
+        )}
 
         {/* Left teal stripe */}
         <View style={s.coverLeftStripe} />

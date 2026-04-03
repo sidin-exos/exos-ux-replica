@@ -13,7 +13,8 @@
  */
 
 import ExcelJS from "exceljs";
-import { extractDashboardData, stripDashboardData, DashboardData } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, stripDashboardData, isStructuredOutput, DashboardData } from "@/lib/dashboard-data-parser";
+import type { ExosOutput } from "@/lib/sentinel/types";
 
 // ─── EXOS Brand Colours (ARGB) ──────────────────────────────────────
 
@@ -600,15 +601,31 @@ export async function exportReportToExcel(
   formData: Record<string, string>,
   timestamp: string,
 ) {
-  const wb = new ExcelJS.Workbook();
+  // Check for structured EXOS Output Schema v1.0
+  if (isStructuredOutput(analysisResult)) {
+    try {
+      const parsed = JSON.parse(analysisResult) as ExosOutput;
+      return exportStructuredToExcel(parsed, formData, timestamp);
+    } catch { /* fall through to legacy */ }
+  }
 
-  // ── Single consolidated sheet ─────────────────────────────────────
+  return exportLegacyToExcel(scenarioTitle, analysisResult, formData, timestamp);
+}
+
+/**
+ * Export structured EXOS Output Schema v1.0 to Excel
+ */
+async function exportStructuredToExcel(
+  parsed: ExosOutput,
+  formData: Record<string, string>,
+  timestamp: string,
+) {
+  const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Report");
   ws.properties.tabColor = { argb: COLORS.deepTeal };
 
   let currentRow = 1;
 
-  // Helper: write a section title row (merged, branded)
   const writeSectionTitle = (title: string) => {
     const row = ws.getRow(currentRow);
     row.getCell(1).value = title;
@@ -616,7 +633,6 @@ export async function exportReportToExcel(
     row.getCell(1).fill = { ...BRAND_TEAL_FILL };
     row.getCell(1).alignment = { vertical: "middle" };
     row.getCell(1).border = { ...THIN_BORDER };
-    // Extend fill across columns
     for (let c = 2; c <= 8; c++) {
       row.getCell(c).fill = { ...BRAND_TEAL_FILL };
       row.getCell(c).border = { ...THIN_BORDER };
@@ -625,15 +641,176 @@ export async function exportReportToExcel(
     currentRow++;
   };
 
-  // Helper: write a table with headers and data, return range for styling
+  const writeTableAtRow = (headers: string[], dataRows: unknown[][]) => {
+    const startRow = currentRow;
+    const headerRow = ws.getRow(currentRow);
+    headers.forEach((h, i) => {
+      const cell = headerRow.getCell(i + 1);
+      cell.value = h;
+      cell.font = { ...HEADER_FONT };
+      cell.fill = { ...HEADER_FILL };
+      cell.border = { ...HEADER_BORDER };
+      cell.alignment = { vertical: "middle", horizontal: "left" };
+    });
+    headerRow.height = 28;
+    currentRow++;
+    for (const row of dataRows) {
+      const wsRow = ws.getRow(currentRow);
+      row.forEach((val, i) => { wsRow.getCell(i + 1).value = val as any; });
+      currentRow++;
+    }
+    for (let r = startRow + 1; r < currentRow; r++) {
+      const row = ws.getRow(r);
+      const isEven = (r - startRow) % 2 === 0;
+      for (let c = 1; c <= headers.length; c++) {
+        const cell = row.getCell(c);
+        cell.font = { ...DATA_FONT };
+        cell.border = { ...THIN_BORDER };
+        cell.alignment = { vertical: "top", wrapText: true };
+        if (isEven) cell.fill = { ...PALE_TEAL_FILL };
+      }
+    }
+  };
+
+  const addSpacing = (rows = 2) => { currentRow += rows; };
+
+  // Low confidence watermark
+  if (parsed.low_confidence_watermark) {
+    const wmRow = ws.getRow(currentRow);
+    wmRow.getCell(1).value = "⚠ LOW CONFIDENCE — KEY DATA MISSING — NOT FOR EXECUTIVE DISTRIBUTION";
+    wmRow.getCell(1).font = { name: "Inter", family: 2, size: 14, bold: true, color: { argb: COLORS.warningText } };
+    wmRow.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.warningBg } };
+    wmRow.height = 32;
+    currentRow++;
+    addSpacing(1);
+  }
+
+  // Title with confidence suffix
+  const confidenceSuffix = parsed.confidence_level !== 'HIGH' ? ` [${parsed.confidence_level} CONFIDENCE]` : '';
+  const reportTitle = `${parsed.scenario_name}${confidenceSuffix}`;
+
+  // Section 1: Executive Summary
+  writeSectionTitle("Executive Summary");
+  const summaryData: [string, string][] = [
+    ["Report Title", sanitizeTableCell(reportTitle)],
+    ["Scenario ID", parsed.scenario_id],
+    ["Group", `${parsed.group} — ${parsed.group_label}`],
+    ["Confidence", parsed.confidence_level],
+    ["Generated At", new Date(timestamp).toLocaleString()],
+    ...parsed.executive_bullets.map((b, i): [string, string] => [`Key Finding ${i + 1}`, sanitizeTableCell(b)]),
+  ];
+  writeTableAtRow(["Field", "Value"], summaryData);
+  addSpacing(3);
+
+  // Section 2: Recommendations
+  if (parsed.recommendations?.length > 0) {
+    writeSectionTitle("Recommendations");
+    const recoData = parsed.recommendations.map(r => [
+      sanitizeTableCell(r.priority),
+      sanitizeTableCell(r.action),
+      sanitizeTableCell(r.financial_impact ?? '—'),
+      sanitizeTableCell(r.next_scenario ?? '—'),
+    ]);
+    writeTableAtRow(["Priority", "Action", "Financial Impact", "Next Scenario"], recoData);
+    addSpacing(3);
+  }
+
+  // Section 3: Data Gaps
+  if (parsed.data_gaps?.length > 0) {
+    writeSectionTitle("Data Gaps");
+    const gapData = parsed.data_gaps.map(g => [
+      sanitizeTableCell(g.field),
+      sanitizeTableCell(g.impact),
+      sanitizeTableCell(g.resolution),
+    ]);
+    writeTableAtRow(["Field", "Impact", "Resolution"], gapData);
+    addSpacing(3);
+  }
+
+  // Section 4: Analysis Inputs
+  const inputEntries = Object.entries(formData);
+  if (inputEntries.length > 0) {
+    writeSectionTitle("Analysis Inputs");
+    const inputData = inputEntries.map(([key, value]): [string, string] => [
+      key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      sanitizeTableCell(value),
+    ]);
+    writeTableAtRow(["Parameter", "Value"], inputData);
+    addSpacing(3);
+  }
+
+  // Section 5: Dashboard Data from payload
+  const dashData = extractDashboardData(JSON.stringify(parsed));
+  if (dashData) {
+    const dashSheets = dashboardToSheets(dashData);
+    for (const { name, rows } of dashSheets) {
+      if (rows.length === 0) continue;
+      writeSectionTitle(name);
+      const { headers, dataRows } = objectsToArrays(rows);
+      writeTableAtRow(headers, dataRows);
+      addSpacing(3);
+    }
+  }
+
+  // Hidden _meta sheet
+  const metaWs = wb.addWorksheet("_meta");
+  metaWs.state = "hidden";
+  metaWs.getRow(1).values = ["Key", "Value"];
+  metaWs.getRow(2).values = ["schema_version", parsed.schema_version];
+  metaWs.getRow(3).values = ["scenario_id", parsed.scenario_id];
+  metaWs.getRow(4).values = ["generated_at", parsed.export_metadata?.generated_at ?? ''];
+  metaWs.getRow(5).values = ["model_used", parsed.export_metadata?.model_used ?? ''];
+  metaWs.getRow(6).values = ["confidence_level", parsed.confidence_level];
+  // gdpr_flags never exported
+
+  // Column widths
+  ws.getColumn(1).width = 35;
+  ws.getColumn(2).width = 60;
+  for (let c = 3; c <= 8; c++) ws.getColumn(c).width = 20;
+
+  const dateStr = new Date(timestamp).toISOString().slice(0, 10);
+  const fileName = `EXOS_${parsed.scenario_name.replace(/\s+/g, "_").slice(0, 40)}_${dateStr}.xlsx`;
+  const buffer = await wb.xlsx.writeBuffer();
+  downloadBuffer(buffer as ArrayBuffer, fileName);
+}
+
+/**
+ * @deprecated Legacy Excel export — used for pre-schema responses
+ */
+async function exportLegacyToExcel(
+  scenarioTitle: string,
+  analysisResult: string,
+  formData: Record<string, string>,
+  timestamp: string,
+) {
+  const wb = new ExcelJS.Workbook();
+
+  const ws = wb.addWorksheet("Report");
+  ws.properties.tabColor = { argb: COLORS.deepTeal };
+
+  let currentRow = 1;
+
+  const writeSectionTitle = (title: string) => {
+    const row = ws.getRow(currentRow);
+    row.getCell(1).value = title;
+    row.getCell(1).font = { name: "Inter", family: 2, size: 14, bold: true, color: { argb: COLORS.white } };
+    row.getCell(1).fill = { ...BRAND_TEAL_FILL };
+    row.getCell(1).alignment = { vertical: "middle" };
+    row.getCell(1).border = { ...THIN_BORDER };
+    for (let c = 2; c <= 8; c++) {
+      row.getCell(c).fill = { ...BRAND_TEAL_FILL };
+      row.getCell(c).border = { ...THIN_BORDER };
+    }
+    row.height = 30;
+    currentRow++;
+  };
+
   const writeTableAtRow = (
     headers: string[],
     dataRows: unknown[][],
     sheetName?: string,
   ): SheetRange => {
     const startRow = currentRow;
-
-    // Header row
     const headerRow = ws.getRow(currentRow);
     headers.forEach((h, i) => {
       const cell = headerRow.getCell(i + 1);
@@ -646,7 +823,6 @@ export async function exportReportToExcel(
     headerRow.height = 28;
     currentRow++;
 
-    // Data rows
     for (const row of dataRows) {
       const wsRow = ws.getRow(currentRow);
       row.forEach((val, i) => {
@@ -658,7 +834,6 @@ export async function exportReportToExcel(
 
     const range: SheetRange = { cols: headers.length, rows: 1 + dataRows.length };
 
-    // Apply data styling (skip header, already styled)
     const numericCols = new Set<number>();
     const wrapColSet = new Set<number>();
     for (let c = 1; c <= range.cols; c++) {
@@ -685,7 +860,6 @@ export async function exportReportToExcel(
       }
     }
 
-    // Status formatting
     const statusCols: { col: number; header: string }[] = [];
     for (let c = 1; c <= range.cols; c++) {
       if (STATUS_COLUMNS.has(headers[c - 1])) statusCols.push({ col: c, header: headers[c - 1] });
@@ -709,12 +883,10 @@ export async function exportReportToExcel(
     return range;
   };
 
-  // Helper: add spacing rows between sections
   const addSpacing = (rows = 2) => {
     currentRow += rows;
   };
 
-  // ── Section 1: Summary ──────────────────────────────────────────────
   const keyPoints = extractKeyPoints(analysisResult);
   writeSectionTitle("Summary");
 
@@ -728,7 +900,6 @@ export async function exportReportToExcel(
 
   addSpacing(3);
 
-  // ── Section 2: Analysis Inputs ──────────────────────────────────────
   const inputEntries = Object.entries(formData);
   if (inputEntries.length > 0) {
     writeSectionTitle("Analysis Inputs");
@@ -742,7 +913,6 @@ export async function exportReportToExcel(
     addSpacing(3);
   }
 
-  // ── Section 3+: Dashboard Data ──────────────────────────────────────
   const parsedData = extractDashboardData(analysisResult);
   if (parsedData) {
     const dashSheets = dashboardToSheets(parsedData);
@@ -758,17 +928,12 @@ export async function exportReportToExcel(
     }
   }
 
-  // ── Set column widths ───────────────────────────────────────────────
   ws.getColumn(1).width = 35;
   ws.getColumn(2).width = 60;
   for (let c = 3; c <= 8; c++) {
     ws.getColumn(c).width = 20;
   }
 
-  // Freeze first row is not useful here since we have multiple tables
-  // No autoFilter since multiple tables on one sheet
-
-  // ── Trigger download ────────────────────────────────────────────────
   const dateStr = new Date(timestamp).toISOString().slice(0, 10);
   const fileName = `EXOS_${scenarioTitle.replace(/\s+/g, "_").slice(0, 40)}_${dateStr}.xlsx`;
   const buffer = await wb.xlsx.writeBuffer();
