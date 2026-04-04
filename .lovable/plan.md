@@ -1,30 +1,40 @@
 
 
-# Fix Schema Implementation Plan Filename
+## Redesign Knowledge Base Interface
 
-## Problem
-The file `docs/schema/EXOS_Schema_Implementation_Plan_v1.md` contains the CTO-corrected v2 plan but is named as v1. The rejected v1 draft contained the `public/docs/` security error. The filename must be corrected to prevent developers from confusing it with the superseded version.
+Based on the screenshots, the "Generate Market Insights" section needs to shift from a stacked layout to a **3-column card grid** where Industry, Countries & Regions, and Procurement Categories each occupy their own card at equal height.
 
-## Changes
+### Changes (single file: `src/components/insights/MarketInsightsAdmin.tsx`)
 
-### 1. Rename the file
-- Rename `docs/schema/EXOS_Schema_Implementation_Plan_v1.md` to `docs/schema/EXOS_Schema_Implementation_Plan_v2.md`
-- Content stays the same (it already contains the corrected v2 plan)
+1. **Remove the description card** at the top (the one with the preview image) — the screenshot shows the generate section as the primary content directly under the tab.
 
-### 2. Update references in `docs/ChangePDFReportsDesign.md`
-- If any cross-references to `EXOS_Schema_Implementation_Plan_v1.md` were added (or are pending from the previous update), change them to `EXOS_Schema_Implementation_Plan_v2.md`
+2. **Replace the "Generate Market Insights" Card internals** with a 3-column grid layout:
+   - **Column 1 — Industry**: A standalone card containing the industry dropdown selector, vertically centered.
+   - **Column 2 — Countries & Regions**: A standalone card with the grouped checkbox list (taller, scrollable).
+   - **Column 3 — Procurement Categories**: A standalone card with the category checkbox list (matching height).
 
-### 3. Update references in `docs/ChangeExcelReportsDesign.md`
-- Same as above — ensure all references point to `v2`
+3. **Section header**: Plain bold text "Generate Market Insights" with subtitle, no card wrapper — matching the clean look in the screenshot.
 
-### 4. Search entire codebase for stale references
-- Grep for `Implementation_Plan_v1` across all files and fix any remaining occurrences
+4. **Generate button**: Remains at the bottom-right, outside the 3 cards, same styling as current.
 
-## Files Affected
-| File | Change |
-|---|---|
-| `docs/schema/EXOS_Schema_Implementation_Plan_v1.md` | Rename to `…_v2.md` |
-| `docs/ChangePDFReportsDesign.md` | Update cross-reference if present |
-| `docs/ChangeExcelReportsDesign.md` | Update cross-reference if present |
-| Any other files with stale references | Fix to `v2` |
+5. **Increase list heights**: Bump `max-h-48` to `max-h-64` or similar to show more items without scrolling, matching the taller cards in the screenshot.
+
+6. **Keep existing**: Browse/filter table, batch progress, generation results — all remain unchanged below.
+
+### Layout sketch
+```text
+Generate Market Insights
+Select one industry, then choose countries and categories...
+
+┌──────────────┐ ┌──────────────────────┐ ┌──────────────────────┐
+│  Industry    │ │ Countries & Regions  │ │ Procurement Categories│
+│              │ │                      │ │                      │
+│ [Dropdown v] │ │ ○ Global             │ │ ○ Chemicals          │
+│              │ │ ○ European Union     │ │ ○ Construction       │
+│              │ │ ○ Asia-Pacific       │ │ ○ Electronic         │
+│              │ │ ...                  │ │ ...                  │
+└──────────────┘ └──────────────────────┘ └──────────────────────┘
+
+                        [summary text]    [Generate Market Insights]
+```
 
