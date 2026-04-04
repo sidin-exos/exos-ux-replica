@@ -63,7 +63,7 @@ const statusBadgeClass: Record<string, string> = {
   stable: "bg-accent/15 text-accent border-accent/30",
 };
 
-const InflationTrackerCard = ({ tracker, onSelect }: Props) => {
+const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
   const [expanded, setExpanded] = useState(false);
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
   const preview = buildPreview(tracker);
