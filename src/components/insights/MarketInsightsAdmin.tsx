@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAllMarketInsights, useGenerateMarketInsights } from "@/hooks/useMarketInsights";
+import { useProcurementCategories } from "@/hooks/useContextData";
 
 const INDUSTRIES = [
   { slug: "aerospace-defense", name: "Aerospace & Defense" },
@@ -44,28 +45,6 @@ const INDUSTRIES = [
   { slug: "telecom", name: "Telecom" },
 ];
 
-const CATEGORIES = [
-  { slug: "chemicals-specialty", name: "Chemicals (Specialty)" },
-  { slug: "construction-materials", name: "Construction Materials" },
-  { slug: "electronic-components", name: "Electronic Components" },
-  { slug: "facilities-management", name: "Facilities Management" },
-  { slug: "fleet-management", name: "Fleet Management" },
-  { slug: "food-ingredients", name: "Food Ingredients" },
-  { slug: "hr-recruitment", name: "HR & Recruitment" },
-  { slug: "it-hardware", name: "IT Hardware" },
-  { slug: "it-software-saas", name: "IT Software (SaaS)" },
-  { slug: "lab-supplies", name: "Lab Supplies" },
-  { slug: "logistics-sea-freight", name: "Logistics (Sea Freight)" },
-  { slug: "logistics-small-parcel", name: "Logistics (Small Parcel)" },
-  { slug: "mro-maintenance", name: "MRO (Maintenance)" },
-  { slug: "packaging-primary", name: "Packaging (Primary)" },
-  { slug: "plastics-resins", name: "Plastics/Resins" },
-  { slug: "raw-materials-steel", name: "Raw Materials (Steel)" },
-  { slug: "semiconductors", name: "Semiconductors" },
-  { slug: "telecomm-equipment", name: "Telecomm Equipment" },
-  { slug: "textile-fabrics", name: "Textile/Fabrics" },
-  { slug: "warehouse-services", name: "Warehouse Services" },
-];
 
 const COUNTRIES = [
   // Global & macro regions
@@ -190,6 +169,8 @@ export function MarketInsightsAdmin() {
   const { toast } = useToast();
   const { data: insights, isLoading: isLoadingInsights, refetch } = useAllMarketInsights();
   const { generate, isGenerating, generationResult } = useGenerateMarketInsights();
+  const { data: dbCategories } = useProcurementCategories();
+  const categories = useMemo(() => (dbCategories || []).map(c => ({ slug: c.slug, name: c.name })), [dbCategories]);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentItem: string } | null>(null);
 
   // Browse filters
@@ -245,7 +226,7 @@ export function MarketInsightsAdmin() {
     const combinations = genCountries.flatMap(countrySlug => {
       const country = COUNTRIES.find(c => c.slug === countrySlug);
       return genCategories.map(catSlug => {
-        const category = CATEGORIES.find(c => c.slug === catSlug);
+        const category = categories.find(c => c.slug === catSlug);
         return {
           industrySlug: industry.slug,
           industryName: industry.name,
@@ -377,7 +358,7 @@ export function MarketInsightsAdmin() {
             </CardHeader>
             <CardContent className="flex-1">
               <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
-                {CATEGORIES.map(c => (
+                {categories.map(c => (
                   <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
                     <Checkbox
                       checked={genCategories.includes(c.slug)}
@@ -502,7 +483,7 @@ export function MarketInsightsAdmin() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {CATEGORIES.map(c => (
+                {categories.map(c => (
                   <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
