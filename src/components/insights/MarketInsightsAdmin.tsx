@@ -296,23 +296,24 @@ export function MarketInsightsAdmin() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Column 1 — Industry */}
-          <Card className="flex flex-col">
+          <Card className="flex flex-col border-t-4 border-t-primary">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />
                 Industry
                 {genIndustry && (
-                  <Badge variant="secondary" className="text-[10px]">1</Badge>
+                  <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20">1</Badge>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
               <div className="relative mb-2">
                 <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input className="h-8 pl-7 text-xs" placeholder="Search industries..." value={searchIndustry} onChange={e => setSearchIndustry(e.target.value)} />
+                <Input className="h-8 pl-7 text-xs border-primary/20 focus-visible:ring-primary/30" placeholder="Search industries..." value={searchIndustry} onChange={e => setSearchIndustry(e.target.value)} />
               </div>
-              <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
+              <div className="border border-primary/15 rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
                 {INDUSTRIES.filter(i => i.name.toLowerCase().includes(searchIndustry.toLowerCase())).map(i => (
-                  <label key={i.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                  <label key={i.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-primary/5 rounded px-1 py-0.5">
                     <Checkbox
                       checked={genIndustry === i.slug}
                       onCheckedChange={() => setGenIndustry(genIndustry === i.slug ? "" : i.slug)}
