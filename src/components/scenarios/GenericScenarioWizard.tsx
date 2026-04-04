@@ -750,14 +750,18 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               {/* Left: Context selectors with inline editors */}
               <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card dark:bg-secondary/60 shadow-sm space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <IndustrySelector
-                    value={industrySlug}
-                    onChange={handleIndustryChange}
-                  />
-                  <CategorySelector
-                    value={categorySlug}
-                    onChange={handleCategoryChange}
-                  />
+                  <div className="p-3 rounded-lg border border-primary/15 bg-primary/[0.02]">
+                    <IndustrySelector
+                      value={industrySlug}
+                      onChange={handleIndustryChange}
+                    />
+                  </div>
+                  <div className="p-3 rounded-lg border border-iris/15 bg-iris/[0.02]">
+                    <CategorySelector
+                      value={categorySlug}
+                      onChange={handleCategoryChange}
+                    />
+                  </div>
                 </div>
 
                 {/* Inline context editors & preview — collapsed by default */}
