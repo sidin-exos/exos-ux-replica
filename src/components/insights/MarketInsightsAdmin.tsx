@@ -226,7 +226,7 @@ export function MarketInsightsAdmin() {
     const combinations = genCountries.flatMap(countrySlug => {
       const country = COUNTRIES.find(c => c.slug === countrySlug);
       return genCategories.map(catSlug => {
-        const category = CATEGORIES.find(c => c.slug === catSlug);
+        const category = categories.find(c => c.slug === catSlug);
         return {
           industrySlug: industry.slug,
           industryName: industry.name,
@@ -358,7 +358,7 @@ export function MarketInsightsAdmin() {
             </CardHeader>
             <CardContent className="flex-1">
               <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
-                {CATEGORIES.map(c => (
+                {categories.map(c => (
                   <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
                     <Checkbox
                       checked={genCategories.includes(c.slug)}
@@ -483,7 +483,7 @@ export function MarketInsightsAdmin() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {CATEGORIES.map(c => (
+                {categories.map(c => (
                   <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
