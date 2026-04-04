@@ -2,7 +2,7 @@
      width="340" height="120" viewBox="0 0 340 120">
   <defs>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&amp;display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;display=swap');
     </style>
   </defs>
 
@@ -22,7 +22,7 @@
 
   <!-- ── WORDMARK ── -->
   <text x="138" y="65"
-        font-family="Poppins, sans-serif" font-weight="700"
-        font-size="46" letter-spacing="10"
+        font-family="'Space Grotesk', system-ui, sans-serif" font-weight="700"
+        font-size="54" letter-spacing="12"
         fill="#0C1D2E" dominant-baseline="middle">EXOS</text>
 </svg>
