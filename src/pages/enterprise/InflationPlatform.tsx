@@ -29,7 +29,7 @@ const InflationPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedTracker, setSelectedTracker] = useState<InflationTracker | null>(null);
-  const { trackers, isLoading, createTracker } = useInflationTrackers();
+  const { trackers, isLoading, createTracker, deleteTracker } = useInflationTrackers();
 
   const handleSelectTracker = useCallback((tracker: InflationTracker) => {
     setSelectedTracker(tracker);
