@@ -104,7 +104,7 @@ const Header = () => {
           onValueChange={setDesktopMenuValue}
         >
           <NavigationMenuList>
-            {NAV_GROUPS.map((group) => (
+            {NAV_GROUPS.slice(0, 2).map((group) => (
               <NavigationMenuItem key={group.label}>
                 <NavigationMenuTrigger
                   className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
@@ -147,6 +147,34 @@ const Header = () => {
                 Market Intelligence
               </button>
             </NavigationMenuItem>
+            {NAV_GROUPS.slice(2).map((group) => (
+              <NavigationMenuItem key={group.label}>
+                <NavigationMenuTrigger
+                  className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                >
+                  {group.label}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <li key={item.path}>
+                          <button
+                            onClick={() => navigate(item.path)}
+                            type="button"
+                            className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+                          >
+                            {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
+                            {item.label}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            ))}
           </NavigationMenuList>
         </NavigationMenu>
 
@@ -167,7 +195,7 @@ const Header = () => {
               </SheetHeader>
 
               <Accordion type="multiple" className="w-full">
-                {NAV_GROUPS.map((group) => (
+                {NAV_GROUPS.slice(0, 2).map((group) => (
                   <AccordionItem key={group.label} value={group.label}>
                     <AccordionTrigger className="text-sm font-medium text-foreground py-2.5 px-3 hover:no-underline hover:bg-muted rounded-md">
                       {group.label}
@@ -200,6 +228,33 @@ const Header = () => {
                 <Sparkles className="w-4 h-4 text-primary" />
                 Market Intelligence
               </button>
+
+              <Accordion type="multiple" className="w-full">
+                {NAV_GROUPS.slice(2).map((group) => (
+                  <AccordionItem key={group.label} value={group.label}>
+                    <AccordionTrigger className="text-sm font-medium text-foreground py-2.5 px-3 hover:no-underline hover:bg-muted rounded-md">
+                      {group.label}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1 pt-0">
+                      <div className="flex flex-col gap-0.5 pl-3">
+                        {group.items.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.path}
+                              onClick={() => mobileNavigate(item.path)}
+                              className="text-sm text-muted-foreground py-2 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                            >
+                              {Icon && <Icon className="w-4 h-4 text-primary" />}
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
 
               <Separator className="my-4" />
 
