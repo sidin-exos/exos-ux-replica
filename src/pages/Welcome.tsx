@@ -95,7 +95,7 @@ const Welcome = () => {
               </h1>
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
                 <p>
-                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you <span className="text-foreground font-medium">AI-powered analysis in minutes</span> — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and live market intelligence.
+                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function.
                 </p>
                 <p>
                   EXOS works as <strong className="text-foreground font-semibold">three interconnected layers</strong>:
