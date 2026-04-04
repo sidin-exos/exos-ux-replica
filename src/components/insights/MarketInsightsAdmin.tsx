@@ -291,7 +291,7 @@ export function MarketInsightsAdmin() {
           </h3>
           <p className="text-muted-foreground mt-1 text-base whitespace-pre-line">
             Market Insights improve scenario analysis using publicly available, non-sensitive data.
-            {"\n\n"}
+            {"\n"}
             You can select existing insights from our database or choose a country and industry to upload your own latest Market Insights.
           </p>
         </div>
