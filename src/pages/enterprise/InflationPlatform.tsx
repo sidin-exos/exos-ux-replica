@@ -137,8 +137,15 @@ const InflationPlatform = () => {
                   {isLoading ? (
                     <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
                   ) : trackers.length === 0 ? (
-                    <div className="text-center py-16 text-muted-foreground">
-                      No trackers yet. Create your first tracker to start monitoring.
+                    <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+                      <p className="text-muted-foreground">No trackers yet. Create your first tracker to start monitoring.</p>
+                      <Button
+                        onClick={() => setActiveTab("setup")}
+                        className="bg-gradient-to-r from-primary via-iris to-copper text-white font-semibold shadow-brand hover:opacity-90 transition-opacity"
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Create Your First Tracker
+                      </Button>
                     </div>
                   ) : (
                     trackers.map(t => (
