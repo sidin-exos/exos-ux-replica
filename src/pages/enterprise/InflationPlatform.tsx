@@ -146,6 +146,7 @@ const InflationPlatform = () => {
                         key={t.id}
                         tracker={t}
                         onSelect={handleSelectTracker}
+                        onDelete={(id) => deleteTracker.mutate(id)}
                       />
                     ))
                   )}
