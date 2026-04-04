@@ -94,15 +94,27 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
             <Lightbulb className="w-4 h-4 text-primary" />
             Use Case Examples
           </h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs text-muted-foreground hover:text-primary gap-1.5"
-            onClick={shuffle}
-          >
-            <RefreshCw className="w-3 h-3" />
-            See more
-          </Button>
+          <div className="flex items-center gap-1">
+            {!collapsed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground hover:text-primary gap-1.5"
+                onClick={shuffle}
+              >
+                <RefreshCw className="w-3 h-3" />
+                See more
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+              onClick={() => setCollapsed(!collapsed)}
+            >
+              {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </Button>
+          </div>
         </div>
 
         {/* Industry picker */}
