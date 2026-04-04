@@ -45,28 +45,6 @@ const INDUSTRIES = [
   { slug: "telecom", name: "Telecom" },
 ];
 
-const CATEGORIES = [
-  { slug: "chemicals-specialty", name: "Chemicals (Specialty)" },
-  { slug: "construction-materials", name: "Construction Materials" },
-  { slug: "electronic-components", name: "Electronic Components" },
-  { slug: "facilities-management", name: "Facilities Management" },
-  { slug: "fleet-management", name: "Fleet Management" },
-  { slug: "food-ingredients", name: "Food Ingredients" },
-  { slug: "hr-recruitment", name: "HR & Recruitment" },
-  { slug: "it-hardware", name: "IT Hardware" },
-  { slug: "it-software-saas", name: "IT Software (SaaS)" },
-  { slug: "lab-supplies", name: "Lab Supplies" },
-  { slug: "logistics-sea-freight", name: "Logistics (Sea Freight)" },
-  { slug: "logistics-small-parcel", name: "Logistics (Small Parcel)" },
-  { slug: "mro-maintenance", name: "MRO (Maintenance)" },
-  { slug: "packaging-primary", name: "Packaging (Primary)" },
-  { slug: "plastics-resins", name: "Plastics/Resins" },
-  { slug: "raw-materials-steel", name: "Raw Materials (Steel)" },
-  { slug: "semiconductors", name: "Semiconductors" },
-  { slug: "telecomm-equipment", name: "Telecomm Equipment" },
-  { slug: "textile-fabrics", name: "Textile/Fabrics" },
-  { slug: "warehouse-services", name: "Warehouse Services" },
-];
 
 const COUNTRIES = [
   // Global & macro regions
