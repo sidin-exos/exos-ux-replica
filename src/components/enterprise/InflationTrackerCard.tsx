@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Package } from "lucide-react";
+import { ChevronRight, Package, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { InflationTracker } from "@/hooks/useInflationTrackers";
 
 interface Props {
   tracker: InflationTracker;
   onSelect?: (tracker: InflationTracker) => void;
+  onDelete?: (trackerId: string) => void;
 }
 
 /** Summarise driver info into a short preview string */
