@@ -195,7 +195,7 @@ const Header = () => {
               </SheetHeader>
 
               <Accordion type="multiple" className="w-full">
-                {NAV_GROUPS.map((group) => (
+                {NAV_GROUPS.slice(0, 2).map((group) => (
                   <AccordionItem key={group.label} value={group.label}>
                     <AccordionTrigger className="text-sm font-medium text-foreground py-2.5 px-3 hover:no-underline hover:bg-muted rounded-md">
                       {group.label}
@@ -228,6 +228,33 @@ const Header = () => {
                 <Sparkles className="w-4 h-4 text-primary" />
                 Market Intelligence
               </button>
+
+              <Accordion type="multiple" className="w-full">
+                {NAV_GROUPS.slice(2).map((group) => (
+                  <AccordionItem key={group.label} value={group.label}>
+                    <AccordionTrigger className="text-sm font-medium text-foreground py-2.5 px-3 hover:no-underline hover:bg-muted rounded-md">
+                      {group.label}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1 pt-0">
+                      <div className="flex flex-col gap-0.5 pl-3">
+                        {group.items.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.path}
+                              onClick={() => mobileNavigate(item.path)}
+                              className="text-sm text-muted-foreground py-2 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                            >
+                              {Icon && <Icon className="w-4 h-4 text-primary" />}
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
 
               <Separator className="my-4" />
 
