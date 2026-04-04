@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Building2, Lightbulb, BookOpen, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Building2, Lightbulb, BookOpen, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { USE_CASE_LIBRARY, INDUSTRIES, type UseCase, type IndustryName } from "@/lib/use-case-library";
 
 type Platform = "scenarios" | "risk";
