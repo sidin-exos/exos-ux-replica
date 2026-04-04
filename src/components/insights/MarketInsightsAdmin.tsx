@@ -367,23 +367,24 @@ export function MarketInsightsAdmin() {
           </Card>
 
           {/* Column 3 — Procurement Categories */}
-          <Card className="flex flex-col">
+          <Card className="flex flex-col border-t-4 border-t-iris">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
+                <FolderKanban className="h-4 w-4 text-iris" />
                 Procurement Categories
                 {genCategories.length > 0 && (
-                  <Badge variant="secondary" className="text-[10px]">{genCategories.length}</Badge>
+                  <Badge className="text-[10px] bg-iris/10 text-iris border-iris/20">{genCategories.length}</Badge>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
               <div className="relative mb-2">
                 <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input className="h-8 pl-7 text-xs" placeholder="Search categories..." value={searchCategory} onChange={e => setSearchCategory(e.target.value)} />
+                <Input className="h-8 pl-7 text-xs border-iris/20 focus-visible:ring-iris/30" placeholder="Search categories..." value={searchCategory} onChange={e => setSearchCategory(e.target.value)} />
               </div>
-              <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
+              <div className="border border-iris/15 rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
                 {categories.filter(c => c.name.toLowerCase().includes(searchCategory.toLowerCase())).map(c => (
-                  <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                  <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-iris/5 rounded px-1 py-0.5">
                     <Checkbox
                       checked={genCategories.includes(c.slug)}
                       onCheckedChange={() => toggleCategory(c.slug)}
