@@ -306,8 +306,12 @@ export function MarketInsightsAdmin() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
+              <div className="relative mb-2">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input className="h-8 pl-7 text-xs" placeholder="Search industries..." value={searchIndustry} onChange={e => setSearchIndustry(e.target.value)} />
+              </div>
               <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
-                {INDUSTRIES.map(i => (
+                {INDUSTRIES.filter(i => i.name.toLowerCase().includes(searchIndustry.toLowerCase())).map(i => (
                   <label key={i.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
                     <Checkbox
                       checked={genIndustry === i.slug}
