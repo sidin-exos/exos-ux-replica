@@ -126,25 +126,57 @@ const Index = () => {
               <div className="lg:col-span-2">
                 <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
                   Do More With Less.{" "}
+                  <br />
                   <span className="text-gradient">Decide With Confidence.</span>
                 </h1>
-                <p className="text-muted-foreground text-base max-w-2xl mb-4">
+                <p className="text-muted-foreground text-base max-w-2xl mb-6">
                   Critical procurement decisions are often made without adequate preparation due to lack of time, 
                   knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost 
                   breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
                 </p>
-                <p className="text-muted-foreground text-base max-w-2xl mb-3">
+
+                <p className="text-foreground text-base max-w-2xl mb-5">
                   EXOS works as three interconnected layers.
                 </p>
-                <ul className="text-muted-foreground text-base max-w-2xl mb-4 space-y-2 list-disc pl-5">
-                  <li>Scenarios are pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.</li>
-                  <li>Market Intelligence and the Market Insights Knowledge Base inject live market context directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.</li>
-                  <li>Inflation Monitor and Risk Assessment Platform continuously track the noise, surface what's changed, and flag only what requires your decision.</li>
-                </ul>
-                <p className="text-muted-foreground text-base max-w-2xl mb-4">
-                  Your sensitive commercial data is masked before reaching external APIs — then grounded 
-                  and validated on the way back.
-                </p>
+
+                {/* Three Layers Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <Card className="bg-card/60 border-border/50 shadow-sm">
+                    <CardContent className="pt-5 pb-4 px-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                        <Workflow className="w-5 h-5 text-primary" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Scenarios:</strong> Pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card/60 border-border/50 shadow-sm">
+                    <CardContent className="pt-5 pb-4 px-4">
+                      <div className="w-10 h-10 rounded-lg bg-iris/10 flex items-center justify-center mb-3">
+                        <Globe className="w-5 h-5 text-iris" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Market Intelligence and the Market Insights Knowledge Base</strong> inject live market directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card/60 border-border/50 shadow-sm">
+                    <CardContent className="pt-5 pb-4 px-4">
+                      <div className="w-10 h-10 rounded-lg bg-copper/10 flex items-center justify-center mb-3">
+                        <BarChart3 className="w-5 h-5 text-copper" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Inflation Monitor and Risk Assessment Platform</strong> continuously track the noise, surface what's changed, and flag only what requires your decision.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Data Safety Banner */}
+                <div className="rounded-lg bg-warning/10 border border-warning/20 px-5 py-3 text-center text-sm text-muted-foreground max-w-2xl">
+                  Your sensitive commercial data is masked before reaching external APIs — then <strong className="text-foreground">grounded and validated</strong> on the way back.
+                </div>
               </div>
 
               {/* Use Case Preview */}
