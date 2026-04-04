@@ -135,6 +135,10 @@ const Index = () => {
                   breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
                 </p>
 
+                <p className="text-muted-foreground text-base max-w-2xl mb-5">
+                  Your sensitive commercial data is masked before reaching external APIs — then <strong className="text-foreground">grounded and validated</strong> on the way back.
+                </p>
+
                 <p className="text-foreground text-base max-w-2xl mb-5">
                   EXOS works as three interconnected layers.
                 </p>
@@ -173,10 +177,6 @@ const Index = () => {
                   </Card>
                 </div>
 
-                {/* Data Safety Banner */}
-                <div className="rounded-lg bg-warning/10 border border-warning/20 px-5 py-3 text-center text-sm text-muted-foreground max-w-2xl">
-                  Your sensitive commercial data is masked before reaching external APIs — then <strong className="text-foreground">grounded and validated</strong> on the way back.
-                </div>
               </div>
 
               {/* Use Case Preview */}
