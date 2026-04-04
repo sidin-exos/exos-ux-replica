@@ -371,14 +371,14 @@ const Welcome = () => {
       {/* ───── Bottom CTA ───── */}
       <section className="py-0">
         <div className="w-full" style={{ background: "var(--gradient-primary)" }}>
-          <div className="container py-16 md:py-20 flex flex-col items-center text-center gap-6">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground leading-tight max-w-lg">
+          <div className="container py-8 md:py-10 flex flex-col items-center text-center gap-4">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-foreground leading-tight max-w-lg">
               Ready to Architect Your Success?
             </h2>
-            <p className="text-primary-foreground/80 max-w-md">
+            <p className="text-primary-foreground/80 max-w-md text-sm">
               Join the world's most advanced procurement teams and start making high-confidence decisions today.
             </p>
-            <div className="flex flex-wrap gap-3 mt-2">
+            <div className="flex flex-wrap gap-3 mt-1">
               <Button size="lg" variant="secondary" className="gap-2 px-6" onClick={() => navigate("/")}>
                 Get Started Now
               </Button>
@@ -390,9 +390,6 @@ const Welcome = () => {
               >
                 Contact Sales
               </Button>
-            </div>
-            <div className="mt-4">
-              <SiteFeedbackButton scenarioId="welcome" />
             </div>
           </div>
         </div>
