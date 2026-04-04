@@ -184,6 +184,11 @@ export function MarketInsightsAdmin() {
   const [genCategories, setGenCategories] = useState<string[]>([]);
   const [genCountries, setGenCountries] = useState<string[]>([]);
 
+  // Search filters for generation cards
+  const [searchIndustry, setSearchIndustry] = useState("");
+  const [searchCountry, setSearchCountry] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
+
   const filteredInsights = useMemo(() => {
     if (!insights) return [];
     return insights.filter(i => {
