@@ -289,8 +289,10 @@ export function MarketInsightsAdmin() {
             <Sparkles className="h-4 w-4" />
             Generate Market Insights
           </h3>
-          <p className="text-xs text-muted-foreground mt-1">
-            Select one industry, then choose countries and categories to generate insights for.
+          <p className="text-muted-foreground mt-1 text-base whitespace-pre-line">
+            Market Insights improve scenario analysis using publicly available, non-sensitive data.
+            {"\n\n"}
+            You can select existing insights from our database or choose a country and industry to upload your own latest Market Insights.
           </p>
         </div>
 
