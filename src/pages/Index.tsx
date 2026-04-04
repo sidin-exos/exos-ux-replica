@@ -177,10 +177,6 @@ const Index = () => {
                   </Card>
                 </div>
 
-                {/* Data Safety Banner */}
-                <div className="rounded-lg bg-warning/10 border border-warning/20 px-5 py-3 text-center text-sm text-muted-foreground max-w-2xl">
-                  Your sensitive commercial data is masked before reaching external APIs — then <strong className="text-foreground">grounded and validated</strong> on the way back.
-                </div>
               </div>
 
               {/* Use Case Preview */}
