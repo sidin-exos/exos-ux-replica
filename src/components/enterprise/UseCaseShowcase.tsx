@@ -19,6 +19,7 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
   const [industry, setIndustry] = useState<IndustryName>(INDUSTRIES[0]);
   const [index, setIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const cases = useMemo(() => {
     const lib = USE_CASE_LIBRARY[industry];
