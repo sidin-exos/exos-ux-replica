@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
-import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles } from "lucide-react";
+import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles, Building2, MapPin, FolderKanban } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
