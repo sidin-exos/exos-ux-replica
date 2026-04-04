@@ -155,10 +155,15 @@ const RiskPlatform = () => {
         </div>
 
 
-        {/* Workspace separator */}
-        <div className="flex items-center gap-4 my-2">
-          <h2 className="text-sm font-semibold text-muted-foreground whitespace-nowrap uppercase tracking-wide">Your Workspace</h2>
-          <Separator className="flex-1" />
+        {/* Workspace section — sticky */}
+        <div className="sticky top-16 z-30 bg-background pt-4 pb-2 -mx-4 px-4 border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-1 rounded-full bg-gradient-to-b from-primary via-iris to-copper" />
+            <h2 className="text-sm font-bold text-foreground whitespace-nowrap uppercase tracking-wider">
+              Your Risk Monitoring Workspace
+            </h2>
+            <Separator className="flex-1" />
+          </div>
         </div>
 
         {/* Setup Wizard (2/3) + Usage Stats (1/3) */}
