@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
+import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3 } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
