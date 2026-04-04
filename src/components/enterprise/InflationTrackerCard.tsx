@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Package } from "lucide-react";
+import { ChevronRight, Package, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { InflationTracker } from "@/hooks/useInflationTrackers";
 
 interface Props {
   tracker: InflationTracker;
   onSelect?: (tracker: InflationTracker) => void;
+  onDelete?: (trackerId: string) => void;
 }
 
 /** Summarise driver info into a short preview string */
@@ -58,7 +63,7 @@ const statusBadgeClass: Record<string, string> = {
   stable: "bg-accent/15 text-accent border-accent/30",
 };
 
-const InflationTrackerCard = ({ tracker, onSelect }: Props) => {
+const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
   const [expanded, setExpanded] = useState(false);
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
   const preview = buildPreview(tracker);
@@ -141,6 +146,38 @@ const InflationTrackerCard = ({ tracker, onSelect }: Props) => {
           </div>
         )}
       </div>
+
+      {/* Delete button */}
+      {onDelete && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+              onClick={(e) => e.stopPropagation()}
+              title="Delete tracker"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete tracker</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{tracker.goods_definition}"? This will also remove all associated drivers and cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => onDelete(tracker.id)}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
     </div>
