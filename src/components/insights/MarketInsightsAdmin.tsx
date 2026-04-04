@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import marketInsightsPreview from "@/assets/market-insights-preview.png";
+
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
 import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles } from "lucide-react";
@@ -295,67 +295,50 @@ export function MarketInsightsAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Description */}
-      <Card>
-        <CardHeader>
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <CardTitle className="flex items-center gap-2 mb-2">
-                <Database className="h-5 w-5" />
-                Market Insights Knowledge Base
-              </CardTitle>
-              <CardDescription>
-                Market Insights improve your scenario analysis results. Pick the country and industry you want to analyse, then upload the latest Market Insights into the system.
-                <br />
-                Market Insights contain publicly available information, no sensitive information is used. You can pick existing market insights from the system database if they fit your needs.
-              </CardDescription>
-            </div>
-            <div className="lg:col-span-1 relative overflow-hidden rounded-lg min-h-[120px]">
-              <img src={marketInsightsPreview} alt="Market Insights Preview" className="w-full h-full object-cover rounded-lg" />
-              <div className="absolute inset-0 bg-gradient-to-r from-card/40 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent pointer-events-none" />
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
       {/* Generate New Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-base font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             Generate Market Insights
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1">
             Select one industry, then choose countries and categories to generate insights for.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {/* Industry (single select) */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Industry</Label>
-            <Select value={genIndustry} onValueChange={setGenIndustry}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an industry" />
-              </SelectTrigger>
-              <SelectContent>
-                {INDUSTRIES.map(i => (
-                  <SelectItem key={i.slug} value={i.slug}>{i.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Countries (multi-select with groups) */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Column 1 — Industry */}
+          <Card className="flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Industry</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 flex items-start">
+              <Select value={genIndustry} onValueChange={setGenIndustry}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INDUSTRIES.map(i => (
+                    <SelectItem key={i.slug} value={i.slug}>{i.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Column 2 — Countries & Regions */}
+          <Card className="flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
                 Countries & Regions
                 {genCountries.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-[10px]">{genCountries.length} selected</Badge>
+                  <Badge variant="secondary" className="text-[10px]">{genCountries.length}</Badge>
                 )}
-              </Label>
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-3">
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-3">
                 {Object.entries(countryGroups).map(([group, countries]) => (
                   <div key={group}>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">{group}</p>
@@ -373,17 +356,21 @@ export function MarketInsightsAdmin() {
                   </div>
                 ))}
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Categories (multi-select) */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">
+          {/* Column 3 — Procurement Categories */}
+          <Card className="flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
                 Procurement Categories
                 {genCategories.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-[10px]">{genCategories.length} selected</Badge>
+                  <Badge variant="secondary" className="text-[10px]">{genCategories.length}</Badge>
                 )}
-              </Label>
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-1.5">
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
                 {CATEGORIES.map(c => (
                   <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
                     <Checkbox
@@ -394,85 +381,85 @@ export function MarketInsightsAdmin() {
                   </label>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Summary + Generate button */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {genIndustry && genCategories.length > 0 && genCountries.length > 0
+              ? `${genCountries.length} × ${genCategories.length} = ${genCountries.length * genCategories.length} insight(s) will be generated`
+              : "Select industry, countries, and categories to generate"}
+          </p>
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || batchProgress !== null || !genIndustry || genCategories.length === 0 || genCountries.length === 0}
+          >
+            {isGenerating || batchProgress ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {batchProgress ? `${batchProgress.current}/${batchProgress.total}` : "Generating..."}
+              </>
+            ) : (
+              <>
+                <Globe className="mr-2 h-4 w-4" />
+                Generate Market Insights
+              </>
+            )}
+          </Button>
+        </div>
+
+        {batchProgress && (
+          <div className="space-y-2 p-4 rounded-lg bg-muted/50">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-xs">{batchProgress.currentItem}</span>
+              <span className="text-xs">{batchProgress.current} of {batchProgress.total}</span>
             </div>
+            <Progress value={(batchProgress.current / batchProgress.total) * 100} />
           </div>
+        )}
 
-          {/* Summary + Generate button */}
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground">
-              {genIndustry && genCategories.length > 0 && genCountries.length > 0
-                ? `${genCountries.length} × ${genCategories.length} = ${genCountries.length * genCategories.length} insight(s) will be generated`
-                : "Select industry, countries, and categories to generate"}
-            </p>
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || batchProgress !== null || !genIndustry || genCategories.length === 0 || genCountries.length === 0}
-            >
-              {isGenerating || batchProgress ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {batchProgress ? `${batchProgress.current}/${batchProgress.total}` : "Generating..."}
-                </>
-              ) : (
-                <>
-                  <Globe className="mr-2 h-4 w-4" />
-                  Generate Market Insights
-                </>
-              )}
-            </Button>
-          </div>
-
-          {batchProgress && (
-            <div className="space-y-2 p-4 rounded-lg bg-muted/50">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-xs">{batchProgress.currentItem}</span>
-                <span className="text-xs">{batchProgress.current} of {batchProgress.total}</span>
+        {generationResult && (
+          <div className={`p-4 rounded-lg ${generationResult.success ? 'bg-primary/5 border border-primary/20' : 'bg-destructive/10 border border-destructive/20'}`}>
+            {generationResult.success && generationResult.summary ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-primary">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="font-medium text-sm">Generation Complete</span>
+                </div>
+                <div className={`grid ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-2'} gap-4 text-xs`}>
+                  <div className="flex items-center gap-2">
+                    <Database className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>{generationResult.summary.successful}/{generationResult.summary.total}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>{(generationResult.summary.processingTimeMs / 1000).toFixed(1)}s</span>
+                  </div>
+                  {isSuperAdmin && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Tokens:</span>
+                        <span>{generationResult.summary.totalTokens.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>{generationResult.summary.estimatedCost}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-              <Progress value={(batchProgress.current / batchProgress.total) * 100} />
-            </div>
-          )}
-
-          {generationResult && (
-            <div className={`p-4 rounded-lg ${generationResult.success ? 'bg-primary/5 border border-primary/20' : 'bg-destructive/10 border border-destructive/20'}`}>
-              {generationResult.success && generationResult.summary ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-primary">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span className="font-medium text-sm">Generation Complete</span>
-                  </div>
-                  <div className={`grid ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-2'} gap-4 text-xs`}>
-                    <div className="flex items-center gap-2">
-                      <Database className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{generationResult.summary.successful}/{generationResult.summary.total}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{(generationResult.summary.processingTimeMs / 1000).toFixed(1)}s</span>
-                    </div>
-                    {isSuperAdmin && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">Tokens:</span>
-                          <span>{generationResult.summary.totalTokens.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>{generationResult.summary.estimatedCost}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-destructive text-sm">
-                  <XCircle className="h-4 w-4" />
-                  <span>{generationResult.error}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <div className="flex items-center gap-2 text-destructive text-sm">
+                <XCircle className="h-4 w-4" />
+                <span>{generationResult.error}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Browse Existing Insights */}
       <Card className="border-t-4 border-t-iris">
