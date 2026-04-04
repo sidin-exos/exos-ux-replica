@@ -326,30 +326,31 @@ export function MarketInsightsAdmin() {
           </Card>
 
           {/* Column 2 — Countries & Regions */}
-          <Card className="flex flex-col">
+          <Card className="flex flex-col border-t-4 border-t-accent">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-accent" />
                 Countries & Regions
                 {genCountries.length > 0 && (
-                  <Badge variant="secondary" className="text-[10px]">{genCountries.length}</Badge>
+                  <Badge className="text-[10px] bg-accent/10 text-accent border-accent/20">{genCountries.length}</Badge>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
               <div className="relative mb-2">
                 <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input className="h-8 pl-7 text-xs" placeholder="Search countries..." value={searchCountry} onChange={e => setSearchCountry(e.target.value)} />
+                <Input className="h-8 pl-7 text-xs border-accent/20 focus-visible:ring-accent/30" placeholder="Search countries..." value={searchCountry} onChange={e => setSearchCountry(e.target.value)} />
               </div>
-              <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-3">
+              <div className="border border-accent/15 rounded-md p-3 max-h-64 overflow-y-auto space-y-3">
                 {Object.entries(countryGroups).map(([group, countries]) => {
                   const filtered = countries.filter(c => c.name.toLowerCase().includes(searchCountry.toLowerCase()));
                   if (filtered.length === 0) return null;
                   return (
                     <div key={group}>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">{group}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-accent/70 font-medium mb-1.5">{group}</p>
                       <div className="space-y-1.5">
                         {filtered.map(c => (
-                          <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                          <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent/5 rounded px-1 py-0.5">
                             <Checkbox
                               checked={genCountries.includes(c.slug)}
                               onCheckedChange={() => toggleCountry(c.slug)}
