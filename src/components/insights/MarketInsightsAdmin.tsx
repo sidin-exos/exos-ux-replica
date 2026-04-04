@@ -311,19 +311,25 @@ export function MarketInsightsAdmin() {
           {/* Column 1 — Industry */}
           <Card className="flex flex-col">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Industry</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2">
+                Industry
+                {genIndustry && (
+                  <Badge variant="secondary" className="text-[10px]">1</Badge>
+                )}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 flex items-start">
-              <Select value={genIndustry} onValueChange={setGenIndustry}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select an industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  {INDUSTRIES.map(i => (
-                    <SelectItem key={i.slug} value={i.slug}>{i.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <CardContent className="flex-1">
+              <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
+                {INDUSTRIES.map(i => (
+                  <label key={i.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                    <Checkbox
+                      checked={genIndustry === i.slug}
+                      onCheckedChange={() => setGenIndustry(genIndustry === i.slug ? "" : i.slug)}
+                    />
+                    <span className="text-xs">{i.name}</span>
+                  </label>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
