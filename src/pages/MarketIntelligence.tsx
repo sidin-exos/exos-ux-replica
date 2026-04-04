@@ -124,7 +124,7 @@ const MarketIntelligence = () => {
         </p>
 
         <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1 border-dotted">
             <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
               Ad-hoc Queries
