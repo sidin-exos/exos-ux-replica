@@ -535,7 +535,7 @@ export function MarketInsightsAdmin() {
                 <TableRow>
                   <TableHead>Industry</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Country</TableHead>
+                  <TableHead>Country or Region</TableHead>
                    <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
@@ -551,7 +551,7 @@ export function MarketInsightsAdmin() {
                 <TableRow>
                   <TableHead>Industry</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Country</TableHead>
+                  <TableHead>Country or Region</TableHead>
                   <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
