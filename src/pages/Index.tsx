@@ -135,6 +135,10 @@ const Index = () => {
                   breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
                 </p>
 
+                <p className="text-muted-foreground text-base max-w-2xl mb-5">
+                  Your sensitive commercial data is masked before reaching external APIs — then <strong className="text-foreground">grounded and validated</strong> on the way back.
+                </p>
+
                 <p className="text-foreground text-base max-w-2xl mb-5">
                   EXOS works as three interconnected layers.
                 </p>
