@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAllMarketInsights, useGenerateMarketInsights } from "@/hooks/useMarketInsights";
+import { useProcurementCategories } from "@/hooks/useContextData";
 
 const INDUSTRIES = [
   { slug: "aerospace-defense", name: "Aerospace & Defense" },
