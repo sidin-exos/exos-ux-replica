@@ -117,59 +117,63 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
           </div>
         </div>
 
-        {/* Industry picker */}
-        <Select value={industry} onValueChange={handleIndustryChange}>
-          <SelectTrigger className="w-full h-8 text-xs">
-            <Building2 className="w-3 h-3 mr-1 text-muted-foreground" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="max-h-56">
-            {INDUSTRIES.map((ind) => (
-              <SelectItem key={ind} value={ind} className="text-xs">{ind}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!collapsed && (
+          <>
+            {/* Industry picker */}
+            <Select value={industry} onValueChange={handleIndustryChange}>
+              <SelectTrigger className="w-full h-8 text-xs">
+                <Building2 className="w-3 h-3 mr-1 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-56">
+                {INDUSTRIES.map((ind) => (
+                  <SelectItem key={ind} value={ind} className="text-xs">{ind}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        {/* Current use case */}
-        <div className="space-y-1.5">
-          <div className="flex items-start gap-2">
-            <Badge variant="secondary" className="text-[10px] shrink-0 mt-0.5">{current.ref}</Badge>
-            <p className="text-xs font-semibold text-foreground leading-snug">{current.title}</p>
-          </div>
-          <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
-            {(expanded ? current.description : descPreview)
-              .split(/\n\n|(?=(?:SITUATION:|HOW TO USE EXOS:|WHAT YOU RECEIVE:|WHY IT MATTERS:))/)
-              .filter(Boolean)
-              .map((paragraph, i) => {
-                const match = paragraph.match(/^(SITUATION:|HOW TO USE EXOS:|WHAT YOU RECEIVE:|WHY IT MATTERS:)\s*/);
-                if (match) {
-                  return (
-                    <p key={i}>
-                      <span className="font-semibold text-foreground">{match[1]}</span>{" "}
-                      {paragraph.slice(match[0].length)}
-                    </p>
-                  );
-                }
-                return <p key={i}>{paragraph.trim()}</p>;
-              })}
-          </div>
-          {current.description.length > 200 && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
-            >
-              {expanded ? "Show less" : "Read more"}
-            </button>
-          )}
-          {current.teachingPoint && (
-            <div className="pt-2 border-t border-border/40">
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                <span className="font-medium text-foreground">💡 Tip: </span>
-                {current.teachingPoint}
-              </p>
+            {/* Current use case */}
+            <div className="space-y-1.5">
+              <div className="flex items-start gap-2">
+                <Badge variant="secondary" className="text-[10px] shrink-0 mt-0.5">{current.ref}</Badge>
+                <p className="text-xs font-semibold text-foreground leading-snug">{current.title}</p>
+              </div>
+              <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
+                {(expanded ? current.description : descPreview)
+                  .split(/\n\n|(?=(?:SITUATION:|HOW TO USE EXOS:|WHAT YOU RECEIVE:|WHY IT MATTERS:))/)
+                  .filter(Boolean)
+                  .map((paragraph, i) => {
+                    const match = paragraph.match(/^(SITUATION:|HOW TO USE EXOS:|WHAT YOU RECEIVE:|WHY IT MATTERS:)\s*/);
+                    if (match) {
+                      return (
+                        <p key={i}>
+                          <span className="font-semibold text-foreground">{match[1]}</span>{" "}
+                          {paragraph.slice(match[0].length)}
+                        </p>
+                      );
+                    }
+                    return <p key={i}>{paragraph.trim()}</p>;
+                  })}
+              </div>
+              {current.description.length > 200 && (
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
+                >
+                  {expanded ? "Show less" : "Read more"}
+                </button>
+              )}
+              {current.teachingPoint && (
+                <div className="pt-2 border-t border-border/40">
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    <span className="font-medium text-foreground">💡 Tip: </span>
+                    {current.teachingPoint}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
