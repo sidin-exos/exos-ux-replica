@@ -163,7 +163,7 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
                   {expanded ? "Show less" : "Read more"}
                 </button>
               )}
-              {current.teachingPoint && (
+              {platform !== "risk" && current.teachingPoint && (
                 <div className="pt-2 border-t border-border/40">
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
                     <span className="font-medium text-foreground">💡 Tip: </span>
