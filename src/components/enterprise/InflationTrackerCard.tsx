@@ -147,6 +147,38 @@ const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
         )}
       </div>
 
+      {/* Delete button */}
+      {onDelete && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+              onClick={(e) => e.stopPropagation()}
+              title="Delete tracker"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete tracker</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{tracker.goods_definition}"? This will also remove all associated drivers and cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => onDelete(tracker.id)}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
       <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
     </div>
   );
