@@ -169,6 +169,8 @@ export function MarketInsightsAdmin() {
   const { toast } = useToast();
   const { data: insights, isLoading: isLoadingInsights, refetch } = useAllMarketInsights();
   const { generate, isGenerating, generationResult } = useGenerateMarketInsights();
+  const { data: dbCategories } = useProcurementCategories();
+  const categories = useMemo(() => (dbCategories || []).map(c => ({ slug: c.slug, name: c.name })), [dbCategories]);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentItem: string } | null>(null);
 
   // Browse filters
