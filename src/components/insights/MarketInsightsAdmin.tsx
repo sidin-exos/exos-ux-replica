@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
 import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -183,6 +184,11 @@ export function MarketInsightsAdmin() {
   const [genCategories, setGenCategories] = useState<string[]>([]);
   const [genCountries, setGenCountries] = useState<string[]>([]);
 
+  // Search filters for generation cards
+  const [searchIndustry, setSearchIndustry] = useState("");
+  const [searchCountry, setSearchCountry] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
+
   const filteredInsights = useMemo(() => {
     if (!insights) return [];
     return insights.filter(i => {
@@ -300,8 +306,12 @@ export function MarketInsightsAdmin() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
+              <div className="relative mb-2">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input className="h-8 pl-7 text-xs" placeholder="Search industries..." value={searchIndustry} onChange={e => setSearchIndustry(e.target.value)} />
+              </div>
               <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
-                {INDUSTRIES.map(i => (
+                {INDUSTRIES.filter(i => i.name.toLowerCase().includes(searchIndustry.toLowerCase())).map(i => (
                   <label key={i.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
                     <Checkbox
                       checked={genIndustry === i.slug}
@@ -325,23 +335,31 @@ export function MarketInsightsAdmin() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
+              <div className="relative mb-2">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input className="h-8 pl-7 text-xs" placeholder="Search countries..." value={searchCountry} onChange={e => setSearchCountry(e.target.value)} />
+              </div>
               <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-3">
-                {Object.entries(countryGroups).map(([group, countries]) => (
-                  <div key={group}>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">{group}</p>
-                    <div className="space-y-1.5">
-                      {countries.map(c => (
-                        <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
-                          <Checkbox
-                            checked={genCountries.includes(c.slug)}
-                            onCheckedChange={() => toggleCountry(c.slug)}
-                          />
-                          <span className="text-xs">{c.name}</span>
-                        </label>
-                      ))}
+                {Object.entries(countryGroups).map(([group, countries]) => {
+                  const filtered = countries.filter(c => c.name.toLowerCase().includes(searchCountry.toLowerCase()));
+                  if (filtered.length === 0) return null;
+                  return (
+                    <div key={group}>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">{group}</p>
+                      <div className="space-y-1.5">
+                        {filtered.map(c => (
+                          <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                            <Checkbox
+                              checked={genCountries.includes(c.slug)}
+                              onCheckedChange={() => toggleCountry(c.slug)}
+                            />
+                            <span className="text-xs">{c.name}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -357,8 +375,12 @@ export function MarketInsightsAdmin() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
+              <div className="relative mb-2">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input className="h-8 pl-7 text-xs" placeholder="Search categories..." value={searchCategory} onChange={e => setSearchCategory(e.target.value)} />
+              </div>
               <div className="border rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
-                {categories.map(c => (
+                {categories.filter(c => c.name.toLowerCase().includes(searchCategory.toLowerCase())).map(c => (
                   <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
                     <Checkbox
                       checked={genCategories.includes(c.slug)}
