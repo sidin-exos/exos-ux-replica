@@ -13,9 +13,9 @@ import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Sparkles, Database, Search, Mail } from "lucide-react";
+import { AlertTriangle, Sparkles, Database, Search, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
+import { Separator } from "@/components/ui/separator";
 
 const MarketIntelligence = () => {
   const [searchParams] = useSearchParams();
@@ -113,29 +113,23 @@ const MarketIntelligence = () => {
       <Header />
       
       <main className="container py-8">
-        {/* Hero Section */}
-        <div className="relative mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-cyan-600/90 via-primary to-indigo-600/90 p-8 text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.12),transparent_60%)]" />
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-3xl font-display font-bold text-white">Market Intelligence</h1>
-            </div>
-            <p className="text-white/80 max-w-2xl text-sm leading-relaxed">
-              Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base improving analytical scenarios results.
-            </p>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-primary" />
           </div>
+          <h1 className="exos-page-title-hero text-3xl">Market Intelligence</h1>
         </div>
+        <p className="text-muted-foreground text-base mb-6 max-w-2/3">
+          Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
+        </p>
 
         <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1">
-            <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1 border-dotted">
+            <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
               Ad-hoc Queries
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md">
+            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-iris data-[state=active]:text-iris-foreground data-[state=active]:shadow-md">
               <Database className="h-4 w-4" />
               Knowledge Base
             </TabsTrigger>
@@ -163,15 +157,23 @@ const MarketIntelligence = () => {
           </TabsContent>
         </Tabs>
 
-        <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
-          <SiteFeedbackButton scenarioId="market-intelligence" />
-          <a href="/pricing#contact">
-            <Button size="lg" className="text-lg px-8 py-6 gap-2">
-              Get in Touch
-              <Mail className="w-5 h-5" />
-            </Button>
-          </a>
-        </section>
+        <footer className="mt-8 border-t border-border/40 pt-4 pb-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>© {new Date().getFullYear()} EXOS Procurement · Market Intelligence</span>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+                <a href="/contact?subject=feedback">
+                  <MessageSquare className="w-4 h-4" /> Leave Feedback
+                </a>
+              </Button>
+              <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+                <a href="/contact">
+                  Get in Touch <Mail className="w-4 h-4" />
+                </a>
+              </Button>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );

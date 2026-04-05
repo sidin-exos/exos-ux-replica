@@ -155,32 +155,32 @@ const TrackerSetupWizard = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Step indicators */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {STEP_LABELS.map((label, i) => (
-          <div key={label} className="flex items-center gap-2">
-            <Badge
-              variant={i === step ? "default" : i < step ? "secondary" : "outline"}
-              className="text-xs"
-            >
-              {i + 1}
-            </Badge>
-            <span className={`text-sm ${i === step ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-              {label}
-            </span>
-            {i < STEP_LABELS.length - 1 && <span className="text-muted-foreground">→</span>}
-          </div>
-        ))}
+    <div className="space-y-4">
+      {/* Header row: title + step indicators */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-base font-semibold text-foreground">Set up New Monitor</h2>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {STEP_LABELS.map((label, i) => (
+            <div key={label} className="flex items-center gap-1">
+              <Badge
+                variant={i === step ? "default" : i < step ? "secondary" : "outline"}
+                className="text-[10px] h-4 w-4 p-0 flex items-center justify-center"
+              >
+                {i + 1}
+              </Badge>
+              <span className={`text-xs ${i === step ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                {label}
+              </span>
+              {i < STEP_LABELS.length - 1 && <span className="text-muted-foreground/50 text-xs">→</span>}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Step 0: Monitor type selection */}
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Select Monitoring Type</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="pt-5 space-y-3">
             {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
               <button
                 key={id}
@@ -283,7 +283,7 @@ const TrackerSetupWizard = ({
       {step === 1 && monitorType === "DM-3" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">DM-3: Risk Dynamics</CardTitle>
+            <CardTitle className="text-lg">DM-3: Regulatory Change Monitor</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">

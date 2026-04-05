@@ -1,59 +1,169 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Brain, Database, ArrowRight, Lock, Quote, TrendingUp, Shield, Users, RefreshCw, Mail } from "lucide-react";
+import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText, Layers, TrendingUp } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
 import SentinelCapabilities from "@/components/features/SentinelCapabilities";
-import { useThemedLogo } from "@/hooks/useThemedLogo";
+import exosMark from "@/assets/exos-mark.svg";
+import exosMarkDark from "@/assets/exos-mark-dark.svg";
+import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useUser } from "@/hooks/useUser";
+import AuthPrompt from "@/components/auth/AuthPrompt";
+import { dashboardConfigs, DashboardType } from "@/lib/dashboard-mappings";
+import { getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
+import DashboardContextCard from "@/components/reports/DashboardContextCard";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ActionChecklistDashboard from "@/components/reports/ActionChecklistDashboard";
+import DecisionMatrixDashboard from "@/components/reports/DecisionMatrixDashboard";
+import CostWaterfallDashboard from "@/components/reports/CostWaterfallDashboard";
+import TimelineRoadmapDashboard from "@/components/reports/TimelineRoadmapDashboard";
+import KraljicQuadrantDashboard from "@/components/reports/KraljicQuadrantDashboard";
+import TCOComparisonDashboard from "@/components/reports/TCOComparisonDashboard";
+import LicenseTierDashboard from "@/components/reports/LicenseTierDashboard";
+import SensitivitySpiderDashboard from "@/components/reports/SensitivitySpiderDashboard";
+import RiskMatrixDashboard from "@/components/reports/RiskMatrixDashboard";
+import ScenarioComparisonDashboard from "@/components/reports/ScenarioComparisonDashboard";
+import SupplierPerformanceDashboard from "@/components/reports/SupplierPerformanceDashboard";
+import SOWAnalysisDashboard from "@/components/reports/SOWAnalysisDashboard";
+import NegotiationPrepDashboard from "@/components/reports/NegotiationPrepDashboard";
+import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
+import { LucideIcon } from "lucide-react";
 
-const successStories = [
+
+// -- Dashboard sample data & config (moved from Reports) ---------------------
+
+const volumeConsolidationActions = [
+  { id: 1, action: "Identify overlapping SKUs across suppliers", priority: "critical" as const, status: "done" as const, owner: "Category Lead", dueDate: "Completed" },
+  { id: 2, action: "Request volume discount proposals from top 3 suppliers", priority: "critical" as const, status: "in-progress" as const, owner: "Sourcing", dueDate: "This week" },
+  { id: 3, action: "Analyze transition risks for supplier consolidation", priority: "high" as const, status: "pending" as const, owner: "Risk Team", dueDate: "Next week" },
+  { id: 4, action: "Develop dual-sourcing contingency plan", priority: "high" as const, status: "pending" as const, owner: "Operations", dueDate: "2 weeks" },
+  { id: 5, action: "Negotiate extended payment terms", priority: "medium" as const, status: "pending" as const, owner: "Finance", dueDate: "3 weeks" },
+];
+
+const makeVsBuyCriteria = [
+  { name: "Total Cost (5yr)", weight: 35 },
+  { name: "Quality Control", weight: 25 },
+  { name: "Time to Market", weight: 20 },
+  { name: "Strategic Fit", weight: 12 },
+  { name: "Flexibility", weight: 8 },
+];
+
+const makeVsBuyOptions = [
+  { id: "make", name: "In-House", scores: [3, 5, 2, 4, 3] },
+  { id: "buy", name: "Outsource", scores: [4, 4, 5, 3, 5] },
+  { id: "hybrid", name: "Hybrid Model", scores: [4, 4, 4, 4, 4] },
+];
+
+const tcoCostBreakdown = [
+  { name: "Equipment Purchase", value: 320000, type: "cost" as const },
+  { name: "Installation", value: 45000, type: "cost" as const },
+  { name: "Training", value: 28000, type: "cost" as const },
+  { name: "Annual Maintenance (5yr)", value: 85000, type: "cost" as const },
+  { name: "Energy Costs (5yr)", value: 62000, type: "cost" as const },
+  { name: "Early Payment Discount", value: -16000, type: "reduction" as const },
+  { name: "Trade-in Credit", value: -35000, type: "reduction" as const },
+];
+
+interface DashboardCategory {
+  label: string;
+  icon: LucideIcon;
+  description: string;
+  dashboards: { id: DashboardType; subtitle: string }[];
+}
+
+const dashboardCategories: DashboardCategory[] = [
   {
-    company: "MedTech Solutions GmbH",
-    industry: "Medical Devices",
-    scenarios: ["TCO Analysis", "Make-or-Buy"],
-    quote: "EXOS revealed hidden logistics costs we'd been overlooking for years. The TCO breakdown across our 12 hospital supply chains was eye-opening—we renegotiated three major contracts within weeks.",
-    person: "Dr. Katrin Schäfer, Head of Strategic Procurement",
-    metric: "18%",
-    metricLabel: "Cost savings on surgical instrument procurement",
-    icon: TrendingUp,
+    label: "Decision Support",
+    icon: Scale,
+    description: "Evaluate vendors, make-vs-buy, or strategic alternatives",
+    dashboards: [
+      { id: "decision-matrix", subtitle: "Weighted criteria scoring" },
+      { id: "scenario-comparison", subtitle: "Side-by-side scenario analysis" },
+      { id: "kraljic-quadrant", subtitle: "Supplier strategic positioning" },
+      { id: "negotiation-prep", subtitle: "Leverage & BATNA planning" },
+    ],
   },
   {
-    company: "NordSteel Industries AB",
-    industry: "Heavy Industry",
-    scenarios: ["Black Swan Simulation", "Supplier Risk Assessment"],
-    quote: "When our primary tungsten supplier faced EU regulatory action, EXOS had already flagged the risk two months prior. The contingency plans we'd built using the Black Swan module kept our production lines running.",
-    person: "Erik Lindqvist, VP Supply Chain",
-    metric: "6-week",
-    metricLabel: "Production halt avoided",
-    icon: Shield,
+    label: "Cost Analysis",
+    icon: DollarSign,
+    description: "Break down spend, model TCO, and stress-test assumptions",
+    dashboards: [
+      { id: "cost-waterfall", subtitle: "Component cost breakdown" },
+      { id: "tco-comparison", subtitle: "Total cost of ownership" },
+      { id: "license-tier", subtitle: "License cost distribution" },
+      { id: "sensitivity-spider", subtitle: "Assumption stress testing" },
+    ],
   },
   {
-    company: "CleanTech Mobility SAS",
-    industry: "Automotive / Green Mobility",
-    scenarios: ["Consolidation Wizard", "Negotiation Prep"],
-    quote: "Going from 47 component suppliers to 12 strategic partners sounded impossible. EXOS mapped the consolidation path, prepared our negotiation briefs, and we closed the transition in one quarter.",
-    person: "Amélie Durand, Chief Procurement Officer",
-    metric: "35%",
-    metricLabel: "Admin overhead reduction",
-    icon: Users,
+    label: "Risk & Compliance",
+    icon: ShieldAlert,
+    description: "Assess supply risks, contract gaps, and data reliability",
+    dashboards: [
+      { id: "risk-matrix", subtitle: "Probability × impact mapping" },
+      { id: "sow-analysis", subtitle: "Scope & contract gap analysis" },
+      { id: "data-quality", subtitle: "Analysis reliability scoring" },
+    ],
+  },
+  {
+    label: "Planning & Performance",
+    icon: CalendarClock,
+    description: "Build timelines, track actions, and monitor suppliers",
+    dashboards: [
+      { id: "action-checklist", subtitle: "Prioritized action tracking" },
+      { id: "timeline-roadmap", subtitle: "Implementation milestones" },
+      { id: "supplier-scorecard", subtitle: "Supplier performance metrics" },
+    ],
   },
 ];
 
+const renderDashboard = (id: DashboardType) => {
+  switch (id) {
+    case "action-checklist":
+      return <ActionChecklistDashboard title="Volume Consolidation Actions" subtitle="Supplier rationalization roadmap" actions={volumeConsolidationActions} />;
+    case "decision-matrix":
+      return <DecisionMatrixDashboard title="Make vs Buy Analysis" subtitle="Strategic sourcing decision" criteria={makeVsBuyCriteria} options={makeVsBuyOptions} />;
+    case "cost-waterfall":
+      return <CostWaterfallDashboard title="TCO Analysis: Industrial Equipment" subtitle="5-year total cost of ownership" components={tcoCostBreakdown} currency="$" />;
+    case "timeline-roadmap":
+      return <TimelineRoadmapDashboard />;
+    case "kraljic-quadrant":
+      return <KraljicQuadrantDashboard />;
+    case "tco-comparison":
+      return <TCOComparisonDashboard />;
+    case "license-tier":
+      return <LicenseTierDashboard />;
+    case "sensitivity-spider":
+      return <SensitivitySpiderDashboard />;
+    case "risk-matrix":
+      return <RiskMatrixDashboard />;
+    case "scenario-comparison":
+      return <ScenarioComparisonDashboard />;
+    case "supplier-scorecard":
+      return <SupplierPerformanceDashboard />;
+    case "sow-analysis":
+      return <SOWAnalysisDashboard />;
+    case "negotiation-prep":
+      return <NegotiationPrepDashboard />;
+    case "data-quality":
+      return <DataQualityDashboard />;
+    default:
+      return null;
+  }
+};
+
 const Features = () => {
-  const exosLogo = useThemedLogo();
+  const { resolvedTheme } = useTheme();
   const location = useLocation();
   const { isSuperAdmin } = useAdminAuth();
-  const [storyIndex, setStoryIndex] = useState(() => Math.floor(Math.random() * successStories.length));
-
-  const nextStory = useCallback(() => {
-    setStoryIndex((prev) => (prev + 1) % successStories.length);
-  }, []);
+  const { user, isLoading: isAuthLoading } = useUser();
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardType>("decision-matrix");
 
   useEffect(() => {
     if (location.hash) {
@@ -64,24 +174,22 @@ const Features = () => {
     }
   }, [location.hash]);
 
-  const story = successStories[storyIndex];
-
   const valuePropositions = [
     {
-      icon: Brain,
-      title: "29 Procurement Scenarios",
-      description: "Purpose-built AI models for high-stakes procurement decisions — from cost optimization to risk simulation.",
+      icon: Layers,
+      title: "Scenarios",
+      description: "Pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.",
       highlights: [
-        "Make-or-Buy & TCO analysis",
-        "Supplier dependency & exit planning",
-        "Black Swan scenario simulation",
-        "SOW & specification optimization"
+        "29 procurement-specific AI scenarios",
+        "Multi-cycle Chain of Experts pipeline",
+        "Methodology-driven agentic loops",
+        "Custom LLM settings per scenario"
       ]
     },
     {
       icon: Database,
-      title: "Real-Time Market Intelligence",
-      description: "Ground every analysis with live market data — supplier news, M&A activity, commodity trends, and regulatory changes.",
+      title: "Market Intelligence & Knowledge Base",
+      description: "Use Market Intelligence as a self-sufficient tool or inject live market context from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
       highlights: [
         "Live supplier & category intelligence",
         "30+ industry grounding profiles",
@@ -90,9 +198,20 @@ const Features = () => {
       ]
     },
     {
+      icon: TrendingUp,
+      title: "Inflation Monitor & Risk Assessment Platform",
+      description: "Continuously track the noise, surface what's changed, and flag only what requires your decision.",
+      highlights: [
+        "Automated inflation driver scanning",
+        "Risk event detection & alerting",
+        "Bridge scenario recommendations",
+        "Continuous monitoring cadence"
+      ]
+    },
+    {
       icon: Lock,
       title: "Commercial Data Safety",
-      description: "Sensitive commercial data is semantically anonymized before reaching any external API, then restored on return.",
+      description: "Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.",
       highlights: [
         "Semantic anonymization of commercial data",
         "PII and financial identifier masking",
@@ -116,122 +235,53 @@ const Features = () => {
         {/* Hero heading */}
         <section className="mb-10 animate-fade-up text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-20 h-20 md:w-24 md:h-24 overflow-hidden rounded-xl">
-              <img src={exosLogo} alt="EXOS" className="w-full h-full object-cover scale-[1.3]" />
-            </div>
+            <img src={resolvedTheme === 'dark' ? exosMarkDark : exosMark} alt="EXOS" className="h-24 md:h-32 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-            How <span className="text-gradient">EXOS</span> Works
+            Do More With Less. <span className="text-gradient">Decide With Confidence.</span>
           </h1>
-          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-            Enterprise-grade AI analysis with privacy-first architecture.
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto mb-4">
+            Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
           </p>
         </section>
 
-        {/* 2/3 Value Props + 1/3 Success Story */}
+        {/* Value Props */}
         <section className="mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left 2/3 — Value proposition cards */}
-            <div className="lg:col-span-2 space-y-4">
-              {valuePropositions.map((prop, index) => (
-                <Card 
-                  key={prop.title} 
-                  className="card-elevated animate-fade-up border-border/50"
-                  style={{ animationDelay: `${100 + index * 80}ms` }}
-                >
-                  <div className="flex items-start gap-4 p-5">
-                    <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <prop.icon className="w-5 h-5 text-primary-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-display text-lg font-semibold mb-1">{prop.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1">
-                        {prop.highlights.map((h) => (
-                          <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70">
-                            <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
-                            {h}
-                          </span>
-                        ))}
-                      </div>
-                      {"link" in prop && prop.link && (
-                        <NavLink
-                          to={prop.link as string}
-                          className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
-                        >
-                          Learn about EXOS architecture
-                          <ArrowRight className="w-3 h-3" />
-                        </NavLink>
-                      )}
-                    </div>
+          <div className="space-y-4">
+            {valuePropositions.map((prop, index) => (
+              <Card 
+                key={prop.title} 
+                className="card-elevated animate-fade-up border-border/50"
+                style={{ animationDelay: `${100 + index * 80}ms` }}
+              >
+                <div className="flex items-start gap-4 p-5">
+                  <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <prop.icon className="w-5 h-5 text-primary-foreground" />
                   </div>
-                </Card>
-              ))}
-            </div>
-
-            {/* Right 1/3 — Success story preview */}
-            <div className="lg:col-span-1">
-              <div className="lg:sticky lg:top-24">
-                <Card className="card-elevated border-border/50 animate-fade-up" style={{ animationDelay: "300ms" }}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Customer Success
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-primary"
-                        onClick={nextStory}
-                        aria-label="Show another story"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="w-9 h-9 rounded-lg bg-copper/15 flex items-center justify-center">
-                        <story.icon className="w-4.5 h-4.5 text-copper" />
-                      </div>
-                      <Badge variant="outline" className="text-iris border-iris/30 bg-iris/10 text-xs">
-                        {story.industry}
-                      </Badge>
-                    </div>
-                    <CardTitle className="font-display text-base mt-2">{story.company}</CardTitle>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {story.scenarios.map((s) => (
-                        <Badge key={s} variant="secondary" className="text-xs bg-info/10 text-info border-info/20">
-                          {s}
-                        </Badge>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display text-lg font-semibold mb-1">{prop.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {prop.highlights.map((h) => (
+                        <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70">
+                          <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
+                          {h}
+                        </span>
                       ))}
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="relative pl-3 border-l-2 border-primary/30">
-                      <Quote className="w-3.5 h-3.5 text-muted-foreground/40 absolute -left-2 -top-0.5 bg-card" />
-                      <p className="text-sm text-foreground/80 italic leading-relaxed">
-                        "{story.quote}"
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2 font-medium">
-                        — {story.person}
-                      </p>
-                    </div>
-                    <div className="pt-3 border-t border-border/50 flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-primary font-display">{story.metric}</span>
-                      <span className="text-xs text-muted-foreground">{story.metricLabel}</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const el = document.getElementById("success");
-                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }}
-                      className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
-                    >
-                      View all stories <ArrowRight className="w-3 h-3" />
-                    </button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                    {"link" in prop && prop.link && (
+                      <NavLink
+                        to={prop.link as string}
+                        className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
+                      >
+                        Learn about EXOS architecture
+                        <ArrowRight className="w-3 h-3" />
+                      </NavLink>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         </section>
 
@@ -274,7 +324,7 @@ const Features = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   EXOS employs an <strong className="text-foreground">agentic structure</strong> where 
                   specialized AI agents collaborate in a server-side <strong className="text-foreground">Chain of Experts</strong> pipeline. 
-                  For financially complex scenarios, a 3-cycle flow — Analyst → Auditor → Synthesizer — ensures 
+                  For complex financial scenarios, a 3-cycle flow — Analyst → Auditor → Synthesizer — ensures 
                   every recommendation is rigorously challenged, mathematically verified, and synthesized into 
                   actionable intelligence before reaching the user.
                 </p>
@@ -292,7 +342,7 @@ const Features = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Every AI output passes through a multi-layer <strong className="text-foreground">anti-hallucination</strong> framework. 
                   Server-side <strong className="text-foreground">grounding</strong> injects live market data, industry KPIs, 
-                  and regulatory context directly into prompts. Post-inference <strong className="text-foreground">results validation</strong> cross-checks 
+                  and regulatory context directly into prompts. Post-inference <strong className="text-foreground">validation</strong> cross-checks 
                   arithmetic (ROI, NPV, break-even), flags unsupported claims, and enforces separation 
                   of hard vs. soft savings — ensuring outputs you can trust in boardroom presentations.
                 </p>
@@ -328,60 +378,126 @@ const Features = () => {
           <DataFlowDiagram />
         </section>
 
-        {/* Customer Success Stories — Full Section */}
-        <section id="success" className="mb-16 animate-fade-up" style={{ animationDelay: "500ms" }}>
+
+        {/* Dashboards Section */}
+        <section id="dashboards" className="mb-20 animate-fade-up" style={{ animationDelay: "450ms" }}>
           <div className="text-center mb-10">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-3">
-              Customer <span className="text-gradient">Success Stories</span>
+              <span className="text-gradient">Dashboards</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              See how EU procurement teams use EXOS to prevent value leakage, 
-              manage supply chain risk, and drive measurable savings.
+              EXOS dashboards — empowering your decision-making with transparency.
             </p>
+            <a href="/samples/EXOS_Specification_Optimizer_2026-02-28.pdf" download="EXOS_Report_Sample.pdf" className="inline-block mt-4">
+              <Button variant="outline" size="sm" className="gap-2 shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)] hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)] transition-all duration-300">
+                <FileText className="h-4 w-4" />
+                Download Report Sample
+              </Button>
+            </a>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {successStories.map((s, index) => (
-              <Card
-                key={s.company}
-                className="card-elevated border-border/50 animate-fade-up"
-                style={{ animationDelay: `${600 + index * 100}ms` }}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-copper/15 flex items-center justify-center">
-                      <s.icon className="w-5 h-5 text-copper" />
+          {/* Guide Me — 4-category cards */}
+          <div className="mb-8">
+            <h3 className="exos-label-caps mb-3">What are you trying to decide?</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {dashboardCategories.map((cat) => {
+                const Icon = cat.icon;
+                const isActive = cat.dashboards.some((d) => d.id === selectedDashboard);
+                return (
+                  <button
+                    key={cat.label}
+                    onClick={() => setSelectedDashboard(cat.dashboards[0].id)}
+                    className={`group rounded-xl border p-3 text-left transition-all duration-300
+                      bg-card shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]
+                      hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5
+                      active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]
+                      ${isActive ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30" : "border-border/60"}`}
+                  >
+                    <Icon className={`h-5 w-5 mb-2 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"}`} />
+                    <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1 hidden md:block">{cat.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mobile: Grouped select dropdown */}
+          <div className="md:hidden mb-6">
+            <Select value={selectedDashboard} onValueChange={(v) => setSelectedDashboard(v as DashboardType)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {dashboardCategories.map((cat) => (
+                  <SelectGroup key={cat.label}>
+                    <SelectLabel className="exos-label-caps">{cat.label}</SelectLabel>
+                    {cat.dashboards.map((d) => {
+                      const config = dashboardConfigs[d.id];
+                      const count = getDashboardScenarioCount(d.id);
+                      return (
+                        <SelectItem key={d.id} value={d.id}>
+                          {config.name}{count > 0 ? ` (${count})` : ""}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop: Master-detail layout */}
+          <div className="hidden md:grid md:grid-cols-4 md:gap-8 mb-8">
+            <nav className="md:col-span-1 space-y-6">
+              {dashboardCategories.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <div key={cat.label}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                      <h3 className="exos-label-caps">{cat.label}</h3>
                     </div>
-                    <Badge variant="outline" className="text-iris border-iris/30 bg-iris/10 text-xs">
-                      {s.industry}
-                    </Badge>
+                    <div className="space-y-0.5">
+                      {cat.dashboards.map((d) => {
+                        const isActive = selectedDashboard === d.id;
+                        const config = dashboardConfigs[d.id];
+                        const count = getDashboardScenarioCount(d.id);
+                        return (
+                          <button
+                            key={d.id}
+                            onClick={() => setSelectedDashboard(d.id)}
+                            className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border-l-2 ${
+                              isActive
+                                ? "border-l-primary bg-muted text-foreground"
+                                : "border-l-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{config.name}</span>
+                              {count > 0 && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">{count}</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">{d.subtitle}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <CardTitle className="font-display text-lg">{s.company}</CardTitle>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {s.scenarios.map((sc) => (
-                      <Badge key={sc} variant="secondary" className="text-xs bg-info/10 text-info border-info/20">
-                        {sc}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="relative pl-4 border-l-2 border-primary/30">
-                    <Quote className="w-4 h-4 text-muted-foreground/40 absolute -left-2 -top-1 bg-card" />
-                    <p className="text-sm text-foreground/80 italic leading-relaxed">
-                      "{s.quote}"
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2 font-medium">
-                      — {s.person}
-                    </p>
-                  </div>
-                  <div className="pt-3 border-t border-border/50 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-primary font-display">{s.metric}</span>
-                    <span className="text-xs text-muted-foreground">{s.metricLabel}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                );
+              })}
+            </nav>
+            <div className="md:col-span-3">
+              <DashboardContextCard dashboardId={selectedDashboard} config={dashboardConfigs[selectedDashboard]} />
+              {renderDashboard(selectedDashboard)}
+            </div>
+          </div>
+
+          {/* Mobile content */}
+          <div className="md:hidden mb-8">
+            <DashboardContextCard dashboardId={selectedDashboard} config={dashboardConfigs[selectedDashboard]} />
+            {renderDashboard(selectedDashboard)}
           </div>
         </section>
 
@@ -395,6 +511,7 @@ const Features = () => {
           </a>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };

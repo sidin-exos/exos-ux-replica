@@ -86,8 +86,8 @@ function wordDiff(oldStr: string, newStr: string): { oldNode: React.ReactNode; n
   const suffix = j > 0 ? oldWords.slice(oldWords.length - j).join("") : "";
 
   return {
-    oldNode: <>{prefix}<mark className="bg-red-200 dark:bg-red-800/60 rounded px-0.5">{oldMiddle}</mark>{suffix}</>,
-    newNode: <>{prefix}<mark className="bg-green-200 dark:bg-green-800/60 rounded px-0.5">{newMiddle}</mark>{suffix}</>,
+    oldNode: <>{prefix}<mark className="bg-destructive/20 dark:bg-destructive/40 rounded px-0.5">{oldMiddle}</mark>{suffix}</>,
+    newNode: <>{prefix}<mark className="bg-success/20 dark:bg-success/40 rounded px-0.5">{newMiddle}</mark>{suffix}</>,
   };
 }
 
@@ -109,14 +109,14 @@ function DiffView({ entry }: { entry: ChangeLogEntry }) {
             <div key={field} className="text-sm">
               <p className="font-medium text-muted-foreground mb-1">{field}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-md p-2">
-                  <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Before</p>
+                <div className="bg-destructive/10 dark:bg-destructive/10 border border-destructive/30 dark:border-destructive/30 rounded-md p-2">
+                  <p className="text-xs font-medium text-destructive dark:text-destructive mb-1">Before</p>
                   <pre className="text-xs whitespace-pre-wrap break-words">
                     {diff ? diff.oldNode : typeof oldVal === "string" ? oldVal : JSON.stringify(oldVal, null, 2)}
                   </pre>
                 </div>
-                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-2">
-                  <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">After</p>
+                <div className="bg-success/10 dark:bg-success/10 border border-success/30 dark:border-success/30 rounded-md p-2">
+                  <p className="text-xs font-medium text-success dark:text-success mb-1">After</p>
                   <pre className="text-xs whitespace-pre-wrap break-words">
                     {diff ? diff.newNode : typeof newVal === "string" ? newVal : JSON.stringify(newVal, null, 2)}
                   </pre>
@@ -161,38 +161,38 @@ const MethodologyHistory = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container max-w-6xl py-12 space-y-8">
         <Breadcrumb>
-          <BreadcrumbList className="text-[13px] text-slate-400">
+          <BreadcrumbList className="text-[13px] text-muted-foreground">
             <BreadcrumbItem>
-              <BreadcrumbLink className="cursor-pointer hover:text-slate-600" onClick={() => navigate("/admin/methodology")}>
+              <BreadcrumbLink className="cursor-pointer hover:text-muted-foreground" onClick={() => navigate("/admin/methodology")}>
                 Methodology
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-slate-600">Change History</BreadcrumbPage>
+              <BreadcrumbPage className="text-muted-foreground">Change History</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
 
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Change History</h1>
-          <p className="text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Change History</h1>
+          <p className="text-muted-foreground mt-1">
             All methodology edits are automatically logged. Click a row to view the diff.
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white">
+        <div className="rounded-lg border border-border bg-card">
           <Table>
             <TableHeader>
               <TableRow>

@@ -113,7 +113,7 @@ function SummarizedPreview({
         <div className="flex flex-wrap gap-1">
           {industry ? (
             <Badge variant="outline" className="text-[10px]">
-              <CheckCircle className="h-2.5 w-2.5 mr-0.5 text-green-500" />
+              <CheckCircle className="h-2.5 w-2.5 mr-0.5 text-success" />
               {industry.name}
             </Badge>
           ) : (
@@ -124,7 +124,7 @@ function SummarizedPreview({
           )}
           {category ? (
             <Badge variant="outline" className="text-[10px]">
-              <CheckCircle className="h-2.5 w-2.5 mr-0.5 text-green-500" />
+              <CheckCircle className="h-2.5 w-2.5 mr-0.5 text-success" />
               {category.name}
             </Badge>
           ) : (
@@ -250,11 +250,11 @@ export function FinalXMLPreview({
               </span>
               <div className="flex items-center gap-1.5">
                 {readiness === "ready" ? (
-                  <Badge className="text-[10px] bg-green-500/10 text-green-600 border-green-500/30">
+                  <Badge className="text-[10px] bg-success/10 text-success border-success/30">
                     Ready
                   </Badge>
                 ) : readiness === "almost" ? (
-                  <Badge className="text-[10px] bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                  <Badge className="text-[10px] bg-warning/10 text-warning border-warning/30">
                     Almost ready
                   </Badge>
                 ) : (

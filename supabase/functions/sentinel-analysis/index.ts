@@ -8,6 +8,13 @@ import { callGoogleAI } from "../_shared/google-ai.ts";
 import { anonymizeText, deanonymizeText, type AnonymizationResultServer } from "../_shared/anonymizer.ts";
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { trackEvent, trackOnceEvent, trackDailyEvent } from "../_shared/track.ts";
+import {
+  SCENARIO_GROUP_REGISTRY, SCENARIO_ID_REGISTRY, GROUP_LABELS,
+  GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
+  parseAIResponse, buildMarkdownFromEnvelope,
+  type ExosOutputParsed,
+} from "../_shared/output-schemas.ts";
 
 /**
  * EXOS Sentinel Analysis Edge Function
@@ -92,10 +99,15 @@ const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor specializing i
 Output your audit as a structured critique with [PASS] or [FAIL] markers for each check.
 At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION].`;
 
-function buildSynthesizerPrompt(dashboards: string[] = []): string {
-  const dashboardInstruction = dashboards.length > 0
-    ? `You MUST generate data for these specific dashboards: ${dashboards.join(", ")}`
-    : "Include dashboard keys relevant to the scenario.";
+function buildSynthesizerPrompt(scenarioGroup: string | null, scenarioId: string | null): string {
+  // Synthesizer uses structured JSON output via schema injection
+  const schemaInjection = scenarioGroup
+    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + GROUP_SCHEMAS[scenarioGroup]
+    : '';
+
+  const sid = scenarioId ? SCENARIO_ID_REGISTRY[scenarioId] || scenarioId : 'unknown';
+  const groupLabel = scenarioGroup ? GROUP_LABELS[scenarioGroup] || scenarioGroup : 'unknown';
+
   return `You are a Senior Procurement Strategist producing the final deliverable for a client.
 
 You are given:
@@ -116,16 +128,9 @@ Output ONLY the final polished analysis. Do NOT include:
 
 The output should read as a clean, professional procurement analysis as if it were correct from the start.
 
-IMPORTANT: At the VERY END of your final output, you MUST append a <dashboard-data> XML block containing valid JSON. Do NOT wrap the JSON in markdown code blocks. ${dashboardInstruction}
+Use scenario_id "${sid}" and group "${scenarioGroup}" with group_label "${groupLabel}" in the envelope.
 
-Required schemas:
-- costWaterfall: {"components":[{"name":"...","value":NUMBER,"type":"cost"|"reduction"}],"currency":"$"}
-- tcoComparison: {"data":[{"year":"Y0","optA":NUMBER,"optB":NUMBER}],"options":[{"id":"optA","name":"...","color":"#1B2A4A","totalTCO":NUMBER}],"currency":"$"}
-- actionChecklist: {"actions":[{"action":"...","priority":"high"|"medium"|"low","status":"pending"|"in-progress"|"done","owner":"..."}]}
-- riskMatrix: {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
-- sensitivitySpider: {"variables":[{"name":"...","baseCase":NUMBER,"lowCase":NUMBER,"highCase":NUMBER}],"currency":"$"}
-
-Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"License Fees","value":120000,"type":"cost"},{"name":"Discount","value":18000,"type":"reduction"}],"currency":"$"}}</dashboard-data>`;
+${schemaInjection}`;
 }
 
 // ============================================
@@ -446,7 +451,7 @@ function buildServerGroundedPrompts(
   userInput: string,
   injectShadowLog: boolean = false,
   marketInsight: MarketInsightRow | null = null,
-  selectedDashboards: string[] = []
+  _selectedDashboards: string[] = []
 ): { systemPrompt: string; userPrompt: string } {
   // Build system prompt with injected context
   const contextParts: string[] = [];
@@ -455,37 +460,30 @@ function buildServerGroundedPrompts(
   if (category) contextParts.push(buildCategoryXML(category));
   if (marketInsight) contextParts.push(buildMarketIntelligenceXML(marketInsight));
 
+  // Derive scenario group server-side
+  const scenarioGroup = SCENARIO_GROUP_REGISTRY[scenarioType];
+  const scenarioCode = SCENARIO_ID_REGISTRY[scenarioType] || scenarioType;
+  const groupLabel = scenarioGroup ? GROUP_LABELS[scenarioGroup] || scenarioGroup : 'unknown';
+
+  // Build schema injection (replaces legacy <dashboard-data> XML instructions)
+  const schemaInjection = scenarioGroup
+    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + GROUP_SCHEMAS[scenarioGroup]
+    : '';
+
   const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
 
 IMPORTANT RULES:
 1. Maintain all masked tokens exactly as provided (e.g., [SUPPLIER_A], [AMOUNT_B])
 2. Do not attempt to guess or reveal masked information
 3. Base recommendations on the provided industry/category context
-4. Structure your response with clear sections: Analysis, Recommendations, Risks, Next Steps
-5. Quantify recommendations with specific percentages or ranges when possible
-6. Only cite specific data points from provided context
-7. Flag uncertainty explicitly with confidence levels
-8. Err on cautious side for savings projections
-9. At the VERY END of your response, you MUST append a <dashboard-data> XML block containing valid JSON. Do NOT wrap the JSON in markdown code blocks inside the XML tags. Use REAL values extracted from your analysis.
-${selectedDashboards.length > 0 ? `\nYou MUST generate data for these specific dashboards: ${selectedDashboards.join(", ")}` : "\nInclude dashboard keys relevant to the scenario."}
+4. Quantify recommendations with specific percentages or ranges when possible
+5. Only cite specific data points from provided context
+6. Flag uncertainty explicitly with confidence levels
+7. Err on cautious side for savings projections
 
-Required schemas for each dashboard key:
-- costWaterfall: {"components":[{"name":"...","value":NUMBER,"type":"cost"|"reduction"}],"currency":"$"}
-- tcoComparison: {"data":[{"year":"Y0","optA":NUMBER,"optB":NUMBER}],"options":[{"id":"optA","name":"...","color":"#1B2A4A","totalTCO":NUMBER}],"currency":"$"}
-- actionChecklist: {"actions":[{"action":"...","priority":"high"|"medium"|"low"|"critical","status":"pending"|"in-progress"|"done"|"blocked","owner":"..."}]}
-- riskMatrix: {"risks":[{"supplier":"...","impact":"high"|"medium"|"low","probability":"high"|"medium"|"low","category":"..."}]}
-- sensitivitySpider: {"variables":[{"name":"...","baseCase":NUMBER,"lowCase":NUMBER,"highCase":NUMBER}],"currency":"$"}
-- decisionMatrix: {"criteria":[{"name":"...","weight":NUMBER}],"options":[{"name":"...","scores":[NUMBER]}]}
-- timelineRoadmap: {"phases":[{"name":"...","startWeek":NUMBER,"endWeek":NUMBER,"status":"completed"|"in-progress"|"upcoming"}]}
-- kraljicQuadrant: {"items":[{"id":"1","name":"...","supplyRisk":NUMBER,"businessImpact":NUMBER}]}
-- scenarioComparison: {"scenarios":[{"id":"a","name":"...","color":"#1B2A4A"}],"radarData":[{"metric":"...","a":NUMBER,"b":NUMBER}],"summary":[{"criteria":"...","a":"...","b":"..."}]}
-- supplierScorecard: {"suppliers":[{"name":"...","score":NUMBER,"trend":"up"|"down"|"stable","spend":"$1M"}]}
-- sowAnalysis: {"clarity":NUMBER,"sections":[{"name":"...","status":"complete"|"partial"|"missing","note":"..."}]}
-- negotiationPrep: {"batna":{"strength":NUMBER,"description":"..."},"leveragePoints":[{"point":"...","tactic":"..."}],"sequence":[{"step":"...","detail":"..."}]}
-- dataQuality: {"fields":[{"field":"...","status":"complete"|"partial"|"missing","coverage":NUMBER}]}
-- licenseTier: {"tiers":[{"name":"...","users":NUMBER,"costPerUser":NUMBER,"totalCost":NUMBER,"color":"#1B2A4A"}]}
+Use scenario_id "${scenarioCode}", scenario_name based on the analysis type, group "${scenarioGroup || 'A'}", and group_label "${groupLabel}" in the envelope.
 
-Example: <dashboard-data>{"costWaterfall":{"components":[{"name":"Materials","value":225000,"type":"cost"},{"name":"Savings","value":45000,"type":"reduction"}],"currency":"$"}}</dashboard-data>
+${schemaInjection}
 
 ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
 
@@ -603,6 +601,33 @@ serve(async (req) => {
       "Analysis rate limit reached. Please wait before submitting another analysis."
     );
   }
+
+  // Funnel: session_returned (CP6) — fire at most once/day if user signed up >= 7 days ago
+  trackDailyEvent({
+    userId,
+    event: "session_returned",
+    checkpoint: "CP6",
+    computeProps: async (supabase) => {
+      const { data } = await supabase
+        .from("user_funnel_events")
+        .select("created_at")
+        .eq("user_id", userId)
+        .eq("event_name", "user_signed_up")
+        .limit(1)
+        .maybeSingle();
+      if (!data) return null;
+      const daysSince = Math.floor(
+        (Date.now() - new Date(data.created_at).getTime()) / (1000 * 60 * 60 * 24),
+      );
+      if (daysSince < 7) return null;
+      const { count } = await supabase
+        .from("user_funnel_events")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("event_name", "session_returned");
+      return { days_since_signup: daysSince, session_number: (count ?? 0) + 1 };
+    },
+  });
 
   // Declare tracer and parentRunId at function scope for error handler
   let tracer: LangSmithTracer | undefined;
@@ -779,14 +804,14 @@ serve(async (req) => {
         });
       }
     } else if (body.systemPrompt) {
-      // Legacy path: client sent full prompts (useQuickAnalysis, ModelConfigPanel, etc.)
+      // Legacy path: client sent full prompts
       systemPrompt = body.systemPrompt;
-      // Append selected dashboards if provided
-      if (selectedDashboards.length > 0) {
-        systemPrompt += `\n\nYou MUST generate <dashboard-data> JSON for these specific dashboards: ${selectedDashboards.join(", ")}`;
+      // Inject schema for structured output if scenario type is known
+      const legacyGroup = scenarioType ? SCENARIO_GROUP_REGISTRY[scenarioType] : null;
+      if (legacyGroup) {
+        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[legacyGroup] + '\n\n' + GROUP_SCHEMAS[legacyGroup];
       }
       userPrompt = anonymizedUserPrompt;
-      // Inject shadow log for legacy path too if conditions met
       if (enableTestLogging && scenarioType) {
         systemPrompt += SHADOW_LOG_INSTRUCTION;
       }
@@ -854,6 +879,7 @@ serve(async (req) => {
       console.log(`[Sentinel] Multi-cycle Chain-of-Experts for scenario: ${scenarioId}`);
 
       const llmOpts = { googleModel, tracer, parentRunId: parentRunId!, spanName: "" };
+      const scenarioGroup = scenarioId ? SCENARIO_GROUP_REGISTRY[scenarioId] : null;
 
       // Cycle 1: Analyst Draft
       const draft = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
@@ -864,9 +890,9 @@ serve(async (req) => {
       const critique = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
       console.log(`[Sentinel] Cycle 2 (Auditor Critique): ${critique.length} chars`);
 
-      // Cycle 3: Synthesizer Final
+      // Cycle 3: Synthesizer Final (with schema injection)
       const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPrompt}\n</original-request>`;
-      const finalContent = await callLLM(buildSynthesizerPrompt(selectedDashboards), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      const finalContent = await callLLM(buildSynthesizerPrompt(scenarioGroup, scenarioId), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
       console.log(`[Sentinel] Cycle 3 (Synthesizer Final): ${finalContent.length} chars`);
 
       const processingTime = Math.round(performance.now() - startTime);
@@ -909,9 +935,31 @@ serve(async (req) => {
         validationConfidence: validation.confidenceScore,
       });
 
+      // Try to parse structured envelope
+      const parsedEnvelope = parseAIResponse(finalContent);
+      let responseContent = multiDeanon.restoredText;
+      if (parsedEnvelope?.schema_version === '1.0') {
+        responseContent = buildMarkdownFromEnvelope(parsedEnvelope);
+        // GDPR flag logging
+        if (parsedEnvelope.gdpr_flags?.length > 0) {
+          console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: parsedEnvelope.scenario_id, flag_count: parsedEnvelope.gdpr_flags.length });
+        }
+        tracer.patchRun(parentRunId!, {
+          scenario_id: parsedEnvelope.scenario_id, confidence_level: parsedEnvelope.confidence_level,
+          data_gaps_count: parsedEnvelope.data_gaps?.length ?? 0, gdpr_flags_count: parsedEnvelope.gdpr_flags?.length ?? 0,
+          schema_version: parsedEnvelope.schema_version,
+        });
+      }
+
+      // Funnel: first_action_completed (CP3) — only first analysis ever
+      trackOnceEvent({ userId, event: "first_action_completed", checkpoint: "CP3", properties: { action_type: "scenario_started" } });
+      // Funnel: report_generated (CP4)
+      trackEvent({ userId, event: "report_generated", checkpoint: "CP4", properties: { report_type: scenarioType, scenario_id: scenarioId } });
+
       return new Response(
         JSON.stringify({
-          content: multiDeanon.restoredText,
+          content: responseContent,
+          structured: parsedEnvelope?.schema_version === '1.0' ? parsedEnvelope : undefined,
           validation,
           model: googleModel,
           source: "google_ai_studio",
@@ -996,12 +1044,31 @@ serve(async (req) => {
           }
         }
 
-        tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog });
+        // Try to parse structured envelope from single-pass
+        const singleParsedEnvelope = parseAIResponse(content);
+        let responseContent = singleDeanon.restoredText;
+        if (singleParsedEnvelope?.schema_version === '1.0') {
+          responseContent = buildMarkdownFromEnvelope(singleParsedEnvelope);
+          if (singleParsedEnvelope.gdpr_flags?.length > 0) {
+            console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: singleParsedEnvelope.scenario_id, flag_count: singleParsedEnvelope.gdpr_flags.length });
+          }
+        }
+
+        tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog,
+          ...(singleParsedEnvelope?.schema_version === '1.0' ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: '1.0' } : {}),
+        });
         tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
+
+        // Funnel: first_action_completed (CP3) — only first analysis ever
+        trackOnceEvent({ userId, event: "first_action_completed", checkpoint: "CP3", properties: { action_type: "scenario_started" } });
+        // Funnel: report_generated (CP4)
+        trackEvent({ userId, event: "report_generated", checkpoint: "CP4", properties: { report_type: scenarioType, scenario_id: scenarioId } });
 
         return new Response(
           JSON.stringify({
-            content: singleDeanon.restoredText, validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
+            content: responseContent,
+            structured: singleParsedEnvelope?.schema_version === '1.0' ? singleParsedEnvelope : undefined,
+            validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

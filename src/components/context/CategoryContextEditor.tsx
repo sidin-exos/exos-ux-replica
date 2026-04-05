@@ -57,20 +57,20 @@ function DirectionIcon({ direction }: { direction?: string }) {
   if (!direction) return null;
   const d = direction.toLowerCase();
   if (d.includes('min') || d.includes('decrease') || d.includes('lower') || d.includes('↓')) {
-    return <TrendingDown className="h-3 w-3 text-green-500 shrink-0" />;
+    return <TrendingDown className="h-3 w-3 text-success shrink-0" />;
   }
   if (d.includes('max') || d.includes('increase') || d.includes('higher') || d.includes('↑')) {
-    return <TrendingUp className="h-3 w-3 text-blue-500 shrink-0" />;
+    return <TrendingUp className="h-3 w-3 text-info shrink-0" />;
   }
   return <Minus className="h-3 w-3 text-muted-foreground shrink-0" />;
 }
 
 const KRALJIC_COLORS: Record<string, string> = {
-  "Strategic": "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  "Leverage": "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  "Bottleneck": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-  "Non-Critical": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  "Routine": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  "Strategic": "bg-destructive/15 text-destructive",
+  "Leverage": "bg-warning/15 text-warning",
+  "Bottleneck": "bg-iris/15 text-iris",
+  "Non-Critical": "bg-success/15 text-success",
+  "Routine": "bg-success/15 text-success",
 };
 
 export function CategoryContextEditor({
@@ -176,7 +176,7 @@ export function CategoryContextEditor({
             <CardTitle className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <FolderKanban className="h-4 w-4 text-accent-foreground" />
-                Fine-tune: {category.name}
+                AI Settings: {category.name}
               </span>
               <div className="flex items-center gap-2">
                 {category.kraljic_position && (
@@ -208,7 +208,7 @@ export function CategoryContextEditor({
             {hasEnrichedData && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Scale className="h-4 w-4 text-purple-500" />
+                  <Scale className="h-4 w-4 text-iris" />
                   <Label className="font-medium">Market Profile</Label>
                 </div>
 
@@ -279,12 +279,12 @@ export function CategoryContextEditor({
 
                 {/* EU Regulatory Context */}
                 {category.eu_regulatory_context && (
-                  <div className="p-2.5 rounded-md bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30">
+                  <div className="p-2.5 rounded-md bg-info/10 border border-info/30">
                     <div className="flex items-center gap-1.5 mb-1">
-                      <ShieldAlert className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                      <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">EU Regulatory Context</span>
+                      <ShieldAlert className="h-3.5 w-3.5 text-info" />
+                      <span className="text-xs font-semibold text-info">EU Regulatory Context</span>
                     </div>
-                    <p className="text-xs text-blue-700 dark:text-blue-300/80">{category.eu_regulatory_context}</p>
+                    <p className="text-xs text-info/80">{category.eu_regulatory_context}</p>
                   </div>
                 )}
 
@@ -292,7 +292,7 @@ export function CategoryContextEditor({
                 {category.common_failure_modes && category.common_failure_modes.length > 0 && (
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-1.5">
-                      <AlertCircle className="h-3 w-3 text-orange-500" />
+                      <AlertCircle className="h-3 w-3 text-copper" />
                       <p className="text-xs text-muted-foreground font-medium">Common Failure Modes</p>
                     </div>
                     <ul className="space-y-1">
@@ -311,7 +311,7 @@ export function CategoryContextEditor({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-500" />
+                  <FileText className="h-4 w-4 text-info" />
                   <Label className="font-medium">Category Characteristics</Label>
                 </div>
                 {!isEditingCharacteristics ? (
@@ -357,7 +357,7 @@ export function CategoryContextEditor({
             {/* Performance KPIs Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-green-500" />
+                <Target className="h-4 w-4 text-success" />
                 <Label className="font-medium">Category KPIs</Label>
               </div>
               <p className="text-xs text-muted-foreground">

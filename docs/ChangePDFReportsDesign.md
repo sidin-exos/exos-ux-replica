@@ -20,6 +20,37 @@ The EXOS PDF export system has **dual rendering**: the web report and the export
 
 ---
 
+## Data Flow — Schema v1.0 vs Legacy
+
+The EXOS AI Output Schema v1.0 introduced a **Universal Envelope JSON format** that replaces the legacy `<dashboard-data>` XML blocks. The parser now uses a dual-path approach:
+
+1. **Primary (v1.0)**: Extract JSON from `EXOS_OUTPUT_BEGIN` / `EXOS_OUTPUT_END` tokens → `ExosOutput` envelope containing `executive_summary`, `confidence_level`, `data_gaps`, `recommendations`, `analytical_payload`, and `export_metadata`.
+2. **Fallback (@deprecated)**: Parse legacy `<dashboard-data>` XML block → `DashboardData` object. This path is retained for pre-schema reports in `shared_reports` and will be removed in a future version.
+
+### Source of Truth
+
+| What | File |
+|---|---|
+| `ExosOutput` envelope types | `src/lib/sentinel/types.ts` |
+| Frontend envelope parser | `src/lib/dashboard-data-parser.ts` |
+| Edge function parser (PDF) | `supabase/functions/generate-pdf/types.ts` ⚠️ *legacy-only — needs envelope support* |
+| Schema specification | `docs/schema/EXOS_AI_Output_Schema_v1.md` |
+| Implementation decisions | `docs/schema/EXOS_Schema_Implementation_Plan_v2.md` |
+
+### Envelope Fields Available for PDF Rendering
+
+| Envelope Field | PDF Usage |
+|---|---|
+| `confidence_level` (HIGH/MEDIUM/LOW) | Confidence badge on cover page |
+| `data_gaps[]` | Data gaps sidebar or callout box |
+| `executive_summary.executive_bullets[]` | Executive summary bullet points |
+| `executive_summary.recommendations[]` | Recommended Actions section |
+| `export_metadata.low_confidence_watermark` | Diagonal watermark on all pages when `true` |
+| `export_metadata.generated_at` | Footer timestamp |
+| `schema_version` | Guard — reject unknown versions |
+
+---
+
 ## File Mirror Map
 
 Every PDF-related frontend file has a server-side mirror in the edge function. When changing PDF design, **always edit both sides**:
@@ -45,6 +76,7 @@ Every PDF-related frontend file has a server-side mirror in the edge function. W
 | `src/components/reports/pdf/dashboardVisuals/PDFTimelineRoadmap.tsx`    | `supabase/functions/generate-pdf/dashboards.tsx` → `PDFTimelineRoadmap`    |
 | `src/lib/dashboard-data-parser.ts`                                      | `supabase/functions/generate-pdf/types.ts`                                 |
 | `src/lib/dashboard-mappings.ts`                                         | `supabase/functions/generate-pdf/types.ts`                                 |
+| `src/lib/sentinel/types.ts` (ExosOutput envelope)                       | `supabase/functions/generate-pdf/types.ts` ⚠️ *pending envelope support*   |
 
 ---
 
@@ -101,6 +133,10 @@ supabase functions deploy generate-pdf --no-verify-jwt
 | Specific dashboard in PDF (e.g. Action Checklist) | `src/components/reports/pdf/dashboardVisuals/PDFActionChecklist.tsx`           | `supabase/functions/generate-pdf/dashboards.tsx` → find `PDFActionChecklist` component   | `supabase functions deploy generate-pdf --no-verify-jwt` |
 | PDF rate limit                                    | N/A                                                                            | `supabase/functions/generate-pdf/index.ts`                                               | `supabase functions deploy generate-pdf --no-verify-jwt` |
 | Dashboard data parsing logic                      | `src/lib/dashboard-data-parser.ts`                                             | `supabase/functions/generate-pdf/types.ts`                                               | `supabase functions deploy generate-pdf --no-verify-jwt` |
+| Confidence badge on cover                         | `src/components/reports/pdf/PDFReportDocument.tsx`                             | `supabase/functions/generate-pdf/pdf-document.tsx`                                       | `supabase functions deploy generate-pdf --no-verify-jwt` |
+| Data gaps sidebar / callout                       | `src/components/reports/pdf/PDFReportDocument.tsx`                             | `supabase/functions/generate-pdf/pdf-document.tsx`                                       | `supabase functions deploy generate-pdf --no-verify-jwt` |
+| Low-confidence watermark                          | `src/components/reports/pdf/PDFReportDocument.tsx`                             | `supabase/functions/generate-pdf/pdf-document.tsx`                                       | `supabase functions deploy generate-pdf --no-verify-jwt` |
+| `schema_version` guard logic                      | `src/lib/dashboard-data-parser.ts`                                             | `supabase/functions/generate-pdf/types.ts`                                               | `supabase functions deploy generate-pdf --no-verify-jwt` |
 
 ---
 
@@ -112,7 +148,7 @@ supabase functions deploy generate-pdf --no-verify-jwt
 | `supabase/functions/generate-pdf/pdf-document.tsx` | **Main PDF layout**: cover page, executive summary extraction, section categorization, dashboard page arrangement, analysis text pages, parameters page. Contains base64 EXOS logo and dark/light color palettes.                                                                                                              |
 | `supabase/functions/generate-pdf/dashboards.tsx`   | **All 14 dashboard PDF components**: ActionChecklist, CostWaterfall, DataQuality, DecisionMatrix, KraljicQuadrant, LicenseTier, NegotiationPrep, RiskMatrix, SOWAnalysis, ScenarioComparison, SensitivityTornado, SupplierScorecard, TCOComparison, TimelineRoadmap. Each is a self-contained `@react-pdf/renderer` component. |
 | `supabase/functions/generate-pdf/theme.ts`         | **PDF theme system**: color definitions, style factory functions for cards, bars, matrices, legends, headers. Controls ALL visual styling constants.                                                                                                                                                                           |
-| `supabase/functions/generate-pdf/types.ts`         | Dashboard type definitions, `extractDashboardData()` parser, `stripDashboardData()` text cleaner. Data logic only, no visual.                                                                                                                                                                                                  |
+| `supabase/functions/generate-pdf/types.ts`         | Dashboard type definitions, `extractDashboardData()` parser (⚠️ **currently legacy XML only** — `@deprecated`), `stripDashboardData()` text cleaner. Needs update to support `ExosOutput` envelope parsing matching `src/lib/dashboard-data-parser.ts`.                                                                       |
 
 ## Shared Dependencies
 
@@ -127,12 +163,57 @@ The edge function also uses these shared modules from `supabase/functions/_share
 
 ---
 
+## EXOS Output Schema v1.0 Integration
+
+### Current State
+
+The frontend (`src/lib/dashboard-data-parser.ts`) has been updated to parse the Universal Envelope JSON format first, falling back to legacy XML. The edge function (`generate-pdf/types.ts`) **still uses legacy XML extraction only** — this is a known gap.
+
+### How It Works (Frontend)
+
+1. `extractDashboardData()` tries to find `EXOS_OUTPUT_BEGIN` / `EXOS_OUTPUT_END` tokens
+2. If found, parses JSON as `ExosOutput` envelope → extracts `analytical_payload` as `DashboardData`
+3. If not found, falls back to `<dashboard-data>` XML parsing (`@deprecated`)
+4. Envelope metadata (`confidence_level`, `data_gaps`, `export_metadata`) is surfaced separately for rendering
+
+### Known Gap — Edge Function
+
+The edge function `supabase/functions/generate-pdf/types.ts` still uses the legacy `<dashboard-data>` XML extraction. To fully support Schema v1.0:
+
+1. Add `ExosOutput` envelope types to `generate-pdf/types.ts` (mirror from `src/lib/sentinel/types.ts`)
+2. Update `extractDashboardData()` to try envelope JSON first, XML fallback second
+3. Pass envelope metadata to `pdf-document.tsx` for confidence badge, watermark, and data gaps rendering
+4. Deploy: `supabase functions deploy generate-pdf --no-verify-jwt`
+
+### Reference Documents
+
+- `docs/schema/EXOS_AI_Output_Schema_v1.md` — full schema specification
+- `docs/schema/EXOS_Schema_Implementation_Plan_v2.md` — CTO-approved implementation decisions
+
+---
+
+## Current PDF Layout
+
+PDF reports use a professional brandbook design with a consolidated layout:
+
+- **Page 1**: Cover page with EXOS logo, analysis type, report title, executive summary (Key Findings + Recommended Actions), and KPI footer (BATNA, Leverage, etc.)
+- **Title format**: `[Name] Analysis Report` (e.g., "Preparing for Negotiation Analysis Report")
+- **Cover metadata**: Simplified to display only "ANALYSIS TYPE"
+- **Dashboard pages**: Each active dashboard rendered as a full-page or half-page component
+- **Final page**: Analysis Parameters (technical metadata + methodology consolidated)
+- **Layout stability**: `wrap={false}` on analysis sections
+
+---
+
 ## Common Mistakes to Avoid
 
 1. **Editing only `src/` PDF files** — This changes the preview modal but NOT the downloaded PDF. Always mirror changes to the edge function.
 2. **Forgetting to deploy** — After editing anything in `supabase/functions/generate-pdf/`, you must run `supabase functions deploy generate-pdf --no-verify-jwt`. Without this, the live PDF will still use the old code.
 3. **Editing `_shared/` modules without redeploying dependent functions** — If you change `_shared/validate.ts`, you must redeploy every function that imports it.
 4. **Assuming the preview matches the export** — The preview modal and the actual PDF download use different codebases. Always test both after changes.
+5. **Editing edge function `types.ts` without checking Excel** — The types file is mirrored in `generate-excel/types.ts`. If you change dashboard data structures, update both, plus the frontend `dashboard-data-parser.ts`.
+6. **Referencing `EXOS_Schema_Implementation_Plan_v1.md`** — The v1 draft was rejected. The correct file is `EXOS_Schema_Implementation_Plan_v2.md`.
+7. **Forgetting envelope support in edge function** — The frontend parser already supports the v1.0 envelope. The edge function `types.ts` still needs updating to match. Adding new envelope fields on the frontend without mirroring to the edge function will cause silent data loss in exported PDFs.
 
 ---
 

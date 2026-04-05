@@ -75,7 +75,7 @@ const TCOComparisonDashboard = ({
   const savings = highestTCO.totalTCO - lowestTCO.totalTCO;
 
   return (
-    <Card className="card-elevated h-full">
+    <Card className="card-elevated">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

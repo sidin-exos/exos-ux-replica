@@ -24,18 +24,18 @@ export const DeepAnalysisResult = ({
 
   // Confidence color based on score
   const getConfidenceColor = (score: number) => {
-    if (score >= 70) return "bg-green-500/20 text-green-600 border-green-500/30";
-    if (score >= 50) return "bg-yellow-500/20 text-yellow-600 border-yellow-500/30";
-    return "bg-red-500/20 text-red-600 border-red-500/30";
+    if (score >= 70) return "bg-success/20 text-success border-success/30";
+    if (score >= 50) return "bg-warning/20 text-warning border-warning/30";
+    return "bg-destructive/20 text-destructive border-destructive/30";
   };
 
   // Validation status styling
   const getValidationStyle = (status: typeof validationStatus) => {
     switch (status) {
       case 'approved':
-        return { className: "bg-green-500/20 text-green-600 border-green-500/30", icon: CheckCircle2 };
+        return { className: "bg-success/20 text-success border-success/30", icon: CheckCircle2 };
       case 'rejected':
-        return { className: "bg-red-500/20 text-red-600 border-red-500/30", icon: XCircle };
+        return { className: "bg-destructive/20 text-destructive border-destructive/30", icon: XCircle };
       default:
         return { className: "bg-muted text-muted-foreground", icon: Info };
     }
@@ -47,12 +47,12 @@ export const DeepAnalysisResult = ({
   return (
     <div className="space-y-6">
       {/* Main Result Card with Gradient Border */}
-      <div className="relative rounded-xl p-[2px] bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500">
+      <div className="relative rounded-xl p-[2px] bg-gradient-to-br from-iris via-accent to-primary">
         <div className="rounded-[10px] bg-card p-6 space-y-4">
           {/* Header */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
-              <BrainCircuit className="w-5 h-5 text-purple-500" />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-iris/20 to-accent/20 flex items-center justify-center">
+              <BrainCircuit className="w-5 h-5 text-iris" />
             </div>
             <div>
               <h3 className="font-display text-lg font-semibold">

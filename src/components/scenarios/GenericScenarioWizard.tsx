@@ -224,7 +224,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const { isAvailable: hasMarketInsights, insight: marketInsight } = useMarketInsightsAvailability(industrySlug, categorySlug);
 
   // Sentinel AI pipeline
-  const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs } = useSentinel({
+  const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs, structuredEnvelope: sentinelEnvelope } = useSentinel({
     onProgress: () => {},
     onError: (error) => {
       toast.error(`Analysis failed: ${error.message}`);
@@ -340,7 +340,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const missingRequired = getMissingRequiredFields(scenario.id, formData);
   const missingOptional = getMissingOptionalFields(scenario.id, formData);
 
-  const canProceed = missingRequired.length === 0;
+  const canProceed = true;
 
   // Fetch methodology config from DB for input evaluation
   const { data: dbEvalConfig } = useScenarioEvalConfig(scenario.id);
@@ -527,6 +527,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         scenarioTitle: scenario.title,
         scenarioId: scenario.id,
         analysisResult: analysisResult,
+        structuredData: sentinelEnvelope ? JSON.stringify(sentinelEnvelope) : undefined,
         formData: formData,
         timestamp: analysisTimestamp,
         selectedDashboards: selectedDashboards,
@@ -682,7 +683,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-display text-lg font-semibold mb-1">
+                <h3 className="text-lg exos-page-title mb-1">
                   Analysis Settings
                 </h3>
                 <p className="text-sm text-muted-foreground">
@@ -749,14 +750,18 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               {/* Left: Context selectors with inline editors */}
               <div className="md:col-span-2 p-3 rounded-lg border border-border bg-card dark:bg-secondary/60 shadow-sm space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <IndustrySelector
-                    value={industrySlug}
-                    onChange={handleIndustryChange}
-                  />
-                  <CategorySelector
-                    value={categorySlug}
-                    onChange={handleCategoryChange}
-                  />
+                  <div className="p-3 rounded-lg border border-primary/15 bg-primary/[0.02]">
+                    <IndustrySelector
+                      value={industrySlug}
+                      onChange={handleIndustryChange}
+                    />
+                  </div>
+                  <div className="p-3 rounded-lg border border-iris/15 bg-iris/[0.02]">
+                    <CategorySelector
+                      value={categorySlug}
+                      onChange={handleCategoryChange}
+                    />
+                  </div>
                 </div>
 
                 {/* Inline context editors & preview — collapsed by default */}
@@ -817,7 +822,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               <div className="md:col-span-2 space-y-6">
                 {/* Required Fields */}
                 <div className="space-y-4 bg-secondary/30 dark:bg-secondary/40 rounded-lg p-4 border border-border/50">
-                  <h4 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+                  <h4 className="exos-label-caps">
                     Enter Your Data
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

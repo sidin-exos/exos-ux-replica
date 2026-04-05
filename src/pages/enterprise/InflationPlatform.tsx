@@ -1,15 +1,21 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { TrendingUp, BarChart3, Rss, Newspaper } from "lucide-react";
+import { TrendingUp, BarChart3, Rss, Newspaper, Mail, MessageSquare } from "lucide-react";
+import signalRadarImg from "@/assets/design_variant_b.png";
+import signalRadarDarkImg from "@/assets/design_variant_b_transparent.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import EnterpriseLayout from "@/components/layout/EnterpriseLayout";
 import InflationSetupWizard from "@/components/enterprise/InflationSetupWizard";
 import InflationTrackerCard from "@/components/enterprise/InflationTrackerCard";
+import InflationDetailView from "@/components/enterprise/InflationDetailView";
 import { useInflationTrackers } from "@/hooks/useInflationTrackers";
+import type { InflationTracker } from "@/hooks/useInflationTrackers";
 
 const MOCK_NEWS_FEED = [
   { title: "Commodity prices stabilise amid mixed economic signals across EU markets", tracker: "DDR5 prices FOB Ningbo", date: "Mar 28, 2026", source: "Reuters" },
@@ -22,7 +28,12 @@ const MOCK_NEWS_FEED = [
 const InflationPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
   const [activeTab, setActiveTab] = useState("dashboard");
-  const { trackers, isLoading, createTracker } = useInflationTrackers();
+  const [selectedTracker, setSelectedTracker] = useState<InflationTracker | null>(null);
+  const { trackers, isLoading, createTracker, deleteTracker } = useInflationTrackers();
+
+  const handleSelectTracker = useCallback((tracker: InflationTracker) => {
+    setSelectedTracker(tracker);
+  }, []);
 
   // Build news feed matched to actual tracker names
   const newsFeed = useMemo(() => {
@@ -55,6 +66,21 @@ const InflationPlatform = () => {
     );
   }
 
+  // Detail view — replaces the whole page like RiskPlatform
+  if (selectedTracker) {
+    return (
+      <EnterpriseLayout>
+        <Header />
+        <main className="container py-8">
+          <InflationDetailView
+            tracker={selectedTracker}
+            onBack={() => setSelectedTracker(null)}
+          />
+        </main>
+      </EnterpriseLayout>
+    );
+  }
+
   return (
     <EnterpriseLayout>
       <Header />
@@ -70,7 +96,7 @@ const InflationPlatform = () => {
                 Inflation Monitoring
               </h1>
               <p className="text-sm text-muted-foreground max-w-2xl mt-1">
-                A human-in-the-loop AI platform helping you structure inflation monitoring with an easy-to-use framework for decision-making. Not intended to replace enterprise-grade analytical platforms or serve as a tool for commodity traders.
+                A human-in-the-loop AI platform that helps you structure inflation monitoring with an easy-to-use framework for decision-making. It is not intended to replace enterprise-grade financial analytical platforms or serve as a tool for commodity traders.
               </p>
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground max-w-2xl list-disc list-inside">
                 <li>Choose the goods or service you want to monitor</li>
@@ -80,8 +106,20 @@ const InflationPlatform = () => {
               <p className="mt-1.5 text-xs font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
             </div>
           </div>
-          <div className="hidden lg:block w-64 h-32 rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/30 flex items-center justify-center">
-            <span className="text-xs text-muted-foreground/50">Design element placeholder</span>
+          <div className="hidden lg:flex items-center justify-center">
+            <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80 mix-blend-multiply dark:hidden" />
+            <img src={signalRadarDarkImg} alt="Signal radar illustration" loading="lazy" width={256} height={384} className="w-64 h-auto object-contain opacity-80 hidden dark:block" />
+          </div>
+        </div>
+
+        {/* Workspace section — sticky */}
+        <div className="sticky top-16 z-30 bg-background pt-4 pb-2 -mx-4 px-4 border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-1 rounded-full bg-gradient-to-b from-primary via-iris to-copper" />
+            <h2 className="text-sm font-bold text-foreground whitespace-nowrap uppercase tracking-wider">
+              Your Inflation Monitoring Workspace
+            </h2>
+            <Separator className="flex-1" />
           </div>
         </div>
 
@@ -100,15 +138,29 @@ const InflationPlatform = () => {
             <TabsContent value="dashboard" className="mt-4">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* 2/3 — Tracker list */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="lg:col-span-2 space-y-2">
                   {isLoading ? (
                     <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
                   ) : trackers.length === 0 ? (
-                    <div className="text-center py-16 text-muted-foreground">
-                      No trackers yet. Create your first tracker to start monitoring.
+                    <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+                      <p className="text-muted-foreground">No trackers yet. Create your first tracker to start monitoring.</p>
+                      <Button
+                        onClick={() => setActiveTab("setup")}
+                        className="bg-gradient-to-r from-primary via-iris to-copper text-white font-semibold shadow-brand hover:opacity-90 transition-opacity"
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Create Your First Tracker
+                      </Button>
                     </div>
                   ) : (
-                    trackers.map(t => <InflationTrackerCard key={t.id} tracker={t} />)
+                    trackers.map(t => (
+                      <InflationTrackerCard
+                        key={t.id}
+                        tracker={t}
+                        onSelect={handleSelectTracker}
+                        onDelete={(id) => deleteTracker.mutate(id)}
+                      />
+                    ))
                   )}
                 </div>
 
@@ -153,6 +205,24 @@ const InflationPlatform = () => {
             </TabsContent>
           </Tabs>
         </div>
+        {/* Lightweight footer */}
+        <footer className="mt-8 border-t border-border/40 pt-4 pb-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>© {new Date().getFullYear()} EXOS Procurement · Inflation Monitoring</span>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+                <a href="/contact?subject=feedback">
+                  <MessageSquare className="w-4 h-4" /> Leave Feedback
+                </a>
+              </Button>
+              <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+                <a href="/contact">
+                  Get in Touch <Mail className="w-4 h-4" />
+                </a>
+              </Button>
+            </div>
+          </div>
+        </footer>
       </main>
     </EnterpriseLayout>
   );

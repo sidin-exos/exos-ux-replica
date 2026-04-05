@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bookmark, Plus, Save, Trash2, Edit2, Check, X } from "lucide-react";
+import { Bookmark, Plus, Save, Trash2, Edit2, Check, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSavedBusinessContexts, SavedBusinessContext } from "@/hooks/useSavedBusinessContexts";
+import { useAccountData } from "@/hooks/useAccountData";
 import { toast } from "sonner";
 
 interface BusinessContextFieldProps {
@@ -42,6 +43,7 @@ export function BusinessContextField({
   placeholder = "Describe your industry context, company specifics, constraints, and any relevant background...",
 }: BusinessContextFieldProps) {
   const { contexts, saveContext, deleteContext, updateContext } = useSavedBusinessContexts();
+  const { profile } = useAccountData();
   const [selectedContextId, setSelectedContextId] = useState<string | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [contextName, setContextName] = useState("");
@@ -51,7 +53,12 @@ export function BusinessContextField({
   const handleSelectContext = (contextId: string) => {
     if (contextId === "__manual__") {
       setSelectedContextId(null);
-      // Don't clear the value - let user type freely
+      return;
+    }
+
+    if (contextId === "__profile__") {
+      setSelectedContextId("__profile__");
+      onChange(profile?.business_context ?? "");
       return;
     }
 
@@ -139,13 +146,26 @@ export function BusinessContextField({
           <SelectTrigger className="flex-1">
             <SelectValue placeholder="Select saved context or enter manually..." />
           </SelectTrigger>
-          <SelectContent>
+           <SelectContent>
             <SelectItem value="__manual__">
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
                 Enter manually
               </span>
             </SelectItem>
+            {profile?.business_context && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  My Account Context
+                </div>
+                <SelectItem value="__profile__">
+                  <span className="flex items-center gap-2">
+                    <User className="h-3.5 w-3.5" />
+                    My company context
+                  </span>
+                </SelectItem>
+              </>
+            )}
             {contexts.length > 0 && (
               <>
                 <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">

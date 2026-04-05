@@ -48,12 +48,12 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const TYPE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  supplier:   { bg: "bg-blue-500/15 dark:bg-blue-400/15",   border: "border-blue-500 dark:border-blue-400",   text: "text-blue-600 dark:text-blue-400" },
-  commodity:  { bg: "bg-amber-500/15 dark:bg-amber-400/15", border: "border-amber-500 dark:border-amber-400", text: "text-amber-600 dark:text-amber-400" },
-  industry:   { bg: "bg-emerald-500/15 dark:bg-emerald-400/15", border: "border-emerald-500 dark:border-emerald-400", text: "text-emerald-600 dark:text-emerald-400" },
-  regulatory: { bg: "bg-purple-500/15 dark:bg-purple-400/15", border: "border-purple-500 dark:border-purple-400", text: "text-purple-600 dark:text-purple-400" },
-  "m&a":      { bg: "bg-cyan-500/15 dark:bg-cyan-400/15",   border: "border-cyan-500 dark:border-cyan-400",   text: "text-cyan-600 dark:text-cyan-400" },
-  risk:       { bg: "bg-rose-500/15 dark:bg-rose-400/15",   border: "border-rose-500 dark:border-rose-400",   text: "text-rose-600 dark:text-rose-400" },
+  supplier:   { bg: "bg-info/15",       border: "border-info",       text: "text-info" },
+  commodity:  { bg: "bg-warning/15",    border: "border-warning",    text: "text-warning" },
+  industry:   { bg: "bg-highlight/15",  border: "border-highlight",  text: "text-highlight" },
+  regulatory: { bg: "bg-iris/15",       border: "border-iris",       text: "text-iris" },
+  "m&a":      { bg: "bg-accent/15",     border: "border-accent",     text: "text-accent" },
+  risk:       { bg: "bg-destructive/15",border: "border-destructive",text: "text-destructive" },
 };
 
 interface QueryBuilderProps {
@@ -64,6 +64,7 @@ interface QueryBuilderProps {
 
 export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryBuilderProps) {
   const [queryType, setQueryType] = useState<QueryType>("supplier");
+  const [queryName, setQueryName] = useState("");
   const [queryText, setQueryText] = useState("");
   const [recencyFilter, setRecencyFilter] = useState<string>("__none__");
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
@@ -76,6 +77,7 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
 
     onSubmit({
       queryType,
+      queryName: queryName.trim() || undefined,
       query: queryText.trim(),
       recencyFilter: recencyFilter === "__none__" ? undefined : recencyFilter as RecencyFilter,
       domainFilter: selectedDomains.length > 0 ? selectedDomains : undefined,
@@ -136,6 +138,20 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
                 );
               })}
             </div>
+          </div>
+
+          {/* Query Name */}
+          <div className="space-y-2">
+            <Label htmlFor="queryName">Report Title</Label>
+            <Input
+              id="queryName"
+              placeholder="e.g., Q2 Supplier Risk Assessment"
+              value={queryName}
+              onChange={(e) => setQueryName(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              This name will appear as the header in the generated report
+            </p>
           </div>
 
           {/* Query Input */}

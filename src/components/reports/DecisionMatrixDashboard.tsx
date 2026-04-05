@@ -91,7 +91,7 @@ const DecisionMatrixDashboard = ({
               <Scale className="w-4 h-4 text-foreground" />
             </div>
             <div>
-              <CardTitle className="font-display text-base">{title}</CardTitle>
+              <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
               <p className="text-xs text-muted-foreground">{subtitle}</p>
             </div>
           </div>

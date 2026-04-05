@@ -144,13 +144,30 @@ export function useGenerateMarketInsights() {
     setGenerationResult(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("generate-market-insights", {
-        body: { combinations, validateOnly },
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated – please sign in.");
+
+      const supabaseUrl = (supabase as any).supabaseUrl
+        || import.meta.env.VITE_SUPABASE_URL
+        || "https://qczblwoaiuxgesjzxjvu.supabase.co";
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-market-insights`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+            || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjemJsd29haXV4Z2Vzanp4anZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2OTkzMDgsImV4cCI6MjA4ODI3NTMwOH0.8_WvREKiiHcwQ6wRrQRoDFSQEfGp8tnYtk3V4qdN2t8",
+        },
+        body: JSON.stringify({ combinations, validateOnly }),
       });
 
-      if (error) {
-        throw new Error(error.message);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || `Server error ${res.status}`);
       }
+
+      const data = await res.json();
 
       if (!data.success) {
         throw new Error(data.error || "Generation failed");

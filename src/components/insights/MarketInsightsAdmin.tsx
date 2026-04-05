@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
+
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
-import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles } from "lucide-react";
+import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles, Building2, MapPin, FolderKanban } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAllMarketInsights, useGenerateMarketInsights } from "@/hooks/useMarketInsights";
+import { useProcurementCategories } from "@/hooks/useContextData";
 
 const INDUSTRIES = [
   { slug: "aerospace-defense", name: "Aerospace & Defense" },
@@ -43,28 +46,6 @@ const INDUSTRIES = [
   { slug: "telecom", name: "Telecom" },
 ];
 
-const CATEGORIES = [
-  { slug: "chemicals-specialty", name: "Chemicals (Specialty)" },
-  { slug: "construction-materials", name: "Construction Materials" },
-  { slug: "electronic-components", name: "Electronic Components" },
-  { slug: "facilities-management", name: "Facilities Management" },
-  { slug: "fleet-management", name: "Fleet Management" },
-  { slug: "food-ingredients", name: "Food Ingredients" },
-  { slug: "hr-recruitment", name: "HR & Recruitment" },
-  { slug: "it-hardware", name: "IT Hardware" },
-  { slug: "it-software-saas", name: "IT Software (SaaS)" },
-  { slug: "lab-supplies", name: "Lab Supplies" },
-  { slug: "logistics-sea-freight", name: "Logistics (Sea Freight)" },
-  { slug: "logistics-small-parcel", name: "Logistics (Small Parcel)" },
-  { slug: "mro-maintenance", name: "MRO (Maintenance)" },
-  { slug: "packaging-primary", name: "Packaging (Primary)" },
-  { slug: "plastics-resins", name: "Plastics/Resins" },
-  { slug: "raw-materials-steel", name: "Raw Materials (Steel)" },
-  { slug: "semiconductors", name: "Semiconductors" },
-  { slug: "telecomm-equipment", name: "Telecomm Equipment" },
-  { slug: "textile-fabrics", name: "Textile/Fabrics" },
-  { slug: "warehouse-services", name: "Warehouse Services" },
-];
 
 const COUNTRIES = [
   // Global & macro regions
@@ -189,6 +170,8 @@ export function MarketInsightsAdmin() {
   const { toast } = useToast();
   const { data: insights, isLoading: isLoadingInsights, refetch } = useAllMarketInsights();
   const { generate, isGenerating, generationResult } = useGenerateMarketInsights();
+  const { data: dbCategories } = useProcurementCategories();
+  const categories = useMemo(() => (dbCategories || []).map(c => ({ slug: c.slug, name: c.name })), [dbCategories]);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentItem: string } | null>(null);
 
   // Browse filters
@@ -200,6 +183,11 @@ export function MarketInsightsAdmin() {
   const [genIndustry, setGenIndustry] = useState<string>("");
   const [genCategories, setGenCategories] = useState<string[]>([]);
   const [genCountries, setGenCountries] = useState<string[]>([]);
+
+  // Search filters for generation cards
+  const [searchIndustry, setSearchIndustry] = useState("");
+  const [searchCountry, setSearchCountry] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
 
   const filteredInsights = useMemo(() => {
     if (!insights) return [];
@@ -244,7 +232,7 @@ export function MarketInsightsAdmin() {
     const combinations = genCountries.flatMap(countrySlug => {
       const country = COUNTRIES.find(c => c.slug === countrySlug);
       return genCategories.map(catSlug => {
-        const category = CATEGORIES.find(c => c.slug === catSlug);
+        const category = categories.find(c => c.slug === catSlug);
         return {
           industrySlug: industry.slug,
           industryName: industry.name,
@@ -294,88 +282,111 @@ export function MarketInsightsAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Description */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Market Insights Knowledge Base
-          </CardTitle>
-          <CardDescription>
-            Market Insights improve your scenario analysis results. Pick the country and industry you want to analyse, then upload the latest Market Insights into the system.
-            <br />
-            Market Insights contain publicly available information, no sensitive information is used. You can pick existing market insights from the system database if they fit your needs.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
       {/* Generate New Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-base font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             Generate Market Insights
-          </CardTitle>
-          <CardDescription>
-            Select one industry, then choose countries and categories to generate insights for.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {/* Industry (single select) */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Industry</Label>
-            <Select value={genIndustry} onValueChange={setGenIndustry}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an industry" />
-              </SelectTrigger>
-              <SelectContent>
-                {INDUSTRIES.map(i => (
-                  <SelectItem key={i.slug} value={i.slug}>{i.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          </h3>
+          <p className="text-muted-foreground mt-1 text-base whitespace-pre-line">
+            Market Insights improve scenario analysis using publicly available, non-sensitive data.
+            {"\n"}
+            You can select existing insights from our database or choose a country and industry to upload your own latest Market Insights.
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Countries (multi-select with groups) */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">
-                Countries & Regions
-                {genCountries.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-[10px]">{genCountries.length} selected</Badge>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Column 1 — Industry */}
+          <Card className="flex flex-col border-t-4 border-t-primary">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />
+                Industry
+                {genIndustry && (
+                  <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20">1</Badge>
                 )}
-              </Label>
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-3">
-                {Object.entries(countryGroups).map(([group, countries]) => (
-                  <div key={group}>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">{group}</p>
-                    <div className="space-y-1.5">
-                      {countries.map(c => (
-                        <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
-                          <Checkbox
-                            checked={genCountries.includes(c.slug)}
-                            onCheckedChange={() => toggleCountry(c.slug)}
-                          />
-                          <span className="text-xs">{c.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <div className="relative mb-2">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input className="h-8 pl-7 text-xs border-primary/20 focus-visible:ring-primary/30" placeholder="Search industries..." value={searchIndustry} onChange={e => setSearchIndustry(e.target.value)} />
+              </div>
+              <div className="border border-primary/15 rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
+                {INDUSTRIES.filter(i => i.name.toLowerCase().includes(searchIndustry.toLowerCase())).map(i => (
+                  <label key={i.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-primary/5 rounded px-1 py-0.5">
+                    <Checkbox
+                      checked={genIndustry === i.slug}
+                      onCheckedChange={() => setGenIndustry(genIndustry === i.slug ? "" : i.slug)}
+                    />
+                    <span className="text-xs">{i.name}</span>
+                  </label>
                 ))}
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Categories (multi-select) */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">
+          {/* Column 2 — Countries & Regions */}
+          <Card className="flex flex-col border-t-4 border-t-accent">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-accent" />
+                Countries & Regions
+                {genCountries.length > 0 && (
+                  <Badge className="text-[10px] bg-accent/10 text-accent border-accent/20">{genCountries.length}</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <div className="relative mb-2">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input className="h-8 pl-7 text-xs border-accent/20 focus-visible:ring-accent/30" placeholder="Search countries..." value={searchCountry} onChange={e => setSearchCountry(e.target.value)} />
+              </div>
+              <div className="border border-accent/15 rounded-md p-3 max-h-64 overflow-y-auto space-y-3">
+                {Object.entries(countryGroups).map(([group, countries]) => {
+                  const filtered = countries.filter(c => c.name.toLowerCase().includes(searchCountry.toLowerCase()));
+                  if (filtered.length === 0) return null;
+                  return (
+                    <div key={group}>
+                      <p className="text-[10px] uppercase tracking-wider text-accent/70 font-medium mb-1.5">{group}</p>
+                      <div className="space-y-1.5">
+                        {filtered.map(c => (
+                          <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent/5 rounded px-1 py-0.5">
+                            <Checkbox
+                              checked={genCountries.includes(c.slug)}
+                              onCheckedChange={() => toggleCountry(c.slug)}
+                            />
+                            <span className="text-xs">{c.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Column 3 — Procurement Categories */}
+          <Card className="flex flex-col border-t-4 border-t-iris">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FolderKanban className="h-4 w-4 text-iris" />
                 Procurement Categories
                 {genCategories.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-[10px]">{genCategories.length} selected</Badge>
+                  <Badge className="text-[10px] bg-iris/10 text-iris border-iris/20">{genCategories.length}</Badge>
                 )}
-              </Label>
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-1.5">
-                {CATEGORIES.map(c => (
-                  <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <div className="relative mb-2">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input className="h-8 pl-7 text-xs border-iris/20 focus-visible:ring-iris/30" placeholder="Search categories..." value={searchCategory} onChange={e => setSearchCategory(e.target.value)} />
+              </div>
+              <div className="border border-iris/15 rounded-md p-3 max-h-64 overflow-y-auto space-y-1.5">
+                {categories.filter(c => c.name.toLowerCase().includes(searchCategory.toLowerCase())).map(c => (
+                  <label key={c.slug} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-iris/5 rounded px-1 py-0.5">
                     <Checkbox
                       checked={genCategories.includes(c.slug)}
                       onCheckedChange={() => toggleCategory(c.slug)}
@@ -384,91 +395,91 @@ export function MarketInsightsAdmin() {
                   </label>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Summary + Generate button */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {genIndustry && genCategories.length > 0 && genCountries.length > 0
+              ? `${genCountries.length} × ${genCategories.length} = ${genCountries.length * genCategories.length} insight(s) will be generated`
+              : "Select industry, countries, and categories to generate"}
+          </p>
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || batchProgress !== null || !genIndustry || genCategories.length === 0 || genCountries.length === 0}
+          >
+            {isGenerating || batchProgress ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {batchProgress ? `${batchProgress.current}/${batchProgress.total}` : "Generating..."}
+              </>
+            ) : (
+              <>
+                <Globe className="mr-2 h-4 w-4" />
+                Generate Market Insights
+              </>
+            )}
+          </Button>
+        </div>
+
+        {batchProgress && (
+          <div className="space-y-2 p-4 rounded-lg bg-muted/50">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-xs">{batchProgress.currentItem}</span>
+              <span className="text-xs">{batchProgress.current} of {batchProgress.total}</span>
             </div>
+            <Progress value={(batchProgress.current / batchProgress.total) * 100} />
           </div>
+        )}
 
-          {/* Summary + Generate button */}
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground">
-              {genIndustry && genCategories.length > 0 && genCountries.length > 0
-                ? `${genCountries.length} × ${genCategories.length} = ${genCountries.length * genCategories.length} insight(s) will be generated`
-                : "Select industry, countries, and categories to generate"}
-            </p>
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || batchProgress !== null || !genIndustry || genCategories.length === 0 || genCountries.length === 0}
-            >
-              {isGenerating || batchProgress ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {batchProgress ? `${batchProgress.current}/${batchProgress.total}` : "Generating..."}
-                </>
-              ) : (
-                <>
-                  <Globe className="mr-2 h-4 w-4" />
-                  Generate Market Insights
-                </>
-              )}
-            </Button>
-          </div>
-
-          {batchProgress && (
-            <div className="space-y-2 p-4 rounded-lg bg-muted/50">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-xs">{batchProgress.currentItem}</span>
-                <span className="text-xs">{batchProgress.current} of {batchProgress.total}</span>
+        {generationResult && (
+          <div className={`p-4 rounded-lg ${generationResult.success ? 'bg-primary/5 border border-primary/20' : 'bg-destructive/10 border border-destructive/20'}`}>
+            {generationResult.success && generationResult.summary ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-primary">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="font-medium text-sm">Generation Complete</span>
+                </div>
+                <div className={`grid ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-2'} gap-4 text-xs`}>
+                  <div className="flex items-center gap-2">
+                    <Database className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>{generationResult.summary.successful}/{generationResult.summary.total}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>{(generationResult.summary.processingTimeMs / 1000).toFixed(1)}s</span>
+                  </div>
+                  {isSuperAdmin && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Tokens:</span>
+                        <span>{generationResult.summary.totalTokens.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>{generationResult.summary.estimatedCost}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-              <Progress value={(batchProgress.current / batchProgress.total) * 100} />
-            </div>
-          )}
-
-          {generationResult && (
-            <div className={`p-4 rounded-lg ${generationResult.success ? 'bg-primary/5 border border-primary/20' : 'bg-destructive/10 border border-destructive/20'}`}>
-              {generationResult.success && generationResult.summary ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-primary">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span className="font-medium text-sm">Generation Complete</span>
-                  </div>
-                  <div className={`grid ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-2'} gap-4 text-xs`}>
-                    <div className="flex items-center gap-2">
-                      <Database className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{generationResult.summary.successful}/{generationResult.summary.total}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{(generationResult.summary.processingTimeMs / 1000).toFixed(1)}s</span>
-                    </div>
-                    {isSuperAdmin && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">Tokens:</span>
-                          <span>{generationResult.summary.totalTokens.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>{generationResult.summary.estimatedCost}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-destructive text-sm">
-                  <XCircle className="h-4 w-4" />
-                  <span>{generationResult.error}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <div className="flex items-center gap-2 text-destructive text-sm">
+                <XCircle className="h-4 w-4" />
+                <span>{generationResult.error}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Browse Existing Insights */}
-      <Card className="border-t-4 border-t-indigo-500">
+      <Card className="border-t-4 border-t-iris">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Database className="w-4 h-4 text-indigo-500" />
+            <Database className="w-4 h-4 text-iris" />
             Active Market Insights
           </CardTitle>
           <CardDescription>
@@ -499,7 +510,7 @@ export function MarketInsightsAdmin() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {CATEGORIES.map(c => (
+                {categories.map(c => (
                   <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -524,7 +535,7 @@ export function MarketInsightsAdmin() {
                 <TableRow>
                   <TableHead>Industry</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Country</TableHead>
+                  <TableHead>Country or Region</TableHead>
                    <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
@@ -540,7 +551,7 @@ export function MarketInsightsAdmin() {
                 <TableRow>
                   <TableHead>Industry</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Country</TableHead>
+                  <TableHead>Country or Region</TableHead>
                   <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>

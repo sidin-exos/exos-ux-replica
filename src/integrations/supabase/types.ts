@@ -1019,29 +1019,53 @@ export type Database = {
       }
       profiles: {
         Row: {
+          business_context: string | null
+          company_name: string | null
+          company_size: string | null
+          country: string | null
           created_at: string
           display_name: string | null
+          full_name: string | null
           id: string
+          industry: string | null
           is_super_admin: boolean
+          job_title: string | null
           organization_id: string | null
+          primary_challenge: string | null
           role: Database["public"]["Enums"]["org_role"]
           updated_at: string
         }
         Insert: {
+          business_context?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          country?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
           id: string
+          industry?: string | null
           is_super_admin?: boolean
+          job_title?: string | null
           organization_id?: string | null
+          primary_challenge?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           updated_at?: string
         }
         Update: {
+          business_context?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          country?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
           id?: string
+          industry?: string | null
           is_super_admin?: boolean
+          job_title?: string | null
           organization_id?: string | null
+          primary_challenge?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           updated_at?: string
         }
@@ -1503,6 +1527,45 @@ export type Database = {
           },
         ]
       }
+      user_funnel_events: {
+        Row: {
+          checkpoint: string | null
+          cohort: string | null
+          country: string | null
+          created_at: string
+          event_name: string
+          id: string
+          properties: Json | null
+          session_id: string | null
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          checkpoint?: string | null
+          cohort?: string | null
+          country?: string | null
+          created_at?: string
+          event_name: string
+          id?: string
+          properties?: Json | null
+          session_id?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          checkpoint?: string | null
+          cohort?: string | null
+          country?: string | null
+          created_at?: string
+          event_name?: string
+          id?: string
+          properties?: Json | null
+          session_id?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       validation_rules: {
         Row: {
           created_at: string | null
@@ -1547,6 +1610,57 @@ export type Database = {
           avg_processing_time_ms: number | null
           batch_date: string | null
           total_runs: number | null
+        }
+        Relationships: []
+      }
+      v_checkpoint_dropoff: {
+        Row: {
+          cohort: string | null
+          no_upgrade_intent: number | null
+          stuck_at_cp3_onboarding: number | null
+          stuck_at_cp4_value: number | null
+          stuck_at_cp5_pricing: number | null
+          stuck_at_cp6_retention: number | null
+        }
+        Relationships: []
+      }
+      v_funnel_overview: {
+        Row: {
+          activated: number | null
+          cohort: string | null
+          generated_report: number | null
+          hit_paywall: number | null
+          paid: number | null
+          retained_week3: number | null
+          signed_up: number | null
+        }
+        Relationships: []
+      }
+      v_user_journey: {
+        Row: {
+          activated: number | null
+          cohort: string | null
+          country: string | null
+          days_since_signup: number | null
+          distinct_events_fired: number | null
+          generated_report: number | null
+          hit_paywall: number | null
+          is_paid: number | null
+          last_seen: string | null
+          returned_week3: number | null
+          signed_up_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_weekly_cohort_health: {
+        Row: {
+          activations: number | null
+          cohort: string | null
+          new_paid: number | null
+          new_signups: number | null
+          reports_generated: number | null
+          week: string | null
         }
         Relationships: []
       }
