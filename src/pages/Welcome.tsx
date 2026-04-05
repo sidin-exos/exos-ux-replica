@@ -77,6 +77,7 @@ const Welcome = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
+      <main>
       {/* ───── Hero ───── */}
       <section className="relative overflow-hidden border-b border-border/50">
         <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
@@ -394,6 +395,8 @@ const Welcome = () => {
           </div>
         </div>
       </section>
+
+      </main>
 
       <Footer />
     </div>
