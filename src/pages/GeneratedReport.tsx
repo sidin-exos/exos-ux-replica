@@ -29,6 +29,7 @@ interface ReportState {
   scenarioTitle: string;
   scenarioId?: string;
   analysisResult: string;
+  structuredData?: string;
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];
@@ -112,7 +113,7 @@ const GeneratedReport = () => {
     );
   }
 
-  const { scenarioTitle, scenarioId, analysisResult, formData, timestamp, selectedDashboards = [], evaluationScore, evaluationConfidence } = state;
+  const { scenarioTitle, scenarioId, analysisResult, structuredData, formData, timestamp, selectedDashboards = [], evaluationScore, evaluationConfidence } = state;
   
   // Ensure analysisResult is never null for rendering
   const safeAnalysisResult = analysisResult ?? '';
@@ -287,6 +288,7 @@ const GeneratedReport = () => {
                         dashboardType={dashboardType}
                         scenarioTitle={scenarioTitle}
                         analysisResult={safeAnalysisResult}
+                        structuredData={structuredData}
                         formData={formData}
                       />
                     </motion.div>
@@ -363,20 +365,44 @@ const GeneratedReport = () => {
               <CardHeader>
                 <CardTitle className="font-display text-base">Analysis Inputs</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 {Object.entries(formData)
                   .filter(([_, value]) => value)
                   .slice(0, 8)
-                  .map(([key, value]) => (
-                    <div key={key} className="text-sm">
-                      <span className="text-muted-foreground capitalize">
-                        {key.replace(/([A-Z])/g, " $1").replace(/_/g, " ")}:
-                      </span>
-                      <p className="text-foreground font-medium truncate">
-                        {value.length > 50 ? `${value.slice(0, 50)}...` : value}
-                      </p>
-                    </div>
-                  ))}
+                  .map(([key, value]) => {
+                    // Split long values into bullet points by sentence or newline
+                    const lines = value
+                      .split(/(?:\n|(?<=[.!?])\s+)/)
+                      .map(l => l.trim())
+                      .filter(l => l.length > 0);
+                    const showBullets = lines.length >= 2 && value.length > 80;
+
+                    return (
+                      <div key={key} className="text-sm">
+                        <span className="text-muted-foreground capitalize font-medium">
+                          {key.replace(/([A-Z])/g, " $1").replace(/_/g, " ")}:
+                        </span>
+                        {showBullets ? (
+                          <ul className="mt-1 space-y-1 list-disc list-inside">
+                            {lines.slice(0, 5).map((line, i) => (
+                              <li key={i} className="text-foreground text-xs leading-relaxed">
+                                {line.length > 120 ? `${line.slice(0, 120)}…` : line}
+                              </li>
+                            ))}
+                            {lines.length > 5 && (
+                              <li className="text-muted-foreground text-xs italic">
+                                +{lines.length - 5} more points
+                              </li>
+                            )}
+                          </ul>
+                        ) : (
+                          <p className="text-foreground font-medium mt-0.5">
+                            {value.length > 120 ? `${value.slice(0, 120)}…` : value}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
               </CardContent>
             </Card>
 

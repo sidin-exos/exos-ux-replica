@@ -13,6 +13,7 @@ export interface Citation {
 
 export interface IntelQueryParams {
   queryType: QueryType;
+  queryName?: string;
   query: string;
   recencyFilter?: RecencyFilter;
   domainFilter?: string[];
@@ -30,6 +31,7 @@ export interface IntelResult {
   summary: string;
   citations: Citation[];
   queryType: QueryType;
+  queryName?: string;
   processingTimeMs: number;
   model: string;
   tokenUsage?: TokenUsage | null;
@@ -122,8 +124,9 @@ export function useMarketIntelligence() {
         throw new Error(data.error || "Query failed");
       }
 
-      setResult(data);
-      return data;
+      const resultWithName = { ...data, queryName: params.queryName };
+      setResult(resultWithName);
+      return resultWithName;
     } catch (err) {
       if (isAuthError(err)) {
         showAuthErrorToast();

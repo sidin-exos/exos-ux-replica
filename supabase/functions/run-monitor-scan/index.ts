@@ -108,6 +108,12 @@ Deno.serve(async (req) => {
 
 When presenting tables, always place the Direction/Status column as the SECOND column (right after the risk area name). Use exactly one of these bold keywords for direction: **Improving**, **Stable**, **Deteriorating**, **Critical**, **Moderate**, **Low**.
 
+For Risk Signals tables, use these short, user-friendly column headers:
+- "Risk Area" (the topic)
+- "Direction" (status keyword)
+- "Supporting Signals" (instead of "Evidence For Hypothesis...")
+- "Counterbalancing Signals" (instead of "Evidence Against Hypothesis...")
+
 Be factual, cite sources where possible. Flag direction of change (improving/stable/deteriorating) for each risk area. This is a decision-support tool — present information for consideration, never prescribe.`;
 
     const startTime = Date.now();

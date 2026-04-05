@@ -6,7 +6,7 @@ const footerColumns = [
     links: [
       { label: "Scenarios", to: "/" },
       { label: "Market Intelligence", to: "/market-intelligence" },
-      { label: "Dashboards", to: "/reports" },
+      { label: "Dashboards", to: "/features#dashboards" },
       { label: "Enterprise", to: "/enterprise/risk" },
     ],
   },

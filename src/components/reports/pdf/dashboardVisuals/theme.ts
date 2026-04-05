@@ -1,39 +1,88 @@
 /**
- * Enterprise print-ready theme for PDF dashboard visuals.
- * White background, black text, minimal color — McKinsey/BCG quality.
- *
- * Note: @react-pdf/renderer supports a limited flexbox subset; avoid `gap`.
+ * EXOS Branded PDF theme — dual light/dark mode.
+ * Based on EXOS Brand Book v2.0 — Teal-first, neutral backgrounds.
  */
 
 import { StyleSheet } from "@react-pdf/renderer";
 
 export type PdfThemeMode = "light" | "dark";
 
-/** Enterprise print palette — used for ALL PDF output */
-export const colors = {
-  primary: "#1B2A4A",       // navy — headings only
-  primaryDark: "#162038",   // darker navy
-  background: "#FFFFFF",    // white — always
-  surface: "#F8FAFC",       // off-white — KPI backgrounds
-  surfaceLight: "#F9FAFB",  // ice gray — alternating rows
-  text: "#1A1A1A",          // near-black — body text
-  textMuted: "#6B7280",     // medium gray — labels, captions
-  success: "#15803D",       // dark green — positive values
-  warning: "#B45309",       // dark amber — caution values
-  destructive: "#B91C1C",   // dark red — negative/risk values
-  border: "rgba(229, 231, 235, 0.6)",  // semi-transparent borders
+/** Light mode palette — neutral backgrounds, teal accents */
+export const lightColors = {
+  primary: "#277169",       // teal — headings, accents, header bar
+  primaryDark: "#184d48",   // darker teal — hover/emphasis
+  background: "#f5f7f8",    // neutral light gray (was sage)
+  surface: "#FFFFFF",       // white — card backgrounds
+  surfaceLight: "#edeff2",  // neutral light gray — alternating rows
+  text: "#111621",          // near-black — body text
+  textMuted: "#576274",     // medium gray — labels, captions
+  textOnPrimary: "#FFFFFF", // white text on teal backgrounds
+  success: "#277c54",       // dark green — positive values
+  warning: "#ce8b16",       // dark amber — caution values
+  destructive: "#ad2828",   // dark red — negative/risk values
+  border: "#d5d9e1",        // neutral border
   badgeText: "#FFFFFF",     // white text on colored badges
-  option2: "#94A3B8",       // slate — secondary chart color
-  option3: "#6B7280",       // gray — tertiary chart color
+  option2: "#6ba5a8",       // chart-2 teal-family
+  option3: "#5ea090",       // chart-3 teal-family
+  // Accent colors for cards/borders
+  accent1: "#184d48",       // dark teal
+  accent2: "#3e988f",       // mid teal
+  accent3: "#ce8b16",       // warning amber
+  accent4: "#9b613a",       // copper (restricted)
+  // Risk severity colors
+  riskCritical: "#ad2828",
+  riskHigh: "#9b613a",      // copper
+  riskMedium: "#ce8b16",    // warning
+  // Chart stripe colors — teal-family muted
+  stripe1: "#387e77",       // chart-1
+  stripe2: "#549296",       // chart-2
+  stripe3: "#4d897a",       // chart-3
+  stripe4: "#69949f",       // chart-4
+  stripe5: "#88a9a6",       // chart-5
+  stripe6: "#25544f",       // chart-6
 } as const;
 
-/** Light colors = same enterprise palette (kept for API compat) */
-export const lightColors = { ...colors } as const;
+/** Dark mode palette — dark neutral bg, dark cards */
+export const darkColors = {
+  primary: "#49aba1",       // bright teal — headings, accents
+  primaryDark: "#2f7d75",   // slightly darker teal
+  background: "#0d0f16",    // very dark neutral page background
+  surface: "#151922",       // dark card backgrounds
+  surfaceLight: "#212630",  // slightly lighter — alternating rows
+  text: "#ebeff4",          // light gray — body text
+  textMuted: "#96a1b0",     // medium slate — labels, captions
+  textOnPrimary: "#FFFFFF", // white text on teal backgrounds
+  success: "#379e6e",       // bright green — positive values
+  warning: "#d9931a",       // bright amber — caution values
+  destructive: "#c93535",   // bright red — negative/risk values
+  border: "#2c3443",        // dark neutral border
+  badgeText: "#FFFFFF",     // white text on colored badges
+  option2: "#6ba5a8",       // chart-2
+  option3: "#5ea090",       // chart-3
+  // Accent colors for cards/borders
+  accent1: "#49aba1",
+  accent2: "#5ea090",
+  accent3: "#d9931a",       // warning
+  accent4: "#b78360",       // copper
+  // Risk severity colors
+  riskCritical: "#c93535",
+  riskHigh: "#b78360",      // copper
+  riskMedium: "#d9931a",    // warning
+  // Chart stripe colors — teal-family
+  stripe1: "#4ea69d",       // chart-1
+  stripe2: "#6ba5a8",       // chart-2
+  stripe3: "#5ea090",       // chart-3
+  stripe4: "#7ea0a9",       // chart-4
+  stripe5: "#96b0ad",       // chart-5
+  stripe6: "#3a7c76",       // chart-6
+} as const;
 
-export type PdfColorSet = { [K in keyof typeof colors]: string };
+export const colors = lightColors;
 
-export function getPdfColors(_mode?: PdfThemeMode): PdfColorSet {
-  return colors;
+export type PdfColorSet = { [K in keyof typeof lightColors]: string };
+
+export function getPdfColors(mode?: PdfThemeMode): PdfColorSet {
+  return mode === "dark" ? darkColors : lightColors;
 }
 
 function buildStyles(c: PdfColorSet) {
@@ -42,7 +91,7 @@ function buildStyles(c: PdfColorSet) {
       marginBottom: 20,
     },
     dashboardCard: {
-      backgroundColor: c.background,
+      backgroundColor: c.surface,
       padding: 14,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
@@ -296,12 +345,13 @@ function buildStyles(c: PdfColorSet) {
   });
 }
 
-/** Enterprise styles (single palette) */
-export const styles = buildStyles(colors);
+/** Light styles */
+export const lightStyles = buildStyles(lightColors);
+/** Dark styles */
+export const darkStyles = buildStyles(darkColors);
+/** Default export (light) */
+export const styles = lightStyles;
 
-/** Alias for API compat */
-export const lightStyles = styles;
-
-export function getPdfStyles(_mode?: PdfThemeMode) {
-  return styles;
+export function getPdfStyles(mode?: PdfThemeMode) {
+  return mode === "dark" ? darkStyles : lightStyles;
 }

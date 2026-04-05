@@ -42,10 +42,10 @@ export const MONITOR_TYPE_META: Record<MonitorType, { label: string; purpose: st
     drs: true, phase: 1,
   },
   "DM-3": {
-    label: "Risk Dynamics",
-    purpose: "Track DRS trajectory over time across comparison periods",
-    description: "Risk Dynamics tracks how the Dynamic Risk Score of an entity evolves over defined comparison periods, highlighting the direction and velocity of change rather than static snapshots. By focusing on deltas — whether risk is accelerating, stabilising, or receding — this monitor surfaces early warning signals that absolute scores alone would miss. It is particularly valuable for portfolio-level risk management, enabling procurement leaders to prioritise attention on entities whose risk trajectories are worsening, even when their absolute scores remain within acceptable thresholds.",
-    drs: true, phase: 1,
+    label: "Regulatory Change",
+    purpose: "Track regulatory and compliance changes affecting procurement categories",
+    description: "Regulatory Change Monitor provides continuous surveillance of legislative and regulatory developments that impact procurement operations. The monitor tracks the status of relevant frameworks — whether in consultation, adopted, in implementation, or in force — and flags changes that affect your contract portfolio. It cross-references regulatory shifts against your specified procurement categories and supplier agreements, generating compliance gap briefs that explain what each change requires and what procurement action is needed before effective dates. This scenario is essential for organisations operating in regulated environments where non-compliance carries significant financial and operational risk.",
+    drs: false, phase: 1,
   },
   "DM-4": {
     label: "Country / Region",

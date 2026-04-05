@@ -16,16 +16,16 @@ interface ScenarioOption {
 
 const SCENARIO_COLORS: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
   adhoc: {
-    bg: "bg-cyan-500/10 dark:bg-cyan-400/10",
-    border: "border-cyan-500 dark:border-cyan-400",
-    text: "text-cyan-600 dark:text-cyan-400",
-    iconBg: "bg-cyan-500 text-white",
+    bg: "bg-accent/10",
+    border: "border-accent",
+    text: "text-accent",
+    iconBg: "bg-accent text-accent-foreground",
   },
   regular: {
-    bg: "bg-amber-500/10 dark:bg-amber-400/10",
-    border: "border-amber-500 dark:border-amber-400",
-    text: "text-amber-600 dark:text-amber-400",
-    iconBg: "bg-amber-500 text-white",
+    bg: "bg-warning/10",
+    border: "border-warning",
+    text: "text-warning",
+    iconBg: "bg-warning text-warning-foreground",
   },
 };
 

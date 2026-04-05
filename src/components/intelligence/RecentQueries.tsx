@@ -67,7 +67,7 @@ export function RecentQueries({ queries, isLoading, onLoad }: RecentQueriesProps
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <History className="w-4 h-4 text-violet-500" />
+            <History className="w-4 h-4 text-iris" />
             Recent Queries
           </CardTitle>
           {hasLoaded && (

@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { useUser } from "@/hooks/useUser";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import exosLogoFallback from "@/assets/logo-concept-layers.png";
+import exosLogoFallback from "@/assets/exos-logo-dark.svg";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -60,9 +60,7 @@ const NAV_GROUPS = [
   {
     label: "About EXOS",
     items: [
-      { label: "Dashboards & Analytics", path: "/reports", icon: BarChart3 },
       { label: "Technology & AI", path: "/features#orchestration", icon: Sparkles },
-      { label: "Customer Success", path: "/features#success", icon: BookOpen },
       { label: "Pricing", path: "/pricing", icon: DollarSign },
       { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
     ],
@@ -76,11 +74,13 @@ const Header = () => {
   const location = useLocation();
   const { user } = useUser();
   const { isSuperAdmin } = useAdminAuth();
+  const [desktopMenuValue, setDesktopMenuValue] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const exosLogo = useThemedLogo();
 
-  // Close mobile menu on navigation
+  // Close transient navigation UI on route changes
   useEffect(() => {
+    setDesktopMenuValue("");
     setMobileOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
@@ -93,22 +93,29 @@ const Header = () => {
     <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <NavLink to="/welcome" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <div className="flex items-center justify-center h-14 w-14 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md shadow-primary/10">
-            <img src={exosLogo} alt="EXOS Logo" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <h1 className="font-display text-lg font-semibold text-foreground">EXOS</h1>
-            <p className="text-xs text-muted-foreground">Your procurement exoskeleton</p>
-          </div>
+        <NavLink to="/welcome" className="flex items-center hover:opacity-90 transition-opacity">
+          <img src={exosLogo} alt="EXOS" className="h-10 md:h-12 w-auto object-contain" />
         </NavLink>
 
         {/* Desktop Mega-Menu */}
-        <NavigationMenu className="hidden md:flex">
+        <NavigationMenu
+          className="hidden md:flex"
+          value={desktopMenuValue}
+          onValueChange={setDesktopMenuValue}
+        >
           <NavigationMenuList>
-            {NAV_GROUPS.map((group) => (
+            {NAV_GROUPS.slice(0, 2).map((group) => (
               <NavigationMenuItem key={group.label}>
-                <NavigationMenuTrigger className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
+                <NavigationMenuTrigger
+                  className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                  onClick={() => {
+                    if (group.label === "Scenarios") {
+                      setDesktopMenuValue("");
+                      navigate("/");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }
+                  }}
+                >
                   {group.label}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -119,6 +126,7 @@ const Header = () => {
                         <li key={item.path}>
                           <button
                             onClick={() => navigate(item.path)}
+                            type="button"
                             className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
                           >
                             {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
@@ -139,6 +147,34 @@ const Header = () => {
                 Market Intelligence
               </button>
             </NavigationMenuItem>
+            {NAV_GROUPS.slice(2).map((group) => (
+              <NavigationMenuItem key={group.label}>
+                <NavigationMenuTrigger
+                  className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                >
+                  {group.label}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="right-0 left-auto">
+                  <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <li key={item.path}>
+                          <button
+                            onClick={() => navigate(item.path)}
+                            type="button"
+                            className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+                          >
+                            {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
+                            {item.label}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            ))}
           </NavigationMenuList>
         </NavigationMenu>
 
@@ -159,7 +195,7 @@ const Header = () => {
               </SheetHeader>
 
               <Accordion type="multiple" className="w-full">
-                {NAV_GROUPS.map((group) => (
+                {NAV_GROUPS.slice(0, 2).map((group) => (
                   <AccordionItem key={group.label} value={group.label}>
                     <AccordionTrigger className="text-sm font-medium text-foreground py-2.5 px-3 hover:no-underline hover:bg-muted rounded-md">
                       {group.label}
@@ -193,6 +229,33 @@ const Header = () => {
                 Market Intelligence
               </button>
 
+              <Accordion type="multiple" className="w-full">
+                {NAV_GROUPS.slice(2).map((group) => (
+                  <AccordionItem key={group.label} value={group.label}>
+                    <AccordionTrigger className="text-sm font-medium text-foreground py-2.5 px-3 hover:no-underline hover:bg-muted rounded-md">
+                      {group.label}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1 pt-0">
+                      <div className="flex flex-col gap-0.5 pl-3">
+                        {group.items.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.path}
+                              onClick={() => mobileNavigate(item.path)}
+                              className="text-sm text-muted-foreground py-2 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
+                            >
+                              {Icon && <Icon className="w-4 h-4 text-primary" />}
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+
               <Separator className="my-4" />
 
               {user ? (
@@ -207,7 +270,7 @@ const Header = () => {
                     <User className="w-4 h-4" /> My Account
                   </button>
                   <button
-                    onClick={() => mobileNavigate("/reports")}
+                    onClick={() => mobileNavigate("/features#dashboards")}
                     className="text-sm text-muted-foreground py-2.5 px-3 rounded-md hover:bg-muted text-left flex items-center gap-2"
                   >
                     <FileText className="w-4 h-4" /> My Reports
@@ -282,7 +345,7 @@ const Header = () => {
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
                   <User className="w-4 h-4" /> My Account
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/reports")}>
+                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/features#dashboards")}>
                   <FileText className="w-4 h-4" /> My Reports
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/market-intelligence?tab=insights")}>

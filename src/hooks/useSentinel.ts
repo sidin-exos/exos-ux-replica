@@ -37,6 +37,7 @@ interface SentinelState {
   error: Error | null;
   tokenUsage: TokenUsage | null;
   processingTimeMs: number | null;
+  structuredEnvelope: Record<string, unknown> | null;
 }
 
 export function useSentinel(options: UseSentinelOptions = {}) {
@@ -47,6 +48,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
     error: null,
     tokenUsage: null,
     processingTimeMs: null,
+    structuredEnvelope: null,
   });
 
   const analyze = useCallback(
@@ -66,6 +68,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
         error: null,
         tokenUsage: null,
         processingTimeMs: null,
+        structuredEnvelope: null,
       });
 
       try {
@@ -153,6 +156,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           error: null,
           tokenUsage: data.usage || null,
           processingTimeMs: data.processingTimeMs || null,
+          structuredEnvelope: data.structured || null,
         });
 
         return result;
@@ -174,6 +178,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           error: err,
           tokenUsage: null,
           processingTimeMs: null,
+          structuredEnvelope: null,
         });
         return null;
       }
@@ -189,6 +194,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       error: null,
       tokenUsage: null,
       processingTimeMs: null,
+      structuredEnvelope: null,
     });
   }, []);
 

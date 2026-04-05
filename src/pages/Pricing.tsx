@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail } from "lucide-react";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +20,7 @@ const pricingTiers = [
   {
     id: "smb",
     name: "SMB",
-    subtitle: "For companies without dedicated procurement",
+    subtitle: "For companies without a dedicated procurement function",
     price: "29",
     period: "month",
     icon: Zap,
@@ -47,7 +48,7 @@ const pricingTiers = [
       "Everything in SMB, plus:",
       "Unlimited simulations & scenarios",
       "Full dashboard access",
-      "On demand dashboards and market intelligence",
+      "On-demand dashboards and market intelligence",
       "Validated secure data protocols",
       "Multi-user collaboration",
       "Advanced reporting & exports",
@@ -82,7 +83,7 @@ const faqData = [
   {
     id: "tariff",
     question: "What is the right tariff for me?",
-    answer: `Pick the SMB (small-medium business) option if you're in a small-to-medium sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 best-in-class support.`,
+    answer: `Pick the SMB (small and medium-sized business) option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 best-in-class support.`,
   },
   {
     id: "data-privacy",
@@ -112,7 +113,7 @@ const faqData = [
   {
     id: "fine-tuning",
     question: "Can I get EXOS fine-tuned for my purposes?",
-    answer: `Absolutely. We offer fine-tuning and customisation for every Pro and Enterprise user. Pro users can request one custom scenario and one custom dashboard per month. Enterprise users get fully custom analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
+    answer: `Absolutely. We offer fine-tuning and customisation for every Pro and Enterprise user. Pro users can request one custom scenario and one custom dashboard per month. Enterprise users get fully customized analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
   },
 ];
 
@@ -141,9 +142,7 @@ const Pricing = () => {
         {/* Hero Section */}
         <section className="mb-12 text-center animate-fade-up">
           <div className="flex justify-center mb-6">
-            <div className="w-24 h-24 md:w-32 md:h-32 overflow-hidden rounded-xl">
-              <img src={exosLogo} alt="EXOS" className="w-full h-full object-contain scale-[1.8]" />
-            </div>
+            <img src={exosLogo} alt="EXOS" className="h-16 md:h-20 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
             Simple, Transparent <span className="text-gradient">Pricing</span>
@@ -267,7 +266,7 @@ const Pricing = () => {
                           {typeof val === "string" ? (
                             <span className="text-sm text-foreground">{val}</span>
                           ) : val ? (
-                            <Check className="w-5 h-5 text-green-500 mx-auto" />
+                            <Check className="w-5 h-5 text-success mx-auto" />
                           ) : (
                             <Minus className="w-5 h-5 text-muted-foreground mx-auto" />
                           )}
@@ -333,6 +332,7 @@ const Pricing = () => {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };

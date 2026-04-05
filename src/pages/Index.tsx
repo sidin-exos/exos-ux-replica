@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Navigate } from "react-router-dom";
+import { useUser } from "@/hooks/useUser";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Quote, TrendingUp, Shield, Users, RefreshCw, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon } from "lucide-react";
+import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3 } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,41 +15,9 @@ import { ChatWidget } from "@/components/chat/ChatWidget";
 import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard";
 import ScenarioPreviewPanel from "@/components/scenarios/ScenarioPreviewPanel";
 import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
+import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
 
 type ActiveView = "dashboard" | "scenario";
-
-const successStories = [
-  {
-    company: "MedTech Solutions GmbH",
-    industry: "Medical Devices",
-    scenarios: ["TCO Analysis", "Make-or-Buy"],
-    quote: "EXOS revealed hidden logistics costs we'd been overlooking for years.",
-    person: "Dr. Katrin Schäfer, Head of Strategic Procurement",
-    metric: "18%",
-    metricLabel: "Cost savings",
-    icon: TrendingUp,
-  },
-  {
-    company: "NordSteel Industries AB",
-    industry: "Heavy Industry",
-    scenarios: ["Black Swan Simulation", "Supplier Risk"],
-    quote: "EXOS flagged the risk two months prior. Our production lines kept running.",
-    person: "Erik Lindqvist, VP Supply Chain",
-    metric: "6-week",
-    metricLabel: "Halt avoided",
-    icon: Shield,
-  },
-  {
-    company: "CleanTech Mobility SAS",
-    industry: "Green Mobility",
-    scenarios: ["Consolidation Wizard", "Negotiation Prep"],
-    quote: "Going from 47 suppliers to 12 strategic partners in one quarter.",
-    person: "Amélie Durand, CPO",
-    metric: "35%",
-    metricLabel: "Overhead reduction",
-    icon: Users,
-  },
-];
 
 const categoryOrder: Scenario["category"][] = ["analysis", "planning", "risk", "documentation"];
 
@@ -60,20 +29,21 @@ const CATEGORY_ICONS: Record<Scenario["category"], LucideIcon> = {
 };
 
 const CATEGORY_ICON_COLOR: Record<Scenario["category"], string> = {
-  analysis: "text-blue-500",
-  planning: "text-amber-500",
+  analysis: "text-info",
+  planning: "text-warning",
   risk: "text-destructive",
-  documentation: "text-purple-500",
+  documentation: "text-iris",
 };
 
 const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
-  analysis: "bg-blue-500/15 text-blue-500",
-  planning: "bg-amber-500/15 text-amber-500",
+  analysis: "bg-info/15 text-info",
+  planning: "bg-warning/15 text-warning",
   risk: "bg-destructive/15 text-destructive",
-  documentation: "bg-purple-500/15 text-purple-500",
+  documentation: "bg-iris/15 text-iris",
 };
 
 const Index = () => {
+  const { user, isLoading: isUserLoading } = useUser();
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
@@ -112,11 +82,6 @@ const Index = () => {
   }, [activeView]);
 
   const navigate = useNavigate();
-  const [storyIndex, setStoryIndex] = useState(() => Math.floor(Math.random() * successStories.length));
-
-  const nextStory = useCallback(() => {
-    setStoryIndex((prev) => (prev + 1) % successStories.length);
-  }, []);
 
   const handleScenarioClick = (scenarioId: string) => {
     const scenario = scenarios.find((s) => s.id === scenarioId);
@@ -139,6 +104,11 @@ const Index = () => {
     return acc;
   }, {} as Record<Scenario["category"], Scenario[]>);
 
+  // Redirect unauthenticated users to /welcome
+  if (!isUserLoading && !user) {
+    return <Navigate to="/welcome" replace />;
+  }
+
   return (
     <div className="min-h-screen gradient-hero">
       <div
@@ -156,61 +126,62 @@ const Index = () => {
               <div className="lg:col-span-2">
                 <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
                   Do More With Less.{" "}
+                  <br />
                   <span className="text-gradient">Decide With Confidence.</span>
                 </h1>
-                <p className="text-muted-foreground text-base max-w-2xl mb-4">
-                  Critical procurement decisions are often made unprepared due to lack of time, 
-                  knowledge, or a specialized function. EXOS gives you AI-powered analysis in minutes — cost 
+                <p className="text-muted-foreground text-base max-w-2xl mb-6">
+                  Critical procurement decisions are often made without adequate preparation due to lack of time, 
+                  knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost 
                   breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
                 </p>
-                <p className="text-muted-foreground text-base max-w-2xl mb-4">
-                  Your sensitive commercial data is masked before reaching external APIs—then grounded 
-                  and validated on the way back.
+
+                <p className="text-muted-foreground text-base max-w-2xl mb-5">
+                  Your sensitive commercial data is masked before reaching external APIs — then <strong className="text-foreground">grounded and validated</strong> on the way back.
                 </p>
+
+                <p className="text-foreground text-base max-w-2xl mb-5">
+                  EXOS works as three interconnected layers.
+                </p>
+
+                {/* Three Layers Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <Card className="bg-card/60 border-border/50 shadow-sm">
+                    <CardContent className="pt-5 pb-4 px-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                        <Workflow className="w-5 h-5 text-primary" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Scenarios:</strong> Pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card/60 border-border/50 shadow-sm">
+                    <CardContent className="pt-5 pb-4 px-4">
+                      <div className="w-10 h-10 rounded-lg bg-iris/10 flex items-center justify-center mb-3">
+                        <Globe className="w-5 h-5 text-iris" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Market Intelligence and the Market Insights Knowledge Base</strong> inject live market directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-card/60 border-border/50 shadow-sm">
+                    <CardContent className="pt-5 pb-4 px-4">
+                      <div className="w-10 h-10 rounded-lg bg-copper/10 flex items-center justify-center mb-3">
+                        <BarChart3 className="w-5 h-5 text-copper" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Inflation Monitor and Risk Assessment Platform</strong> continuously track the noise, surface what's changed, and flag only what requires your decision.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
               </div>
 
-              {/* Customer Success Preview */}
+              {/* Use Case Preview */}
               <div className="hidden lg:block">
-                {(() => {
-                  const story = successStories[storyIndex];
-                  const Icon = story.icon;
-                  return (
-                    <Card className="border-border/50 bg-card/80 backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-                      <CardContent className="p-5 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-xs">{story.industry}</Badge>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextStory}>
-                            <RefreshCw className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Icon className="w-5 h-5 text-iris shrink-0" />
-                          <span className="font-semibold text-sm">{story.company}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {story.scenarios.map((s) => (
-                            <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0">{s}</Badge>
-                          ))}
-                        </div>
-                        <blockquote className="text-xs text-muted-foreground italic border-l-2 border-iris/30 pl-3">
-                          <Quote className="w-3 h-3 inline mr-1 opacity-50" />
-                          {story.quote}
-                        </blockquote>
-                        <p className="text-[11px] text-muted-foreground">{story.person}</p>
-                        <div className="flex items-baseline gap-1.5 pt-1">
-                          <span className="text-xl font-bold text-iris">{story.metric}</span>
-                          <span className="text-xs text-muted-foreground">{story.metricLabel}</span>
-                        </div>
-                        <button
-                          onClick={() => navigate("/features#success")}
-                          className="text-xs text-iris hover:underline cursor-pointer"
-                        >
-                          See all success stories →
-                        </button>
-                      </CardContent>
-                    </Card>
-                  );
-                })()}
+                <UseCaseShowcase platform="scenarios" variant="card" />
               </div>
             </section>
 

@@ -1,7 +1,7 @@
 import { type ReactNode, useMemo } from "react";
 import { AlertCircle } from "lucide-react";
 import { DashboardType } from "@/lib/dashboard-mappings";
-import { extractDashboardData, type DashboardData } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, extractFromEnvelope, type DashboardData } from "@/lib/dashboard-data-parser";
 
 // Dashboard components
 import ActionChecklistDashboard from "./ActionChecklistDashboard";
@@ -41,6 +41,7 @@ interface DashboardRendererProps {
   dashboardType: DashboardType;
   scenarioTitle?: string;
   analysisResult?: string;
+  structuredData?: string;
   formData?: Record<string, string>;
 }
 
@@ -48,12 +49,21 @@ const DashboardRenderer = ({
   dashboardType,
   scenarioTitle,
   analysisResult,
+  structuredData,
   formData,
 }: DashboardRendererProps) => {
-  const parsedData = useMemo(
-    () => extractDashboardData(analysisResult || ''),
-    [analysisResult]
-  );
+  const parsedData = useMemo(() => {
+    // Prefer structured envelope data when available
+    if (structuredData) {
+      try {
+        const envelope = JSON.parse(structuredData);
+        if (envelope?.schema_version === '1.0') {
+          return extractFromEnvelope(envelope);
+        }
+      } catch { /* fall through to legacy */ }
+    }
+    return extractDashboardData(analysisResult || '');
+  }, [structuredData, analysisResult]);
 
   const dataKey = dashboardDataKey[dashboardType];
   const hasRealData = !!(parsedData && dataKey && parsedData[dataKey]);

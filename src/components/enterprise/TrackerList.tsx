@@ -17,10 +17,26 @@ interface TrackerListProps {
   onSelectTracker?: (tracker: EnterpriseTracker) => void;
 }
 
-const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
-  active: "default",
-  setup: "secondary",
-  paused: "outline",
+const statusConfig: Record<string, { variant: "default" | "secondary" | "outline"; className: string }> = {
+  active: { variant: "default", className: "bg-success/15 text-success border-success/30" },
+  setup: { variant: "secondary", className: "bg-warning/15 text-warning border-warning/30" },
+  paused: { variant: "outline", className: "bg-muted text-muted-foreground border-border" },
+};
+
+const monitorTypeColors: Record<string, string> = {
+  "DM-1": "bg-accent/10 text-accent border-accent/30",
+  "DM-2": "bg-copper/10 text-copper border-copper/30",
+  "DM-3": "bg-iris/10 text-iris border-iris/30",
+  "DM-4": "bg-primary/10 text-primary border-primary/30",
+  "DM-5": "bg-highlight/10 text-highlight border-highlight/30",
+};
+
+const monitorTypeBorderColors: Record<string, string> = {
+  "DM-1": "border-l-accent",
+  "DM-2": "border-l-copper",
+  "DM-3": "border-l-iris",
+  "DM-4": "border-l-primary",
+  "DM-5": "border-l-highlight",
 };
 
 /** Truncate to ~first 2 sentences or 120 chars */
@@ -123,23 +139,27 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
         const typeMeta = MONITOR_TYPE_META[monitorType];
         const latest = latestReports[t.id];
 
+        const typeColorClass = monitorTypeColors[monitorType] || "bg-highlight/10 text-highlight border-highlight/30";
+        const borderColorClass = monitorTypeBorderColors[monitorType] || "border-l-highlight";
+        const statusCfg = statusConfig[t.status] || statusConfig.active;
+
         return (
           <div
             key={t.id}
-            className="flex items-center gap-4 p-3 rounded-md border border-border/50 hover:border-primary/40 cursor-pointer transition-colors group"
+            className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderColorClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
             onClick={() => onSelectTracker?.(t)}
           >
             {/* Name + summary */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">{t.name}</span>
-                <span className="text-xs text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 rounded px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 shrink-0">{typeMeta?.label}</span>
-                <Badge variant={statusVariant[t.status] ?? "secondary"} className="capitalize text-xs shrink-0">
+                <span className={`text-[10px] font-medium border rounded px-1.5 py-0.5 shrink-0 ${typeColorClass}`}>{typeMeta?.label}</span>
+                <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 capitalize shrink-0 ${statusCfg.className}`}>
                   {t.status}
-                </Badge>
+                </span>
               </div>
               {latest && (
-                <p className="text-xs text-muted-foreground leading-relaxed mt-1 line-clamp-5">
+                <p className="text-xs text-muted-foreground leading-relaxed mt-1.5 line-clamp-5">
                   {latest.summary}
                 </p>
               )}
@@ -147,16 +167,14 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
 
             {/* Dates column */}
             <div className="shrink-0 text-right space-y-1">
-              <div className="text-xs text-muted-foreground/70">
-                <span className="text-muted-foreground/50">Created</span>
-                <br />
-                {format(new Date(t.created_at), "MMM d, yyyy")}
+              <div className="text-[11px]">
+                <span className="text-muted-foreground/60 block">Created</span>
+                <span className="text-muted-foreground">{format(new Date(t.created_at), "MMM d, yyyy")}</span>
               </div>
               {latest && (
-                <div className="text-xs text-muted-foreground/70">
-                  <span className="text-muted-foreground/50">Updated</span>
-                  <br />
-                  {format(new Date(latest.date), "MMM d, yyyy")}
+                <div className="text-[11px]">
+                  <span className="text-muted-foreground/60 block">Updated</span>
+                  <span className="text-muted-foreground">{format(new Date(latest.date), "MMM d, yyyy")}</span>
                 </div>
               )}
             </div>

@@ -45,9 +45,15 @@ const FILE_TYPE_ICONS: Record<string, typeof FileText> = {
 };
 
 const FILE_TYPE_COLORS: Record<string, string> = {
-  xlsx: "text-green-500",
-  docx: "text-blue-500",
-  pdf: "text-red-500",
+  xlsx: "text-highlight",
+  docx: "text-info",
+  pdf: "text-copper",
+};
+
+const FILE_TYPE_BADGE_STYLES: Record<string, string> = {
+  xlsx: "bg-highlight/10 text-highlight border-highlight/20",
+  docx: "bg-info/10 text-info border-info/20",
+  pdf: "bg-copper/10 text-copper border-copper/20",
 };
 
 const UserFilesManager = () => {
@@ -191,10 +197,11 @@ const UserFilesManager = () => {
 
   return (
     <>
-      <Card className="card-elevated animate-fade-up" style={{ animationDelay: "150ms" }}>
+      <Card className="card-elevated animate-fade-up overflow-hidden" style={{ animationDelay: "150ms" }}>
+        <div className="h-1 bg-gradient-to-r from-accent to-primary" />
         <CardHeader>
           <div className="flex items-center gap-2">
-            <FolderOpen className="w-5 h-5 text-primary" />
+            <FolderOpen className="w-5 h-5 text-accent" />
             <CardTitle className="font-display text-lg">My Files</CardTitle>
           </div>
           <CardDescription>
@@ -343,7 +350,7 @@ const UserFilesManager = () => {
                           </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="outline" className={`text-xs ${FILE_TYPE_BADGE_STYLES[file.file_type] || ""}`}>
                             {getFileTypeLabel(file.file_type as AllowedExtension)}
                           </Badge>
                         </TableCell>

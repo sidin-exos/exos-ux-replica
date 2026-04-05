@@ -8,6 +8,16 @@ import { parseBody, requireString, requireStringEnum, requireArray, validationEr
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
+import {
+  GROUP_AI_INSTRUCTIONS,
+  GROUP_SCHEMAS,
+  AI_PROMPT_CONTRACT,
+  parseAIResponse,
+  buildMarkdownFromEnvelope,
+  SCENARIO_ID_REGISTRY,
+  GROUP_LABELS,
+} from "../_shared/output-schemas.ts";
+
 type QueryType = 'supplier' | 'commodity' | 'industry' | 'regulatory' | 'm&a' | 'risk';
 type RecencyFilter = 'day' | 'week' | 'month' | 'year';
 
@@ -147,10 +157,17 @@ serve(async (req) => {
       queryType, queryLength: query?.length || 0, recencyFilter, domainFilter,
     }, { tags: ["model:sonar-pro"] });
 
-    const systemPrompt = QUERY_TYPE_PROMPTS[queryType];
-    if (!systemPrompt) {
+    const baseSystemPrompt = QUERY_TYPE_PROMPTS[queryType];
+    if (!baseSystemPrompt) {
       throw new Error(`Invalid queryType: ${queryType}`);
     }
+
+    // Inject EXOS Output Schema v1.0 contract for Group E
+    const schemaInjection = AI_PROMPT_CONTRACT
+      + GROUP_AI_INSTRUCTIONS['E']
+      + '\n\n'
+      + GROUP_SCHEMAS['E'];
+    const systemPrompt = baseSystemPrompt + '\n\n' + schemaInjection;
 
     // Build enriched query with optional context
     let enrichedQuery = query;
@@ -209,7 +226,7 @@ serve(async (req) => {
     if (injectionResult.flagged) {
       console.warn("Prompt injection detected in Perplexity response:", injectionResult.matches);
     }
-    const summary = injectionResult.cleaned;
+    const cleanedContent = injectionResult.cleaned;
     const citations = data.citations || [];
     
     // Extract token usage
@@ -219,12 +236,37 @@ serve(async (req) => {
       totalTokens: data.usage.total_tokens || 0,
     } : null;
 
+    // Attempt to parse structured EXOS Output Schema v1.0
+    const parsedEnvelope = parseAIResponse(cleanedContent);
+    let summary = cleanedContent;
+    let structured: Record<string, unknown> | undefined;
+
+    if (parsedEnvelope?.schema_version === '1.0') {
+      // Schema version validated
+      summary = buildMarkdownFromEnvelope(parsedEnvelope);
+      structured = parsedEnvelope as unknown as Record<string, unknown>;
+
+      // GDPR flag logging
+      if (parsedEnvelope.gdpr_flags?.length > 0) {
+        console.warn('[MARKET-INTEL] GDPR flags in AI output', {
+          scenario_id: parsedEnvelope.scenario_id,
+          flag_count: parsedEnvelope.gdpr_flags.length,
+        });
+      }
+    }
+
     // Trace child LLM run (fire-and-forget)
     const llmRunId = tracer.createRun("perplexity-sonar-pro", "llm", {
       model: "sonar-pro", queryType,
     }, { parentRunId });
     tracer.patchRun(llmRunId, {
       summaryLength: summary.length, citationCount: citations.length, tokenUsage, processingTimeMs,
+      ...(parsedEnvelope?.schema_version === '1.0' ? {
+        schema_version: '1.0',
+        confidence_level: parsedEnvelope.confidence_level,
+        data_gaps_count: parsedEnvelope.data_gaps?.length ?? 0,
+        gdpr_flags_count: parsedEnvelope.gdpr_flags?.length ?? 0,
+      } : {}),
     });
 
     // Format citations as structured objects
@@ -269,6 +311,7 @@ serve(async (req) => {
         processingTimeMs,
         model: "sonar-pro",
         tokenUsage,
+        structured,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

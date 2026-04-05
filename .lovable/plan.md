@@ -1,60 +1,40 @@
 
 
-# PDF Layout Restructure — Move Analysis Inputs & Methodology into Parameters Section
+## Redesign Knowledge Base Interface
 
-## What Changes
+Based on the screenshots, the "Generate Market Insights" section needs to shift from a stacked layout to a **3-column card grid** where Industry, Countries & Regions, and Procurement Categories each occupy their own card at equal height.
 
-**Current structure (last page):**
-1. Detailed Analysis sections
-2. Methodology & Limitations (separate section)
-3. Analysis Parameters (full table)
+### Changes (single file: `src/components/insights/MarketInsightsAdmin.tsx`)
 
-**Current Executive Summary page:**
-- KPIs → Key Findings → Recommended Actions → **Analysis Inputs (first 6 params)** ← remove this
+1. **Remove the description card** at the top (the one with the preview image) — the screenshot shows the generate section as the primary content directly under the tab.
 
-**New structure:**
+2. **Replace the "Generate Market Insights" Card internals** with a 3-column grid layout:
+   - **Column 1 — Industry**: A standalone card containing the industry dropdown selector, vertically centered.
+   - **Column 2 — Countries & Regions**: A standalone card with the grouped checkbox list (taller, scrollable).
+   - **Column 3 — Procurement Categories**: A standalone card with the category checkbox list (matching height).
 
-**Executive Summary page:** KPIs → Key Findings → Recommended Actions (no inputs table)
+3. **Section header**: Plain bold text "Generate Market Insights" with subtitle, no card wrapper — matching the clean look in the screenshot.
 
-**Last page:**
-1. Detailed Analysis sections
-2. **Analysis Parameters** section containing:
-   - Full parameters table (all params, not just first 6)
-   - Methodology & Limitations text (moved inside, after the table)
-   - Input coverage + confidence badge
-   - Audit trail
+4. **Generate button**: Remains at the bottom-right, outside the 3 cards, same styling as current.
 
-## Files to Edit
+5. **Increase list heights**: Bump `max-h-48` to `max-h-64` or similar to show more items without scrolling, matching the taller cards in the screenshot.
 
-| File | Change |
-|---|---|
-| `src/components/reports/pdf/PDFReportDocument.tsx` | Remove "Analysis Inputs" block from Exec Summary page; move Methodology into Parameters section |
-| `supabase/functions/generate-pdf/pdf-document.tsx` | Mirror identical changes |
+6. **Keep existing**: Browse/filter table, batch progress, generation results — all remain unchanged below.
 
-## Detailed Changes (both files)
-
-### 1. Remove Analysis Inputs from Executive Summary (lines ~873-894 frontend, ~1073-1094 edge)
-Delete the entire `{inputEntries.length > 0 && (...)}` block that renders the "Analysis Inputs" table on the Executive Summary page. Also remove the `inputEntries` variable.
-
-### 2. Restructure the Parameters + Methodology section
-Replace the current separate Methodology and Parameters sections with a single combined "Analysis Parameters" section:
-
+### Layout sketch
 ```text
-Analysis Parameters (section title)
-├── Parameters table (all entries)
-├── Divider
-├── Methodology & Limitations (sub-header, not section title)
-│   ├── Methodology text
-│   ├── Coverage + Confidence row
-│   └── Audit trail
+Generate Market Insights
+Select one industry, then choose countries and categories...
+
+┌──────────────┐ ┌──────────────────────┐ ┌──────────────────────┐
+│  Industry    │ │ Countries & Regions  │ │ Procurement Categories│
+│              │ │                      │ │                      │
+│ [Dropdown v] │ │ ○ Global             │ │ ○ Chemicals          │
+│              │ │ ○ European Union     │ │ ○ Construction       │
+│              │ │ ○ Asia-Pacific       │ │ ○ Electronic         │
+│              │ │ ...                  │ │ ...                  │
+└──────────────┘ └──────────────────────┘ └──────────────────────┘
+
+                        [summary text]    [Generate Market Insights]
 ```
-
-### 3. Update TOC
-Remove the separate "Methodology & Limitations" TOC entry — it's now a subsection inside "Analysis Parameters".
-
-### 4. Deploy
-Deploy `generate-pdf` edge function after changes.
-
-## Build Errors
-The existing build errors in other edge functions (`generate-market-insights`, `generate-test-data`, `im-driver-propose`, `market-intelligence`, `sentinel-analysis`) are pre-existing and unrelated to this change. They will not be addressed in this task.
 

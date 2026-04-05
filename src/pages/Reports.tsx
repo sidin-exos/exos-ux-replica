@@ -200,7 +200,7 @@ const Reports = () => {
 
         {/* Guide Me — 4-category cards */}
         <section className="mb-8 animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <h2 className="text-sm font-medium text-foreground/70 uppercase tracking-wide mb-3">
+          <h2 className="exos-label-caps mb-3">
             What are you trying to decide?
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -235,7 +235,7 @@ const Reports = () => {
             <SelectContent>
               {dashboardCategories.map((cat) => (
                 <SelectGroup key={cat.label}>
-                  <SelectLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <SelectLabel className="exos-label-caps">
                     {cat.label}
                   </SelectLabel>
                   {cat.dashboards.map((d) => {
@@ -263,7 +263,7 @@ const Reports = () => {
                 <div key={cat.label}>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <h3 className="exos-label-caps">
                       {cat.label}
                     </h3>
                   </div>

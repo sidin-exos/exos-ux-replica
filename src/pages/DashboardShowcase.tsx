@@ -74,11 +74,11 @@ const DashboardShowcase = () => {
 
       <main className="container mx-auto px-6 py-8 space-y-10">
         {/* Demo Mode Banner */}
-        <div className="flex items-start gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
+        <div className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/10 px-4 py-3">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" />
           <div className="text-sm">
-            <span className="font-semibold text-blue-300">Demo Mode</span>
-            <span className="text-blue-300/80"> — All data shown below is illustrative sample data for demonstration purposes. Run a scenario analysis to generate real insights.</span>
+            <span className="font-semibold text-info">Demo Mode</span>
+            <span className="text-info/80"> — All data shown below is illustrative sample data for demonstration purposes. Run a scenario analysis to generate real insights.</span>
           </div>
         </div>
         {/* New Dashboards Section */}

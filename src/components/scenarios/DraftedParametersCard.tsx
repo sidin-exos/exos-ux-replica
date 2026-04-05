@@ -194,8 +194,8 @@ export function DraftedParametersCard({
           {displayParams.trick && (
             <div className="pt-3 border-t border-border/50">
               <div className="flex items-center gap-2 mb-2">
-                <Target className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                <Target className="w-4 h-4 text-warning" />
+                <span className="text-sm font-medium text-warning">
                   Training Focus
                 </span>
                 <TooltipProvider>

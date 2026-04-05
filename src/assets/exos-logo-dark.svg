@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="340" height="120" viewBox="0 0 340 120">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;display=swap');
+    </style>
+    <linearGradient id="tg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#47DDD4"/>
+      <stop offset="100%" stop-color="#19A49C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="340" height="120" fill="none"/>
+
+  <!-- ── MARK ── -->
+  <g transform="translate(20,10)">
+    <polygon points="40,48 66,74 40,100 14,74" fill="#122F47"/>
+    <polygon points="40,24 66,50 40,76 14,50" fill="url(#tg)"/>
+    <polygon points="40,0 66,26 40,52 14,26"
+             fill="none" stroke="url(#tg)" stroke-width="6" stroke-linejoin="round"/>
+  </g>
+
+  <!-- ── DIVIDER ── -->
+  <rect x="116" y="30" width="2" height="60" fill="#FFFFFF" opacity="0.15" rx="1"/>
+
+  <!-- ── WORDMARK ── -->
+  <text x="138" y="65"
+        font-family="'Space Grotesk', system-ui, sans-serif" font-weight="700"
+        font-size="54" letter-spacing="12"
+        fill="#FFFFFF" dominant-baseline="middle">EXOS</text>
+</svg>
