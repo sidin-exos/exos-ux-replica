@@ -156,7 +156,7 @@ const Welcome = () => {
             {/* Right — Abstract dashboard preview */}
             <div className="hidden lg:flex justify-end">
               <div className="w-full max-w-md">
-                <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-5 backdrop-blur-sm">
+                <div role="img" aria-label="EXOS agentic AI orchestration pipeline diagram" className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-5 backdrop-blur-sm">
                   <div className="text-center mb-5">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20 mb-1">
                       <Shield className="w-3.5 h-3.5 text-primary" />
@@ -217,7 +217,7 @@ const Welcome = () => {
                           </div>
                           {step.sideButton && (
                             <div className="flex items-center gap-1.5 shrink-0">
-                              <svg width="24" height="12" viewBox="0 0 24 12" className="text-primary/50 shrink-0">
+                              <svg aria-hidden="true" width="24" height="12" viewBox="0 0 24 12" className="text-primary/50 shrink-0">
                                 <path d="M2 6 L8 2 L8 10 Z" fill="currentColor" stroke="none" />
                                 <line x1="8" y1="6" x2="24" y2="6" stroke="currentColor" strokeWidth="2" />
                               </svg>
@@ -233,12 +233,12 @@ const Welcome = () => {
                         {i < arr.length - 1 && (
                           <div className="flex justify-center py-0.5">
                             {i === 1 ? (
-                              <svg width="24" height="28" viewBox="0 0 24 28" className="text-primary">
+                              <svg aria-hidden="true" width="24" height="28" viewBox="0 0 24 28" className="text-primary">
                                 <path d="M12 0 L18 7 L14 7 L14 12 L10 12 L10 7 L6 7 Z" fill="currentColor" />
                                 <path d="M12 28 L6 21 L10 21 L10 16 L14 16 L14 21 L18 21 Z" fill="currentColor" />
                               </svg>
                             ) : (
-                              <svg width="12" height="20" viewBox="0 0 12 20" className="text-primary/50">
+                              <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-primary/50">
                                 <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="2" />
                                 <path d="M6 20 L2 14 L10 14 Z" fill="currentColor" stroke="none" />
                               </svg>
