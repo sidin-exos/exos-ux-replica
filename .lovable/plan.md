@@ -1,53 +1,64 @@
 
 
-# Task 3 — Rebuild Generation Prompt for All 3 Blocks
+# Task 4 — Update Response Parsing and Return Shape
 
 ## Summary
 
-Replace the system and user prompts in `handleGenerateMode` (lines 608-665) with the new layered prompt structure. Also update the output format to expect `block1`/`block2`/`block3`/`testNotes`/`expectedEvaluatorScore` keys, and adjust `parseGeneratedData` to map these block keys back to the scenario field IDs.
+Update the `handleGenerateMode` return block (lines 818-838) to use the new `GenerateTestDataResponse` shape with `fieldValues`, `testNotes`, `expectedEvaluatorScore`, `methodologyEnriched`, and `generatedAt` as top-level keys instead of the current `data`/`metadata` structure.
 
 ## Changes — Single File
 
 **`supabase/functions/generate-test-data/index.ts`**
 
-### 1. Replace system prompt (lines 608-650)
+### 1. Replace the return block (lines 818-838)
 
-New system prompt is a static string covering:
-- Procurement data specialist role
-- GDPR rules (fictional entities, no PII, role-based references, EUR ranges, region-level addresses)
-- Strict OUTPUT FORMAT requiring `{ block1, block2, block3, testNotes, expectedEvaluatorScore }`
+Change from:
+```typescript
+return { success: true, data, metadata: { ... } }
+```
 
-### 2. Replace user prompt (lines 652-665)
+To:
+```typescript
+return {
+  success: true,
+  scenarioId: scenarioType,
+  qualityTier,
+  parameters,
+  fieldValues: data,
+  testNotes,
+  expectedEvaluatorScore: expectedEvaluatorScore || "READY",
+  methodologyEnriched: !!(categoryCtx || industryCtx),
+  generatedAt: new Date().toISOString(),
+  metadata: {
+    trickValidation: trickScore,
+    persona: selectedPersona.id,
+    personaName: selectedPersona.name,
+    requiredFieldCount: fieldGroups.required.length,
+    optionalFieldCount: fieldGroups.optional.length,
+    deviationType,
+  }
+};
+```
 
-Build dynamically with 6 layers in exact order:
-- **Layer 1**: Scenario context (name, ID, group, deviation type, quality tier, persona)
-- **Layer 2**: Field structure from `fieldConfigs` — iterate blocks showing label, data type, sub-prompts, critical flags, tier-specific guidance
-- **Layer 3**: Methodology grounding from DB context (`categoryCtx` and `industryCtx`) — only non-null fields, skip entirely if both null
-- **Layer 4**: Parameter constraints (industry, category, company size with financial scale reference table, complexity, financial context, market conditions, priority)
-- **Layer 5**: Trick injection (if trick present) — type, instruction, target block, subtlety
-- **Layer 6**: Generation instruction — tier-specific rules (OPTIMAL=full, MINIMUM=bare minimum, DEGRADED=deliberate failures, GIBBERISH=garbage) + persona style instruction
+Key changes:
+- `data` renamed to `fieldValues` — keys are the `block_id` values from `scenario_field_config`
+- `testNotes` and `expectedEvaluatorScore` promoted to top-level
+- `methodologyEnriched` boolean added (true when DB category/industry data was found)
+- `generatedAt` ISO timestamp added
+- Remaining diagnostic info stays in `metadata` to avoid breaking logging
 
-### 3. Update `parseGeneratedData` call site (line 689)
+### 2. Update client type in `src/lib/ai-test-data-generator.ts`
 
-After parsing, map `block1`/`block2`/`block3` keys back to actual field IDs from `fieldConfigs`:
-- `block1` → first field config block_id (typically `industryContext`)
-- `block2` → second field config block_id
-- `block3` → third field config block_id
-- Also preserve `testNotes` and `expectedEvaluatorScore` in metadata
-
-### 4. Add persona style instructions map
-
-Add a `PERSONA_STYLE_INSTRUCTIONS` record mapping persona IDs to writing style descriptions (rushed-junior, methodical-manager, cfo-finance, frustrated-stakeholder, lost-user).
-
-### 5. Add company size financial scale reference
-
-Add `COMPANY_SIZE_SCALES` record with SME/Mid-Market/Large Enterprise ranges for contract values and WACC.
+Update `AIGeneratedTestData` interface and the `generateAITestData` function to read `fieldValues` instead of `data` from the response, with backward compatibility fallback:
+```typescript
+const fieldValues = responseData.fieldValues || responseData.data || {};
+```
 
 ## Deployment
 - Deploy `generate-test-data` after changes
 
 ## Not Changed
-- `handleDraftMode`, `handleMessyMode`, `buildGenerationPrompt` (full mode) — untouched
-- `parseGeneratedData` function itself — unchanged (already preserves all keys)
-- No other files
+- `parseGeneratedData` function — unchanged
+- Block mapping logic (lines 783-794) — unchanged, already maps block1/2/3 to field IDs
+- No UI, auth, or migration changes
 
