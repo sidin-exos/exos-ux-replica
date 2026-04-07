@@ -283,8 +283,16 @@ function calculateConfidenceServer(
   return Math.max(0.1, Math.min(1.0, confidence));
 }
 
+// "price" was previously included but removed: financial amounts (€8.5M, $1.2K)
+// are not personally identifying — they're commercial figures the AI needs to
+// compute TCO/NPV/cost analyses. Anonymising them broke every Group A scenario
+// because the AI received [AMOUNT_A] tokens it couldn't do math on, returning
+// `amount: null` everywhere and blanking the Cost Breakdown / TCO dashboards.
+// PII proper (names, emails, phones, IBAN, tax IDs, supplier names) is still
+// anonymised. The "price" patterns remain available in REVERSIBLE_ENTITY_PATTERNS
+// for any caller that explicitly opts in.
 const DEFAULT_ENTITY_TYPES: EntityType[] = [
-  "company", "person", "price", "contract", "email",
+  "company", "person", "contract", "email",
   "phone", "iban", "credit_card", "tax_id",
 ];
 
