@@ -276,15 +276,22 @@ export function extractFromEnvelope(parsed: ExosOutput): DashboardData | null {
     };
   }
 
-  // Data quality from data_gaps
-  if (parsed.data_gaps?.length > 0) {
+  // Data quality from data_gaps — filter out generic placeholders
+  const GENERIC_GAP_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
+  const validGaps = (parsed.data_gaps ?? []).filter(g => {
+    if (!g?.field || !g?.impact || !g?.resolution) return false;
+    const combined = `${g.field} ${g.impact} ${g.resolution}`.toLowerCase();
+    return !GENERIC_GAP_PHRASES.some(p => combined.includes(p));
+  });
+
+  if (validGaps.length > 0) {
     result.dataQuality = {
-      fields: parsed.data_gaps.map(g => ({
+      fields: validGaps.map(g => ({
         field: g.field,
         status: 'missing' as const,
         coverage: 0,
       })),
-      limitations: parsed.data_gaps.map(g => ({
+      limitations: validGaps.map(g => ({
         title: g.field,
         impact: g.impact,
       })),

@@ -1021,11 +1021,18 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {/* Low confidence watermark */}
+        {/* Confidence guidance note */}
         {hasLowConfidenceWatermark && (
-          <View style={{ position: "absolute", top: "40%", left: "15%", transform: "rotate(-30deg)", opacity: 0.08 }}>
-            <Text style={{ fontSize: 48, fontFamily: "Helvetica-Bold", color: "#ab3232" }}>
-              LOW CONFIDENCE
+          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+            <Text style={{ fontSize: 8, color: "#856404", fontFamily: "Helvetica-Bold" }}>
+              This analysis is indicative — see improvement tips below
+            </Text>
+          </View>
+        )}
+        {!hasLowConfidenceWatermark && confidenceLevel === "Medium" && (
+          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+            <Text style={{ fontSize: 8, color: "#1b4b47", fontFamily: "Helvetica-Bold" }}>
+              Good analysis — a few additions would sharpen the results
             </Text>
           </View>
         )}

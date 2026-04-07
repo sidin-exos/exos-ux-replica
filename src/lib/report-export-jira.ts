@@ -58,11 +58,18 @@ function formatStructuredForJira(parsed: ExosOutput): string {
     sections.push("");
   }
 
-  // Data gaps
-  if (parsed.data_gaps?.length > 0) {
-    sections.push("h3. Data Gaps");
-    parsed.data_gaps.forEach(g => {
-      sections.push(`* {color:red}[DATA GAP]{color} *${sanitizeJiraCell(g.field)}*: ${sanitizeJiraCell(g.impact)}`);
+  // Coaching tips from valid data gaps
+  const GENERIC_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
+  const validGaps = (parsed.data_gaps ?? []).filter(g => {
+    if (!g?.field || !g?.resolution) return false;
+    const combined = `${g.field} ${g.impact} ${g.resolution}`.toLowerCase();
+    return !GENERIC_PHRASES.some(p => combined.includes(p));
+  }).slice(0, 3);
+
+  if (validGaps.length > 0) {
+    sections.push("h3. To improve this analysis");
+    validGaps.forEach(g => {
+      sections.push(`* ${sanitizeJiraCell(g.resolution)}`);
     });
     sections.push("");
   }
