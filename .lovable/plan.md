@@ -1,64 +1,42 @@
 
 
-# Task 4 — Update Response Parsing and Return Shape
+# Task 5 — Update Client Bridge
 
 ## Summary
 
-Update the `handleGenerateMode` return block (lines 818-838) to use the new `GenerateTestDataResponse` shape with `fieldValues`, `testNotes`, `expectedEvaluatorScore`, `methodologyEnriched`, and `generatedAt` as top-level keys instead of the current `data`/`metadata` structure.
+Update `generateTestDataHybrid` in `src/lib/ai-test-data-generator.ts` to log methodology enrichment status from the new Engine 2 response shape. The `fieldValues` mapping already works (line 161). Only the hybrid function's success path needs dev-only logging.
 
 ## Changes — Single File
 
-**`supabase/functions/generate-test-data/index.ts`**
+**`src/lib/ai-test-data-generator.ts`** (lines 223-229)
 
-### 1. Replace the return block (lines 818-838)
+After the `result.success` check (line 223), before returning, add:
 
-Change from:
 ```typescript
-return { success: true, data, metadata: { ... } }
-```
-
-To:
-```typescript
-return {
-  success: true,
-  scenarioId: scenarioType,
-  qualityTier,
-  parameters,
-  fieldValues: data,
-  testNotes,
-  expectedEvaluatorScore: expectedEvaluatorScore || "READY",
-  methodologyEnriched: !!(categoryCtx || industryCtx),
-  generatedAt: new Date().toISOString(),
-  metadata: {
-    trickValidation: trickScore,
-    persona: selectedPersona.id,
-    personaName: selectedPersona.name,
-    requiredFieldCount: fieldGroups.required.length,
-    optionalFieldCount: fieldGroups.optional.length,
-    deviationType,
+if (result.success && Object.keys(result.data).length > 0) {
+  if (import.meta.env.DEV) {
+    const meta = result.metadata as any;
+    console.log(
+      `[TestEngine] Generated ${meta.qualityTier || "unknown"} data for ${scenarioType}. Methodology enriched: ${meta.methodologyEnriched}. Expected evaluator score: ${meta.expectedEvaluatorScore}`
+    );
+    if (meta.methodologyEnriched === false) {
+      console.warn(
+        `[TestEngine] Category "${category}" or industry "${industry}" not found in DB. Generation used fallback context only.`
+      );
+    }
   }
-};
+  return {
+    data: result.data,
+    source: "ai",
+    metadata: result.metadata,
+  };
+}
 ```
-
-Key changes:
-- `data` renamed to `fieldValues` — keys are the `block_id` values from `scenario_field_config`
-- `testNotes` and `expectedEvaluatorScore` promoted to top-level
-- `methodologyEnriched` boolean added (true when DB category/industry data was found)
-- `generatedAt` ISO timestamp added
-- Remaining diagnostic info stays in `metadata` to avoid breaking logging
-
-### 2. Update client type in `src/lib/ai-test-data-generator.ts`
-
-Update `AIGeneratedTestData` interface and the `generateAITestData` function to read `fieldValues` instead of `data` from the response, with backward compatibility fallback:
-```typescript
-const fieldValues = responseData.fieldValues || responseData.data || {};
-```
-
-## Deployment
-- Deploy `generate-test-data` after changes
 
 ## Not Changed
-- `parseGeneratedData` function — unchanged
-- Block mapping logic (lines 783-794) — unchanged, already maps block1/2/3 to field IDs
+- `generateAITestData` — already handles `fieldValues` and new metadata fields (lines 160-176)
+- `AIGeneratedTestData` interface — metadata spread already captures extra fields
+- Engine 1 fallback path (lines 235-240)
+- No edge function changes
 - No UI, auth, or migration changes
 
