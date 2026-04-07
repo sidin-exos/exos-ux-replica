@@ -644,17 +644,19 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
             <div className="border-t border-border/40" />
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowChatAssistant(!showChatAssistant)}
-              className="gap-2"
-            >
-              <MessageSquare className="w-4 h-4" />
-              {showChatAssistant ? "Hide chatbot" : "Use chatbot to enter data"}
-            </Button>
+            {showTechnicalDetails && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChatAssistant(!showChatAssistant)}
+                className="gap-2"
+              >
+                <MessageSquare className="w-4 h-4" />
+                {showChatAssistant ? "Hide chatbot" : "Use chatbot to enter data"}
+              </Button>
+            )}
 
-            {showChatAssistant && (
+            {showTechnicalDetails && showChatAssistant && (
               <ScenarioChatAssistant
                 scenarioId={scenario.id}
                 requiredFields={scenario.requiredFields.map((f) => ({
