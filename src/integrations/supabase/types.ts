@@ -1209,6 +1209,7 @@ export type Database = {
           optimal_guidance: string | null
           scenario_id: number
           scenario_slug: string
+          sort_order: number
           sub_prompts: Json | null
           updated_at: string
         }
@@ -1228,6 +1229,7 @@ export type Database = {
           optimal_guidance?: string | null
           scenario_id: number
           scenario_slug: string
+          sort_order?: number
           sub_prompts?: Json | null
           updated_at?: string
         }
@@ -1247,6 +1249,7 @@ export type Database = {
           optimal_guidance?: string | null
           scenario_id?: number
           scenario_slug?: string
+          sort_order?: number
           sub_prompts?: Json | null
           updated_at?: string
         }
