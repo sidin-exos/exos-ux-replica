@@ -38,6 +38,10 @@ const ScenarioComparisonDashboard = ({ parsedData }: ScenarioComparisonDashboard
   const scenarios = parsedData?.scenarios || defaultScenarios;
   const radarData = parsedData?.radarData || defaultRadarData;
   const summary = parsedData?.summary || defaultSummary;
+
+  // Build dynamic column keys from scenarios
+  const scenarioIds = scenarios.map(s => s.id);
+
   return (
     <Card className="card-elevated h-full">
       <CardHeader className="pb-4">
@@ -73,18 +77,20 @@ const ScenarioComparisonDashboard = ({ parsedData }: ScenarioComparisonDashboard
                     <th className="text-left font-normal pb-2"></th>
                     {scenarios.map((s) => (
                       <th key={s.id} className="text-center font-normal pb-2" style={{ color: s.color }}>
-                        {s.id}
+                        {s.name}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.map((row) => (
-                    <tr key={row.criteria}>
+                  {summary.map((row, idx) => (
+                    <tr key={idx}>
                       <td className="py-1.5 text-muted-foreground">{row.criteria}</td>
-                      <td className="py-1.5 text-center text-foreground">{row.A}</td>
-                      <td className="py-1.5 text-center text-foreground">{row.B}</td>
-                      <td className="py-1.5 text-center text-foreground">{row.C}</td>
+                      {scenarioIds.map((id) => (
+                        <td key={id} className="py-1.5 text-center text-foreground">
+                          {(row as Record<string, string>)[id] ?? row.description ?? row.risk ?? ''}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -93,7 +99,11 @@ const ScenarioComparisonDashboard = ({ parsedData }: ScenarioComparisonDashboard
 
             {/* Recommendation */}
             <p className="text-xs text-muted-foreground pt-2">
-              <span className="text-primary">Recommended:</span> Scenario C offers balanced risk-reward
+              <span className="text-primary">Recommended:</span>{' '}
+              {scenarios.find((_, i) => summary.some(r => (r as Record<string, string>)[scenarios[i]?.id] === '✓'))?.name 
+                || scenarios[scenarios.length - 1]?.name 
+                || 'Scenario C'}{' '}
+              offers balanced risk-reward
             </p>
           </div>
 
