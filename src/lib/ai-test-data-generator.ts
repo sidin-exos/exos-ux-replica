@@ -28,6 +28,9 @@ interface GenerateOptions {
   mctsIterations?: number;
 }
 
+// CANONICAL SOURCE: supabase/functions/_shared/industry-matrix.ts
+// Keep this local copy in sync when categories are added.
+// TODO Phase 1: fetch this from the edge function instead.
 /**
  * Industry-Category Compatibility Matrix
  * Used for client-side validation before AI generation
