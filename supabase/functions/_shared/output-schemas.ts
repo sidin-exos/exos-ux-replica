@@ -152,6 +152,9 @@ Every risk must reference a regulatory standard or contractual clause. Use RAG s
       "leverage_points": [
         { "title": "string ≤8 words", "description": "string referencing user data", "impact": "high | medium | low" }
       ],
+      "negotiation_sequence": [
+        { "step": "string — short action label", "detail": "string — 1-2 sentences on execution" }
+      ],
       "negotiation_scenarios": [
         { "name": "Conservative | Balanced | Aggressive", "description": "string", "expected_savings_pct": 0, "risk_level": "low | medium | high", "recommended": false }
       ]
