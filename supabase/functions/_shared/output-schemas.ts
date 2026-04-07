@@ -78,7 +78,8 @@ export const GROUP_AI_INSTRUCTIONS: Record<string, string> = {
 S21 Negotiation Preparation — SPECIFIC RULES:
 1. batna_strength_pct: Calculate deterministically 0–100 (cap at 95). Formula: start at 50, +10 if ≥2 alternative suppliers mentioned, +10 if switching cost <15% of contract value, +10 if contract is non-critical (leverage/routine in Kraljic), +5 if market is buyer-favourable, −15 if sole-source/monopoly. Clamp to [5, 95].
 2. leverage_points[]: Return 2–6 items. Each must have title (≤8 words), description (1–2 sentences referencing user data), and impact ("high"|"medium"|"low"). Forbidden: generic phrases like "Use competitive pressure" without specifics.
-3. negotiation_scenarios[]: Always return exactly 3 objects: Conservative, Balanced, Aggressive. Each has name, description, expected_savings_pct (number), risk_level ("low"|"medium"|"high"), and recommended (boolean — exactly one must be true).`,
+3. negotiation_scenarios[]: Always return exactly 3 objects: Conservative, Balanced, Aggressive. Each has name, description, expected_savings_pct (number), risk_level ("low"|"medium"|"high"), and recommended (boolean — exactly one must be true).
+4. negotiation_sequence[]: Produce 3–6 sequential tactical steps for the negotiation. Each step must have: step (a short action label, e.g. "Open with price anchor", "Introduce volume commitment") and detail (1–2 sentences on exactly how to execute this step given the user's inputs). Do not use generic advice. Each step must reference something specific from the user's input.`,
   E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
 };
 
@@ -151,6 +152,9 @@ Every risk must reference a regulatory standard or contractual clause. Use RAG s
       "zopa": { "low": null, "high": null, "currency": "EUR" },
       "leverage_points": [
         { "title": "string ≤8 words", "description": "string referencing user data", "impact": "high | medium | low" }
+      ],
+      "negotiation_sequence": [
+        { "step": "string — short action label", "detail": "string — 1-2 sentences on execution" }
       ],
       "negotiation_scenarios": [
         { "name": "Conservative | Balanced | Aggressive", "description": "string", "expected_savings_pct": 0, "risk_level": "low | medium | high", "recommended": false }
