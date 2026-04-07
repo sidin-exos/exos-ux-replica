@@ -778,7 +778,24 @@ Deliberately trigger the common failure mode for this scenario.`;
     return { success: false, error: "Failed to generate test data" };
   }
 
-  const data = parseGeneratedData(response.content, fields);
+  const rawData = parseGeneratedData(response.content, fields);
+  
+  // Map block1/block2/block3 keys back to actual field IDs from fieldConfigs
+  const data: Record<string, string> = {};
+  const blockKeys = ["block1", "block2", "block3"] as const;
+  for (const [key, value] of Object.entries(rawData)) {
+    const blockIdx = blockKeys.indexOf(key as any);
+    if (blockIdx >= 0 && fieldConfigs[blockIdx]) {
+      data[fieldConfigs[blockIdx].block_id] = value;
+    } else if (key !== "testNotes" && key !== "expectedEvaluatorScore") {
+      // Preserve any field that already uses the correct field ID
+      data[key] = value;
+    }
+  }
+
+  // Preserve test metadata from AI response
+  const testNotes = rawData["testNotes"] || "";
+  const expectedEvaluatorScore = rawData["expectedEvaluatorScore"] || "";
   
   if (Object.keys(data).length === 0) {
     tracer.patchRun(runId, undefined, "Failed to parse generated data");
