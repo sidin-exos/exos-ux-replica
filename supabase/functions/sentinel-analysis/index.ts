@@ -938,16 +938,21 @@ serve(async (req) => {
       // Try to parse structured envelope
       const parsedEnvelope = parseAIResponse(finalContent);
       let responseContent = multiDeanon.restoredText;
+      let deanonEnvelopeObj = parsedEnvelope;
       if (parsedEnvelope?.schema_version === '1.0') {
-        responseContent = buildMarkdownFromEnvelope(parsedEnvelope);
+        // Deanonymize the envelope itself so structured data has real names
+        const envelopeStr = JSON.stringify(parsedEnvelope);
+        const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
+        deanonEnvelopeObj = JSON.parse(deanonEnvelope.restoredText);
+        responseContent = buildMarkdownFromEnvelope(deanonEnvelopeObj);
         // GDPR flag logging
-        if (parsedEnvelope.gdpr_flags?.length > 0) {
-          console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: parsedEnvelope.scenario_id, flag_count: parsedEnvelope.gdpr_flags.length });
+        if (deanonEnvelopeObj.gdpr_flags?.length > 0) {
+          console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonEnvelopeObj.scenario_id, flag_count: deanonEnvelopeObj.gdpr_flags.length });
         }
         tracer.patchRun(parentRunId!, {
-          scenario_id: parsedEnvelope.scenario_id, confidence_level: parsedEnvelope.confidence_level,
-          data_gaps_count: parsedEnvelope.data_gaps?.length ?? 0, gdpr_flags_count: parsedEnvelope.gdpr_flags?.length ?? 0,
-          schema_version: parsedEnvelope.schema_version,
+          scenario_id: deanonEnvelopeObj.scenario_id, confidence_level: deanonEnvelopeObj.confidence_level,
+          data_gaps_count: deanonEnvelopeObj.data_gaps?.length ?? 0, gdpr_flags_count: deanonEnvelopeObj.gdpr_flags?.length ?? 0,
+          schema_version: deanonEnvelopeObj.schema_version,
         });
       }
 
@@ -959,7 +964,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           content: responseContent,
-          structured: parsedEnvelope?.schema_version === '1.0' ? parsedEnvelope : undefined,
+          structured: deanonEnvelopeObj?.schema_version === '1.0' ? deanonEnvelopeObj : undefined,
           validation,
           model: googleModel,
           source: "google_ai_studio",
@@ -1047,10 +1052,15 @@ serve(async (req) => {
         // Try to parse structured envelope from single-pass
         const singleParsedEnvelope = parseAIResponse(content);
         let responseContent = singleDeanon.restoredText;
+        let deanonSingleEnvelope = singleParsedEnvelope;
         if (singleParsedEnvelope?.schema_version === '1.0') {
-          responseContent = buildMarkdownFromEnvelope(singleParsedEnvelope);
-          if (singleParsedEnvelope.gdpr_flags?.length > 0) {
-            console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: singleParsedEnvelope.scenario_id, flag_count: singleParsedEnvelope.gdpr_flags.length });
+          // Deanonymize the envelope itself so structured data has real names
+          const envelopeStr = JSON.stringify(singleParsedEnvelope);
+          const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
+          deanonSingleEnvelope = JSON.parse(deanonEnvelope.restoredText);
+          responseContent = buildMarkdownFromEnvelope(deanonSingleEnvelope);
+          if (deanonSingleEnvelope.gdpr_flags?.length > 0) {
+            console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonSingleEnvelope.scenario_id, flag_count: deanonSingleEnvelope.gdpr_flags.length });
           }
         }
 
