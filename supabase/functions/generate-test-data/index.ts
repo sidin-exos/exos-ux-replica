@@ -105,13 +105,16 @@ async function fetchCategoryContext(
 ): Promise<{
   characteristics: string;
   kpis: string[];
+  kpis_v2: unknown[] | null;
   key_cost_drivers: string[];
   negotiation_dynamics: string | null;
   kraljic_position: string | null;
+  market_structure: string | null;
+  supply_concentration: string | null;
 } | null> {
   const { data, error } = await supabase
     .from("procurement_categories")
-    .select("characteristics, kpis, key_cost_drivers, negotiation_dynamics, kraljic_position")
+    .select("characteristics, kpis, kpis_v2, key_cost_drivers, negotiation_dynamics, kraljic_position, market_structure, supply_concentration")
     .eq("slug", categorySlug)
     .maybeSingle();
 
@@ -119,11 +122,14 @@ async function fetchCategoryContext(
   return {
     characteristics: data.characteristics || "",
     kpis: data.kpis || [],
+    kpis_v2: Array.isArray(data.kpis_v2) ? data.kpis_v2 : null,
     key_cost_drivers: Array.isArray(data.key_cost_drivers)
       ? (data.key_cost_drivers as string[])
       : [],
     negotiation_dynamics: data.negotiation_dynamics,
     kraljic_position: data.kraljic_position,
+    market_structure: data.market_structure || null,
+    supply_concentration: data.supply_concentration || null,
   };
 }
 
