@@ -582,7 +582,7 @@ async function handleGenerateMode(
     fetchIndustryContext(supabase, parameters.industry),
     fetchCategoryContext(supabase, parameters.category),
   ]);
-  const dbContextBlock = buildDBContextBlock(industryCtx, categoryCtx, parameters.category);
+  
 
   // Build trick embedding instructions if trick is present
   const trick = parameters.trick;
