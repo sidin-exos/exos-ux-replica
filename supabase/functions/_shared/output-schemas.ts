@@ -73,7 +73,12 @@ export const GROUP_AI_INSTRUCTIONS: Record<string, string> = {
   A: `You are a deterministic financial calculation engine. Every numerical output must be derived from the user's inputs, not estimated. Where inputs are missing, return null for the affected field and add an entry to confidence_flags. Never invent financial figures.`,
   B: `You are a procurement document generation engine. Output structured, ready-to-use documents. Every section must be explicitly labelled. Mark any section where insufficient input was provided with [DATA NEEDED: description] rather than fabricating content.`,
   C: `You are a procurement risk and compliance auditor. Every identified issue must be explicitly referenced to the relevant regulatory standard or contractual clause. Never omit a risk. Use RAG status consistently.`,
-  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions.`,
+  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions.
+
+S21 Negotiation Preparation — SPECIFIC RULES:
+1. batna_strength_pct: Calculate deterministically 0–100 (cap at 95). Formula: start at 50, +10 if ≥2 alternative suppliers mentioned, +10 if switching cost <15% of contract value, +10 if contract is non-critical (leverage/routine in Kraljic), +5 if market is buyer-favourable, −15 if sole-source/monopoly. Clamp to [5, 95].
+2. leverage_points[]: Return 2–6 items. Each must have title (≤8 words), description (1–2 sentences referencing user data), and impact ("high"|"medium"|"low"). Forbidden: generic phrases like "Use competitive pressure" without specifics.
+3. negotiation_scenarios[]: Always return exactly 3 objects: Conservative, Balanced, Aggressive. Each has name, description, expected_savings_pct (number), risk_level ("low"|"medium"|"high"), and recommended (boolean — exactly one must be true).`,
   E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
 };
 
@@ -136,10 +141,31 @@ Every risk must reference a regulatory standard or contractual clause. Use RAG s
   "payload": {
     "framework_applied": null,
     "strategic_verdict": null,
-    "scenario_specific": {}
+    "scenario_specific": {
+      // S21 Negotiation Preparation:
+      "batna": {
+        "batna_strength_pct": 0,
+        "description": "string — 1-2 sentences explaining the BATNA assessment",
+        "best_alternative": "string — the specific best alternative identified"
+      },
+      "zopa": { "low": null, "high": null, "currency": "EUR" },
+      "leverage_points": [
+        { "title": "string ≤8 words", "description": "string referencing user data", "impact": "high | medium | low" }
+      ],
+      "negotiation_scenarios": [
+        { "name": "Conservative | Balanced | Aggressive", "description": "string", "expected_savings_pct": 0, "risk_level": "low | medium | high", "recommended": false }
+      ]
+    }
   }
 }
-Populate scenario_specific based on the scenario (e.g. batna/zopa/leverage_analysis for Negotiation Prep, kraljic_position/porters_five_forces for Category Strategy, make_cost/buy_cost/verdict for Make vs Buy, consolidation_scenarios for Volume Consolidation, development_plan for SRM, value_dimensions for Total Value, maturity dimensions for Maturity Assessment).
+Populate scenario_specific based on the scenario:
+- S21 Negotiation Prep: batna (with batna_strength_pct), zopa, leverage_points[], negotiation_scenarios[] (always 3, exactly one recommended).
+- S22 Category Strategy: kraljic_position, porters_five_forces.
+- S23 Make vs Buy: make_cost, buy_cost, verdict.
+- S24 Volume Consolidation: consolidation_scenarios.
+- S25 SRM: development_plan.
+- S26 Total Value: value_dimensions.
+- S27 Maturity Assessment: maturity dimensions.
 All framework outputs must reference the user's specific inputs. Never produce generic textbook descriptions.`,
 
   E: `GROUP E PAYLOAD SCHEMA (Real-Time Knowledge — S28–S29):

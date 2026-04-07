@@ -248,19 +248,47 @@ export function extractFromEnvelope(parsed: ExosOutput): DashboardData | null {
   }
 
   // Group D: negotiation-prep → negotiationPrep
-  if (scenarioSpecific.batna || scenarioSpecific.zopa) {
-    const leverageAnalysis = (scenarioSpecific.leverage_analysis ?? []) as Array<Record<string, unknown>>;
+  if (scenarioSpecific.batna || scenarioSpecific.zopa || scenarioSpecific.leverage_points) {
+    const batnaObj = (scenarioSpecific.batna ?? {}) as Record<string, unknown>;
+    const leveragePoints = (scenarioSpecific.leverage_points ?? scenarioSpecific.leverage_analysis ?? []) as Array<Record<string, unknown>>;
+    const negScenarios = (scenarioSpecific.negotiation_scenarios ?? []) as Array<Record<string, unknown>>;
+
+    const strength = Number(batnaObj.batna_strength_pct ?? batnaObj.strength ?? 50);
+    const description = String(batnaObj.description ?? batnaObj.best_alternative ?? '');
+
     result.negotiationPrep = {
-      batna: {
-        strength: Number((scenarioSpecific.batna as Record<string, unknown>)?.strength ?? 50),
-        description: String((scenarioSpecific.batna as Record<string, unknown>)?.description ?? ''),
-      },
-      leveragePoints: leverageAnalysis.map(l => ({
-        point: String(l.point ?? l.lever ?? ''),
-        tactic: String(l.tactic ?? l.approach ?? ''),
+      batna: { strength, description },
+      leveragePoints: leveragePoints.map(l => ({
+        point: String(l.title ?? l.point ?? l.lever ?? ''),
+        tactic: String(l.description ?? l.tactic ?? l.approach ?? ''),
       })),
-      sequence: [],
+      sequence: negScenarios.map(s => ({
+        step: String(s.name ?? ''),
+        detail: String(s.description ?? '') + (s.expected_savings_pct != null ? ` (Est. savings: ${s.expected_savings_pct}%)` : ''),
+      })),
     };
+
+    // Also populate scenarioComparison if we have negotiation_scenarios
+    if (negScenarios.length > 0) {
+      const scenarioColors = ['#10b981', '#3b82f6', '#ef4444'];
+      result.scenarioComparison = {
+        scenarios: negScenarios.map((s, i) => ({
+          id: `neg-${i}`,
+          name: String(s.name ?? `Scenario ${i + 1}`),
+          color: scenarioColors[i] ?? '#6b7280',
+        })),
+        radarData: [
+          { metric: 'Expected Savings', ...Object.fromEntries(negScenarios.map((s, i) => [`neg-${i}`, Number(s.expected_savings_pct ?? 0)])) },
+          { metric: 'Risk Level', ...Object.fromEntries(negScenarios.map((s, i) => [`neg-${i}`, s.risk_level === 'high' ? 80 : s.risk_level === 'medium' ? 50 : 20])) },
+        ],
+        summary: negScenarios.map(s => ({
+          criteria: String(s.name ?? ''),
+          description: String(s.description ?? ''),
+          risk: String(s.risk_level ?? ''),
+          recommended: s.recommended ? '✓' : '',
+        })),
+      };
+    }
   }
 
   // Group B: document → sowAnalysis (for SOW Critic)
