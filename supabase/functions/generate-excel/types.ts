@@ -241,11 +241,159 @@ export function stripDashboardData(text: string): string {
     .trim();
 }
 
+// ── Structured envelope extraction (mirrors frontend extractFromEnvelope) ──
+
+interface ExosOutputLike {
+  schema_version: string;
+  recommendations?: { action: string; priority: string }[];
+  data_gaps?: { field: string; impact: string; resolution: string }[];
+  payload?: Record<string, unknown>;
+}
+
+const GENERIC_GAP_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
+
+export function extractFromEnvelope(raw: string): DashboardData | null {
+  if (!raw) return null;
+  let parsed: ExosOutputLike;
+  try {
+    parsed = JSON.parse(raw);
+    if (parsed?.schema_version !== '1.0' || !parsed.payload) return null;
+  } catch { return null; }
+
+  const result: DashboardData = {};
+  const payload = parsed.payload!;
+  const scenarioSpecific = (payload.scenario_specific ?? {}) as Record<string, unknown>;
+
+  // Action checklist from recommendations
+  if (parsed.recommendations && parsed.recommendations.length > 0) {
+    result.actionChecklist = {
+      actions: parsed.recommendations.map(r => ({
+        action: r.action,
+        priority: r.priority.toLowerCase() as "critical" | "high" | "medium" | "low",
+        status: "pending" as const,
+      })),
+    };
+  }
+
+  // Cost waterfall from financial_model
+  const financialModel = payload.financial_model as Record<string, unknown> | undefined;
+  if (financialModel?.cost_breakdown && Array.isArray(financialModel.cost_breakdown)) {
+    result.costWaterfall = {
+      components: (financialModel.cost_breakdown as Array<Record<string, unknown>>).map(cb => ({
+        name: String(cb.category ?? ''),
+        value: Number(cb.amount ?? 0),
+        type: 'cost' as const,
+      })),
+      currency: String(financialModel.currency ?? 'EUR'),
+    };
+  }
+
+  // Risk matrix
+  const riskSummary = payload.risk_summary as Record<string, unknown> | undefined;
+  if (riskSummary) {
+    const riskItems = (scenarioSpecific.risk_register ?? scenarioSpecific.risk_items ?? []) as Array<Record<string, unknown>>;
+    if (Array.isArray(riskItems) && riskItems.length > 0) {
+      result.riskMatrix = {
+        risks: riskItems.map(r => ({
+          supplier: String(r.risk_name ?? r.supplier ?? r.item ?? ''),
+          impact: String(r.impact ?? r.severity ?? 'medium').toLowerCase() as "high" | "medium" | "low",
+          probability: String(r.probability ?? r.likelihood ?? 'medium').toLowerCase() as "high" | "medium" | "low",
+          category: String(r.category ?? r.type ?? ''),
+        })),
+      };
+    }
+  }
+
+  // Negotiation prep
+  if (scenarioSpecific.batna || scenarioSpecific.zopa || scenarioSpecific.leverage_points) {
+    const batnaObj = (scenarioSpecific.batna ?? {}) as Record<string, unknown>;
+    const leveragePoints = (scenarioSpecific.leverage_points ?? scenarioSpecific.leverage_analysis ?? []) as Array<Record<string, unknown>>;
+    const negScenarios = (scenarioSpecific.negotiation_scenarios ?? []) as Array<Record<string, unknown>>;
+
+    const strength = Number(batnaObj.batna_strength_pct ?? batnaObj.strength ?? 50);
+    const description = String(batnaObj.description ?? batnaObj.best_alternative ?? '');
+
+    result.negotiationPrep = {
+      batna: { strength, description },
+      leveragePoints: leveragePoints.map(l => ({
+        point: String(l.title ?? l.point ?? l.lever ?? ''),
+        tactic: String(l.description ?? l.tactic ?? l.approach ?? ''),
+      })),
+      sequence: negScenarios.map(s => ({
+        step: String(s.name ?? ''),
+        detail: String(s.description ?? '') + (s.expected_savings_pct != null ? ` (Est. savings: ${s.expected_savings_pct}%)` : ''),
+      })),
+    };
+
+    if (negScenarios.length > 0) {
+      const scenarioColors = ['#10b981', '#3b82f6', '#ef4444'];
+      result.scenarioComparison = {
+        scenarios: negScenarios.map((s, i) => ({
+          id: `neg-${i}`,
+          name: String(s.name ?? `Scenario ${i + 1}`),
+          color: scenarioColors[i] ?? '#6b7280',
+        })),
+        radarData: [
+          { metric: 'Expected Savings', ...Object.fromEntries(negScenarios.map((s, i) => [`neg-${i}`, Number(s.expected_savings_pct ?? 0)])) },
+          { metric: 'Risk Level', ...Object.fromEntries(negScenarios.map((s, i) => [`neg-${i}`, s.risk_level === 'high' ? 80 : s.risk_level === 'medium' ? 50 : 20])) },
+        ],
+        summary: negScenarios.map(s => ({
+          criteria: String(s.name ?? ''),
+          description: String(s.description ?? ''),
+          risk: String(s.risk_level ?? ''),
+          recommended: s.recommended ? '✓' : '',
+        })),
+      };
+    }
+  }
+
+  // SOW analysis
+  if (scenarioSpecific.issues || scenarioSpecific.missing_clauses) {
+    const sections = (scenarioSpecific.issues ?? scenarioSpecific.missing_clauses ?? []) as Array<Record<string, unknown>>;
+    result.sowAnalysis = {
+      clarity: Number(scenarioSpecific.clarity_score ?? 50),
+      sections: sections.map(s => ({
+        name: String(s.section ?? s.clause ?? s.name ?? ''),
+        status: String(s.status ?? 'partial') as "complete" | "partial" | "missing",
+        note: String(s.note ?? s.description ?? s.issue ?? ''),
+      })),
+    };
+  }
+
+  // Data quality from data_gaps
+  const validGaps = (parsed.data_gaps ?? []).filter(g => {
+    if (!g?.field || !g?.impact || !g?.resolution) return false;
+    const combined = `${g.field} ${g.impact} ${g.resolution}`.toLowerCase();
+    return !GENERIC_GAP_PHRASES.some(p => combined.includes(p));
+  });
+  if (validGaps.length > 0) {
+    result.dataQuality = {
+      fields: validGaps.map(g => ({ field: g.field, status: 'missing' as const, coverage: 0 })),
+      limitations: validGaps.map(g => ({ title: g.field, impact: g.impact })),
+    };
+  }
+
+  // Supplier scorecard
+  if (scenarioSpecific.scorecard && Array.isArray(scenarioSpecific.scorecard)) {
+    result.supplierScorecard = {
+      suppliers: (scenarioSpecific.scorecard as Array<Record<string, unknown>>).map(s => ({
+        name: String(s.name ?? s.supplier ?? ''),
+        score: Number(s.score ?? s.overall_score ?? 0),
+        trend: String(s.trend ?? 'stable') as "up" | "down" | "stable",
+        spend: String(s.spend ?? ''),
+      })),
+    };
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 // ── Request payload ──
 
 export interface GenerateExcelPayload {
   scenarioTitle: string;
   analysisResult: string;
+  structuredData?: string;
   formData: Record<string, string>;
   timestamp: string;
 }
