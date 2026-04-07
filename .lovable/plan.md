@@ -1,57 +1,31 @@
 
 
-# Fix: Anonymized Placeholders in Reports & Missing Dashboard Data
+# Fix Social Share Preview Image
 
-## Root Cause
+## Problem
+`og:image` uses a relative URL to an SVG file — both break social previews on LinkedIn, Twitter/X, Slack, WhatsApp.
 
-The `sentinel-analysis` edge function has a deanonymization bug in both the single-pass and multi-cycle code paths:
+## Changes
 
-1. **`structured` envelope is never deanonymized** — `parseAIResponse()` is called on the anonymized `content`, so the returned `structured` JSON still contains `[SUPPLIER_G]`, `[CONTRACT_REF_B]`, etc. The client stores this as `structuredData` and the dashboard parser reads it — but all text fields have anonymization tokens.
+### 1. Generate `public/og-image.png` (1200×630px)
+Python script with Pillow:
+- Dark background using brand teal `hsl(174, 48%, 30%)` → `rgb(40, 113, 105)`
+- "EXOS" large white centered text
+- Tagline: "AI Procurement Analysis — Built for EU Mid-Market Teams"
+- Subtle border accent
 
-2. **Markdown `content` is re-anonymized** — When a valid envelope is found, `responseContent` is overwritten by `buildMarkdownFromEnvelope(parsedEnvelope)` which pulls text from the still-anonymized envelope. This overwrites the correctly deanonymized `singleDeanon.restoredText` / `multiDeanon.restoredText`.
+### 2. Update `index.html` meta tags
 
-3. **Dashboard shows "Sample data"** — Because the structured envelope has anonymization tokens in field values, the parser may fail to match expected fields or return nulls, causing the fallback banner.
+Replace all OG/Twitter image references:
+- `og:image` → `https://exosproc.com/og-image.png`
+- `twitter:image` → `https://exosproc.com/og-image.png`
 
-## Fix (1 file)
+Add missing tags:
+- `og:url` → `https://exosproc.com`
+- `og:site_name` → `EXOS`
+- `og:locale` → `en_GB`
+- `twitter:title` → `EXOS – AI Procurement Analysis & Strategy Platform`
+- `twitter:description` → `29 AI-powered procurement scenarios. TCO analysis, supplier risk, negotiation prep — GDPR-native, built for EU mid-market teams.`
 
-### `supabase/functions/sentinel-analysis/index.ts`
-
-In both code paths (multi-cycle ~line 939 and single-pass ~line 1048):
-
-**Before:**
-```
-const parsedEnvelope = parseAIResponse(content);        // anonymized
-let responseContent = deanon.restoredText;               // deanonymized
-if (parsedEnvelope?.schema_version === '1.0') {
-  responseContent = buildMarkdownFromEnvelope(parsedEnvelope);  // overwrites with anonymized!
-}
-// returns structured: parsedEnvelope (anonymized)
-```
-
-**After:**
-```
-const parsedEnvelope = parseAIResponse(content);         // anonymized
-let responseContent = deanon.restoredText;               // deanonymized ✓
-if (parsedEnvelope?.schema_version === '1.0') {
-  // Deanonymize the envelope itself
-  const envelopeStr = JSON.stringify(parsedEnvelope);
-  const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
-  const deanonParsedEnvelope = JSON.parse(deanonEnvelope.restoredText);
-  responseContent = buildMarkdownFromEnvelope(deanonParsedEnvelope);  // deanonymized ✓
-  // Use deanonParsedEnvelope as the structured response
-}
-// returns structured: deanonParsedEnvelope (deanonymized ✓)
-```
-
-Apply this fix to both:
-- Multi-cycle path (around lines 939-952)
-- Single-pass path (around lines 1048-1055)
-
-Then redeploy `sentinel-analysis`.
-
-## What This Fixes
-
-- Report text will no longer show `[SUPPLIER_G]`, `[CONTRACT_REF_B]` etc.
-- Dashboard parser will receive real supplier names, enabling proper data extraction
-- Negotiation Prep dashboard should populate with real data instead of showing "Sample data"
+### No other files touched.
 
