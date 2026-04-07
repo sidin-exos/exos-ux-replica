@@ -18,6 +18,7 @@ import { getPdfColors, getPdfStyles } from "./theme.ts";
 import type { PdfColorSet } from "./theme.ts";
 import {
   extractDashboardData,
+  extractFromEnvelope,
   stripDashboardData,
   dashboardConfigs,
   type DashboardType,
@@ -366,17 +367,18 @@ function chunkPairs<T>(arr: T[]): T[][] {
 // ── Main Document ──
 
 const PDFReportDocument = ({
-  scenarioTitle, analysisResult, formData, timestamp,
+  scenarioTitle, analysisResult, structuredData, formData, timestamp,
   selectedDashboards = [], pdfTheme = "light",
   evaluationScore, evaluationConfidence,
 }: {
-  scenarioTitle: string; analysisResult: string; formData: Record<string, string>;
+  scenarioTitle: string; analysisResult: string; structuredData?: string; formData: Record<string, string>;
   timestamp: string; selectedDashboards?: DashboardType[]; pdfTheme?: PdfThemeMode;
   evaluationScore?: number; evaluationConfidence?: string;
 }) => {
   const c = getPdfColors(pdfTheme);
   const s = buildStyles(c);
-  const parsedData = extractDashboardData(analysisResult);
+  // Prefer structured envelope, fall back to legacy XML parsing
+  const parsedData = (structuredData ? extractFromEnvelope(structuredData) : null) ?? extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
   const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
   const analysisLines = strippedAnalysis.split("\n").filter((line) => line.trim());
@@ -595,9 +597,9 @@ const PDFReportDocument = ({
 // ── Public API ──
 
 export async function generatePdfBuffer(payload: GeneratePdfPayload): Promise<Uint8Array> {
-  const { scenarioTitle, analysisResult, formData, timestamp, selectedDashboards = [], pdfTheme = "light", evaluationScore, evaluationConfidence } = payload;
+  const { scenarioTitle, analysisResult, structuredData, formData, timestamp, selectedDashboards = [], pdfTheme = "light", evaluationScore, evaluationConfidence } = payload;
   const doc = (
-    <PDFReportDocument scenarioTitle={scenarioTitle} analysisResult={analysisResult} formData={formData} timestamp={timestamp} selectedDashboards={selectedDashboards} pdfTheme={pdfTheme} evaluationScore={evaluationScore} evaluationConfidence={evaluationConfidence} />
+    <PDFReportDocument scenarioTitle={scenarioTitle} analysisResult={analysisResult} structuredData={structuredData} formData={formData} timestamp={timestamp} selectedDashboards={selectedDashboards} pdfTheme={pdfTheme} evaluationScore={evaluationScore} evaluationConfidence={evaluationConfidence} />
   );
   const buffer = await renderToBuffer(doc as any);
   return new Uint8Array(buffer);

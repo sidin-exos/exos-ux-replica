@@ -7,9 +7,12 @@ interface ReportData {
   scenarioTitle: string;
   scenarioId?: string;
   analysisResult: string;
+  structuredData?: string;
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];
+  evaluationScore?: number | null;
+  evaluationConfidence?: string | null;
 }
 
 interface ShareableReportReturn {
@@ -101,9 +104,12 @@ export function useShareableReport(): ShareableReportReturn {
           scenarioTitle: payload.scenarioTitle,
           scenarioId: payload.scenarioId,
           analysisResult: payload.analysisResult,
+          structuredData: payload.structuredData,
           formData: payload.formData,
           timestamp: payload.timestamp,
           selectedDashboards: payload.selectedDashboards,
+          evaluationScore: payload.evaluationScore,
+          evaluationConfidence: payload.evaluationConfidence,
         };
       } catch (error) {
         console.error("Failed to load shared report:", error);

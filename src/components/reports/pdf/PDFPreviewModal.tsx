@@ -37,6 +37,7 @@ interface PDFPreviewModalProps {
   onOpenChange: (open: boolean) => void;
   scenarioTitle: string;
   analysisResult: string;
+  structuredData?: string;
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];
@@ -49,6 +50,7 @@ const PDFPreviewModal = ({
   onOpenChange,
   scenarioTitle,
   analysisResult,
+  structuredData,
   formData,
   timestamp,
   selectedDashboards = [],
@@ -73,6 +75,7 @@ const PDFPreviewModal = ({
     () => JSON.stringify({
       scenarioTitle,
       analysisResult,
+      structuredData,
       timestamp,
       pdfTheme,
       evaluationScore: evaluationScore ?? null,
@@ -83,6 +86,7 @@ const PDFPreviewModal = ({
     [
       scenarioTitle,
       analysisResult,
+      structuredData,
       timestamp,
       pdfTheme,
       evaluationScore,
@@ -115,6 +119,7 @@ const PDFPreviewModal = ({
         body: {
           scenarioTitle,
           analysisResult,
+          structuredData,
           formData,
           timestamp,
           selectedDashboards,
@@ -146,6 +151,7 @@ const PDFPreviewModal = ({
     }
   }, [
     analysisResult,
+    structuredData,
     evaluationConfidence,
     evaluationScore,
     formData,
