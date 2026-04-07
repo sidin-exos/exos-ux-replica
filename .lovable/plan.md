@@ -1,40 +1,68 @@
 
 
-## Redesign Knowledge Base Interface
+# EXOS AI Output Schema Patch v1.1 — Implementation Plan
 
-Based on the screenshots, the "Generate Market Insights" section needs to shift from a stacked layout to a **3-column card grid** where Industry, Countries & Regions, and Procurement Categories each occupy their own card at equal height.
+## Summary
 
-### Changes (single file: `src/components/insights/MarketInsightsAdmin.tsx`)
+This patch fixes the "Unknown field: Impact not specified → Provide missing data" rendering bug by tightening the AI prompt contract for `data_gaps` and adding client-side filtering/rendering changes across 7 files.
 
-1. **Remove the description card** at the top (the one with the preview image) — the screenshot shows the generate section as the primary content directly under the tab.
+## Changes Overview
 
-2. **Replace the "Generate Market Insights" Card internals** with a 3-column grid layout:
-   - **Column 1 — Industry**: A standalone card containing the industry dropdown selector, vertically centered.
-   - **Column 2 — Countries & Regions**: A standalone card with the grouped checkbox list (taller, scrollable).
-   - **Column 3 — Procurement Categories**: A standalone card with the category checkbox list (matching height).
+### 1. AI Prompt Contract — `supabase/functions/_shared/output-schemas.ts` (P0)
 
-3. **Section header**: Plain bold text "Generate Market Insights" with subtitle, no card wrapper — matching the clean look in the screenshot.
+**Replace** line 175 (`- Add an entry to data_gaps for every field that is null due to missing user input.`) with the new strict quality rules block from the patch document (Rules 1-5: max 3 entries, must name specific field/impact/resolution, forbidden placeholder values, coaching tone).
 
-4. **Generate button**: Remains at the bottom-right, outside the 3 cards, same styling as current.
+**Update** `buildMarkdownFromEnvelope()` (lines 255-264):
+- Add the `isValidDataGap()` filter before rendering
+- Change rendering from `### Data Gaps` standalone section to inline `💡 To strengthen this analysis: [resolution]` format
+- Only include valid gaps that pass the filter
 
-5. **Increase list heights**: Bump `max-h-48` to `max-h-64` or similar to show more items without scrolling, matching the taller cards in the screenshot.
+### 2. Client-Side Filter — `src/lib/dashboard-data-parser.ts` (P0)
 
-6. **Keep existing**: Browse/filter table, batch progress, generation results — all remain unchanged below.
+Add the `isValidDataGap()` filter function with `GENERIC_PHRASES` blocklist. Apply it to `parsed.data_gaps` before mapping to `dataQuality` fields (around line 280). Only populate `dataQuality` if valid gaps remain.
 
-### Layout sketch
-```text
-Generate Market Insights
-Select one industry, then choose countries and categories...
+### 3. PDF Report — `src/components/reports/pdf/PDFReportDocument.tsx` (P0-P1)
 
-┌──────────────┐ ┌──────────────────────┐ ┌──────────────────────┐
-│  Industry    │ │ Countries & Regions  │ │ Procurement Categories│
-│              │ │                      │ │                      │
-│ [Dropdown v] │ │ ○ Global             │ │ ○ Chemicals          │
-│              │ │ ○ European Union     │ │ ○ Construction       │
-│              │ │ ○ Asia-Pacific       │ │ ○ Electronic         │
-│              │ │ ...                  │ │ ...                  │
-└──────────────┘ └──────────────────────┘ └──────────────────────┘
+- **Remove** the "LOW CONFIDENCE" watermark text. Replace with softer copy per the patch:
+  - Low: `"This analysis is indicative — see improvement tips below"`
+  - Medium: `"Good analysis — a few additions would sharpen the results"`
+- No standalone "Data Gaps" section exists in the PDF (confirmed — it's only in the DataQuality dashboard visual), so no removal needed there.
 
-                        [summary text]    [Generate Market Insights]
-```
+### 4. Server-Side PDF — `supabase/functions/generate-pdf/dashboards.tsx`
+
+Minor: update the `PDFDataQuality` dashboard's "Data gaps present" label to be more coaching-oriented. This is a soft improvement (P1).
+
+### 5. Excel Export — `src/lib/report-export-excel.ts` (P1)
+
+**Remove** the dedicated "Data Gaps" section (lines 718-728). Instead, null values in the scenario sheet get Excel cell comments with the matching `resolution` text from valid gaps.
+
+### 6. Jira Export — `src/lib/report-export-jira.ts` (P2)
+
+**Remove** the `[DATA GAP]` label pattern (lines 61-68). Replace with a single "To improve this analysis" block at the bottom of the ticket description, listing only valid gaps (max 3) in plain prose. Omit entirely if no valid gaps.
+
+### 7. Confidence Badge Copy — `src/components/reports/pdf/PDFReportDocument.tsx` (P1)
+
+Update the watermark/badge text:
+- `"LOW CONFIDENCE"` → `"This analysis is indicative — see improvement tips below"`  
+- Remove `"NOT FOR EXECUTIVE DISTRIBUTION"` if present
+- Add medium confidence copy: `"Good analysis — a few additions would sharpen the results"`
+
+## Files Modified
+
+| File | Change |
+|---|---|
+| `supabase/functions/_shared/output-schemas.ts` | New data_gaps prompt rules + isValidDataGap filter + updated markdown builder |
+| `src/lib/dashboard-data-parser.ts` | Filter data_gaps before mapping to dataQuality |
+| `src/lib/report-export-excel.ts` | Remove Data Gaps sheet, add cell comments |
+| `src/lib/report-export-jira.ts` | Replace [DATA GAP] with coaching block |
+| `src/components/reports/pdf/PDFReportDocument.tsx` | Update confidence watermark copy |
+| `src/components/reports/pdf/dashboardVisuals/PDFDataQuality.tsx` | Softer label text |
+| `supabase/functions/generate-pdf/dashboards.tsx` | Softer label text |
+
+## What Does NOT Change
+
+- `ExosOutputParsed` type — `data_gaps[]` array stays as-is
+- `DataGap` interface unchanged
+- `confidence_level` logic unchanged
+- `isStructuredOutput()` detection unchanged
 
