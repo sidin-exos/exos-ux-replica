@@ -75,6 +75,7 @@ const PDFPreviewModal = ({
     () => JSON.stringify({
       scenarioTitle,
       analysisResult,
+      structuredData,
       timestamp,
       pdfTheme,
       evaluationScore: evaluationScore ?? null,
@@ -85,6 +86,7 @@ const PDFPreviewModal = ({
     [
       scenarioTitle,
       analysisResult,
+      structuredData,
       timestamp,
       pdfTheme,
       evaluationScore,
