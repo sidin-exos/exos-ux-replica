@@ -1,8 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { authenticateRequest, requireAdmin } from "../_shared/auth.ts";
-import { parseBody, requireString, requireStringEnum, optionalBoolean, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
+import { parseBody, requireString, requireStringEnum, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
-
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { LangSmithTracer } from "../_shared/langsmith.ts";
@@ -15,6 +14,10 @@ import {
   type QualityTier,
   type ScenarioFieldConfigRow,
 } from "./block-guidance.ts";
+
+// Shared modules — canonical sources
+import { TRICK_LIBRARY, selectRandomTrick, type TrickDefinition, type TrickTemplate } from "../_shared/trick-library.ts";
+import { INDUSTRY_CATEGORY_MATRIX, CATEGORY_KPIS } from "../_shared/industry-matrix.ts";
 
 /**
  * AI-Powered Test Data Generation with Drafter-Validator Pattern
@@ -34,21 +37,6 @@ type StrategicPriority = "cost" | "risk" | "speed" | "quality" | "innovation" | 
 type MarketConditions = "stable" | "growing" | "volatile" | "disrupted";
 type DataQuality = "excellent" | "good" | "partial" | "poor";
 type TrickSubtlety = "obvious" | "moderate" | "subtle" | "expert-level";
-
-interface TrickDefinition {
-  category: string;
-  description: string;
-  targetField: string;
-  expectedDetection: string;
-  subtlety: TrickSubtlety;
-}
-
-interface TrickTemplate {
-  category: string;
-  templates: string[];
-  targetFields: string[];
-  subtlety: TrickSubtlety;
-}
 
 interface DraftedParameters {
   industry: string;
@@ -90,6 +78,98 @@ async function fetchFieldConfigs(
     return [];
   }
   return (data || []) as ScenarioFieldConfigRow[];
+}
+
+/** Fetch industry context from DB if available */
+async function fetchIndustryContext(
+  supabase: ReturnType<typeof createClient>,
+  industrySlug: string
+): Promise<{ kpis: string[]; constraints: string[] } | null> {
+  const { data, error } = await supabase
+    .from("industry_contexts")
+    .select("kpis, constraints, kpis_v2, constraints_v2")
+    .eq("slug", industrySlug)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return {
+    kpis: data.kpis || [],
+    constraints: data.constraints || [],
+  };
+}
+
+/** Fetch procurement category context from DB if available */
+async function fetchCategoryContext(
+  supabase: ReturnType<typeof createClient>,
+  categorySlug: string
+): Promise<{
+  characteristics: string;
+  kpis: string[];
+  key_cost_drivers: string[];
+  negotiation_dynamics: string | null;
+  kraljic_position: string | null;
+} | null> {
+  const { data, error } = await supabase
+    .from("procurement_categories")
+    .select("characteristics, kpis, key_cost_drivers, negotiation_dynamics, kraljic_position")
+    .eq("slug", categorySlug)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return {
+    characteristics: data.characteristics || "",
+    kpis: data.kpis || [],
+    key_cost_drivers: Array.isArray(data.key_cost_drivers)
+      ? (data.key_cost_drivers as string[])
+      : [],
+    negotiation_dynamics: data.negotiation_dynamics,
+    kraljic_position: data.kraljic_position,
+  };
+}
+
+/** Build DB-enriched context block for system prompts */
+function buildDBContextBlock(
+  industryCtx: { kpis: string[]; constraints: string[] } | null,
+  categoryCtx: {
+    characteristics: string;
+    kpis: string[];
+    key_cost_drivers: string[];
+    negotiation_dynamics: string | null;
+    kraljic_position: string | null;
+  } | null,
+  category: string
+): string {
+  const parts: string[] = [];
+
+  if (industryCtx) {
+    parts.push(`INDUSTRY CONTEXT (from database):
+- KPIs: ${industryCtx.kpis.join(", ")}
+- Constraints: ${industryCtx.constraints.join(", ")}`);
+  }
+
+  if (categoryCtx) {
+    parts.push(`CATEGORY INTELLIGENCE (from database):
+- Characteristics: ${categoryCtx.characteristics}
+- Category KPIs: ${categoryCtx.kpis.join(", ")}
+- Key Cost Drivers: ${categoryCtx.key_cost_drivers.join(", ")}${
+      categoryCtx.negotiation_dynamics
+        ? `\n- Negotiation Dynamics: ${categoryCtx.negotiation_dynamics}`
+        : ""
+    }${
+      categoryCtx.kraljic_position
+        ? `\n- Kraljic Position: ${categoryCtx.kraljic_position}`
+        : ""
+    }`);
+  } else {
+    // Fall back to hardcoded KPIs
+    const fallbackKpis = CATEGORY_KPIS[category];
+    if (fallbackKpis) {
+      parts.push(`CATEGORY KPIs (fallback):
+- ${fallbackKpis.join("\n- ")}`);
+    }
+  }
+
+  return parts.length > 0 ? "\n\n" + parts.join("\n\n") : "";
 }
 
 
@@ -137,381 +217,6 @@ function selectPersona(requestedPersona?: string) {
   return BUYER_PERSONAS[Math.floor(Math.random() * BUYER_PERSONAS.length)];
 }
 
-// Industry-Category compatibility matrix
-const COMPATIBILITY_MATRIX: Record<string, string[]> = {
-  manufacturing: [
-    "raw-materials", "components", "mro", "packaging", "logistics",
-    "capital-equipment", "tooling", "contract-manufacturing", "energy"
-  ],
-  software: [
-    "cloud-infrastructure", "saas-subscriptions", "development-tools",
-    "security-services", "professional-services", "it-hardware", "telecom"
-  ],
-  healthcare: [
-    "medical-devices", "pharmaceuticals", "clinical-supplies", "lab-equipment",
-    "facilities-services", "it-systems", "professional-services", "biotech"
-  ],
-  retail: [
-    "merchandise", "packaging", "logistics", "marketing-services",
-    "store-operations", "e-commerce-tech", "facilities", "pos-systems"
-  ],
-  professional: [
-    "professional-services", "travel", "facilities", "office-supplies",
-    "it-services", "legal-services", "consulting", "training"
-  ],
-  financial: [
-    "it-infrastructure", "professional-services", "compliance-services",
-    "facilities", "security-services", "consulting", "market-data"
-  ],
-  energy: [
-    "capital-equipment", "raw-materials", "mro", "engineering-services",
-    "logistics", "safety-equipment", "environmental-services"
-  ],
-  construction: [
-    "raw-materials", "equipment-rental", "subcontractors", "safety",
-    "logistics", "engineering-services", "machinery", "tools"
-  ],
-};
-
-// Core category KPIs that must align with generated data
-const CATEGORY_KPIS: Record<string, string[]> = {
-  "raw-materials": ["Price volatility (%)", "Lead time reliability", "Quality defect rate (PPM)"],
-  "it-services": ["SLA compliance (%)", "Ticket resolution time", "System uptime (%)"],
-  "professional-services": ["Billable utilization (%)", "Project delivery on-time", "Client satisfaction"],
-  "logistics": ["On-time delivery (%)", "Damage rate (%)", "Cost per unit shipped"],
-  "capital-equipment": ["Uptime (%)", "Maintenance cost ratio", "ROI period (months)"],
-};
-
-
-// Trick Library - scenario-specific training traps
-const TRICK_LIBRARY: Record<string, TrickTemplate[]> = {
-  "supplier-review": [
-    {
-      category: "performance-masking",
-      templates: [
-        "High communication and innovation scores, but recent delivery reliability declining with explanations buried in context",
-        "Excellent quality metrics from samples, but production batch consistency issues mentioned casually",
-        "Strong overall ratings, but crisis response time has degraded over past quarters with blame on external factors"
-      ],
-      targetFields: ["industryContext", "incidentLog"],
-      subtlety: "moderate"
-    },
-    {
-      category: "financial-warning-signs",
-      templates: [
-        "Supplier appears stable but recently lost major customer representing significant portion of their revenue",
-        "Good payment terms offered, but context mentions extended payment requests to their suppliers"
-      ],
-      targetFields: ["industryContext", "spendVolume"],
-      subtlety: "subtle"
-    },
-    {
-      category: "dependency-trap",
-      templates: [
-        "Only qualified supplier for critical component, mentioned positively as 'exclusive partnership'",
-        "Proprietary technology integration that would require 18-month transition mentioned as 'seamless integration'"
-      ],
-      targetFields: ["industryContext", "spendVolume"],
-      subtlety: "moderate"
-    },
-    {
-      category: "esg-greenwashing",
-      templates: [
-        "Prominent sustainability certifications displayed, but audit scope limited to headquarters only",
-        "Carbon neutral claims for operations, but supply chain emissions not included in scope"
-      ],
-      targetFields: ["industryContext", "incidentLog"],
-      subtlety: "subtle"
-    }
-  ],
-  "software-licensing": [
-    {
-      category: "lock-in-trap",
-      templates: [
-        "Generous discount for 3-year term, but data export only available in proprietary format",
-        "Low per-user cost, but API access requires separate enterprise license at significant premium"
-      ],
-      targetFields: ["industryContext", "commercialTerms"],
-      subtlety: "moderate"
-    },
-    {
-      category: "escalation-clause",
-      templates: [
-        "Competitive Year 1 pricing with standard 'cost of living adjustments' - actually 8-12% annual increases",
-        "Base price locked, but 'usage fees' have uncapped growth tied to company metrics"
-      ],
-      targetFields: ["industryContext", "commercialTerms"],
-      subtlety: "subtle"
-    },
-    {
-      category: "user-tier-mismatch",
-      templates: [
-        "Enterprise tier purchased for full workforce, but only 20% are power users needing those features",
-        "All-in licensing when actual usage pattern is 60% light users who could use cheaper tier"
-      ],
-      targetFields: ["userMetrics", "industryContext"],
-      subtlety: "moderate"
-    },
-    {
-      category: "exit-penalty",
-      templates: [
-        "Early termination requires payment of remaining term plus 6-month penalty",
-        "Data extraction services priced at $500/hour for assisted migration mentioned in fine print"
-      ],
-      targetFields: ["industryContext", "commercialTerms"],
-      subtlety: "subtle"
-    }
-  ],
-  "tco-analysis": [
-    {
-      category: "iceberg-costs",
-      templates: [
-        "Competitive purchase price but annual maintenance at 22% of purchase price vs industry standard 15%",
-        "Low base cost but consumables only available from vendor at 3x market rates"
-      ],
-      targetFields: ["capexBreakdown", "opexBreakdown", "industryContext"],
-      subtlety: "moderate"
-    },
-    {
-      category: "obsolescence-trap",
-      templates: [
-        "Current generation equipment offered at discount, with new version launching in 6 months",
-        "Technology approaching end-of-support but positioned as 'proven and stable'"
-      ],
-      targetFields: ["industryContext", "assetDescription"],
-      subtlety: "subtle"
-    },
-    {
-      category: "vendor-dependency",
-      templates: [
-        "Proprietary spare parts with single-source availability and extended lead times",
-        "Specialized technician certification required that only vendor provides"
-      ],
-      targetFields: ["industryContext", "riskFactors"],
-      subtlety: "moderate"
-    },
-    {
-      category: "decommissioning-surprise",
-      templates: [
-        "Hazardous materials requiring specialized disposal not mentioned in ownership cost",
-        "Asset contains regulated substances requiring certified decommissioning"
-      ],
-      targetFields: ["riskFactors", "industryContext"],
-      subtlety: "expert-level"
-    }
-  ],
-  "negotiation-preparation": [
-    {
-      category: "leverage-illusion",
-      templates: [
-        "Three alternative suppliers identified but all have 12+ month qualification lead times",
-        "Multiple options available but incumbent has exclusive access to required certifications"
-      ],
-      targetFields: ["leverageContext", "industryContext"],
-      subtlety: "moderate"
-    },
-    {
-      category: "relationship-complacency",
-      templates: [
-        "15-year partnership celebrated as 'strategic' while pricing drifted 25% above market",
-        "Strong relationship scores mask gradual erosion of service levels over past 3 years"
-      ],
-      targetFields: ["relationshipHistory", "industryContext"],
-      subtlety: "subtle"
-    },
-    {
-      category: "contract-auto-renewal",
-      templates: [
-        "Auto-renewal clause with 90-day notice window, current contract expires in 45 days",
-        "Evergreen contract with renewal pricing 20% above initial term"
-      ],
-      targetFields: ["timeline", "industryContext"],
-      subtlety: "moderate"
-    },
-    {
-      category: "benchmark-gap",
-      templates: [
-        "Current pricing 30% above market but internal comparison limited to historical rates",
-        "Supplier-provided 'competitive analysis' used as benchmark reference"
-      ],
-      targetFields: ["currentSpend", "industryContext"],
-      subtlety: "subtle"
-    }
-  ],
-  "risk-assessment": [
-    {
-      category: "hidden-concentration",
-      templates: [
-        "Tier-1 supplier appears diversified but all Tier-2 sources share single raw material supplier",
-        "Multiple manufacturing sites listed but all in same regulatory jurisdiction"
-      ],
-      targetFields: ["industryContext", "currentSituation"],
-      subtlety: "expert-level"
-    },
-    {
-      category: "false-diversification",
-      templates: [
-        "Three approved suppliers all located within same 50km radius disaster zone",
-        "Alternative sources identified but all dependent on same regional infrastructure"
-      ],
-      targetFields: ["industryContext", "riskTolerance"],
-      subtlety: "subtle"
-    },
-    {
-      category: "contract-gap",
-      templates: [
-        "Business continuity requirements mentioned but no contractual SLAs for recovery time",
-        "Force majeure clause excludes the most likely disruption scenarios for this category"
-      ],
-      targetFields: ["industryContext", "riskTolerance"],
-      subtlety: "moderate"
-    },
-    {
-      category: "near-miss-ignored",
-      templates: [
-        "Previous quality incident resolved without root cause analysis mentioned casually",
-        "Past delivery disruption attributed to one-time event that could easily recur"
-      ],
-      targetFields: ["industryContext", "currentSituation"],
-      subtlety: "subtle"
-    }
-  ],
-  "make-vs-buy": [
-    {
-      category: "capability-overestimate",
-      templates: [
-        "Internal team 'could' develop capability but current capacity fully allocated for 18 months",
-        "Technical skills exist but not at scale required for production workload"
-      ],
-      targetFields: ["industryContext", "strategicFactors"],
-      subtlety: "moderate"
-    },
-    {
-      category: "hidden-management-cost",
-      templates: [
-        "Direct labor costs compared but management overhead for internal option not included",
-        "Quality control requirements would need additional headcount not reflected in analysis"
-      ],
-      targetFields: ["makeCosts", "industryContext"],
-      subtlety: "subtle"
-    },
-    {
-      category: "knowledge-loss-downplayed",
-      templates: [
-        "External provider gains proprietary process knowledge that becomes competitive advantage",
-        "IP developed jointly but ownership defaults to vendor per standard contract terms"
-      ],
-      targetFields: ["strategicFactors", "industryContext"],
-      subtlety: "moderate"
-    },
-    {
-      category: "scale-mismatch",
-      templates: [
-        "Build option based on current volume but demand volatility requires 3x peak capacity",
-        "Agency model attractive at current scale but economics invert at projected growth"
-      ],
-      targetFields: ["projectBrief", "industryContext"],
-      subtlety: "subtle"
-    }
-  ],
-  "disruption-management": [
-    {
-      category: "alternatives-mirage",
-      templates: [
-        "Three alternative suppliers listed but none have required certifications or capacity",
-        "Backup sources identified but lead time for qualification exceeds crisis timeline"
-      ],
-      targetFields: ["alternativesContext", "industryContext"],
-      subtlety: "moderate"
-    },
-    {
-      category: "lead-time-underestimate",
-      templates: [
-        "Switching time quoted for normal conditions but crisis creates industry-wide demand surge",
-        "Recovery timeline assumes immediate capacity availability that doesn't exist"
-      ],
-      targetFields: ["crisisDescription", "industryContext"],
-      subtlety: "subtle"
-    },
-    {
-      category: "cost-of-inaction-hidden",
-      templates: [
-        "Revenue impact calculated for single product line but downstream dependencies not included",
-        "Daily loss estimate excludes customer penalty clauses triggered at day 7"
-      ],
-      targetFields: ["impactAssessment", "industryContext"],
-      subtlety: "moderate"
-    },
-    {
-      category: "single-point-failure",
-      templates: [
-        "All alternatives route through same port or logistics hub as primary",
-        "Backup power/IT infrastructure shares same grid or data center dependency"
-      ],
-      targetFields: ["industryContext", "alternativesContext"],
-      subtlety: "expert-level"
-    }
-  ],
-  "sow-critic": [
-    {
-      category: "scope-ambiguity",
-      templates: [
-        "Deliverables described as 'industry standard' without specific metrics or requirements",
-        "Performance standards reference 'best efforts' rather than measurable outcomes"
-      ],
-      targetFields: ["industryContext"],
-      subtlety: "moderate"
-    },
-    {
-      category: "acceptance-loophole",
-      templates: [
-        "Acceptance deemed granted if client doesn't respond within 5 business days",
-        "Partial delivery triggers proportional payment even if unusable without remaining scope"
-      ],
-      targetFields: ["industryContext"],
-      subtlety: "subtle"
-    },
-    {
-      category: "responsibility-shift",
-      templates: [
-        "Supplier performance contingent on 'timely client inputs' with undefined timeline",
-        "Risk of third-party delays explicitly transferred to client"
-      ],
-      targetFields: ["industryContext"],
-      subtlety: "subtle"
-    },
-    {
-      category: "penalty-asymmetry",
-      templates: [
-        "Client late payments incur 2%/month penalty but supplier delays have no consequences",
-        "Force majeure protects supplier from delays but not client from supplier non-performance"
-      ],
-      targetFields: ["industryContext"],
-      subtlety: "moderate"
-    }
-  ]
-};
-
-// Helper to get random trick for scenario
-function selectRandomTrick(scenarioType: string): { trick: TrickDefinition; template: TrickTemplate } | null {
-  const tricks = TRICK_LIBRARY[scenarioType];
-  if (!tricks || tricks.length === 0) return null;
-  
-  const template = tricks[Math.floor(Math.random() * tricks.length)];
-  const description = template.templates[Math.floor(Math.random() * template.templates.length)];
-  const targetField = template.targetFields[Math.floor(Math.random() * template.targetFields.length)];
-  
-  return {
-    template,
-    trick: {
-      category: template.category,
-      description,
-      targetField,
-      expectedDetection: `AI should identify and flag the ${template.category.replace(/-/g, ' ')} issue despite neutral/positive framing`,
-      subtlety: template.subtlety
-    }
-  };
-}
 
 interface GenerateRequest {
   mode?: "draft" | "generate" | "full" | "messy";
@@ -604,7 +309,8 @@ serve(async (req) => {
         parameters,
         temperature,
         selectedPersona,
-        fieldConfigs
+        fieldConfigs,
+        supabase
       );
       return new Response(
         JSON.stringify(generateResult),
@@ -629,19 +335,25 @@ serve(async (req) => {
     // === FULL MODE: Legacy MCTS approach ===
     const fieldGroups = getFieldGroups(fieldConfigs);
     const fields = fieldGroups.all;
-    const industries = Object.keys(COMPATIBILITY_MATRIX);
+    const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
     
     const selectedIndustry = industry && industries.includes(industry) 
       ? industry 
       : industries[Math.floor(Math.random() * industries.length)];
     
-    const validCategories = COMPATIBILITY_MATRIX[selectedIndustry] || [];
+    const validCategories = INDUSTRY_CATEGORY_MATRIX[selectedIndustry] || [];
     const selectedCategory = category && validCategories.includes(category)
       ? category
       : validCategories[Math.floor(Math.random() * validCategories.length)];
 
     console.log(`[TestDataGen] Full mode - Industry: ${selectedIndustry}, Category: ${selectedCategory}`);
     console.log(`[TestDataGen] MCTS iterations: ${mctsIterations}`);
+
+    // Fetch DB context for enriched prompts
+    const [industryCtx, categoryCtx] = await Promise.all([
+      fetchIndustryContext(supabase, selectedIndustry),
+      fetchCategoryContext(supabase, selectedCategory),
+    ]);
 
     const candidates: MCTSNode[] = [];
     
@@ -655,7 +367,9 @@ serve(async (req) => {
         fieldGroups,
         iteration,
         selectedPersona,
-        fieldConfigs
+        fieldConfigs,
+        industryCtx,
+        categoryCtx
       );
       
       const generationResponse = await callAI(generationPrompt.system, generationPrompt.user, temperature);
@@ -736,7 +450,7 @@ async function handleDraftMode(
   scenarioType: string,
   temperature: number
 ): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
-  const industries = Object.keys(COMPATIBILITY_MATRIX);
+  const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
   
   // Select a random trick and persona for this scenario type
   const trickResult = selectRandomTrick(scenarioType);
@@ -792,7 +506,7 @@ Return ONLY a valid JSON object with these exact keys:
     const parsed = JSON.parse(jsonStr.trim()) as DraftedParameters;
     
     // Validate the category is compatible with industry
-    const validCategories = COMPATIBILITY_MATRIX[parsed.industry] || [];
+    const validCategories = INDUSTRY_CATEGORY_MATRIX[parsed.industry] || [];
     if (!validCategories.includes(parsed.category)) {
       parsed.category = validCategories[0] || "professional-services";
     }
@@ -824,7 +538,8 @@ async function handleGenerateMode(
   parameters: DraftedParameters,
   temperature: number,
   selectedPersona: typeof BUYER_PERSONAS[number],
-  fieldConfigs: ScenarioFieldConfigRow[]
+  fieldConfigs: ScenarioFieldConfigRow[],
+  supabase: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
   const fieldGroups = getFieldGroups(fieldConfigs);
   const fields = fieldGroups.all;
@@ -843,6 +558,13 @@ async function handleGenerateMode(
 
   // Build block-specific instructions from DB field configs
   const blockInstructions = buildBlockInstructions(fieldConfigs, qualityTier);
+
+  // Fetch DB context for enrichment
+  const [industryCtx, categoryCtx] = await Promise.all([
+    fetchIndustryContext(supabase, parameters.industry),
+    fetchCategoryContext(supabase, parameters.category),
+  ]);
+  const dbContextBlock = buildDBContextBlock(industryCtx, categoryCtx, parameters.category);
 
   // Build trick embedding instructions if trick is present
   const trick = parameters.trick;
@@ -879,6 +601,7 @@ STRICT CONTEXT:
 - Data Quality: ${parameters.dataQuality}
 - Quality Tier: ${qualityTier}
 - Deviation Type: ${deviationType}
+${dbContextBlock}
 
 BUYER PERSONA:
 You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
@@ -902,6 +625,7 @@ CRITICAL RULES:
 3. All numeric values must be plausible for the company scale
 4. If data quality is "partial" or "poor", follow the MINIMUM/DEGRADED tier rules
 5. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
+6. You MUST generate content for Block 1, Block 2, AND Block 3 fields — do NOT stop after Block 1.
 ${trickInstructions}
 
 OUTPUT FORMAT:
@@ -919,7 +643,7 @@ ${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join
 Context: ${parameters.reasoning}
 ${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
 
-IMPORTANT: You MUST generate content for ALL required fields — not just the first one. Follow the block-by-block instructions in the system prompt.
+IMPORTANT: You MUST generate content for ALL required fields — not just the first one. Follow the block-by-block instructions in the system prompt. Generate content for ALL blocks (Block 1, Block 2, Block 3).
 
 Return ONLY the JSON object.`;
 
@@ -1083,7 +807,8 @@ OPTIONAL FIELDS (fill chaotically per persona, some blank):
 ${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 OUTPUT FORMAT:
-Return ONLY a valid JSON object with ALL field names as keys. Required fields must have messy data. Optional fields may be empty strings or contain mismatched data.`;
+Return ONLY a valid JSON object with ALL field names as keys. Required fields must have messy data. Optional fields may be empty strings or contain mismatched data.
+You MUST include fields from ALL blocks — Block 1, Block 2, and Block 3.`;
 
   const user = `Generate messy, chaotic procurement data for the "${targetScenario}" scenario.
 
@@ -1095,6 +820,8 @@ Examples of messy data styles:
 - A "number" field containing: "see attached spreadsheet row 47, col D — last time it was 12 but procurement said they're renegotiating"
 - A "text" field containing a full forwarded email thread with "FW: RE: RE: Updated pricing" 
 - Some optional fields left completely blank
+
+IMPORTANT: You MUST generate content for ALL blocks, not just Block 1.
 
 Return ONLY the JSON object.`;
 
@@ -1158,7 +885,15 @@ function buildGenerationPrompt(
   fieldGroups: ScenarioFieldGroups,
   seed: number,
   selectedPersona: typeof BUYER_PERSONAS[number],
-  fieldConfigs: ScenarioFieldConfigRow[]
+  fieldConfigs: ScenarioFieldConfigRow[],
+  industryCtx: { kpis: string[]; constraints: string[] } | null,
+  categoryCtx: {
+    characteristics: string;
+    kpis: string[];
+    key_cost_drivers: string[];
+    negotiation_dynamics: string | null;
+    kraljic_position: string | null;
+  } | null
 ): { system: string; user: string } {
   const fields = fieldGroups.all;
   const diversityHints = [
@@ -1172,7 +907,11 @@ function buildGenerationPrompt(
   // Default to OPTIMAL for full mode
   const blockInstructions = buildBlockInstructions(fieldConfigs, 'OPTIMAL');
 
+  // Build DB context block
+  const dbContextBlock = buildDBContextBlock(industryCtx, categoryCtx, category);
+
   const system = `You are an expert procurement consultant generating realistic test data for procurement analysis software.
+${dbContextBlock}
 
 BUYER PERSONA:
 You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
@@ -1197,6 +936,7 @@ CRITICAL RULES:
 4. All numeric values must be plausible for the industry scale
 5. DO NOT generate illogical combinations (e.g., pharmaceutical procurement for a software company)
 6. ALWAYS fill all REQUIRED fields. For OPTIONAL fields, follow the persona fill rate — include unfilled optional fields as empty strings.
+7. You MUST generate content for Block 1, Block 2, AND Block 3 fields.
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.`;
@@ -1214,6 +954,7 @@ ${fields.map(f => `- ${f}`).join('\n')}
 IMPORTANT:
 - "industryContext" must describe a specific, realistic company (100+ words) in the ${industry} sector
 - You MUST generate content for ALL required fields — not just the first one
+- You MUST populate ALL blocks (Block 1, Block 2, Block 3) — do NOT stop after the first block
 - All values must be internally consistent with that company
 - Numbers should be realistic for the company size described
 - Include specific details like certifications, employee counts, and strategic priorities
@@ -1300,7 +1041,13 @@ Fix any issues and return the enhanced JSON object.`;
   return { system, user };
 }
 
-function parseGeneratedData(content: string, fields: string[]): Record<string, string> {
+/**
+ * Parse AI-generated JSON, preserving ALL keys from the response.
+ * The `expectedFields` list is used to ensure known fields are included,
+ * but any EXTRA keys the AI generates (e.g. Block 2/3 fields not in
+ * scenario_field_config) are also preserved.
+ */
+function parseGeneratedData(content: string, expectedFields: string[]): Record<string, string> {
   try {
     // Try to extract JSON from the response
     let jsonStr = content.trim();
@@ -1317,9 +1064,12 @@ function parseGeneratedData(content: string, fields: string[]): Record<string, s
     
     const parsed = JSON.parse(jsonStr.trim());
     
+    // Build the union of expected fields + any extra keys from the AI response
+    const allKeys = new Set<string>([...expectedFields, ...Object.keys(parsed)]);
+
     // Convert all values to strings (stringify objects/arrays)
     const result: Record<string, string> = {};
-    for (const field of fields) {
+    for (const field of allKeys) {
       if (parsed[field] !== undefined && parsed[field] !== null) {
         const val = parsed[field];
         if (typeof val === "object") {
