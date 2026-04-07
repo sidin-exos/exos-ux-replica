@@ -1077,7 +1077,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             content: responseContent,
-            structured: singleParsedEnvelope?.schema_version === '1.0' ? singleParsedEnvelope : undefined,
+            structured: deanonSingleEnvelope?.schema_version === '1.0' ? deanonSingleEnvelope : undefined,
             validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
