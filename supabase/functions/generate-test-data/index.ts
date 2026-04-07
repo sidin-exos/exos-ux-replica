@@ -817,23 +817,21 @@ Deliberately trigger the common failure mode for this scenario.`;
 
   return {
     success: true,
-    data,
+    scenarioId: scenarioType,
+    qualityTier,
+    parameters,
+    fieldValues: data,
+    testNotes: testNotes || "",
+    expectedEvaluatorScore: expectedEvaluatorScore || "READY",
+    methodologyEnriched: !!(categoryCtx || industryCtx),
+    generatedAt: new Date().toISOString(),
     metadata: {
-      industry: parameters.industry,
-      category: parameters.category,
-      score: 75,
-      iterations: 1,
-      reasoning: parameters.reasoning,
-      parameters: parameters,
       trickValidation: trickScore,
       persona: selectedPersona.id,
       personaName: selectedPersona.name,
       requiredFieldCount: fieldGroups.required.length,
       optionalFieldCount: fieldGroups.optional.length,
-      qualityTier,
       deviationType,
-      testNotes,
-      expectedEvaluatorScore,
     }
   };
 }
