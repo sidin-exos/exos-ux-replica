@@ -605,64 +605,156 @@ EMBEDDING RULES:
 6. Embed the trick primarily in the "${trick.targetField}" field
 7. The rest of the data should appear normal and professional` : '';
 
-  const system = `You are an expert procurement consultant generating realistic test data.
+  // ── PERSONA STYLE INSTRUCTIONS ──
+  const PERSONA_STYLE_INSTRUCTIONS: Record<string, string> = {
+    "rushed-junior": "Write minimally and vaguely. Use abbreviations freely. Fill only 30-40% of optional fields. Skip details a junior wouldn't know.",
+    "methodical-manager": "Write in detailed, structured prose with precise industry terminology. Fill 85-95% of optional fields. Include strategic rationale.",
+    "cfo-finance": "Focus exclusively on numbers, risk metrics, and ROI. Keep text fields extremely short. Prioritize financial fields. Fill 40-60% of optional fields.",
+    "frustrated-stakeholder": "Mix complaints into data fields. Use narrative paragraphs instead of structured facts. Misuse procurement terminology. Fill 50-70% of optional fields but often in wrong format.",
+    "lost-user": "Write completely irrelevant content with no procurement context. Ask random unrelated questions. Fill 0% of optional fields meaningfully.",
+  };
 
-STRICT CONTEXT:
-- Industry: ${parameters.industry}
-- Procurement Category: ${parameters.category}
-- Company Size: ${parameters.companySize} (${companySizeDescriptions[parameters.companySize]})
-- Complexity Level: ${parameters.complexity}
-- Financial Pressure: ${parameters.financialPressure}
-- Strategic Priority: ${parameters.strategicPriority}
-- Market Conditions: ${parameters.marketConditions}
-- Data Quality: ${parameters.dataQuality}
-- Quality Tier: ${qualityTier}
-- Deviation Type: ${deviationType}
-${dbContextBlock}
+  // ── COMPANY SIZE FINANCIAL SCALES ──
+  const COMPANY_SIZE_SCALES: Record<string, string> = {
+    "startup": "contract values €5K-€50K, WACC 15-25%, limited leverage",
+    "smb": "contract values €20K-€200K, WACC 10-16%",
+    "SME": "contract values €20K-€200K, WACC 8-14%",
+    "mid-market": "contract values €100K-€2M, WACC 7-11%",
+    "Mid-Market": "contract values €100K-€2M, WACC 7-11%",
+    "enterprise": "contract values €500K-€10M, WACC 6-9%",
+    "large-enterprise": "contract values €500K-€20M, WACC 6-9%",
+    "Large Enterprise": "contract values €500K-€20M, WACC 6-9%",
+  };
 
-BUYER PERSONA:
-You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
-${selectedPersona.description}
+  const personaStyle = PERSONA_STYLE_INSTRUCTIONS[selectedPersona.id] || PERSONA_STYLE_INSTRUCTIONS["methodical-manager"];
+  const financialScale = COMPANY_SIZE_SCALES[parameters.companySize] || "contract values €100K-€2M, WACC 7-11%";
 
-Adjust your output accordingly:
-- Tone and verbosity of text fields should match this persona
-- Optional field fill rate should be approximately ${selectedPersona.optionalFillRate}
+  // ── SYSTEM PROMPT ──
+  const system = `You are a procurement data specialist generating realistic test data for the EXOS procurement intelligence platform.
 
-FIELD REQUIREMENTS:
-REQUIRED FIELDS (MUST always be filled):
-${fieldGroups.required.map(f => `- ${f}`).join('\n')}
+GDPR RULES (non-negotiable):
+- Never use real company names. Use fictional EU entity names with correct legal suffixes: GmbH, OÜ, SAS, SpA, AB, BV, Sp. z o.o.
+- Never generate email addresses, phone numbers, or personal names.
+- Use role-based references only: "Operations Lead", "CPO", "Plant Manager".
+- Financial figures must use clearly fictional but realistic EU ranges in EUR.
+- Registration numbers: use patterns like "HRB 00000", "REG-SAMPLE-001".
+- Addresses: region-level only — "Stuttgart region", "Northern France".
 
-OPTIONAL FIELDS (fill according to persona behavior — leave some blank as empty strings):
-${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
-${blockInstructions}
+OUTPUT FORMAT (strict): You must return a valid JSON object with exactly this structure:
+{
+  "block1": "string — industry and business context",
+  "block2": "string — scenario-specific core data",
+  "block3": "string — enhanced parameters and financial data",
+  "testNotes": "string — 1-2 sentences describing what this test case exercises",
+  "expectedEvaluatorScore": "READY" | "IMPROVABLE" | "INSUFFICIENT"
+}
 
-CRITICAL RULES:
-1. ALL data must be consistent with the above context
-2. ALL blocks must be populated according to the quality tier instructions above
-3. All numeric values must be plausible for the company scale
-4. If data quality is "partial" or "poor", follow the MINIMUM/DEGRADED tier rules
-5. ALWAYS include all REQUIRED fields. For OPTIONAL fields, follow the persona's fill rate guidance — include some as empty strings "" to simulate realistic incomplete forms.
-6. You MUST generate content for Block 1, Block 2, AND Block 3 fields — do NOT stop after Block 1.
-${trickInstructions}
+Do not include markdown, code fences, or any text outside the JSON object.`;
 
-OUTPUT FORMAT:
-Return ONLY a valid JSON object with the requested fields. No markdown, no explanation.
-Include ALL required fields and the optional fields you choose to fill. For unfilled optional fields, include them as empty strings.`;
+  // ── USER PROMPT (6 layers) ──
+  // LAYER 1 — Scenario context
+  let userPrompt = `SCENARIO: ${scenarioType} (Group: ${deviationType})
+QUALITY TIER: ${qualityTier}
+PERSONA: ${selectedPersona.id} (${selectedPersona.name})
 
-  const user = `Generate test data for "${scenarioType}" scenario.
+`;
 
-REQUIRED FIELDS:
-${fieldGroups.required.map(f => `- ${f}`).join('\n')}
+  // LAYER 2 — Field structure from scenario_field_config
+  if (fieldConfigs.length > 0) {
+    userPrompt += `REQUIRED BLOCKS AND THEIR PURPOSE:\n`;
+    fieldConfigs.forEach((fc, idx) => {
+      const blockNum = idx + 1;
+      userPrompt += `BLOCK ${blockNum} — ${fc.block_label}:\n`;
+      userPrompt += `  Type: ${fc.expected_data_type}\n`;
+      if (fc.sub_prompts) {
+        const subs = Array.isArray(fc.sub_prompts) ? fc.sub_prompts : [];
+        if (subs.length > 0) {
+          userPrompt += `  Required sub-prompts: ${subs.map((s: any) => typeof s === 'string' ? s : s.label || s.prompt || JSON.stringify(s)).join(', ')}\n`;
+        }
+      }
+      if (fc.deviation_type === '1H') {
+        userPrompt += `  ⚠ CRITICAL FIELDS — must be present for correct output type\n`;
+      }
+      // Tier-specific guidance
+      const guidance = qualityTier === 'OPTIMAL' ? fc.optimal_guidance
+        : qualityTier === 'MINIMUM' ? fc.minimum_guidance
+        : qualityTier === 'DEGRADED' ? fc.degraded_guidance
+        : fc.block_guidance;
+      if (guidance) {
+        userPrompt += `  Guidance for ${qualityTier} tier: ${guidance}\n`;
+      }
+      userPrompt += `\n`;
+    });
+  }
 
-OPTIONAL FIELDS (fill per persona behavior):
-${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
+  // LAYER 3 — Methodology grounding from DB
+  if (categoryCtx || industryCtx) {
+    if (categoryCtx) {
+      userPrompt += `CATEGORY INTELLIGENCE (${parameters.category}):\n`;
+      if (categoryCtx.key_cost_drivers?.length) userPrompt += `  Key cost drivers: ${categoryCtx.key_cost_drivers.join(', ')}\n`;
+      if (categoryCtx.kraljic_position) userPrompt += `  Kraljic position: ${categoryCtx.kraljic_position}\n`;
+      if (categoryCtx.market_structure) userPrompt += `  Market structure: ${categoryCtx.market_structure}\n`;
+      if (categoryCtx.negotiation_dynamics) userPrompt += `  Negotiation dynamics: ${categoryCtx.negotiation_dynamics}\n`;
+      if (categoryCtx.kpis_v2) userPrompt += `  Relevant KPIs: ${JSON.stringify(categoryCtx.kpis_v2)}\n`;
+      userPrompt += `\n`;
+    }
+    if (industryCtx) {
+      userPrompt += `INDUSTRY INTELLIGENCE (${parameters.industry}):\n`;
+      if (industryCtx.kpis?.length) userPrompt += `  Industry KPIs: ${JSON.stringify(industryCtx.kpis)}\n`;
+      if (industryCtx.constraints?.length) userPrompt += `  Industry constraints: ${JSON.stringify(industryCtx.constraints)}\n`;
+      userPrompt += `\n`;
+    }
+  }
 
-Context: ${parameters.reasoning}
-${trick ? `\nRemember: Subtly embed the ${trick.category} challenge in the ${trick.targetField} field without being obvious.` : ''}
+  // LAYER 4 — Parameter constraints
+  userPrompt += `GENERATION PARAMETERS:
+  Industry: ${parameters.industry}
+  Category: ${parameters.category}
+  Company Size: ${parameters.companySize} — scale all financial figures accordingly
+  Complexity: ${parameters.complexity}
+  Financial Context: ${parameters.financialPressure}
+  Market Conditions: ${parameters.marketConditions}
+  Priority Focus: ${parameters.strategicPriority}
 
-IMPORTANT: You MUST generate content for ALL required fields — not just the first one. Follow the block-by-block instructions in the system prompt. Generate content for ALL blocks (Block 1, Block 2, Block 3).
+FINANCIAL SCALE REFERENCE FOR ${parameters.companySize}: ${financialScale}
 
-Return ONLY the JSON object.`;
+`;
+
+  // LAYER 5 — Trick injection
+  if (trick) {
+    userPrompt += `EMBEDDED TRICK — include this issue subtly in the data:
+  Type: ${trick.category}
+  Instruction: ${trick.description}
+  Target block: ${trick.targetField}
+  Subtlety level: ${trick.subtlety} — make it ${trick.subtlety === 'obvious' ? 'obvious' : 'subtle'} but realistic.
+
+`;
+  }
+
+  // LAYER 6 — Generation instruction
+  if (qualityTier === 'OPTIMAL') {
+    userPrompt += `Generate complete, realistic content for ALL THREE BLOCKS for the ${scenarioType} scenario at OPTIMAL quality tier.
+All blocks must be fully populated with scenario-specific, contextually rich content. Every sub-prompt must be addressed with concrete, internally consistent values. Use domain terminology naturally.`;
+  } else if (qualityTier === 'MINIMUM') {
+    userPrompt += `Generate MINIMUM viable content for ALL THREE BLOCKS for the ${scenarioType} scenario.
+Provide the minimum viable content that meets bare requirements. Critical sub-prompts must be present. Optional fields may be omitted. Block 3 may be brief.`;
+  } else if (qualityTier === 'DEGRADED') {
+    userPrompt += `Generate DEGRADED content for ALL THREE BLOCKS for the ${scenarioType} scenario.
+Deliberately trigger the common failure mode for this scenario.`;
+    if (deviationType === '1' || deviationType === '1H') {
+      userPrompt += ` Ignore sub-prompt structure — write Block 2 as a single narrative paragraph that buries the required data points in prose.`;
+      if (deviationType === '1H') {
+        const criticalSubs = fieldConfigs.filter(f => f.deviation_type === '1H').map(f => f.block_label);
+        userPrompt += ` Omit the critical fields entirely: ${criticalSubs.join(', ')}.`;
+      }
+    }
+  } else {
+    userPrompt += `Generate obviously unusable GIBBERISH content for ALL THREE BLOCKS. Keyboard mash, lorem ipsum, completely irrelevant text. All three blocks must fail basic quality checks.`;
+  }
+
+  userPrompt += `\n\nUse the persona writing style: ${personaStyle}`;
+
+  const user = userPrompt;
 
   console.log(`[TestDataGen] Generate mode - QualityTier: ${qualityTier}, DeviationType: ${deviationType}, Trick: ${trick?.category || 'none'}, Persona: ${selectedPersona.id}`);
 
@@ -686,7 +778,24 @@ Return ONLY the JSON object.`;
     return { success: false, error: "Failed to generate test data" };
   }
 
-  const data = parseGeneratedData(response.content, fields);
+  const rawData = parseGeneratedData(response.content, fields);
+  
+  // Map block1/block2/block3 keys back to actual field IDs from fieldConfigs
+  const data: Record<string, string> = {};
+  const blockKeys = ["block1", "block2", "block3"] as const;
+  for (const [key, value] of Object.entries(rawData)) {
+    const blockIdx = blockKeys.indexOf(key as any);
+    if (blockIdx >= 0 && fieldConfigs[blockIdx]) {
+      data[fieldConfigs[blockIdx].block_id] = value;
+    } else if (key !== "testNotes" && key !== "expectedEvaluatorScore") {
+      // Preserve any field that already uses the correct field ID
+      data[key] = value;
+    }
+  }
+
+  // Preserve test metadata from AI response
+  const testNotes = rawData["testNotes"] || "";
+  const expectedEvaluatorScore = rawData["expectedEvaluatorScore"] || "";
   
   if (Object.keys(data).length === 0) {
     tracer.patchRun(runId, undefined, "Failed to parse generated data");
@@ -723,6 +832,8 @@ Return ONLY the JSON object.`;
       optionalFieldCount: fieldGroups.optional.length,
       qualityTier,
       deviationType,
+      testNotes,
+      expectedEvaluatorScore,
     }
   };
 }
