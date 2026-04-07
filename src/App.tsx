@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { HelmetProvider } from "react-helmet-async";
 import { ModelConfigProvider } from "@/contexts/ModelConfigContext";
 import { isAuthError } from "@/lib/auth-utils";
 import NotFound from "./pages/NotFound";
@@ -42,6 +43,14 @@ const MethodologyScenarioEdit = lazy(() => import("./pages/admin/MethodologyScen
 const MethodologyConfig = lazy(() => import("./pages/admin/MethodologyConfig"));
 const MethodologyHistory = lazy(() => import("./pages/admin/MethodologyHistory"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+
+// Scenario landing pages
+const TCOAnalysis = lazy(() => import("./pages/scenarios/TCOAnalysis"));
+const SupplierRisk = lazy(() => import("./pages/scenarios/SupplierRisk"));
+const NegotiationPrep = lazy(() => import("./pages/scenarios/NegotiationPrep"));
+const MakeOrBuy = lazy(() => import("./pages/scenarios/MakeOrBuy"));
+const BlackSwan = lazy(() => import("./pages/scenarios/BlackSwan"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     mutations: {
@@ -58,6 +67,7 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <Sentry.ErrorBoundary fallback={<SentryErrorFallback />}>
+  <HelmetProvider>
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
     <ModelConfigProvider>
       <QueryClientProvider client={queryClient}>
@@ -95,6 +105,12 @@ const App = () => (
             <Route path="/admin/methodology/history" element={<ProtectedRoute requireSuperAdmin><MethodologyHistory /></ProtectedRoute>} />
             <Route path="/admin/methodology/:slug" element={<ProtectedRoute requireSuperAdmin><MethodologyScenarioEdit /></ProtectedRoute>} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            {/* Scenario SEO landing pages */}
+            <Route path="/scenarios/tco-analysis" element={<TCOAnalysis />} />
+            <Route path="/scenarios/supplier-risk-assessment" element={<SupplierRisk />} />
+            <Route path="/scenarios/negotiation-preparation" element={<NegotiationPrep />} />
+            <Route path="/scenarios/make-or-buy-analysis" element={<MakeOrBuy />} />
+            <Route path="/scenarios/black-swan-simulation" element={<BlackSwan />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -106,6 +122,7 @@ const App = () => (
       </QueryClientProvider>
     </ModelConfigProvider>
   </ThemeProvider>
+  </HelmetProvider>
   </Sentry.ErrorBoundary>
 );
 
