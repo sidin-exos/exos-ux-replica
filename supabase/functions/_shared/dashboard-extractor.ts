@@ -1,204 +1,117 @@
-/**
- * Dashboard Data Parser
- * 
- * Extracts structured JSON from AI responses. Supports two formats:
- * 1. EXOS Output Schema v1.0 (structured JSON envelope with schema_version: "1.0")
- * 2. @deprecated Legacy <dashboard-data> XML blocks
- * 
- * If parsing fails, returns null so dashboards fall back to hardcoded defaults.
- *
- * SYNC COPY of supabase/functions/_shared/dashboard-extractor.ts
- * Cannot import directly (Deno-only path). Must be kept in sync manually.
- * When dashboard-extractor.ts changes, update this file to match.
- */
-
-// ============================================
-// Per-dashboard data interfaces
-// ============================================
-
-export interface ActionChecklistData {
-  actions: {
-    action: string;
-    priority: "critical" | "high" | "medium" | "low";
-    status: "done" | "in-progress" | "pending" | "blocked";
-    owner?: string;
-    dueDate?: string;
-  }[];
-}
-
-export interface DecisionMatrixData {
-  criteria: { name: string; weight: number }[];
-  options: { name: string; scores: number[] }[];
-}
-
-export interface CostWaterfallData {
-  components: { name: string; value: number; type: "cost" | "reduction" }[];
-  currency?: string;
-}
-
-export interface TimelineRoadmapData {
-  phases: {
-    name: string;
-    startWeek: number;
-    endWeek: number;
-    status: "completed" | "in-progress" | "upcoming";
-    milestones?: string[];
-  }[];
-  totalWeeks?: number;
-}
-
-export interface KraljicData {
-  items: {
-    id: string;
-    name: string;
-    supplyRisk: number;
-    businessImpact: number;
-    spend?: string;
-  }[];
-}
-
-export interface TCOComparisonData {
-  data: { year: string; [key: string]: number | string }[];
-  options: { id: string; name: string; color: string; totalTCO: number }[];
-  currency?: string;
-}
-
-export interface LicenseTierData {
-  tiers: {
-    name: string;
-    users: number;
-    costPerUser: number;
-    totalCost: number;
-    color: string;
-    recommended?: number;
-  }[];
-  currency?: string;
-}
-
-export interface SensitivityData {
-  variables: {
-    name: string;
-    baseCase: number;
-    lowCase: number;
-    highCase: number;
-    unit?: string;
-  }[];
-  baseCaseTotal?: number;
-  currency?: string;
-}
-
-export interface RiskMatrixData {
-  risks: {
-    supplier: string;
-    impact: "high" | "medium" | "low";
-    probability: "high" | "medium" | "low";
-    category: string;
-  }[];
-}
-
-export interface ScenarioComparisonData {
-  scenarios: { id: string; name: string; color: string }[];
-  radarData: { metric: string; [key: string]: number | string }[];
-  summary: { criteria: string; [key: string]: string }[];
-}
-
-export interface SupplierScorecardData {
-  suppliers: {
-    name: string;
-    score: number;
-    trend: "up" | "down" | "stable";
-    spend: string;
-  }[];
-}
-
-export interface SOWAnalysisData {
-  clarity: number;
-  sections: {
-    name: string;
-    status: "complete" | "partial" | "missing";
-    note: string;
-  }[];
-  recommendations?: string[];
-}
-
-export interface NegotiationPrepData {
-  batna: { strength: number; description: string };
-  leveragePoints: { point: string; tactic: string }[];
-  sequence: { step: string; detail: string }[];
-}
-
-export interface DataQualityData {
-  fields: {
-    field: string;
-    status: "complete" | "partial" | "missing";
-    coverage: number;
-  }[];
-  limitations?: { title: string; impact: string }[];
-}
-
-// ============================================
-// Top-level union type
-// ============================================
+// supabase/functions/_shared/dashboard-extractor.ts
+// Canonical dashboard data extractor — shared by generate-pdf and generate-excel.
+// INPUT:  rawString — raw JSON string (ExosOutput envelope, schema_version "1.0")
+// OUTPUT: DashboardData | null
+//
+// The frontend (src/lib/dashboard-data-parser.ts) cannot import from this path directly.
+// It maintains a manual sync copy. When this file changes, update the frontend copy too.
 
 export interface DashboardData {
-  actionChecklist?: ActionChecklistData;
-  decisionMatrix?: DecisionMatrixData;
-  costWaterfall?: CostWaterfallData;
-  timelineRoadmap?: TimelineRoadmapData;
-  kraljicQuadrant?: KraljicData;
-  tcoComparison?: TCOComparisonData;
-  licenseTier?: LicenseTierData;
-  sensitivitySpider?: SensitivityData;
-  riskMatrix?: RiskMatrixData;
-  scenarioComparison?: ScenarioComparisonData;
-  supplierScorecard?: SupplierScorecardData;
-  sowAnalysis?: SOWAnalysisData;
-  negotiationPrep?: NegotiationPrepData;
-  dataQuality?: DataQualityData;
+  actionChecklist?: {
+    actions: {
+      action: string;
+      priority: 'critical' | 'high' | 'medium' | 'low';
+      status: 'done' | 'in-progress' | 'pending' | 'blocked';
+      owner?: string;
+      dueDate?: string;
+    }[];
+  };
+  decisionMatrix?: {
+    criteria: { name: string; weight: number }[];
+    options: { name: string; scores: number[] }[];
+  };
+  costWaterfall?: {
+    components: { name: string; value: number; type: 'cost' | 'reduction' }[];
+    currency?: string;
+  };
+  timelineRoadmap?: {
+    phases: {
+      name: string;
+      startWeek: number;
+      endWeek: number;
+      status: 'completed' | 'in-progress' | 'upcoming';
+      milestones?: string[];
+    }[];
+    totalWeeks?: number;
+  };
+  kraljicQuadrant?: {
+    items: {
+      id: string;
+      name: string;
+      supplyRisk: number;
+      businessImpact: number;
+      spend?: string;
+    }[];
+  };
+  tcoComparison?: {
+    data: { year: string; [key: string]: number | string }[];
+    options: { id: string; name: string; color: string; totalTCO: number }[];
+    currency?: string;
+  };
+  licenseTier?: {
+    tiers: {
+      name: string;
+      users: number;
+      costPerUser: number;
+      totalCost: number;
+      color: string;
+      recommended?: number;
+    }[];
+    currency?: string;
+  };
+  sensitivitySpider?: {
+    variables: {
+      name: string;
+      baseCase: number;
+      lowCase: number;
+      highCase: number;
+      unit?: string;
+    }[];
+    baseCaseTotal?: number;
+    currency?: string;
+  };
+  riskMatrix?: {
+    risks: {
+      supplier: string;
+      impact: 'high' | 'medium' | 'low';
+      probability: 'high' | 'medium' | 'low';
+      category: string;
+    }[];
+  };
+  scenarioComparison?: {
+    scenarios: { id: string; name: string; color: string }[];
+    radarData: { metric: string; [key: string]: number | string }[];
+    summary: { criteria: string; [key: string]: string }[];
+  };
+  supplierScorecard?: {
+    suppliers: {
+      name: string;
+      score: number;
+      trend: 'up' | 'down' | 'stable';
+      spend: string;
+    }[];
+  };
+  sowAnalysis?: {
+    clarity: number;
+    sections: { name: string; status: 'complete' | 'partial' | 'missing'; note: string }[];
+    recommendations?: string[];
+  };
+  negotiationPrep?: {
+    batna: { strength: number; description: string };
+    leveragePoints: { point: string; tactic: string }[];
+    sequence: { step: string; detail: string }[];
+  };
+  dataQuality?: {
+    fields: {
+      field: string;
+      status: 'complete' | 'partial' | 'missing';
+      coverage: number;
+    }[];
+    limitations?: { title: string; impact: string }[];
+  };
 }
 
-// ============================================
-// Extraction & stripping utilities
-// ============================================
-
-const DASHBOARD_DATA_REGEX = /<dashboard-data>([\s\S]*?)<\/dashboard-data>/;
-
-/** Map snake_case keys the AI might return to the camelCase keys DashboardData expects */
-const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
-  action_checklist: 'actionChecklist',
-  decision_matrix: 'decisionMatrix',
-  cost_waterfall: 'costWaterfall',
-  timeline_roadmap: 'timelineRoadmap',
-  kraljic_quadrant: 'kraljicQuadrant',
-  tco_comparison: 'tcoComparison',
-  license_tier: 'licenseTier',
-  sensitivity_spider: 'sensitivitySpider',
-  risk_matrix: 'riskMatrix',
-  scenario_comparison: 'scenarioComparison',
-  supplier_scorecard: 'supplierScorecard',
-  sow_analysis: 'sowAnalysis',
-  negotiation_prep: 'negotiationPrep',
-  data_quality: 'dataQuality',
-};
-
-const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
-
-/**
- * Check whether a raw AI response string is EXOS Output Schema v1.0.
- */
-export function isStructuredOutput(raw: string): boolean {
-  if (!raw) return false;
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed?.schema_version === '1.0';
-  } catch {
-    return false;
-  }
-}
-
-// ============================================
-// Envelope extraction helpers (synced with dashboard-extractor.ts)
-// ============================================
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 const SCENARIO_COLORS: Record<string, string> = {
   Conservative: '#10b981',
@@ -225,29 +138,14 @@ function isValidGap(g: any): boolean {
   return !GENERIC_PHRASES.some(p => combined.includes(p));
 }
 
-/**
- * Extract DashboardData from an EXOS Output Schema v1.0 envelope.
- * Accepts a pre-parsed object (frontend already has the parsed object).
- * Re-serialises internally to reuse the same extraction logic as the shared module.
- */
-export function extractFromEnvelope(parsed: Record<string, unknown>): DashboardData | null {
-  if (!parsed) return null;
-  try {
-    return extractFromEnvelopeRaw(JSON.stringify(parsed));
-  } catch {
-    return null;
-  }
-}
+// ── Main export ──────────────────────────────────────────────────────────────
 
-/**
- * Internal function — identical body to supabase/functions/_shared/dashboard-extractor.ts
- */
-function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
+export function extractFromEnvelope(rawString: string): DashboardData | null {
   let envelope: Record<string, any>;
   try {
-    const p = JSON.parse(rawString);
-    if (p?.schema_version !== '1.0') return null;
-    envelope = p;
+    const parsed = JSON.parse(rawString);
+    if (parsed?.schema_version !== '1.0') return null;
+    envelope = parsed;
   } catch {
     return null;
   }
@@ -259,7 +157,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   const dataGaps: any[] = envelope.data_gaps ?? [];
   const result: DashboardData = {};
 
-  // ── Universal: actionChecklist
+  // ── Universal: actionChecklist ─────────────────────────────────────────────
   const validRecs = recommendations.filter((r: any) => r?.action);
   if (validRecs.length > 0) {
     result.actionChecklist = {
@@ -275,7 +173,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     };
   }
 
-  // ── Universal: dataQuality
+  // ── Universal: dataQuality ─────────────────────────────────────────────────
   const validGaps = dataGaps.filter(isValidGap);
   if (validGaps.length > 0) {
     result.dataQuality = {
@@ -291,7 +189,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     };
   }
 
-  // ── Universal: costWaterfall
+  // ── Universal: costWaterfall ───────────────────────────────────────────────
   const costBreakdown: any[] = payload.financial_model?.cost_breakdown ?? [];
   if (costBreakdown.length > 0) {
     result.costWaterfall = {
@@ -306,7 +204,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     };
   }
 
-  // ── Group A: tcoComparison
+  // ── Group A: tcoComparison ─────────────────────────────────────────────────
   if (group === 'A') {
     const vendorOptions: any[] = ss.vendor_options ?? [];
     const validVendors = vendorOptions.filter(
@@ -333,7 +231,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     }
   }
 
-  // ── Group B: supplierScorecard
+  // ── Group B: supplierScorecard ─────────────────────────────────────────────
   if (group === 'B') {
     const scorecard: any[] = ss.scorecard ?? [];
     if (scorecard.length > 0) {
@@ -362,8 +260,9 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     }
   }
 
-  // ── Group C: riskMatrix + sowAnalysis
+  // ── Group C: riskMatrix + sowAnalysis ──────────────────────────────────────
   if (group === 'C') {
+    // riskMatrix — check BOTH paths
     const riskSource: any[] =
       (ss.risk_register ?? []).length > 0
         ? ss.risk_register
@@ -384,6 +283,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
       };
     }
 
+    // sowAnalysis — from issues[] and missing_clauses[]
     const issues: any[] = ss.issues ?? [];
     const missingClauses: any[] = ss.missing_clauses ?? [];
     if (issues.length > 0 || missingClauses.length > 0) {
@@ -421,6 +321,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
 
   // ── Group D: negotiationPrep + scenarioComparison + timelineRoadmap + decisionMatrix
   if (group === 'D') {
+    // negotiationPrep (S21)
     const batnaStrengthPct: number | null = ss.batna?.batna_strength_pct ?? null;
     const batnaDescription: string | null = ss.batna?.buyer_batna_description ?? ss.batna?.description ?? null;
     const leveragePoints = (ss.leverage_points ?? [])
@@ -444,6 +345,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
       };
     }
 
+    // scenarioComparison — derived from negotiation_scenarios[] (S21)
     const negScenarios: any[] = (ss.negotiation_scenarios ?? []).filter(
       (s: any) => s?.name && s?.expected_savings_pct != null
     );
@@ -520,6 +422,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
       };
     }
 
+    // timelineRoadmap — from three_year_roadmap[] (S22)
     const roadmap: any[] = ss.three_year_roadmap ?? [];
     if (roadmap.length > 0) {
       let cursor = 1;
@@ -542,6 +445,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
       };
     }
 
+    // decisionMatrix — from qualitative_factors[] (S23)
     const qualFactors: any[] = (ss.qualitative_factors ?? []).filter(
       (f: any) => f?.factor && f?.make_score != null && f?.buy_score != null
     );
@@ -560,75 +464,4 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   }
 
   return Object.keys(result).length === 0 ? null : result;
-}
-
-/**
- * Extracts structured dashboard data from AI response text.
- * Tries EXOS Output Schema v1.0 first, falls back to legacy XML.
- * @deprecated Legacy XML path — new responses use schema_version: "1.0"
- */
-export function extractDashboardData(text: string): DashboardData | null {
-  if (!text) return null;
-
-  // Try structured EXOS Output Schema v1.0 first
-  try {
-    const parsed = JSON.parse(text);
-    if (parsed?.schema_version === '1.0') {
-      return extractFromEnvelope(parsed);
-    }
-  } catch { /* not JSON, fall through to legacy */ }
-
-  // Legacy XML path
-  const match = text.match(DASHBOARD_DATA_REGEX);
-  if (!match?.[1]) {
-    if (text.length > 200) {
-      console.warn('[dashboard-data] No <dashboard-data> block found in response');
-    }
-    return null;
-  }
-
-  try {
-    const raw = match[1]
-      .replace(/```json\s*/gi, '')
-      .replace(/```\s*/g, '')
-      .trim();
-
-    const parsed = JSON.parse(raw);
-
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return null;
-    }
-
-    const normalized: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(parsed)) {
-      const camelKey = SNAKE_TO_CAMEL[key] || key;
-      normalized[camelKey] = value;
-    }
-
-    const foundKeys = Object.keys(normalized);
-    const recognized = foundKeys.filter(k => VALID_KEYS.has(k));
-    const unrecognized = foundKeys.filter(k => !VALID_KEYS.has(k));
-
-    if (unrecognized.length > 0) {
-      console.warn('[dashboard-data] Unrecognized keys:', unrecognized, '| Recognized:', recognized);
-    }
-    if (recognized.length === 0) {
-      console.warn('[dashboard-data] No recognized dashboard keys found. Keys present:', foundKeys);
-      return null;
-    }
-
-    return normalized as DashboardData;
-  } catch (err) {
-    console.warn('[dashboard-data] Parse failed:', err);
-    return null;
-  }
-}
-
-/**
- * Strips the <dashboard-data> block from the markdown text
- * so it doesn't render in the UI.
- */
-export function stripDashboardData(text: string): string {
-  if (!text) return text;
-  return text.replace(DASHBOARD_DATA_REGEX, '').trim();
 }
