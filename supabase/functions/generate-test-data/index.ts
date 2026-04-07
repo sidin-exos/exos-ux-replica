@@ -276,7 +276,9 @@ serve(async (req) => {
   }
 
   // Rate limit: 10 requests/hour per admin user
-  const rateCheck = await checkRateLimit(authResult.user.userId, "generate-test-data", 10, 60, { failClosed: true });
+  // 30 req/hour per admin user — matches sentinel-analysis. Draft + generate
+  // count as separate calls so the legacy 10/hour was too tight for active testing.
+  const rateCheck = await checkRateLimit(authResult.user.userId, "generate-test-data", 30, 60, { failClosed: true });
   if (!rateCheck.allowed) {
     return rateLimitResponse(rateCheck, corsHeaders);
   }
