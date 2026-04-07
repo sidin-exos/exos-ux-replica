@@ -172,7 +172,13 @@ You MUST use the following schema structure:
 - payload must contain the group-specific structure defined below.
 - Every defined field must be present. Use null for missing values — never omit a field.
 - Set low_confidence_watermark to true if confidence_level is LOW.
-- Add an entry to data_gaps for every field that is null due to missing user input.
+- data_gaps RULES (strict):
+  1. Maximum 3 entries. Pick the ones with the highest analytical impact.
+  2. Each entry MUST name a specific field from the user's input form (e.g. "annual_spend", "contract_end_date"), not generic labels like "Unknown field".
+  3. "impact" MUST describe the concrete analytical consequence (e.g. "Cannot calculate NPV without discount rate"), never "Impact not specified".
+  4. "resolution" MUST be a specific, actionable coaching tip (e.g. "Add your annual spend figure to unlock cost-per-unit calculations"), never "Provide missing data".
+  5. FORBIDDEN placeholder values: "Unknown field", "Impact not specified", "Provide missing data", "Not available", "N/A". If you cannot write a specific entry, omit it entirely.
+  6. Tone: helpful coaching, not punitive. Frame as "To strengthen this analysis, add [field]" rather than "Missing: [field]".
 - Add an entry to gdpr_flags if any output field appears to contain unanonymised personal
   data (real names, email addresses, phone numbers, salary amounts). Set that field to null
   and explain in gdpr_flags. Never write PII into any output field.
@@ -252,13 +258,18 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     parts.push('');
   }
 
-  if (parsed.data_gaps?.length > 0) {
-    parts.push('### Data Gaps');
-    parsed.data_gaps.forEach(g => {
-      const field = g?.field ?? 'Unknown field';
-      const impact = g?.impact ?? 'Impact not specified';
-      const resolution = g?.resolution ?? 'Provide missing data';
-      parts.push(`- **${field}**: ${impact} → ${resolution}`);
+  const GENERIC_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
+  const validGaps = (parsed.data_gaps ?? []).filter(g => {
+    if (!g?.field || !g?.impact || !g?.resolution) return false;
+    const combined = `${g.field} ${g.impact} ${g.resolution}`.toLowerCase();
+    return !GENERIC_PHRASES.some(p => combined.includes(p));
+  });
+
+  if (validGaps.length > 0) {
+    parts.push('');
+    parts.push('💡 **To strengthen this analysis:**');
+    validGaps.slice(0, 3).forEach(g => {
+      parts.push(`- ${g.resolution}`);
     });
     parts.push('');
   }

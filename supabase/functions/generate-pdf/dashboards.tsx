@@ -1000,7 +1000,7 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
   if (!data.fields?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Data Quality: insufficient data</Text></View>;
   const fields = data.fields.map(f => {
     const label = f.status === "complete" ? "Complete" : f.status === "partial" ? "Partial" : "Missing";
-    const missing = f.status === "complete" ? "-" : f.status === "partial" ? "Data gaps present" : "Data not available";
+    const missing = f.status === "complete" ? "-" : f.status === "partial" ? "Additional data would improve results" : "Data not available";
     return { name: f.field, value: f.coverage, status: label, missing };
   });
   const avgQuality = fields.length > 0 ? Math.round(fields.reduce((sum, f) => sum + f.value, 0) / fields.length) : 0;
@@ -1050,7 +1050,7 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
         ))}
       </View>
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.warning, fontFamily: "Helvetica-Bold" }}>Data Gap: </Text>Request missing supplier pricing and clarify renewal terms to improve analysis confidence.</Text>
+        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.warning, fontFamily: "Helvetica-Bold" }}>Tip: </Text>Adding more input details will strengthen the analysis and increase confidence scores.</Text>
       </View>
     </View>
   );
