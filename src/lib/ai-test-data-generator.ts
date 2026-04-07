@@ -157,10 +157,23 @@ export async function generateAITestData(
       };
     }
 
+    // Support new fieldValues shape with backward compat
+    const fieldValues = data.fieldValues || data.data || {};
+
     return {
       success: true,
-      data: data.data,
-      metadata: data.metadata,
+      data: fieldValues,
+      metadata: {
+        industry: options.industry || data.metadata?.industry || "unknown",
+        category: options.category || data.metadata?.category || "unknown",
+        score: data.metadata?.score || 75,
+        iterations: data.metadata?.iterations || 1,
+        reasoning: data.metadata?.reasoning || "",
+        ...data.metadata,
+        testNotes: data.testNotes,
+        expectedEvaluatorScore: data.expectedEvaluatorScore,
+        methodologyEnriched: data.methodologyEnriched,
+      },
     };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
