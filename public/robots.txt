@@ -1,3 +1,6 @@
+User-agent: *
+Allow: /
+
 User-agent: Googlebot
 Allow: /
 
@@ -10,5 +13,16 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /
+# Block admin and internal routes from all crawlers
+Disallow: /admin/
+Disallow: /dashboards
+Disallow: /architecture
+Disallow: /dev-workflow
+Disallow: /testing-pipeline
+Disallow: /org-chart
+Disallow: /pdf-test
+Disallow: /account
+Disallow: /reset-password
+Disallow: /unsubscribe
+
+Sitemap: https://exosproc.com/sitemap.xml
