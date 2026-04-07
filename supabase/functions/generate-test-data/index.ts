@@ -61,7 +61,7 @@ interface ScenarioFieldGroups {
 }
 
 // DB query columns for scenario_field_config
-const FIELD_CONFIG_COLUMNS = "block_id, block_label, is_required, expected_data_type, sub_prompts, deviation_type, block_guidance, optimal_guidance, minimum_guidance, degraded_guidance" as const;
+const FIELD_CONFIG_COLUMNS = "block_id, block_label, is_required, expected_data_type, sub_prompts, deviation_type, block_guidance, optimal_guidance, minimum_guidance, degraded_guidance, sort_order" as const;
 
 /** Fetch scenario field configs from DB */
 async function fetchFieldConfigs(
@@ -71,7 +71,8 @@ async function fetchFieldConfigs(
   const { data, error } = await supabase
     .from("scenario_field_config")
     .select(FIELD_CONFIG_COLUMNS)
-    .eq("scenario_slug", scenarioSlug);
+    .eq("scenario_slug", scenarioSlug)
+    .order("sort_order", { ascending: true });
 
   if (error) {
     console.error(`[TestDataGen] Failed to fetch field config for ${scenarioSlug}:`, error);
