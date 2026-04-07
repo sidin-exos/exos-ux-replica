@@ -1,29 +1,101 @@
 
+What I found
 
-# S21 Negotiation Preparation — Dashboard Fix
+- I do not see a browser runtime error in the current snapshot/logs, which suggests this is not mainly a React crash.
+- The stronger signal is contract drift: the approved S21 fix updated the frontend parser to understand the new EXOS structured envelope and Group D mapping, but the report/export stack still uses older parsing logic.
 
-## Problem
-The S21 (Negotiation Preparation) dashboards show "Sample data shown — AI-generated data unavailable" because of field mismatches between the AI output schema and the `extractFromEnvelope()` mapping in `dashboard-data-parser.ts`. The AI returns `leverage_analysis` but the parser reads it incorrectly; `batna.strength` doesn't match `batna.batna_strength_pct`; and there's no `negotiation_scenarios[]` mapping.
+Likely root causes
 
-## Changes (2 files only)
+1. Frontend and report/export parsers are out of sync
+- `src/lib/dashboard-data-parser.ts` now supports structured EXOS output via `extractFromEnvelope()`.
+- `supabase/functions/generate-pdf/types.ts` and `supabase/functions/generate-excel/types.ts` still only parse legacy `<dashboard-data>` blocks.
+- Result: report generation paths cannot reliably read the new S21 structured output.
 
-### 1. `supabase/functions/_shared/output-schemas.ts`
+2. Export flows do not pass the structured envelope at all
+- `GenericScenarioWizard` stores `structuredData` when navigating to `/report`.
+- But `ReportExportButtons` and `PDFPreviewModal` only send `analysisResult` to the edge functions.
+- So exports often receive markdown only, while the real dashboard data lives in `structuredData`.
 
-**Change 1a** — Replace the Group D schema (lines 134-143) to include explicit S21 `scenario_specific` structure with `batna` (including `batna_strength_pct`), `leverage_points[]` (with title/description/impact), and `negotiation_scenarios[]` (Conservative/Aggressive/Hybrid). The instruction text on line 142 will be updated to reference the new field names.
+3. Shared reports drop the structured payload
+- `useShareableReport.ts` saves/loads `analysisResult`, but not `structuredData`.
+- Shared reports therefore lose the exact structured data needed for dashboards and exports.
 
-**Change 1b** — Append S21-specific AI instructions to `GROUP_AI_INSTRUCTIONS['D']` (line 76): deterministic `batna_strength_pct` calculation formula (0-100, capped at 95), `leverage_points[]` quality rules (min 2, max 6, no generic placeholders), and `negotiation_scenarios[]` rules (always 3 scenarios, exactly one recommended).
+4. Scenario Comparison renderers are still coded for the old shape
+- `ScenarioComparisonDashboard.tsx` expects hardcoded columns `A/B/C`.
+- The S21 parser now creates scenario ids like `neg-0`, `neg-1`, `neg-2`, and summary rows shaped like `{criteria, description, risk, recommended}`.
+- `PDFScenarioComparison` on both client/server also truncates to 2 scenarios with `slice(0, 2)`, while S21 now requires 3.
+- This explains the “sample data shown” symptom and can also break report rendering logic/expectations.
 
-### 2. `src/lib/dashboard-data-parser.ts`
+Proposed fixes
 
-**Replace** the Group D negotiation mapping block (lines 250-264) to read the new field names:
-- `batna.batna_strength_pct` instead of `batna.strength`
-- `leverage_points[]` (with title/description) instead of `leverage_analysis[]` (with point/tactic)
-- Add `negotiation_scenarios[]` mapping for the scenario comparison table
-- Return `null` only when all three key fields are empty (correct fallback behavior)
+P0
+1. Unify parsing for report/export paths
+- Make PDF/Excel generators prefer structured envelope parsing, not legacy XML-only parsing.
+- Best fix: move the shared envelope-to-dashboard mapping into one reusable schema/parser module used by both frontend and edge functions.
+- Minimum safe fix: port the same structured-envelope support from `src/lib/dashboard-data-parser.ts` into:
+  - `supabase/functions/generate-pdf/types.ts`
+  - `supabase/functions/generate-excel/types.ts`
 
-The `NegotiationPrepData` interface and `DashboardData` type remain unchanged to avoid downstream component breakage — the new fields are mapped into the existing interface shape.
+2. Pass `structuredData` through the entire export pipeline
+- Add `structuredData` to:
+  - `ReportExportButtons` props
+  - `PDFPreviewModal` props
+  - `generate-pdf` payload/type
+  - `generate-excel` payload/type
+- In both edge functions, parse `structuredData` first; only fall back to `analysisResult` if absent.
 
-### Post-deploy
+P1
+3. Persist `structuredData` in shared reports
+- Extend `useShareableReport.ts` save/load shape to include:
+  - `structuredData`
+  - optionally `evaluationScore` / `evaluationConfidence` for parity
+- This ensures shared report pages export the same data as the original report.
 
-Deploy the `sentinel-analysis` edge function to pick up the schema change. No migration needed.
+4. Refactor Scenario Comparison to be data-driven
+- Update `src/components/reports/ScenarioComparisonDashboard.tsx`
+  - render dynamic scenario columns from `data.scenarios`
+  - stop reading fixed `row.A`, `row.B`, `row.C`
+- Update:
+  - `src/components/reports/pdf/dashboardVisuals/PDFScenarioComparison.tsx`
+  - `supabase/functions/generate-pdf/dashboards.tsx`
+  so they support all provided scenarios instead of slicing to 2.
 
+P2
+5. Add defensive guards so reports degrade gracefully instead of erroring
+- If structured data is present but incomplete, show a placeholder card rather than attempting mismatched rendering.
+- For S21 scenario comparison, derive report rows from `radarData`/scenario definitions when `summary` shape is not tabular.
+
+Files I would update
+
+- `src/components/reports/ReportExportButtons.tsx`
+- `src/components/reports/pdf/PDFPreviewModal.tsx`
+- `src/pages/GeneratedReport.tsx`
+- `src/hooks/useShareableReport.ts`
+- `src/components/reports/ScenarioComparisonDashboard.tsx`
+- `src/components/reports/pdf/dashboardVisuals/PDFScenarioComparison.tsx`
+- `supabase/functions/generate-pdf/types.ts`
+- `supabase/functions/generate-excel/types.ts`
+- `supabase/functions/generate-pdf/index.ts`
+- `supabase/functions/generate-excel/index.ts`
+- `supabase/functions/generate-pdf/dashboards.tsx`
+
+Validation plan
+
+- Test a fresh S21 report on `/report`
+- Test PDF preview/download end to end
+- Test Excel export end to end
+- Test shared report link export path
+- Verify Scenario Comparison renders real S21 scenarios instead of sample data
+- Add parser tests for structured S21 envelopes in both frontend and edge-function report paths
+
+Recommended implementation order
+
+1. Fix parser parity in report edge functions
+2. Pass `structuredData` through export payloads
+3. Fix shared report persistence
+4. Refactor Scenario Comparison renderers
+5. Run end-to-end verification across normal + shared report flows
+
+Bottom line
+
+The most likely primary regression is not the S21 schema itself, but that only the frontend dashboard parser was updated while report/export code still relies on older parsing assumptions. I would fix the data contract first, then the scenario-comparison renderer assumptions.
