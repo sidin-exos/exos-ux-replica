@@ -145,7 +145,7 @@ const Pricing = () => {
             <img src={exosLogo} alt="EXOS" className="h-16 md:h-20 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-            Simple, Transparent <span className="text-gradient">Pricing</span>
+            Simple, Transparent <span className="text-gradient">Pricing</span> for EU Procurement Teams
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Choose the plan that fits your procurement needs. 
@@ -292,7 +292,7 @@ const Pricing = () => {
               Frequently Asked <span className="text-gradient">Questions</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Everything you need to know about EXOS and how it can help your procurement decisions.
+              Everything you need to know about EXOS — AI architecture, data privacy, GDPR compliance, and procurement scenario coverage.
             </p>
           </div>
 

@@ -105,8 +105,11 @@ const RiskPlatform = () => {
           </div>
           <div>
             <h1 className="text-2xl exos-page-title">
-               Dynamic Risk Monitoring
+               Supplier Risk Assessment Platform
             </h1>
+            <p className="text-sm text-muted-foreground max-w-2xl mt-1">
+              Continuous monitoring of supplier financial health, geopolitical exposure, and regulatory risk — built for EU procurement teams.
+            </p>
           </div>
         </div>
 
