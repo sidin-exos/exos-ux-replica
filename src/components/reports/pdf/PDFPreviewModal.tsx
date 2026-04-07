@@ -151,6 +151,7 @@ const PDFPreviewModal = ({
     }
   }, [
     analysisResult,
+    structuredData,
     evaluationConfidence,
     evaluationScore,
     formData,
