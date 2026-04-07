@@ -138,6 +138,40 @@ function isValidGap(g: any): boolean {
   return !GENERIC_PHRASES.some(p => combined.includes(p));
 }
 
+/**
+ * Coerce an "amount" value into a finite number.
+ * Handles: numbers, numeric strings ("11000000"), strings with thousand
+ * separators ("11,000,000", "11.000.000"), currency-prefixed strings
+ * ("€11M", "$ 1.5K"), and shorthand suffixes (K/M/B). Returns null if the
+ * value is null/undefined/unparseable. Returns 0 for an explicit zero.
+ */
+function parseAmount(raw: any): number | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+  if (typeof raw !== 'string') return null;
+
+  let s = raw.trim();
+  if (!s) return null;
+
+  // Strip currency symbols and letters except K/M/B suffixes
+  s = s.replace(/[€$£¥₹]/g, '').trim();
+
+  // Detect K/M/B/T suffix (case-insensitive)
+  const suffixMatch = s.match(/([kmbt])\s*$/i);
+  let multiplier = 1;
+  if (suffixMatch) {
+    const ch = suffixMatch[1].toLowerCase();
+    multiplier = ch === 'k' ? 1e3 : ch === 'm' ? 1e6 : ch === 'b' ? 1e9 : 1e12;
+    s = s.slice(0, suffixMatch.index).trim();
+  }
+
+  // Remove thousand separators (comma or space). Keep dot as decimal.
+  s = s.replace(/[,\s]/g, '');
+
+  const n = Number(s);
+  return Number.isFinite(n) ? n * multiplier : null;
+}
+
 // ── Main export ──────────────────────────────────────────────────────────────
 
 export function extractFromEnvelope(rawString: string): DashboardData | null {
@@ -193,14 +227,17 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   // Filter BEFORE the length check — if AI returns items with null amounts,
   // we'd otherwise create costWaterfall with an empty components array, which
   // makes the dashboard render with all zeros instead of being hidden.
+  // Coerce amount via parseAmount to handle strings with thousand separators
+  // and currency symbols (e.g. "11,000,000", "€11M", "11000000").
   const costBreakdown: any[] = payload.financial_model?.cost_breakdown ?? [];
   const validCostComponents = costBreakdown
-    .filter((c: any) => c?.category && c?.amount != null && Number(c.amount) > 0)
-    .map((c: any) => ({
-      name: String(c.category),
-      value: Number(c.amount),
-      type: 'cost' as const,
-    }));
+    .map((c: any) => {
+      const amount = parseAmount(c?.amount);
+      return c?.category && amount !== null
+        ? { name: String(c.category), value: amount, type: 'cost' as const }
+        : null;
+    })
+    .filter((c): c is { name: string; value: number; type: 'cost' } => c !== null);
   if (validCostComponents.length > 0) {
     result.costWaterfall = {
       components: validCostComponents,
