@@ -1,10 +1,14 @@
 
 
-# Fix Sitemap — 4 Issues
+# Fix robots.txt — Add Sitemap Directive & Block Internal Routes
 
 ## Single Change
 
-Replace `public/sitemap.xml` with the exact XML provided in the task: 12 `<url>` entries, `/auth` removed, `/enterprise/risk` and `/enterprise/inflation` added, changefreq on `/` and `/welcome` changed to "monthly".
+Replace `public/robots.txt` with the exact content provided in the task:
+- Keep existing bot-specific `Allow: /` rules
+- Add `Disallow` directives for admin/internal routes (`/admin/`, `/dashboards`, `/architecture`, `/dev-workflow`, `/testing-pipeline`, `/org-chart`, `/pdf-test`, `/account`, `/reset-password`, `/unsubscribe`)
+- Add `Sitemap: https://exosproc.com/sitemap.xml` at the end
+- `/auth` is intentionally NOT disallowed
 
 No other files touched.
 
