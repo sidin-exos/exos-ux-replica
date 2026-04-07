@@ -153,8 +153,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [isGeneratingFromDraft, setIsGeneratingFromDraft] = useState(false);
   const [testDataMetadata, setTestDataMetadata] = useState<{
     source: "ai" | "static";
-    score?: number;
-    reasoning?: string;
+    qualityTier?: "OPTIMAL" | "MINIMUM" | "DEGRADED" | "GIBBERISH";
+    expectedEvaluatorScore?: "READY" | "IMPROVABLE" | "INSUFFICIENT";
+    testNotes?: string;
   } | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -287,12 +288,15 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         setFormData(result.data);
         setTestDataMetadata({
           source: "ai",
-          score: result.metadata?.score,
-          reasoning: result.metadata?.reasoning,
+          qualityTier: result.qualityTier,
+          expectedEvaluatorScore: result.expectedEvaluatorScore,
+          testNotes: result.testNotes,
         });
         setDraftedParams(null); // Clear draft after success
         toast.success("Test Data Generated", {
-          description: `Score: ${result.metadata?.score}/100`,
+          description: result.qualityTier
+            ? `Quality: ${result.qualityTier}${result.expectedEvaluatorScore ? ` • Expected: ${result.expectedEvaluatorScore}` : ""}`
+            : "Test data ready",
         });
       } else {
         toast.error("Generation failed", { description: result.error });
@@ -700,7 +704,10 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   {testDataMetadata && (
                     <span className="text-xs text-muted-foreground">
                       {testDataMetadata.source === "ai" ? (
-                        <>Score: {testDataMetadata.score}/100</>
+                        <>
+                          {testDataMetadata.qualityTier ?? "AI"}
+                          {testDataMetadata.expectedEvaluatorScore ? ` • ${testDataMetadata.expectedEvaluatorScore}` : ""}
+                        </>
                       ) : (
                         "Static"
                       )}

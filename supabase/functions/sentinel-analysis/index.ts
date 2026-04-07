@@ -940,10 +940,18 @@ serve(async (req) => {
       let responseContent = multiDeanon.restoredText;
       let deanonEnvelopeObj = parsedEnvelope;
       if (parsedEnvelope?.schema_version === '1.0') {
-        // Deanonymize the envelope itself so structured data has real names
-        const envelopeStr = JSON.stringify(parsedEnvelope);
-        const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
-        deanonEnvelopeObj = JSON.parse(deanonEnvelope.restoredText);
+        // Deanonymize the envelope itself so structured data has real names.
+        // Wrapped in try/catch because deanonymizeText does plain text replacement
+        // and original PII values containing ", \, or newlines will break the JSON.
+        try {
+          const envelopeStr = JSON.stringify(parsedEnvelope);
+          const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
+          deanonEnvelopeObj = JSON.parse(deanonEnvelope.restoredText);
+        } catch (e) {
+          console.error("[Sentinel] Envelope deanonymization re-parse failed, falling back to anonymized envelope:", e);
+          new SentryReporter("sentinel-analysis").captureException(e, { userId, tags: { stage: "envelope-deanon" } });
+          deanonEnvelopeObj = parsedEnvelope;
+        }
         responseContent = buildMarkdownFromEnvelope(deanonEnvelopeObj);
         // GDPR flag logging
         if (deanonEnvelopeObj.gdpr_flags?.length > 0) {
@@ -1054,10 +1062,18 @@ serve(async (req) => {
         let responseContent = singleDeanon.restoredText;
         let deanonSingleEnvelope = singleParsedEnvelope;
         if (singleParsedEnvelope?.schema_version === '1.0') {
-          // Deanonymize the envelope itself so structured data has real names
-          const envelopeStr = JSON.stringify(singleParsedEnvelope);
-          const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
-          deanonSingleEnvelope = JSON.parse(deanonEnvelope.restoredText);
+          // Deanonymize the envelope itself so structured data has real names.
+          // Wrapped in try/catch because deanonymizeText does plain text replacement
+          // and original PII values containing ", \, or newlines will break the JSON.
+          try {
+            const envelopeStr = JSON.stringify(singleParsedEnvelope);
+            const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
+            deanonSingleEnvelope = JSON.parse(deanonEnvelope.restoredText);
+          } catch (e) {
+            console.error("[Sentinel] Envelope deanonymization re-parse failed, falling back to anonymized envelope:", e);
+            new SentryReporter("sentinel-analysis").captureException(e, { userId, tags: { stage: "envelope-deanon" } });
+            deanonSingleEnvelope = singleParsedEnvelope;
+          }
           responseContent = buildMarkdownFromEnvelope(deanonSingleEnvelope);
           if (deanonSingleEnvelope.gdpr_flags?.length > 0) {
             console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonSingleEnvelope.scenario_id, flag_count: deanonSingleEnvelope.gdpr_flags.length });

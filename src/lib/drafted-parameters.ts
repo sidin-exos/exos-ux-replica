@@ -54,14 +54,16 @@ export interface DraftResult {
 export interface GenerateWithParamsResult {
   success: boolean;
   data?: Record<string, string>;
+  qualityTier?: "OPTIMAL" | "MINIMUM" | "DEGRADED" | "GIBBERISH";
+  expectedEvaluatorScore?: "READY" | "IMPROVABLE" | "INSUFFICIENT";
+  testNotes?: string;
   metadata?: {
-    industry: string;
-    category: string;
-    score: number;
-    iterations: number;
-    reasoning: string;
-    parameters: DraftedParameters;
-    mainFocusGenerated?: string; // The AI-generated main focus/challenge
+    persona?: string;
+    personaName?: string;
+    deviationType?: string;
+    requiredFieldCount?: number;
+    optionalFieldCount?: number;
+    trickValidation?: { embedded: boolean; subtletyScore: number; feedback: string } | null;
   };
   error?: string;
 }
@@ -225,7 +227,10 @@ export async function generateWithParameters(
 
     return {
       success: true,
-      data: data.data,
+      data: data.fieldValues,
+      qualityTier: data.qualityTier,
+      expectedEvaluatorScore: data.expectedEvaluatorScore,
+      testNotes: data.testNotes,
       metadata: data.metadata,
     };
   } catch (err) {

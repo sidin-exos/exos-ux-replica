@@ -391,9 +391,9 @@ serve(async (req) => {
       );
       
       const generationResponse = await callAI(generationPrompt.system, generationPrompt.user, temperature);
-      
+
       if (!generationResponse.success) {
-        console.warn(`[TestDataGen] Generation failed on iteration ${iteration + 1}`);
+        console.warn(`[TestDataGen] Generation failed on iteration ${iteration + 1}: ${generationResponse.error || "unknown error"}`);
         continue;
       }
 
@@ -510,9 +510,9 @@ Return ONLY a valid JSON object with these exact keys:
   const user = `Generate random parameters for a "${scenarioType}" procurement test case. Be creative but consistent.`;
 
   const response = await callAI(system, user, temperature);
-  
+
   if (!response.success) {
-    return { success: false, error: "Failed to generate draft parameters" };
+    return { success: false, error: response.error || "Failed to generate draft parameters" };
   }
 
   try {
@@ -545,8 +545,9 @@ Return ONLY a valid JSON object with these exact keys:
     
     return { success: true, parameters: parsed };
   } catch (error) {
-    console.error("[TestDataGen] Failed to parse draft:", error);
-    return { success: false, error: "Failed to parse draft parameters" };
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[TestDataGen] Failed to parse draft:", message);
+    return { success: false, error: `Failed to parse draft parameters: ${message}` };
   }
 }
 
@@ -773,10 +774,10 @@ Deliberately trigger the common failure mode for this scenario.`;
   });
 
   const response = await callAI(system, user, temperature);
-  
+
   if (!response.success) {
-    tracer.patchRun(runId, undefined, "AI call failed");
-    return { success: false, error: "Failed to generate test data" };
+    tracer.patchRun(runId, undefined, response.error || "AI call failed");
+    return { success: false, error: response.error || "Failed to generate test data" };
   }
 
   const rawData = parseGeneratedData(response.content, fields);
@@ -955,7 +956,7 @@ Return ONLY the JSON object.`;
   const response = await callAI(system, user, temperature);
 
   if (!response.success) {
-    return { success: false, error: "Failed to generate messy test data" };
+    return { success: false, error: response.error || "Failed to generate messy test data" };
   }
 
   const data = parseGeneratedData(response.content, fields);
@@ -989,19 +990,19 @@ async function callAI(
   systemPrompt: string,
   userPrompt: string,
   temperature: number = 0.7
-): Promise<{ success: boolean; content: string }> {
+): Promise<{ success: boolean; content: string; error?: string }> {
   try {
     const response = await callGoogleAI({
       systemPrompt,
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
       temperature,
       maxOutputTokens: 8192,
-      model: "gemini-3.1-flash-lite-preview",
     });
     return { success: true, content: response.text };
   } catch (error) {
-    console.error("[TestDataGen] AI call failed:", error);
-    return { success: false, content: "" };
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[TestDataGen] AI call failed:", message);
+    return { success: false, content: "", error: message };
   }
 }
 
