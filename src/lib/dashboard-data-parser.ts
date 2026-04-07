@@ -307,27 +307,66 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   }
 
   // ── Group A: tcoComparison
+  // Render with >= 1 vendor. Single-vendor TCO renders as a one-bar chart;
+  // the AI is instructed to emit >= 2 vendors but we don't blank the dashboard
+  // when it returns only one (e.g. user provided a single option to analyse).
   if (group === 'A') {
     const vendorOptions: any[] = ss.vendor_options ?? [];
     const validVendors = vendorOptions.filter(
       (v: any) => v?.vendor_label && v?.total_tco != null
     );
-    if (validVendors.length >= 2) {
+    if (validVendors.length >= 1) {
+      const options = validVendors.map((v: any, i: number) => ({
+        id: String(i),
+        name: v.vendor_label,
+        color: TCO_COLORS[i % TCO_COLORS.length],
+        totalTCO: Number(v.total_tco),
+      }));
+
+      // Build year-by-year cumulative data so the area/line chart has >= 2 points.
+      // Priority: explicit year_breakdown from AI → linear ramp from analysis_period_years → flat 5y default.
+      const periodYears = Number(payload.financial_model?.analysis_period_years) || 5;
+      const hasYearBreakdown = validVendors.every(
+        (v: any) => Array.isArray(v.year_breakdown) && v.year_breakdown.length > 0
+      );
+
+      let data: Array<{ year: string; [key: string]: number | string }>;
+      if (hasYearBreakdown) {
+        // Collect distinct years across all vendors, sorted ascending
+        const yearSet = new Set<number>();
+        validVendors.forEach((v: any) => {
+          v.year_breakdown.forEach((yb: any) => {
+            const y = Number(yb?.year);
+            if (Number.isFinite(y)) yearSet.add(y);
+          });
+        });
+        const years = Array.from(yearSet).sort((a, b) => a - b);
+        // Cumulative running totals per vendor
+        const running: number[] = validVendors.map(() => 0);
+        data = years.map((year) => {
+          const row: { year: string; [key: string]: number | string } = { year: `Y${year}` };
+          validVendors.forEach((v: any, i: number) => {
+            const entry = v.year_breakdown.find((yb: any) => Number(yb?.year) === year);
+            running[i] += Number(entry?.cost ?? 0);
+            row[String(i)] = running[i];
+          });
+          return row;
+        });
+      } else {
+        // Synthesize a linear ramp from 0 → totalTCO over analysis_period_years
+        const n = Math.max(2, periodYears);
+        data = Array.from({ length: n + 1 }, (_, k) => {
+          const row: { year: string; [key: string]: number | string } = { year: `Y${k}` };
+          validVendors.forEach((v: any, i: number) => {
+            row[String(i)] = (Number(v.total_tco) * k) / n;
+          });
+          return row;
+        });
+      }
+
       result.tcoComparison = {
-        options: validVendors.map((v: any, i: number) => ({
-          id: String(i),
-          name: v.vendor_label,
-          color: TCO_COLORS[i % TCO_COLORS.length],
-          totalTCO: Number(v.total_tco),
-        })),
-        data: [
-          {
-            year: 'Total',
-            ...Object.fromEntries(
-              validVendors.map((v: any) => [v.vendor_label, Number(v.total_tco)])
-            ),
-          },
-        ],
+        options,
+        data,
         currency: payload.financial_model?.currency ?? 'EUR',
       };
     }

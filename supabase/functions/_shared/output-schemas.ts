@@ -105,7 +105,16 @@ export const GROUP_SCHEMAS: Record<string, string> = {
     "scenario_specific": {}
   }
 }
-Populate scenario_specific based on the scenario being analysed (e.g. vendor_options for TCO, cost_decomposition for Should-Cost, savings_breakdown for Savings Calculation, etc.).
+Populate scenario_specific based on the scenario being analysed.
+
+SCENARIO-SPECIFIC REQUIREMENTS (mandatory shapes — downstream dashboards depend on these exact field names):
+
+- tco-analysis (S1): scenario_specific.vendor_options MUST be an array of AT LEAST 2 objects, each with: vendor_label (string), total_tco (number), year_breakdown (array of { year: number, cost: number }, optional). If the user provided only one option to analyse, generate the comparison against a clearly-labelled status-quo / do-nothing / industry-benchmark alternative so the dashboard can render a meaningful comparison. Never return fewer than 2 vendor_options for tco-analysis.
+- cost-breakdown (S2): scenario_specific.cost_decomposition with an array of cost categories — already covered by financial_model.cost_breakdown, mirror or omit.
+- savings-calculation (S4): scenario_specific.savings_breakdown — array of { lever (string), annual_savings (number), one_off_savings (number), confidence (HIGH|MEDIUM|LOW) }.
+- capex-vs-opex (S3): scenario_specific.options — array of >= 2 { option_label, total_capex, total_opex, year_by_year } entries.
+- For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
+
 Every numeric field must be derived from user inputs. Use null + confidence_flags entry if input is missing.`,
 
   B: `GROUP B PAYLOAD SCHEMA (Workflow & Convenience — S9–S15):
