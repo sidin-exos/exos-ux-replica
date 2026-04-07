@@ -97,6 +97,8 @@ const Welcome = () => {
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
                 <p>
                   Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function.
+                  <br />
+                  EXOS works from the first day and first user, no integration or company-wide adoption needed. Get better results with agentic AI.
                 </p>
                 <p>
                   EXOS works as <strong className="text-foreground font-semibold">three interconnected layers</strong>:
