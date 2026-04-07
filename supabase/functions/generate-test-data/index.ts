@@ -139,9 +139,12 @@ function buildDBContextBlock(
   categoryCtx: {
     characteristics: string;
     kpis: string[];
+    kpis_v2: unknown[] | null;
     key_cost_drivers: string[];
     negotiation_dynamics: string | null;
     kraljic_position: string | null;
+    market_structure: string | null;
+    supply_concentration: string | null;
   } | null,
   category: string
 ): string {
@@ -164,6 +167,14 @@ function buildDBContextBlock(
     }${
       categoryCtx.kraljic_position
         ? `\n- Kraljic Position: ${categoryCtx.kraljic_position}`
+        : ""
+    }${
+      categoryCtx.market_structure
+        ? `\n- Market Structure: ${categoryCtx.market_structure}`
+        : ""
+    }${
+      categoryCtx.supply_concentration
+        ? `\n- Supply Concentration: ${categoryCtx.supply_concentration}`
         : ""
     }`);
   } else {
