@@ -1,3 +1,7 @@
+// CANONICAL SOURCE: supabase/functions/_shared/trick-library.ts
+// This client copy is kept for UI reference only and must not be
+// edited directly. Sync manually when the shared module changes.
+
 /**
  * Training Trick Library
  * 
