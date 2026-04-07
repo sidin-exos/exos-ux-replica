@@ -1,27 +1,75 @@
 
 
-# Populate 5 Scenario Landing Pages
+# Static HTML Generation for SEO — Practical Approach
 
-## Summary
-Replace the 5 placeholder files in `src/pages/scenarios/` with full content using the `ScenarioLandingPage` component. All copy is provided verbatim in the task spec. No other files touched.
+## Problem with the Proposed Tools
+
+`vite-plugin-ssg` is a **Vue-specific** package (by antfu, depends on `vue-router` and `@vueuse/head`). It will not work with React. The fallback `react-snap` requires Puppeteer, which cannot run in Lovable's build environment.
+
+## Recommended Approach: Postbuild Meta Injection Script
+
+A custom Node.js postbuild script that:
+1. Copies `dist/index.html` into route-specific directories (e.g., `dist/features/index.html`)
+2. Injects route-specific `<title>`, `<meta name="description">`, `<meta property="og:*">`, and a `<noscript>` content block into each copy
+3. Runs as a postbuild npm script — no Puppeteer, no Vue, pure Node.js
+
+This gives crawlers (Google, LinkedIn, Twitter) correct per-page metadata in the raw HTML without requiring JS execution.
 
 ## Changes
 
-### 1. `src/pages/scenarios/TCOAnalysis.tsx`
-Import `ScenarioLandingPage`, render with TCO Analysis props (category "Analysis", H1 "Total Cost of Ownership Analysis", 4 features, 4 roles, MedTech proof quote, 3 related scenarios).
+### 1. Create `scripts/postbuild-seo.mjs`
 
-### 2. `src/pages/scenarios/SupplierRisk.tsx`
-Render with Supplier Risk props (category "Risk", H1 "Supplier Risk Assessment", NordSteel proof quote).
+A Node.js script that defines a route map:
 
-### 3. `src/pages/scenarios/NegotiationPrep.tsx`
-Render with Negotiation Prep props (category "Planning", H1 "Negotiation Preparation", no proof quote).
+```text
+Route                                    → Title, Description, OG tags
+/welcome                                → EXOS – AI Procurement Analysis...
+/features                               → How EXOS Works | EXOS
+/pricing                                → Simple, Transparent Pricing...
+/faq                                    → FAQ | EXOS
+/enterprise/risk                        → Supplier Risk Assessment...
+/enterprise/inflation                   → Inflation Monitoring...
+/scenarios/tco-analysis                 → Total Cost of Ownership...
+/scenarios/supplier-risk-assessment      → AI Supplier Risk Assessment...
+/scenarios/negotiation-preparation       → Procurement Negotiation...
+/scenarios/make-or-buy-analysis          → Make vs Buy Analysis...
+/scenarios/black-swan-simulation         → Black Swan Supply Chain...
+```
 
-### 4. `src/pages/scenarios/MakeOrBuy.tsx`
-Render with Make vs Buy props (category "Analysis", H1 "Make vs Buy Analysis", no proof quote).
+For each route, the script:
+- Creates the directory in `dist/` (e.g., `dist/features/`)
+- Copies `dist/index.html`
+- Replaces `<title>` with the route-specific title
+- Replaces `<meta name="description">` with the route-specific description
+- Replaces `og:title`, `og:description`, `og:url`, `twitter:title`, `twitter:description`
+- Adds a `<noscript>` block in `<body>` with the H1 and description text (for crawlers that don't execute JS)
 
-### 5. `src/pages/scenarios/BlackSwan.tsx`
-Render with Black Swan props (category "Risk", H1 "Black Swan Scenario Simulator", NordSteel proof quote).
+### 2. Update `package.json` scripts
 
-## Not touched
-- `ScenarioLandingPage.tsx`, `App.tsx`, `sitemap.xml`, Supabase, auth — zero changes.
+```json
+"build": "vite build",
+"postbuild": "node scripts/postbuild-seo.mjs"
+```
+
+The `postbuild` script runs automatically after `build` completes.
+
+### 3. No other files change
+
+- `vite.config.ts` — unchanged
+- `src/main.tsx` — unchanged
+- No new npm dependencies required
+- No page components, Supabase, or auth files touched
+
+## What This Achieves
+
+- LinkedIn/Twitter/Slack/WhatsApp see correct OG title + description + image per page
+- Google sees unique `<title>` and `<meta description>` per route in raw HTML
+- `<noscript>` block provides basic text content for non-JS crawlers
+- Zero build environment dependencies — pure Node.js `fs` operations
+- Compatible with Lovable's build pipeline
+
+## What This Does NOT Do
+
+- Full server-side rendering of React components (would require a framework migration to Next.js/Remix)
+- For an SPA on Vite, this postbuild meta injection is the standard practical approach used by most production SPAs
 
