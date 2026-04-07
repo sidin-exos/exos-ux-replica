@@ -463,5 +463,53 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
     }
   }
 
+  // ── Universal fallback: timelineRoadmap from phases[] (Group B project planning)
+  if (!result.timelineRoadmap) {
+    const phases: any[] = ss.phases ?? [];
+    if (phases.length > 0) {
+      let cursor = 1;
+      result.timelineRoadmap = {
+        phases: phases
+          .filter((p: any) => p?.name || p?.heading)
+          .map((p: any, i: number) => {
+            const duration = p.duration_weeks ?? 4;
+            const startWeek = cursor;
+            const endWeek = cursor + duration - 1;
+            cursor = endWeek + 1;
+            return {
+              name: p.name ?? p.heading ?? `Phase ${i + 1}`,
+              startWeek,
+              endWeek,
+              status: (p.status === 'completed' ? 'completed' :
+                       p.status === 'in-progress' ? 'in-progress' : 'upcoming') as any,
+              milestones: Array.isArray(p.milestones) ? p.milestones.slice(0, 3) :
+                          Array.isArray(p.deliverables) ? p.deliverables.slice(0, 3) : [],
+            };
+          }),
+        totalWeeks: cursor - 1,
+      };
+    }
+  }
+
+  // ── Universal fallback: riskMatrix from risk_register / risk_items / risk_summary
+  if (!result.riskMatrix) {
+    const riskSource: any[] =
+      (ss.risk_register ?? []).length > 0 ? ss.risk_register :
+      (ss.risk_items ?? []).length > 0 ? ss.risk_items :
+      (payload.risk_summary?.risks ?? []);
+    if (riskSource.length > 0) {
+      result.riskMatrix = {
+        risks: riskSource
+          .filter((r: any) => r)
+          .map((r: any) => ({
+            supplier: r.risk_description ?? r.label ?? r.risk ?? 'Unknown risk',
+            impact: normaliseRisk(r.impact),
+            probability: normaliseRisk(r.likelihood ?? r.probability),
+            category: r.category ?? 'Operational',
+          })),
+      };
+    }
+  }
+
   return Object.keys(result).length === 0 ? null : result;
 }
