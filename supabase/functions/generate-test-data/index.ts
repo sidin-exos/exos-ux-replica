@@ -832,6 +832,8 @@ Deliberately trigger the common failure mode for this scenario.`;
       optionalFieldCount: fieldGroups.optional.length,
       qualityTier,
       deviationType,
+      testNotes,
+      expectedEvaluatorScore,
     }
   };
 }
