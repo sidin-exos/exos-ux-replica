@@ -1,44 +1,52 @@
 
 
-# Merged: Fix Duplicate H1s + Add "ROI from Day One" to /welcome
+# Add Descriptive Alt Text & Accessibility Attributes to Public Pages
 
-## Changes (4 files, text-only)
+## Analysis
 
-### 1. `src/pages/Welcome.tsx` — line 129-130
-Insert ROI block between CTA buttons and stats strip:
-```tsx
-{/* after closing </div> of buttons */}
-<div className="mt-3">
-  <p className="text-sm font-semibold text-foreground">
-    Get ROI from first day, first user.
-  </p>
-  <p className="text-xs text-muted-foreground max-w-sm">
-    No integrations required. No company-wide approvals. Purchase with a corporate card and get value immediately.
-  </p>
-</div>
-{/* stats strip follows */}
-```
-H1 on /welcome remains unchanged.
+After inspecting all public page components, the codebase has very few `<img>` tags — most visuals are Lucide icon components (inline SVGs) and CSS-rendered elements. The SEO audit's count of "28 out of 30 images" likely includes inline SVGs rendered by Lucide icons and decorative SVG arrows.
 
-### 2. `src/pages/Features.tsx` — line 240-241
-- FROM: `Do More With Less. <span className="text-gradient">Decide With Confidence.</span>`
-- TO: `How EXOS <span className="text-gradient">Works</span>`
+### Current `<img>` tags (all have `alt` already, but some need better text):
+- `Header.tsx:97` — `alt="EXOS"` (every page)
+- `Features.tsx:238` — `alt="EXOS"` (EXOS mark)
+- `Pricing.tsx:145` — `alt="EXOS"` (EXOS logo)
+- `InflationPlatform.tsx:110-111` — `alt="Signal radar illustration"` (already good)
 
-### 3. `src/pages/Pricing.tsx` — two changes
-- **Line 147-149** (H1): change to `Simple, Transparent <span className="text-gradient">Pricing</span> for EU Procurement Teams`
-- **Line 294-296** (FAQ subtitle): change to `Everything you need to know about EXOS — AI architecture, data privacy, GDPR compliance, and procurement scenario coverage.`
+### Inline SVGs needing `aria-hidden="true"`:
+- Welcome.tsx hero diagram: ~8 decorative SVG arrows/connectors (lines 220-246)
+- DataFlowDiagram.tsx: decorative connectors and arrows
 
-### 4. `src/pages/enterprise/RiskPlatform.tsx` — lines 107-110
-- Change H1 text from `Dynamic Risk Monitoring` to `Supplier Risk Assessment Platform`
-- Add subtitle after the H1 div:
-```tsx
-<p className="text-sm text-muted-foreground max-w-2xl mt-1">
-  Continuous monitoring of supplier financial health, geopolitical exposure, and regulatory risk — built for EU procurement teams.
-</p>
-```
+### Lucide icons used as meaningful content (not purely decorative):
+- Welcome.tsx pillar icons (BarChart3, Radar, Building2) represent feature categories
+- Features.tsx value prop icons
+- SentinelCapabilities.tsx step icons
 
-### Not touched
-- `Welcome.tsx` H1 (preserved)
-- `InflationPlatform.tsx` (already correct)
-- No Supabase, auth, layout, or styling changes
+## Changes (6 files, attribute-only — no layout/logic changes)
+
+### 1. `src/components/layout/Header.tsx` (line 97)
+- Change `alt="EXOS"` → `alt="EXOS procurement platform logo"`
+
+### 2. `src/pages/Features.tsx` (line 238)
+- Change `alt="EXOS"` → `alt="EXOS procurement platform logo"`
+
+### 3. `src/pages/Pricing.tsx` (line 145)
+- Change `alt="EXOS"` → `alt="EXOS procurement platform logo"`
+
+### 4. `src/pages/Welcome.tsx`
+- Add `aria-hidden="true"` to all decorative inline `<svg>` elements in the hero diagram (lines 220, 236, 241)
+- Add `role="img"` and `aria-label` to the hero diagram container div (line 159): `aria-label="EXOS agentic AI orchestration pipeline diagram"`
+
+### 5. `src/components/features/DataFlowDiagram.tsx`
+- Add `aria-hidden="true"` to all decorative connector SVGs (VerticalConnector, VerticalBidirectionalConnector, MobileConnector, AnimatedConnector)
+- Add `role="img"` and `aria-label="EXOS privacy-first data flow diagram"` to the root container div
+
+### 6. `src/components/features/SentinelCapabilities.tsx`
+- Add `role="img"` and `aria-label="EXOS Sentinel Pipeline capabilities"` to the root container div
+
+## What does NOT change
+- No layout, styling, or component logic
+- No Supabase, auth, or admin files
+- No routing changes
+- InflationPlatform.tsx already has good alt text — no changes needed
+- RiskPlatform.tsx has no `<img>` tags — no changes needed
 
