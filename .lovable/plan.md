@@ -1,32 +1,53 @@
 
 
-# Phase 0: Engine Rebuild — Status & Remaining Refinements
+# Task 3 — Rebuild Generation Prompt for All 3 Blocks
 
-## Already Completed (Previous Session)
+## Summary
 
-All three tasks from this instruction were implemented in the prior session:
+Replace the system and user prompts in `handleGenerateMode` (lines 608-665) with the new layered prompt structure. Also update the output format to expect `block1`/`block2`/`block3`/`testNotes`/`expectedEvaluatorScore` keys, and adjust `parseGeneratedData` to map these block keys back to the scenario field IDs.
 
-1. **Shared modules** — `_shared/trick-library.ts` and `_shared/industry-matrix.ts` exist with correct exports; edge function imports from them; client files have canonical source comments.
-2. **Block 2/3 fix** — `parseGeneratedData` preserves all AI keys; system prompts enforce multi-block generation.
-3. **DB enrichment** — `fetchIndustryContext` and `fetchCategoryContext` query the DB; `buildDBContextBlock` injects context into prompts with hardcoded fallback.
+## Changes — Single File
 
-## Minor Refinements (Optional)
+**`supabase/functions/generate-test-data/index.ts`**
 
-The task specifies fetching additional columns that exist in `procurement_categories` but are not currently queried:
-- `market_structure`
-- `supply_concentration`
-- `kpis_v2` (enriched JSONB format)
+### 1. Replace system prompt (lines 608-650)
 
-### Change: Expand `fetchCategoryContext` query
+New system prompt is a static string covering:
+- Procurement data specialist role
+- GDPR rules (fictional entities, no PII, role-based references, EUR ranges, region-level addresses)
+- Strict OUTPUT FORMAT requiring `{ block1, block2, block3, testNotes, expectedEvaluatorScore }`
 
-In `supabase/functions/generate-test-data/index.ts`, add `market_structure`, `supply_concentration`, and `kpis_v2` to the `.select()` call in `fetchCategoryContext`, and include them in `buildDBContextBlock` output when present.
+### 2. Replace user prompt (lines 652-665)
 
-### Not Changed
-- No new `fetchMethodologyContext` wrapper — the current two-function approach is equivalent
-- No columns added that don't exist in the schema (`typical_categories`, `regulatory_environment` are not on `industry_contexts`)
-- No UI, auth, RLS, or Engine 1 changes
+Build dynamically with 6 layers in exact order:
+- **Layer 1**: Scenario context (name, ID, group, deviation type, quality tier, persona)
+- **Layer 2**: Field structure from `fieldConfigs` — iterate blocks showing label, data type, sub-prompts, critical flags, tier-specific guidance
+- **Layer 3**: Methodology grounding from DB context (`categoryCtx` and `industryCtx`) — only non-null fields, skip entirely if both null
+- **Layer 4**: Parameter constraints (industry, category, company size with financial scale reference table, complexity, financial context, market conditions, priority)
+- **Layer 5**: Trick injection (if trick present) — type, instruction, target block, subtlety
+- **Layer 6**: Generation instruction — tier-specific rules (OPTIMAL=full, MINIMUM=bare minimum, DEGRADED=deliberate failures, GIBBERISH=garbage) + persona style instruction
 
-### Files
-1. **EDIT**: `supabase/functions/generate-test-data/index.ts` — expand category query + context block
-2. **DEPLOY**: `generate-test-data`
+### 3. Update `parseGeneratedData` call site (line 689)
+
+After parsing, map `block1`/`block2`/`block3` keys back to actual field IDs from `fieldConfigs`:
+- `block1` → first field config block_id (typically `industryContext`)
+- `block2` → second field config block_id
+- `block3` → third field config block_id
+- Also preserve `testNotes` and `expectedEvaluatorScore` in metadata
+
+### 4. Add persona style instructions map
+
+Add a `PERSONA_STYLE_INSTRUCTIONS` record mapping persona IDs to writing style descriptions (rushed-junior, methodical-manager, cfo-finance, frustrated-stakeholder, lost-user).
+
+### 5. Add company size financial scale reference
+
+Add `COMPANY_SIZE_SCALES` record with SME/Mid-Market/Large Enterprise ranges for contract values and WACC.
+
+## Deployment
+- Deploy `generate-test-data` after changes
+
+## Not Changed
+- `handleDraftMode`, `handleMessyMode`, `buildGenerationPrompt` (full mode) — untouched
+- `parseGeneratedData` function itself — unchanged (already preserves all keys)
+- No other files
 
