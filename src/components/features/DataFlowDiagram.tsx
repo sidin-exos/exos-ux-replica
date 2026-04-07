@@ -32,7 +32,7 @@ const DataFlowDiagram = () => {
   };
 
   return (
-    <div className="relative">
+    <div role="img" aria-label="EXOS privacy-first data flow diagram" className="relative">
       {/* Desktop Layout */}
       <div className="hidden lg:block">
         <div className="relative">
@@ -258,7 +258,7 @@ const MobileLayerCard = ({ layer }: { layer: LayerCardProps["layer"] }) => {
 const AnimatedConnector = ({ direction, className, bidirectional = false }: { direction: "left" | "right"; className?: string; bidirectional?: boolean }) => {
   return (
     <div className={cn("w-16 h-8 flex items-center", className)}>
-      <svg className="w-full h-full" viewBox="0 0 64 32">
+      <svg aria-hidden="true" className="w-full h-full" viewBox="0 0 64 32">
         {/* Gradient Definition */}
         <defs>
           <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -310,7 +310,7 @@ const AnimatedConnector = ({ direction, className, bidirectional = false }: { di
 /* Vertical Down Arrow Connector */
 const VerticalConnector = () => (
   <div className="relative h-12 w-5 my-2">
-    <svg className="w-full h-full" viewBox="0 0 20 48">
+    <svg aria-hidden="true" className="w-full h-full" viewBox="0 0 20 48">
       <path
         d="M10 0 L10 40"
         fill="none"
@@ -335,7 +335,7 @@ const VerticalConnector = () => (
 /* Vertical Bidirectional Connector (up+down arrows) */
 const VerticalBidirectionalConnector = () => (
   <div className="relative h-12 w-5 my-2">
-    <svg className="w-full h-full" viewBox="0 0 20 48">
+    <svg aria-hidden="true" className="w-full h-full" viewBox="0 0 20 48">
       <path
         d="M10 6 L10 42"
         fill="none"
@@ -369,7 +369,7 @@ const VerticalBidirectionalConnector = () => (
 const MobileConnector = () => (
   <div className="flex justify-center py-1">
     <div className="relative w-6 h-6">
-      <svg className="w-full h-full" viewBox="0 0 24 24">
+      <svg aria-hidden="true" className="w-full h-full" viewBox="0 0 24 24">
         <path
           d="M12 0 L12 24"
           fill="none"

@@ -36,7 +36,7 @@ const SentinelCapabilities = () => {
   ];
 
   return (
-    <div className="relative">
+    <div role="img" aria-label="EXOS Sentinel Pipeline capabilities" className="relative">
       {/* Central Hub Visual */}
 
       {/* Capabilities Grid */}
