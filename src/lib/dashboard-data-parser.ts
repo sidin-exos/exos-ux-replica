@@ -292,16 +292,20 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   }
 
   // ── Universal: costWaterfall
+  // Filter BEFORE the length check — if AI returns items with null amounts,
+  // we'd otherwise create costWaterfall with an empty components array, which
+  // makes the dashboard render with all zeros instead of being hidden.
   const costBreakdown: any[] = payload.financial_model?.cost_breakdown ?? [];
-  if (costBreakdown.length > 0) {
+  const validCostComponents = costBreakdown
+    .filter((c: any) => c?.category && c?.amount != null && Number(c.amount) > 0)
+    .map((c: any) => ({
+      name: String(c.category),
+      value: Number(c.amount),
+      type: 'cost' as const,
+    }));
+  if (validCostComponents.length > 0) {
     result.costWaterfall = {
-      components: costBreakdown
-        .filter((c: any) => c?.category && c?.amount != null)
-        .map((c: any) => ({
-          name: c.category,
-          value: Number(c.amount),
-          type: 'cost' as const,
-        })),
+      components: validCostComponents,
       currency: payload.financial_model?.currency ?? 'EUR',
     };
   }
