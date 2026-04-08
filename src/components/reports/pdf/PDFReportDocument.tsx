@@ -1094,17 +1094,17 @@ const PDFReportDocument = ({
         {/* KPI footer */}
         <View style={s.kpiRow}>
           <View style={s.kpiCell}>
-            <Text style={s.kpiLabel}>BATNA SCORE</Text>
-            <Text style={{ ...s.kpiValue, color: c.primary }}>{coveragePct} / 100</Text>
+            <Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text>
+            <Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? batnaScore : coveragePct} / 100</Text>
           </View>
           <View style={s.kpiCell}>
             <Text style={s.kpiLabel}>LEVERAGE</Text>
-            <Text style={{ ...s.kpiValue, color: c.primary }}>3-Year Commitment</Text>
+            <Text style={{ ...s.kpiValue, color: c.primary }}>{leverageLabel}</Text>
           </View>
           <View style={s.kpiCell}>
             <Text style={s.kpiLabel}>SUPPLIER POWER</Text>
             <Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>
-              {extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A"}
+              {supplierPowerLabel || (extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A")}
             </Text>
           </View>
           <View style={{ ...s.kpiCell, ...s.kpiCellLast }}>
