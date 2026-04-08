@@ -221,7 +221,7 @@ You MUST use the following schema structure:
   3. "impact" MUST describe the concrete analytical consequence (e.g. "Cannot calculate NPV without discount rate"), never "Impact not specified".
   4. "resolution" MUST be a specific, actionable coaching tip (e.g. "Add your annual spend figure to unlock cost-per-unit calculations"), never "Provide missing data".
   5. FORBIDDEN placeholder values: "Unknown field", "Impact not specified", "Provide missing data", "Not available", "N/A". If you cannot write a specific entry, omit it entirely.
-  6. Tone: helpful coaching, not punitive. Frame as "To strengthen this analysis, add [field]" rather than "Missing: [field]".
+  6. Tone: helpful coaching, not punitive. Frame as "Add [specific field] to unlock [specific benefit]" rather than "Missing: [field]". Do NOT start resolutions with "To strengthen this analysis" — the UI already provides that heading.
 - Add an entry to gdpr_flags if any output field appears to contain unanonymised personal
   data (real names, email addresses, phone numbers, salary amounts). Set that field to null
   and explain in gdpr_flags. Never write PII into any output field.
@@ -312,7 +312,11 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     parts.push('');
     parts.push('💡 **To strengthen this analysis:**');
     validGaps.slice(0, 3).forEach(g => {
-      parts.push(`- ${g.resolution}`);
+      // Strip redundant prefix that duplicates the heading
+      const cleaned = g.resolution.replace(/^To strengthen this analysis,?\s*/i, '');
+      // Capitalise the first letter after stripping
+      const resolution = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+      parts.push(`- ${resolution}`);
     });
     parts.push('');
   }
