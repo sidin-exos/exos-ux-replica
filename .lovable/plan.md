@@ -1,51 +1,64 @@
 
 
-# Block 5 — Methodology Enrichment Quality Check: ST-11 Analysis
+# Smoke Test Block 1 — Route Access Control: Code Audit Results
 
-## Verification Approach
+## ST-01 — Public Routes (12 routes) — PASS (code verified)
 
-Cannot call the edge function directly (requires authenticated admin user). Performed code-path analysis and DB data comparison instead.
+These routes have **no `ProtectedRoute` wrapper** in App.tsx:
 
-## Findings
+| Route | Wrapper | Verdict |
+|-------|---------|---------|
+| `/` | None | Public |
+| `/welcome` | None | Public |
+| `/features` | None | Public |
+| `/pricing` | None | Public |
+| `/auth` | None | Public |
+| `/reset-password` | None | Public |
+| `/unsubscribe` | None | Public |
+| `/scenarios/tco-analysis` | None | Public |
+| `/scenarios/supplier-risk-assessment` | None | Public |
+| `/scenarios/negotiation-preparation` | None | Public |
+| `/scenarios/make-or-buy-analysis` | None | Public |
+| `/scenarios/black-swan-simulation` | None | Public |
 
-### Code Path — PASS (with one dead-code note)
+All 12 will load without auth. No code-level issues.
 
-The `handleGenerateMode` function:
-1. **Line 581-584**: Fetches `industryCtx` and `categoryCtx` from DB using `parameters.industry` and `parameters.category` directly
-2. **Line 585**: Builds `dbContextBlock` — but this variable is **never used** in the generate mode prompt (dead code)
-3. **Lines 691-708 (Layer 3)**: Injects category intelligence inline with key cost drivers, Kraljic position, market structure, negotiation dynamics, and KPIs — this IS the active injection path
-4. The Layer 3 content is meaningfully different per category because the DB data is deeply distinct
+## ST-02 — Auth-Required Routes (6 routes) — PASS (code verified)
 
-### DB Data Comparison — Strongly Different
+These routes use `<ProtectedRoute>` (no admin flags), which redirects to `/auth` when unauthenticated (line 48 of ProtectedRoute.tsx):
 
-| Field | raw-materials-steel-metals | it-software-saas |
-|-------|---------------------------|------------------|
-| Kraljic | Leverage | Strategic |
-| Market structure | Oligopoly (ArcelorMittal, Thyssenkrupp) | Oligopoly (Microsoft, Salesforce, SAP) |
-| Cost drivers | Iron ore index, grade specs, CBAM | Licence waste, tier over-procurement, bundled PS |
-| Negotiation | Index vs. fixed pricing, mill-direct | Renewal discounts, year-end urgency, POC threat |
+| Route | Wrapper | Verdict |
+|-------|---------|---------|
+| `/faq` | `<ProtectedRoute>` | Redirects to `/auth` |
+| `/report` | `<ProtectedRoute>` | Redirects to `/auth` |
+| `/market-intelligence` | `<ProtectedRoute>` | Redirects to `/auth` |
+| `/account` | `<ProtectedRoute>` | Redirects to `/auth` |
+| `/enterprise/risk` | `<ProtectedRoute>` | Redirects to `/auth` |
+| `/enterprise/inflation` | `<ProtectedRoute>` | Redirects to `/auth` |
 
-This data WILL produce meaningfully different Block 2 content since it's injected directly into the user prompt at Layer 3.
+All 6 correctly protected.
 
-### Slug Mapping Note
+## ST-03 — Super Admin Routes (5 routes) — PASS (code verified)
 
-The test instruction uses `manufacturing` and `raw-materials` — these won't match DB slugs. Correct slugs are `industrial-manufacturing` and `raw-materials-steel-metals`. The UI must pass DB-valid slugs for enrichment to activate.
+These use `<ProtectedRoute requireSuperAdmin>`:
 
-## Dead Code Fix (Small)
+| Route | Wrapper | Redirect (unauth) | Redirect (non-super-admin) |
+|-------|---------|-------------------|---------------------------|
+| `/admin/dashboard` | `requireSuperAdmin` | → `/auth` | → `/` |
+| `/admin/methodology` | `requireSuperAdmin` | → `/auth` | → `/` |
+| `/testing-pipeline` | `requireSuperAdmin` | → `/auth` | → `/` |
+| `/dashboards` | `requireSuperAdmin` | → `/auth` | → `/` |
+| `/architecture` | `requireSuperAdmin` | → `/auth` | → `/` |
 
-Line 585 creates `dbContextBlock` in `handleGenerateMode` but never uses it. This is harmless but should be cleaned up.
+All 5 correctly gated. The ProtectedRoute logic:
+- Line 48: No session → redirect `/auth`
+- Line 49: Not super admin → redirect `/`
 
-### File: `supabase/functions/generate-test-data/index.ts`
+## Security Note
 
-Remove line 585 (`const dbContextBlock = buildDBContextBlock(...)`) from `handleGenerateMode` since Layer 3 handles injection directly. This saves one unused function call.
+The `ProtectedRoute` uses server-validated RPCs (`is_super_admin`, `get_user_org_role`) defined as `SECURITY DEFINER` functions in the database — not client-side storage. This is the correct pattern.
 
-## Verdict
+## Summary
 
-**ST-11: PASS (by code analysis)** — Category intelligence from the DB is actively injected into Layer 3 of the prompt with distinct, rich content per category. The AI will receive different cost drivers, market structures, and negotiation dynamics, producing meaningfully different outputs.
-
-**Recommended live test**: Use slugs `industrial-manufacturing` + `raw-materials-steel-metals` for Run A and `industrial-manufacturing` + `it-software-saas` for Run B from the testing pipeline UI.
-
-## Scope
-- 1 line removed from `supabase/functions/generate-test-data/index.ts`
-- Deploy `generate-test-data`
+All 3 sub-tests pass at the code level. No regressions detected. To confirm runtime behavior, use the browser tools to navigate each route in incognito.
 
