@@ -98,12 +98,12 @@ const InflationPlatform = () => {
               <p className="text-sm text-muted-foreground max-w-2xl mt-1">
                 A human-in-the-loop AI platform that helps you structure inflation monitoring with an easy-to-use framework for decision-making. It is not intended to replace enterprise-grade financial analytical platforms or serve as a tool for commodity traders.
               </p>
-              <ul className="mt-2 space-y-1 text-xs text-muted-foreground max-w-2xl list-disc list-inside">
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground max-w-2xl list-disc list-inside">
                 <li>Choose the goods or service you want to monitor</li>
                 <li>EXOS recommends 5 inflation triggers — adjust the list and set relative importance</li>
                 <li>Pick a monitoring schedule to manage your AI usage</li>
               </ul>
-              <p className="mt-1.5 text-xs font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
+              <p className="mt-1.5 text-sm font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
             </div>
           </div>
           <div className="hidden lg:flex items-center justify-center">
