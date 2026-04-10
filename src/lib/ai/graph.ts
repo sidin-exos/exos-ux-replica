@@ -72,6 +72,7 @@ interface PipelineState {
   config: ModelConfigType;
   scenarioId?: string;
   selectedDashboards?: string[];
+  fileIds?: string[];
   anonymizedQuery: string;
   entityMap: Map<string, SensitiveEntity>;
   aiResponse: string;
@@ -147,6 +148,7 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
       enableTestLogging: false,
       scenarioId: state.scenarioId,
       selectedDashboards: state.selectedDashboards || [],
+      fileIds: state.fileIds?.length ? state.fileIds : undefined,
     },
   });
 
@@ -230,7 +232,8 @@ export async function runExosGraph(
   userQuery: string,
   config: ModelConfigType,
   scenarioId?: string,
-  selectedDashboards?: string[]
+  selectedDashboards?: string[],
+  fileIds?: string[]
 ): Promise<{
   finalAnswer: string;
   confidenceScore: number;
@@ -257,6 +260,7 @@ export async function runExosGraph(
     config,
     scenarioId,
     selectedDashboards,
+    fileIds,
     anonymizedQuery: '',
     entityMap: new Map(),
     aiResponse: '',

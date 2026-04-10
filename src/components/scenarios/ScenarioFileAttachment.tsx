@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Paperclip, ChevronRight, FileSpreadsheet, FileText, File, Eye } from "lucide-react";
+import { Paperclip, ChevronRight, FileSpreadsheet, FileText, File, Eye, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -13,9 +13,16 @@ import {
 } from "@/components/ui/dialog";
 import { useUserFiles, type UserFile } from "@/hooks/useUserFiles";
 import { useDebounce } from "@/hooks/useDebounce";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import FileSearchFilterBar from "@/components/files/FileSearchFilterBar";
 import FilePagination from "@/components/files/FilePagination";
 import { formatFileSize, getFileTypeLabel, type AllowedExtension } from "@/lib/file-validation";
+
+const TOKEN_BUDGET_WARNING = 25_000;
 
 const FILE_TYPE_ICONS: Record<string, typeof FileText> = {
   xlsx: FileSpreadsheet,
@@ -65,6 +72,11 @@ const ScenarioFileAttachment = ({
       onSelectionChange([...selectedFileIds, fileId]);
     }
   };
+
+  // Calculate total token estimate for selected files
+  const totalTokens = files
+    .filter((f) => selectedFileIds.includes(f.id) && f.extraction_status === "done")
+    .reduce((sum, f) => sum + (f.token_estimate ?? 0), 0);
 
   const handlePreview = async (e: React.MouseEvent, file: UserFile) => {
     e.stopPropagation(); // Don't toggle checkbox
@@ -122,26 +134,49 @@ const ScenarioFileAttachment = ({
           {files.map((file) => {
             const Icon = FILE_TYPE_ICONS[file.file_type] || File;
             const isSelected = selectedFileIds.includes(file.id);
+            const isExtracting = file.extraction_status === "pending" || file.extraction_status === "processing";
+            const isFailed = file.extraction_status === "failed";
+            const isDone = file.extraction_status === "done";
 
             return (
               <div
                 key={file.id}
-                className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer"
-                onClick={() => toggleFile(file.id)}
+                className={`flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 ${isExtracting ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                onClick={() => !isExtracting && toggleFile(file.id)}
               >
                 <Checkbox
                   checked={isSelected}
-                  onCheckedChange={() => toggleFile(file.id)}
+                  onCheckedChange={() => !isExtracting && toggleFile(file.id)}
+                  disabled={isExtracting}
                 />
                 <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <Label className="text-sm font-medium cursor-pointer truncate block">
+                  <Label className={`text-sm font-medium truncate block ${isExtracting ? "cursor-not-allowed" : "cursor-pointer"}`}>
                     {file.file_name}
                   </Label>
                   <span className="text-xs text-muted-foreground">
                     {getFileTypeLabel(file.file_type as AllowedExtension)} · {formatFileSize(file.file_size)}
                   </span>
                 </div>
+                {isExtracting && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>Extracting text, please wait...</TooltipContent>
+                  </Tooltip>
+                )}
+                {isFailed && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>Text extraction failed. Content won't be available to AI.</TooltipContent>
+                  </Tooltip>
+                )}
+                {isDone && (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                )}
                 {file.file_type === "pdf" && (
                   <Button
                     variant="ghost"
@@ -155,6 +190,12 @@ const ScenarioFileAttachment = ({
               </div>
             );
           })}
+          {selectedFileIds.length > 0 && totalTokens > TOKEN_BUDGET_WARNING && (
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-amber-600 bg-amber-50">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              <span>Large documents selected — analysis quality may be affected</span>
+            </div>
+          )}
           <FilePagination
             page={page}
             pageSize={pageSize}

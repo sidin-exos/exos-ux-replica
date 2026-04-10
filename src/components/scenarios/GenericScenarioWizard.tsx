@@ -426,7 +426,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       categoryContext || null,
       undefined, // config
       effectiveModel, // pass the model from settings
-      selectedDashboards
+      selectedDashboards,
+      attachedFileIds
     );
 
     if (result?.success) {
@@ -490,7 +491,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         model: configModel,
       };
 
-      const result = await runExosGraph(queryText, graphConfig, scenario.id, selectedDashboards);
+      const result = await runExosGraph(queryText, graphConfig, scenario.id, selectedDashboards, attachedFileIds);
 
       clearInterval(progressInterval);
       setDeepAnalysisStep(4); // Complete all steps

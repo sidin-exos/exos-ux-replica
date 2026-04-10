@@ -49,6 +49,8 @@ interface AnalysisRequest {
   enableTestLogging?: boolean;
   // Multi-cycle routing
   scenarioId?: string;
+  // Attached file content
+  fileIds?: string[];
   // Tracing
   env?: string;
 }
@@ -451,7 +453,8 @@ function buildServerGroundedPrompts(
   userInput: string,
   injectShadowLog: boolean = false,
   marketInsight: MarketInsightRow | null = null,
-  _selectedDashboards: string[] = []
+  _selectedDashboards: string[] = [],
+  attachedDocumentsXml: string = ""
 ): { systemPrompt: string; userPrompt: string } {
   // Build system prompt with injected context
   const contextParts: string[] = [];
@@ -480,6 +483,7 @@ IMPORTANT RULES:
 5. Only cite specific data points from provided context
 6. Flag uncertainty explicitly with confidence levels
 7. Err on cautious side for savings projections
+8. ATTACHED DOCUMENTS: If <attached-documents> is present in the analysis request, treat the document content as primary source material. Reference specific sections, clauses, data points, or figures from the documents in your analysis. If the documents contain data that contradicts the user's text input, flag the discrepancy.
 
 Use scenario_id "${scenarioCode}", scenario_name based on the analysis type, group "${scenarioGroup || 'A'}", and group_label "${groupLabel}" in the envelope.
 
@@ -497,7 +501,7 @@ ${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n
   <user-input>
     ${scenarioFields}
   </user-input>
-  <anonymized-query>
+${attachedDocumentsXml ? `  ${attachedDocumentsXml}\n` : ""}  <anonymized-query>
     ${escapeXML(userInput)}
   </anonymized-query>
 </analysis-request>`;
@@ -663,6 +667,7 @@ serve(async (req) => {
     const enableTestLogging = optionalBoolean(body.enableTestLogging, "enableTestLogging") ?? true;
     const scenarioId = requireString(body.scenarioId, "scenarioId", { optional: true, maxLength: 100 });
     const selectedDashboards: string[] = Array.isArray(body.selectedDashboards) ? body.selectedDashboards.filter((d: unknown) => typeof d === "string").slice(0, 20) : [];
+    const fileIds: string[] = Array.isArray(body.fileIds) ? body.fileIds.filter((id: unknown) => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id as string)).slice(0, 10) : [];
     const reqEnv = requireString(body.env, "env", { optional: true, maxLength: 50 });
 
     // === SERVER-SIDE ANONYMIZATION (fail-closed) ===
@@ -701,6 +706,87 @@ serve(async (req) => {
         } else {
           (anonymizedScenarioData as Record<string, unknown>)[key] = value;
         }
+      }
+    }
+
+    // === FETCH & ANONYMIZE ATTACHED FILE CONTENT ===
+    let attachedDocumentsXml = "";
+    if (fileIds.length > 0) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (supabaseUrl && supabaseKey) {
+          const fileClient = createClient(supabaseUrl, supabaseKey);
+
+          let filesQuery = fileClient
+            .from("user_files")
+            .select("id, file_name, file_type, extracted_text, extraction_status, token_estimate")
+            .in("id", fileIds);
+
+          // Org isolation — super admins (userOrgId=null) can access any org's files
+          if (userOrgId) {
+            filesQuery = filesQuery.eq("organization_id", userOrgId);
+          }
+
+          const { data: files } = await filesQuery;
+
+          if (files?.length) {
+            const validFiles = files.filter(
+              (f: { extraction_status: string; extracted_text: string | null }) =>
+                f.extraction_status === "done" && f.extracted_text
+            );
+
+            // Token budget: max 50K tokens for file content
+            const MAX_FILE_TOKENS = 50_000;
+            const totalTokens = validFiles.reduce(
+              (sum: number, f: { token_estimate: number | null }) => sum + (f.token_estimate || 0), 0
+            );
+
+            let includedFiles = validFiles;
+            if (totalTokens > MAX_FILE_TOKENS) {
+              // Fit smaller files first until budget exhausted
+              includedFiles = [];
+              let budget = MAX_FILE_TOKENS;
+              for (const f of [...validFiles].sort(
+                (a: { token_estimate: number | null }, b: { token_estimate: number | null }) =>
+                  (a.token_estimate || 0) - (b.token_estimate || 0)
+              )) {
+                if ((f.token_estimate || 0) <= budget) {
+                  includedFiles.push(f);
+                  budget -= (f.token_estimate || 0);
+                }
+              }
+            }
+
+            if (includedFiles.length > 0) {
+              // Anonymize file content with the same entity map as user prompt
+              const anonResult = anonymizationResult as AnonymizationResultServer & { _nextEntityIndex?: number };
+              let nextIndex = anonResult._nextEntityIndex ?? Object.keys(anonymizationResult.entityMap).length;
+
+              const docParts: string[] = [];
+              for (const f of includedFiles) {
+                const fileAnon = anonymizeText(
+                  f.extracted_text!,
+                  undefined,
+                  { entityMap: anonymizationResult.entityMap, entityIndex: nextIndex }
+                );
+                // Merge new entities back into the main entity map
+                Object.assign(anonymizationResult.entityMap, fileAnon.entityMap);
+                nextIndex = (fileAnon as AnonymizationResultServer & { _nextEntityIndex?: number })._nextEntityIndex ?? nextIndex;
+
+                docParts.push(
+                  `<document file-name="${escapeXML(f.file_name)}" file-type="${escapeXML(f.file_type)}">\n${fileAnon.anonymizedText}\n</document>`
+                );
+              }
+
+              attachedDocumentsXml = `<attached-documents count="${includedFiles.length}">\n${docParts.join("\n")}\n</attached-documents>`;
+              console.log(`[Sentinel] Attached ${includedFiles.length} file(s), ~${includedFiles.reduce((s: number, f: { token_estimate: number | null }) => s + (f.token_estimate || 0), 0)} tokens`);
+            }
+          }
+        }
+      } catch (fileErr) {
+        // Non-fatal — analysis proceeds without file content
+        console.error("[Sentinel] Failed to fetch attached files:", fileErr);
       }
     }
 
@@ -791,7 +877,8 @@ serve(async (req) => {
           anonymizedUserPrompt,
           shouldInjectShadowLog,
           insightResult.data as MarketInsightRow | null,
-          selectedDashboards
+          selectedDashboards,
+          attachedDocumentsXml
         );
 
         systemPrompt = grounded.systemPrompt;
@@ -811,14 +898,18 @@ serve(async (req) => {
       if (legacyGroup) {
         systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[legacyGroup] + '\n\n' + GROUP_SCHEMAS[legacyGroup];
       }
-      userPrompt = anonymizedUserPrompt;
+      userPrompt = attachedDocumentsXml
+        ? `${anonymizedUserPrompt}\n\n${attachedDocumentsXml}`
+        : anonymizedUserPrompt;
       if (enableTestLogging && scenarioType) {
         systemPrompt += SHADOW_LOG_INSTRUCTION;
       }
     } else {
       // Fallback: no grounding, use a basic system prompt
       systemPrompt = "You are an expert procurement analyst. Provide clear, actionable recommendations.";
-      userPrompt = anonymizedUserPrompt;
+      userPrompt = attachedDocumentsXml
+        ? `${anonymizedUserPrompt}\n\n${attachedDocumentsXml}`
+        : anonymizedUserPrompt;
     }
 
     // Validate required fields
@@ -885,13 +976,19 @@ serve(async (req) => {
       const draft = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
       console.log(`[Sentinel] Cycle 1 (Analyst Draft): ${draft.length} chars`);
 
+      // Cycles 2-3: strip attached-documents from original-request to save tokens
+      // (the analyst draft already incorporates the document content)
+      const userPromptWithoutDocs = attachedDocumentsXml
+        ? userPrompt.replace(attachedDocumentsXml, "").replace(/\n\n\n+/g, "\n\n")
+        : userPrompt;
+
       // Cycle 2: Auditor Critique
-      const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPrompt}\n</original-request>`;
+      const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPromptWithoutDocs}\n</original-request>`;
       const critique = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
       console.log(`[Sentinel] Cycle 2 (Auditor Critique): ${critique.length} chars`);
 
       // Cycle 3: Synthesizer Final (with schema injection)
-      const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPrompt}\n</original-request>`;
+      const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPromptWithoutDocs}\n</original-request>`;
       const finalContent = await callLLM(buildSynthesizerPrompt(scenarioGroup, scenarioId), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
       console.log(`[Sentinel] Cycle 3 (Synthesizer Final): ${finalContent.length} chars`);
 
