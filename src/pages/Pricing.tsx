@@ -37,7 +37,7 @@ const pricingTiers = [
   },
   {
     id: "professional",
-    name: "Procurement Professionals",
+    name: "Professional",
     subtitle: "For dedicated procurement teams",
     price: "99",
     annualNote: "or €66/mo billed quarterly (€197/quarter)",
