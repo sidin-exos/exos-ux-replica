@@ -133,9 +133,6 @@ const Welcome = () => {
                 <p className="text-sm font-semibold text-foreground">
                   Get ROI from first day, first user.
                 </p>
-                <p className="text-xs text-muted-foreground max-w-sm">
-                  No integrations required. No company-wide approvals. Purchase with a corporate card and get value immediately.
-                </p>
               </div>
               <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
