@@ -72,7 +72,7 @@ const pricingTiers = [
       "Full InfoSec access to outgoing API requests",
       "Dedicated success manager",
       "Custom AI models configuration",
-      "EXOS engine placed on your local server",
+      "Custom enterprise Risk and Inflation analytics",
       "SLA guarantees",
     ],
     cta: "Book a 15-min Demo",
