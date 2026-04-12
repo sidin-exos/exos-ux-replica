@@ -95,10 +95,10 @@ const Welcome = () => {
                 </span>
               </h1>
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
-                <p>
+                <p className="text-base leading-relaxed text-muted-foreground">
                   Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function.
                   <br />
-                  EXOS works from the first day and first user, no integration or company-wide adoption needed. Get better results with agentic AI.
+                  <span className="text-base leading-relaxed text-muted-foreground">EXOS works from the first day and first user, no integration or company-wide adoption needed. Get better results with agentic AI.</span>
                 </p>
                 <p>
                   EXOS works as <strong className="text-foreground font-semibold">three interconnected layers</strong>:
