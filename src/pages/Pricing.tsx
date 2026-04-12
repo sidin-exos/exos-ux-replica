@@ -65,7 +65,7 @@ const pricingTiers = [
     period: null,
     icon: Building2,
     featured: false,
-    comingSoon: true,
+    comingSoon: false,
     features: [
       "Everything in Professional, plus:",
       "Custom data integrations",
@@ -168,11 +168,6 @@ const Pricing = () => {
                 {tier.featured && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-                  </div>
-                )}
-                {tier.comingSoon && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge variant="secondary">Coming Soon</Badge>
                   </div>
                 )}
                 
