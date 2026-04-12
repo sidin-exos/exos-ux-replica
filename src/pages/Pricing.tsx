@@ -73,7 +73,7 @@ const pricingTiers = [
       "Dedicated success manager",
       "Custom AI models configuration",
       "Custom enterprise Risk and Inflation analytics",
-      "SLA guarantees",
+      "Custom API integrations",
     ],
     cta: "Book a 15-min Demo",
   },
