@@ -183,7 +183,7 @@ const Pricing = () => {
                   </p>
                 </CardHeader>
 
-                <CardContent className="pt-4">
+                <CardContent className="pt-4 flex flex-col flex-1">
                   {/* Price */}
                   <div className="text-center mb-6">
                     {tier.price ? (
@@ -206,7 +206,7 @@ const Pricing = () => {
                   </div>
 
                   {/* Features */}
-                  <ul className="space-y-3 mb-6">
+                  <ul className="space-y-3 mb-6 flex-1">
                     {tier.features.map((feature, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
                         <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -217,7 +217,7 @@ const Pricing = () => {
 
                   {/* CTA */}
                   <Button
-                    className={`w-full ${tier.featured ? "" : "variant-outline"}`}
+                    className={`w-full mt-auto ${tier.featured ? "" : "variant-outline"}`}
                     variant={tier.featured ? "default" : "outline"}
                     disabled={tier.comingSoon}
                   >
