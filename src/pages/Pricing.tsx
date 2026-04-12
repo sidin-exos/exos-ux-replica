@@ -160,7 +160,7 @@ const Pricing = () => {
             return (
               <Card
                 key={tier.id}
-                className={`card-elevated relative animate-fade-up ${
+                className={`card-elevated relative animate-fade-up flex flex-col ${
                   tier.featured ? "border-primary/50 shadow-lg shadow-primary/10" : ""
                 }`}
                 style={{ animationDelay: `${100 + index * 100}ms` }}
