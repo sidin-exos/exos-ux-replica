@@ -100,7 +100,7 @@ const Welcome = () => {
                   <br />
                   <span className="text-base leading-relaxed text-muted-foreground">EXOS works from the first day and first user, no integration or company-wide adoption needed. Get better results with agentic AI.</span>
                 </p>
-                <p className="text-sm border-l-2 border-primary/30 pl-3 text-muted-foreground/80 italic">
+                <p className="text-base leading-relaxed text-muted-foreground">
                   Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.
                 </p>
               </div>
