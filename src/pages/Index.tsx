@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useLocation, useNavigate, Navigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useUser } from "@/hooks/useUser";
+import { SCENARIO_META, DEFAULT_SCENARIO_SLUG } from "@/lib/scenarioSlugs";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3 } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
