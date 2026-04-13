@@ -1,11 +1,11 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { BarChart3, Brain, Home, FileText, Tag } from "lucide-react";
+import { Brain, Home, FileText, Tag, User } from "lucide-react";
 
 const navItems = [
   { label: "Home", path: "/welcome", icon: Home },
   { label: "Intel", path: "/market-intelligence", icon: Brain },
   { label: "Scenarios", path: "/", icon: FileText },
-  { label: "Dashboards", path: "/features#dashboards", icon: BarChart3 },
+  { label: "Account", path: "/account", icon: User },
   { label: "Pricing", path: "/pricing", icon: Tag },
 ];
 
