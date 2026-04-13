@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Activity, BarChart3, FileText, Gauge, Mail, MessageSquare } from "lucide-react";
@@ -26,8 +27,17 @@ import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
 
 const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
-  const [selectedTracker, setSelectedTracker] = useState<EnterpriseTracker | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
+
+  // Derive selected tracker from URL param
+  const selectedTracker = id
+    ? (trackers?.find(t => t.id === id) ?? null)
+    : null;
+
+  // After trackers have loaded, if an ID was requested but not found → redirect
+  const trackerNotFound = id && !isLoading && !selectedTracker;
 
   const MAX_REPORTS_PER_MONTH = 50;
 
@@ -55,8 +65,8 @@ const RiskPlatform = () => {
   });
 
   const handleSelectTracker = useCallback((tracker: EnterpriseTracker) => {
-    setSelectedTracker(tracker);
-  }, []);
+    navigate(`/enterprise/risk/monitor/${tracker.id}`);
+  }, [navigate]);
 
   if (isAuthLoading) {
     return (
