@@ -46,6 +46,7 @@ const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
 
 const Index = () => {
   const { user, isLoading: isUserLoading } = useUser();
+  const { scenarioSlug } = useParams<{ scenarioSlug: string }>();
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
@@ -85,17 +86,33 @@ const Index = () => {
 
   const navigate = useNavigate();
 
+  // Sync URL slug to component state
+  useEffect(() => {
+    if (!scenarioSlug) {
+      // No slug in URL — show dashboard
+      setActiveView("dashboard");
+      setSelectedScenario(null);
+      return;
+    }
+    const matched = scenarios.find((s) => s.id === scenarioSlug);
+    if (matched && matched.status === "available") {
+      setSelectedScenario(matched);
+      setActiveView("scenario");
+    } else {
+      // Unknown slug — redirect to home
+      navigate("/", { replace: true });
+    }
+  }, [scenarioSlug, navigate]);
+
   const handleScenarioClick = (scenarioId: string) => {
     const scenario = scenarios.find((s) => s.id === scenarioId);
     if (scenario && scenario.status === "available") {
-      setSelectedScenario(scenario);
-      setActiveView("scenario");
+      navigate(`/analyse/${scenario.id}`);
     }
   };
 
   const handleBack = () => {
-    setActiveView("dashboard");
-    setSelectedScenario(null);
+    navigate("/");
   };
 
   // Group scenarios by category
