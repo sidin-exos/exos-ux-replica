@@ -230,7 +230,6 @@ const Welcome = () => {
                     </div>
                     <p className="text-[10px] text-muted-foreground">Validated reports, dashboards & action roadmaps</p>
                   </div>
-                  </div>
                 </div>
               </div>
             </div>
