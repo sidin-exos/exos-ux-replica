@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
+import riskSignalsPreview from "@/assets/risk-signals-preview.png";
 
 /* ── Feature Pillars ── */
 const pillars = [
@@ -59,6 +60,7 @@ const pillars = [
     cta: "View Platforms",
     href: "/enterprise/risk",
     useCaseType: "risk" as const,
+    previewImage: riskSignalsPreview,
   },
 ];
 
