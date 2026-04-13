@@ -101,7 +101,7 @@ const Welcome = () => {
                   <span className="text-base leading-relaxed text-muted-foreground">EXOS works from the first day and first user, no integration or company-wide adoption needed. Get better results with agentic AI.</span>
                 </p>
                 <p>
-                  EXOS works as <strong className="text-foreground font-semibold">three interconnected layers</strong>:
+                  <br />
                 </p>
                 <ul className="space-y-2 pl-1">
                   <li className="flex items-start gap-2">
@@ -259,7 +259,7 @@ const Welcome = () => {
       <section className="container py-10 md:py-12">
         <div className="max-w-2xl">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-            Architectural Intelligence
+            EXOS works as three interconnected layers:
           </h2>
           <p className="text-muted-foreground mt-3 leading-relaxed">
             A unified ecosystem designed to replace fragmented legacy tools with high-fidelity procurement workflows.
