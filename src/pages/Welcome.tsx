@@ -142,93 +142,98 @@ const Welcome = () => {
             {/* Right — Abstract dashboard preview */}
             <div className="hidden lg:flex justify-end">
               <div className="w-full max-w-md">
-                <div role="img" aria-label="EXOS platform overview diagram" className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-5 backdrop-blur-sm">
-                  <div className="text-center mb-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20">
+                <div role="img" aria-label="EXOS agentic AI orchestration pipeline diagram" className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-5 backdrop-blur-sm">
+                  <div className="text-center mb-5">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20 mb-1">
                       <Shield className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-[10px] font-mono text-primary uppercase tracking-wider">EXOS Platform</span>
+                      <span className="text-[10px] font-mono text-primary uppercase tracking-wider">EXOS Agentic AI workflow</span>
                     </div>
                   </div>
 
-                  {/* User Input — compact bookend */}
-                  <div className="flex items-center gap-3 py-2 px-3 rounded-lg border bg-accent/8 border-accent/40 shadow-sm shadow-accent/10 mb-1.5">
-                    <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center shrink-0">
-                      <Lock className="w-3 h-3 text-primary-foreground" />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">Data anonymised & secured before processing</p>
-                  </div>
-
-                  {/* Arrow down */}
-                  <div className="flex justify-center py-0.5">
-                    <svg aria-hidden="true" width="12" height="16" viewBox="0 0 12 16" className="text-primary/50">
-                      <line x1="6" y1="0" x2="6" y2="10" stroke="currentColor" strokeWidth="2" />
-                      <path d="M6 16 L2 10 L10 10 Z" fill="currentColor" />
-                    </svg>
-                  </div>
-
-                  {/* Three EXOS pillars — emphasized */}
-                  <div className="space-y-1.5 py-1">
+                  <div className="space-y-1.5">
                     {[
-                      { icon: BarChart3, label: "Analytical Scenarios", desc: "20+ agentic AI flows for cost, risk, negotiation & sourcing", tier: "scenarios" as const },
-                      { icon: Radar, label: "Market Intelligence", desc: "Live benchmarks, pricing signals & geopolitical risk feeds", tier: "intelligence" as const },
-                      { icon: Database, label: "Risk & Inflation Platforms", desc: "Always-on monitoring with automated alerts & trend tracking", tier: "platforms" as const },
-                    ].map((pillar, i, arr) => {
-                      const styles = {
-                        scenarios: {
+                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", tier: "input" as const, sideButton: { icon: Database, label: "Risk & Inflation Platforms" } },
+                      { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", tier: "engine" as const, sideButton: { icon: Radar, label: "Market Intelligence" } },
+                      { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", tier: "cloud" as const },
+                      { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", tier: "output" as const },
+                    ].map((step, i, arr) => {
+                      const tierStyles = {
+                        input: {
+                          card: "bg-accent/8 border-accent/40 shadow-sm shadow-accent/10",
+                          icon: "bg-accent shadow-sm shadow-accent/30",
+                          label: "text-xs text-accent font-bold",
+                          badge: "border-accent bg-accent text-accent-foreground",
+                        },
+                        engine: {
                           card: "bg-primary/10 border-primary/40 shadow-md shadow-primary/15 ring-1 ring-primary/20",
                           icon: "bg-primary shadow-md shadow-primary/30",
-                          label: "text-primary",
+                          label: "text-sm text-primary font-bold",
+                          badge: "border-primary bg-primary text-primary-foreground",
                         },
-                        intelligence: {
-                          card: "bg-iris/10 border-iris/40 shadow-md shadow-iris/15 ring-1 ring-iris/20",
-                          icon: "bg-iris shadow-md shadow-iris/30",
-                          label: "text-iris",
+                        cloud: {
+                          card: "bg-iris/8 border-iris/40 shadow-sm shadow-iris/10",
+                          icon: "bg-iris shadow-sm shadow-iris/30",
+                          label: "text-xs text-iris font-bold",
+                          badge: "border-iris bg-iris text-white",
                         },
-                        platforms: {
-                          card: "bg-copper/10 border-copper/40 shadow-md shadow-copper/15 ring-1 ring-copper/20",
-                          icon: "bg-copper shadow-md shadow-copper/30",
-                          label: "text-copper",
+                        output: {
+                          card: "bg-positive/8 border-positive/40 shadow-sm shadow-positive/10",
+                          icon: "bg-positive shadow-sm shadow-positive/30",
+                          label: "text-xs text-positive font-bold",
+                          badge: "border-positive bg-positive text-white",
                         },
                       };
-                      const s = styles[pillar.tier];
+                      const s = tierStyles[step.tier];
                       return (
-                        <div key={pillar.label}>
-                          <div className={`flex items-center gap-3 py-3 px-4 rounded-lg border cursor-default transition-all hover:shadow-lg ${s.card}`}>
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${s.icon}`}>
-                              <pillar.icon className="w-4 h-4 text-white" />
+                      <div key={step.label}>
+                        <div className="flex items-stretch gap-2">
+                          <div className={`flex items-center gap-3 py-2.5 px-4 rounded-lg border cursor-default transition-all hover:shadow-lg flex-1 ${s.card}`}>
+                            <div className="relative shrink-0">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.icon}`}>
+                                <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
+                              </div>
+                              <span className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[8px] font-bold flex items-center justify-center ${s.badge}`}>
+                                {i + 1}
+                              </span>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className={`text-sm font-bold leading-tight ${s.label}`}>{pillar.label}</p>
-                              <p className="text-[10px] text-foreground/70 leading-snug mt-0.5">{pillar.desc}</p>
+                              <p className={`leading-tight ${s.label}`}>{step.label}</p>
+                              <p className={`leading-snug mt-0.5 ${step.tier === "engine" ? "text-[11px] text-foreground/80" : "text-[10px] text-muted-foreground"}`}>{step.desc}</p>
                             </div>
                           </div>
-                          {i < arr.length - 1 && (
-                            <div className="flex justify-center py-0.5">
-                              <svg aria-hidden="true" width="24" height="20" viewBox="0 0 24 20" className="text-primary/40">
-                                <path d="M12 0 L16 5 L13 5 L13 9 L11 9 L11 5 L8 5 Z" fill="currentColor" />
-                                <path d="M12 20 L8 15 L11 15 L11 11 L13 11 L13 15 L16 15 Z" fill="currentColor" />
+                          {step.sideButton && (
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <svg aria-hidden="true" width="24" height="12" viewBox="0 0 24 12" className="text-primary/50 shrink-0">
+                                <path d="M2 6 L8 2 L8 10 Z" fill="currentColor" stroke="none" />
+                                <line x1="8" y1="6" x2="24" y2="6" stroke="currentColor" strokeWidth="2" />
                               </svg>
+                              <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border-2 border-copper/50 bg-copper/10 cursor-default transition-all hover:shadow-lg hover:border-copper/70 self-stretch shadow-sm shadow-copper/10">
+                                <div className="w-7 h-7 rounded-lg bg-copper shadow-sm shadow-copper/30 flex items-center justify-center">
+                                  <step.sideButton.icon className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <p className="text-[10px] font-bold text-foreground leading-tight max-w-[5rem]">{step.sideButton.label}</p>
+                              </div>
                             </div>
                           )}
                         </div>
+                        {i < arr.length - 1 && (
+                          <div className="flex justify-center py-0.5">
+                            {i === 1 ? (
+                              <svg aria-hidden="true" width="24" height="28" viewBox="0 0 24 28" className="text-primary">
+                                <path d="M12 0 L18 7 L14 7 L14 12 L10 12 L10 7 L6 7 Z" fill="currentColor" />
+                                <path d="M12 28 L6 21 L10 21 L10 16 L14 16 L14 21 L18 21 Z" fill="currentColor" />
+                              </svg>
+                            ) : (
+                              <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-primary/50">
+                                <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="2" />
+                                <path d="M6 20 L2 14 L10 14 Z" fill="currentColor" stroke="none" />
+                              </svg>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       );
                     })}
-                  </div>
-
-                  {/* Arrow down */}
-                  <div className="flex justify-center py-0.5">
-                    <svg aria-hidden="true" width="12" height="16" viewBox="0 0 12 16" className="text-primary/50">
-                      <line x1="6" y1="0" x2="6" y2="10" stroke="currentColor" strokeWidth="2" />
-                      <path d="M6 16 L2 10 L10 10 Z" fill="currentColor" />
-                    </svg>
-                  </div>
-
-                  {/* Output — compact bookend */}
-                  <div className="flex items-center gap-3 py-2 px-3 rounded-lg border bg-positive/8 border-positive/40 shadow-sm shadow-positive/10">
-                    <div className="w-6 h-6 rounded-md bg-positive flex items-center justify-center shrink-0">
-                      <CheckCircle className="w-3 h-3 text-white" />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">Validated reports, dashboards & action roadmaps</p>
                   </div>
                 </div>
               </div>
