@@ -40,7 +40,7 @@ const pricingTiers = [
     name: "Professional",
     subtitle: "For dedicated procurement teams",
     price: "99",
-    annualNote: "or €66/mo billed quarterly (€197/quarter)",
+    annualNote: "or €66/mo billed quarterly till the end of 2026",
     period: "month",
     icon: Shield,
     featured: true,
