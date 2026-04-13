@@ -134,7 +134,7 @@ const MarketIntelligence = () => {
           Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
         </p>
 
-        <Tabs defaultValue={defaultTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1 border-dotted">
             <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
