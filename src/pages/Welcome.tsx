@@ -45,6 +45,7 @@ const pillars = [
     cta: "Open Intelligence Hub",
     href: "/market-intelligence",
     useCaseType: "scenarios" as const,
+    previewImage: undefined as string | undefined,
   },
   {
     number: "03",
