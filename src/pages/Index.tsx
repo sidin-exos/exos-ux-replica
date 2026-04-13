@@ -128,8 +128,32 @@ const Index = () => {
     return <Navigate to="/welcome" replace />;
   }
 
+  const currentMeta = scenarioSlug
+    ? (SCENARIO_META[scenarioSlug] ?? null)
+    : null;
+
   return (
     <div className="min-h-screen gradient-hero">
+      <Helmet>
+        <title>
+          {currentMeta?.title ?? 'AI Procurement Scenarios | EXOS'}
+        </title>
+        <meta
+          name="description"
+          content={
+            currentMeta?.description ??
+            'AI-powered procurement scenario analysis for EU mid-market teams.'
+          }
+        />
+        <link
+          rel="canonical"
+          href={
+            scenarioSlug
+              ? `https://exosproc.com/analyse/${scenarioSlug}`
+              : 'https://exosproc.com/'
+          }
+        />
+      </Helmet>
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}
