@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import { ModelConfigProvider } from "@/contexts/ModelConfigContext";
@@ -25,6 +25,7 @@ const Features = lazy(() => import("./pages/Features"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const GeneratedReport = lazy(() => import("./pages/GeneratedReport"));
+const SharedReport = lazy(() => import("./pages/SharedReport"));
 const DashboardShowcase = lazy(() => import("./pages/DashboardShowcase"));
 const MarketIntelligence = lazy(() => import("./pages/MarketIntelligence"));
 const ArchitectureDiagram = lazy(() => import("./pages/ArchitectureDiagram"));
@@ -86,7 +87,8 @@ const App = () => (
             <Route path="/reports" element={<Features />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
-            <Route path="/report" element={<ProtectedRoute><GeneratedReport /></ProtectedRoute>} />
+            <Route path="/report" element={<Navigate to="/" replace />} />
+            <Route path="/report/:shareId" element={<SharedReport />} />
             <Route path="/dashboards" element={<ProtectedRoute requireSuperAdmin><DashboardShowcase /></ProtectedRoute>} />
             <Route path="/market-intelligence" element={<ProtectedRoute><MarketIntelligence /></ProtectedRoute>} />
             <Route path="/architecture" element={<ProtectedRoute requireSuperAdmin><ArchitectureDiagram /></ProtectedRoute>} />
