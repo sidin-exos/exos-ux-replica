@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
+import { useParams, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { TrendingUp, BarChart3, Rss, Newspaper, Mail, MessageSquare } from "lucide-react";
@@ -27,13 +28,29 @@ const MOCK_NEWS_FEED = [
 
 const InflationPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [selectedTracker, setSelectedTracker] = useState<InflationTracker | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { trackers, isLoading, createTracker, deleteTracker } = useInflationTrackers();
 
+  // Derive activeTab from URL path segment
+  const activeTab = (() => {
+    const segment = location.pathname.split('/').pop();
+    if (segment === 'setup') return 'setup';
+    if (segment === 'events') return 'events';
+    return 'dashboard';
+  })();
+
+  // Derive selectedTracker from URL param
+  const selectedTracker = id
+    ? (trackers?.find(t => t.id === id) ?? null)
+    : null;
+
+  const trackerNotFound = id && !isLoading && !selectedTracker;
+
   const handleSelectTracker = useCallback((tracker: InflationTracker) => {
-    setSelectedTracker(tracker);
-  }, []);
+    navigate(`/enterprise/inflation/tracker/${tracker.id}`);
+  }, [navigate]);
 
   // Build news feed matched to actual tracker names
   const newsFeed = useMemo(() => {
@@ -66,6 +83,20 @@ const InflationPlatform = () => {
     );
   }
 
+  // Loading state for deep-linked tracker detail
+  if (id && isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  // Tracker ID in URL but not found after load → redirect
+  if (trackerNotFound) {
+    return <Navigate to="/enterprise/inflation" replace />;
+  }
+
   // Detail view — replaces the whole page like RiskPlatform
   if (selectedTracker) {
     return (
@@ -74,7 +105,7 @@ const InflationPlatform = () => {
         <main className="container py-8">
           <InflationDetailView
             tracker={selectedTracker}
-            onBack={() => setSelectedTracker(null)}
+            onBack={() => navigate('/enterprise/inflation/dashboard')}
           />
         </main>
       </EnterpriseLayout>
@@ -124,7 +155,7 @@ const InflationPlatform = () => {
         </div>
 
         <div>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={(tab) => navigate(`/enterprise/inflation/${tab}`)}>
             <TabsList>
               <TabsTrigger value="dashboard">
                 <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
@@ -145,7 +176,7 @@ const InflationPlatform = () => {
                     <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
                       <p className="text-muted-foreground">No trackers yet. Create your first tracker to start monitoring.</p>
                       <Button
-                        onClick={() => setActiveTab("setup")}
+                        onClick={() => navigate('/enterprise/inflation/setup')}
                         className="bg-gradient-to-r from-primary via-iris to-copper text-white font-semibold shadow-brand hover:opacity-90 transition-opacity"
                       >
                         <TrendingUp className="w-4 h-4 mr-2" />
@@ -194,7 +225,7 @@ const InflationPlatform = () => {
             <TabsContent value="setup" className="mt-4">
               <InflationSetupWizard
                 onActivate={(data) => createTracker.mutateAsync(data)}
-                onComplete={() => setActiveTab("dashboard")}
+                onComplete={() => navigate('/enterprise/inflation/dashboard')}
               />
             </TabsContent>
 

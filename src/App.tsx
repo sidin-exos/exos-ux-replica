@@ -104,7 +104,11 @@ const App = () => (
             <Route path="/admin/analytics" element={<ProtectedRoute requireSuperAdmin><AnalyticsDashboard /></ProtectedRoute>} />
             <Route path="/enterprise/risk" element={<ProtectedRoute><RiskPlatform /></ProtectedRoute>} />
             <Route path="/enterprise/risk/monitor/:id" element={<ProtectedRoute><RiskPlatform /></ProtectedRoute>} />
-            <Route path="/enterprise/inflation" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation" element={<ProtectedRoute><Navigate to="/enterprise/inflation/dashboard" replace /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation/dashboard" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation/setup" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation/events" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation/tracker/:id" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
             <Route path="/pdf-test" element={<ProtectedRoute requireSuperAdmin><PdfTestPage /></ProtectedRoute>} />
             <Route path="/admin/methodology" element={<ProtectedRoute requireSuperAdmin><MethodologyDashboard /></ProtectedRoute>} />
             <Route path="/admin/methodology/config" element={<ProtectedRoute requireSuperAdmin><MethodologyConfig /></ProtectedRoute>} />
