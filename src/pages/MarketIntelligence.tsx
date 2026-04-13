@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
@@ -20,8 +19,7 @@ import { Separator } from "@/components/ui/separator";
 const MarketIntelligence = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const modeParam = searchParams.get("mode") as IntelScenario | null;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Derive active tab from URL path segment
   const activeTab = (() => {
@@ -34,15 +32,21 @@ const MarketIntelligence = () => {
     navigate(`/market-intelligence/${tab}`);
   };
 
-  const defaultScenario: IntelScenario = modeParam && ["adhoc", "regular"].includes(modeParam) ? modeParam as IntelScenario : "adhoc";
-  
-  const [selectedScenario, setSelectedScenario] = useState<IntelScenario>(defaultScenario);
-  
-  useEffect(() => {
-    if (modeParam && ["adhoc", "regular"].includes(modeParam)) {
-      setSelectedScenario(modeParam as IntelScenario);
-    }
-  }, [modeParam]);
+  // Derive selectedScenario directly from URL param
+  const selectedScenario: IntelScenario =
+    searchParams.get('mode') === 'regular' ? 'regular' : 'adhoc';
+
+  const updateFilter = (key: string, value: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (!value || value === '') {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      return next;
+    }, { replace: true });
+  };
   
   const { user, isLoading: isAuthLoading } = useUser();
 
@@ -149,7 +153,7 @@ const MarketIntelligence = () => {
           <TabsContent value="queries" className="space-y-6">
             <IntelScenarioSelector
               selected={selectedScenario}
-              onSelect={setSelectedScenario}
+              onSelect={(val) => updateFilter('mode', val === 'adhoc' ? '' : val)}
             />
 
             {error && (
