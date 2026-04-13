@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import Header from "@/components/layout/Header";
@@ -18,11 +18,22 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 const MarketIntelligence = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get("tab");
   const modeParam = searchParams.get("mode") as IntelScenario | null;
-  
-  const defaultTab = tabParam === "insights" ? "insights" : "queries";
+
+  // Derive active tab from URL path segment
+  const activeTab = (() => {
+    const segment = location.pathname.split('/').pop();
+    if (segment === 'insights') return 'insights';
+    return 'queries';
+  })();
+
+  const handleTabChange = (tab: string) => {
+    navigate(`/market-intelligence/${tab}`);
+  };
+
   const defaultScenario: IntelScenario = modeParam && ["adhoc", "regular"].includes(modeParam) ? modeParam as IntelScenario : "adhoc";
   
   const [selectedScenario, setSelectedScenario] = useState<IntelScenario>(defaultScenario);
@@ -123,7 +134,7 @@ const MarketIntelligence = () => {
           Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
         </p>
 
-        <Tabs defaultValue={defaultTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1 border-dotted">
             <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
