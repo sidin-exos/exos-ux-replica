@@ -141,7 +141,7 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setQueryType(type)}
+                    onClick={() => updateFilter('type', type === 'supplier' ? '' : type)}
                     className={`p-3 rounded-lg border text-left transition-all ${
                       isSelected
                         ? `${colors.border} ${colors.bg} text-foreground ring-1 ring-offset-1 ring-offset-background ${colors.border.replace('border-', 'ring-')}`
@@ -197,7 +197,7 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
             <Label>Time Range</Label>
             <Select
               value={recencyFilter}
-              onValueChange={setRecencyFilter}
+              onValueChange={(v) => updateFilter('recency', v === '__none__' ? '' : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Any time" />
