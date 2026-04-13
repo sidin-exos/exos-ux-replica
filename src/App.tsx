@@ -87,7 +87,7 @@ const App = () => (
             <Route path="/reports" element={<Features />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
-            <Route path="/report" element={<Navigate to="/" replace />} />
+            <Route path="/report" element={<ProtectedRoute><GeneratedReport /></ProtectedRoute>} />
             <Route path="/report/:shareId" element={<SharedReport />} />
             <Route path="/dashboards" element={<ProtectedRoute requireSuperAdmin><DashboardShowcase /></ProtectedRoute>} />
             <Route path="/market-intelligence" element={<ProtectedRoute><Navigate to="/market-intelligence/queries" replace /></ProtectedRoute>} />
