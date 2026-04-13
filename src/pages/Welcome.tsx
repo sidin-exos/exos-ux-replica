@@ -314,10 +314,22 @@ const Welcome = () => {
                 <div className={`${!isEven ? "md:order-1" : ""}`}>
                   <Card className="overflow-hidden border-border/50 bg-muted/20">
                     <CardContent className="p-0">
-                      <div className="aspect-[16/10] flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
-                          <Icon className="w-8 h-8 text-primary/60" />
-                        </div>
+                      <div className="aspect-[16/10] relative overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
+                        {pillar.previewImage ? (
+                          <img
+                            src={pillar.previewImage}
+                            alt={`${pillar.title} preview`}
+                            className="w-full h-full object-cover object-top"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                              <Icon className="w-8 h-8 text-primary/60" />
+                            </div>
+                          </div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-muted to-transparent" />
                       </div>
                     </CardContent>
                   </Card>
