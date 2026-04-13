@@ -1,45 +1,47 @@
 
 
-## Persist query filters in URL search params
+## Implement URL-driven routing for /enterprise/inflation
 
 Two files modified. No other files touched.
 
-### File 1: `src/pages/MarketIntelligence.tsx`
+### File 1: `src/App.tsx`
 
-- Replace `const [searchParams] = useSearchParams()` with `const [searchParams, setSearchParams] = useSearchParams()`
-- Delete `modeParam` variable (line 24), `defaultScenario` (line 37), `selectedScenario` useState (line 39), and the sync useEffect (lines 41-45)
-- Add URL-derived `selectedScenario`: `const selectedScenario = (searchParams.get('mode') === 'regular' ? 'regular' : 'adhoc') as IntelScenario`
-- Add `updateFilter` helper using `setSearchParams` with `{ replace: true }`
-- Wire `IntelScenarioSelector.onSelect` to: `updateFilter('mode', val === 'adhoc' ? '' : val)`
-- Remove `useState` and `useEffect` from imports (keep `useState` only if used elsewhere — it's not, so remove both)
+Replace the single `/enterprise/inflation` route (line 107) with 5 routes:
 
-### File 2: `src/components/intelligence/QueryBuilder.tsx`
+```
+<Route path="/enterprise/inflation" element={<ProtectedRoute><Navigate to="/enterprise/inflation/dashboard" replace /></ProtectedRoute>} />
+<Route path="/enterprise/inflation/dashboard" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+<Route path="/enterprise/inflation/setup" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+<Route path="/enterprise/inflation/events" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+<Route path="/enterprise/inflation/tracker/:id" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+```
 
-- Add `import { useSearchParams } from 'react-router-dom'`
-- Add `const [searchParams, setSearchParams] = useSearchParams()` at top of component
-- Add same `updateFilter` helper
-- Replace 3 useState declarations with URL-derived values:
-  - `queryType`: `searchParams.get('type') as QueryType ?? "supplier"`
-  - `recencyFilter`: `searchParams.get('recency') ?? "__none__"`
-  - `selectedDomains`: parsed from `searchParams.get('domains')?.split(',').filter(Boolean) ?? []`
-- Replace setter calls:
-  - `setQueryType(type)` → `updateFilter('type', type === 'supplier' ? '' : type)`
-  - `setRecencyFilter` in Select's `onValueChange` → `updateFilter('recency', v === '__none__' ? '' : v)`
-  - `toggleDomain` → compute next array, call `updateFilter('domains', next.join(','))`
-- Keep `queryName`, `queryText`, `context`, `showAdvanced` as regular useState (excluded per spec)
-- `handleSubmit` call site unchanged — `queryType`, `recencyFilter`, `selectedDomains` resolve to same types
+`Navigate` is already imported from `react-router-dom`.
 
-### Default value cleanup rules
-| Param | Default | URL when default |
-|-------|---------|-----------------|
-| mode | adhoc | deleted |
-| type | supplier | deleted |
-| recency | __none__ | deleted |
-| domains | [] | deleted |
+### File 2: `src/pages/enterprise/InflationPlatform.tsx`
+
+**Imports**: Add `useParams`, `useNavigate`, `useLocation`, `Navigate` from `react-router-dom`
+
+**Replace state with URL derivation**:
+- Delete `useState("dashboard")` (line 30) → derive `activeTab` from `location.pathname.split('/').pop()` (map `setup`/`events`/`dashboard`, default to `dashboard`)
+- Delete `useState<InflationTracker | null>(null)` (line 31) → derive `selectedTracker` from `useParams` `:id` matched against `trackers` array
+- Add `trackerNotFound` guard → `<Navigate to="/enterprise/inflation" replace />`
+- Add loading spinner when `id && isLoading`
+
+**Replace setter calls** (4 occurrences):
+1. Line 35: `handleSelectTracker` → `navigate(\`/enterprise/inflation/tracker/\${tracker.id}\`)`
+2. Line 77: `onBack={() => setSelectedTracker(null)}` → `onBack={() => navigate('/enterprise/inflation/dashboard')}`
+3. Line 148: `setActiveTab("setup")` → `navigate('/enterprise/inflation/setup')`
+4. Line 198: `onComplete={() => setActiveTab("dashboard")}` → `onComplete={() => navigate('/enterprise/inflation/dashboard')}`
+
+**Wire Tabs**: Line 127 `onValueChange={setActiveTab}` → `onValueChange={(tab) => navigate(\`/enterprise/inflation/\${tab}\`)}`
+
+Remove `useState` from imports if no longer used (check: `useMemo` and `useCallback` still needed).
 
 ### What does NOT change
-- Form submission logic, edge function params, visual UI
-- Tab path navigation (Session 1 `navigate()` calls untouched)
-- Insights tab gets zero query params
-- App.tsx not modified
+- InflationSetupWizard internal wizard steps (local state)
+- InflationDetailView, InflationTrackerCard, InflationDriverCard interfaces
+- useInflationTrackers hook, Supabase queries, edge functions, RLS
+- News feed sidebar, market signals, footer
+- No database migrations
 
