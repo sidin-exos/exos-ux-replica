@@ -1165,6 +1165,30 @@ export type Database = {
           },
         ]
       }
+      scenario_drafts: {
+        Row: {
+          blocks: Json
+          id: string
+          scenario_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocks?: Json
+          id?: string
+          scenario_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocks?: Json
+          id?: string
+          scenario_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scenario_feedback: {
         Row: {
           created_at: string
