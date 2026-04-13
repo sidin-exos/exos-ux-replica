@@ -1,41 +1,45 @@
 
 
-## Move Market Intelligence tabs into URL
+## Persist query filters in URL search params
 
-### What changes
-Replace React state-driven tab switching with URL-driven routing so each tab has a stable, bookmarkable address that survives refresh.
+Two files modified. No other files touched.
 
-### URL structure
-- `/market-intelligence` → redirects to `/market-intelligence/queries`
-- `/market-intelligence/queries` → Ad-hoc Queries tab (with adhoc/regular sub-mode preserved as `?mode=regular` query param)
-- `/market-intelligence/insights` → Knowledge Base tab
+### File 1: `src/pages/MarketIntelligence.tsx`
 
-### File 1: `src/App.tsx`
-Replace the single `/market-intelligence` route (line 93) with three routes:
-```
-/market-intelligence        → ProtectedRoute → Navigate to /market-intelligence/queries
-/market-intelligence/queries  → ProtectedRoute → MarketIntelligence
-/market-intelligence/insights → ProtectedRoute → MarketIntelligence
-```
+- Replace `const [searchParams] = useSearchParams()` with `const [searchParams, setSearchParams] = useSearchParams()`
+- Delete `modeParam` variable (line 24), `defaultScenario` (line 37), `selectedScenario` useState (line 39), and the sync useEffect (lines 41-45)
+- Add URL-derived `selectedScenario`: `const selectedScenario = (searchParams.get('mode') === 'regular' ? 'regular' : 'adhoc') as IntelScenario`
+- Add `updateFilter` helper using `setSearchParams` with `{ replace: true }`
+- Wire `IntelScenarioSelector.onSelect` to: `updateFilter('mode', val === 'adhoc' ? '' : val)`
+- Remove `useState` and `useEffect` from imports (keep `useState` only if used elsewhere — it's not, so remove both)
 
-### File 2: `src/pages/MarketIntelligence.tsx`
-- Replace `useSearchParams`-based tab derivation with `useLocation` path segment derivation
-- Derive `activeTab` from the last path segment (`queries` or `insights`)
-- Replace `<Tabs defaultValue={...}>` with `<Tabs value={activeTab}>` (controlled)
-- Wire `onValueChange` on `Tabs` to `navigate(\`/market-intelligence/${tab}\`)`
-- Keep the `?mode=adhoc|regular` query param logic for the sub-selector within the queries tab (no change to IntelScenarioSelector)
+### File 2: `src/components/intelligence/QueryBuilder.tsx`
+
+- Add `import { useSearchParams } from 'react-router-dom'`
+- Add `const [searchParams, setSearchParams] = useSearchParams()` at top of component
+- Add same `updateFilter` helper
+- Replace 3 useState declarations with URL-derived values:
+  - `queryType`: `searchParams.get('type') as QueryType ?? "supplier"`
+  - `recencyFilter`: `searchParams.get('recency') ?? "__none__"`
+  - `selectedDomains`: parsed from `searchParams.get('domains')?.split(',').filter(Boolean) ?? []`
+- Replace setter calls:
+  - `setQueryType(type)` → `updateFilter('type', type === 'supplier' ? '' : type)`
+  - `setRecencyFilter` in Select's `onValueChange` → `updateFilter('recency', v === '__none__' ? '' : v)`
+  - `toggleDomain` → compute next array, call `updateFilter('domains', next.join(','))`
+- Keep `queryName`, `queryText`, `context`, `showAdvanced` as regular useState (excluded per spec)
+- `handleSubmit` call site unchanged — `queryType`, `recencyFilter`, `selectedDomains` resolve to same types
+
+### Default value cleanup rules
+| Param | Default | URL when default |
+|-------|---------|-----------------|
+| mode | adhoc | deleted |
+| type | supplier | deleted |
+| recency | __none__ | deleted |
+| domains | [] | deleted |
 
 ### What does NOT change
-- Tab UI, query interface, results display, save-to-KB, citation display
-- IntelScenarioSelector adhoc/regular sub-mode (stays as query param)
-- Supabase queries, edge functions, RLS policies
-- ProtectedRoute wrapping (all sub-routes remain auth-gated)
-- No other files modified
-
-### Verification
-- `/market-intelligence` redirects to `/market-intelligence/queries`
-- Refreshing `/market-intelligence/insights` stays on Knowledge Base
-- Browser back/forward navigates between tabs
-- `?mode=regular` on queries tab still works
-- Auth gate enforced on all sub-routes
+- Form submission logic, edge function params, visual UI
+- Tab path navigation (Session 1 `navigate()` calls untouched)
+- Insights tab gets zero query params
+- App.tsx not modified
 
