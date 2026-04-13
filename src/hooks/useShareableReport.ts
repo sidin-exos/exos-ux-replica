@@ -64,7 +64,7 @@ export function useShareableReport(): ShareableReportReturn {
         // Use the current origin so the share link points to the same
         // environment that stored the payload.
         const origin = window.location.origin;
-        const shareUrl = `${origin}/report?share=${id}`;
+        const shareUrl = `${origin}/report/${id}`;
 
         return shareUrl;
       } catch (error) {
