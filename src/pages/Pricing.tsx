@@ -28,7 +28,7 @@ const pricingTiers = [
     features: [
       "Distilled procurement knowledge in one place",
       "AI-powered analysis scenarios",
-      "SOW & contract review tools",
+      "Validated secure data protocols",
       "Negotiation preparation frameworks",
       "100 AI reports a month",
       "Email support",
@@ -49,7 +49,7 @@ const pricingTiers = [
       "Unlimited simulations & scenarios",
       "Full dashboard access",
       "On-demand dashboards and market intelligence",
-      "Validated secure data protocols",
+      "\n",
       "Multi-user collaboration",
       "Advanced reporting & exports",
       "Consultation support",
