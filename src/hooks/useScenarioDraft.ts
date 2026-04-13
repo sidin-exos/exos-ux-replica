@@ -92,7 +92,7 @@ export function useScenarioDraft({
         const row = {
               user_id: userId,
               scenario_id: scenarioId,
-              blocks: staged as unknown as Record<string, unknown>,
+              blocks: JSON.parse(JSON.stringify(staged)),
             };
         const { error } = await supabase
           .from('scenario_drafts')
