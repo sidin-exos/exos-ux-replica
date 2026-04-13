@@ -30,7 +30,7 @@ const pricingTiers = [
       "AI-powered analysis scenarios",
       "SOW & contract review tools",
       "Negotiation preparation frameworks",
-      "Risk assessment matrices",
+      "100 AI reports a month",
       "Email support",
     ],
     cta: "Get Started",
