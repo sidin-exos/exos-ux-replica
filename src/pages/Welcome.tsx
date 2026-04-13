@@ -96,12 +96,12 @@ const Welcome = () => {
               </h1>
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function.
+                  Critical <strong className="text-foreground font-semibold">procurement decisions</strong> are often made without adequate preparation due to lack of time, knowledge, or a specialised function.
                   <br />
-                  <span className="text-base leading-relaxed text-muted-foreground">EXOS works from the first day and first user, no integration or company-wide adoption needed. Get better results with agentic AI.</span>
+                  <span className="text-base leading-relaxed text-muted-foreground">EXOS works from the <strong className="text-foreground font-semibold">first day and first user</strong>, no integration or company-wide adoption needed. Get better results with <strong className="text-foreground font-semibold">agentic AI</strong>.</span>
                 </p>
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.
+                  Your <strong className="text-foreground font-semibold">sensitive commercial data</strong> is masked before reaching external APIs — then <strong className="text-foreground font-semibold">grounded and validated</strong> on the way back.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 mt-2">
