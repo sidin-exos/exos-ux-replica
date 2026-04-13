@@ -261,9 +261,20 @@ const Welcome = () => {
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
             EXOS works as three interconnected layers:
           </h2>
-          <p className="text-muted-foreground mt-3 leading-relaxed">
-            A unified ecosystem designed to replace fragmented legacy tools with high-fidelity procurement workflows.
-          </p>
+          <ul className="space-y-2 pl-1 mt-4 text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+              <span><strong className="text-foreground">Scenarios</strong> — pre-defined agentic AI flows with procurement methodology, agentic loops, and custom LLM settings.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+              <span><strong className="text-foreground">Market Intelligence</strong> — live market context injected into AI results: benchmarks, risks, pricing signals, regulatory shifts.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+              <span><strong className="text-foreground">Continuous Monitoring</strong> — Inflation and Risk platforms that surface what's changed and flag only what requires your decision.</span>
+            </li>
+          </ul>
         </div>
       </section>
 
