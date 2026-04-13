@@ -1,25 +1,34 @@
 
 
-## Create `src/hooks/useScenarioDraft.ts`
+## Fix "Generate Full Report" redirect to "/"
 
-### Single file to create
+### Root cause
 
-`src/hooks/useScenarioDraft.ts` — a pure hook (zero UI/JSX) implementing two-layer draft persistence.
+In `src/App.tsx` line 90, the `/report` route is explicitly mapped to `<Navigate to="/" replace />`, which immediately redirects to the homepage. Meanwhile, `handleGenerateReport` in `GenericScenarioWizard.tsx` navigates to `/report` with state data expecting the `GeneratedReport` page to render.
 
-### Implementation
+The `GeneratedReport` page component exists at `src/pages/GeneratedReport.tsx` and reads `location.state` for the report data — it just isn't wired up.
 
-- **Types**: `DraftBlocks = Record<string, string>`, options interface with `scenarioId`, `userId`, `enabled`
-- **localStorage helpers**: `saveToLocal`, `loadFromLocal`, `clearFromLocal` — all wrapped in try/catch, never throw
-- **`saveDraft(blocks)`**: writes to localStorage immediately, stages blocks in a ref, schedules a 3-second debounced Supabase upsert via `setTimeout`. Skips Supabase if `userId` is null.
-- **`loadDraft()`**: checks localStorage first; if empty and authenticated, falls back to Supabase `maybeSingle()` query
-- **`clearDraft()`**: clears timeout, removes localStorage key, deletes Supabase row if authenticated
-- **Supabase upsert** uses `onConflict: 'user_id,scenario_id'` against the `scenario_drafts` table
-- **Cleanup**: `useEffect` clears the debounce timeout on unmount
-- **Returns**: `{ saveDraft, clearDraft, loadDraft, isSaving, lastSaved, hasDraft }`
-- Uses existing `useDebounce` is NOT used (ref-based debounce instead to avoid re-renders on every keystroke)
-- JSONB blocks cast through `unknown` to satisfy Supabase generated types
+### Fix
+
+**File: `src/App.tsx`, line 90**
+
+Replace:
+```tsx
+<Route path="/report" element={<Navigate to="/" replace />} />
+```
+With:
+```tsx
+<Route path="/report" element={<ProtectedRoute><GeneratedReport /></ProtectedRoute>} />
+```
+
+Add the missing import at the top of the file:
+```tsx
+import GeneratedReport from "@/pages/GeneratedReport";
+```
+
+Or, if `GeneratedReport` is already lazy-loaded elsewhere in the file, use that reference instead. This is a one-line route fix plus one import.
 
 ### What does NOT change
-- No existing hooks, components, or files modified
-- Hook is not wired into any component yet (that's a later task)
+- No changes to `GenericScenarioWizard.tsx`, `OutputFeedback.tsx`, or `GeneratedReport.tsx`
+- No database or migration changes
 
