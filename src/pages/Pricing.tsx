@@ -145,7 +145,7 @@ const Pricing = () => {
             <img src={exosLogo} alt="EXOS procurement platform logo" className="h-16 md:h-20 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-            Simple, Transparent <span className="text-gradient">Pricing</span>. ROI from first day, first user.
+            Simple, Transparent <span className="text-gradient">Pricing</span> ROI from first day, first user.
           </h1>
         </section>
 
