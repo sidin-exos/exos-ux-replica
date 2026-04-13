@@ -19,7 +19,7 @@ import { useThemedLogo } from "@/hooks/useThemedLogo";
 const pricingTiers = [
   {
     id: "smb",
-    name: "SMB",
+    name: "Starter/SMB",
     subtitle: "For companies without a dedicated procurement function",
     price: "29",
     period: "month",
