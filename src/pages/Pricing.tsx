@@ -147,10 +147,6 @@ const Pricing = () => {
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
             Simple, Transparent <span className="text-gradient">Pricing</span> for EU Procurement Teams
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Choose the plan that fits your procurement needs. 
-            No hidden fees, cancel anytime.
-          </p>
         </section>
 
         {/* Pricing Cards */}
