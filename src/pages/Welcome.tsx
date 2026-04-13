@@ -27,6 +27,7 @@ const pillars = [
     cta: "Explore Scenarios",
     href: "/",
     useCaseType: "scenarios" as const,
+    previewImage: undefined as string | undefined,
   },
   {
     number: "02",
