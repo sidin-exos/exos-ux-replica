@@ -100,23 +100,6 @@ const Welcome = () => {
                   <br />
                   <span className="text-base leading-relaxed text-muted-foreground">EXOS works from the first day and first user, no integration or company-wide adoption needed. Get better results with agentic AI.</span>
                 </p>
-                <p>
-                  <br />
-                </p>
-                <ul className="space-y-2 pl-1">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
-                    <span><strong className="text-foreground">Scenarios</strong> — pre-defined agentic AI flows with procurement methodology, agentic loops, and custom LLM settings.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
-                    <span><strong className="text-foreground">Market Intelligence</strong> — live market context injected into AI results: benchmarks, risks, pricing signals, regulatory shifts.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
-                    <span><strong className="text-foreground">Continuous Monitoring</strong> — Inflation and Risk platforms that surface what's changed and flag only what requires your decision.</span>
-                  </li>
-                </ul>
                 <p className="text-sm border-l-2 border-primary/30 pl-3 text-muted-foreground/80 italic">
                   Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.
                 </p>
