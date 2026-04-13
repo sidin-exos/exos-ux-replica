@@ -89,16 +89,14 @@ export function useScenarioDraft({
       isSavingRef.current = true;
 
       try {
-        const { error } = await supabase
-          .from('scenario_drafts')
-          .upsert(
-            {
+        const row = {
               user_id: userId,
               scenario_id: scenarioId,
               blocks: staged as unknown as Record<string, unknown>,
-            },
-            { onConflict: 'user_id,scenario_id' }
-          );
+            };
+        const { error } = await supabase
+          .from('scenario_drafts')
+          .upsert(row, { onConflict: 'user_id,scenario_id' });
 
         if (!error) {
           lastSavedRef.current = new Date();
