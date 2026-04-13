@@ -96,7 +96,7 @@ export function useScenarioDraft({
             };
         const { error } = await supabase
           .from('scenario_drafts')
-          .upsert(row, { onConflict: 'user_id,scenario_id' });
+          .upsert([row], { onConflict: 'user_id,scenario_id' });
 
         if (!error) {
           lastSavedRef.current = new Date();
