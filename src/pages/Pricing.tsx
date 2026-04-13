@@ -235,7 +235,7 @@ const Pricing = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[200px]">Feature</TableHead>
-                  <TableHead className="text-center">SMB</TableHead>
+                  <TableHead className="text-center">Starter/SMB</TableHead>
                   <TableHead className="text-center font-semibold text-primary">Professional</TableHead>
                   <TableHead className="text-center">Enterprise</TableHead>
                 </TableRow>
