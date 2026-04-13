@@ -19,7 +19,7 @@ import { useThemedLogo } from "@/hooks/useThemedLogo";
 const pricingTiers = [
   {
     id: "smb",
-    name: "SMB",
+    name: "Starter/SMB",
     subtitle: "For companies without a dedicated procurement function",
     price: "29",
     period: "month",
@@ -235,7 +235,7 @@ const Pricing = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[200px]">Feature</TableHead>
-                  <TableHead className="text-center">SMB</TableHead>
+                  <TableHead className="text-center">Starter/SMB</TableHead>
                   <TableHead className="text-center font-semibold text-primary">Professional</TableHead>
                   <TableHead className="text-center">Enterprise</TableHead>
                 </TableRow>
