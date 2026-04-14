@@ -141,8 +141,8 @@ const Welcome = () => {
 
             {/* Right — Abstract dashboard preview */}
             <div className="hidden lg:flex justify-end">
-              <div className="w-full max-w-md">
-                <div role="img" aria-label="EXOS agentic AI orchestration pipeline diagram" className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-5 backdrop-blur-sm">
+              <div className="w-full max-w-lg">
+                <div role="img" aria-label="EXOS agentic AI orchestration pipeline diagram" className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-6 md:p-8 backdrop-blur-sm">
                   <div className="text-center mb-5">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20 mb-1">
                       <Shield className="w-3.5 h-3.5 text-primary" />
