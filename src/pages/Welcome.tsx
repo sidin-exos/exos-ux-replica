@@ -230,11 +230,11 @@ const Welcome = () => {
                         </div>
                       </div>
                       {/* Invisible spacer to match rows with side buttons */}
-                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0 invisible">
-                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="shrink-0"><line x1="0" y1="5" x2="18" y2="5" /></svg>
-                        <div className="flex items-center gap-2 py-3 px-3.5">
-                          <Database className="w-4 h-4" />
-                          <p className="text-[11px] font-bold leading-tight max-w-[6.5rem]">Placeholder</p>
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0 invisible">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="shrink-0"><line x1="0" y1="5" x2="24" y2="5" /></svg>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 min-h-[56px]">
+                          <Database className="w-4.5 h-4.5" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Placeholder</p>
                         </div>
                       </div>
                     </div>
@@ -260,11 +260,11 @@ const Welcome = () => {
                         </div>
                       </div>
                       {/* Invisible spacer to match rows with side buttons */}
-                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0 invisible">
-                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="shrink-0"><line x1="0" y1="5" x2="18" y2="5" /></svg>
-                        <div className="flex items-center gap-2 py-3 px-3.5">
-                          <Database className="w-4 h-4" />
-                          <p className="text-[11px] font-bold leading-tight max-w-[6.5rem]">Placeholder</p>
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0 invisible">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="shrink-0"><line x1="0" y1="5" x2="24" y2="5" /></svg>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 min-h-[56px]">
+                          <Database className="w-4.5 h-4.5" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Placeholder</p>
                         </div>
                       </div>
                     </div>
