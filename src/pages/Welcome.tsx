@@ -153,7 +153,7 @@ const Welcome = () => {
                   <div className="flex flex-col items-center gap-0">
                     {/* Step 1 — User Input + Risk & Inflation side button */}
                     <div className="flex items-center gap-2 w-full">
-                      <div className="flex-1 max-w-[280px] mx-auto rounded-xl border border-accent/30 bg-background p-4 transition-all hover:shadow-md">
+                      <div className="w-[280px] shrink-0 mx-auto rounded-xl border border-accent/30 bg-background p-4 transition-all hover:shadow-md">
                         <div className="flex items-start gap-3">
                           <span className="font-display text-2xl font-light text-accent/40 leading-none mt-0.5">1</span>
                           <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
@@ -185,7 +185,7 @@ const Welcome = () => {
 
                     {/* Step 2 — Core Engine (elevated) + Market Intelligence side button */}
                     <div className="flex items-center gap-2 w-full">
-                      <div className="flex-1 max-w-[280px] mx-auto rounded-xl bg-primary border border-primary/80 p-4 shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30">
+                      <div className="w-[280px] shrink-0 mx-auto rounded-xl bg-primary border border-primary/80 p-4 shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30">
                         <div className="flex items-start gap-3">
                           <span className="font-display text-2xl font-light text-primary-foreground/30 leading-none mt-0.5">2</span>
                           <div className="w-7 h-7 rounded-lg bg-primary-foreground/15 flex items-center justify-center shrink-0 mt-0.5">
@@ -216,15 +216,25 @@ const Welcome = () => {
                     </svg>
 
                     {/* Step 3 — Cloud AI */}
-                    <div className="w-full max-w-[280px] rounded-xl border border-iris/30 bg-background p-4 transition-all hover:shadow-md">
-                      <div className="flex items-start gap-3">
-                        <span className="font-display text-2xl font-light text-iris/40 leading-none mt-0.5">3</span>
-                        <div className="w-7 h-7 rounded-lg bg-iris/15 flex items-center justify-center shrink-0 mt-0.5">
-                          <Globe className="w-3.5 h-3.5 text-iris" />
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="w-[280px] shrink-0 mx-auto rounded-xl border border-iris/30 bg-background p-4 transition-all hover:shadow-md">
+                        <div className="flex items-start gap-3">
+                          <span className="font-display text-2xl font-light text-iris/40 leading-none mt-0.5">3</span>
+                          <div className="w-7 h-7 rounded-lg bg-iris/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <Globe className="w-3.5 h-3.5 text-iris" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-foreground leading-tight">Cloud AI</p>
+                            <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Auditor, Optimiser & Strategist agents analyse in parallel</p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-foreground leading-tight">Cloud AI</p>
-                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Auditor, Optimiser & Strategist agents analyse in parallel</p>
+                      </div>
+                      {/* Invisible spacer to match rows with side buttons */}
+                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0 invisible">
+                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="shrink-0"><line x1="0" y1="5" x2="18" y2="5" /></svg>
+                        <div className="flex items-center gap-2 py-3 px-3.5">
+                          <Database className="w-4 h-4" />
+                          <p className="text-[11px] font-bold leading-tight max-w-[6.5rem]">Placeholder</p>
                         </div>
                       </div>
                     </div>
@@ -236,15 +246,25 @@ const Welcome = () => {
                     </svg>
 
                     {/* Step 4 — User Interface */}
-                    <div className="w-full max-w-[280px] rounded-xl border border-positive/30 bg-background p-4 transition-all hover:shadow-md">
-                      <div className="flex items-start gap-3">
-                        <span className="font-display text-2xl font-light text-positive/40 leading-none mt-0.5">4</span>
-                        <div className="w-7 h-7 rounded-lg bg-positive/15 flex items-center justify-center shrink-0 mt-0.5">
-                          <CheckCircle className="w-3.5 h-3.5 text-positive" />
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="w-[280px] shrink-0 mx-auto rounded-xl border border-positive/30 bg-background p-4 transition-all hover:shadow-md">
+                        <div className="flex items-start gap-3">
+                          <span className="font-display text-2xl font-light text-positive/40 leading-none mt-0.5">4</span>
+                          <div className="w-7 h-7 rounded-lg bg-positive/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle className="w-3.5 h-3.5 text-positive" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-foreground leading-tight">User Interface</p>
+                            <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Validated reports, interactive dashboards & action roadmaps</p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-foreground leading-tight">User Interface</p>
-                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Validated reports, interactive dashboards & action roadmaps</p>
+                      </div>
+                      {/* Invisible spacer to match rows with side buttons */}
+                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0 invisible">
+                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="shrink-0"><line x1="0" y1="5" x2="18" y2="5" /></svg>
+                        <div className="flex items-center gap-2 py-3 px-3.5">
+                          <Database className="w-4 h-4" />
+                          <p className="text-[11px] font-bold leading-tight max-w-[6.5rem]">Placeholder</p>
                         </div>
                       </div>
                     </div>
