@@ -151,16 +151,28 @@ const Welcome = () => {
                   </div>
 
                   <div className="flex flex-col items-center gap-0">
-                    {/* Step 1 — User Input */}
-                    <div className="w-full max-w-[280px] rounded-xl border border-accent/30 bg-background p-4 transition-all hover:shadow-md">
-                      <div className="flex items-start gap-3">
-                        <span className="font-display text-2xl font-light text-accent/40 leading-none mt-0.5">1</span>
-                        <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
-                          <Lock className="w-3.5 h-3.5 text-accent" />
+                    {/* Step 1 — User Input + Risk & Inflation side button */}
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="flex-1 max-w-[280px] mx-auto rounded-xl border border-accent/30 bg-background p-4 transition-all hover:shadow-md">
+                        <div className="flex items-start gap-3">
+                          <span className="font-display text-2xl font-light text-accent/40 leading-none mt-0.5">1</span>
+                          <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <Lock className="w-3.5 h-3.5 text-accent" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-foreground leading-tight">User Input</p>
+                            <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Scenario data, documents & supplier info — anonymised before processing</p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-foreground leading-tight">User Input</p>
-                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Scenario data, documents & supplier info — anonymised before processing</p>
+                      </div>
+                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0">
+                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
+                          <line x1="0" y1="5" x2="14" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M18 5 L13 2 L13 8 Z" fill="currentColor" />
+                        </svg>
+                        <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-copper text-white shadow-sm shadow-copper/20 cursor-default">
+                          <Database className="w-3 h-3 text-white/90" />
+                          <p className="text-[9px] font-bold leading-tight max-w-[5rem]">Risk & Inflation Platforms</p>
                         </div>
                       </div>
                     </div>
@@ -171,7 +183,7 @@ const Welcome = () => {
                       <path d="M6 20 L2 13 L10 13 Z" fill="currentColor" />
                     </svg>
 
-                    {/* Step 2 — Core Engine (elevated) + Side Buttons */}
+                    {/* Step 2 — Core Engine (elevated) + Market Intelligence side button */}
                     <div className="flex items-center gap-2 w-full">
                       <div className="flex-1 max-w-[280px] mx-auto rounded-xl bg-primary border border-primary/80 p-4 shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30">
                         <div className="flex items-start gap-3">
@@ -185,23 +197,15 @@ const Welcome = () => {
                           </div>
                         </div>
                       </div>
-                      {/* Side connectors */}
-                      <div className="hidden min-[480px]:flex flex-col gap-2 shrink-0">
-                        {[
-                          { icon: Database, label: "Risk & Inflation Platforms" },
-                          { icon: Radar, label: "Market Intelligence" },
-                        ].map((btn) => (
-                          <div key={btn.label} className="flex items-center gap-1">
-                            <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
-                              <line x1="18" y1="5" x2="4" y2="5" stroke="currentColor" strokeWidth="1.5" />
-                              <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
-                            </svg>
-                            <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-copper text-white shadow-sm shadow-copper/20 cursor-default">
-                              <btn.icon className="w-3 h-3 text-white/90" />
-                              <p className="text-[9px] font-bold leading-tight max-w-[5rem]">{btn.label}</p>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0">
+                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
+                          <line x1="0" y1="5" x2="14" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M18 5 L13 2 L13 8 Z" fill="currentColor" />
+                        </svg>
+                        <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-copper text-white shadow-sm shadow-copper/20 cursor-default">
+                          <Radar className="w-3 h-3 text-white/90" />
+                          <p className="text-[9px] font-bold leading-tight max-w-[5rem]">Market Intelligence</p>
+                        </div>
                       </div>
                     </div>
 
