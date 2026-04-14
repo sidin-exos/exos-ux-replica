@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 // ── Types ────────────────────────────────────────────────────
@@ -60,14 +60,14 @@ export function useScenarioDraft({
   enabled = true,
 }: UseScenarioDraftOptions): UseScenarioDraftReturn {
   const localKey = getLocalKey(scenarioId, userId);
-  const isSavingRef = useRef(false);
-  const lastSavedRef = useRef<Date | null>(null);
   const pendingBlocksRef = useRef<DraftBlocks | null>(null);
   const serverSaveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const hasDraft = enabled
-    ? localStorage.getItem(localKey) !== null
-    : false;
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasDraft, setHasDraft] = useState(() =>
+    enabled ? localStorage.getItem(localKey) !== null : false
+  );
 
   // ── saveDraft ─────────────────────────────────────────────
   const saveDraft = useCallback((blocks: DraftBlocks) => {
@@ -75,6 +75,7 @@ export function useScenarioDraft({
 
     // Layer 1 — immediate localStorage write
     saveToLocal(localKey, blocks);
+    setHasDraft(true);
 
     // Stage for debounced server save
     pendingBlocksRef.current = blocks;
@@ -86,7 +87,7 @@ export function useScenarioDraft({
     serverSaveTimeoutRef.current = setTimeout(async () => {
       const staged = pendingBlocksRef.current;
       if (!staged) return;
-      isSavingRef.current = true;
+      setIsSaving(true);
 
       try {
         const row = {
@@ -99,7 +100,7 @@ export function useScenarioDraft({
           .upsert([row], { onConflict: 'user_id,scenario_id' });
 
         if (!error) {
-          lastSavedRef.current = new Date();
+          setLastSaved(new Date());
           pendingBlocksRef.current = null;
         } else {
           console.warn('[EXOS Draft] Supabase save failed:', error.message);
@@ -107,7 +108,7 @@ export function useScenarioDraft({
       } catch (err) {
         console.warn('[EXOS Draft] Supabase save error:', err);
       } finally {
-        isSavingRef.current = false;
+        setIsSaving(false);
       }
     }, 3000);
   }, [enabled, localKey, userId, scenarioId]);
@@ -117,7 +118,10 @@ export function useScenarioDraft({
     if (!enabled) return null;
 
     const local = loadFromLocal(localKey);
-    if (local) return local;
+    if (local) {
+      setHasDraft(true);
+      return local;
+    }
 
     if (!userId) return null;
 
@@ -130,6 +134,7 @@ export function useScenarioDraft({
         .maybeSingle();
 
       if (error || !data) return null;
+      setHasDraft(true);
       return data.blocks as unknown as DraftBlocks;
     } catch {
       return null;
@@ -141,6 +146,8 @@ export function useScenarioDraft({
     clearTimeout(serverSaveTimeoutRef.current);
     clearFromLocal(localKey);
     pendingBlocksRef.current = null;
+    setHasDraft(false);
+    setLastSaved(null);
 
     if (!userId) return;
 
@@ -166,8 +173,8 @@ export function useScenarioDraft({
     saveDraft,
     clearDraft,
     loadDraft,
-    isSaving: isSavingRef.current,
-    lastSaved: lastSavedRef.current,
+    isSaving,
+    lastSaved,
     hasDraft,
   };
 }
