@@ -150,90 +150,100 @@ const Welcome = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    {[
-                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", tier: "input" as const, sideButton: { icon: Database, label: "Risk & Inflation Platforms" } },
-                      { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", tier: "engine" as const, sideButton: { icon: Radar, label: "Market Intelligence" } },
-                      { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", tier: "cloud" as const },
-                      { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", tier: "output" as const },
-                    ].map((step, i, arr) => {
-                      const tierStyles = {
-                        input: {
-                          card: "bg-accent/8 border-accent/40 shadow-sm shadow-accent/10",
-                          icon: "bg-accent shadow-sm shadow-accent/30",
-                          label: "text-xs text-accent font-bold",
-                          badge: "border-accent bg-accent text-accent-foreground",
-                        },
-                        engine: {
-                          card: "bg-primary/10 border-primary/40 shadow-md shadow-primary/15 ring-1 ring-primary/20",
-                          icon: "bg-primary shadow-md shadow-primary/30",
-                          label: "text-sm text-primary font-bold",
-                          badge: "border-primary bg-primary text-primary-foreground",
-                        },
-                        cloud: {
-                          card: "bg-iris/8 border-iris/40 shadow-sm shadow-iris/10",
-                          icon: "bg-iris shadow-sm shadow-iris/30",
-                          label: "text-xs text-iris font-bold",
-                          badge: "border-iris bg-iris text-white",
-                        },
-                        output: {
-                          card: "bg-positive/8 border-positive/40 shadow-sm shadow-positive/10",
-                          icon: "bg-positive shadow-sm shadow-positive/30",
-                          label: "text-xs text-positive font-bold",
-                          badge: "border-positive bg-positive text-white",
-                        },
-                      };
-                      const s = tierStyles[step.tier];
-                      return (
-                      <div key={step.label}>
-                        <div className="flex items-stretch gap-2">
-                          <div className={`flex items-center gap-3 py-2.5 px-4 rounded-lg border cursor-default transition-all hover:shadow-lg flex-1 ${s.card}`}>
-                            <div className="relative shrink-0">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.icon}`}>
-                                <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
-                              </div>
-                              <span className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[8px] font-bold flex items-center justify-center ${s.badge}`}>
-                                {i + 1}
-                              </span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className={`leading-tight ${s.label}`}>{step.label}</p>
-                              <p className={`leading-snug mt-0.5 ${step.tier === "engine" ? "text-[11px] text-foreground/80" : "text-[10px] text-muted-foreground"}`}>{step.desc}</p>
-                            </div>
-                          </div>
-                          {step.sideButton && (
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <svg aria-hidden="true" width="24" height="12" viewBox="0 0 24 12" className="text-primary/50 shrink-0">
-                                <path d="M2 6 L8 2 L8 10 Z" fill="currentColor" stroke="none" />
-                                <line x1="8" y1="6" x2="24" y2="6" stroke="currentColor" strokeWidth="2" />
-                              </svg>
-                              <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border-2 border-copper/50 bg-copper/10 cursor-default transition-all hover:shadow-lg hover:border-copper/70 self-stretch shadow-sm shadow-copper/10">
-                                <div className="w-7 h-7 rounded-lg bg-copper shadow-sm shadow-copper/30 flex items-center justify-center">
-                                  <step.sideButton.icon className="w-3.5 h-3.5 text-white" />
-                                </div>
-                                <p className="text-[10px] font-bold text-foreground leading-tight max-w-[5rem]">{step.sideButton.label}</p>
-                              </div>
-                            </div>
-                          )}
+                  <div className="flex flex-col items-center gap-0">
+                    {/* Step 1 — User Input */}
+                    <div className="w-full max-w-[280px] rounded-xl border border-accent/30 bg-background p-4 transition-all hover:shadow-md">
+                      <div className="flex items-start gap-3">
+                        <span className="font-display text-2xl font-light text-accent/40 leading-none mt-0.5">1</span>
+                        <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+                          <Lock className="w-3.5 h-3.5 text-accent" />
                         </div>
-                        {i < arr.length - 1 && (
-                          <div className="flex justify-center py-0.5">
-                            {i === 1 ? (
-                              <svg aria-hidden="true" width="24" height="28" viewBox="0 0 24 28" className="text-primary">
-                                <path d="M12 0 L18 7 L14 7 L14 12 L10 12 L10 7 L6 7 Z" fill="currentColor" />
-                                <path d="M12 28 L6 21 L10 21 L10 16 L14 16 L14 21 L18 21 Z" fill="currentColor" />
-                              </svg>
-                            ) : (
-                              <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-primary/50">
-                                <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="2" />
-                                <path d="M6 20 L2 14 L10 14 Z" fill="currentColor" stroke="none" />
-                              </svg>
-                            )}
-                          </div>
-                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-foreground leading-tight">User Input</p>
+                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Scenario data, documents & supplier info — anonymised before processing</p>
+                        </div>
                       </div>
-                      );
-                    })}
+                    </div>
+
+                    {/* Arrow 1→2 */}
+                    <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-muted-foreground/40 my-0.5">
+                      <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M6 20 L2 13 L10 13 Z" fill="currentColor" />
+                    </svg>
+
+                    {/* Step 2 — Core Engine (elevated) + Side Buttons */}
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="flex-1 max-w-[280px] mx-auto rounded-xl bg-primary border border-primary/80 p-4 shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30">
+                        <div className="flex items-start gap-3">
+                          <span className="font-display text-2xl font-light text-primary-foreground/30 leading-none mt-0.5">2</span>
+                          <div className="w-7 h-7 rounded-lg bg-primary-foreground/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <Shield className="w-3.5 h-3.5 text-primary-foreground" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-primary-foreground leading-tight">Core Engine</p>
+                            <p className="text-[10px] text-primary-foreground/70 leading-snug mt-0.5">Grounding, market enrichment, validation & de-anonymisation pipeline</p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Side connectors */}
+                      <div className="hidden min-[480px]:flex flex-col gap-2 shrink-0">
+                        {[
+                          { icon: Database, label: "Risk & Inflation Platforms" },
+                          { icon: Radar, label: "Market Intelligence" },
+                        ].map((btn) => (
+                          <div key={btn.label} className="flex items-center gap-1">
+                            <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
+                              <line x1="18" y1="5" x2="4" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                              <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
+                            </svg>
+                            <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-copper text-white shadow-sm shadow-copper/20 cursor-default">
+                              <btn.icon className="w-3 h-3 text-white/90" />
+                              <p className="text-[9px] font-bold leading-tight max-w-[5rem]">{btn.label}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Arrow 2→3 */}
+                    <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-muted-foreground/40 my-0.5">
+                      <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M6 20 L2 13 L10 13 Z" fill="currentColor" />
+                    </svg>
+
+                    {/* Step 3 — Cloud AI */}
+                    <div className="w-full max-w-[280px] rounded-xl border border-iris/30 bg-background p-4 transition-all hover:shadow-md">
+                      <div className="flex items-start gap-3">
+                        <span className="font-display text-2xl font-light text-iris/40 leading-none mt-0.5">3</span>
+                        <div className="w-7 h-7 rounded-lg bg-iris/15 flex items-center justify-center shrink-0 mt-0.5">
+                          <Globe className="w-3.5 h-3.5 text-iris" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-foreground leading-tight">Cloud AI</p>
+                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Auditor, Optimiser & Strategist agents analyse in parallel</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Arrow 3→4 */}
+                    <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-muted-foreground/40 my-0.5">
+                      <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M6 20 L2 13 L10 13 Z" fill="currentColor" />
+                    </svg>
+
+                    {/* Step 4 — User Interface */}
+                    <div className="w-full max-w-[280px] rounded-xl border border-positive/30 bg-background p-4 transition-all hover:shadow-md">
+                      <div className="flex items-start gap-3">
+                        <span className="font-display text-2xl font-light text-positive/40 leading-none mt-0.5">4</span>
+                        <div className="w-7 h-7 rounded-lg bg-positive/15 flex items-center justify-center shrink-0 mt-0.5">
+                          <CheckCircle className="w-3.5 h-3.5 text-positive" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-foreground leading-tight">User Interface</p>
+                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Validated reports, interactive dashboards & action roadmaps</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
