@@ -1,34 +1,29 @@
 
 
-## Fix "Generate Full Report" redirect to "/"
+## Problem
 
-### Root cause
+In `src/hooks/useScenarioDraft.ts`, `isSavingRef` and `lastSavedRef` are `useRef` values. Mutating refs does not cause React re-renders, so the draft status UI in `GenericScenarioWizard.tsx` (lines 1046-1058) never updates — "Saving...", "Draft saved X ago", and "Draft restored" are effectively dead code.
 
-In `src/App.tsx` line 90, the `/report` route is explicitly mapped to `<Navigate to="/" replace />`, which immediately redirects to the homepage. Meanwhile, `handleGenerateReport` in `GenericScenarioWizard.tsx` navigates to `/report` with state data expecting the `GeneratedReport` page to render.
+Additionally, `hasDraft` is computed once during render using `localStorage.getItem()` and never updates reactively.
 
-The `GeneratedReport` page component exists at `src/pages/GeneratedReport.tsx` and reads `location.state` for the report data — it just isn't wired up.
+## Plan
 
-### Fix
+**File: `src/hooks/useScenarioDraft.ts`**
 
-**File: `src/App.tsx`, line 90**
+1. Replace `isSavingRef` and `lastSavedRef` with `useState` so changes trigger re-renders.
+2. Replace the static `hasDraft` computation with a `useState<boolean>` that updates when drafts are saved, loaded, or cleared.
+3. Update all mutation sites (`saveDraft`, `loadDraft`, `clearDraft`) to call the new state setters.
 
-Replace:
-```tsx
-<Route path="/report" element={<Navigate to="/" replace />} />
-```
-With:
-```tsx
-<Route path="/report" element={<ProtectedRoute><GeneratedReport /></ProtectedRoute>} />
-```
+### Specific changes:
 
-Add the missing import at the top of the file:
-```tsx
-import GeneratedReport from "@/pages/GeneratedReport";
-```
+- Add `useState` to the React import
+- `const [isSaving, setIsSaving] = useState(false)` — replace `isSavingRef`
+- `const [lastSaved, setLastSaved] = useState<Date | null>(null)` — replace `lastSavedRef`
+- `const [hasDraft, setHasDraft] = useState(() => enabled ? localStorage.getItem(localKey) !== null : false)`
+- In `saveDraft`: use `setIsSaving(true/false)`, `setLastSaved(new Date())`, `setHasDraft(true)`
+- In `clearDraft`: `setHasDraft(false)`, `setLastSaved(null)`
+- In `loadDraft`: if draft found, `setHasDraft(true)`
+- Return the state values directly instead of `.current`
 
-Or, if `GeneratedReport` is already lazy-loaded elsewhere in the file, use that reference instead. This is a one-line route fix plus one import.
-
-### What does NOT change
-- No changes to `GenericScenarioWizard.tsx`, `OutputFeedback.tsx`, or `GeneratedReport.tsx`
-- No database or migration changes
+No changes needed to `GenericScenarioWizard.tsx` — it already reads these values correctly.
 
