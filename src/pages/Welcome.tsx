@@ -166,14 +166,14 @@ const Welcome = () => {
                         </div>
                       </div>
                       <div className="hidden min-[480px]:flex items-center gap-1 shrink-0">
-                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
-                          <line x1="0" y1="5" x2="14" y2="5" stroke="currentColor" strokeWidth="1.5" />
-                          <path d="M18 5 L13 2 L13 8 Z" fill="currentColor" />
-                        </svg>
-                        <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-copper text-white shadow-sm shadow-copper/20 cursor-default">
-                          <Database className="w-3 h-3 text-white/90" />
+                        <div className="flex items-center gap-1.5 py-2 px-2.5 rounded-md border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default">
+                          <Database className="w-3 h-3 text-copper" />
                           <p className="text-[9px] font-bold leading-tight max-w-[5rem]">Risk & Inflation Platforms</p>
                         </div>
+                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
+                          <line x1="0" y1="5" x2="14" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
+                        </svg>
                       </div>
                     </div>
 
@@ -198,14 +198,14 @@ const Welcome = () => {
                         </div>
                       </div>
                       <div className="hidden min-[480px]:flex items-center gap-1 shrink-0">
-                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
-                          <line x1="0" y1="5" x2="14" y2="5" stroke="currentColor" strokeWidth="1.5" />
-                          <path d="M18 5 L13 2 L13 8 Z" fill="currentColor" />
-                        </svg>
-                        <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-copper text-white shadow-sm shadow-copper/20 cursor-default">
-                          <Radar className="w-3 h-3 text-white/90" />
+                        <div className="flex items-center gap-1.5 py-2 px-2.5 rounded-md border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default">
+                          <Radar className="w-3 h-3 text-copper" />
                           <p className="text-[9px] font-bold leading-tight max-w-[5rem]">Market Intelligence</p>
                         </div>
+                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
+                          <line x1="0" y1="5" x2="14" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
+                        </svg>
                       </div>
                     </div>
 
