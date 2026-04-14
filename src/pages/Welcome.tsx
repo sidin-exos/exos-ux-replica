@@ -165,14 +165,14 @@ const Welcome = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0">
-                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
-                          <line x1="4" y1="5" x2="18" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="text-muted-foreground/30 shrink-0">
+                          <line x1="4" y1="5" x2="24" y2="5" stroke="currentColor" strokeWidth="1.5" />
                           <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
                         </svg>
-                        <div className="flex items-center gap-2 py-3 px-3.5 rounded-md border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default">
-                          <Database className="w-4 h-4 text-copper" />
-                          <p className="text-[11px] font-bold leading-tight max-w-[6.5rem]">Risk & Inflation Platforms</p>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-h-[56px]">
+                          <Database className="w-4.5 h-4.5 text-copper shrink-0" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Risk & Inflation Platforms</p>
                         </div>
                       </div>
                     </div>
@@ -197,14 +197,14 @@ const Welcome = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0">
-                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="text-muted-foreground/30 shrink-0">
-                          <line x1="4" y1="5" x2="18" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="text-muted-foreground/30 shrink-0">
+                          <line x1="4" y1="5" x2="24" y2="5" stroke="currentColor" strokeWidth="1.5" />
                           <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
                         </svg>
-                        <div className="flex items-center gap-2 py-3 px-3.5 rounded-md border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default">
-                          <Radar className="w-4 h-4 text-copper" />
-                          <p className="text-[11px] font-bold leading-tight max-w-[6.5rem]">Market Intelligence</p>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-h-[56px]">
+                          <Radar className="w-4.5 h-4.5 text-copper shrink-0" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Market Intelligence</p>
                         </div>
                       </div>
                     </div>
@@ -230,11 +230,11 @@ const Welcome = () => {
                         </div>
                       </div>
                       {/* Invisible spacer to match rows with side buttons */}
-                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0 invisible">
-                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="shrink-0"><line x1="0" y1="5" x2="18" y2="5" /></svg>
-                        <div className="flex items-center gap-2 py-3 px-3.5">
-                          <Database className="w-4 h-4" />
-                          <p className="text-[11px] font-bold leading-tight max-w-[6.5rem]">Placeholder</p>
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0 invisible">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="shrink-0"><line x1="0" y1="5" x2="24" y2="5" /></svg>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 min-h-[56px]">
+                          <Database className="w-4.5 h-4.5" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Placeholder</p>
                         </div>
                       </div>
                     </div>
@@ -260,11 +260,11 @@ const Welcome = () => {
                         </div>
                       </div>
                       {/* Invisible spacer to match rows with side buttons */}
-                      <div className="hidden min-[480px]:flex items-center gap-1 shrink-0 invisible">
-                        <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" className="shrink-0"><line x1="0" y1="5" x2="18" y2="5" /></svg>
-                        <div className="flex items-center gap-2 py-3 px-3.5">
-                          <Database className="w-4 h-4" />
-                          <p className="text-[11px] font-bold leading-tight max-w-[6.5rem]">Placeholder</p>
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0 invisible">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="shrink-0"><line x1="0" y1="5" x2="24" y2="5" /></svg>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 min-h-[56px]">
+                          <Database className="w-4.5 h-4.5" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Placeholder</p>
                         </div>
                       </div>
                     </div>
