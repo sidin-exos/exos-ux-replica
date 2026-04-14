@@ -170,9 +170,9 @@ const Welcome = () => {
                           <line x1="4" y1="5" x2="18" y2="5" stroke="currentColor" strokeWidth="1.5" />
                           <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
                         </svg>
-                        <div className="flex items-center gap-2 py-3 px-3.5 rounded-md border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-w-[120px]">
-                          <Database className="w-4 h-4 text-copper shrink-0" />
-                          <p className="text-[10px] font-bold leading-tight">Risk & Inflation Platforms</p>
+                        <div className="flex items-center gap-1.5 py-2 px-2.5 rounded-md border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default">
+                          <Database className="w-3 h-3 text-copper" />
+                          <p className="text-[9px] font-bold leading-tight max-w-[5rem]">Risk & Inflation Platforms</p>
                         </div>
                       </div>
                     </div>
@@ -202,9 +202,9 @@ const Welcome = () => {
                           <line x1="4" y1="5" x2="18" y2="5" stroke="currentColor" strokeWidth="1.5" />
                           <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
                         </svg>
-                        <div className="flex items-center gap-2 py-3 px-3.5 rounded-md border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-w-[120px]">
-                          <Radar className="w-4 h-4 text-copper shrink-0" />
-                          <p className="text-[10px] font-bold leading-tight">Market Intelligence</p>
+                        <div className="flex items-center gap-1.5 py-2 px-2.5 rounded-md border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default">
+                          <Radar className="w-3 h-3 text-copper" />
+                          <p className="text-[9px] font-bold leading-tight max-w-[5rem]">Market Intelligence</p>
                         </div>
                       </div>
                     </div>
