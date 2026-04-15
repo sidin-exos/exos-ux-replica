@@ -58,7 +58,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       industry: IndustryContext | null,
       category: ProcurementCategory | null,
       config?: Partial<PipelineConfig>,
-      model: string = "gemini-3.1-pro-preview",
+      model: string = "gemini-2.5-pro",
       selectedDashboards: string[] = [],
       fileIds: string[] = []
     ): Promise<OrchestratorResponse | null> => {

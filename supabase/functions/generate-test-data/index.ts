@@ -511,7 +511,8 @@ Return ONLY a valid JSON object with these exact keys:
 
   const user = `Generate random parameters for a "${scenarioType}" procurement test case. Be creative but consistent.`;
 
-  const response = await callAI(system, user, temperature);
+  const draftTemperature = Math.min(temperature, 0.5);
+  const response = await callAIWithLimit(system, user, draftTemperature, 4096);
 
   if (!response.success) {
     return { success: false, error: response.error || "Failed to generate draft parameters" };
@@ -993,18 +994,45 @@ async function callAI(
   userPrompt: string,
   temperature: number = 0.7
 ): Promise<{ success: boolean; content: string; error?: string }> {
+  return callAIWithLimit(systemPrompt, userPrompt, temperature, 8192);
+}
+
+async function callAIWithLimit(
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number,
+  maxOutputTokens: number
+): Promise<{ success: boolean; content: string; error?: string }> {
+  const base = {
+    systemPrompt,
+    contents: [{ role: "user" as const, parts: [{ text: userPrompt }] }],
+    temperature,
+    maxOutputTokens,
+    timeoutMs: 45_000,
+  };
+
   try {
-    const response = await callGoogleAI({
-      systemPrompt,
-      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-      temperature,
-      maxOutputTokens: 8192,
-    });
+    const response = await callGoogleAI(base);
     return { success: true, content: response.text };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("[TestDataGen] AI call failed:", message);
-    return { success: false, content: "", error: message };
+    const status = (error as { status?: number })?.status;
+    const primaryMsg = error instanceof Error ? error.message : String(error);
+    const overloaded = status === 503 || status === 429;
+
+    if (!overloaded) {
+      console.error("[TestDataGen] AI call failed:", primaryMsg);
+      return { success: false, content: "", error: primaryMsg };
+    }
+
+    console.warn(`[TestDataGen] primary model overloaded (${status}), falling back to gemini-2.5-flash`);
+    try {
+      const response = await callGoogleAI({ ...base, model: "gemini-2.5-flash" });
+      return { success: true, content: response.text };
+    } catch (fallbackError) {
+      const fbMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+      console.error("[TestDataGen] fallback gemini-2.5-flash also failed:", fbMsg);
+      return { success: false, content: "", error: fbMsg };
+    }
   }
 }
 
