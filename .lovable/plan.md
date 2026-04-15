@@ -2,28 +2,35 @@
 
 ## Problem
 
-In `src/hooks/useScenarioDraft.ts`, `isSavingRef` and `lastSavedRef` are `useRef` values. Mutating refs does not cause React re-renders, so the draft status UI in `GenericScenarioWizard.tsx` (lines 1046-1058) never updates — "Saving...", "Draft saved X ago", and "Draft restored" are effectively dead code.
+The input evaluator's **gibberish detection** (`UNIVERSAL_GIBBERISH_RATIO` check) fires false positives on legitimate English procurement text. This happens because domain-specific terms, company names, product codes, and abbreviations aren't in the `KNOWN_WORDS` set, causing the "known word ratio" to drop below 50%.
 
-Additionally, `hasDraft` is computed once during render using `localStorage.getItem()` and never updates reactively.
+When triggered, it shows:
+- **Message**: "Only X% of words are recognisable. The content may be garbled or pasted from an incompatible source."
+- **Suggestion**: "Ensure the text is in English and describes your procurement context clearly."
+
+Both are **factually incorrect** (the text IS in English) and **impolite** (implying the user wrote gibberish when they provided quality data).
 
 ## Plan
 
-**File: `src/hooks/useScenarioDraft.ts`**
+### 1. Raise the gibberish threshold and soften the messaging
 
-1. Replace `isSavingRef` and `lastSavedRef` with `useState` so changes trigger re-renders.
-2. Replace the static `hasDraft` computation with a `useState<boolean>` that updates when drafts are saved, loaded, or cleared.
-3. Update all mutation sites (`saveDraft`, `loadDraft`, `clearDraft`) to call the new state setters.
+**File**: `src/lib/input-evaluator/universal-checks.ts`
 
-### Specific changes:
+- Lower the trigger threshold from `ratio < 0.5` (50%) to `ratio < 0.35` (35%) — legitimate procurement text with domain terms, proper nouns, and codes typically scores 40-60% on this dictionary, so 50% is far too aggressive.
+- Rewrite the message to be constructive and respectful:
+  - **Message**: `"Some specialised terms weren't recognised by our dictionary — this is normal for domain-specific content and won't affect your analysis."`
+  - **Suggestion**: `"No action needed if your input is accurate. Our analysis engine handles industry jargon, product codes, and company names."`
+- Downgrade severity from `WARNING` to `INFO` — this should never alarm the user.
 
-- Add `useState` to the React import
-- `const [isSaving, setIsSaving] = useState(false)` — replace `isSavingRef`
-- `const [lastSaved, setLastSaved] = useState<Date | null>(null)` — replace `lastSavedRef`
-- `const [hasDraft, setHasDraft] = useState(() => enabled ? localStorage.getItem(localKey) !== null : false)`
-- In `saveDraft`: use `setIsSaving(true/false)`, `setLastSaved(new Date())`, `setHasDraft(true)`
-- In `clearDraft`: `setHasDraft(false)`, `setLastSaved(null)`
-- In `loadDraft`: if draft found, `setHasDraft(true)`
-- Return the state values directly instead of `.current`
+### 2. Exempt fields with sufficient word count and numeric content
 
-No changes needed to `GenericScenarioWizard.tsx` — it already reads these values correctly.
+**File**: `src/lib/input-evaluator/universal-checks.ts`
+
+- Add an early return in `checkGibberish` when the text has 30+ words AND contains numeric data — this pattern strongly indicates real procurement input, not gibberish, even if many words aren't in the dictionary.
+
+### 3. Soften the language check message
+
+**File**: `src/lib/input-evaluator/universal-checks.ts`
+
+- The `UNIVERSAL_LANGUAGE` check (line 145) also has a slightly commanding tone. Rewrite to: `"This field contains non-Latin characters. EXOS produces the most detailed output with English text — proper nouns and technical terms in other scripts work fine."`
 
