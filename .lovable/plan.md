@@ -1,40 +1,36 @@
 
 
-## Redesign Knowledge Base Interface
+## Problem
 
-Based on the screenshots, the "Generate Market Insights" section needs to shift from a stacked layout to a **3-column card grid** where Industry, Countries & Regions, and Procurement Categories each occupy their own card at equal height.
+The input evaluator's **gibberish detection** (`UNIVERSAL_GIBBERISH_RATIO` check) fires false positives on legitimate English procurement text. This happens because domain-specific terms, company names, product codes, and abbreviations aren't in the `KNOWN_WORDS` set, causing the "known word ratio" to drop below 50%.
 
-### Changes (single file: `src/components/insights/MarketInsightsAdmin.tsx`)
+When triggered, it shows:
+- **Message**: "Only X% of words are recognisable. The content may be garbled or pasted from an incompatible source."
+- **Suggestion**: "Ensure the text is in English and describes your procurement context clearly."
 
-1. **Remove the description card** at the top (the one with the preview image) — the screenshot shows the generate section as the primary content directly under the tab.
+Both are **factually incorrect** (the text IS in English) and **impolite** (implying the user wrote gibberish when they provided quality data).
 
-2. **Replace the "Generate Market Insights" Card internals** with a 3-column grid layout:
-   - **Column 1 — Industry**: A standalone card containing the industry dropdown selector, vertically centered.
-   - **Column 2 — Countries & Regions**: A standalone card with the grouped checkbox list (taller, scrollable).
-   - **Column 3 — Procurement Categories**: A standalone card with the category checkbox list (matching height).
+## Plan
 
-3. **Section header**: Plain bold text "Generate Market Insights" with subtitle, no card wrapper — matching the clean look in the screenshot.
+### 1. Raise the gibberish threshold and soften the messaging
 
-4. **Generate button**: Remains at the bottom-right, outside the 3 cards, same styling as current.
+**File**: `src/lib/input-evaluator/universal-checks.ts`
 
-5. **Increase list heights**: Bump `max-h-48` to `max-h-64` or similar to show more items without scrolling, matching the taller cards in the screenshot.
+- Lower the trigger threshold from `ratio < 0.5` (50%) to `ratio < 0.35` (35%) — legitimate procurement text with domain terms, proper nouns, and codes typically scores 40-60% on this dictionary, so 50% is far too aggressive.
+- Rewrite the message to be constructive and respectful:
+  - **Message**: `"Some specialised terms weren't recognised by our dictionary — this is normal for domain-specific content and won't affect your analysis."`
+  - **Suggestion**: `"No action needed if your input is accurate. Our analysis engine handles industry jargon, product codes, and company names."`
+- Downgrade severity from `WARNING` to `INFO` — this should never alarm the user.
 
-6. **Keep existing**: Browse/filter table, batch progress, generation results — all remain unchanged below.
+### 2. Exempt fields with sufficient word count and numeric content
 
-### Layout sketch
-```text
-Generate Market Insights
-Select one industry, then choose countries and categories...
+**File**: `src/lib/input-evaluator/universal-checks.ts`
 
-┌──────────────┐ ┌──────────────────────┐ ┌──────────────────────┐
-│  Industry    │ │ Countries & Regions  │ │ Procurement Categories│
-│              │ │                      │ │                      │
-│ [Dropdown v] │ │ ○ Global             │ │ ○ Chemicals          │
-│              │ │ ○ European Union     │ │ ○ Construction       │
-│              │ │ ○ Asia-Pacific       │ │ ○ Electronic         │
-│              │ │ ...                  │ │ ...                  │
-└──────────────┘ └──────────────────────┘ └──────────────────────┘
+- Add an early return in `checkGibberish` when the text has 30+ words AND contains numeric data — this pattern strongly indicates real procurement input, not gibberish, even if many words aren't in the dictionary.
 
-                        [summary text]    [Generate Market Insights]
-```
+### 3. Soften the language check message
+
+**File**: `src/lib/input-evaluator/universal-checks.ts`
+
+- The `UNIVERSAL_LANGUAGE` check (line 145) also has a slightly commanding tone. Rewrite to: `"This field contains non-Latin characters. EXOS produces the most detailed output with English text — proper nouns and technical terms in other scripts work fine."`
 

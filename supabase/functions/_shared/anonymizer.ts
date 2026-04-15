@@ -283,8 +283,16 @@ function calculateConfidenceServer(
   return Math.max(0.1, Math.min(1.0, confidence));
 }
 
+// "price" was previously included but removed: financial amounts (€8.5M, $1.2K)
+// are not personally identifying — they're commercial figures the AI needs to
+// compute TCO/NPV/cost analyses. Anonymising them broke every Group A scenario
+// because the AI received [AMOUNT_A] tokens it couldn't do math on, returning
+// `amount: null` everywhere and blanking the Cost Breakdown / TCO dashboards.
+// PII proper (names, emails, phones, IBAN, tax IDs, supplier names) is still
+// anonymised. The "price" patterns remain available in REVERSIBLE_ENTITY_PATTERNS
+// for any caller that explicitly opts in.
 const DEFAULT_ENTITY_TYPES: EntityType[] = [
-  "company", "person", "price", "contract", "email",
+  "company", "person", "contract", "email",
   "phone", "iban", "credit_card", "tax_id",
 ];
 
@@ -293,15 +301,28 @@ const DEFAULT_ENTITY_TYPES: EntityType[] = [
  * Returns entity map for subsequent deanonymization.
  *
  * Deterministic within a single call: same input value always gets the same token.
+ *
+ * Pass `existingContext` to continue from a prior anonymization's entity map,
+ * ensuring the same real-world value gets the same token across multiple texts
+ * (e.g. user textarea + attached document content).
  */
 export function anonymizeText(
   text: string,
-  entityTypes: EntityType[] = DEFAULT_ENTITY_TYPES
+  entityTypes: EntityType[] = DEFAULT_ENTITY_TYPES,
+  existingContext?: { entityMap: Record<string, SensitiveEntityServer>; entityIndex: number }
 ): AnonymizationResultServer {
   const startTime = performance.now();
-  const entityMap: Record<string, SensitiveEntityServer> = {};
+  const entityMap: Record<string, SensitiveEntityServer> = existingContext
+    ? { ...existingContext.entityMap }
+    : {};
   let anonymizedText = text;
-  let entityIndex = 0;
+  let entityIndex = existingContext?.entityIndex ?? 0;
+
+  // Build value→token lookup from existing entity map for consistency
+  const valueToToken = new Map<string, string>();
+  for (const entity of Object.values(entityMap)) {
+    valueToToken.set(entity.originalValue, entity.maskedToken);
+  }
 
   // Collect all matches with their positions
   const allMatches: Array<{
@@ -349,9 +370,6 @@ export function anonymizeText(
     return true;
   });
 
-  // Deduplicate by value (same value gets same token)
-  const valueToToken = new Map<string, string>();
-
   for (const match of filteredMatches) {
     let maskedToken: string;
 
@@ -386,7 +404,9 @@ export function anonymizeText(
       processingTimeMs: performance.now() - startTime,
       confidence: calculateConfidenceServer(text, entityMap),
     },
-  };
+    // Expose next entity index so callers can chain anonymization
+    _nextEntityIndex: entityIndex,
+  } as AnonymizationResultServer & { _nextEntityIndex: number };
 }
 
 /**

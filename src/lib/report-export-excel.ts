@@ -715,17 +715,7 @@ async function exportStructuredToExcel(
     addSpacing(3);
   }
 
-  // Section 3: Data Gaps
-  if (parsed.data_gaps?.length > 0) {
-    writeSectionTitle("Data Gaps");
-    const gapData = parsed.data_gaps.map(g => [
-      sanitizeTableCell(g.field),
-      sanitizeTableCell(g.impact),
-      sanitizeTableCell(g.resolution),
-    ]);
-    writeTableAtRow(["Field", "Impact", "Resolution"], gapData);
-    addSpacing(3);
-  }
+  // Data gaps are now rendered as inline coaching tips, not a separate section
 
   // Section 4: Analysis Inputs
   const inputEntries = Object.entries(formData);

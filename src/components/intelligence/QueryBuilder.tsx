@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,11 +64,32 @@ interface QueryBuilderProps {
 }
 
 export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryBuilderProps) {
-  const [queryType, setQueryType] = useState<QueryType>("supplier");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // URL-backed filter state
+  const queryType = (searchParams.get('type') as QueryType) ?? "supplier";
+  const recencyFilter = searchParams.get('recency') ?? "__none__";
+  const selectedDomains = (() => {
+    const raw = searchParams.get('domains');
+    if (!raw) return [] as string[];
+    return raw.split(',').filter(Boolean);
+  })();
+
+  const updateFilter = (key: string, value: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (!value || value === '') {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      return next;
+    }, { replace: true });
+  };
+
+  // Local-only state (not persisted in URL)
   const [queryName, setQueryName] = useState("");
   const [queryText, setQueryText] = useState("");
-  const [recencyFilter, setRecencyFilter] = useState<string>("__none__");
-  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [context, setContext] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -86,11 +108,10 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
   };
 
   const toggleDomain = (domain: string) => {
-    setSelectedDomains(prev =>
-      prev.includes(domain)
-        ? prev.filter(d => d !== domain)
-        : [...prev, domain]
-    );
+    const next = selectedDomains.includes(domain)
+      ? selectedDomains.filter(d => d !== domain)
+      : [...selectedDomains, domain];
+    updateFilter('domains', next.join(','));
   };
 
   const currentType = QUERY_TYPE_LABELS[queryType];
@@ -120,7 +141,7 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setQueryType(type)}
+                    onClick={() => updateFilter('type', type === 'supplier' ? '' : type)}
                     className={`p-3 rounded-lg border text-left transition-all ${
                       isSelected
                         ? `${colors.border} ${colors.bg} text-foreground ring-1 ring-offset-1 ring-offset-background ${colors.border.replace('border-', 'ring-')}`
@@ -176,7 +197,7 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
             <Label>Time Range</Label>
             <Select
               value={recencyFilter}
-              onValueChange={setRecencyFilter}
+              onValueChange={(v) => updateFilter('recency', v === '__none__' ? '' : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Any time" />

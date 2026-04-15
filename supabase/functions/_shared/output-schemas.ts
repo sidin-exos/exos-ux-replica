@@ -73,7 +73,13 @@ export const GROUP_AI_INSTRUCTIONS: Record<string, string> = {
   A: `You are a deterministic financial calculation engine. Every numerical output must be derived from the user's inputs, not estimated. Where inputs are missing, return null for the affected field and add an entry to confidence_flags. Never invent financial figures.`,
   B: `You are a procurement document generation engine. Output structured, ready-to-use documents. Every section must be explicitly labelled. Mark any section where insufficient input was provided with [DATA NEEDED: description] rather than fabricating content.`,
   C: `You are a procurement risk and compliance auditor. Every identified issue must be explicitly referenced to the relevant regulatory standard or contractual clause. Never omit a risk. Use RAG status consistently.`,
-  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions.`,
+  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions.
+
+S21 Negotiation Preparation — SPECIFIC RULES:
+1. batna_strength_pct: Calculate deterministically 0–100 (cap at 95). Formula: start at 50, +10 if ≥2 alternative suppliers mentioned, +10 if switching cost <15% of contract value, +10 if contract is non-critical (leverage/routine in Kraljic), +5 if market is buyer-favourable, −15 if sole-source/monopoly. Clamp to [5, 95].
+2. leverage_points[]: Return 2–6 items. Each must have title (≤8 words), description (1–2 sentences referencing user data), and impact ("high"|"medium"|"low"). Forbidden: generic phrases like "Use competitive pressure" without specifics.
+3. negotiation_scenarios[]: Always return exactly 3 objects: Conservative, Balanced, Aggressive. Each has name, description, expected_savings_pct (number), risk_level ("low"|"medium"|"high"), and recommended (boolean — exactly one must be true).
+4. negotiation_sequence[]: Produce 3–6 sequential tactical steps for the negotiation. Each step must have: step (a short action label, e.g. "Open with price anchor", "Introduce volume commitment") and detail (1–2 sentences on exactly how to execute this step given the user's inputs). Do not use generic advice. Each step must reference something specific from the user's input.`,
   E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
 };
 
@@ -99,8 +105,21 @@ export const GROUP_SCHEMAS: Record<string, string> = {
     "scenario_specific": {}
   }
 }
-Populate scenario_specific based on the scenario being analysed (e.g. vendor_options for TCO, cost_decomposition for Should-Cost, savings_breakdown for Savings Calculation, etc.).
-Every numeric field must be derived from user inputs. Use null + confidence_flags entry if input is missing.`,
+FINANCIAL_MODEL IS ALWAYS REQUIRED (independent of scenario_specific):
+- payload.financial_model.cost_breakdown MUST always contain at least 3 cost categories with non-null numeric "amount" values derived from the user's inputs. Do NOT leave amount as null when the user provided enough information to compute it. Do NOT skip this section — it powers the Cost Breakdown dashboard for every Group A scenario.
+- payload.financial_model.totals.total_cost MUST be the sum of cost_breakdown amounts.
+- payload.financial_model.currency MUST be set (default "EUR").
+- payload.financial_model.analysis_period_years MUST be set when the scenario involves a time horizon (TCO, Capex/Opex, Forecasting).
+
+Then ALSO populate scenario_specific with the per-scenario structure below — this is in ADDITION to financial_model, never instead of it:
+
+- tco-analysis (S1): scenario_specific.vendor_options MUST be an array of AT LEAST 2 objects, each with vendor_label (string), total_tco (number), year_breakdown (array of { year: number, cost: number }). If the user provided only one option to analyse, generate the comparison against a clearly-labelled status-quo / do-nothing / industry-benchmark alternative. Never return fewer than 2 vendor_options for tco-analysis. The financial_model.cost_breakdown for tco-analysis represents the categorical decomposition of the PRIMARY (recommended) option's total_tco.
+- cost-breakdown (S2): use financial_model.cost_breakdown as the primary source. scenario_specific can stay empty {} or hold optional commentary.
+- savings-calculation (S4): scenario_specific.savings_breakdown — array of { lever (string), annual_savings (number), one_off_savings (number), confidence (HIGH|MEDIUM|LOW) }.
+- capex-vs-opex (S3): scenario_specific.options — array of >= 2 { option_label, total_capex, total_opex, year_by_year } entries.
+- For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
+
+Every numeric field must be derived from user inputs. Use null + confidence_flags entry ONLY when input is genuinely missing — do not use null as a shortcut to skip computation when you have the data.`,
 
   B: `GROUP B PAYLOAD SCHEMA (Workflow & Convenience — S9–S15):
 {
@@ -136,10 +155,34 @@ Every risk must reference a regulatory standard or contractual clause. Use RAG s
   "payload": {
     "framework_applied": null,
     "strategic_verdict": null,
-    "scenario_specific": {}
+    "scenario_specific": {
+      // S21 Negotiation Preparation:
+      "batna": {
+        "batna_strength_pct": 0,
+        "description": "string — 1-2 sentences explaining the BATNA assessment",
+        "best_alternative": "string — the specific best alternative identified"
+      },
+      "zopa": { "low": null, "high": null, "currency": "EUR" },
+      "leverage_points": [
+        { "title": "string ≤8 words", "description": "string referencing user data", "impact": "high | medium | low" }
+      ],
+      "negotiation_sequence": [
+        { "step": "string — short action label", "detail": "string — 1-2 sentences on execution" }
+      ],
+      "negotiation_scenarios": [
+        { "name": "Conservative | Balanced | Aggressive", "description": "string", "expected_savings_pct": 0, "risk_level": "low | medium | high", "recommended": false }
+      ]
+    }
   }
 }
-Populate scenario_specific based on the scenario (e.g. batna/zopa/leverage_analysis for Negotiation Prep, kraljic_position/porters_five_forces for Category Strategy, make_cost/buy_cost/verdict for Make vs Buy, consolidation_scenarios for Volume Consolidation, development_plan for SRM, value_dimensions for Total Value, maturity dimensions for Maturity Assessment).
+Populate scenario_specific based on the scenario:
+- S21 Negotiation Prep: batna (with batna_strength_pct), zopa, leverage_points[], negotiation_scenarios[] (always 3, exactly one recommended).
+- S22 Category Strategy: kraljic_position, porters_five_forces.
+- S23 Make vs Buy: make_cost, buy_cost, verdict.
+- S24 Volume Consolidation: consolidation_scenarios.
+- S25 SRM: development_plan.
+- S26 Total Value: value_dimensions.
+- S27 Maturity Assessment: maturity dimensions.
 All framework outputs must reference the user's specific inputs. Never produce generic textbook descriptions.`,
 
   E: `GROUP E PAYLOAD SCHEMA (Real-Time Knowledge — S28–S29):
@@ -172,7 +215,13 @@ You MUST use the following schema structure:
 - payload must contain the group-specific structure defined below.
 - Every defined field must be present. Use null for missing values — never omit a field.
 - Set low_confidence_watermark to true if confidence_level is LOW.
-- Add an entry to data_gaps for every field that is null due to missing user input.
+- data_gaps RULES (strict):
+  1. Maximum 3 entries. Pick the ones with the highest analytical impact.
+  2. Each entry MUST name a specific field from the user's input form (e.g. "annual_spend", "contract_end_date"), not generic labels like "Unknown field".
+  3. "impact" MUST describe the concrete analytical consequence (e.g. "Cannot calculate NPV without discount rate"), never "Impact not specified".
+  4. "resolution" MUST be a specific, actionable coaching tip (e.g. "Add your annual spend figure to unlock cost-per-unit calculations"), never "Provide missing data".
+  5. FORBIDDEN placeholder values: "Unknown field", "Impact not specified", "Provide missing data", "Not available", "N/A". If you cannot write a specific entry, omit it entirely.
+  6. Tone: helpful coaching, not punitive. Frame as "Add [specific field] to unlock [specific benefit]" rather than "Missing: [field]". Do NOT start resolutions with "To strengthen this analysis" — the UI already provides that heading.
 - Add an entry to gdpr_flags if any output field appears to contain unanonymised personal
   data (real names, email addresses, phone numbers, salary amounts). Set that field to null
   and explain in gdpr_flags. Never write PII into any output field.
@@ -252,13 +301,22 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     parts.push('');
   }
 
-  if (parsed.data_gaps?.length > 0) {
-    parts.push('### Data Gaps');
-    parsed.data_gaps.forEach(g => {
-      const field = g?.field ?? 'Unknown field';
-      const impact = g?.impact ?? 'Impact not specified';
-      const resolution = g?.resolution ?? 'Provide missing data';
-      parts.push(`- **${field}**: ${impact} → ${resolution}`);
+  const GENERIC_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
+  const validGaps = (parsed.data_gaps ?? []).filter(g => {
+    if (!g?.field || !g?.impact || !g?.resolution) return false;
+    const combined = `${g.field} ${g.impact} ${g.resolution}`.toLowerCase();
+    return !GENERIC_PHRASES.some(p => combined.includes(p));
+  });
+
+  if (validGaps.length > 0) {
+    parts.push('');
+    parts.push('💡 **To strengthen this analysis:**');
+    validGaps.slice(0, 3).forEach(g => {
+      // Strip redundant prefix that duplicates the heading
+      const cleaned = g.resolution.replace(/^To strengthen this analysis,?\s*/i, '');
+      // Capitalise the first letter after stripping
+      const resolution = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+      parts.push(`- ${resolution}`);
     });
     parts.push('');
   }

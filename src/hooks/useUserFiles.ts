@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -83,6 +84,18 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
   const files = data?.files ?? [];
   const totalCount = data?.totalCount ?? 0;
 
+  // Poll every 3s while any file is pending/processing extraction
+  const hasExtractingFiles = files.some(
+    (f) => f.extraction_status === "pending" || f.extraction_status === "processing"
+  );
+  useEffect(() => {
+    if (!hasExtractingFiles) return;
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [hasExtractingFiles, queryClient]);
+
   // Upload file mutation
   const uploadFile = useMutation({
     mutationFn: async (file: File) => {
@@ -165,6 +178,11 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
         await supabase.storage.from("user-files").remove([storagePath]);
         throw error;
       }
+
+      // Fire-and-forget: trigger text extraction for AI analysis
+      triggerExtraction(data.id).catch((err) => {
+        console.error("Failed to trigger file extraction:", err);
+      });
 
       return data;
     },
@@ -288,6 +306,29 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
     return data.signedUrl;
   };
 
+  // Trigger file text extraction via direct fetch (supabase.functions.invoke
+  // doesn't send Authorization header reliably — same workaround as getDownloadUrl)
+  const triggerExtraction = async (fileId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+
+    const { supabaseUrl, supabaseKey } = supabase as any;
+    await fetch(`${supabaseUrl}/functions/v1/extract-file-content`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: supabaseKey,
+      },
+      body: JSON.stringify({ fileId }),
+    });
+  };
+
+  const retryExtraction = async (fileId: string) => {
+    await triggerExtraction(fileId);
+    queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+  };
+
   return {
     files,
     totalCount,
@@ -297,5 +338,6 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
     deleteFile,
     getDownloadUrl,
     getPreviewUrl,
+    retryExtraction,
   };
 }

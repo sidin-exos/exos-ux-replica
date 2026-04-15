@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useLocation, useNavigate, Navigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useUser } from "@/hooks/useUser";
+import { SCENARIO_META, DEFAULT_SCENARIO_SLUG } from "@/lib/scenarioSlugs";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3 } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
@@ -44,6 +46,7 @@ const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
 
 const Index = () => {
   const { user, isLoading: isUserLoading } = useUser();
+  const { scenarioSlug } = useParams<{ scenarioSlug: string }>();
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
@@ -83,17 +86,33 @@ const Index = () => {
 
   const navigate = useNavigate();
 
+  // Sync URL slug to component state
+  useEffect(() => {
+    if (!scenarioSlug) {
+      // No slug in URL — show dashboard
+      setActiveView("dashboard");
+      setSelectedScenario(null);
+      return;
+    }
+    const matched = scenarios.find((s) => s.id === scenarioSlug);
+    if (matched && matched.status === "available") {
+      setSelectedScenario(matched);
+      setActiveView("scenario");
+    } else {
+      // Unknown slug — redirect to home
+      navigate("/", { replace: true });
+    }
+  }, [scenarioSlug, navigate]);
+
   const handleScenarioClick = (scenarioId: string) => {
     const scenario = scenarios.find((s) => s.id === scenarioId);
     if (scenario && scenario.status === "available") {
-      setSelectedScenario(scenario);
-      setActiveView("scenario");
+      navigate(`/analyse/${scenario.id}`);
     }
   };
 
   const handleBack = () => {
-    setActiveView("dashboard");
-    setSelectedScenario(null);
+    navigate("/");
   };
 
   // Group scenarios by category
@@ -109,8 +128,32 @@ const Index = () => {
     return <Navigate to="/welcome" replace />;
   }
 
+  const currentMeta = scenarioSlug
+    ? (SCENARIO_META[scenarioSlug] ?? null)
+    : null;
+
   return (
     <div className="min-h-screen gradient-hero">
+      <Helmet>
+        <title>
+          {currentMeta?.title ?? 'AI Procurement Scenarios | EXOS'}
+        </title>
+        <meta
+          name="description"
+          content={
+            currentMeta?.description ??
+            'AI-powered procurement scenario analysis for EU mid-market teams.'
+          }
+        />
+        <link
+          rel="canonical"
+          href={
+            scenarioSlug
+              ? `https://exosproc.com/analyse/${scenarioSlug}`
+              : 'https://exosproc.com/'
+          }
+        />
+      </Helmet>
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}

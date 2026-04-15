@@ -731,16 +731,22 @@ export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; the
 export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioComparisonData; themeMode?: PdfThemeMode }) => {
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
-  const getScoreColor = (score: number, otherScore: number): string => { if (score > otherScore) return colors.primary; if (score < otherScore) return colors.textMuted; return colors.text; };
-  const scenarioNames = data.scenarios?.slice(0, 2) || [];
-  const scA = scenarioNames[0] || { id: "a", name: "Scenario A", color: colors.primary };
-  const scB = scenarioNames[1] || { id: "b", name: "Scenario B", color: colors.option2 };
-  const criteria = data.radarData ? data.radarData.map(r => { const aVal = typeof r[scA.id] === "number" ? (r[scA.id] as number) : 50; const bVal = typeof r[scB.id] === "number" ? (r[scB.id] as number) : 50; return { name: r.metric as string, weight: 20, a: aVal, b: bVal }; }) : [];
+
+  const allScenarios = data.scenarios || [];
+  if (allScenarios.length === 0) {
+    return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Scenario Comparison: insufficient data</Text></View>;
+  }
+
+  const criteria = data.radarData ? data.radarData.map(r => {
+    const scores: Record<string, number> = {};
+    for (const sc of allScenarios) { scores[sc.id] = typeof r[sc.id] === "number" ? (r[sc.id] as number) : 50; }
+    return { name: r.metric as string, scores };
+  }) : [];
+
   const equalWeight = criteria.length > 0 ? Math.round(100 / criteria.length) : 20;
-  const effectiveCriteria = criteria.map(c => ({ ...c, weight: equalWeight }));
-  const weightedA = effectiveCriteria.reduce((sum, c) => sum + (c.a * c.weight / 100), 0).toFixed(1);
-  const weightedB = effectiveCriteria.reduce((sum, c) => sum + (c.b * c.weight / 100), 0).toFixed(1);
-  const winner = Number(weightedA) >= Number(weightedB) ? { ...scA, weighted: weightedA } : { ...scB, weighted: weightedB };
+  const weightedScores: Record<string, number> = {};
+  for (const sc of allScenarios) { weightedScores[sc.id] = criteria.reduce((sum, c) => sum + ((c.scores[sc.id] ?? 50) * equalWeight / 100), 0); }
+  const winnerId = allScenarios.reduce((best, sc) => (weightedScores[sc.id] ?? 0) > (weightedScores[best.id] ?? 0) ? sc : best, allScenarios[0]);
 
   return (
     <View style={styles.dashboardCard}>
@@ -751,48 +757,58 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
           <Text style={styles.dashboardSubtitle}>Score-by-criterion (0–100)</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: winner.color }}>{winner.name}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: winnerId.color }}>{winnerId.name}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>recommended</Text>
         </View>
       </View>
-      <View style={{ marginTop: 8, marginBottom: 8 }}>
-        {effectiveCriteria.map((c, i) => (
-          <View key={i} style={{ marginBottom: 6 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
-              <Text style={{ fontSize: 9, color: colors.text }}>{c.name}</Text>
-              <Text style={{ fontSize: 8, color: colors.textMuted }}>Wt: {c.weight}%</Text>
-            </View>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-                <View style={{ flex: 1, height: 9, backgroundColor: colors.surfaceLight, overflow: "hidden" }}><View style={{ width: `${c.a}%`, height: 9, backgroundColor: scA.color }} /></View>
-                <Text style={{ width: 22, fontSize: 9, color: getScoreColor(c.a, c.b), textAlign: "right", marginLeft: 4 }}>{c.a}</Text>
+      {allScenarios.length <= 2 && (
+        <View style={{ marginTop: 8, marginBottom: 8 }}>
+          {criteria.map((c, i) => (
+            <View key={i} style={{ marginBottom: 6 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
+                <Text style={{ fontSize: 9, color: colors.text }}>{c.name}</Text>
+                <Text style={{ fontSize: 8, color: colors.textMuted }}>Wt: {equalWeight}%</Text>
               </View>
-              <View style={{ width: 16 }} />
-              <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-                <View style={{ flex: 1, height: 9, backgroundColor: colors.surfaceLight, overflow: "hidden" }}><View style={{ width: `${c.b}%`, height: 9, backgroundColor: scB.color }} /></View>
-                <Text style={{ width: 22, fontSize: 9, color: getScoreColor(c.b, c.a), textAlign: "right", marginLeft: 4 }}>{c.b}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                {allScenarios.map((sc, si) => (
+                  <View key={sc.id} style={{ flex: 1, flexDirection: "row", alignItems: "center", marginLeft: si > 0 ? 16 : 0 }}>
+                    <View style={{ flex: 1, height: 9, backgroundColor: colors.surfaceLight, overflow: "hidden" }}><View style={{ width: `${c.scores[sc.id] ?? 50}%`, height: 9, backgroundColor: sc.color }} /></View>
+                    <Text style={{ width: 22, fontSize: 9, color: colors.text, textAlign: "right", marginLeft: 4 }}>{c.scores[sc.id] ?? 50}</Text>
+                  </View>
+                ))}
               </View>
             </View>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      )}
       <View style={styles.matrixContainer}>
         <View style={[styles.matrixRow, styles.matrixHeader]}>
           <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, color: colors.badgeText, fontFamily: "Helvetica-Bold" }]}>Metric</Text>
-          <View style={[styles.matrixCell, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]}><View style={{ width: 7, height: 7, backgroundColor: colors.badgeText, opacity: 0.7, marginRight: 3 }} /><Text style={{ fontSize: 9, color: colors.badgeText }}>{scA.name}</Text></View>
-          <View style={[styles.matrixCell, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]}><View style={{ width: 7, height: 7, backgroundColor: colors.badgeText, opacity: 0.5, marginRight: 3 }} /><Text style={{ fontSize: 9, color: colors.badgeText }}>{scB.name}</Text></View>
+          {allScenarios.map((sc) => (
+            <View key={sc.id} style={[styles.matrixCell, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]}>
+              <View style={{ width: 7, height: 7, backgroundColor: colors.badgeText, opacity: 0.7, marginRight: 3 }} />
+              <Text style={{ fontSize: 9, color: colors.badgeText }}>{sc.name}</Text>
+            </View>
+          ))}
         </View>
-        {effectiveCriteria.map((c, i) => (
-          <View key={i} style={[styles.matrixRow, i % 2 === 1 ? { backgroundColor: colors.surface } : {}]}>
-            <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4 }]}>{c.name}</Text>
-            <Text style={[styles.matrixCell, { color: getScoreColor(c.a, c.b), fontFamily: c.a > c.b ? "Helvetica-Bold" : "Helvetica" }]}>{c.a}</Text>
-            <Text style={[styles.matrixCell, { color: getScoreColor(c.b, c.a), fontFamily: c.b > c.a ? "Helvetica-Bold" : "Helvetica" }]}>{c.b}</Text>
-          </View>
-        ))}
+        {criteria.map((c, i) => {
+          const maxScore = Math.max(...allScenarios.map(sc => c.scores[sc.id] ?? 0));
+          return (
+            <View key={i} style={[styles.matrixRow, i % 2 === 1 ? { backgroundColor: colors.surface } : {}]}>
+              <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4 }]}>{c.name}</Text>
+              {allScenarios.map((sc) => {
+                const val = c.scores[sc.id] ?? 50;
+                const isMax = val === maxScore && maxScore > 0;
+                return <Text key={sc.id} style={[styles.matrixCell, { color: isMax ? colors.primary : colors.text, fontFamily: isMax ? "Helvetica-Bold" : "Helvetica" }]}>{val}</Text>;
+              })}
+            </View>
+          );
+        })}
         <View style={[styles.matrixRow, { backgroundColor: colors.surfaceLight, borderBottomWidth: 0 }]}>
           <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, fontFamily: "Helvetica-Bold" }]}>Weighted Score</Text>
-          <Text style={[styles.matrixCell, { fontFamily: "Helvetica-Bold", color: Number(weightedA) >= Number(weightedB) ? colors.primary : colors.text }]}>{weightedA}</Text>
-          <Text style={[styles.matrixCell, { fontFamily: "Helvetica-Bold", color: Number(weightedB) > Number(weightedA) ? colors.primary : colors.text }]}>{weightedB}</Text>
+          {allScenarios.map((sc) => (
+            <Text key={sc.id} style={[styles.matrixCell, { fontFamily: "Helvetica-Bold", color: sc.id === winnerId.id ? colors.primary : colors.text }]}>{(weightedScores[sc.id] ?? 0).toFixed(1)}</Text>
+          ))}
         </View>
       </View>
       <View style={styles.legend}><View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.primary }]} /><Text style={styles.legendText}>Higher score wins per criterion</Text></View></View>
@@ -1000,7 +1016,7 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
   if (!data.fields?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Data Quality: insufficient data</Text></View>;
   const fields = data.fields.map(f => {
     const label = f.status === "complete" ? "Complete" : f.status === "partial" ? "Partial" : "Missing";
-    const missing = f.status === "complete" ? "-" : f.status === "partial" ? "Data gaps present" : "Data not available";
+    const missing = f.status === "complete" ? "-" : f.status === "partial" ? "Additional data would improve results" : "Data not available";
     return { name: f.field, value: f.coverage, status: label, missing };
   });
   const avgQuality = fields.length > 0 ? Math.round(fields.reduce((sum, f) => sum + f.value, 0) / fields.length) : 0;
@@ -1050,7 +1066,7 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
         ))}
       </View>
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.warning, fontFamily: "Helvetica-Bold" }}>Data Gap: </Text>Request missing supplier pricing and clarify renewal terms to improve analysis confidence.</Text>
+        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.warning, fontFamily: "Helvetica-Bold" }}>Tip: </Text>Adding more input details will strengthen the analysis and increase confidence scores.</Text>
       </View>
     </View>
   );

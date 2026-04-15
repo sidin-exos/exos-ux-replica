@@ -10,12 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const GOOGLE_MODELS = [
-  { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro", description: "Latest Pro model (default)" },
-  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash", description: "Fast & balanced" },
-  { value: "gemini-3-pro-preview", label: "Gemini 3 Pro", description: "Highest quality reasoning" },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", description: "Stable GA Pro model (default)" },
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", description: "Fast & balanced" },
   { value: "gemini-3.1-flash-lite-preview", label: "Gemini 3.1 Flash Lite", description: "Fast & cost-efficient" },
-  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", description: "Previous-gen powerhouse" },
-  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", description: "Previous-gen balanced" },
+  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash", description: "Experimental flash model" },
 ];
 
 export function ModelConfigPanel() {

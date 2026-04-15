@@ -28,42 +28,102 @@ interface GenerateOptions {
   mctsIterations?: number;
 }
 
+// CANONICAL SOURCE: supabase/functions/_shared/industry-matrix.ts
+// Keep this local copy in sync when categories are added.
+// TODO Phase 1: fetch this from the edge function instead.
 /**
  * Industry-Category Compatibility Matrix
  * Used for client-side validation before AI generation
+ * Keys = real DB slugs from industry_contexts / procurement_categories
  */
 export const INDUSTRY_CATEGORY_COMPATIBILITY: Record<string, string[]> = {
-  manufacturing: [
-    "raw-materials", "components", "mro", "packaging", "logistics",
-    "capital-equipment", "tooling", "contract-manufacturing", "energy"
+  "industrial-manufacturing": [
+    "raw-materials-steel-metals", "chemicals-specialty", "plastics-resins",
+    "electronic-components", "castings-forgings-machined-parts",
+    "mro-maintenance-repair-operations", "packaging-primary",
+    "logistics-road-freight", "capital-equipment-industrial-machinery",
+    "tooling-dies-moulds", "contract-manufacturing", "utilities-energy",
+    "fasteners-springs-fixings", "rubber-elastomers", "adhesives-sealants-coatings",
+    "cables-wire-harnesses"
   ],
-  software: [
-    "cloud-infrastructure", "saas-subscriptions", "development-tools",
-    "security-services", "professional-services", "it-hardware", "telecom"
+  "software-it": [
+    "cloud-infrastructure-iaas-paas", "it-software-saas", "managed-it-services-msp",
+    "cybersecurity-solutions", "professional-services", "it-hardware",
+    "telecoms-connectivity-services", "training-education"
   ],
-  healthcare: [
-    "medical-devices", "pharmaceuticals", "clinical-supplies", "lab-equipment",
-    "facilities-services", "it-systems", "professional-services", "biotech"
+  "healthcare": [
+    "medical-devices-clinical-consumables", "pharmaceutical-ingredients-apis",
+    "clinical-research-organisation-cro-services", "lab-supplies",
+    "scientific-laboratory-equipment-capital", "facilities-management",
+    "medical-software-health-it-systems", "professional-services"
   ],
-  retail: [
-    "merchandise", "packaging", "logistics", "marketing-services",
-    "store-operations", "e-commerce-tech", "facilities", "pos-systems"
+  "retail": [
+    "textile-fabrics", "food-ingredients", "packaging-primary",
+    "secondary-packaging-labels-print", "logistics-road-freight",
+    "last-mile-e-commerce-fulfilment", "marketing-services",
+    "facilities-management", "it-software-saas"
   ],
-  professional: [
-    "professional-services", "travel", "facilities", "office-supplies",
-    "it-services", "legal-services", "consulting", "training"
+  "professional-services": [
+    "professional-services", "corporate-travel", "facilities-management",
+    "office-supplies", "managed-it-services-msp", "legal-services",
+    "management-consulting-advisory", "training-education",
+    "printing-creative-production"
   ],
-  financial: [
-    "it-infrastructure", "professional-services", "compliance-services",
-    "facilities", "security-services", "consulting", "market-data"
+  "banking-finance": [
+    "cloud-infrastructure-iaas-paas", "it-hardware", "professional-services",
+    "audit-tax-accounting-services", "facilities-management",
+    "cybersecurity-solutions", "management-consulting-advisory",
+    "market-research-data-intelligence", "insurance-corporate"
   ],
-  energy: [
-    "capital-equipment", "raw-materials", "mro", "engineering-services",
-    "logistics", "safety-equipment", "environmental-services"
+  "energy-utilities": [
+    "capital-equipment-industrial-machinery", "raw-materials-steel-metals",
+    "mro-maintenance-repair-operations", "precision-machining-subcontract-engineering",
+    "logistics-road-freight", "personal-protective-equipment-ppe",
+    "waste-management-recycling", "calibration-testing-inspection-services"
   ],
-  construction: [
-    "raw-materials", "equipment-rental", "subcontractors", "safety",
-    "logistics", "engineering-services", "machinery", "tools"
+  "construction-infrastructure": [
+    "construction-materials", "raw-materials-steel-metals",
+    "capital-equipment-industrial-machinery", "personal-protective-equipment-ppe",
+    "logistics-road-freight", "precision-machining-subcontract-engineering",
+    "tooling-dies-moulds", "contract-manufacturing"
+  ],
+  "automotive-oem": [
+    "castings-forgings-machined-parts", "electronic-components", "semiconductors",
+    "plastics-resins", "rubber-elastomers", "printed-circuit-boards-pcbs",
+    "tooling-dies-moulds", "logistics-road-freight", "surface-treatment-plating-coating"
+  ],
+  "pharma-life-sciences": [
+    "pharmaceutical-ingredients-apis", "lab-supplies",
+    "scientific-laboratory-equipment-capital",
+    "clinical-research-organisation-cro-services",
+    "packaging-primary", "cold-chain-logistics",
+    "calibration-testing-inspection-services", "medical-software-health-it-systems"
+  ],
+  "food-beverage": [
+    "food-ingredients", "packaging-primary", "secondary-packaging-labels-print",
+    "cold-chain-logistics", "logistics-road-freight", "utilities-energy",
+    "catering-workplace-food-services", "waste-management-recycling"
+  ],
+  "electronics": [
+    "electronic-components", "semiconductors", "printed-circuit-boards-pcbs",
+    "cables-wire-harnesses", "plastics-resins", "contract-manufacturing",
+    "tooling-dies-moulds", "packaging-primary"
+  ],
+  "telecom": [
+    "telecom-equipment", "telecoms-connectivity-services",
+    "cloud-infrastructure-iaas-paas", "cybersecurity-solutions",
+    "it-hardware", "managed-it-services-msp", "cables-wire-harnesses"
+  ],
+  "aerospace-defense": [
+    "castings-forgings-machined-parts", "electronic-components",
+    "precision-machining-subcontract-engineering", "adhesives-sealants-coatings",
+    "calibration-testing-inspection-services", "capital-equipment-industrial-machinery",
+    "surface-treatment-plating-coating"
+  ],
+  "fmcg-cpg": [
+    "packaging-primary", "secondary-packaging-labels-print", "food-ingredients",
+    "cosmetics-personal-care-ingredients", "marketing-services",
+    "logistics-road-freight", "last-mile-e-commerce-fulfilment"
   ],
 };
 
@@ -154,10 +214,23 @@ export async function generateAITestData(
       };
     }
 
+    // Support new fieldValues shape with backward compat
+    const fieldValues = data.fieldValues || data.data || {};
+
     return {
       success: true,
-      data: data.data,
-      metadata: data.metadata,
+      data: fieldValues,
+      metadata: {
+        industry: options.industry || data.metadata?.industry || "unknown",
+        category: options.category || data.metadata?.category || "unknown",
+        score: data.metadata?.score || 75,
+        iterations: data.metadata?.iterations || 1,
+        reasoning: data.metadata?.reasoning || "",
+        ...data.metadata,
+        testNotes: data.testNotes,
+        expectedEvaluatorScore: data.expectedEvaluatorScore,
+        methodologyEnriched: data.methodologyEnriched,
+      },
     };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
@@ -205,6 +278,17 @@ export async function generateTestDataHybrid(
       });
 
       if (result.success && Object.keys(result.data).length > 0) {
+        if (import.meta.env.DEV) {
+          const meta = result.metadata as any;
+          console.log(
+            `[TestEngine] Generated ${meta.qualityTier || "unknown"} data for ${scenarioType}. Methodology enriched: ${meta.methodologyEnriched}. Expected evaluator score: ${meta.expectedEvaluatorScore}`
+          );
+          if (meta.methodologyEnriched === false) {
+            console.warn(
+              `[TestEngine] Category "${category}" or industry "${industry}" not found in DB. Generation used fallback context only.`
+            );
+          }
+        }
         return {
           data: result.data,
           source: "ai",

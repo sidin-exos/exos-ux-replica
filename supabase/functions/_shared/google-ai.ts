@@ -2,12 +2,19 @@
  * Google AI Studio shared helper for all EXOS Edge Functions.
  *
  * Two-tier model strategy:
- *   Heavy (default): "gemini-3.1-pro-preview" — complex reasoning, tool use, multi-turn
+ *   Heavy (default): "gemini-2.5-pro" — complex reasoning, tool use, multi-turn (GA, stable)
  *   Light:           "gemini-3.1-flash-lite-preview" — simple single-turn, cost-sensitive
+ *
+ * Note: gemini-3.1-pro-preview is currently affected by a known Google-side hang
+ * (https://github.com/google-gemini/gemini-cli/issues/21937) — avoid until fixed.
  */
 
-const DEFAULT_MODEL = "gemini-3.1-pro-preview";
+const DEFAULT_MODEL = "gemini-2.5-pro";
+const OVERLOAD_FALLBACK_MODEL = "gemini-2.5-flash";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const DEFAULT_TIMEOUT_MS = 60_000;
+const MAX_ATTEMPTS = 5;
+const RETRY_BASE_DELAY_MS = 1_000;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -21,6 +28,7 @@ export interface GoogleAIRequest {
   maxOutputTokens?: number;
   model?: string;
   tools?: GoogleAITool[];
+  timeoutMs?: number;
 }
 
 export interface GoogleAITool {
@@ -68,18 +76,84 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
     body.tools = request.tools;
   }
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const timeoutMs = request.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const contentsLen = JSON.stringify(request.contents).length;
+  const sysPromptLen = request.systemPrompt?.length ?? 0;
 
-  if (!res.ok) {
+  let res: Response | undefined;
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    console.log("[GoogleAI] →", JSON.stringify({
+      model,
+      attempt,
+      maxAttempts: MAX_ATTEMPTS,
+      contentsLen,
+      sysPromptLen,
+      hasTools: !!request.tools && request.tools.length > 0,
+      temperature: request.temperature ?? 0.4,
+      maxOutputTokens: request.maxOutputTokens ?? 4096,
+      timeoutMs,
+    }));
+
+    const startTime = performance.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      const elapsedMs = Math.round(performance.now() - startTime);
+      if (err instanceof Error && err.name === "AbortError") {
+        console.error("[GoogleAI] TIMEOUT", JSON.stringify({ model, attempt, elapsedMs, timeoutMs }));
+        const error = new Error(`Google AI Studio request timed out after ${timeoutMs}ms`) as Error & { status: number };
+        error.status = 504;
+        throw error;
+      }
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error("[GoogleAI] NETWORK ERR", JSON.stringify({ model, attempt, elapsedMs, errMsg }));
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    const elapsedMs = Math.round(performance.now() - startTime);
+    console.log("[GoogleAI] ← HTTP", res.status, "in", elapsedMs, "ms");
+
+    if (res.ok) {
+      break;
+    }
+
     const errText = await res.text();
     const error = new Error(`Google AI Studio error ${res.status}: ${errText}`) as Error & { status: number; body: string };
     error.status = res.status;
     error.body = errText;
-    throw error;
+
+    const retriable = res.status >= 500 && res.status < 600;
+    const overloaded = res.status === 503 || res.status === 429;
+
+    if (attempt === MAX_ATTEMPTS && overloaded && model !== OVERLOAD_FALLBACK_MODEL) {
+      console.warn(`[GoogleAI] ${res.status} exhausted on ${model}, falling back to ${OVERLOAD_FALLBACK_MODEL}`);
+      return callGoogleAI({ ...request, model: OVERLOAD_FALLBACK_MODEL });
+    }
+
+    if (!retriable || attempt === MAX_ATTEMPTS) {
+      throw error;
+    }
+
+    lastError = error;
+    const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+    console.warn(`[GoogleAI] ${res.status} on attempt ${attempt}/${MAX_ATTEMPTS}, retrying in ${delay}ms`);
+    await new Promise(r => setTimeout(r, delay));
+  }
+
+  if (!res || !res.ok) {
+    throw lastError ?? new Error("Google AI Studio request failed with no response");
   }
 
   const data = await res.json();

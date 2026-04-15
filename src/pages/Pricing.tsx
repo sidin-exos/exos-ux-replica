@@ -19,7 +19,7 @@ import { useThemedLogo } from "@/hooks/useThemedLogo";
 const pricingTiers = [
   {
     id: "smb",
-    name: "SMB",
+    name: "Starter/SMB",
     subtitle: "For companies without a dedicated procurement function",
     price: "29",
     period: "month",
@@ -27,33 +27,33 @@ const pricingTiers = [
     featured: false,
     features: [
       "Distilled procurement knowledge in one place",
-      "AI-powered analysis scenarios",
-      "SOW & contract review tools",
-      "Negotiation preparation frameworks",
-      "Risk assessment matrices",
+      "29 Analytical scanarios",
+      "Market Intelligence",
+      "Validated secure data protocols",
+      "100 AI reports a month",
       "Email support",
     ],
     cta: "Get Started",
   },
   {
     id: "professional",
-    name: "Procurement Professionals",
+    name: "Professional",
     subtitle: "For dedicated procurement teams",
     price: "99",
-    annualNote: "or €66/mo billed quarterly (€197/quarter)",
+    annualNote: "or €66/mo billed quarterly till the end of 2026",
     period: "month",
     icon: Shield,
     featured: true,
     features: [
       "Everything in SMB, plus:",
-      "Unlimited simulations & scenarios",
-      "Full dashboard access",
-      "On-demand dashboards and market intelligence",
-      "Validated secure data protocols",
+      "Risk Assessment Platform",
+      "Inflation Analysis Platform",
+      "\n",
+      "\n",
       "Multi-user collaboration",
       "Advanced reporting & exports",
-      "Consultation support",
-      "Priority support",
+      "300 AI reports a month",
+      "1 Custom scenario per user per month*",
     ],
     cta: "Start Free Trial",
   },
@@ -65,15 +65,15 @@ const pricingTiers = [
     period: null,
     icon: Building2,
     featured: false,
-    comingSoon: true,
+    comingSoon: false,
     features: [
       "Everything in Professional, plus:",
       "Custom data integrations",
       "Full InfoSec access to outgoing API requests",
       "Dedicated success manager",
       "Custom AI models configuration",
-      "EXOS engine placed on your local server",
-      "SLA guarantees",
+      "Custom enterprise Risk and Inflation analytics",
+      "Custom API integrations",
     ],
     cta: "Book a 15-min Demo",
   },
@@ -142,15 +142,11 @@ const Pricing = () => {
         {/* Hero Section */}
         <section className="mb-12 text-center animate-fade-up">
           <div className="flex justify-center mb-6">
-            <img src={exosLogo} alt="EXOS" className="h-16 md:h-20 w-auto object-contain" />
+            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-16 md:h-20 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-            Simple, Transparent <span className="text-gradient">Pricing</span>
+            Simple, Transparent <span className="text-gradient">Pricing</span> ROI from first day, first user.
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Choose the plan that fits your procurement needs. 
-            No hidden fees, cancel anytime.
-          </p>
         </section>
 
         {/* Pricing Cards */}
@@ -160,7 +156,7 @@ const Pricing = () => {
             return (
               <Card
                 key={tier.id}
-                className={`card-elevated relative animate-fade-up ${
+                className={`card-elevated relative animate-fade-up flex flex-col ${
                   tier.featured ? "border-primary/50 shadow-lg shadow-primary/10" : ""
                 }`}
                 style={{ animationDelay: `${100 + index * 100}ms` }}
@@ -168,11 +164,6 @@ const Pricing = () => {
                 {tier.featured && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-                  </div>
-                )}
-                {tier.comingSoon && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge variant="secondary">Coming Soon</Badge>
                   </div>
                 )}
                 
@@ -188,7 +179,7 @@ const Pricing = () => {
                   </p>
                 </CardHeader>
 
-                <CardContent className="pt-4">
+                <CardContent className="pt-4 flex flex-col flex-1">
                   {/* Price */}
                   <div className="text-center mb-6">
                     {tier.price ? (
@@ -211,7 +202,7 @@ const Pricing = () => {
                   </div>
 
                   {/* Features */}
-                  <ul className="space-y-3 mb-6">
+                  <ul className="space-y-3 mb-6 flex-1">
                     {tier.features.map((feature, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
                         <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -222,7 +213,7 @@ const Pricing = () => {
 
                   {/* CTA */}
                   <Button
-                    className={`w-full ${tier.featured ? "" : "variant-outline"}`}
+                    className={`w-full mt-auto ${tier.featured ? "" : "variant-outline"}`}
                     variant={tier.featured ? "default" : "outline"}
                     disabled={tier.comingSoon}
                   >
@@ -244,7 +235,7 @@ const Pricing = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[200px]">Feature</TableHead>
-                  <TableHead className="text-center">SMB</TableHead>
+                  <TableHead className="text-center">Starter/SMB</TableHead>
                   <TableHead className="text-center font-semibold text-primary">Professional</TableHead>
                   <TableHead className="text-center">Enterprise</TableHead>
                 </TableRow>
@@ -292,7 +283,7 @@ const Pricing = () => {
               Frequently Asked <span className="text-gradient">Questions</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Everything you need to know about EXOS and how it can help your procurement decisions.
+              Everything you need to know about EXOS — AI architecture, data privacy, GDPR compliance, and procurement scenario coverage.
             </p>
           </div>
 

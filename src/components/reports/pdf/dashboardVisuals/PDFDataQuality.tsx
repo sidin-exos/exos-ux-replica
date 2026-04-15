@@ -4,7 +4,7 @@ import type { DataQualityData } from "@/lib/dashboard-data-parser";
 
 const statusToDisplay = (status: string): { label: string; missing: string } => {
   if (status === "complete") return { label: "Complete", missing: "-" };
-  if (status === "partial") return { label: "Partial", missing: "Data gaps present" };
+  if (status === "partial") return { label: "Partial", missing: "Additional data would improve results" };
   return { label: "Missing", missing: "Data not available" };
 };
 
@@ -91,8 +91,8 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
 
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
         <Text style={{ fontSize: 9, color: colors.textMuted }}>
-          <Text style={{ color: colors.warning, fontWeight: 600 }}>Data Gap: </Text>
-          Request missing supplier pricing and clarify renewal terms to improve analysis confidence.
+          <Text style={{ color: colors.warning, fontWeight: 600 }}>Tip: </Text>
+          Adding more input details will strengthen the analysis and increase confidence scores.
         </Text>
       </View>
     </View>

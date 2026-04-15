@@ -4,8 +4,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { HelmetProvider } from "react-helmet-async";
 import { ModelConfigProvider } from "@/contexts/ModelConfigContext";
 import { isAuthError } from "@/lib/auth-utils";
 import NotFound from "./pages/NotFound";
@@ -24,6 +25,7 @@ const Features = lazy(() => import("./pages/Features"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const GeneratedReport = lazy(() => import("./pages/GeneratedReport"));
+const SharedReport = lazy(() => import("./pages/SharedReport"));
 const DashboardShowcase = lazy(() => import("./pages/DashboardShowcase"));
 const MarketIntelligence = lazy(() => import("./pages/MarketIntelligence"));
 const ArchitectureDiagram = lazy(() => import("./pages/ArchitectureDiagram"));
@@ -42,6 +44,14 @@ const MethodologyScenarioEdit = lazy(() => import("./pages/admin/MethodologyScen
 const MethodologyConfig = lazy(() => import("./pages/admin/MethodologyConfig"));
 const MethodologyHistory = lazy(() => import("./pages/admin/MethodologyHistory"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+
+// Scenario landing pages
+const TCOAnalysis = lazy(() => import("./pages/scenarios/TCOAnalysis"));
+const SupplierRisk = lazy(() => import("./pages/scenarios/SupplierRisk"));
+const NegotiationPrep = lazy(() => import("./pages/scenarios/NegotiationPrep"));
+const MakeOrBuy = lazy(() => import("./pages/scenarios/MakeOrBuy"));
+const BlackSwan = lazy(() => import("./pages/scenarios/BlackSwan"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     mutations: {
@@ -58,6 +68,7 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <Sentry.ErrorBoundary fallback={<SentryErrorFallback />}>
+  <HelmetProvider>
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
     <ModelConfigProvider>
       <QueryClientProvider client={queryClient}>
@@ -71,13 +82,17 @@ const App = () => (
           <Routes>
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/" element={<Index />} />
+            <Route path="/analyse/:scenarioSlug" element={<Index />} />
             <Route path="/features" element={<Features />} />
             <Route path="/reports" element={<Features />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
             <Route path="/report" element={<ProtectedRoute><GeneratedReport /></ProtectedRoute>} />
+            <Route path="/report/:shareId" element={<SharedReport />} />
             <Route path="/dashboards" element={<ProtectedRoute requireSuperAdmin><DashboardShowcase /></ProtectedRoute>} />
-            <Route path="/market-intelligence" element={<ProtectedRoute><MarketIntelligence /></ProtectedRoute>} />
+            <Route path="/market-intelligence" element={<ProtectedRoute><Navigate to="/market-intelligence/queries" replace /></ProtectedRoute>} />
+            <Route path="/market-intelligence/queries" element={<ProtectedRoute><MarketIntelligence /></ProtectedRoute>} />
+            <Route path="/market-intelligence/insights" element={<ProtectedRoute><MarketIntelligence /></ProtectedRoute>} />
             <Route path="/architecture" element={<ProtectedRoute requireSuperAdmin><ArchitectureDiagram /></ProtectedRoute>} />
             <Route path="/dev-workflow" element={<ProtectedRoute requireSuperAdmin><DevWorkflow /></ProtectedRoute>} />
             <Route path="/testing-pipeline" element={<ProtectedRoute requireSuperAdmin><TestingPipeline /></ProtectedRoute>} />
@@ -88,13 +103,24 @@ const App = () => (
             <Route path="/admin/dashboard" element={<ProtectedRoute requireSuperAdmin><FounderDashboard /></ProtectedRoute>} />
             <Route path="/admin/analytics" element={<ProtectedRoute requireSuperAdmin><AnalyticsDashboard /></ProtectedRoute>} />
             <Route path="/enterprise/risk" element={<ProtectedRoute><RiskPlatform /></ProtectedRoute>} />
-            <Route path="/enterprise/inflation" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/risk/monitor/:id" element={<ProtectedRoute><RiskPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation" element={<ProtectedRoute><Navigate to="/enterprise/inflation/dashboard" replace /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation/dashboard" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation/setup" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation/events" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
+            <Route path="/enterprise/inflation/tracker/:id" element={<ProtectedRoute><InflationPlatform /></ProtectedRoute>} />
             <Route path="/pdf-test" element={<ProtectedRoute requireSuperAdmin><PdfTestPage /></ProtectedRoute>} />
             <Route path="/admin/methodology" element={<ProtectedRoute requireSuperAdmin><MethodologyDashboard /></ProtectedRoute>} />
             <Route path="/admin/methodology/config" element={<ProtectedRoute requireSuperAdmin><MethodologyConfig /></ProtectedRoute>} />
             <Route path="/admin/methodology/history" element={<ProtectedRoute requireSuperAdmin><MethodologyHistory /></ProtectedRoute>} />
             <Route path="/admin/methodology/:slug" element={<ProtectedRoute requireSuperAdmin><MethodologyScenarioEdit /></ProtectedRoute>} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            {/* Scenario SEO landing pages */}
+            <Route path="/scenarios/tco-analysis" element={<TCOAnalysis />} />
+            <Route path="/scenarios/supplier-risk-assessment" element={<SupplierRisk />} />
+            <Route path="/scenarios/negotiation-preparation" element={<NegotiationPrep />} />
+            <Route path="/scenarios/make-or-buy-analysis" element={<MakeOrBuy />} />
+            <Route path="/scenarios/black-swan-simulation" element={<BlackSwan />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -106,6 +132,7 @@ const App = () => (
       </QueryClientProvider>
     </ModelConfigProvider>
   </ThemeProvider>
+  </HelmetProvider>
   </Sentry.ErrorBoundary>
 );
 

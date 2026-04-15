@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, Trash2, FolderOpen, Loader2, FileSpreadsheet, FileText, File, SearchX, Eye } from "lucide-react";
+import { Download, Trash2, FolderOpen, Loader2, FileSpreadsheet, FileText, File, SearchX, Eye, AlertTriangle, CheckCircle2, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,6 +29,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import FileUploadZone from "@/components/enterprise/FileUploadZone";
 import FileSearchFilterBar from "@/components/files/FileSearchFilterBar";
 import FilePagination from "@/components/files/FilePagination";
@@ -62,7 +67,7 @@ const UserFilesManager = () => {
   const [page, setPage] = useState(0);
   const debouncedSearch = useDebounce(searchInput, 300);
 
-  const { files, totalCount, pageSize, isLoading, uploadFile, deleteFile, getDownloadUrl, getPreviewUrl } =
+  const { files, totalCount, pageSize, isLoading, uploadFile, deleteFile, getDownloadUrl, getPreviewUrl, retryExtraction } =
     useUserFiles({ search: debouncedSearch, fileType, page, pageSize: 10, paginate: true });
 
   const [pendingFiles, setPendingFiles] = useState<globalThis.File[]>([]);
@@ -76,6 +81,17 @@ const UserFilesManager = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const hasActiveFilters = debouncedSearch !== "" || fileType !== null;
+
+  // Auto-trigger extraction for files stuck at 'pending' (failed = manual retry only)
+  const [triggeredIds] = useState(() => new Set<string>());
+  useEffect(() => {
+    for (const file of files) {
+      if (file.extraction_status === "pending" && !triggeredIds.has(file.id)) {
+        triggeredIds.add(file.id);
+        retryExtraction(file.id).catch(() => {});
+      }
+    }
+  }, [files, retryExtraction, triggeredIds]);
 
   // Reset page and selection when filters change
   useEffect(() => {
@@ -322,6 +338,7 @@ const UserFilesManager = () => {
                     <TableHead>Name</TableHead>
                     <TableHead className="hidden sm:table-cell">Type</TableHead>
                     <TableHead className="hidden sm:table-cell">Size</TableHead>
+                    <TableHead className="hidden md:table-cell">AI Ready</TableHead>
                     <TableHead className="hidden md:table-cell">Uploaded</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -356,6 +373,40 @@ const UserFilesManager = () => {
                         </TableCell>
                         <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                           {formatFileSize(file.file_size)}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {file.extraction_status === "done" ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Ready
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>Text extracted and ready for AI analysis</TooltipContent>
+                            </Tooltip>
+                          ) : file.extraction_status === "failed" ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center gap-1 text-xs text-destructive">
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  Failed
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); retryExtraction(file.id); }}
+                                    className="ml-1 hover:text-destructive/80"
+                                  >
+                                    <RotateCcw className="w-3 h-3" />
+                                  </button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>{file.extraction_error || "Extraction failed. Click retry."}</TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Extracting...
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                           {new Date(file.created_at).toLocaleDateString()}
