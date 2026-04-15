@@ -58,8 +58,9 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       industry: IndustryContext | null,
       category: ProcurementCategory | null,
       config?: Partial<PipelineConfig>,
-      model: string = "gemini-3.1-pro-preview",
-      selectedDashboards: string[] = []
+      model: string = "gemini-2.5-pro",
+      selectedDashboards: string[] = [],
+      fileIds: string[] = []
     ): Promise<OrchestratorResponse | null> => {
       setState({
         isProcessing: true,
@@ -115,6 +116,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
               categorySlug: category?.slug || null,
               enableTestLogging: true,
               selectedDashboards,
+              fileIds: fileIds.length > 0 ? fileIds : undefined,
             },
           }
         );

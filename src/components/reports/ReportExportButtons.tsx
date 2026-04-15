@@ -11,6 +11,7 @@ import { DashboardType } from "@/lib/dashboard-mappings";
 interface ReportExportButtonsProps {
   scenarioTitle?: string;
   analysisResult?: string;
+  structuredData?: string;
   formData?: Record<string, string>;
   timestamp?: string;
   selectedDashboards?: DashboardType[];
@@ -21,6 +22,7 @@ interface ReportExportButtonsProps {
 const ReportExportButtons = ({
   scenarioTitle = "Analysis",
   analysisResult = "",
+  structuredData,
   formData = {},
   timestamp = new Date().toISOString(),
   selectedDashboards = [],
@@ -46,7 +48,7 @@ const ReportExportButtons = ({
           "Content-Type": "application/json",
           "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
-        body: JSON.stringify({ scenarioTitle, analysisResult, formData, timestamp }),
+        body: JSON.stringify({ scenarioTitle, analysisResult, structuredData, formData, timestamp }),
       });
 
       if (!res.ok) {
@@ -112,6 +114,7 @@ const ReportExportButtons = ({
         onOpenChange={setPdfPreviewOpen}
         scenarioTitle={scenarioTitle}
         analysisResult={analysisResult}
+        structuredData={structuredData}
         formData={formData}
         timestamp={timestamp}
         selectedDashboards={selectedDashboards}

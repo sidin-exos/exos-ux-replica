@@ -7,9 +7,12 @@ interface ReportData {
   scenarioTitle: string;
   scenarioId?: string;
   analysisResult: string;
+  structuredData?: string;
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];
+  evaluationScore?: number | null;
+  evaluationConfidence?: string | null;
 }
 
 interface ShareableReportReturn {
@@ -61,7 +64,7 @@ export function useShareableReport(): ShareableReportReturn {
         // Use the current origin so the share link points to the same
         // environment that stored the payload.
         const origin = window.location.origin;
-        const shareUrl = `${origin}/report?share=${id}`;
+        const shareUrl = `${origin}/report/${id}`;
 
         return shareUrl;
       } catch (error) {
@@ -101,9 +104,12 @@ export function useShareableReport(): ShareableReportReturn {
           scenarioTitle: payload.scenarioTitle,
           scenarioId: payload.scenarioId,
           analysisResult: payload.analysisResult,
+          structuredData: payload.structuredData,
           formData: payload.formData,
           timestamp: payload.timestamp,
           selectedDashboards: payload.selectedDashboards,
+          evaluationScore: payload.evaluationScore,
+          evaluationConfidence: payload.evaluationConfidence,
         };
       } catch (error) {
         console.error("Failed to load shared report:", error);

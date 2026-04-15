@@ -6,9 +6,11 @@
  * 2. @deprecated Legacy <dashboard-data> XML blocks
  * 
  * If parsing fails, returns null so dashboards fall back to hardcoded defaults.
+ *
+ * SYNC COPY of supabase/functions/_shared/dashboard-extractor.ts
+ * Cannot import directly (Deno-only path). Must be kept in sync manually.
+ * When dashboard-extractor.ts changes, update this file to match.
  */
-
-import type { ExosOutput } from "@/lib/sentinel/types";
 
 // ============================================
 // Per-dashboard data interfaces
@@ -194,117 +196,498 @@ export function isStructuredOutput(raw: string): boolean {
   }
 }
 
+// ============================================
+// Envelope extraction helpers (synced with dashboard-extractor.ts)
+// ============================================
+
+const SCENARIO_COLORS: Record<string, string> = {
+  Conservative: '#10b981',
+  Aggressive: '#6366f1',
+  Hybrid: '#8b5cf6',
+};
+
+const TCO_COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444'];
+
+function normaliseRisk(v: unknown): 'high' | 'medium' | 'low' {
+  const s = String(v ?? '').toLowerCase();
+  if (s === 'high' || s === 'red') return 'high';
+  if (s === 'low' || s === 'green') return 'low';
+  return 'medium';
+}
+
+const GENERIC_PHRASES = [
+  'unknown', 'not specified', 'provide missing', 'n/a', 'impact not specified',
+];
+
+function isValidGap(g: any): boolean {
+  if (!g?.field || !g?.impact) return false;
+  const combined = `${g.field} ${g.impact}`.toLowerCase();
+  return !GENERIC_PHRASES.some(p => combined.includes(p));
+}
+
+/**
+ * Coerce an "amount" value into a finite number.
+ * Handles: numbers, numeric strings ("11000000"), strings with thousand
+ * separators ("11,000,000", "11.000.000"), currency-prefixed strings
+ * ("€11M", "$ 1.5K"), and shorthand suffixes (K/M/B). Returns null if the
+ * value is null/undefined/unparseable. Returns 0 for an explicit zero.
+ */
+function parseAmount(raw: any): number | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+  if (typeof raw !== 'string') return null;
+
+  let s = raw.trim();
+  if (!s) return null;
+
+  // Strip currency symbols and letters except K/M/B suffixes
+  s = s.replace(/[€$£¥₹]/g, '').trim();
+
+  // Detect K/M/B/T suffix (case-insensitive)
+  const suffixMatch = s.match(/([kmbt])\s*$/i);
+  let multiplier = 1;
+  if (suffixMatch) {
+    const ch = suffixMatch[1].toLowerCase();
+    multiplier = ch === 'k' ? 1e3 : ch === 'm' ? 1e6 : ch === 'b' ? 1e9 : 1e12;
+    s = s.slice(0, suffixMatch.index).trim();
+  }
+
+  // Remove thousand separators (comma or space). Keep dot as decimal.
+  s = s.replace(/[,\s]/g, '');
+
+  const n = Number(s);
+  return Number.isFinite(n) ? n * multiplier : null;
+}
+
 /**
  * Extract DashboardData from an EXOS Output Schema v1.0 envelope.
- * Maps payload fields to existing dashboard component interfaces.
+ * Accepts a pre-parsed object (frontend already has the parsed object).
+ * Re-serialises internally to reuse the same extraction logic as the shared module.
  */
-export function extractFromEnvelope(parsed: ExosOutput): DashboardData | null {
-  if (!parsed?.payload) return null;
+export function extractFromEnvelope(parsed: Record<string, unknown>): DashboardData | null {
+  if (!parsed) return null;
+  try {
+    return extractFromEnvelopeRaw(JSON.stringify(parsed));
+  } catch {
+    return null;
+  }
+}
 
+/**
+ * Internal function — identical body to supabase/functions/_shared/dashboard-extractor.ts
+ */
+function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
+  let envelope: Record<string, any>;
+  try {
+    const p = JSON.parse(rawString);
+    if (p?.schema_version !== '1.0') return null;
+    envelope = p;
+  } catch {
+    return null;
+  }
+
+  const group: string = envelope.group ?? '';
+  const payload: Record<string, any> = envelope.payload ?? {};
+  const ss: Record<string, any> = payload.scenario_specific ?? {};
+  const recommendations: any[] = envelope.recommendations ?? [];
+  const dataGaps: any[] = envelope.data_gaps ?? [];
   const result: DashboardData = {};
-  const payload = parsed.payload as Record<string, unknown>;
-  const scenarioSpecific = (payload.scenario_specific ?? {}) as Record<string, unknown>;
 
-  // Action checklist from recommendations
-  if (parsed.recommendations?.length > 0) {
+  // ── Universal: actionChecklist
+  const validRecs = recommendations.filter((r: any) => r?.action);
+  if (validRecs.length > 0) {
     result.actionChecklist = {
-      actions: parsed.recommendations.map(r => ({
+      actions: validRecs.map((r: any) => ({
         action: r.action,
-        priority: r.priority.toLowerCase() as "critical" | "high" | "medium" | "low",
-        status: "pending" as const,
-        owner: undefined,
-        dueDate: undefined,
+        priority: (['critical', 'high', 'medium', 'low'].includes(
+          String(r.priority ?? '').toLowerCase()
+        )
+          ? String(r.priority).toLowerCase()
+          : 'medium') as any,
+        status: 'pending' as const,
       })),
     };
   }
 
-  // Group A: financial_model → costWaterfall, sensitivitySpider
-  const financialModel = payload.financial_model as Record<string, unknown> | undefined;
-  if (financialModel?.cost_breakdown && Array.isArray(financialModel.cost_breakdown)) {
-    result.costWaterfall = {
-      components: (financialModel.cost_breakdown as Array<Record<string, unknown>>).map(cb => ({
-        name: String(cb.category ?? ''),
-        value: Number(cb.amount ?? 0),
-        type: 'cost' as const,
-      })),
-      currency: String(financialModel.currency ?? 'EUR'),
-    };
-  }
-
-  // Group C: risk_summary → riskMatrix
-  const riskSummary = payload.risk_summary as Record<string, unknown> | undefined;
-  if (riskSummary) {
-    const riskItems = (scenarioSpecific.risk_register ?? scenarioSpecific.risk_items ?? []) as Array<Record<string, unknown>>;
-    if (Array.isArray(riskItems) && riskItems.length > 0) {
-      result.riskMatrix = {
-        risks: riskItems.map(r => ({
-          supplier: String(r.risk_name ?? r.supplier ?? r.item ?? ''),
-          impact: String(r.impact ?? r.severity ?? 'medium').toLowerCase() as "high" | "medium" | "low",
-          probability: String(r.probability ?? r.likelihood ?? 'medium').toLowerCase() as "high" | "medium" | "low",
-          category: String(r.category ?? r.type ?? ''),
-        })),
-      };
-    }
-  }
-
-  // Group D: negotiation-prep → negotiationPrep
-  if (scenarioSpecific.batna || scenarioSpecific.zopa) {
-    const leverageAnalysis = (scenarioSpecific.leverage_analysis ?? []) as Array<Record<string, unknown>>;
-    result.negotiationPrep = {
-      batna: {
-        strength: Number((scenarioSpecific.batna as Record<string, unknown>)?.strength ?? 50),
-        description: String((scenarioSpecific.batna as Record<string, unknown>)?.description ?? ''),
-      },
-      leveragePoints: leverageAnalysis.map(l => ({
-        point: String(l.point ?? l.lever ?? ''),
-        tactic: String(l.tactic ?? l.approach ?? ''),
-      })),
-      sequence: [],
-    };
-  }
-
-  // Group B: document → sowAnalysis (for SOW Critic)
-  if (scenarioSpecific.issues || scenarioSpecific.missing_clauses) {
-    const sections = (scenarioSpecific.issues ?? scenarioSpecific.missing_clauses ?? []) as Array<Record<string, unknown>>;
-    result.sowAnalysis = {
-      clarity: Number(scenarioSpecific.clarity_score ?? 50),
-      sections: sections.map(s => ({
-        name: String(s.section ?? s.clause ?? s.name ?? ''),
-        status: String(s.status ?? 'partial') as "complete" | "partial" | "missing",
-        note: String(s.note ?? s.description ?? s.issue ?? ''),
-      })),
-    };
-  }
-
-  // Data quality from data_gaps
-  if (parsed.data_gaps?.length > 0) {
+  // ── Universal: dataQuality
+  const validGaps = dataGaps.filter(isValidGap);
+  if (validGaps.length > 0) {
     result.dataQuality = {
-      fields: parsed.data_gaps.map(g => ({
+      fields: validGaps.map((g: any) => ({
         field: g.field,
         status: 'missing' as const,
         coverage: 0,
       })),
-      limitations: parsed.data_gaps.map(g => ({
+      limitations: validGaps.map((g: any) => ({
         title: g.field,
         impact: g.impact,
       })),
     };
   }
 
-  // Supplier scorecard from scenario_specific
-  if (scenarioSpecific.scorecard && Array.isArray(scenarioSpecific.scorecard)) {
-    result.supplierScorecard = {
-      suppliers: (scenarioSpecific.scorecard as Array<Record<string, unknown>>).map(s => ({
-        name: String(s.name ?? s.supplier ?? ''),
-        score: Number(s.score ?? s.overall_score ?? 0),
-        trend: String(s.trend ?? 'stable') as "up" | "down" | "stable",
-        spend: String(s.spend ?? ''),
-      })),
+  // ── Universal: costWaterfall
+  // Filter BEFORE the length check — if AI returns items with null amounts,
+  // we'd otherwise create costWaterfall with an empty components array, which
+  // makes the dashboard render with all zeros instead of being hidden.
+  // Coerce amount via parseAmount to handle strings with thousand separators
+  // and currency symbols (e.g. "11,000,000", "€11M", "11000000").
+  const costBreakdown: any[] = payload.financial_model?.cost_breakdown ?? [];
+  const validCostComponents = costBreakdown
+    .map((c: any) => {
+      const amount = parseAmount(c?.amount);
+      return c?.category && amount !== null
+        ? { name: String(c.category), value: amount, type: 'cost' as const }
+        : null;
+    })
+    .filter((c): c is { name: string; value: number; type: 'cost' } => c !== null);
+  if (validCostComponents.length > 0) {
+    result.costWaterfall = {
+      components: validCostComponents,
+      currency: payload.financial_model?.currency ?? 'EUR',
     };
   }
 
-  const hasData = Object.keys(result).length > 0;
-  return hasData ? result : null;
+  // ── Group A: tcoComparison
+  // Render with >= 1 vendor. Single-vendor TCO renders as a one-bar chart;
+  // the AI is instructed to emit >= 2 vendors but we don't blank the dashboard
+  // when it returns only one (e.g. user provided a single option to analyse).
+  if (group === 'A') {
+    const vendorOptions: any[] = ss.vendor_options ?? [];
+    const validVendors = vendorOptions.filter(
+      (v: any) => v?.vendor_label && v?.total_tco != null
+    );
+    if (validVendors.length >= 1) {
+      const options = validVendors.map((v: any, i: number) => ({
+        id: String(i),
+        name: v.vendor_label,
+        color: TCO_COLORS[i % TCO_COLORS.length],
+        totalTCO: Number(v.total_tco),
+      }));
+
+      // Build year-by-year cumulative data so the area/line chart has >= 2 points.
+      // Priority: explicit year_breakdown from AI → linear ramp from analysis_period_years → flat 5y default.
+      const periodYears = Number(payload.financial_model?.analysis_period_years) || 5;
+      const hasYearBreakdown = validVendors.every(
+        (v: any) => Array.isArray(v.year_breakdown) && v.year_breakdown.length > 0
+      );
+
+      let data: Array<{ year: string; [key: string]: number | string }>;
+      if (hasYearBreakdown) {
+        // Collect distinct years across all vendors, sorted ascending
+        const yearSet = new Set<number>();
+        validVendors.forEach((v: any) => {
+          v.year_breakdown.forEach((yb: any) => {
+            const y = Number(yb?.year);
+            if (Number.isFinite(y)) yearSet.add(y);
+          });
+        });
+        const years = Array.from(yearSet).sort((a, b) => a - b);
+        // Cumulative running totals per vendor
+        const running: number[] = validVendors.map(() => 0);
+        data = years.map((year) => {
+          const row: { year: string; [key: string]: number | string } = { year: `Y${year}` };
+          validVendors.forEach((v: any, i: number) => {
+            const entry = v.year_breakdown.find((yb: any) => Number(yb?.year) === year);
+            running[i] += Number(entry?.cost ?? 0);
+            row[String(i)] = running[i];
+          });
+          return row;
+        });
+      } else {
+        // Synthesize a linear ramp from 0 → totalTCO over analysis_period_years
+        const n = Math.max(2, periodYears);
+        data = Array.from({ length: n + 1 }, (_, k) => {
+          const row: { year: string; [key: string]: number | string } = { year: `Y${k}` };
+          validVendors.forEach((v: any, i: number) => {
+            row[String(i)] = (Number(v.total_tco) * k) / n;
+          });
+          return row;
+        });
+      }
+
+      result.tcoComparison = {
+        options,
+        data,
+        currency: payload.financial_model?.currency ?? 'EUR',
+      };
+    }
+  }
+
+  // ── Group B: supplierScorecard
+  if (group === 'B') {
+    const scorecard: any[] = ss.scorecard ?? [];
+    if (scorecard.length > 0) {
+      const overallRag = String(ss.overall_rag ?? '').toLowerCase();
+      const trend: 'up' | 'down' | 'stable' =
+        overallRag === 'green' ? 'up' :
+        overallRag === 'red' ? 'down' : 'stable';
+      const kpisWithValues = scorecard.filter((k: any) => k?.actual_pct != null);
+      const avgScore =
+        kpisWithValues.length > 0
+          ? Math.round(
+              kpisWithValues.reduce((sum: number, k: any) => sum + Number(k.actual_pct), 0) /
+                kpisWithValues.length
+            )
+          : ss.overall_score ?? 0;
+      result.supplierScorecard = {
+        suppliers: [
+          {
+            name: ss.supplier_label ?? 'Supplier A',
+            score: avgScore,
+            trend,
+            spend: ss.review_period ?? '—',
+          },
+        ],
+      };
+    }
+  }
+
+  // ── Group C: riskMatrix + sowAnalysis
+  if (group === 'C') {
+    const riskSource: any[] =
+      (ss.risk_register ?? []).length > 0
+        ? ss.risk_register
+        : (ss.risk_items ?? []).length > 0
+        ? ss.risk_items
+        : payload.risk_summary?.risks ?? [];
+
+    if (riskSource.length > 0) {
+      result.riskMatrix = {
+        risks: riskSource
+          .filter((r: any) => r)
+          .map((r: any) => ({
+            supplier: r.risk_description ?? r.label ?? r.risk ?? 'Unknown risk',
+            impact: normaliseRisk(r.impact),
+            probability: normaliseRisk(r.likelihood ?? r.probability),
+            category: r.category ?? 'Operational',
+          })),
+      };
+    }
+
+    const issues: any[] = ss.issues ?? [];
+    const missingClauses: any[] = ss.missing_clauses ?? [];
+    if (issues.length > 0 || missingClauses.length > 0) {
+      const criticalCount = issues.filter(
+        (i: any) => String(i?.severity ?? '').toUpperCase() === 'CRITICAL'
+      ).length;
+      const clarity = Math.max(0, 100 - criticalCount * 20 - missingClauses.length * 10);
+      result.sowAnalysis = {
+        clarity,
+        sections: [
+          ...issues
+            .filter((i: any) => i?.clause_reference || i?.issue_description)
+            .map((i: any) => ({
+              name: i.clause_reference ?? i.issue_id ?? 'Clause',
+              status: (String(i.severity ?? '').toUpperCase() === 'CRITICAL'
+                ? 'missing'
+                : 'partial') as any,
+              note: i.issue_description ?? i.recommended_fix ?? '',
+            })),
+          ...missingClauses
+            .filter((c: any) => c?.clause_type)
+            .map((c: any) => ({
+              name: c.clause_type,
+              status: 'missing' as const,
+              note: c.risk_if_absent ?? '',
+            })),
+        ],
+        recommendations: issues
+          .filter((i: any) => i?.recommended_fix)
+          .map((i: any) => i.recommended_fix)
+          .slice(0, 5),
+      };
+    }
+  }
+
+  // ── Group D: negotiationPrep + scenarioComparison + timelineRoadmap + decisionMatrix
+  if (group === 'D') {
+    const batnaStrengthPct: number | null = ss.batna?.batna_strength_pct ?? null;
+    const batnaDescription: string | null = ss.batna?.buyer_batna_description ?? ss.batna?.description ?? null;
+    const leveragePoints = (ss.leverage_points ?? [])
+      .filter((lp: any) => lp?.title && lp?.description)
+      .map((lp: any) => ({
+        point: lp.title,
+        tactic: lp.description,
+      }));
+    const sequence = (ss.negotiation_sequence ?? [])
+      .filter((s: any) => s?.step && s?.detail)
+      .map((s: any) => ({ step: s.step, detail: s.detail }));
+
+    if (batnaStrengthPct !== null || leveragePoints.length > 0) {
+      result.negotiationPrep = {
+        batna: {
+          strength: batnaStrengthPct ?? 0,
+          description: batnaDescription ?? '',
+        },
+        leveragePoints,
+        sequence,
+      };
+    }
+
+    const negScenarios: any[] = (ss.negotiation_scenarios ?? []).filter(
+      (s: any) => s?.name && s?.expected_savings_pct != null
+    );
+    if (negScenarios.length > 0) {
+      const maxSavings = Math.max(...negScenarios.map((s: any) => Number(s.expected_savings_pct)));
+      const maxTimeline = Math.max(
+        ...negScenarios.map((s: any) => Number(s.estimated_timeline_months ?? 1))
+      );
+      const riskScore: Record<string, number> = { LOW: 90, MEDIUM: 60, HIGH: 25 };
+
+      result.scenarioComparison = {
+        scenarios: negScenarios.map((s: any) => ({
+          id: String(s.name).toLowerCase(),
+          name: s.name,
+          color: SCENARIO_COLORS[s.name] ?? '#94a3b8',
+        })),
+        radarData: [
+          {
+            metric: 'Savings',
+            ...Object.fromEntries(
+              negScenarios.map((s: any) => [
+                s.name,
+                maxSavings > 0 ? Math.round((Number(s.expected_savings_pct) / maxSavings) * 100) : 0,
+              ])
+            ),
+          },
+          {
+            metric: 'Risk',
+            ...Object.fromEntries(
+              negScenarios.map((s: any) => [
+                s.name,
+                riskScore[String(s.risk_level ?? '').toUpperCase()] ?? 50,
+              ])
+            ),
+          },
+          {
+            metric: 'Flexibility',
+            ...Object.fromEntries(
+              negScenarios.map((s: any) => [
+                s.name,
+                maxTimeline > 0
+                  ? Math.round((1 - Number(s.estimated_timeline_months ?? 1) / maxTimeline) * 100)
+                  : 50,
+              ])
+            ),
+          },
+        ],
+        summary: [
+          {
+            criteria: 'Est. Savings',
+            ...Object.fromEntries(
+              negScenarios.map((s: any) => [
+                s.name,
+                `${s.expected_savings_pct}%`,
+              ])
+            ),
+          },
+          {
+            criteria: 'Timeline',
+            ...Object.fromEntries(
+              negScenarios.map((s: any) => [
+                s.name,
+                `${s.estimated_timeline_months ?? '?'} mo`,
+              ])
+            ),
+          },
+          {
+            criteria: 'Risk Level',
+            ...Object.fromEntries(
+              negScenarios.map((s: any) => [s.name, s.risk_level ?? '—'])
+            ),
+          },
+        ],
+      };
+    }
+
+    const roadmap: any[] = ss.three_year_roadmap ?? [];
+    if (roadmap.length > 0) {
+      let cursor = 1;
+      result.timelineRoadmap = {
+        phases: roadmap
+          .filter((y: any) => y?.year)
+          .map((y: any, i: number) => {
+            const startWeek = cursor;
+            const endWeek = cursor + 51;
+            cursor = endWeek + 1;
+            return {
+              name: `Year ${y.year}`,
+              startWeek,
+              endWeek,
+              status: i === 0 ? ('in-progress' as const) : ('upcoming' as const),
+              milestones: Array.isArray(y.objectives) ? y.objectives.slice(0, 3) : [],
+            };
+          }),
+        totalWeeks: roadmap.length * 52,
+      };
+    }
+
+    const qualFactors: any[] = (ss.qualitative_factors ?? []).filter(
+      (f: any) => f?.factor && f?.make_score != null && f?.buy_score != null
+    );
+    if (qualFactors.length > 0) {
+      result.decisionMatrix = {
+        criteria: qualFactors.map((f: any) => ({
+          name: f.factor,
+          weight: f.weight_pct ?? Math.round(100 / qualFactors.length),
+        })),
+        options: [
+          { name: 'Make', scores: qualFactors.map((f: any) => Number(f.make_score)) },
+          { name: 'Buy', scores: qualFactors.map((f: any) => Number(f.buy_score)) },
+        ],
+      };
+    }
+  }
+
+  // ── Universal fallback: timelineRoadmap from phases[] (Group B project planning)
+  if (!result.timelineRoadmap) {
+    const phases: any[] = ss.phases ?? [];
+    if (phases.length > 0) {
+      let cursor = 1;
+      result.timelineRoadmap = {
+        phases: phases
+          .filter((p: any) => p?.name || p?.heading)
+          .map((p: any, i: number) => {
+            const duration = p.duration_weeks ?? 4;
+            const startWeek = cursor;
+            const endWeek = cursor + duration - 1;
+            cursor = endWeek + 1;
+            return {
+              name: p.name ?? p.heading ?? `Phase ${i + 1}`,
+              startWeek,
+              endWeek,
+              status: (p.status === 'completed' ? 'completed' :
+                       p.status === 'in-progress' ? 'in-progress' : 'upcoming') as any,
+              milestones: Array.isArray(p.milestones) ? p.milestones.slice(0, 3) :
+                          Array.isArray(p.deliverables) ? p.deliverables.slice(0, 3) : [],
+            };
+          }),
+        totalWeeks: cursor - 1,
+      };
+    }
+  }
+
+  // ── Universal fallback: riskMatrix from risk_register / risk_items / risk_summary
+  if (!result.riskMatrix) {
+    const riskSource: any[] =
+      (ss.risk_register ?? []).length > 0 ? ss.risk_register :
+      (ss.risk_items ?? []).length > 0 ? ss.risk_items :
+      (payload.risk_summary?.risks ?? []);
+    if (riskSource.length > 0) {
+      result.riskMatrix = {
+        risks: riskSource
+          .filter((r: any) => r)
+          .map((r: any) => ({
+            supplier: r.risk_description ?? r.label ?? r.risk ?? 'Unknown risk',
+            impact: normaliseRisk(r.impact),
+            probability: normaliseRisk(r.likelihood ?? r.probability),
+            category: r.category ?? 'Operational',
+          })),
+      };
+    }
+  }
+
+  return Object.keys(result).length === 0 ? null : result;
 }
 
 /**
@@ -319,7 +702,7 @@ export function extractDashboardData(text: string): DashboardData | null {
   try {
     const parsed = JSON.parse(text);
     if (parsed?.schema_version === '1.0') {
-      return extractFromEnvelope(parsed as ExosOutput);
+      return extractFromEnvelope(parsed);
     }
   } catch { /* not JSON, fall through to legacy */ }
 

@@ -3,6 +3,13 @@
  * Mirrors the frontend types from dashboard-data-parser.ts and dashboard-mappings.ts.
  */
 
+import { extractFromEnvelope } from '../_shared/dashboard-extractor.ts';
+import type { DashboardData } from '../_shared/dashboard-extractor.ts';
+
+// Re-export for consumers
+export { extractFromEnvelope };
+export type { DashboardData };
+
 // ── Dashboard type ──
 
 export type DashboardType =
@@ -165,31 +172,12 @@ export interface DataQualityData {
   limitations?: { title: string; impact: string }[];
 }
 
-// ── Top-level union ──
-
-export interface DashboardData {
-  actionChecklist?: ActionChecklistData;
-  decisionMatrix?: DecisionMatrixData;
-  costWaterfall?: CostWaterfallData;
-  timelineRoadmap?: TimelineRoadmapData;
-  kraljicQuadrant?: KraljicData;
-  tcoComparison?: TCOComparisonData;
-  licenseTier?: LicenseTierData;
-  sensitivitySpider?: SensitivityData;
-  riskMatrix?: RiskMatrixData;
-  scenarioComparison?: ScenarioComparisonData;
-  supplierScorecard?: SupplierScorecardData;
-  sowAnalysis?: SOWAnalysisData;
-  negotiationPrep?: NegotiationPrepData;
-  dataQuality?: DataQualityData;
-}
-
-// ── Extraction utilities ──
+// ── Extraction utilities (legacy XML fallback) ──
 
 const DASHBOARD_DATA_REGEX = /<dashboard-data>([\s\S]*?)<\/dashboard-data>/;
 
 /** Map snake_case keys the AI might return to the camelCase keys DashboardData expects */
-const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
+const SNAKE_TO_CAMEL: Record<string, string> = {
   action_checklist: "actionChecklist",
   decision_matrix: "decisionMatrix",
   cost_waterfall: "costWaterfall",
@@ -246,6 +234,7 @@ export function stripDashboardData(text: string): string {
 export interface GeneratePdfPayload {
   scenarioTitle: string;
   analysisResult: string;
+  structuredData?: string;
   formData: Record<string, string>;
   timestamp: string;
   selectedDashboards?: DashboardType[];

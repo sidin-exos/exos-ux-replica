@@ -1165,6 +1165,30 @@ export type Database = {
           },
         ]
       }
+      scenario_drafts: {
+        Row: {
+          blocks: Json
+          id: string
+          scenario_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocks?: Json
+          id?: string
+          scenario_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocks?: Json
+          id?: string
+          scenario_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scenario_feedback: {
         Row: {
           created_at: string
@@ -1209,6 +1233,7 @@ export type Database = {
           optimal_guidance: string | null
           scenario_id: number
           scenario_slug: string
+          sort_order: number
           sub_prompts: Json | null
           updated_at: string
         }
@@ -1228,6 +1253,7 @@ export type Database = {
           optimal_guidance?: string | null
           scenario_id: number
           scenario_slug: string
+          sort_order?: number
           sub_prompts?: Json | null
           updated_at?: string
         }
@@ -1247,6 +1273,7 @@ export type Database = {
           optimal_guidance?: string | null
           scenario_id?: number
           scenario_slug?: string
+          sort_order?: number
           sub_prompts?: Json | null
           updated_at?: string
         }
@@ -1486,6 +1513,10 @@ export type Database = {
       user_files: {
         Row: {
           created_at: string
+          extracted_at: string | null
+          extracted_text: string | null
+          extraction_error: string | null
+          extraction_status: string
           file_name: string
           file_size: number
           file_type: string
@@ -1493,10 +1524,15 @@ export type Database = {
           mime_type: string
           organization_id: string
           storage_path: string
+          token_estimate: number | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          extracted_at?: string | null
+          extracted_text?: string | null
+          extraction_error?: string | null
+          extraction_status?: string
           file_name: string
           file_size: number
           file_type: string
@@ -1504,10 +1540,15 @@ export type Database = {
           mime_type: string
           organization_id: string
           storage_path: string
+          token_estimate?: number | null
           user_id: string
         }
         Update: {
           created_at?: string
+          extracted_at?: string | null
+          extracted_text?: string | null
+          extraction_error?: string | null
+          extraction_status?: string
           file_name?: string
           file_size?: number
           file_type?: string
@@ -1515,6 +1556,7 @@ export type Database = {
           mime_type?: string
           organization_id?: string
           storage_path?: string
+          token_estimate?: number | null
           user_id?: string
         }
         Relationships: [

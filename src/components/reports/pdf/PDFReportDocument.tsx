@@ -971,6 +971,10 @@ const PDFReportDocument = ({
       ? (evaluationConfidence === "HIGH" ? "High" : "Low")
       : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
   const hasLowConfidenceWatermark = structuredOutput?.low_confidence_watermark === true;
+  const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
+  const batnaScore = parsedData?.negotiationPrep?.batna?.strength;
+  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
+  const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
 
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
@@ -1021,11 +1025,18 @@ const PDFReportDocument = ({
           </View>
         </View>
 
-        {/* Low confidence watermark */}
+        {/* Confidence guidance note */}
         {hasLowConfidenceWatermark && (
-          <View style={{ position: "absolute", top: "40%", left: "15%", transform: "rotate(-30deg)", opacity: 0.08 }}>
-            <Text style={{ fontSize: 48, fontFamily: "Helvetica-Bold", color: "#ab3232" }}>
-              LOW CONFIDENCE
+          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+            <Text style={{ fontSize: 8, color: "#856404", fontFamily: "Helvetica-Bold" }}>
+              This analysis is indicative — see improvement tips below
+            </Text>
+          </View>
+        )}
+        {!hasLowConfidenceWatermark && confidenceLevel === "Medium" && (
+          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+            <Text style={{ fontSize: 8, color: "#1b4b47", fontFamily: "Helvetica-Bold" }}>
+              Good analysis — a few additions would sharpen the results
             </Text>
           </View>
         )}
@@ -1087,17 +1098,17 @@ const PDFReportDocument = ({
         {/* KPI footer */}
         <View style={s.kpiRow}>
           <View style={s.kpiCell}>
-            <Text style={s.kpiLabel}>BATNA SCORE</Text>
-            <Text style={{ ...s.kpiValue, color: c.primary }}>{coveragePct} / 100</Text>
+            <Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text>
+            <Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? batnaScore : coveragePct} / 100</Text>
           </View>
           <View style={s.kpiCell}>
             <Text style={s.kpiLabel}>LEVERAGE</Text>
-            <Text style={{ ...s.kpiValue, color: c.primary }}>3-Year Commitment</Text>
+            <Text style={{ ...s.kpiValue, color: c.primary }}>{leverageLabel}</Text>
           </View>
           <View style={s.kpiCell}>
             <Text style={s.kpiLabel}>SUPPLIER POWER</Text>
             <Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>
-              {extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A"}
+              {supplierPowerLabel || (extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A")}
             </Text>
           </View>
           <View style={{ ...s.kpiCell, ...s.kpiCellLast }}>

@@ -9,6 +9,7 @@
 import ExcelJS from "https://esm.sh/exceljs@4.4.0";
 import {
   extractDashboardData,
+  extractFromEnvelope,
   stripDashboardData,
   type DashboardData,
   type GenerateExcelPayload,
@@ -356,7 +357,7 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
 // ─── main export function ─────────────────────────────────────────────
 
 export async function generateExcelBuffer(payload: GenerateExcelPayload): Promise<Uint8Array> {
-  const { scenarioTitle, analysisResult, formData, timestamp } = payload;
+  const { scenarioTitle, analysisResult, structuredData, formData, timestamp } = payload;
   // deno-lint-ignore no-explicit-any
   const wb = new (ExcelJS as any).Workbook();
 
@@ -480,7 +481,8 @@ export async function generateExcelBuffer(payload: GenerateExcelPayload): Promis
   }
 
   // Section 3+: Dashboard Data
-  const parsedData = extractDashboardData(analysisResult);
+  // Prefer structured envelope, fall back to legacy XML parsing
+  const parsedData = (structuredData ? extractFromEnvelope(structuredData) : null) ?? extractDashboardData(analysisResult);
   if (parsedData) {
     for (const { name, rows } of dashboardToSheets(parsedData)) {
       if (rows.length === 0) continue;

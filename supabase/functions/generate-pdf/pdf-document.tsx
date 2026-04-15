@@ -18,6 +18,7 @@ import { getPdfColors, getPdfStyles } from "./theme.ts";
 import type { PdfColorSet } from "./theme.ts";
 import {
   extractDashboardData,
+  extractFromEnvelope,
   stripDashboardData,
   dashboardConfigs,
   type DashboardType,
@@ -366,17 +367,18 @@ function chunkPairs<T>(arr: T[]): T[][] {
 // ── Main Document ──
 
 const PDFReportDocument = ({
-  scenarioTitle, analysisResult, formData, timestamp,
+  scenarioTitle, analysisResult, structuredData, formData, timestamp,
   selectedDashboards = [], pdfTheme = "light",
   evaluationScore, evaluationConfidence,
 }: {
-  scenarioTitle: string; analysisResult: string; formData: Record<string, string>;
+  scenarioTitle: string; analysisResult: string; structuredData?: string; formData: Record<string, string>;
   timestamp: string; selectedDashboards?: DashboardType[]; pdfTheme?: PdfThemeMode;
   evaluationScore?: number; evaluationConfidence?: string;
 }) => {
   const c = getPdfColors(pdfTheme);
   const s = buildStyles(c);
-  const parsedData = extractDashboardData(analysisResult);
+  // Prefer structured envelope, fall back to legacy XML parsing
+  const parsedData = (structuredData ? extractFromEnvelope(structuredData) : null) ?? extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
   const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
   const analysisLines = strippedAnalysis.split("\n").filter((line) => line.trim());
@@ -394,6 +396,10 @@ const PDFReportDocument = ({
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
   const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
   const confidenceLevel = evaluationConfidence ? (evaluationConfidence === "HIGH" ? "High" : "Low") : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
+  const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
+  const batnaScore = parsedData?.negotiationPrep?.batna?.strength;
+  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
+  const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
   const parseFindingTitle = (text: string): { title: string; body: string } => {
@@ -449,9 +455,9 @@ const PDFReportDocument = ({
         })}
 
         <View style={s.kpiRow}>
-          <View style={s.kpiCell}><Text style={s.kpiLabel}>BATNA SCORE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coveragePct} / 100</Text></View>
-          <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>3-Year Commitment</Text></View>
-          <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>{extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A"}</Text></View>
+          <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? batnaScore : coveragePct} / 100</Text></View>
+          <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{leverageLabel}</Text></View>
+          <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>{supplierPowerLabel || (extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A")}</Text></View>
           <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>CONFIDENCE</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
         </View>
 
@@ -595,9 +601,9 @@ const PDFReportDocument = ({
 // ── Public API ──
 
 export async function generatePdfBuffer(payload: GeneratePdfPayload): Promise<Uint8Array> {
-  const { scenarioTitle, analysisResult, formData, timestamp, selectedDashboards = [], pdfTheme = "light", evaluationScore, evaluationConfidence } = payload;
+  const { scenarioTitle, analysisResult, structuredData, formData, timestamp, selectedDashboards = [], pdfTheme = "light", evaluationScore, evaluationConfidence } = payload;
   const doc = (
-    <PDFReportDocument scenarioTitle={scenarioTitle} analysisResult={analysisResult} formData={formData} timestamp={timestamp} selectedDashboards={selectedDashboards} pdfTheme={pdfTheme} evaluationScore={evaluationScore} evaluationConfidence={evaluationConfidence} />
+    <PDFReportDocument scenarioTitle={scenarioTitle} analysisResult={analysisResult} structuredData={structuredData} formData={formData} timestamp={timestamp} selectedDashboards={selectedDashboards} pdfTheme={pdfTheme} evaluationScore={evaluationScore} evaluationConfidence={evaluationConfidence} />
   );
   const buffer = await renderToBuffer(doc as any);
   return new Uint8Array(buffer);

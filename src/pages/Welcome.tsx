@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
+import riskSignalsPreview from "@/assets/risk-signals-preview.png";
 
 /* ── Feature Pillars ── */
 const pillars = [
@@ -26,6 +27,7 @@ const pillars = [
     cta: "Explore Scenarios",
     href: "/",
     useCaseType: "scenarios" as const,
+    previewImage: undefined as string | undefined,
   },
   {
     number: "02",
@@ -43,6 +45,7 @@ const pillars = [
     cta: "Open Intelligence Hub",
     href: "/market-intelligence",
     useCaseType: "scenarios" as const,
+    previewImage: undefined as string | undefined,
   },
   {
     number: "03",
@@ -59,6 +62,7 @@ const pillars = [
     cta: "View Platforms",
     href: "/enterprise/risk",
     useCaseType: "risk" as const,
+    previewImage: riskSignalsPreview,
   },
 ];
 
@@ -95,28 +99,13 @@ const Welcome = () => {
                 </span>
               </h1>
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
-                <p>
-                  Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function.
+                <p className="text-base leading-relaxed text-muted-foreground">
+                  Critical <strong className="text-foreground font-semibold">procurement decisions</strong> are often made without adequate preparation due to lack of time, knowledge, or a specialised function.
+                  <br />
+                  <span className="text-base leading-relaxed text-muted-foreground">EXOS works from the <strong className="text-foreground font-semibold">first day and first user</strong>, no integration or company-wide adoption needed. Get better results with <strong className="text-foreground font-semibold">agentic AI</strong>.</span>
                 </p>
-                <p>
-                  EXOS works as <strong className="text-foreground font-semibold">three interconnected layers</strong>:
-                </p>
-                <ul className="space-y-2 pl-1">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
-                    <span><strong className="text-foreground">Scenarios</strong> — pre-defined agentic AI flows with procurement methodology, agentic loops, and custom LLM settings.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
-                    <span><strong className="text-foreground">Market Intelligence</strong> — live market context injected into AI results: benchmarks, risks, pricing signals, regulatory shifts.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
-                    <span><strong className="text-foreground">Continuous Monitoring</strong> — Inflation and Risk platforms that surface what's changed and flag only what requires your decision.</span>
-                  </li>
-                </ul>
-                <p className="text-sm border-l-2 border-primary/30 pl-3 text-muted-foreground/80 italic">
-                  Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.
+                <p className="text-base leading-relaxed text-muted-foreground">
+                  Your <strong className="text-foreground font-semibold">sensitive commercial data</strong> is masked before reaching external APIs — then <strong className="text-foreground font-semibold">grounded and validated</strong> on the way back.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 mt-2">
@@ -126,6 +115,11 @@ const Welcome = () => {
                 <Button size="lg" variant="outline" className="gap-2 px-6" onClick={() => navigate("/features")}>
                   Explore Solutions
                 </Button>
+              </div>
+              <div className="mt-3">
+                <p className="text-sm font-semibold text-foreground">
+                  Get ROI from first day, first user.
+                </p>
               </div>
               <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
@@ -147,8 +141,8 @@ const Welcome = () => {
 
             {/* Right — Abstract dashboard preview */}
             <div className="hidden lg:flex justify-end">
-              <div className="w-full max-w-md">
-                <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-5 backdrop-blur-sm">
+              <div className="w-full max-w-xl">
+                <div role="img" aria-label="EXOS agentic AI orchestration pipeline diagram" className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent p-6 md:p-8 backdrop-blur-sm">
                   <div className="text-center mb-5">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/20 mb-1">
                       <Shield className="w-3.5 h-3.5 text-primary" />
@@ -156,90 +150,124 @@ const Welcome = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    {[
-                      { icon: Lock, label: "User Input", desc: "Scenario data, documents & supplier info — anonymised before processing", tier: "input" as const, sideButton: { icon: Database, label: "Risk & Inflation Platforms" } },
-                      { icon: Shield, label: "Core Engine", desc: "Grounding, market enrichment, validation & de-anonymisation pipeline", tier: "engine" as const, sideButton: { icon: Radar, label: "Market Intelligence" } },
-                      { icon: Globe, label: "Cloud AI", desc: "Auditor, Optimiser & Strategist agents analyse in parallel", tier: "cloud" as const },
-                      { icon: CheckCircle, label: "User Interface", desc: "Validated reports, interactive dashboards & action roadmaps", tier: "output" as const },
-                    ].map((step, i, arr) => {
-                      const tierStyles = {
-                        input: {
-                          card: "bg-accent/8 border-accent/40 shadow-sm shadow-accent/10",
-                          icon: "bg-accent shadow-sm shadow-accent/30",
-                          label: "text-xs text-accent font-bold",
-                          badge: "border-accent bg-accent text-accent-foreground",
-                        },
-                        engine: {
-                          card: "bg-primary/10 border-primary/40 shadow-md shadow-primary/15 ring-1 ring-primary/20",
-                          icon: "bg-primary shadow-md shadow-primary/30",
-                          label: "text-sm text-primary font-bold",
-                          badge: "border-primary bg-primary text-primary-foreground",
-                        },
-                        cloud: {
-                          card: "bg-iris/8 border-iris/40 shadow-sm shadow-iris/10",
-                          icon: "bg-iris shadow-sm shadow-iris/30",
-                          label: "text-xs text-iris font-bold",
-                          badge: "border-iris bg-iris text-white",
-                        },
-                        output: {
-                          card: "bg-positive/8 border-positive/40 shadow-sm shadow-positive/10",
-                          icon: "bg-positive shadow-sm shadow-positive/30",
-                          label: "text-xs text-positive font-bold",
-                          badge: "border-positive bg-positive text-white",
-                        },
-                      };
-                      const s = tierStyles[step.tier];
-                      return (
-                      <div key={step.label}>
-                        <div className="flex items-stretch gap-2">
-                          <div className={`flex items-center gap-3 py-2.5 px-4 rounded-lg border cursor-default transition-all hover:shadow-lg flex-1 ${s.card}`}>
-                            <div className="relative shrink-0">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.icon}`}>
-                                <step.icon className="w-3.5 h-3.5 text-primary-foreground" />
-                              </div>
-                              <span className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[8px] font-bold flex items-center justify-center ${s.badge}`}>
-                                {i + 1}
-                              </span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className={`leading-tight ${s.label}`}>{step.label}</p>
-                              <p className={`leading-snug mt-0.5 ${step.tier === "engine" ? "text-[11px] text-foreground/80" : "text-[10px] text-muted-foreground"}`}>{step.desc}</p>
-                            </div>
+                  <div className="flex flex-col items-center gap-0">
+                    {/* Step 1 — User Input + Risk & Inflation side button */}
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="w-[280px] shrink-0 mx-auto rounded-xl border border-accent/30 bg-background p-4 transition-all hover:shadow-md">
+                        <div className="flex items-start gap-3">
+                          <span className="font-display text-2xl font-light text-accent/40 leading-none mt-0.5">1</span>
+                          <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <Lock className="w-3.5 h-3.5 text-accent" />
                           </div>
-                          {step.sideButton && (
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <svg width="24" height="12" viewBox="0 0 24 12" className="text-primary/50 shrink-0">
-                                <path d="M2 6 L8 2 L8 10 Z" fill="currentColor" stroke="none" />
-                                <line x1="8" y1="6" x2="24" y2="6" stroke="currentColor" strokeWidth="2" />
-                              </svg>
-                              <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border-2 border-copper/50 bg-copper/10 cursor-default transition-all hover:shadow-lg hover:border-copper/70 self-stretch shadow-sm shadow-copper/10">
-                                <div className="w-7 h-7 rounded-lg bg-copper shadow-sm shadow-copper/30 flex items-center justify-center">
-                                  <step.sideButton.icon className="w-3.5 h-3.5 text-white" />
-                                </div>
-                                <p className="text-[10px] font-bold text-foreground leading-tight max-w-[5rem]">{step.sideButton.label}</p>
-                              </div>
-                            </div>
-                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-foreground leading-tight">User Input</p>
+                            <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Scenario data, documents & supplier info — anonymised before processing</p>
+                          </div>
                         </div>
-                        {i < arr.length - 1 && (
-                          <div className="flex justify-center py-0.5">
-                            {i === 1 ? (
-                              <svg width="24" height="28" viewBox="0 0 24 28" className="text-primary">
-                                <path d="M12 0 L18 7 L14 7 L14 12 L10 12 L10 7 L6 7 Z" fill="currentColor" />
-                                <path d="M12 28 L6 21 L10 21 L10 16 L14 16 L14 21 L18 21 Z" fill="currentColor" />
-                              </svg>
-                            ) : (
-                              <svg width="12" height="20" viewBox="0 0 12 20" className="text-primary/50">
-                                <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="2" />
-                                <path d="M6 20 L2 14 L10 14 Z" fill="currentColor" stroke="none" />
-                              </svg>
-                            )}
-                          </div>
-                        )}
                       </div>
-                      );
-                    })}
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="text-muted-foreground/30 shrink-0">
+                          <line x1="4" y1="5" x2="24" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
+                        </svg>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-h-[56px]">
+                          <Database className="w-4.5 h-4.5 text-copper shrink-0" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Risk & Inflation Platforms</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Arrow 1→2 */}
+                    <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-muted-foreground/40 my-0.5">
+                      <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M6 20 L2 13 L10 13 Z" fill="currentColor" />
+                    </svg>
+
+                    {/* Step 2 — Core Engine (elevated) + Market Intelligence side button */}
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="w-[280px] shrink-0 mx-auto rounded-xl bg-primary border border-primary/80 p-4 shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30">
+                        <div className="flex items-start gap-3">
+                          <span className="font-display text-2xl font-light text-primary-foreground/30 leading-none mt-0.5">2</span>
+                          <div className="w-7 h-7 rounded-lg bg-primary-foreground/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <Shield className="w-3.5 h-3.5 text-primary-foreground" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-primary-foreground leading-tight">Core Engine</p>
+                            <p className="text-[10px] text-primary-foreground/70 leading-snug mt-0.5">Grounding, market enrichment, validation & de-anonymisation pipeline</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="text-muted-foreground/30 shrink-0">
+                          <line x1="4" y1="5" x2="24" y2="5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
+                        </svg>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-h-[56px]">
+                          <Radar className="w-4.5 h-4.5 text-copper shrink-0" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Market Intelligence</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Arrow 2→3 */}
+                    <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-muted-foreground/40 my-0.5">
+                      <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M6 20 L2 13 L10 13 Z" fill="currentColor" />
+                    </svg>
+
+                    {/* Step 3 — Cloud AI */}
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="w-[280px] shrink-0 mx-auto rounded-xl border border-iris/30 bg-background p-4 transition-all hover:shadow-md">
+                        <div className="flex items-start gap-3">
+                          <span className="font-display text-2xl font-light text-iris/40 leading-none mt-0.5">3</span>
+                          <div className="w-7 h-7 rounded-lg bg-iris/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <Globe className="w-3.5 h-3.5 text-iris" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-foreground leading-tight">Cloud AI</p>
+                            <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Auditor, Optimiser & Strategist agents analyse in parallel</p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Invisible spacer to match rows with side buttons */}
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0 invisible">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="shrink-0"><line x1="0" y1="5" x2="24" y2="5" /></svg>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 min-h-[56px]">
+                          <Database className="w-4.5 h-4.5" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Placeholder</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Arrow 3→4 */}
+                    <svg aria-hidden="true" width="12" height="20" viewBox="0 0 12 20" className="text-muted-foreground/40 my-0.5">
+                      <line x1="6" y1="0" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M6 20 L2 13 L10 13 Z" fill="currentColor" />
+                    </svg>
+
+                    {/* Step 4 — User Interface */}
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="w-[280px] shrink-0 mx-auto rounded-xl border border-positive/30 bg-background p-4 transition-all hover:shadow-md">
+                        <div className="flex items-start gap-3">
+                          <span className="font-display text-2xl font-light text-positive/40 leading-none mt-0.5">4</span>
+                          <div className="w-7 h-7 rounded-lg bg-positive/15 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle className="w-3.5 h-3.5 text-positive" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-foreground leading-tight">User Interface</p>
+                            <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">Validated reports, interactive dashboards & action roadmaps</p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Invisible spacer to match rows with side buttons */}
+                      <div className="hidden min-[480px]:flex items-center gap-1.5 shrink-0 invisible">
+                        <svg aria-hidden="true" width="24" height="10" viewBox="0 0 24 10" className="shrink-0"><line x1="0" y1="5" x2="24" y2="5" /></svg>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 min-h-[56px]">
+                          <Database className="w-4.5 h-4.5" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Placeholder</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -252,11 +280,22 @@ const Welcome = () => {
       <section className="container py-10 md:py-12">
         <div className="max-w-2xl">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-            Architectural Intelligence
+            EXOS works as three interconnected layers:
           </h2>
-          <p className="text-muted-foreground mt-3 leading-relaxed">
-            A unified ecosystem designed to replace fragmented legacy tools with high-fidelity procurement workflows.
-          </p>
+          <ul className="space-y-2 pl-1 mt-4 text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+              <span><strong className="text-foreground">Scenarios</strong> — pre-defined agentic AI flows with procurement methodology, agentic loops, and custom LLM settings.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+              <span><strong className="text-foreground">Market Intelligence</strong> — live market context injected into AI results: benchmarks, risks, pricing signals, regulatory shifts.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+              <span><strong className="text-foreground">Continuous Monitoring</strong> — Inflation and Risk platforms that surface what's changed and flag only what requires your decision.</span>
+            </li>
+          </ul>
         </div>
       </section>
 
@@ -313,10 +352,22 @@ const Welcome = () => {
                 <div className={`${!isEven ? "md:order-1" : ""}`}>
                   <Card className="overflow-hidden border-border/50 bg-muted/20">
                     <CardContent className="p-0">
-                      <div className="aspect-[16/10] flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
-                          <Icon className="w-8 h-8 text-primary/60" />
-                        </div>
+                      <div className="aspect-[16/10] relative overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
+                        {pillar.previewImage ? (
+                          <img
+                            src={pillar.previewImage}
+                            alt={`${pillar.title} preview`}
+                            className="w-full h-full object-cover object-top"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                              <Icon className="w-8 h-8 text-primary/60" />
+                            </div>
+                          </div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-muted to-transparent" />
                       </div>
                     </CardContent>
                   </Card>

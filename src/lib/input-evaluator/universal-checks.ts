@@ -37,6 +37,9 @@ export function checkGibberish(text: string, fieldId: string): QualityCheck | nu
   // Exempt numeric-heavy blocks (financial data, tables)
   if (numericTokenRatio(text) > 0.4) return null;
 
+  // Exempt substantial text with numeric content — strongly indicates real procurement data
+  if (wordCount(text) >= 30 && numericTokenRatio(text) > 0.05) return null;
+
   // Check keyboard-mash patterns
   for (const pattern of KEYBOARD_MASH_PATTERNS) {
     if (pattern.test(text)) {
@@ -50,15 +53,15 @@ export function checkGibberish(text: string, fieldId: string): QualityCheck | nu
     }
   }
 
-  // Check dictionary-word ratio
+  // Check dictionary-word ratio (lowered threshold to accommodate domain jargon)
   const ratio = knownWordRatio(text);
-  if (ratio < 0.5) {
+  if (ratio < 0.35) {
     return {
       id: "UNIVERSAL_GIBBERISH_RATIO",
-      severity: "WARNING",
-      message: `Only ${Math.round(ratio * 100)}% of words are recognisable. The content may be garbled or pasted from an incompatible source.`,
+      severity: "INFO",
+      message: "Some specialised terms weren't recognised by our dictionary — this is normal for domain-specific content and won't affect your analysis.",
       fieldId,
-      suggestion: "Ensure the text is in English and describes your procurement context clearly.",
+      suggestion: "No action needed if your input is accurate. Our analysis engine handles industry jargon, product codes, and company names.",
     };
   }
 
@@ -142,9 +145,9 @@ export function checkLanguage(text: string, fieldId: string): QualityCheck | nul
     return {
       id: "UNIVERSAL_LANGUAGE",
       severity: "INFO",
-      message: "This field contains significant non-Latin script content. EXOS analysis works best with English text.",
+      message: "This field contains non-Latin characters. EXOS produces the most detailed output with English text — proper nouns and technical terms in other scripts work fine.",
       fieldId,
-      suggestion: "For best results, provide input in English. Proper nouns and technical terms in other scripts are fine.",
+      suggestion: "No action needed for names, codes, or technical terms. For full blocks of non-English text, consider translating for best results.",
     };
   }
   return null;

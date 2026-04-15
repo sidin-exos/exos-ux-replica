@@ -65,10 +65,12 @@ serve(async (req) => {
     const analysisResult = requireString(body.analysisResult, "analysisResult", { maxLength: 200000 })!;
     const timestamp = requireString(body.timestamp, "timestamp", { maxLength: 50 })!;
     const formData = (optionalRecord(body.formData, "formData", 100) ?? {}) as Record<string, string>;
+    const structuredData = typeof body.structuredData === "string" ? body.structuredData.slice(0, 500000) : undefined;
 
     const payload: GenerateExcelPayload = {
       scenarioTitle,
       analysisResult,
+      structuredData,
       formData,
       timestamp,
     };

@@ -229,6 +229,7 @@ const GeneratedReport = () => {
             <ReportExportButtons
               scenarioTitle={scenarioTitle}
               analysisResult={safeAnalysisResult}
+              structuredData={structuredData}
               formData={formData}
               timestamp={timestamp}
               selectedDashboards={selectedDashboards}

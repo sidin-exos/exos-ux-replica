@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
 import { Activity, BarChart3, FileText, Gauge, Mail, MessageSquare } from "lucide-react";
@@ -26,8 +27,17 @@ import { useEnterpriseTrackers } from "@/hooks/useEnterpriseTrackers";
 
 const RiskPlatform = () => {
   const { user, isLoading: isAuthLoading } = useUser();
-  const [selectedTracker, setSelectedTracker] = useState<EnterpriseTracker | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { trackers, isLoading, createTracker } = useEnterpriseTrackers("risk");
+
+  // Derive selected tracker from URL param
+  const selectedTracker = id
+    ? (trackers?.find(t => t.id === id) ?? null)
+    : null;
+
+  // After trackers have loaded, if an ID was requested but not found → redirect
+  const trackerNotFound = id && !isLoading && !selectedTracker;
 
   const MAX_REPORTS_PER_MONTH = 50;
 
@@ -55,8 +65,8 @@ const RiskPlatform = () => {
   });
 
   const handleSelectTracker = useCallback((tracker: EnterpriseTracker) => {
-    setSelectedTracker(tracker);
-  }, []);
+    navigate(`/enterprise/risk/monitor/${tracker.id}`);
+  }, [navigate]);
 
   if (isAuthLoading) {
     return (
@@ -80,6 +90,18 @@ const RiskPlatform = () => {
     );
   }
 
+  if (isLoading && id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (trackerNotFound) {
+    return <Navigate to="/enterprise/risk" replace />;
+  }
+
   if (selectedTracker) {
     return (
       <EnterpriseLayout>
@@ -87,7 +109,7 @@ const RiskPlatform = () => {
         <main className="container py-8">
           <MonitorDetailView
             tracker={selectedTracker}
-            onBack={() => setSelectedTracker(null)}
+            onBack={() => navigate('/enterprise/risk')}
           />
         </main>
       </EnterpriseLayout>
@@ -105,8 +127,11 @@ const RiskPlatform = () => {
           </div>
           <div>
             <h1 className="text-2xl exos-page-title">
-               Dynamic Risk Monitoring
+              Risk Assessment Platform
             </h1>
+            <p className="text-sm text-muted-foreground max-w-2xl mt-1">
+              Continuous monitoring of supplier financial health, geopolitical exposure, and regulatory risk — built for EU procurement teams.
+            </p>
           </div>
         </div>
 

@@ -235,10 +235,10 @@ const Features = () => {
         {/* Hero heading */}
         <section className="mb-10 animate-fade-up text-center">
           <div className="flex justify-center mb-4">
-            <img src={resolvedTheme === 'dark' ? exosMarkDark : exosMark} alt="EXOS" className="h-24 md:h-32 w-auto object-contain" />
+            <img src={resolvedTheme === 'dark' ? exosMarkDark : exosMark} alt="EXOS procurement platform logo" className="h-24 md:h-32 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-            Do More With Less. <span className="text-gradient">Decide With Confidence.</span>
+            How EXOS <span className="text-gradient">Works</span>
           </h1>
           <p className="text-muted-foreground text-base max-w-2xl mx-auto mb-4">
             Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.

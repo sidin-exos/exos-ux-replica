@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import * as Sentry from "@sentry/react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { useNavigate } from "react-router-dom";
@@ -75,6 +75,7 @@ import { useScenarioFileAttachments } from "@/hooks/useScenarioFileAttachments";
 import { useInputEvaluator } from "@/hooks/useInputEvaluator";
 import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
 import { useUser } from "@/hooks/useUser";
+import { useScenarioDraft } from "@/hooks/useScenarioDraft";
 
 const DataRequirementsCollapsible = ({ dataRequirements }: { dataRequirements: { title: string; sections: { heading: string; description: string }[] } }) => {
   const [open, setOpen] = useState(false);
@@ -131,10 +132,32 @@ interface GenericScenarioWizardProps {
 
 type Step = "input" | "review" | "analyzing" | "results";
 
+const formatRelativeTime = (date: Date): string => {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 10) return 'just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return 'earlier';
+};
+
 const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const navigate = useNavigate();
   const { showTechnicalDetails } = useShareableMode();
   const { user } = useUser();
+
+  const {
+    saveDraft,
+    clearDraft,
+    loadDraft,
+    isSaving,
+    lastSaved,
+    hasDraft,
+  } = useScenarioDraft({
+    scenarioId: scenario.id,
+    userId: user?.id ?? null,
+  });
+
   const [step, setStep] = useState<Step>("input");
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [strategyValue, setStrategyValue] = useState<StrategyType>("balanced");
@@ -153,8 +176,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [isGeneratingFromDraft, setIsGeneratingFromDraft] = useState(false);
   const [testDataMetadata, setTestDataMetadata] = useState<{
     source: "ai" | "static";
-    score?: number;
-    reasoning?: string;
+    qualityTier?: "OPTIMAL" | "MINIMUM" | "DEGRADED" | "GIBBERISH";
+    expectedEvaluatorScore?: "READY" | "IMPROVABLE" | "INSUFFICIENT";
+    testNotes?: string;
   } | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -285,14 +309,18 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       
       if (result.success && result.data) {
         setFormData(result.data);
+        saveDraft(result.data);
         setTestDataMetadata({
           source: "ai",
-          score: result.metadata?.score,
-          reasoning: result.metadata?.reasoning,
+          qualityTier: result.qualityTier,
+          expectedEvaluatorScore: result.expectedEvaluatorScore,
+          testNotes: result.testNotes,
         });
         setDraftedParams(null); // Clear draft after success
         toast.success("Test Data Generated", {
-          description: `Score: ${result.metadata?.score}/100`,
+          description: result.qualityTier
+            ? `Quality: ${result.qualityTier}${result.expectedEvaluatorScore ? ` • Expected: ${result.expectedEvaluatorScore}` : ""}`
+            : "Test data ready",
         });
       } else {
         toast.error("Generation failed", { description: result.error });
@@ -309,6 +337,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const handleStaticGenerate = () => {
     const testData = generateTestData(scenario.id);
     setFormData(testData);
+    saveDraft(testData);
     setDraftedParams(null);
     setTestDataMetadata({ source: "static" });
     toast.success("Static test data generated");
@@ -325,8 +354,31 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     setCategoryOverrides(getDefaultCategoryOverrides());
   };
 
+  // Restore draft on mount / scenario switch
+  useEffect(() => {
+    const restore = async () => {
+      const draft = await loadDraft();
+      if (!draft) return;
+      setFormData(prev => {
+        const merged: Record<string, string> = { ...prev };
+        Object.entries(draft).forEach(([key, value]) => {
+          if (value && value.trim() !== '') {
+            merged[key] = value;
+          }
+        });
+        return merged;
+      });
+    };
+    restore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario.id]);
+
   const handleFieldChange = (fieldId: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [fieldId]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [fieldId]: value };
+      saveDraft(next);
+      return next;
+    });
   };
 
   const handleFieldClick = (fieldId: string) => {
@@ -381,6 +433,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         setAnalysisTimestamp(new Date().toISOString());
         setStep("results");
         toast.success(`Analysis complete! Completeness: ${data.completenessScore ?? "N/A"}/100`);
+        clearDraft();
       } catch (err) {
         console.error("[MarketSnapshot] Error:", err);
         Sentry.captureException(err, { tags: { feature: "scenario-wizard", scenario: "market-snapshot" } });
@@ -422,7 +475,8 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       categoryContext || null,
       undefined, // config
       effectiveModel, // pass the model from settings
-      selectedDashboards
+      selectedDashboards,
+      attachedFileIds
     );
 
     if (result?.success) {
@@ -430,6 +484,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       setAnalysisTimestamp(new Date().toISOString());
       setStep("results");
       toast.success("Analysis complete!");
+      clearDraft();
 
       // Save file attachments (fire-and-forget)
       if (attachedFileIds.length > 0) {
@@ -486,7 +541,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         model: configModel,
       };
 
-      const result = await runExosGraph(queryText, graphConfig, scenario.id, selectedDashboards);
+      const result = await runExosGraph(queryText, graphConfig, scenario.id, selectedDashboards, attachedFileIds);
 
       clearInterval(progressInterval);
       setDeepAnalysisStep(4); // Complete all steps
@@ -495,6 +550,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       setAnalysisTimestamp(new Date().toISOString());
       setStep("results");
       toast.success("Deep Analysis complete!");
+      clearDraft();
     } catch (err) {
       clearInterval(progressInterval);
       const errorMessage = err instanceof Error ? err.message : "Analysis failed";
@@ -644,17 +700,19 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
             <div className="border-t border-border/40" />
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowChatAssistant(!showChatAssistant)}
-              className="gap-2"
-            >
-              <MessageSquare className="w-4 h-4" />
-              {showChatAssistant ? "Hide chatbot" : "Use chatbot to enter data"}
-            </Button>
+            {showTechnicalDetails && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChatAssistant(!showChatAssistant)}
+                className="gap-2"
+              >
+                <MessageSquare className="w-4 h-4" />
+                {showChatAssistant ? "Hide chatbot" : "Use chatbot to enter data"}
+              </Button>
+            )}
 
-            {showChatAssistant && (
+            {showTechnicalDetails && showChatAssistant && (
               <ScenarioChatAssistant
                 scenarioId={scenario.id}
                 requiredFields={scenario.requiredFields.map((f) => ({
@@ -698,7 +756,10 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   {testDataMetadata && (
                     <span className="text-xs text-muted-foreground">
                       {testDataMetadata.source === "ai" ? (
-                        <>Score: {testDataMetadata.score}/100</>
+                        <>
+                          {testDataMetadata.qualityTier ?? "AI"}
+                          {testDataMetadata.expectedEvaluatorScore ? ` • ${testDataMetadata.expectedEvaluatorScore}` : ""}
+                        </>
                       ) : (
                         "Static"
                       )}
@@ -979,6 +1040,35 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            {/* Draft status indicator */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+              <div>
+                {isSaving && (
+                  <span className="flex items-center gap-1">
+                    <span className="animate-pulse">●</span> Saving...
+                  </span>
+                )}
+                {!isSaving && lastSaved && (
+                  <span>Draft saved {formatRelativeTime(lastSaved)}</span>
+                )}
+                {!isSaving && !lastSaved && hasDraft && (
+                  <span>Draft restored</span>
+                )}
+              </div>
+              {hasDraft && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await clearDraft();
+                    setFormData({});
+                  }}
+                  className="underline hover:text-foreground transition-colors cursor-pointer"
+                >
+                  Clear draft
+                </button>
+              )}
             </div>
 
             <div className="flex justify-between">
