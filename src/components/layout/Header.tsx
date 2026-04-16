@@ -155,7 +155,7 @@ const Header = () => {
                 >
                   {group.label}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent className="right-0 left-auto">
+                <NavigationMenuContent>
                   <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
                     {group.items.map((item) => {
                       const Icon = item.icon;
