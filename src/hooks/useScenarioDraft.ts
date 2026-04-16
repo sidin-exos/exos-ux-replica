@@ -116,14 +116,13 @@ export function useScenarioDraft({
   // ── loadDraft ─────────────────────────────────────────────
   const loadDraft = useCallback(async (): Promise<DraftBlocks | null> => {
     if (!enabled) return null;
+    if (!userId) return null;
 
     const local = loadFromLocal(localKey);
     if (local) {
       setHasDraft(true);
       return local;
     }
-
-    if (!userId) return null;
 
     try {
       const { data, error } = await supabase

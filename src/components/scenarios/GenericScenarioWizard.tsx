@@ -380,8 +380,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       });
     };
     restore();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scenario.id]);
+  }, [scenario.id, user?.id]);
 
   const handleFieldChange = (fieldId: string, value: string) => {
     setFormData((prev) => {
