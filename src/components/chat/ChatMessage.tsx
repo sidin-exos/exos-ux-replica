@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Bot, ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { routeFeedback } from '@/lib/route-feedback';
 import type { Message } from '@/hooks/use-exos-chat';
 
 const timeFormatter = new Intl.DateTimeFormat('en-US', {
@@ -129,6 +130,16 @@ export function ChatMessage({ message, isLatest, allMessages }: ChatMessageProps
       toast.error('Failed to submit feedback');
       setFeedbackGiven(null);
     } else {
+      if (rating === 'not_helpful') {
+        routeFeedback({
+          source: 'chat_feedback',
+          idempotency_key: crypto.randomUUID(),
+          chat_rating: rating,
+          message_id: message.id,
+          conversation_excerpt: JSON.stringify(context),
+          page_url: window.location.href,
+        });
+      }
       toast.success('Thanks for your feedback!');
     }
   }, [message.id, allMessages]);

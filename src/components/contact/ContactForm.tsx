@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
+import { routeFeedback } from "@/lib/route-feedback";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -46,21 +47,17 @@ export function ContactForm() {
       setSubmitted(true);
       toast.success("Message sent successfully!");
 
-      // Non-blocking email notification to the team
-      supabase.functions.invoke('send-transactional-email', {
-        body: {
-          templateName: 'contact-notification',
-          recipientEmail: 'contact@exosproc.com',
-          idempotencyKey: `contact-notify-${id}`,
-          templateData: {
-            name: values.name,
-            email: values.email,
-            company: values.company || undefined,
-            subject: values.subject,
-            message: values.message,
-          },
-        },
-      }).catch((err) => console.error("Email notification failed:", err));
+      // Non-blocking notification to Plain + Resend
+      routeFeedback({
+        source: "contact_form",
+        idempotency_key: id,
+        name: values.name,
+        email: values.email,
+        company: values.company || undefined,
+        subject: values.subject,
+        message: values.message,
+        page_url: window.location.href,
+      });
     } catch {
       toast.error("Failed to send message. Please try again.");
     } finally {

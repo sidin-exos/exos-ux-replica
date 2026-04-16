@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.run-monitor-scan]
 verify_jwt = false
+
+[functions.route-feedback]
+verify_jwt = false
