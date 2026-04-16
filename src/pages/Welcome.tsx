@@ -368,6 +368,8 @@ const Welcome = () => {
                           />
                         ) : pillar.showPipeline ? (
                           <PipelinePreviewAnimation />
+                        ) : (pillar as any).showIntelPreview ? (
+                          <MarketIntelPreview />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
