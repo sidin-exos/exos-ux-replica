@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, BarChart3, Radar, Quote, Building2, CheckCircle, Lock, Compass, Globe, RefreshCw, Shield, Database } from "lucide-react";
-import PillarUseCaseDropdown from "@/components/welcome/PillarUseCaseDropdown";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -344,7 +344,7 @@ const Welcome = () => {
                       <p className="text-sm text-foreground leading-relaxed">
                         {pillar.impact}
                       </p>
-                      <PillarUseCaseDropdown type={pillar.useCaseType} />
+                      
                     </CardContent>
                   </Card>
                   <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href)}>
