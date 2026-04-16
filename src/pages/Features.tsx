@@ -488,7 +488,7 @@ const Features = () => {
                 );
               })}
             </nav>
-            <div className="md:col-span-3">
+            <div className="md:col-span-3 overflow-hidden">
               <DashboardContextCard dashboardId={selectedDashboard} config={dashboardConfigs[selectedDashboard]} />
               {renderDashboard(selectedDashboard)}
             </div>
