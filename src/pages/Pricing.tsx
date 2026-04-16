@@ -45,7 +45,7 @@ const pricingTiers = [
     icon: Shield,
     featured: true,
     features: [
-      "Full platform functionality",
+      "Everything in SMB, plus:",
       "Risk Assessment Platform",
       "Inflation Analysis Platform",
       "\n",
