@@ -15,7 +15,7 @@ import { MarketIntelPreview } from "@/components/welcome/MarketIntelPreview";
 const pillars = [
   {
     number: "01",
-    title: "Analytical Scenarios",
+    title: "Procurement Scenarios",
     description:
       "20+ AI scenario types — from cost optimization to negotiation prep. Provide context, receive actionable dashboards.",
     details: [
