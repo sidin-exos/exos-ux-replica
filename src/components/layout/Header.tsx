@@ -75,7 +75,7 @@ const Header = () => {
   const location = useLocation();
   const { user } = useUser();
   const { isSuperAdmin } = useAdminAuth();
-  const [desktopMenuValue, setDesktopMenuValue] = useState("");
+  const [_desktopMenuValue, _setDesktopMenuValue] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const exosLogo = useThemedLogo();
 
