@@ -103,6 +103,7 @@ const Header = () => {
           className="hidden md:flex"
           value={desktopMenuValue}
           onValueChange={setDesktopMenuValue}
+          viewportClassName="right-0 left-auto"
         >
           <NavigationMenuList>
             {NAV_GROUPS.slice(0, 2).map((group) => (
@@ -155,7 +156,7 @@ const Header = () => {
                 >
                   {group.label}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent>
+                <NavigationMenuContent className="right-0 left-auto">
                   <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
                     {group.items.map((item) => {
                       const Icon = item.icon;
