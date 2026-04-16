@@ -68,6 +68,7 @@ const pillars = [
     useCaseType: "scenarios" as const,
     previewImage: undefined as string | undefined,
     showPipeline: false,
+    showIntelPreview: true,
   },
 ];
 
