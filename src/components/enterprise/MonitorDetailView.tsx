@@ -31,7 +31,7 @@ const PARAM_LABELS: Record<string, string> = {
   monitor_type: "Monitoring Type",
   entity_type: "Entity Type",
   default_period: "Comparison Period",
-  hypothesis: "Hypothesis",
+  hypothesis: "Strategic Position",
   context_constraints: "Context & Constraints",
   existing_evidence: "Existing Evidence",
   entity_context: "Entity & Context",

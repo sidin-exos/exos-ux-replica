@@ -30,9 +30,9 @@ export const DRS_BAND_META: Record<DrsBand, { label: string; color: string; rang
 
 export const MONITOR_TYPE_META: Record<MonitorType, { label: string; purpose: string; description: string; drs: boolean; phase: 1 | 2 }> = {
   "DM-1": {
-    label: "Hypothesis Testing",
-    purpose: "Test a procurement hypothesis with balanced for/against evidence",
-    description: "Hypothesis Testing enables procurement professionals to validate strategic assumptions by systematically gathering and weighing evidence for and against a specific thesis. The monitor continuously scans publicly available sources to surface supporting and contradicting signals, helping decision-makers avoid confirmation bias. Rather than prescribing conclusions, it presents a balanced evidence portfolio that evolves over time, enabling teams to make data-informed decisions about sourcing strategies, supplier relationships, and market positioning with greater confidence and rigour.",
+    label: "Signal Balancer",
+    purpose: "Stress-test strategic positions with balanced supporting and contradicting signals",
+    description: "Signal Balancer enables procurement professionals to stress-test strategic positions by continuously scanning public sources for supporting and contradicting signals. Rather than pointing to a conclusion, it builds a living evidence portfolio that evolves over time — helping teams counteract confirmation bias and approach sourcing decisions, supplier relationships, and market positioning with greater confidence and rigour.",
     drs: false, phase: 1,
   },
   "DM-2": {
