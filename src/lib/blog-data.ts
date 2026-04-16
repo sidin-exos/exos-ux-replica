@@ -19,7 +19,7 @@ export const blogPosts: BlogPost[] = [
     slug: "the-efficiency-trap",
     title: "The Efficiency Trap: Why Automating Your Tail Spend Won't Save Your Margin",
     subtitle: "Transactional speed vs. cognitive depth — why the next generation of procurement technology must augment strategic thinking, not just automate clicks.",
-    date: "2026-04-15",
+    date: "2026-04-05",
     readingTime: "12 min read",
     author: "EXOS Research",
     heroImage: heroImage,
