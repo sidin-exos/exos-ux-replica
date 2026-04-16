@@ -45,7 +45,7 @@ const pricingTiers = [
     icon: Shield,
     featured: true,
     features: [
-      "Everything in SMB, plus:",
+      "Full EXOS Platform functionality",
       "Risk Assessment Platform",
       "Inflation Analysis Platform",
       "\n",
