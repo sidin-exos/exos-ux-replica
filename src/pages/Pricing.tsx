@@ -48,8 +48,6 @@ const pricingTiers = [
       "Full EXOS Platform functionality",
       "Risk Assessment Platform",
       "Inflation Analysis Platform",
-      "\n",
-      "\n",
       "Multi-user collaboration",
       "Advanced reporting & exports",
       "200 AI reports a month",
