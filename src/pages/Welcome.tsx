@@ -47,8 +47,9 @@ const pillars = [
     cta: "View Platforms",
     href: "/enterprise/risk",
     useCaseType: "risk" as const,
-    previewImage: riskSignalsPreview,
+    previewImage: undefined as string | undefined,
     showPipeline: false,
+    showPlatformsPreview: true,
   },
   {
     number: "03",
