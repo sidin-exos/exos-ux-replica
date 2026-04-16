@@ -374,6 +374,7 @@ const Welcome = () => {
                             </div>
                           </div>
                         )}
+                        <div className="absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-muted to-transparent" />
                         <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-muted to-transparent" />
                       </div>
                     </CardContent>
