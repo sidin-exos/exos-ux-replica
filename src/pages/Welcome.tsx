@@ -8,6 +8,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import riskSignalsPreview from "@/assets/risk-signals-preview.png";
+import { PipelinePreviewAnimation } from "@/components/welcome/PipelinePreviewAnimation";
 
 /* ── Feature Pillars ── */
 const pillars = [
@@ -361,11 +362,7 @@ const Welcome = () => {
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
-                              <Icon className="w-8 h-8 text-primary/60" />
-                            </div>
-                          </div>
+                          <PipelinePreviewAnimation />
                         )}
                         <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-muted to-transparent" />
                       </div>
