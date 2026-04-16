@@ -1,4 +1,5 @@
 import heroImage from "@/assets/blog/efficiency-trap-hero.jpg";
+import noiseProblemHero from "@/assets/blog/noise-problem-hero.jpg";
 
 export interface BlogPost {
   slug: string;
