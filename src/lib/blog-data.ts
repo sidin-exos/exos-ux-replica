@@ -17,7 +17,7 @@ export interface BlogPost {
 export const blogPosts: BlogPost[] = [
   {
     slug: "the-efficiency-trap",
-    title: "The Efficiency Trap: Why Automating Your Tail Spend Won't Save Your Margin",
+    title: "The Efficiency Trap",
     subtitle: "Transactional speed vs. cognitive depth — why the next generation of procurement technology must augment strategic thinking, not just automate clicks.",
     date: "2026-04-05",
     readingTime: "12 min read",
@@ -109,7 +109,7 @@ As McKinsey's latest supply chain research confirms, the companies that resume t
   },
   {
     slug: "the-noise-problem",
-    title: "The Noise Problem: A Note for Every Procurement Manager Who Has Too Much to Read and Too Little Time to Think",
+    title: "The Noise Problem",
     subtitle: "You are not short of information. You are short of the right information, at the right moment, already connected to your specific categories and contracts.",
     date: "2026-04-15",
     readingTime: "8 min read",
