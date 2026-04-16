@@ -75,13 +75,11 @@ const Header = () => {
   const location = useLocation();
   const { user } = useUser();
   const { isSuperAdmin } = useAdminAuth();
-  const [_desktopMenuValue, _setDesktopMenuValue] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const exosLogo = useThemedLogo();
 
   // Close transient navigation UI on route changes
   useEffect(() => {
-    setDesktopMenuValue("");
     setMobileOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
