@@ -9,6 +9,7 @@ import Footer from "@/components/layout/Footer";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import riskSignalsPreview from "@/assets/risk-signals-preview.png";
 import { PipelinePreviewAnimation } from "@/components/welcome/PipelinePreviewAnimation";
+import { MarketIntelPreview } from "@/components/welcome/MarketIntelPreview";
 
 /* ── Feature Pillars ── */
 const pillars = [
