@@ -312,7 +312,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Trigger &amp; Threshold Definitions</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Define specific events or thresholds for each driver. The AI will monitor public sources for these signals, improving the accuracy and relevance of your inflation scans.
+                  You can improve monitoring accuracy by defining specific events or thresholds you consider critical for each driver. EXOS will monitor public sources for these signals, improving the accuracy and relevance of your inflation scans.
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
