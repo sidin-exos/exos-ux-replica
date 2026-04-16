@@ -99,86 +99,86 @@ const Header = () => {
         </NavLink>
 
         {/* Desktop Mega-Menu */}
-        <NavigationMenu
-          className="hidden md:flex"
-          value={desktopMenuValue}
-          onValueChange={setDesktopMenuValue}
-          viewportClassName="right-0 left-auto"
-        >
-          <NavigationMenuList>
-            {NAV_GROUPS.slice(0, 2).map((group) => (
-              <NavigationMenuItem key={group.label}>
-                <NavigationMenuTrigger
-                  className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
-                  onClick={() => {
-                    if (group.label === "Scenarios") {
-                      setDesktopMenuValue("");
-                      navigate("/");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }
-                  }}
-                >
-                  {group.label}
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <li key={item.path}>
-                          <button
-                            onClick={() => navigate(item.path)}
-                            type="button"
-                            className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
-                          >
-                            {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
-                            {item.label}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            ))}
-            <NavigationMenuItem>
-              <button
-                onClick={() => navigate("/market-intelligence")}
-                className="text-sm font-medium text-muted-foreground px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                Market Intelligence
-              </button>
-            </NavigationMenuItem>
-            {NAV_GROUPS.slice(2).map((group) => (
-              <NavigationMenuItem key={group.label}>
-                <NavigationMenuTrigger
-                  className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
-                >
-                  {group.label}
-                </NavigationMenuTrigger>
-                <NavigationMenuContent className="right-0 left-auto">
-                  <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <li key={item.path}>
-                          <button
-                            onClick={() => navigate(item.path)}
-                            type="button"
-                            className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
-                          >
-                            {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
-                            {item.label}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
+        <div className="hidden md:flex items-center gap-1">
+          {NAV_GROUPS.slice(0, 2).map((group) => (
+            <NavigationMenu key={group.label}>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger
+                    className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                    onClick={() => {
+                      if (group.label === "Procurement Scenarios") {
+                        navigate("/");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }
+                    }}
+                  >
+                    {group.label}
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <li key={item.path}>
+                            <button
+                              onClick={() => navigate(item.path)}
+                              type="button"
+                              className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+                            >
+                              {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
+                              {item.label}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          ))}
+
+          <button
+            onClick={() => navigate("/market-intelligence")}
+            className="text-sm font-medium text-muted-foreground px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            Market Intelligence
+          </button>
+
+          {NAV_GROUPS.slice(2).map((group) => (
+            <NavigationMenu key={group.label}>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger
+                    className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                  >
+                    {group.label}
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <li key={item.path}>
+                            <button
+                              onClick={() => navigate(item.path)}
+                              type="button"
+                              className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+                            >
+                              {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
+                              {item.label}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          ))}
+        </div>
 
         <div className="flex items-center gap-1">
           <ThemeToggle />
