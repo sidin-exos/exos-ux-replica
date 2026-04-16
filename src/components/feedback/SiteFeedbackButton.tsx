@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { routeFeedback } from "@/lib/route-feedback";
 
 const FEEDBACK_TYPES = [
   { value: "bug", label: "Bug Report", icon: Bug },
@@ -44,6 +45,15 @@ const SiteFeedbackButton = ({ scenarioId = "general", className }: SiteFeedbackB
     if (error) {
       toast.error("Failed to submit feedback");
     } else {
+      routeFeedback({
+        source: "site_feedback",
+        idempotency_key: crypto.randomUUID(),
+        rating,
+        feedback_type: feedbackType || undefined,
+        feedback_text: feedbackText || undefined,
+        scenario_id: scenarioId,
+        page_url: window.location.href,
+      });
       toast.success("Thank you for your feedback!");
       setSubmitted(true);
       setTimeout(() => {

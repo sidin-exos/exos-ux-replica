@@ -1,19 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, BarChart3, Radar, Quote, Building2, CheckCircle, Lock, Compass, Globe, RefreshCw, Shield, Database } from "lucide-react";
-import PillarUseCaseDropdown from "@/components/welcome/PillarUseCaseDropdown";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
-import riskSignalsPreview from "@/assets/risk-signals-preview.png";
+import { PipelinePreviewAnimation } from "@/components/welcome/PipelinePreviewAnimation";
+import { MarketIntelPreview } from "@/components/welcome/MarketIntelPreview";
+import { AnalyticalPlatformsPreview } from "@/components/welcome/AnalyticalPlatformsPreview";
 
 /* ── Feature Pillars ── */
 const pillars = [
   {
     number: "01",
-    title: "Analytical Scenarios",
+    title: "Procurement Scenarios",
     description:
       "20+ AI scenario types — from cost optimization to negotiation prep. Provide context, receive actionable dashboards.",
     details: [
@@ -28,9 +30,29 @@ const pillars = [
     href: "/",
     useCaseType: "scenarios" as const,
     previewImage: undefined as string | undefined,
+    showPipeline: true,
   },
   {
     number: "02",
+    title: "Analytical Platforms",
+    description:
+      "Continuous Risk and Inflation monitoring that filters market noise into concise executive summaries — so you spend less time reading and more time deciding, with full control over what matters.",
+    details: [
+      "Risk Assessment Platform with automated alerts",
+      "Inflation Analysis with category-level trends",
+      "Cross-portfolio monitoring dashboards",
+    ],
+    impact: "From periodic reviews to continuous monitoring.",
+    icon: Building2,
+    cta: "View Platforms",
+    href: "/enterprise/risk",
+    useCaseType: "risk" as const,
+    previewImage: undefined as string | undefined,
+    showPipeline: false,
+    showPlatformsPreview: true,
+  },
+  {
+    number: "03",
     title: "Market Intelligence",
     description:
       "Query global supply chain data, commodity pricing, and geopolitical risks in real time. Schedule automated monitoring.",
@@ -46,23 +68,8 @@ const pillars = [
     href: "/market-intelligence",
     useCaseType: "scenarios" as const,
     previewImage: undefined as string | undefined,
-  },
-  {
-    number: "03",
-    title: "Enterprise Platforms",
-    description:
-      "Always-on Risk Assessment and Inflation Analysis platforms with automated alerts and category-level trend tracking.",
-    details: [
-      "Risk Assessment Platform with automated alerts",
-      "Inflation Analysis with category-level trends",
-      "Cross-portfolio monitoring dashboards",
-    ],
-    impact: "From periodic reviews to continuous monitoring.",
-    icon: Building2,
-    cta: "View Platforms",
-    href: "/enterprise/risk",
-    useCaseType: "risk" as const,
-    previewImage: riskSignalsPreview,
+    showPipeline: false,
+    showIntelPreview: true,
   },
 ];
 
@@ -285,15 +292,15 @@ const Welcome = () => {
           <ul className="space-y-2 pl-1 mt-4 text-muted-foreground">
             <li className="flex items-start gap-2">
               <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
-              <span><strong className="text-foreground">Scenarios</strong> — pre-defined agentic AI flows with procurement methodology, agentic loops, and custom LLM settings.</span>
+              <span><strong className="text-foreground">Procurement Scenarios</strong> — pre-defined agentic AI flows with procurement methodology, agentic loops, and custom LLM settings.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
+              <span><strong className="text-foreground">Analytical Platforms</strong> — Inflation and Risk platforms that surface what's changed and flag only what requires your decision.</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
               <span><strong className="text-foreground">Market Intelligence</strong> — live market context injected into AI results: benchmarks, risks, pricing signals, regulatory shifts.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 text-primary mt-1 shrink-0" />
-              <span><strong className="text-foreground">Continuous Monitoring</strong> — Inflation and Risk platforms that surface what's changed and flag only what requires your decision.</span>
             </li>
           </ul>
         </div>
@@ -334,13 +341,10 @@ const Welcome = () => {
                   </ul>
                   <Card className="border-primary/20 bg-primary/5">
                     <CardContent className="p-3">
-                      <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-0.5">
-                        Business Impact
-                      </p>
                       <p className="text-sm text-foreground leading-relaxed">
                         {pillar.impact}
                       </p>
-                      <PillarUseCaseDropdown type={pillar.useCaseType} />
+                      
                     </CardContent>
                   </Card>
                   <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href)}>
@@ -360,6 +364,12 @@ const Welcome = () => {
                             className="w-full h-full object-cover object-top"
                             loading="lazy"
                           />
+                        ) : pillar.showPipeline ? (
+                          <PipelinePreviewAnimation />
+                        ) : (pillar as any).showPlatformsPreview ? (
+                          <AnalyticalPlatformsPreview />
+                        ) : (pillar as any).showIntelPreview ? (
+                          <MarketIntelPreview />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
@@ -367,6 +377,7 @@ const Welcome = () => {
                             </div>
                           </div>
                         )}
+                        <div className="absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-muted to-transparent" />
                         <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-muted to-transparent" />
                       </div>
                     </CardContent>

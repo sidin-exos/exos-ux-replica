@@ -31,6 +31,9 @@ dist-ssr
 *.sw?
 
 # Sensitive project context docs (security audit L-5)
+public/docs/*PROJECT_CONTEXT*.md
+public/docs/*CONTEXT*.md
+public/**/PROJECT_CONTEXT*.md
 public/PROJECT_CONTEXT*.md
 docs/PROJECT_CONTEXT*.md
 PROJECT_CONTEXT.md

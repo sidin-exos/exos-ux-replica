@@ -37,13 +37,22 @@ export async function checkRateLimit(
     .gte("created_at", windowStart);
 
   if (countError) {
-    console.error("Rate limit check failed:", countError);
+    // Structured log so rate-limiter DB outages surface in log-based alerts.
+    console.error(JSON.stringify({
+      level: "CRITICAL",
+      event: "rate_limit_db_failure",
+      endpoint,
+      failMode: options?.failClosed ? "closed" : "open",
+      error: countError.message,
+      timestamp: new Date().toISOString(),
+    }));
+
     if (options?.failClosed) {
-      // Fail-closed: deny on DB error for high-value endpoints
-      console.warn(`Rate limit fail-closed triggered for endpoint: ${endpoint}`);
-      return { allowed: false, remaining: 0, resetAt: new Date(Date.now() + 60_000).toISOString() };
+      console.warn(`Rate limit fail-CLOSED for ${endpoint} — request blocked due to DB error`);
+      return { allowed: false, remaining: 0, resetAt: new Date(Date.now() + windowMinutes * 60 * 1000).toISOString() };
     }
-    // Fail-open: allow on DB error for low-risk endpoints
+
+    console.warn(`Rate limit fail-OPEN for ${endpoint} — request allowed despite DB error`);
     return { allowed: true, remaining: maxRequests, resetAt: "" };
   }
 

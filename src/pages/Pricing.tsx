@@ -45,14 +45,12 @@ const pricingTiers = [
     icon: Shield,
     featured: true,
     features: [
-      "Everything in SMB, plus:",
+      "Full EXOS Platform functionality",
       "Risk Assessment Platform",
       "Inflation Analysis Platform",
-      "\n",
-      "\n",
       "Multi-user collaboration",
       "Advanced reporting & exports",
-      "300 AI reports a month",
+      "200 AI reports a month",
       "1 Custom scenario per user per month*",
     ],
     cta: "Start Free Trial",
@@ -145,7 +143,8 @@ const Pricing = () => {
             <img src={exosLogo} alt="EXOS procurement platform logo" className="h-16 md:h-20 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-            Simple, Transparent <span className="text-gradient">Pricing</span> ROI from first day, first user.
+            Simple, Transparent Pricing.{" "}
+            <span className="text-gradient">ROI</span> from first day, first user.
           </h1>
         </section>
 
@@ -242,11 +241,11 @@ const Pricing = () => {
               </TableHeader>
               <TableBody>
                 {[
-                  { feature: "Available Scenarios", smb: "5 / month", pro: "Unlimited", enterprise: "Unlimited + Custom" },
-                  { feature: "Excel / Jira Export", smb: false, pro: true, enterprise: true },
-                  { feature: "Perplexity Real-Time AI", smb: false, pro: true, enterprise: true },
-                  { feature: "Dedicated Account Manager", smb: false, pro: false, enterprise: true },
-                  { feature: "Custom GDPR Guardrails", smb: false, pro: false, enterprise: true },
+                  { feature: "AI Credits", smb: "100 / month", pro: "200 / month", enterprise: "Custom" },
+                  { feature: "20+ procurement scenarios and Market Intelligence", smb: true, pro: true, enterprise: true },
+                  { feature: "Risk and Inflation Platforms", smb: false, pro: true, enterprise: true },
+                  { feature: "Users Training", smb: false, pro: false, enterprise: true },
+                  { feature: "Custom integrations", smb: false, pro: false, enterprise: true },
                 ].map((row) => (
                   <TableRow key={row.feature}>
                     <TableCell className="font-medium text-foreground">{row.feature}</TableCell>

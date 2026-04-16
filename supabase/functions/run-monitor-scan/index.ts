@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -34,6 +35,11 @@ Deno.serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    const rateCheck = await checkRateLimit(user.id, "run-monitor-scan", 10, 60, { failClosed: true });
+    if (!rateCheck.allowed) {
+      return rateLimitResponse(rateCheck, corsHeaders);
     }
 
     const { tracker_id } = await req.json();

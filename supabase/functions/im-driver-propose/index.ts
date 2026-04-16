@@ -1,5 +1,6 @@
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +44,12 @@ Deno.serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    const userId = data.claims.sub as string;
+    const rateCheck = await checkRateLimit(userId, "im-driver-propose", 30, 60, { failClosed: true });
+    if (!rateCheck.allowed) {
+      return rateLimitResponse(rateCheck, corsHeaders);
     }
 
     const body = await req.json();

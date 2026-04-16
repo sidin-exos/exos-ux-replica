@@ -23,6 +23,8 @@ const Welcome = lazy(() => import("./pages/Welcome"));
 const Features = lazy(() => import("./pages/Features"));
 
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const GeneratedReport = lazy(() => import("./pages/GeneratedReport"));
 const SharedReport = lazy(() => import("./pages/SharedReport"));
@@ -44,6 +46,8 @@ const MethodologyScenarioEdit = lazy(() => import("./pages/admin/MethodologyScen
 const MethodologyConfig = lazy(() => import("./pages/admin/MethodologyConfig"));
 const MethodologyHistory = lazy(() => import("./pages/admin/MethodologyHistory"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 // Scenario landing pages
 const TCOAnalysis = lazy(() => import("./pages/scenarios/TCOAnalysis"));
@@ -86,6 +90,8 @@ const App = () => (
             <Route path="/features" element={<Features />} />
             <Route path="/reports" element={<Features />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
             <Route path="/report" element={<ProtectedRoute><GeneratedReport /></ProtectedRoute>} />
             <Route path="/report/:shareId" element={<SharedReport />} />
@@ -115,6 +121,8 @@ const App = () => (
             <Route path="/admin/methodology/history" element={<ProtectedRoute requireSuperAdmin><MethodologyHistory /></ProtectedRoute>} />
             <Route path="/admin/methodology/:slug" element={<ProtectedRoute requireSuperAdmin><MethodologyScenarioEdit /></ProtectedRoute>} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             {/* Scenario SEO landing pages */}
             <Route path="/scenarios/tco-analysis" element={<TCOAnalysis />} />
             <Route path="/scenarios/supplier-risk-assessment" element={<SupplierRisk />} />

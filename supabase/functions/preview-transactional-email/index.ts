@@ -1,6 +1,7 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { checkRateLimit, rateLimitResponse } from '../_shared/rate-limit.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +35,16 @@ Deno.serve(async (req) => {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
+  }
+
+  // Defence-in-depth rate limit keyed on client IP (no user context on this endpoint)
+  const clientIp =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    req.headers.get('cf-connecting-ip') ||
+    'unknown'
+  const rateCheck = await checkRateLimit(clientIp, 'preview-transactional-email', 60, 60)
+  if (!rateCheck.allowed) {
+    return rateLimitResponse(rateCheck, corsHeaders)
   }
 
   const templateNames = Object.keys(TEMPLATES)
