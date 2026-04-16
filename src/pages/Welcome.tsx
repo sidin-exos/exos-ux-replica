@@ -9,6 +9,7 @@ import Footer from "@/components/layout/Footer";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import riskSignalsPreview from "@/assets/risk-signals-preview.png";
 import { PipelinePreviewAnimation } from "@/components/welcome/PipelinePreviewAnimation";
+import { MarketIntelPreview } from "@/components/welcome/MarketIntelPreview";
 
 /* ── Feature Pillars ── */
 const pillars = [
@@ -67,6 +68,7 @@ const pillars = [
     useCaseType: "scenarios" as const,
     previewImage: undefined as string | undefined,
     showPipeline: false,
+    showIntelPreview: true,
   },
 ];
 
@@ -366,6 +368,8 @@ const Welcome = () => {
                           />
                         ) : pillar.showPipeline ? (
                           <PipelinePreviewAnimation />
+                        ) : (pillar as any).showIntelPreview ? (
+                          <MarketIntelPreview />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
