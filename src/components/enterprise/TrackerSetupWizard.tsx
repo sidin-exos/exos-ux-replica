@@ -321,7 +321,7 @@ const TrackerSetupWizard = ({
       {step === 1 && monitorType === "DM-4" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">DM-4: Country / Region</CardTitle>
+            <CardTitle className="text-lg">DM-4: Country / Region Risk Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -340,7 +340,7 @@ const TrackerSetupWizard = ({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country-region">Block 1 — Country / Region</Label>
+              <Label htmlFor="country-region">Block 1 — Country / Region Risk Profile</Label>
               <Textarea id="country-region" placeholder="Which country or region to monitor? e.g. 'Turkey — key sourcing geography for textiles and automotive components.'" value={countryRegion} onChange={(e) => setCountryRegion(e.target.value)} rows={3} />
               <p className="text-xs text-muted-foreground">Covers geopolitical, regulatory, logistics, and macroeconomic risk signals for the specified geography.</p>
             </div>
@@ -467,7 +467,7 @@ const TrackerSetupWizard = ({
               )}
               {monitorType === "DM-4" && (
                 <div className="col-span-2">
-                  <span className="text-muted-foreground">Country / Region</span>
+                  <span className="text-muted-foreground">Country / Region Risk Profile</span>
                   <p className="font-medium text-foreground">{countryRegion}</p>
                 </div>
               )}

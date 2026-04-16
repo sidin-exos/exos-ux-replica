@@ -48,7 +48,7 @@ export const MONITOR_TYPE_META: Record<MonitorType, { label: string; purpose: st
     drs: false, phase: 1,
   },
   "DM-4": {
-    label: "Country / Region",
+    label: "Country / Region Risk Profile",
     purpose: "Monitor geopolitical, regulatory, and logistics risk by geography",
     description: "Country & Region monitoring provides continuous surveillance of geopolitical, regulatory, and logistical risk factors affecting procurement operations in specific geographies. The monitor tracks political stability, trade policy shifts, sanctions developments, currency volatility, and infrastructure disruptions that could impact supply chains. It is essential for organisations with international sourcing strategies, offering early visibility into country-level risks that could affect lead times, costs, or supplier availability. The Delta-first approach ensures teams focus on emerging changes rather than well-known static conditions.",
     drs: true, phase: 1,
