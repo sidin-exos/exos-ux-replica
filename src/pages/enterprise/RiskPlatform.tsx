@@ -219,53 +219,28 @@ const RiskPlatform = () => {
 
                 <h2 className="text-base font-semibold text-foreground">Usage Statistics</h2>
 
-                {/* Active Monitors */}
-                <div className="rounded-lg border border-border bg-muted/30 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Gauge className="w-4 h-4 text-primary" />
-                    <span className="text-xs text-muted-foreground">Active Monitors</span>
-                  </div>
-                  <p className="text-3xl font-display font-bold text-foreground">
-                    {trackers.filter((t) => t.status === "active").length}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    {trackers.length} total ({trackers.filter((t) => t.status === "setup").length} in setup)
-                  </p>
-                </div>
-
-                {/* Reports This Month */}
-                <div className="rounded-lg border border-border bg-muted/30 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-iris" />
-                    <span className="text-xs text-muted-foreground">Reports This Month</span>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <p className="text-3xl font-display font-bold text-foreground">
-                      {reportsThisMonth}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Gauge className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-[11px] text-muted-foreground">Monitors</span>
+                    </div>
+                    <p className="text-2xl font-display font-bold text-foreground">
+                      {trackers.filter((t) => t.status === "active").length}
+                      <span className="text-sm font-normal text-muted-foreground"> / {trackers.length}</span>
                     </p>
-                    <span className="text-sm text-muted-foreground">/ {MAX_REPORTS_PER_MONTH}</span>
                   </div>
-                  <Progress
-                    value={Math.min((reportsThisMonth / MAX_REPORTS_PER_MONTH) * 100, 100)}
-                    className="h-1.5 mt-2"
-                  />
-                  <p className="text-[11px] text-muted-foreground mt-1.5">
-                    Professional tier · {MAX_REPORTS_PER_MONTH - reportsThisMonth > 0 ? `${MAX_REPORTS_PER_MONTH - reportsThisMonth} remaining` : "Limit reached"}
-                  </p>
-                </div>
 
-                {/* Max Reports */}
-                <div className="rounded-lg border border-border bg-muted/30 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BarChart3 className="w-4 h-4 text-copper" />
-                    <span className="text-xs text-muted-foreground">Monthly Report Limit</span>
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <FileText className="w-3.5 h-3.5 text-iris" />
+                      <span className="text-[11px] text-muted-foreground">Reports</span>
+                    </div>
+                    <p className="text-2xl font-display font-bold text-foreground">
+                      {reportsThisMonth}
+                      <span className="text-sm font-normal text-muted-foreground"> / {MAX_REPORTS_PER_MONTH}</span>
+                    </p>
                   </div>
-                  <p className="text-3xl font-display font-bold text-foreground">
-                    {MAX_REPORTS_PER_MONTH}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    Professional tier allowance
-                  </p>
                 </div>
               </CardContent>
             </Card>
