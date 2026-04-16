@@ -36,7 +36,7 @@ const pillars = [
     number: "02",
     title: "Analytical Platforms",
     description:
-      "Always-on Risk Assessment and Inflation Analysis platforms with automated alerts and category-level trend tracking.",
+      "Continuous Risk and Inflation monitoring that filters market noise into concise executive summaries — so you spend less time reading and more time deciding, with full control over what matters.",
     details: [
       "Risk Assessment Platform with automated alerts",
       "Inflation Analysis with category-level trends",
