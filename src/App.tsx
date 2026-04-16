@@ -23,6 +23,8 @@ const Welcome = lazy(() => import("./pages/Welcome"));
 const Features = lazy(() => import("./pages/Features"));
 
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const GeneratedReport = lazy(() => import("./pages/GeneratedReport"));
 const SharedReport = lazy(() => import("./pages/SharedReport"));
@@ -88,6 +90,8 @@ const App = () => (
             <Route path="/features" element={<Features />} />
             <Route path="/reports" element={<Features />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
             <Route path="/report" element={<ProtectedRoute><GeneratedReport /></ProtectedRoute>} />
             <Route path="/report/:shareId" element={<SharedReport />} />
