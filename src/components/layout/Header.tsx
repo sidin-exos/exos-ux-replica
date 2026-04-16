@@ -103,6 +103,7 @@ const Header = () => {
           className="hidden md:flex"
           value={desktopMenuValue}
           onValueChange={setDesktopMenuValue}
+          viewportClassName="right-0 left-auto"
         >
           <NavigationMenuList>
             {NAV_GROUPS.slice(0, 2).map((group) => (
