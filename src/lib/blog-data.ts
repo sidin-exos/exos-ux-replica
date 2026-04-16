@@ -1,4 +1,5 @@
 import heroImage from "@/assets/blog/efficiency-trap-hero.jpg";
+import noiseProblemHero from "@/assets/blog/noise-problem-hero.jpg";
 
 export interface BlogPost {
   slug: string;
@@ -105,6 +106,62 @@ As McKinsey's latest supply chain research confirms, the companies that resume t
 *Outsourcing & Procurement: Deloitte 2024 Global Outsourcing Survey · CIPS / Protiviti — Procurement Savings Don't Reach Bottom Line · Kearney — The Future of Procurement Strategy · Suplari — Should-Cost Modelling in Procurement (2026)*
 
 *Standards & Frameworks: ISO 31000 Risk Management Framework · Business Continuity Institute — ISO 22301 Guide*`,
+  },
+  {
+    slug: "the-noise-problem",
+    title: "The Noise Problem: A Note for Every Procurement Manager Who Has Too Much to Read and Too Little Time to Think",
+    subtitle: "You are not short of information. You are short of the right information, at the right moment, already connected to your specific categories and contracts.",
+    date: "2026-04-16",
+    readingTime: "8 min read",
+    author: "EXOS Research",
+    heroImage: noiseProblemHero,
+    excerpt: "You do not need another report to tell you that global supply chains are volatile. You live it. Every morning you open your inbox and there is already something waiting. This is not a knowledge gap — it is a noise problem.",
+    tags: ["Market Intelligence", "Supply Chain Risk", "Category Management", "Disruption Monitoring"],
+    content: `## You Already Know the Problem
+
+You do not need another report to tell you that global supply chains are volatile. You live it. Every morning you open your inbox and there is already something waiting — a supplier flagging a price increase, a news alert about a new tariff, a colleague forwarding an article about a port disruption on the other side of the world. And the day has not started yet.
+
+This is not a knowledge gap. You are not short of information. You are short of the *right* information, at the right moment, already connected to your specific categories and contracts. The rest is just noise — and according to CIPS's 2025 Global Procurement Report, the volume of that noise has never been higher. Supply chain risk is now cited as a top challenge by 47% of procurement professionals, up from 31% just two years ago. That gap is not new risk. It is the same risk, arriving faster.
+
+## The Real Cost of Information Overload
+
+Here is what actually happens in most procurement teams. A Category Manager spends a meaningful share of their morning scanning industry newsletters, commodity trackers, and geopolitical briefings. Not because they want to. Because they feel they have to. Because missing a signal can mean signing a contract at the wrong price, or discovering a supply risk three weeks too late.
+
+The problem is that manual monitoring does not scale. One person can track two or three categories with reasonable attention. But a single category today — IT hardware, industrial components, logistics services — can be exposed to disruptions across five countries, two regulatory changes, and a dozen tier-2 suppliers that you have never met and cannot easily monitor. McKinsey's latest supply chain research confirms that the majority of companies still understand their supply chain risks only at tier-1 — leaving everything beneath it effectively invisible.
+
+The result is a quiet, persistent anxiety. Not a crisis you can point to. Just the feeling that somewhere in the noise, there is a signal you are about to miss.
+
+## Two Things That Actually Keep You Up at Night
+
+After speaking with procurement professionals across Europe, the same two concerns come up again and again. Not in theory — on a Tuesday afternoon.
+
+**The first is disruptions.** Not the big dramatic ones that make the news — those are easy to see. The dangerous ones are the slow-moving signals. A regional logistics constraint that will become a delivery problem in six weeks. A geopolitical development that will translate into a component price increase by the next contract renewal. A supplier quietly reducing capacity while still accepting orders. McKinsey estimates that 82% of companies had their supply chains materially affected by new trade measures in 2025, and that significant disruptions now occur every 3.7 years on average — meaning a Category Manager is always either managing a crisis, recovering from one, or 18 months away from the next.
+
+**The second is market intelligence.** Your job is not just to buy things. It is to understand markets — what is happening in your categories, what your industry peers are experiencing, what structural shifts are changing the economics of your supplier base. That context is what turns a purchase order into a strategic decision. The challenge is that gathering it is enormously time-consuming. It means reading analyst reports, tracking commodity indices, following regulatory developments, and synthesising all of it into something relevant to your specific spend. Gartner estimates that only 7% of supply chain leaders have the infrastructure to respond to market signals in real time. The other 93% are working from a picture of the world that is already out of date.
+
+## What This Problem Actually Costs
+
+The financial consequences of reactive monitoring rarely appear as a clean line item. They show up as a contract renewed above market because current benchmark data was not available. As an emergency spot purchase at a 15–20% premium because a disruption was not anticipated early enough to activate an alternative supplier. As a budget overrun in Q3 that nobody can fully explain because cost pressure built gradually across several categories at once.
+
+These are not catastrophic failures. They are the ordinary, invisible losses that accumulate when a procurement function is managing information rather than managing strategy. Bain & Company documents this dynamic precisely: the teams that protect margin are not the ones with the most data — they are the ones whose data infrastructure allows them to act before the supplier's price increase letter arrives.
+
+## A Different Way to Work
+
+What if the monitoring happened automatically — not as a dashboard you have to remember to check, but as an active system that tracks the signals relevant to your categories, connects them to your contracts and budgets, and brings you a clear picture of what matters, when it matters?
+
+This is what EXOS is built to do. Not to replace your judgement — your judgement is the point. But to make sure that when you sit down to make a decision, you are working with current, contextualised intelligence rather than yesterday's newsletter and a feeling that you might have missed something.
+
+Three capabilities, working together. A **Disruption Monitor** that tracks the signals preceding supply problems — mapped to your specific categories and suppliers, before they reach the news. A **Market Intelligence Engine** powered by agentic AI that automatically collects industry developments, category trends, and supplier market shifts — and integrates them directly into your procurement analysis so you arrive at every negotiation with the context your counterpart is hoping you do not have. And an **Inflation Tracker** that monitors the leading indicators of cost pressure — producer prices, commodity indices, freight rates — translated into the actual impact on your contracts and budgets, before your suppliers tell you about it.
+
+**Less noise. More signal. And the time to actually think.**
+
+---
+
+*Key Sources & Further Reading:*
+
+*Procurement & Supply Chain Risk: CIPS — Global State of Procurement & Supply 2025 · McKinsey — Supply Chain Risk Survey 2025 · McKinsey — Decoding Disruption to Reshape Manufacturing Footprints · Tradeverifyd — 68 Supply Chain Statistics 2025*
+
+*Inflation & Cost Intelligence: Bain & Company — Procurement's Twin Challenge: Inflation and Supply Shortages · Conexiom — The Cost of Supply Chain Disruptions · McKinsey — Responding to Inflation and Volatility · CIPS & RS — Inflation Biggest Procurement Concern 2025*`,
   },
 ];
 
