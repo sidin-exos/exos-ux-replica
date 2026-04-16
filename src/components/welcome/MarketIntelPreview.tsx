@@ -30,6 +30,7 @@ export const MarketIntelPreview = () => {
           className="absolute inset-0 w-full h-full object-contain object-center"
         />
       </AnimatePresence>
+      <div className="absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-muted/80 to-transparent pointer-events-none" />
     </div>
   );
 };
