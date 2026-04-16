@@ -60,7 +60,7 @@ const NAV_GROUPS = [
   {
     label: "About EXOS",
     items: [
-      { label: "Technology & AI", path: "/features#orchestration", icon: Sparkles },
+      { label: "Technology & AI", path: "/features", icon: Sparkles },
       { label: "Blog", path: "/blog", icon: PenLine },
       { label: "Pricing", path: "/pricing", icon: DollarSign },
       { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
