@@ -309,16 +309,17 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Trigger Definitions</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Trigger &amp; Threshold Definitions</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Define specific events or thresholds for each driver. The AI will monitor public sources for these signals, improving the accuracy and relevance of your inflation scans.
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Alert variant="destructive" className="border-warning/40 bg-warning/5 text-warning">
-                  <ShieldAlert className="h-4 w-4" />
-                  <AlertDescription className="text-sm">
-                    This description is sent to public AI. Do not include confidential information.
-                  </AlertDescription>
-                </Alert>
+                <p className="text-xs text-warning flex items-center gap-1.5">
+                  <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                  Sent to public AI — do not include confidential information.
+                </p>
                 {acceptedDrivers.map((d, i) => (
                   <div key={i} className="space-y-1.5">
                     <Label className="text-sm font-medium">{d.name}</Label>
