@@ -17,21 +17,19 @@ export const MarketIntelPreview = () => {
   }, []);
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-3 overflow-hidden">
-      <div className="w-full rounded-lg border border-border/60 bg-card/80 shadow-sm overflow-hidden relative aspect-[16/10]">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={index}
-            src={IMAGES[index]}
-            alt="Market Intelligence preview"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="absolute inset-0 w-full h-full object-contain object-center"
-          />
-        </AnimatePresence>
-      </div>
+    <div className="w-full h-full overflow-hidden relative">
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={index}
+          src={IMAGES[index]}
+          alt="Market Intelligence preview"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          className="absolute inset-0 w-full h-full object-contain object-center"
+        />
+      </AnimatePresence>
     </div>
   );
 };
