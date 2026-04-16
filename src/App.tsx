@@ -44,6 +44,8 @@ const MethodologyScenarioEdit = lazy(() => import("./pages/admin/MethodologyScen
 const MethodologyConfig = lazy(() => import("./pages/admin/MethodologyConfig"));
 const MethodologyHistory = lazy(() => import("./pages/admin/MethodologyHistory"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 // Scenario landing pages
 const TCOAnalysis = lazy(() => import("./pages/scenarios/TCOAnalysis"));
@@ -115,6 +117,8 @@ const App = () => (
             <Route path="/admin/methodology/history" element={<ProtectedRoute requireSuperAdmin><MethodologyHistory /></ProtectedRoute>} />
             <Route path="/admin/methodology/:slug" element={<ProtectedRoute requireSuperAdmin><MethodologyScenarioEdit /></ProtectedRoute>} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             {/* Scenario SEO landing pages */}
             <Route path="/scenarios/tco-analysis" element={<TCOAnalysis />} />
             <Route path="/scenarios/supplier-risk-assessment" element={<SupplierRisk />} />

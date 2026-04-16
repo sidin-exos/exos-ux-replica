@@ -14,6 +14,7 @@ const footerColumns = [
     title: "Company",
     links: [
       { label: "About EXOS", to: "#" },
+      { label: "Blog", to: "/blog" },
       { label: "Careers", to: "#" },
       { label: "Press", to: "#" },
     ],
