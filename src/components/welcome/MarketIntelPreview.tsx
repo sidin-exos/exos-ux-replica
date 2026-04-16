@@ -4,7 +4,7 @@ import intelPreview1 from "@/assets/intel-preview-1.png";
 import intelPreview2 from "@/assets/intel-preview-2.png";
 
 const IMAGES = [intelPreview1, intelPreview2];
-const DISPLAY_MS = 4000;
+const DISPLAY_MS = 5000;
 
 export const MarketIntelPreview = () => {
   const [index, setIndex] = useState(0);
@@ -26,7 +26,7 @@ export const MarketIntelPreview = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          transition={{ duration: 1.6, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full object-contain object-center"
         />
       </AnimatePresence>
