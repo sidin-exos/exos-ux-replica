@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/client';
 
 // ── Types ────────────────────────────────────────────────────
 export type DraftBlocks = Record<string, string>;
@@ -62,6 +62,7 @@ export function useScenarioDraft({
   const localKey = getLocalKey(scenarioId, userId);
   const pendingBlocksRef = useRef<DraftBlocks | null>(null);
   const serverSaveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const accessTokenRef = useRef<string | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -160,6 +161,59 @@ export function useScenarioDraft({
       console.warn('[EXOS Draft] Draft delete failed');
     }
   }, [localKey, userId, scenarioId]);
+
+  // ── Track access token for keepalive fetch on unload ─────
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      accessTokenRef.current = data.session?.access_token ?? null;
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      accessTokenRef.current = session?.access_token ?? null;
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  // ── Flush pending save on page unload ─────────────────────
+  // Covers the race where the user refreshes/closes the tab within the 3s
+  // debounce window — without this, the pending Supabase upsert is cancelled
+  // and other devices see stale data.
+  useEffect(() => {
+    const flush = () => {
+      const pending = pendingBlocksRef.current;
+      const token = accessTokenRef.current;
+      if (!pending || !userId || !token) return;
+
+      clearTimeout(serverSaveTimeoutRef.current);
+
+      const row = {
+        user_id: userId,
+        scenario_id: scenarioId,
+        blocks: pending,
+      };
+
+      fetch(
+        `${SUPABASE_URL}/rest/v1/scenario_drafts?on_conflict=user_id,scenario_id`,
+        {
+          method: 'POST',
+          keepalive: true,
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${token}`,
+            'Prefer': 'resolution=merge-duplicates,return=minimal',
+          },
+          body: JSON.stringify([row]),
+        }
+      ).catch(() => {
+        // fire-and-forget; browser is unloading
+      });
+
+      pendingBlocksRef.current = null;
+    };
+
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, [userId, scenarioId]);
 
   // ── Cleanup on unmount ────────────────────────────────────
   useEffect(() => {
