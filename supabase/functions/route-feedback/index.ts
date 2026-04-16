@@ -16,6 +16,7 @@ import {
 } from "../_shared/validate.ts";
 import { createPlainThread } from "../_shared/plain.ts";
 import { sendResendEmail } from "../_shared/resend.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const FEEDBACK_SOURCES = [
   "contact_form",
@@ -46,6 +47,15 @@ const FEEDBACK_TYPE_LABELS: Record<string, string> = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    req.headers.get("cf-connecting-ip") ||
+    "unknown";
+  const rateCheck = await checkRateLimit(clientIp, "route-feedback", 20, 60);
+  if (!rateCheck.allowed) {
+    return rateLimitResponse(rateCheck, corsHeaders);
   }
 
   try {
