@@ -29,9 +29,28 @@ const pillars = [
     href: "/",
     useCaseType: "scenarios" as const,
     previewImage: undefined as string | undefined,
+    showPipeline: true,
   },
   {
     number: "02",
+    title: "Analytical Platforms",
+    description:
+      "Always-on Risk Assessment and Inflation Analysis platforms with automated alerts and category-level trend tracking.",
+    details: [
+      "Risk Assessment Platform with automated alerts",
+      "Inflation Analysis with category-level trends",
+      "Cross-portfolio monitoring dashboards",
+    ],
+    impact: "From periodic reviews to continuous monitoring.",
+    icon: Building2,
+    cta: "View Platforms",
+    href: "/enterprise/risk",
+    useCaseType: "risk" as const,
+    previewImage: riskSignalsPreview,
+    showPipeline: false,
+  },
+  {
+    number: "03",
     title: "Market Intelligence",
     description:
       "Query global supply chain data, commodity pricing, and geopolitical risks in real time. Schedule automated monitoring.",
@@ -47,23 +66,7 @@ const pillars = [
     href: "/market-intelligence",
     useCaseType: "scenarios" as const,
     previewImage: undefined as string | undefined,
-  },
-  {
-    number: "03",
-    title: "Enterprise Platforms",
-    description:
-      "Always-on Risk Assessment and Inflation Analysis platforms with automated alerts and category-level trend tracking.",
-    details: [
-      "Risk Assessment Platform with automated alerts",
-      "Inflation Analysis with category-level trends",
-      "Cross-portfolio monitoring dashboards",
-    ],
-    impact: "From periodic reviews to continuous monitoring.",
-    icon: Building2,
-    cta: "View Platforms",
-    href: "/enterprise/risk",
-    useCaseType: "risk" as const,
-    previewImage: riskSignalsPreview,
+    showPipeline: false,
   },
 ];
 
@@ -361,8 +364,14 @@ const Welcome = () => {
                             className="w-full h-full object-cover object-top"
                             loading="lazy"
                           />
-                        ) : (
+                        ) : pillar.showPipeline ? (
                           <PipelinePreviewAnimation />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                              <Icon className="w-8 h-8 text-primary/60" />
+                            </div>
+                          </div>
                         )}
                         <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-muted to-transparent" />
                       </div>
