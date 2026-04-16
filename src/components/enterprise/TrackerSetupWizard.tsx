@@ -321,7 +321,7 @@ const TrackerSetupWizard = ({
       {step === 1 && monitorType === "DM-4" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">DM-4: Country / Region</CardTitle>
+            <CardTitle className="text-lg">DM-4: Country / Region Risk Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -340,134 +340,14 @@ const TrackerSetupWizard = ({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country-region">Block 1 — Country / Region</Label>
+              <Label htmlFor="country-region">Block 1 — Country / Region Risk Profile</Label>
               <Textarea id="country-region" placeholder="Which country or region to monitor? e.g. 'Turkey — key sourcing geography for textiles and automotive components.'" value={countryRegion} onChange={(e) => setCountryRegion(e.target.value)} rows={3} />
               <p className="text-xs text-muted-foreground">Covers geopolitical, regulatory, logistics, and macroeconomic risk signals for the specified geography.</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="geopolitical-context">Block 2 — Geopolitical & Business Context</Label>
-              <Textarea id="geopolitical-context" placeholder="Your exposure in this geography, active suppliers, contracts, trade routes, known regulatory changes…" value={geopoliticalContext} onChange={(e) => setGeopoliticalContext(e.target.value)} rows={3} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="regulatory-notes">Block 3 — Regulatory Notes (optional)</Label>
-              <Textarea id="regulatory-notes" placeholder="Upcoming legislation, sanctions, tariff changes, trade agreements under negotiation…" value={regulatoryNotes} onChange={(e) => setRegulatoryNotes(e.target.value)} rows={2} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {step === 1 && monitorType === "DM-5" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">DM-5: Industry Dynamics</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="monitor-name-dm5">Monitoring Name</Label>
-              <Input id="monitor-name-dm5" placeholder="e.g. Semiconductor Industry Risk Monitoring" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Comparison Period</Label>
-              <Select value={comparisonPeriod} onValueChange={(v) => setComparisonPeriod(v as ComparisonPeriod)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PERIODS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="industry-scope">Block 1 — Industry & Scope</Label>
-              <Textarea id="industry-scope" placeholder="Which industry or sub-sector to monitor? e.g. 'European pharmaceutical packaging — glass vials and pre-filled syringes.'" value={industryScope} onChange={(e) => setIndustryScope(e.target.value)} rows={3} />
-              <p className="text-xs text-muted-foreground">Tracks industry-level risk signals, structural shifts, M&A activity, and capacity changes.</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="market-context">Block 2 — Market & Competitive Context</Label>
-              <Textarea id="market-context" placeholder="Your position in this industry, key competitors, supply-demand dynamics, technology shifts…" value={marketContext} onChange={(e) => setMarketContext(e.target.value)} rows={3} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="known-disruptors">Block 3 — Known Disruptors (optional)</Label>
-              <Textarea id="known-disruptors" placeholder="Emerging technologies, new entrants, regulatory shifts, sustainability mandates…" value={knownDisruptors} onChange={(e) => setKnownDisruptors(e.target.value)} rows={2} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Files & Context */}
-      {step === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Upload Documents & Context</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <FileUploadZone files={files} onFilesChange={setFiles} />
-            <div className="space-y-2">
-              <Label htmlFor="additional-context">Additional Context (optional)</Label>
-              <Textarea id="additional-context" placeholder="Any relevant context about your business, supply chain, or specific concerns..." value={additionalContext} onChange={(e) => setAdditionalContext(e.target.value)} rows={3} />
-            </div>
-            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4">
-              <Checkbox id="gdpr-consent" checked={gdprChecked} onCheckedChange={(v) => setGdprChecked(v === true)} className="mt-0.5" />
-              <Label htmlFor="gdpr-consent" className="text-sm leading-relaxed cursor-pointer">
-                <ShieldCheck className="w-4 h-4 inline-block mr-1 text-success" />
-                I confirm that all uploaded documents are free of personally identifiable information (PII) and comply with our GDPR guidelines.
-              </Label>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Review & Activate */}
-      {step === 3 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Review & Activate</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-muted-foreground">Name</span>
-                <p className="font-medium text-foreground">{name}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Type</span>
-                <p className="font-medium text-foreground">
-                  {monitorType} — {MONITOR_TYPE_META[monitorType!]?.label}
-                </p>
-              </div>
-              {monitorType === "DM-1" && (
-                <div className="col-span-2">
-                  <span className="text-muted-foreground">Hypothesis</span>
-                  <p className="font-medium text-foreground">{hypothesis}</p>
-                </div>
-              )}
-              {monitorType === "DM-2" && (
-                <>
-                  <div>
-                    <span className="text-muted-foreground">Entity Type</span>
-                    <p className="font-medium text-foreground capitalize">{entityType}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Period</span>
-                    <p className="font-medium text-foreground">{comparisonPeriod}</p>
-                  </div>
-                </>
-              )}
-              {monitorType === "DM-3" && (
-                <>
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">Tracking Subject</span>
-                    <p className="font-medium text-foreground">{trackingSubject}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Period</span>
-                    <p className="font-medium text-foreground">{comparisonPeriod}</p>
-                  </div>
-                </>
-              )}
+...
               {monitorType === "DM-4" && (
                 <div className="col-span-2">
-                  <span className="text-muted-foreground">Country / Region</span>
+                  <span className="text-muted-foreground">Country / Region Risk Profile</span>
                   <p className="font-medium text-foreground">{countryRegion}</p>
                 </div>
               )}
