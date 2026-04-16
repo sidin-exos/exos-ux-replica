@@ -340,9 +340,6 @@ const Welcome = () => {
                   </ul>
                   <Card className="border-primary/20 bg-primary/5">
                     <CardContent className="p-3">
-                      <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-0.5">
-                        Business Impact
-                      </p>
                       <p className="text-sm text-foreground leading-relaxed">
                         {pillar.impact}
                       </p>
