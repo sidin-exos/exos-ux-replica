@@ -243,7 +243,7 @@ const Pricing = () => {
               <TableBody>
                 {[
                   { feature: "Available Scenarios", smb: "5 / month", pro: "Unlimited", enterprise: "Unlimited + Custom" },
-                  { feature: "Excel / Jira Export", smb: false, pro: true, enterprise: true },
+                  { feature: "Excel / Jira Export", smb: true, pro: true, enterprise: true },
                   { feature: "Perplexity Real-Time AI", smb: false, pro: true, enterprise: true },
                   { feature: "Dedicated Account Manager", smb: false, pro: false, enterprise: true },
                   { feature: "Custom GDPR Guardrails", smb: false, pro: false, enterprise: true },
