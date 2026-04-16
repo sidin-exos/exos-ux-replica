@@ -52,7 +52,7 @@ const pricingTiers = [
       "\n",
       "Multi-user collaboration",
       "Advanced reporting & exports",
-      "300 AI reports a month",
+      "200 AI reports a month",
       "1 Custom scenario per user per month*",
     ],
     cta: "Start Free Trial",
