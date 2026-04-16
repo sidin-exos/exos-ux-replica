@@ -366,6 +366,8 @@ const Welcome = () => {
                           />
                         ) : pillar.showPipeline ? (
                           <PipelinePreviewAnimation />
+                        ) : (pillar as any).showPlatformsPreview ? (
+                          <AnalyticalPlatformsPreview />
                         ) : (pillar as any).showIntelPreview ? (
                           <MarketIntelPreview />
                         ) : (
