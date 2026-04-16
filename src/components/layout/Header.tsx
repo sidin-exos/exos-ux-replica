@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Settings, LogIn, User, CreditCard, LogOut, HelpCircle, FileText, Database, Menu, ShieldAlert, TrendingUp, BarChart3, Sparkles, BookOpen, DollarSign, Zap, ClipboardList, AlertTriangle, FileCheck } from "lucide-react";
+import { Settings, LogIn, User, CreditCard, LogOut, HelpCircle, FileText, Database, Menu, ShieldAlert, TrendingUp, BarChart3, Sparkles, BookOpen, DollarSign, Zap, ClipboardList, AlertTriangle, FileCheck, PenLine } from "lucide-react";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/NavLink";
@@ -61,6 +61,7 @@ const NAV_GROUPS = [
     label: "About EXOS",
     items: [
       { label: "Technology & AI", path: "/features#orchestration", icon: Sparkles },
+      { label: "Blog", path: "/blog", icon: PenLine },
       { label: "Pricing", path: "/pricing", icon: DollarSign },
       { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
     ],
