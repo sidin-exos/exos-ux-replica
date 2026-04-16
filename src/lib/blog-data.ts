@@ -109,7 +109,7 @@ As McKinsey's latest supply chain research confirms, the companies that resume t
   },
   {
     slug: "the-noise-problem",
-    title: "The Noise Problem: A Note for Every Procurement Manager Who Has Too Much to Read and Too Little Time to Think",
+    title: "The Noise Problem: A Note for Every Procurement Manager",
     subtitle: "You are not short of information. You are short of the right information, at the right moment, already connected to your specific categories and contracts.",
     date: "2026-04-15",
     readingTime: "8 min read",
