@@ -207,17 +207,17 @@ const TrackerSetupWizard = ({
       {step === 1 && monitorType === "DM-1" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">DM-1: Hypothesis Testing</CardTitle>
+            <CardTitle className="text-lg">DM-1: Signal Balancer</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="monitor-name">Monitoring Name</Label>
-              <Input id="monitor-name" placeholder="e.g. Logistics Consolidation Hypothesis" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input id="monitor-name" placeholder="e.g. Logistics Consolidation Signal Balance" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="hypothesis">Block 1 — Hypothesis Statement</Label>
-              <Textarea id="hypothesis" placeholder="A clear, falsifiable statement to test. e.g. 'Consolidating logistics suppliers from 4 to 2 will reduce transport costs by 15% within 12 months.'" value={hypothesis} onChange={(e) => setHypothesis(e.target.value)} rows={3} />
-              <p className="text-xs text-muted-foreground">The AI will present balanced evidence for and against — no recommendation is implied.</p>
+              <Label htmlFor="hypothesis">Block 1 — Strategic Position</Label>
+              <Textarea id="hypothesis" placeholder="A clear strategic position to stress-test. e.g. 'Consolidating logistics suppliers from 4 to 2 will reduce transport costs by 15% within 12 months.'" value={hypothesis} onChange={(e) => setHypothesis(e.target.value)} rows={3} />
+              <p className="text-xs text-muted-foreground">The AI will continuously scan for supporting and contradicting signals — no recommendation is implied.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="context-constraints">Block 2 — Context & Constraints</Label>
@@ -225,7 +225,7 @@ const TrackerSetupWizard = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="existing-evidence">Block 3 — Evidence Already Held (optional)</Label>
-              <Textarea id="existing-evidence" placeholder="Market data, historical results, pilot outcomes that support or contradict the hypothesis…" value={existingEvidence} onChange={(e) => setExistingEvidence(e.target.value)} rows={2} />
+              <Textarea id="existing-evidence" placeholder="Market data, historical results, pilot outcomes that support or contradict the position…" value={existingEvidence} onChange={(e) => setExistingEvidence(e.target.value)} rows={2} />
             </div>
           </CardContent>
         </Card>
@@ -321,7 +321,7 @@ const TrackerSetupWizard = ({
       {step === 1 && monitorType === "DM-4" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">DM-4: Country / Region</CardTitle>
+            <CardTitle className="text-lg">DM-4: Country / Region Risk Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -340,7 +340,7 @@ const TrackerSetupWizard = ({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country-region">Block 1 — Country / Region</Label>
+              <Label htmlFor="country-region">Block 1 — Country / Region Risk Profile</Label>
               <Textarea id="country-region" placeholder="Which country or region to monitor? e.g. 'Turkey — key sourcing geography for textiles and automotive components.'" value={countryRegion} onChange={(e) => setCountryRegion(e.target.value)} rows={3} />
               <p className="text-xs text-muted-foreground">Covers geopolitical, regulatory, logistics, and macroeconomic risk signals for the specified geography.</p>
             </div>
@@ -437,7 +437,7 @@ const TrackerSetupWizard = ({
               </div>
               {monitorType === "DM-1" && (
                 <div className="col-span-2">
-                  <span className="text-muted-foreground">Hypothesis</span>
+                  <span className="text-muted-foreground">Strategic Position</span>
                   <p className="font-medium text-foreground">{hypothesis}</p>
                 </div>
               )}
@@ -467,7 +467,7 @@ const TrackerSetupWizard = ({
               )}
               {monitorType === "DM-4" && (
                 <div className="col-span-2">
-                  <span className="text-muted-foreground">Country / Region</span>
+                  <span className="text-muted-foreground">Country / Region Risk Profile</span>
                   <p className="font-medium text-foreground">{countryRegion}</p>
                 </div>
               )}
