@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
-import riskSignalsPreview from "@/assets/risk-signals-preview.png";
 import { PipelinePreviewAnimation } from "@/components/welcome/PipelinePreviewAnimation";
 import { MarketIntelPreview } from "@/components/welcome/MarketIntelPreview";
+import { AnalyticalPlatformsPreview } from "@/components/welcome/AnalyticalPlatformsPreview";
 
 /* ── Feature Pillars ── */
 const pillars = [
