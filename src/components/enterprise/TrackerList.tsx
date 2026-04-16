@@ -159,7 +159,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
                 </span>
               </div>
               {latest && (
-                <p className="text-xs text-muted-foreground leading-relaxed mt-1.5 line-clamp-5">
+                <p className="text-xs text-muted-foreground leading-relaxed mt-1.5 line-clamp-3 max-w-lg">
                   {latest.summary}
                 </p>
               )}
