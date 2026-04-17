@@ -148,10 +148,14 @@ const MarketIntelligence = () => {
         </p>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1 border-dotted">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 bg-muted/70 p-1">
             <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
               Ad-hoc Queries
+            </TabsTrigger>
+            <TabsTrigger value="scheduled" className="flex items-center gap-2 data-[state=active]:bg-warning data-[state=active]:text-warning-foreground data-[state=active]:shadow-md">
+              <CalendarClock className="h-4 w-4" />
+              Scheduled Reports
             </TabsTrigger>
             <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-iris data-[state=active]:text-iris-foreground data-[state=active]:shadow-md">
               <Database className="h-4 w-4" />
@@ -160,11 +164,6 @@ const MarketIntelligence = () => {
           </TabsList>
 
           <TabsContent value="queries" className="space-y-6">
-            <IntelScenarioSelector
-              selected={selectedScenario}
-              onSelect={(val) => updateFilter('mode', val === 'adhoc' ? '' : val)}
-            />
-
             {error && (
               <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
@@ -172,7 +171,10 @@ const MarketIntelligence = () => {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            {renderScenarioContent()}
+          </TabsContent>
 
+          <TabsContent value="scheduled" className="space-y-6">
             {renderScenarioContent()}
           </TabsContent>
 
