@@ -150,7 +150,7 @@ const MarketIntelligence = () => {
             </p>
           </div>
           <div
-            className="hidden md:flex shrink-0 w-48 h-32 lg:w-56 lg:h-36 rounded-lg border border-dashed border-border bg-muted/30 items-center justify-center text-xs text-muted-foreground"
+            className="hidden md:flex shrink-0 w-72 h-40 lg:w-96 lg:h-52 rounded-lg border border-dashed border-border bg-muted/30 items-center justify-center text-xs text-muted-foreground"
             aria-label="Image placeholder"
           >
             Image placeholder
