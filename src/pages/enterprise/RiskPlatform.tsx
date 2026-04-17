@@ -122,8 +122,12 @@ const RiskPlatform = () => {
       <main className="container py-8 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl exos-page-title">
+          <h1 className="text-2xl exos-page-title flex items-center gap-2.5">
             Risk Assessment Platform
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+            </span>
           </h1>
           <p className="text-sm text-muted-foreground max-w-3xl mt-1 leading-relaxed">
             The Dynamic Monitoring Module saves you time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a <strong className="font-semibold text-primary">Signal-First</strong> approach, prioritising the <strong className="font-semibold text-foreground">direction</strong> and <strong className="font-semibold text-foreground">velocity</strong> of change over static positions.
