@@ -127,11 +127,17 @@ const InflationPlatform = () => {
                 </span>
               </div>
               <h1 className="text-3xl lg:text-4xl font-display font-semibold tracking-tight text-foreground mb-3">
-                Structured signal tracking for procurement teams
+                Inflation Monitoring
               </h1>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                A human-in-the-loop AI framework. Not a Bloomberg replacement — a decision-making companion built for procurement, not commodity traders.
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                A human-in-the-loop AI platform that helps you structure inflation monitoring with an easy-to-use framework for decision-making. It is not intended to replace enterprise-grade financial analytical platforms or serve as a tool for commodity traders.
               </p>
+              <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside mb-2">
+                <li>Choose the goods or service you want to monitor</li>
+                <li>EXOS recommends 5 inflation triggers — adjust the list and set relative importance</li>
+                <li>Pick a monitoring schedule to manage your AI usage</li>
+              </ul>
+              <p className="text-sm font-medium text-foreground/70 mb-6">Our monitoring pipeline is set. Simple as that!</p>
               <div className="flex flex-wrap gap-8 pt-4 border-t border-border">
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 1</div>
