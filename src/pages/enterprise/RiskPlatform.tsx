@@ -121,21 +121,16 @@ const RiskPlatform = () => {
       <Header />
       <main className="container py-8 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-destructive/10">
-            <Activity className="w-6 h-6 text-destructive" />
-          </div>
-          <div>
-            <h1 className="text-2xl exos-page-title">
-              Risk Assessment Platform
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-3xl mt-1 leading-relaxed">
-              The Dynamic Monitoring Module saves you time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a <strong className="font-semibold text-primary">Signal-First</strong> approach, prioritising the <strong className="font-semibold text-foreground">direction</strong> and <strong className="font-semibold text-foreground">velocity</strong> of change over static positions.
-            </p>
-            <p className="text-sm text-muted-foreground max-w-3xl mt-2 leading-relaxed">
-              Designed to inform your judgement, not replace it.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl exos-page-title">
+            Risk Assessment Platform
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-3xl mt-1 leading-relaxed">
+            The Dynamic Monitoring Module saves you time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a <strong className="font-semibold text-primary">Signal-First</strong> approach, prioritising the <strong className="font-semibold text-foreground">direction</strong> and <strong className="font-semibold text-foreground">velocity</strong> of change over static positions.
+          </p>
+          <p className="text-sm text-muted-foreground max-w-3xl mt-2 leading-relaxed">
+            Designed to inform your judgement, not replace it.
+          </p>
         </div>
 
         {/* Monitoring Modules + Case Studies */}
