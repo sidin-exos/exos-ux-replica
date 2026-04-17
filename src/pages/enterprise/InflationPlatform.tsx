@@ -116,30 +116,41 @@ const InflationPlatform = () => {
     <EnterpriseLayout>
       <Header />
       <main className="container py-8 space-y-6">
-        {/* Header row: 2/3 title + 1/3 status badges */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-warning/10">
-              <TrendingUp className="w-6 h-6 text-warning" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-semibold text-foreground">
-                Inflation Monitoring
+        {/* Polished intro banner */}
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-muted/40 via-background to-warning/5 p-8 lg:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+            <div className="lg:col-span-2 relative max-w-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-px w-8 bg-warning" />
+                <span className="text-xs font-medium tracking-[0.2em] uppercase text-warning">
+                  Inflation Monitoring
+                </span>
+              </div>
+              <h1 className="text-3xl lg:text-4xl font-display font-semibold tracking-tight text-foreground mb-3">
+                Structured signal tracking for procurement teams
               </h1>
-              <p className="text-sm text-muted-foreground max-w-2xl mt-1">
-                A human-in-the-loop AI platform that helps you structure inflation monitoring with an easy-to-use framework for decision-making. It is not intended to replace enterprise-grade financial analytical platforms or serve as a tool for commodity traders.
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                A human-in-the-loop AI framework. Not a Bloomberg replacement — a decision-making companion built for procurement, not commodity traders.
               </p>
-              <ul className="mt-2 space-y-1 text-sm text-muted-foreground max-w-2xl list-disc list-inside">
-                <li>Choose the goods or service you want to monitor</li>
-                <li>EXOS recommends 5 inflation triggers — adjust the list and set relative importance</li>
-                <li>Pick a monitoring schedule to manage your AI usage</li>
-              </ul>
-              <p className="mt-1.5 text-sm font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
+              <div className="flex flex-wrap gap-8 pt-4 border-t border-border">
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 1</div>
+                  <div className="text-sm font-medium text-foreground">Define goods</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 2</div>
+                  <div className="text-sm font-medium text-foreground">Tune 5 triggers</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 3</div>
+                  <div className="text-sm font-medium text-foreground">Set cadence</div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="hidden lg:flex items-center justify-center">
-            <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80 mix-blend-multiply dark:hidden" />
-            <img src={signalRadarDarkImg} alt="Signal radar illustration" loading="lazy" width={256} height={384} className="w-64 h-auto object-contain opacity-80 hidden dark:block" />
+            <div className="hidden lg:flex items-center justify-center">
+              <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80 mix-blend-multiply dark:hidden" />
+              <img src={signalRadarDarkImg} alt="Signal radar illustration" loading="lazy" width={256} height={384} className="w-64 h-auto object-contain opacity-80 hidden dark:block" />
+            </div>
           </div>
         </div>
 
