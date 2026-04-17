@@ -12,7 +12,7 @@ import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare, Globe, BrainCircuit, ArrowRight } from "lucide-react";
+import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -143,57 +143,9 @@ const MarketIntelligence = () => {
           </div>
           <h1 className="exos-page-title-hero text-3xl">Market Intelligence</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-5 max-w-3xl leading-relaxed">
-          Real-time analysis of supplier news, commodity trends, regulatory updates and supply-chain risks — grounded in <strong className="font-semibold text-foreground">live web search</strong> with <strong className="font-semibold text-foreground">source citations</strong>.
+        <p className="text-muted-foreground text-base mb-6 max-w-2/3">
+          Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
         </p>
-
-        {/* Context injection flow */}
-        <div className="mb-8 rounded-xl border border-border/50 bg-card/40 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="h-1 w-8 rounded-full bg-gradient-to-r from-primary via-iris to-accent" />
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
-              How it powers EXOS
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-3 sm:gap-2">
-            {/* Step 1 — Sources */}
-            <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-background/60 p-3">
-              <div className="p-2 rounded-md bg-accent/10 text-accent shrink-0">
-                <Globe className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-semibold text-foreground">Live web sources</div>
-                <div className="text-[11px] text-muted-foreground leading-tight">News, filings, regulators</div>
-              </div>
-            </div>
-
-            <ArrowRight className="hidden sm:block w-4 h-4 text-muted-foreground/60 mx-auto" aria-hidden="true" />
-
-            {/* Step 2 — Knowledge Base */}
-            <div className="flex items-center gap-3 rounded-lg border border-iris/30 bg-iris/5 p-3">
-              <div className="p-2 rounded-md bg-iris/15 text-iris shrink-0">
-                <Database className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-semibold text-foreground">EXOS Knowledge Base</div>
-                <div className="text-[11px] text-muted-foreground leading-tight">Cited, structured, reusable</div>
-              </div>
-            </div>
-
-            <ArrowRight className="hidden sm:block w-4 h-4 text-muted-foreground/60 mx-auto" aria-hidden="true" />
-
-            {/* Step 3 — Scenario Analysis */}
-            <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-              <div className="p-2 rounded-md bg-primary/15 text-primary shrink-0">
-                <BrainCircuit className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-semibold text-foreground">Injected into scenarios</div>
-                <div className="text-[11px] text-muted-foreground leading-tight">Sharper, grounded answers</div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full max-w-2xl grid-cols-3 bg-muted/70 p-1">
