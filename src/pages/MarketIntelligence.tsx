@@ -156,7 +156,7 @@ const MarketIntelligence = () => {
             loading="lazy"
             width={1408}
             height={768}
-            className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 rounded-lg object-cover"
+            className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 object-cover mix-blend-multiply dark:mix-blend-screen dark:invert dark:opacity-80"
           />
         </div>
 
