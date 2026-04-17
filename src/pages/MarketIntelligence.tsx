@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import intelContextImage from "@/assets/intel-context-A-ribbon.jpg";
+import intelContextImage from "@/assets/intel-context-final.jpg";
 
 const MarketIntelligence = () => {
   const location = useLocation();
