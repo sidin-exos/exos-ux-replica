@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import intelContextImage from "@/assets/intel-context-A-ribbon.jpg";
 
 const MarketIntelligence = () => {
   const location = useLocation();
@@ -149,12 +150,14 @@ const MarketIntelligence = () => {
               Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
             </p>
           </div>
-          <div
-            className="hidden md:flex shrink-0 w-72 h-40 lg:w-96 lg:h-52 rounded-lg border border-dashed border-border bg-muted/30 items-center justify-center text-xs text-muted-foreground"
-            aria-label="Image placeholder"
-          >
-            Image placeholder
-          </div>
+          <img
+            src={intelContextImage}
+            alt="Context injection into AI"
+            loading="lazy"
+            width={1408}
+            height={768}
+            className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 rounded-lg object-cover"
+          />
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
