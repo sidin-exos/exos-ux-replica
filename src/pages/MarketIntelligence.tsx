@@ -21,15 +21,24 @@ const MarketIntelligence = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Derive active tab from URL path segment
+  // Derive active tab from URL path + mode param
   const activeTab = (() => {
     const segment = location.pathname.split('/').pop();
     if (segment === 'insights') return 'insights';
+    if (searchParams.get('mode') === 'regular') return 'scheduled';
     return 'queries';
   })();
 
   const handleTabChange = (tab: string) => {
-    navigate(`/market-intelligence/${tab}`);
+    if (tab === 'insights') {
+      navigate('/market-intelligence/insights');
+      return;
+    }
+    if (tab === 'scheduled') {
+      navigate('/market-intelligence/queries?mode=regular');
+      return;
+    }
+    navigate('/market-intelligence/queries');
   };
 
   // Derive selectedScenario directly from URL param
