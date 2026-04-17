@@ -151,7 +151,7 @@ const RiskPlatform = () => {
                       className="w-full justify-start text-left text-xs font-medium whitespace-normal leading-tight py-2.5 px-3 rounded-md transition-all
                         border-l-2 border-transparent text-muted-foreground
                         hover:bg-accent/40 hover:text-foreground
-                        data-[state=active]:bg-accent/60 data-[state=active]:text-foreground data-[state=active]:border-l-2 data-[state=active]:border-primary data-[state=active]:shadow-none"
+                        data-[state=active]:bg-destructive/5 data-[state=active]:text-foreground data-[state=active]:border-l-2 data-[state=active]:border-destructive data-[state=active]:shadow-none"
                     >
                       {meta.label}
                     </TabsTrigger>
