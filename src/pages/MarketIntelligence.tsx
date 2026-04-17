@@ -15,12 +15,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import intelContextImage from "@/assets/intel-context-light-v2.jpg";
+import { useTheme } from "next-themes";
+import intelContextLight from "@/assets/intel-context-light-v2.jpg";
+import intelContextDark from "@/assets/intel-context-dark.jpg";
 
 const MarketIntelligence = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { resolvedTheme } = useTheme();
+  const intelContextImage = resolvedTheme === "dark" ? intelContextDark : intelContextLight;
 
   // Derive active tab from URL path + mode param
   const activeTab = (() => {
@@ -156,7 +160,7 @@ const MarketIntelligence = () => {
             loading="lazy"
             width={1408}
             height={768}
-            className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 object-cover dark:invert dark:opacity-80"
+            className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 object-cover"
             style={{
               maskImage:
                 "radial-gradient(ellipse at center, hsl(0 0% 0% / 1) 50%, hsl(0 0% 0% / 0) 95%)",
