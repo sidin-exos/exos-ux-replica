@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import intelContextImage from "@/assets/intel-context-final.jpg";
+import intelContextImage from "@/assets/intel-context-light.jpg";
 
 const MarketIntelligence = () => {
   const location = useLocation();
@@ -156,7 +156,7 @@ const MarketIntelligence = () => {
             loading="lazy"
             width={1408}
             height={768}
-            className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 object-cover mix-blend-multiply dark:mix-blend-screen dark:invert dark:opacity-80"
+            className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 object-cover dark:invert dark:opacity-80"
           />
         </div>
 
