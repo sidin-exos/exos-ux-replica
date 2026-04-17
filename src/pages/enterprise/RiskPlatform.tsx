@@ -122,8 +122,12 @@ const RiskPlatform = () => {
       <main className="container py-8 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl exos-page-title">
+          <h1 className="text-2xl exos-page-title flex items-center gap-2.5">
             Risk Assessment Platform
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+            </span>
           </h1>
           <p className="text-sm text-muted-foreground max-w-3xl mt-1 leading-relaxed">
             The Dynamic Monitoring Module saves you time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a <strong className="font-semibold text-primary">Signal-First</strong> approach, prioritising the <strong className="font-semibold text-foreground">direction</strong> and <strong className="font-semibold text-foreground">velocity</strong> of change over static positions.
@@ -147,7 +151,7 @@ const RiskPlatform = () => {
                       className="w-full justify-start text-left text-xs font-medium whitespace-normal leading-tight py-2.5 px-3 rounded-md transition-all
                         border-l-2 border-transparent text-muted-foreground
                         hover:bg-accent/40 hover:text-foreground
-                        data-[state=active]:bg-accent/60 data-[state=active]:text-foreground data-[state=active]:border-l-2 data-[state=active]:border-primary data-[state=active]:shadow-none"
+                        data-[state=active]:bg-destructive/5 data-[state=active]:text-foreground data-[state=active]:border-l-2 data-[state=active]:border-destructive data-[state=active]:shadow-none"
                     >
                       {meta.label}
                     </TabsTrigger>
