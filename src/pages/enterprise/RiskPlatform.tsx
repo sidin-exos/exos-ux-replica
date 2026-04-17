@@ -135,42 +135,36 @@ const RiskPlatform = () => {
           </div>
         </div>
 
-        {/* Methodology + Case Studies */}
+        {/* Monitoring Modules + Case Studies */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left 2/3 — Methodology & Tabs */}
+          {/* Left 2/3 — Vertical-tab module switcher */}
           <Card className="lg:col-span-2 border-border/50 bg-card/50">
-            <CardContent className="pt-5 pb-4 space-y-4">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">Methodology</h2>
-                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                  The Dynamic Monitoring Module saves you time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a Δ-first approach — prioritising the direction and velocity of change over static positions — and operates as a decision-support tool, not a decision-making one.
-                </p>
-              </div>
-              <Tabs defaultValue="DM-1" className="w-full">
-                <TabsList className="w-full grid grid-cols-5 h-auto gap-1.5 bg-accent/20 p-2 rounded-lg border border-border/40">
+            <CardContent className="pt-5 pb-5">
+              <Tabs defaultValue="DM-1" orientation="vertical" className="w-full flex flex-col sm:flex-row gap-5">
+                <TabsList className="flex sm:flex-col h-auto w-full sm:w-48 shrink-0 gap-1 bg-transparent p-0 justify-start">
                   {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
                     <TabsTrigger
                       key={key}
                       value={key}
-                      className="text-xs whitespace-normal leading-tight py-2.5 px-2 rounded-md transition-all
-                        border border-border/50 bg-card shadow-sm
-                        hover:bg-accent/60 hover:shadow-md hover:border-border
-                        data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary/30 data-[state=active]:shadow-[0_2px_8px_-2px_hsl(var(--primary)/0.4)] data-[state=active]:ring-1 data-[state=active]:ring-primary/20"
+                      className="w-full justify-start text-left text-xs font-medium whitespace-normal leading-tight py-2.5 px-3 rounded-md transition-all
+                        border-l-2 border-transparent text-muted-foreground
+                        hover:bg-accent/40 hover:text-foreground
+                        data-[state=active]:bg-accent/60 data-[state=active]:text-foreground data-[state=active]:border-l-2 data-[state=active]:border-primary data-[state=active]:shadow-none"
                     >
                       {meta.label}
                     </TabsTrigger>
                   ))}
                 </TabsList>
-                {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
-                  <TabsContent key={key} value={key} className="mt-3">
-                    <div className="space-y-2">
+                <div className="flex-1 sm:border-l sm:border-border/50 sm:pl-5 min-w-0">
+                  {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
+                    <TabsContent key={key} value={key} className="mt-0 space-y-2">
                       <h3 className="text-sm font-semibold text-foreground">{meta.label}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {meta.description}
                       </p>
-                    </div>
-                  </TabsContent>
-                ))}
+                    </TabsContent>
+                  ))}
+                </div>
               </Tabs>
             </CardContent>
           </Card>
