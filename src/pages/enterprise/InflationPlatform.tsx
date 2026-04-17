@@ -137,7 +137,7 @@ const InflationPlatform = () => {
                 <li>EXOS recommends 5 inflation triggers — adjust the list and set relative importance</li>
                 <li>Pick a monitoring schedule to manage your AI usage</li>
               </ul>
-              <p className="text-sm font-medium text-foreground/70 mb-6">Our monitoring pipeline is set. Simple as that!</p>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">Our monitoring pipeline is set. Simple as that!</p>
               <div className="flex flex-wrap gap-8 pt-4 border-t border-border">
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 1</div>
