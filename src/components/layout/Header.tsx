@@ -107,7 +107,7 @@ const Header = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
-                    className="font-display font-semibold tracking-tight text-[14px] text-foreground/80 bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                    className="font-display font-semibold tracking-tight text-[15px] text-foreground/80 bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
                     onClick={() => {
                       if (group.label === "Scenarios") {
                         navigate("/");
@@ -143,7 +143,7 @@ const Header = () => {
 
           <button
             onClick={() => navigate("/market-intelligence")}
-            className="font-display font-semibold tracking-tight text-[14px] text-foreground/80 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="font-display font-semibold tracking-tight text-[15px] text-foreground/80 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             Market Intelligence
           </button>
@@ -153,7 +153,7 @@ const Header = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
-                    className="font-display font-semibold tracking-tight text-[14px] text-foreground/80 bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                    className="font-display font-semibold tracking-tight text-[15px] text-foreground/80 bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
                   >
                     {group.label}
                   </NavigationMenuTrigger>
