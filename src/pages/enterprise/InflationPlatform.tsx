@@ -149,7 +149,7 @@ const InflationPlatform = () => {
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 3</div>
-                  <div className="text-sm font-medium text-foreground">Set cadence</div>
+                  <div className="text-sm font-medium text-foreground">Set AI usage</div>
                 </div>
               </div>
             </div>
