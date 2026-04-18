@@ -1,8 +1,8 @@
 import { useTheme } from "next-themes";
-import exosLogoDark from "@/assets/exos-logo-dark.svg";
-import exosLogoLight from "@/assets/exos-logo-light.svg";
+import exosMarkDark from "@/assets/exos-mark-dark.svg";
+import exosMarkLight from "@/assets/exos-mark.svg";
 
 export const useThemedLogo = () => {
   const { resolvedTheme } = useTheme();
-  return resolvedTheme === "dark" ? exosLogoDark : exosLogoLight;
+  return resolvedTheme === "dark" ? exosMarkDark : exosMarkLight;
 };
