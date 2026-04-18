@@ -70,9 +70,51 @@ const TCOComparisonDashboard = ({
   const effectiveData = parsedData?.data || data;
   const effectiveOptions = parsedData?.options || options;
   const effectiveCurrency = parsedData?.currency || currency;
-  const lowestTCO = [...effectiveOptions].sort((a, b) => a.totalTCO - b.totalTCO)[0];
-  const highestTCO = [...effectiveOptions].sort((a, b) => b.totalTCO - a.totalTCO)[0];
+  const sortedOptions = [...effectiveOptions].sort((a, b) => a.totalTCO - b.totalTCO);
+  const lowestTCO = sortedOptions[0];
+  const runnerUp = sortedOptions[1];
+  const highestTCO = sortedOptions[sortedOptions.length - 1];
   const savings = highestTCO.totalTCO - lowestTCO.totalTCO;
+
+  // Parse year label "Y0", "Y1"... into a number
+  const yearOf = (label: string): number => {
+    const m = label.match(/(\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : 0;
+  };
+
+  // Find the crossover: first time `lowestTCO` becomes ≤ `runnerUp` and stays so.
+  // Returns null if `lowestTCO` was already cheapest from Y0.
+  const findCrossover = (): { years: number; months: number } | null => {
+    if (!runnerUp) return null;
+    const aKey = lowestTCO.id as keyof TCODataPoint;
+    const bKey = runnerUp.id as keyof TCODataPoint;
+    for (let i = 1; i < effectiveData.length; i++) {
+      const prev = effectiveData[i - 1];
+      const curr = effectiveData[i];
+      const prevA = Number(prev[aKey] ?? 0);
+      const prevB = Number(prev[bKey] ?? 0);
+      const currA = Number(curr[aKey] ?? 0);
+      const currB = Number(curr[bKey] ?? 0);
+      // Crossover when sign of (A - B) flips from positive to non-positive
+      if (prevA > prevB && currA <= currB) {
+        const t = (prevA - prevB) / ((prevA - prevB) - (currA - currB));
+        const y0 = yearOf(prev.year);
+        const y1 = yearOf(curr.year);
+        const exact = y0 + t * (y1 - y0);
+        const years = Math.floor(exact);
+        const months = Math.round((exact - years) * 12);
+        return months === 12 ? { years: years + 1, months: 0 } : { years, months };
+      }
+    }
+    return null;
+  };
+
+  const crossover = findCrossover();
+  const conclusion = crossover
+    ? `${lowestTCO.name} becomes the cheapest option after ${crossover.years} year${crossover.years === 1 ? "" : "s"}${
+        crossover.months > 0 ? ` and ${crossover.months} month${crossover.months === 1 ? "" : "s"}` : ""
+      }, saving ${formatCurrency(savings, effectiveCurrency)} over ${runnerUp ? runnerUp.name : highestTCO.name} across the full horizon.`
+    : `${lowestTCO.name} is the cheapest option from day one, saving ${formatCurrency(savings, effectiveCurrency)} versus ${highestTCO.name} across the full horizon.`;
 
   return (
     <Card className="card-elevated">
