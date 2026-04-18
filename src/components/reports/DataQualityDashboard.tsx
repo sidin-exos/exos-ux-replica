@@ -7,14 +7,27 @@ interface DataQualityDashboardProps {
   parsedData?: DataQualityData;
 }
 
+const MAX_SCORE = 5;
+
+// Coverage stored as 0–5 in 0.5 steps
 const defaultDataFields = [
-  { field: "Supplier Spend Data", status: "complete", coverage: 100 },
-  { field: "Contract Terms", status: "partial", coverage: 65 },
-  { field: "Historical Pricing", status: "complete", coverage: 95 },
+  { field: "Supplier Spend Data", status: "complete", coverage: 5 },
+  { field: "Contract Terms", status: "partial", coverage: 3 },
+  { field: "Historical Pricing", status: "complete", coverage: 4.5 },
   { field: "Volume Forecasts", status: "missing", coverage: 0 },
-  { field: "Quality Metrics", status: "partial", coverage: 40 },
-  { field: "Lead Time Data", status: "complete", coverage: 88 },
+  { field: "Quality Metrics", status: "partial", coverage: 2 },
+  { field: "Lead Time Data", status: "complete", coverage: 4.5 },
 ];
+
+// Round any incoming value to nearest 0.5 and clamp to 0–5
+const toFiveScale = (v: number): number => {
+  // Heuristic: if value looks like a percentage (>5), convert to /5
+  const scaled = v > MAX_SCORE ? (v / 100) * MAX_SCORE : v;
+  const rounded = Math.round(scaled * 2) / 2;
+  return Math.max(0, Math.min(MAX_SCORE, rounded));
+};
+
+const formatScore = (v: number): string => v.toFixed(1).replace(/\.0$/, "");
 
 const defaultLimitations = [
   { title: "Volume Forecast Missing", impact: "Savings estimates may be ±25% less accurate" },
