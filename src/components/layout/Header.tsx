@@ -139,10 +139,8 @@ const navigateWithHash = (path: string, navigate: (p: string) => void) => {
 
 // Shared mega-dropdown content renderer
 const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: string) => void }) => {
-  const hasFeature = !!group.feature;
-  const FeatureIcon = group.feature?.icon;
   return (
-    <div className={`grid ${hasFeature ? "w-[640px] grid-cols-3" : "w-[420px] grid-cols-2"}`}>
+    <div className="grid w-[420px] grid-cols-2">
       <div className="col-span-2 p-5">
         <p className="font-display text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground mb-3">
           {group.label}
@@ -175,7 +173,6 @@ const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: s
             );
           })}
         </ul>
-      </div>
       </div>
     </div>
   );
