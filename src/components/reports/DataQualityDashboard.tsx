@@ -99,11 +99,9 @@ const DataQualityDashboard = ({ parsedData }: DataQualityDashboardProps) => {
             <div key={field.field} className="flex items-center gap-2">
               {getStatusIcon(field.status)}
               <span className="text-sm text-foreground flex-1">{field.field}</span>
-              <div className="w-16">
-                <Progress value={(field.coverage / MAX_SCORE) * 100} className="h-1" />
-              </div>
-              <span className="text-xs text-muted-foreground w-12 text-right tabular-nums">
-                {formatScore(field.coverage)} / {MAX_SCORE}
+              <StarRating value={field.coverage} max={MAX_SCORE} />
+              <span className="text-xs text-muted-foreground w-7 text-right tabular-nums">
+                {formatScore(field.coverage)}
               </span>
             </div>
           ))}
