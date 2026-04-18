@@ -40,33 +40,145 @@ import { Separator } from "@/components/ui/separator";
 
 // -- Navigation data ----------------------------------------------------------
 
-const NAV_GROUPS = [
+type NavItem = {
+  label: string;
+  path: string;
+  icon: typeof BarChart3;
+  description?: string;
+};
+
+type NavFeature = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  ctaPath: string;
+  icon: typeof Sparkles;
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+  feature?: NavFeature;
+};
+
+const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: "Scenarios",
     items: [
-      { label: "Analysis", path: "/#category-analysis", icon: BarChart3 },
-      { label: "Planning", path: "/#category-planning", icon: ClipboardList },
-      { label: "Risk", path: "/#category-risk", icon: AlertTriangle },
-      { label: "Documentation", path: "/#category-documentation", icon: FileCheck },
+      { label: "Analysis", path: "/#category-analysis", icon: BarChart3, description: "TCO, should-cost & cost waterfalls" },
+      { label: "Planning", path: "/#category-planning", icon: ClipboardList, description: "Make-or-buy & sourcing strategy" },
+      { label: "Risk", path: "/#category-risk", icon: AlertTriangle, description: "Supplier, geopolitical & black swan" },
+      { label: "Documentation", path: "/#category-documentation", icon: FileCheck, description: "SOW reviews & negotiation prep" },
     ],
+    feature: {
+      eyebrow: "Featured",
+      title: "29 Scenarios Library",
+      description: "Human-in-the-loop analyses for the procurement decisions that matter most.",
+      ctaLabel: "Explore scenarios",
+      ctaPath: "/",
+      icon: Sparkles,
+    },
   },
   {
     label: "Analytical Platforms",
     items: [
-      { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert },
-      { label: "Inflation Analysis Platform", path: "/enterprise/inflation", icon: TrendingUp },
+      { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert, description: "Continuous monitoring of suppliers & exposure" },
+      { label: "Inflation Analysis Platform", path: "/enterprise/inflation", icon: TrendingUp, description: "Driver-level signal radar for cost shifts" },
     ],
+    feature: {
+      eyebrow: "New",
+      title: "Delta-First Monitoring",
+      description: "Catch material changes early — focus your team on what actually moved.",
+      ctaLabel: "See how it works",
+      ctaPath: "/features",
+      icon: TrendingUp,
+    },
   },
   {
     label: "About EXOS",
     items: [
-      { label: "Technology & AI", path: "/features", icon: Sparkles },
-      { label: "Blog", path: "/blog", icon: PenLine },
-      { label: "Pricing", path: "/pricing", icon: DollarSign },
-      { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
+      { label: "Technology & AI", path: "/features", icon: Sparkles, description: "Agentic workflow & grounding stack" },
+      { label: "Blog", path: "/blog", icon: PenLine, description: "Procurement insights & playbooks" },
+      { label: "Pricing", path: "/pricing", icon: DollarSign, description: "Plans for SMB to enterprise" },
+      { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle, description: "Answers to common questions" },
     ],
+    feature: {
+      eyebrow: "Get started",
+      title: "ROI from day one",
+      description: "Transparent pricing, no consultants needed. Start with the Starter plan.",
+      ctaLabel: "View pricing",
+      ctaPath: "/pricing",
+      icon: DollarSign,
+    },
   },
 ] as const;
+
+// Shared mega-dropdown content renderer
+const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: string) => void }) => {
+  const hasFeature = !!group.feature;
+  const FeatureIcon = group.feature?.icon;
+  return (
+    <div className={`grid ${hasFeature ? "w-[640px] grid-cols-3" : "w-[420px] grid-cols-2"}`}>
+      <div className="col-span-2 p-5">
+        <p className="font-display text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground mb-3">
+          {group.label}
+        </p>
+        <ul className="grid grid-cols-2 gap-1.5">
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.path}>
+                <button
+                  onClick={() => navigate(item.path)}
+                  type="button"
+                  className="group flex items-start gap-3 w-full rounded-lg p-2.5 hover:bg-accent transition-colors text-left"
+                >
+                  <div className="shrink-0 w-9 h-9 rounded-md bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center text-primary transition-colors">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm text-foreground group-hover:text-primary transition-colors leading-tight">
+                      {item.label}
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      {group.feature && FeatureIcon && (
+        <div className="border-l border-border bg-muted/30 p-5 flex flex-col">
+          <p className="font-display text-[11px] font-semibold tracking-[0.18em] uppercase text-primary mb-3">
+            {group.feature.eyebrow}
+          </p>
+          <div className="aspect-[4/3] rounded-md bg-gradient-to-br from-primary via-accent to-primary/60 mb-3 flex items-center justify-center">
+            <FeatureIcon className="w-8 h-8 text-primary-foreground/90" />
+          </div>
+          <h4 className="font-display font-semibold text-sm text-foreground leading-tight mb-1">
+            {group.feature.title}
+          </h4>
+          <p className="text-xs text-muted-foreground leading-snug mb-3 flex-1">
+            {group.feature.description}
+          </p>
+          <button
+            onClick={() => navigate(group.feature!.ctaPath)}
+            type="button"
+            className="text-xs font-semibold text-primary hover:underline text-left"
+          >
+            {group.feature.ctaLabel} →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // -- Component ----------------------------------------------------------------
 
