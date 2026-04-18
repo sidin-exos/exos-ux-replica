@@ -1,7 +1,24 @@
-import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, XCircle, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import type { DataQualityData } from "@/lib/dashboard-data-parser";
+
+const StarRating = ({ value, max }: { value: number; max: number }) => (
+  <div className="flex items-center gap-0.5" aria-label={`${value} of ${max}`}>
+    {Array.from({ length: max }).map((_, i) => {
+      const fill = Math.max(0, Math.min(1, value - i));
+      return (
+        <span key={i} className="relative inline-block w-3.5 h-3.5">
+          <Star className="absolute inset-0 w-3.5 h-3.5 text-muted-foreground/30" />
+          {fill > 0 && (
+            <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+              <Star className="w-3.5 h-3.5 text-warning fill-warning" />
+            </span>
+          )}
+        </span>
+      );
+    })}
+  </div>
+);
 
 interface DataQualityDashboardProps {
   parsedData?: DataQualityData;
