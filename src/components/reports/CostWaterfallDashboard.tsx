@@ -1,14 +1,6 @@
 import { TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { CostWaterfallData } from "@/lib/dashboard-data-parser";
 
 interface CostComponent {
@@ -37,52 +29,138 @@ const defaultComponents: CostComponent[] = [
 
 const formatCurrency = (value: number, currency: string = "$"): string => {
   const absValue = Math.abs(value);
-  if (absValue >= 1000000) {
-    return `${currency}${(value / 1000000).toFixed(1)}M`;
-  }
-  if (absValue >= 1000) {
-    return `${currency}${(value / 1000).toFixed(0)}K`;
-  }
+  if (absValue >= 1000000) return `${currency}${(value / 1000000).toFixed(1)}M`;
+  if (absValue >= 1000) return `${currency}${(value / 1000).toFixed(0)}K`;
   return `${currency}${value}`;
 };
 
+// Neutral grey palette for the "Maximum Cost" pie
+const GREY_PALETTE = [
+  "hsl(var(--muted-foreground) / 0.85)",
+  "hsl(var(--muted-foreground) / 0.70)",
+  "hsl(var(--muted-foreground) / 0.55)",
+  "hsl(var(--muted-foreground) / 0.40)",
+  "hsl(var(--muted-foreground) / 0.30)",
+  "hsl(var(--muted-foreground) / 0.22)",
+  "hsl(var(--muted-foreground) / 0.18)",
+];
+
+// Primary tints for the "Potential Improvements" pie
+const PRIMARY_PALETTE = [
+  "hsl(var(--primary))",
+  "hsl(var(--primary) / 0.75)",
+  "hsl(var(--primary) / 0.55)",
+  "hsl(var(--primary) / 0.40)",
+];
+
+interface PieDatum {
+  name: string;
+  value: number;
+}
+
+const PieBlock = ({
+  data,
+  palette,
+  centerLabel,
+  centerValue,
+  currency,
+}: {
+  data: PieDatum[];
+  palette: string[];
+  centerLabel: string;
+  centerValue: string;
+  currency: string;
+}) => (
+  <div className="relative h-56">
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Tooltip
+          contentStyle={{
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 8,
+            fontSize: 11,
+          }}
+          formatter={(v: number, n) => [formatCurrency(v, currency), n as string]}
+        />
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          innerRadius="55%"
+          outerRadius="85%"
+          paddingAngle={1.5}
+          stroke="hsl(var(--card))"
+          strokeWidth={2}
+        >
+          {data.map((_, i) => (
+            <Cell key={i} fill={palette[i % palette.length]} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ResponsiveContainer>
+    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{centerLabel}</p>
+      <p className="text-lg font-semibold text-foreground tabular-nums">{centerValue}</p>
+    </div>
+  </div>
+);
+
+const Legend = ({
+  data,
+  palette,
+  currency,
+  total,
+}: {
+  data: PieDatum[];
+  palette: string[];
+  currency: string;
+  total: number;
+}) => (
+  <div className="space-y-1.5">
+    {data.map((d, i) => {
+      const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
+      return (
+        <div key={d.name} className="flex items-center gap-2 text-xs">
+          <span
+            className="w-2.5 h-2.5 rounded-sm shrink-0"
+            style={{ backgroundColor: palette[i % palette.length] }}
+          />
+          <span className="flex-1 truncate text-foreground">{d.name}</span>
+          <span className="text-muted-foreground tabular-nums">{pct}%</span>
+          <span className="tabular-nums font-medium text-foreground w-12 text-right">
+            {formatCurrency(d.value, currency)}
+          </span>
+        </div>
+      );
+    })}
+  </div>
+);
+
 const CostWaterfallDashboard = ({
   title = "Cost Breakdown",
-  subtitle = "Component analysis",
+  subtitle = "Maximum cost vs. potential improvements",
   components = defaultComponents,
   currency = "$",
   parsedData,
 }: CostWaterfallDashboardProps) => {
   const effectiveComponents = parsedData?.components || components;
   const effectiveCurrency = parsedData?.currency || currency;
-  // Calculate running totals for waterfall effect
-  let runningTotal = 0;
-  const waterfallData = effectiveComponents.map((comp) => {
-    const start = runningTotal;
-    runningTotal += comp.value;
-    return {
-      ...comp,
-      start,
-      end: runningTotal,
-      displayValue: comp.value,
-    };
-  });
 
-  // Add total bar
-  const totalValue = runningTotal;
-  waterfallData.push({
-    name: "Total Cost",
-    value: totalValue,
-    type: "total",
-    start: 0,
-    end: totalValue,
-    displayValue: totalValue,
-  });
+  const costItems: PieDatum[] = effectiveComponents
+    .filter((c) => c.type === "cost")
+    .map((c) => ({ name: c.name, value: c.value }))
+    .sort((a, b) => b.value - a.value);
 
-  const maxValue = Math.max(...waterfallData.map((d) => d.end));
-  const totalCosts = effectiveComponents.filter((c) => c.type === "cost").reduce((sum, c) => sum + c.value, 0);
-  const totalReductions = Math.abs(effectiveComponents.filter((c) => c.type === "reduction").reduce((sum, c) => sum + c.value, 0));
-  const reductionPercent = Math.round((totalReductions / totalCosts) * 100);
+  const reductionItems: PieDatum[] = effectiveComponents
+    .filter((c) => c.type === "reduction")
+    .map((c) => ({ name: c.name, value: Math.abs(c.value) }))
+    .sort((a, b) => b.value - a.value);
+
+  const grossCost = costItems.reduce((s, c) => s + c.value, 0);
+  const totalReductions = reductionItems.reduce((s, c) => s + c.value, 0);
+  const netCost = grossCost - totalReductions;
+  const reductionPercent = grossCost > 0 ? Math.round((totalReductions / grossCost) * 100) : 0;
 
   return (
     <Card className="card-elevated h-full">
@@ -99,7 +177,7 @@ const CostWaterfallDashboard = ({
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold text-foreground">
-              {formatCurrency(totalValue, effectiveCurrency)}
+              {formatCurrency(netCost, effectiveCurrency)}
             </p>
             <p className="text-xs text-primary">
               {formatCurrency(totalReductions, effectiveCurrency)} saved ({reductionPercent}%)
@@ -109,63 +187,58 @@ const CostWaterfallDashboard = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Horizontal Bar Chart */}
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={waterfallData}
-              layout="vertical"
-              margin={{ top: 5, right: 60, left: 100, bottom: 5 }}
-            >
-              <XAxis
-                type="number"
-                domain={[0, maxValue * 1.1]}
-                tickFormatter={(v) => formatCurrency(v, effectiveCurrency)}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                axisLine={{ stroke: "hsl(var(--border))" }}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Maximum Cost — grey */}
+          <div className="space-y-3">
+            <div className="text-center">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Maximum Cost</p>
+              <p className="text-[11px] text-muted-foreground/80">All cost components</p>
+            </div>
+            <PieBlock
+              data={costItems}
+              palette={GREY_PALETTE}
+              centerLabel="Gross"
+              centerValue={formatCurrency(grossCost, effectiveCurrency)}
+              currency={effectiveCurrency}
+            />
+            <Legend data={costItems} palette={GREY_PALETTE} currency={effectiveCurrency} total={grossCost} />
+          </div>
+
+          {/* Potential Improvements — primary */}
+          <div className="space-y-3">
+            <div className="text-center">
+              <p className="text-xs uppercase tracking-wide text-primary">Potential Improvements</p>
+              <p className="text-[11px] text-muted-foreground/80">Identified savings levers</p>
+            </div>
+            {reductionItems.length > 0 ? (
+              <PieBlock
+                data={reductionItems}
+                palette={PRIMARY_PALETTE}
+                centerLabel="Savings"
+                centerValue={`-${formatCurrency(totalReductions, effectiveCurrency)}`}
+                currency={effectiveCurrency}
               />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={95}
-                tick={{ fill: "hsl(var(--foreground))", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Bar dataKey="end" radius={[0, 4, 4, 0]} barSize={24}>
-                {waterfallData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={
-                      entry.type === "reduction"
-                        ? "hsl(var(--primary))"
-                        : entry.type === "total"
-                        ? "hsl(var(--foreground) / 0.8)"
-                        : "hsl(var(--muted-foreground) / 0.4)"
-                    }
-                  />
-                ))}
-                <LabelList
-                  dataKey="displayValue"
-                  position="right"
-                  formatter={(value: number) => formatCurrency(value, effectiveCurrency)}
-                  style={{
-                    fill: "hsl(var(--muted-foreground))",
-                    fontSize: 10,
-                  }}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+            ) : (
+              <div className="h-56 flex items-center justify-center text-xs text-muted-foreground">
+                No reductions identified
+              </div>
+            )}
+            <Legend
+              data={reductionItems}
+              palette={PRIMARY_PALETTE}
+              currency={effectiveCurrency}
+              total={totalReductions}
+            />
+          </div>
         </div>
 
-        {/* Summary Table */}
+        {/* Summary */}
         <div className="pt-3 border-t border-border/30">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-xs text-muted-foreground mb-1">Gross Costs</p>
               <p className="text-sm font-semibold text-foreground">
-                {formatCurrency(totalCosts, effectiveCurrency)}
+                {formatCurrency(grossCost, effectiveCurrency)}
               </p>
             </div>
             <div>
@@ -177,25 +250,9 @@ const CostWaterfallDashboard = ({
             <div>
               <p className="text-xs text-muted-foreground mb-1">Net Total</p>
               <p className="text-sm font-semibold text-foreground">
-                {formatCurrency(totalValue, effectiveCurrency)}
+                {formatCurrency(netCost, effectiveCurrency)}
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Cost breakdown legend */}
-        <div className="flex items-center justify-center gap-6 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-muted-foreground/40" />
-            <span className="text-muted-foreground">Cost Component</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-primary" />
-            <span className="text-muted-foreground">Reduction</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-foreground/80" />
-            <span className="text-muted-foreground">Total</span>
           </div>
         </div>
       </CardContent>
