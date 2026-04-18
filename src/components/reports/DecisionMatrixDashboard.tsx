@@ -1,4 +1,4 @@
-import { Scale } from "lucide-react";
+import { Scale, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { DecisionMatrixData } from "@/lib/dashboard-data-parser";
@@ -47,12 +47,14 @@ const getScoreColor = (score: number): string => {
 
 const getScoreDots = (score: number): JSX.Element => {
   return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((dot) => (
-        <div
-          key={dot}
-          className={`w-2 h-2 rounded-full ${
-            dot <= score ? "bg-primary" : "bg-secondary"
+    <div className="flex gap-0.5" aria-label={`${score} out of 5`}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`w-2.5 h-2.5 ${
+            star <= score
+              ? "fill-primary text-primary"
+              : "fill-transparent text-muted-foreground/40"
           }`}
         />
       ))}
