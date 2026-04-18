@@ -350,17 +350,6 @@ const Features = () => {
             </Card>
           </div>
 
-          {isSuperAdmin && (
-            <div className="text-center">
-              <NavLink
-                to="/architecture"
-                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
-              >
-                Explore full architecture diagram
-                <ArrowRight className="w-4 h-4" />
-              </NavLink>
-            </div>
-          )}
         </section>
 
         {/* Data Flow Section */}
