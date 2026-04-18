@@ -177,15 +177,9 @@ const Welcome = () => {
                           <line x1="4" y1="5" x2="24" y2="5" stroke="currentColor" strokeWidth="1.5" />
                           <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
                         </svg>
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-2 py-2 px-3 rounded-lg border border-destructive/30 bg-destructive/10 text-foreground shadow-sm cursor-default">
-                            <Database className="w-4 h-4 text-destructive shrink-0" />
-                            <p className="text-xs font-bold leading-tight">Risk Platform</p>
-                          </div>
-                          <div className="flex items-center gap-2 py-2 px-3 rounded-lg border border-warning/30 bg-warning/10 text-foreground shadow-sm cursor-default">
-                            <Database className="w-4 h-4 text-warning shrink-0" />
-                            <p className="text-xs font-bold leading-tight">Inflation Platform</p>
-                          </div>
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-h-[56px]">
+                          <Database className="w-4.5 h-4.5 text-copper shrink-0" />
+                          <p className="text-xs font-bold leading-tight max-w-[7rem]">Risk & Inflation Platforms</p>
                         </div>
                       </div>
                     </div>
@@ -215,8 +209,8 @@ const Welcome = () => {
                           <line x1="4" y1="5" x2="24" y2="5" stroke="currentColor" strokeWidth="1.5" />
                           <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
                         </svg>
-                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-iris/30 bg-iris/10 text-foreground shadow-sm cursor-default min-h-[56px]">
-                          <Radar className="w-4.5 h-4.5 text-iris shrink-0" />
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-h-[56px]">
+                          <Radar className="w-4.5 h-4.5 text-copper shrink-0" />
                           <p className="text-xs font-bold leading-tight max-w-[7rem]">Market Intelligence</p>
                         </div>
                       </div>
