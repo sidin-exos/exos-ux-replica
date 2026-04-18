@@ -95,9 +95,11 @@ const SOWAnalysisDashboard = ({ parsedData }: SOWAnalysisDashboardProps) => {
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Document Clarity</span>
-            <span className="text-sm font-medium text-foreground">{sowAnalysis.clarity}%</span>
+            <span className="text-sm font-medium text-foreground tabular-nums">{sowAnalysis.clarity.toFixed(1).replace(/\.0$/, "")}</span>
           </div>
-          <Progress value={sowAnalysis.clarity} className="h-1.5" />
+          <div className="flex items-center gap-3">
+            <StarRating value={sowAnalysis.clarity} max={MAX_SCORE} />
+          </div>
           <p className="text-xs text-muted-foreground mt-1.5">
             {completeCount} of {totalCount} sections complete
           </p>
