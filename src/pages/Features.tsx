@@ -247,38 +247,38 @@ const Features = () => {
 
         {/* Value Props */}
         <section className="mb-20">
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {valuePropositions.map((prop, index) => (
-              <Card 
-                key={prop.title} 
-                className="card-elevated animate-fade-up border-border/50"
+              <Card
+                key={prop.title}
+                className="card-elevated animate-fade-up border-border/50 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
                 style={{ animationDelay: `${100 + index * 80}ms` }}
               >
-                <div className="flex items-start gap-4 p-5">
-                  <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <prop.icon className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display text-lg font-semibold mb-1">{prop.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      {prop.highlights.map((h) => (
-                        <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70">
-                          <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
-                          {h}
-                        </span>
-                      ))}
+                <div className="flex flex-col h-full p-5">
+                  <div className="flex items-start gap-4 mb-3">
+                    <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                      <prop.icon className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    {"link" in prop && prop.link && (
-                      <NavLink
-                        to={prop.link as string}
-                        className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Learn about EXOS architecture
-                        <ArrowRight className="w-3 h-3" />
-                      </NavLink>
-                    )}
+                    <h3 className="font-display text-lg font-semibold leading-tight pt-1.5">{prop.title}</h3>
                   </div>
+                  <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
+                  <div className="flex flex-col gap-1 mt-auto">
+                    {prop.highlights.map((h) => (
+                      <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70 transition-transform duration-200 hover:translate-x-1">
+                        <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
+                        {h}
+                      </span>
+                    ))}
+                  </div>
+                  {"link" in prop && prop.link && (
+                    <NavLink
+                      to={prop.link as string}
+                      className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
+                    >
+                      Learn about EXOS architecture
+                      <ArrowRight className="w-3 h-3" />
+                    </NavLink>
+                  )}
                 </div>
               </Card>
             ))}
