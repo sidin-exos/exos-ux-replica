@@ -231,7 +231,7 @@ const TCOComparisonDashboard = ({
 
         {/* Recommendation */}
         <p className="text-xs text-muted-foreground pt-2">
-          <span className="text-primary font-medium">Recommendation:</span> {lowestTCO.name} offers the lowest total cost of ownership
+          <span className="text-primary font-medium">Conclusion:</span> {conclusion}
         </p>
       </CardContent>
     </Card>
