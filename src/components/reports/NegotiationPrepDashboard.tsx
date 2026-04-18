@@ -1,15 +1,49 @@
-import { Target, ArrowRight } from "lucide-react";
+import { Target, ArrowRight, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+
 import type { NegotiationPrepData } from "@/lib/dashboard-data-parser";
 
 interface NegotiationPrepDashboardProps {
   parsedData?: NegotiationPrepData;
 }
 
+const MAX_STARS = 5;
+
+// Round to nearest 0.5; supports legacy %-based input (>5 → /20)
+const toFiveScale = (v: number): number => {
+  const scaled = v > MAX_STARS ? v / 20 : v;
+  return Math.max(0, Math.min(MAX_STARS, Math.round(scaled * 2) / 2));
+};
+
+const formatStars = (v: number): string => v.toFixed(1).replace(/\.0$/, "");
+
+const StarRating = ({ value }: { value: number }) => {
+  const v = toFiveScale(value);
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`BATNA strength ${formatStars(v)} of ${MAX_STARS}`}>
+      {Array.from({ length: MAX_STARS }).map((_, i) => {
+        const fill = Math.max(0, Math.min(1, v - i)); // 0, 0.5, or 1
+        return (
+          <span key={i} className="relative inline-block w-4 h-4">
+            <Star className="absolute inset-0 w-4 h-4 text-muted-foreground/30" />
+            {fill > 0 && (
+              <span
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: `${fill * 100}%` }}
+              >
+                <Star className="w-4 h-4 text-warning fill-warning" />
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
 const defaultNegotiationFramework = {
   batna: {
-    strength: 65,
+    strength: 3.5,
     description:
       "Two pre-qualified alternative suppliers identified, both with confirmed capacity and a realistic 6-week switching timeline including technical validation, contract paperwork and onboarding. This gives the team credible walk-away leverage without disrupting operational continuity.",
   },
@@ -76,9 +110,14 @@ const NegotiationPrepDashboard = ({ parsedData }: NegotiationPrepDashboardProps)
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">BATNA Strength</span>
-            <span className="text-sm font-medium text-foreground">{negotiationFramework.batna.strength}%</span>
+            <div className="flex items-center gap-2">
+              <StarRating value={negotiationFramework.batna.strength} />
+              <span className="text-sm font-medium text-foreground tabular-nums">
+                {formatStars(toFiveScale(negotiationFramework.batna.strength))}
+                <span className="text-muted-foreground"> / {MAX_STARS}</span>
+              </span>
+            </div>
           </div>
-          <Progress value={negotiationFramework.batna.strength} className="h-1.5" />
           <p className="text-xs text-muted-foreground mt-1.5">
             {negotiationFramework.batna.description}
           </p>
