@@ -114,6 +114,24 @@ const NAV_GROUPS: readonly NavGroup[] = [
   },
 ] as const;
 
+// Smart navigation that handles hash links to the current page
+const navigateWithHash = (path: string, navigate: (p: string) => void) => {
+  const hashIndex = path.indexOf("#");
+  if (hashIndex !== -1) {
+    const [pathPart, hashPart] = [path.slice(0, hashIndex) || "/", path.slice(hashIndex + 1)];
+    if (window.location.pathname === pathPart) {
+      const el = document.getElementById(hashPart);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Update hash without triggering navigation
+        window.history.replaceState(null, "", `${pathPart}#${hashPart}`);
+        return;
+      }
+    }
+  }
+  navigate(path);
+};
+
 // Shared mega-dropdown content renderer
 const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: string) => void }) => {
   const hasFeature = !!group.feature;
@@ -130,7 +148,7 @@ const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: s
             return (
               <li key={item.path}>
                 <button
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigateWithHash(item.path, navigate)}
                   type="button"
                   className="group flex items-start gap-3 w-full rounded-lg p-2.5 hover:bg-accent transition-colors text-left"
                 >
@@ -197,7 +215,7 @@ const Header = () => {
 
   const mobileNavigate = (path: string) => {
     setMobileOpen(false);
-    navigate(path);
+    setTimeout(() => navigateWithHash(path, navigate), 50);
   };
 
   return (
