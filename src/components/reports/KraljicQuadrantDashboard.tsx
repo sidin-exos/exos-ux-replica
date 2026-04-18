@@ -41,7 +41,8 @@ const quadrantConfig: Record<Quadrant, {
   leverage: {
     label: "Leverage",
     strategy: "Maximize Value",
-    description: "High profit impact, low supply risk. Negotiate aggressively and consolidate volumes.",
+    description:
+      "High profit impact with low supply risk. Use competitive tendering, consolidate spend across business units and renegotiate contracts to capture price reductions. Maintain a broad supplier base to preserve buyer power.",
     borderColor: "border-primary/60",
     bgClass: "bg-primary/5",
     accentClass: "text-primary",
@@ -50,7 +51,8 @@ const quadrantConfig: Record<Quadrant, {
   strategic: {
     label: "Strategic",
     strategy: "Partner & Collaborate",
-    description: "High profit impact, high supply risk. Build partnerships and secure long-term contracts.",
+    description:
+      "High profit impact and high supply risk. Build deep, long-term partnerships with key suppliers and lock in multi-year contracts. Co-invest in joint innovation, capacity planning and risk mitigation to protect continuity.",
     borderColor: "border-warning/60",
     bgClass: "bg-warning/5",
     accentClass: "text-warning",
@@ -59,7 +61,8 @@ const quadrantConfig: Record<Quadrant, {
   "non-critical": {
     label: "Non-Critical",
     strategy: "Simplify & Automate",
-    description: "Low profit impact, low supply risk. Standardize processes and reduce transaction costs.",
+    description:
+      "Low profit impact and low supply risk. Standardise specifications, automate ordering through catalogues or P-cards and minimise administrative overhead. Focus on process efficiency rather than price negotiation.",
     borderColor: "border-muted-foreground/40",
     bgClass: "bg-muted/30",
     accentClass: "text-muted-foreground",
@@ -68,7 +71,8 @@ const quadrantConfig: Record<Quadrant, {
   bottleneck: {
     label: "Bottleneck",
     strategy: "Secure Supply",
-    description: "Low profit impact, high supply risk. Diversify sources and maintain safety stock.",
+    description:
+      "Low profit impact but high supply risk. Diversify sources, qualify alternative suppliers and maintain safety stock to protect operations. Explore substitution, redesign or insourcing to reduce dependency over time.",
     borderColor: "border-accent-foreground/40",
     bgClass: "bg-accent/30",
     accentClass: "text-accent-foreground",
