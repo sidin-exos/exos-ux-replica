@@ -230,23 +230,7 @@ const Header = () => {
                     {group.label}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
-                      {group.items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.path}>
-                            <button
-                              onClick={() => navigate(item.path)}
-                              type="button"
-                              className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
-                            >
-                              {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
-                              {item.label}
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <MegaDropdown group={group} navigate={navigate} />
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               </NavigationMenuList>
