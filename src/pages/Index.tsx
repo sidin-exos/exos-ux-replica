@@ -59,7 +59,10 @@ const Index = () => {
     if (location.hash) {
       const id = location.hash.replace("#", "");
       setTimeout(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const el = document.getElementById(id);
+        if (!el) return;
+        const top = el.getBoundingClientRect().top + window.scrollY - 96;
+        window.scrollTo({ top, behavior: "smooth" });
       }, 100);
     }
   }, [location.hash]);
