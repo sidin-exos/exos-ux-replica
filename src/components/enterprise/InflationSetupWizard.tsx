@@ -238,17 +238,30 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                       {d.accepted && (
                         <div className="pl-10 flex items-center gap-3">
                           <Label className="text-xs text-muted-foreground shrink-0">Weight</Label>
-                          <Slider
-                            value={[d.weight ?? 50]}
-                            onValueChange={([v]) => {
-                              setDrivers(prev => prev.map((dr, di) => di === i ? { ...dr, weight: v } : dr));
-                            }}
-                            min={1}
-                            max={100}
-                            step={1}
-                            className="flex-1"
-                          />
-                          <span className="text-xs font-mono w-6 text-right text-foreground">{d.weight ?? "—"}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Low</span>
+                            {[20, 40, 60, 80, 100].map((stepVal) => {
+                              const current = d.weight ?? 60;
+                              const isActive = current >= stepVal - 10 && current <= stepVal + 10;
+                              const isFilled = current >= stepVal - 10;
+                              return (
+                                <button
+                                  key={stepVal}
+                                  type="button"
+                                  onClick={() => setDrivers(prev => prev.map((dr, di) => di === i ? { ...dr, weight: stepVal } : dr))}
+                                  className={`w-3.5 h-3.5 rounded-full border transition-all ${
+                                    isActive
+                                      ? "border-primary bg-primary scale-110"
+                                      : isFilled
+                                        ? "border-primary/60 bg-primary/40"
+                                        : "border-border bg-muted hover:border-primary/50"
+                                  }`}
+                                  aria-label={`Set weight to ${stepVal}`}
+                                />
+                              );
+                            })}
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">High</span>
+                          </div>
                         </div>
                       )}
                     </div>
