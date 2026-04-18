@@ -397,13 +397,15 @@ const Features = () => {
                     key={cat.label}
                     onClick={() => setSelectedDashboard(cat.dashboards[0].id)}
                     className={`group rounded-xl border p-3 text-left transition-all duration-300
-                      bg-card shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]
+                      shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]
                       hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5
                       active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]
-                      ${isActive ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30" : "border-border/60"}`}
+                      ${isActive
+                        ? "border-primary bg-primary/15 ring-1 ring-primary/40 shadow-[0_2px_0_0_hsl(var(--primary)/0.5),0_6px_16px_-4px_hsl(var(--primary)/0.18)]"
+                        : "bg-card border-border/60"}`}
                   >
                     <Icon className={`h-5 w-5 mb-2 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"}`} />
-                    <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                    <p className={`text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-foreground"}`}>{cat.label}</p>
                     <p className="text-xs text-muted-foreground mt-1 hidden md:block">{cat.description}</p>
                   </button>
                 );
