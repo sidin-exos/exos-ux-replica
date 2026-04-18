@@ -215,7 +215,7 @@ const Header = () => {
 
   const mobileNavigate = (path: string) => {
     setMobileOpen(false);
-    navigate(path);
+    setTimeout(() => navigateWithHash(path, navigate), 50);
   };
 
   return (
