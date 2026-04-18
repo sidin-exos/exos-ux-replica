@@ -458,12 +458,6 @@ const Header = () => {
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/market-intelligence?tab=insights")}>
                   <Database className="w-4 h-4" /> My Knowledge Database
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
-                  <Settings className="w-4 h-4" /> Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/pricing")}>
-                  <CreditCard className="w-4 h-4" /> Manage Subscription
-                </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/pricing#faq")}>
                   <HelpCircle className="w-4 h-4" /> Help & FAQ
                 </DropdownMenuItem>
