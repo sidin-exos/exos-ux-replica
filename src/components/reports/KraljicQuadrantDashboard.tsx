@@ -177,13 +177,19 @@ const KraljicQuadrantDashboard = ({
               const count = (groupedItems[q] || []).length;
               return (
                 <div key={q} className={`rounded-md border ${config.borderColor} p-3 ${config.bgClass}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-xs font-semibold ${config.accentClass}`}>
-                      {config.label}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">{count} item{count !== 1 ? "s" : ""}</span>
+                  <div className="flex items-start gap-3">
+                    <div className="w-24 shrink-0">
+                      <p className={`text-xs font-semibold ${config.accentClass}`}>
+                        {config.label}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {count} item{count !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <p className="flex-1 text-[11px] text-muted-foreground leading-relaxed">
+                      {config.description}
+                    </p>
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">{config.description}</p>
                 </div>
               );
             })}
