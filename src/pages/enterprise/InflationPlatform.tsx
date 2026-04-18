@@ -226,12 +226,18 @@ const InflationPlatform = () => {
                           key={i}
                           className="group space-y-1 rounded-md -mx-1.5 px-1.5 py-1 transition-colors hover:bg-iris/10"
                         >
-                          <p className="text-xs font-medium text-foreground leading-snug line-clamp-1 group-hover:line-clamp-none transition-all">
-                            {n.title}
-                          </p>
+                          <div className="flex items-start gap-2">
+                            <span
+                              aria-hidden="true"
+                              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-iris/60 group-hover:bg-iris transition-colors"
+                            />
+                            <p className="text-xs font-medium text-foreground leading-snug line-clamp-1 group-hover:line-clamp-none transition-all flex-1">
+                              {n.title}
+                            </p>
+                          </div>
                           <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out">
                             <div className="overflow-hidden">
-                              <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                              <div className="flex items-center gap-1.5 flex-wrap pt-0.5 pl-3.5">
                                 <Badge variant="secondary" className="text-xs px-1.5 py-0">{n.tracker}</Badge>
                                 <span className="text-xs text-muted-foreground">{n.source} · {n.date}</span>
                               </div>
