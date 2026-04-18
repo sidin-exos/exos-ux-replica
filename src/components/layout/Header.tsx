@@ -148,7 +148,7 @@ const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: s
             return (
               <li key={item.path}>
                 <button
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigateWithHash(item.path, navigate)}
                   type="button"
                   className="group flex items-start gap-3 w-full rounded-lg p-2.5 hover:bg-accent transition-colors text-left"
                 >
