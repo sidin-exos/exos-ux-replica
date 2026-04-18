@@ -10,7 +10,7 @@ const SentinelCapabilities = () => {
       title: "Semantic Anonymizer",
       role: "Encoder",
       description: "Masks sensitive entities like company names, prices, and volumes with semantic tokens. Your real data never reaches external systems.",
-      example: "Acme Corp → [SUPPLIER_A], $125,000 → [AMOUNT_B]"
+      example: "Acme Corp → [SUPPLIER_A]"
     },
     {
       icon: Database,
@@ -31,7 +31,7 @@ const SentinelCapabilities = () => {
       title: "Context Restorer",
       role: "Decoder",
       description: "Seamlessly replaces anonymization tokens with your original data, delivering actionable insights with full context.",
-      example: "[SUPPLIER_A] → Acme Corp, [AMOUNT_B] → $125,000"
+      example: "[SUPPLIER_A] → Acme Corp"
     }
   ];
 
