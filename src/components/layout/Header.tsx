@@ -203,6 +203,43 @@ const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: s
   );
 };
 
+// -- Personal greeting --------------------------------------------------------
+
+const getPersonalGreeting = (firstName: string): { greeting: string; subtitle: string } => {
+  const now = new Date();
+  const hour = now.getHours();
+  const day = now.getDay(); // 0=Sun..6=Sat
+  const date = now.getDate();
+  const month = now.getMonth(); // 0=Jan
+  const name = firstName || "there";
+
+  // Special dates first
+  if (month === 0 && date === 1) return { greeting: `Happy New Year, ${name}! 🎉`, subtitle: "Fresh start, fresh wins." };
+  if (month === 11 && date >= 24 && date <= 26) return { greeting: `Happy holidays, ${name} 🎄`, subtitle: "Hope you're taking it easy." };
+  if (month === 11 && date === 31) return { greeting: `Last day of the year, ${name}!`, subtitle: "One more push, then celebrate." };
+
+  // Day-of-week vibes
+  if (day === 5) {
+    if (hour < 12) return { greeting: `Happy Friday, ${name} 🙌`, subtitle: "Almost the weekend — let's wrap it up." };
+    return { greeting: `Friday afternoon, ${name}`, subtitle: "Sneak in one last win before the weekend." };
+  }
+  if (day === 6) return { greeting: `Working on a Saturday, ${name}? 💪`, subtitle: "Respect. Make it count." };
+  if (day === 0) return { greeting: `Sunday vibes, ${name} ☕`, subtitle: "Easing into the week ahead?" };
+  if (day === 1) {
+    if (hour < 12) return { greeting: `Monday mode, ${name} ☕`, subtitle: "Let's set the tone for the week." };
+    return { greeting: `Powering through Monday, ${name}`, subtitle: "You've got this." };
+  }
+  if (day === 3) return { greeting: `Hump day, ${name} 🐫`, subtitle: "Halfway there." };
+  if (day === 4) return { greeting: `Almost Friday, ${name}`, subtitle: "Keep the momentum going." };
+
+  // Generic time-of-day
+  if (hour < 5) return { greeting: `Burning the midnight oil, ${name}? 🌙`, subtitle: "Don't forget to rest." };
+  if (hour < 12) return { greeting: `Good morning, ${name} ☀️`, subtitle: "What are we tackling today?" };
+  if (hour < 17) return { greeting: `Good afternoon, ${name}`, subtitle: "Hope the day's treating you well." };
+  if (hour < 22) return { greeting: `Good evening, ${name} 🌆`, subtitle: "Wrapping up or just getting started?" };
+  return { greeting: `Late night, ${name}? 🌙`, subtitle: "Make it a productive one." };
+};
+
 // -- Component ----------------------------------------------------------------
 
 const Header = () => {
@@ -211,7 +248,33 @@ const Header = () => {
   const { user } = useUser();
   const { isSuperAdmin } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [firstName, setFirstName] = useState<string>("");
   const exosLogo = useThemedLogo();
+
+  // Fetch first name from profile for personalised greeting
+  useEffect(() => {
+    if (!user?.id) {
+      setFirstName("");
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("full_name, display_name")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const raw = data?.display_name || data?.full_name || user.email?.split("@")[0] || "";
+        const first = raw.trim().split(/\s+/)[0] || "";
+        setFirstName(first.charAt(0).toUpperCase() + first.slice(1));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.email]);
+
+  const personalGreeting = useMemo(() => getPersonalGreeting(firstName), [firstName]);
 
   // Close transient navigation UI on route changes
   useEffect(() => {
