@@ -187,17 +187,6 @@ const Features = () => {
       ]
     },
     {
-      icon: Database,
-      title: "Market Intelligence & Knowledge Base",
-      description: "Use Market Intelligence as a self-sufficient tool or inject live market context from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
-      highlights: [
-        "Live supplier & category intelligence",
-        "30+ industry grounding profiles",
-        "30+ category strategy frameworks",
-        "Cited sources for full transparency"
-      ]
-    },
-    {
       icon: TrendingUp,
       title: "Inflation Monitor & Risk Assessment Platform",
       description: "Continuously track the noise, surface what's changed, and flag only what requires your decision.",
@@ -206,6 +195,17 @@ const Features = () => {
         "Risk event detection & alerting",
         "Bridge scenario recommendations",
         "Continuous monitoring cadence"
+      ]
+    },
+    {
+      icon: Database,
+      title: "Market Intelligence & Knowledge Base",
+      description: "Use Market Intelligence as a self-sufficient tool or inject live market context from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
+      highlights: [
+        "Live supplier & category intelligence",
+        "30+ industry grounding profiles",
+        "30+ category strategy frameworks",
+        "Cited sources for full transparency"
       ]
     },
     {
