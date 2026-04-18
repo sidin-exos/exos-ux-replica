@@ -110,9 +110,14 @@ const NegotiationPrepDashboard = ({ parsedData }: NegotiationPrepDashboardProps)
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">BATNA Strength</span>
-            <span className="text-sm font-medium text-foreground">{negotiationFramework.batna.strength}%</span>
+            <div className="flex items-center gap-2">
+              <StarRating value={negotiationFramework.batna.strength} />
+              <span className="text-sm font-medium text-foreground tabular-nums">
+                {formatStars(toFiveScale(negotiationFramework.batna.strength))}
+                <span className="text-muted-foreground"> / {MAX_STARS}</span>
+              </span>
+            </div>
           </div>
-          <Progress value={negotiationFramework.batna.strength} className="h-1.5" />
           <p className="text-xs text-muted-foreground mt-1.5">
             {negotiationFramework.batna.description}
           </p>
