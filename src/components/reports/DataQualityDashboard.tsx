@@ -7,14 +7,27 @@ interface DataQualityDashboardProps {
   parsedData?: DataQualityData;
 }
 
+const MAX_SCORE = 5;
+
+// Coverage stored as 0–5 in 0.5 steps
 const defaultDataFields = [
-  { field: "Supplier Spend Data", status: "complete", coverage: 100 },
-  { field: "Contract Terms", status: "partial", coverage: 65 },
-  { field: "Historical Pricing", status: "complete", coverage: 95 },
+  { field: "Supplier Spend Data", status: "complete", coverage: 5 },
+  { field: "Contract Terms", status: "partial", coverage: 3 },
+  { field: "Historical Pricing", status: "complete", coverage: 4.5 },
   { field: "Volume Forecasts", status: "missing", coverage: 0 },
-  { field: "Quality Metrics", status: "partial", coverage: 40 },
-  { field: "Lead Time Data", status: "complete", coverage: 88 },
+  { field: "Quality Metrics", status: "partial", coverage: 2 },
+  { field: "Lead Time Data", status: "complete", coverage: 4.5 },
 ];
+
+// Round any incoming value to nearest 0.5 and clamp to 0–5
+const toFiveScale = (v: number): number => {
+  // Heuristic: if value looks like a percentage (>5), convert to /5
+  const scaled = v > MAX_SCORE ? (v / 100) * MAX_SCORE : v;
+  const rounded = Math.round(scaled * 2) / 2;
+  return Math.max(0, Math.min(MAX_SCORE, rounded));
+};
+
+const formatScore = (v: number): string => v.toFixed(1).replace(/\.0$/, "");
 
 const defaultLimitations = [
   { title: "Volume Forecast Missing", impact: "Savings estimates may be ±25% less accurate" },
@@ -25,9 +38,11 @@ const DataQualityDashboard = ({ parsedData }: DataQualityDashboardProps) => {
   const dataFields = parsedData?.fields || defaultDataFields;
   const limitations = parsedData?.limitations || defaultLimitations;
 
-  const overallScore = Math.round(
-    dataFields.reduce((acc, f) => acc + f.coverage, 0) / dataFields.length
-  );
+
+  const normalizedFields = dataFields.map((f) => ({ ...f, coverage: toFiveScale(f.coverage) }));
+
+  const overallScore =
+    Math.round((normalizedFields.reduce((acc, f) => acc + f.coverage, 0) / normalizedFields.length) * 2) / 2;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -55,20 +70,24 @@ const DataQualityDashboard = ({ parsedData }: DataQualityDashboardProps) => {
               <p className="text-xs text-muted-foreground">Analysis confidence</p>
             </div>
           </div>
-          <span className="text-sm font-medium text-foreground">{overallScore}%</span>
+          <span className="text-sm font-medium text-foreground tabular-nums">
+            {formatScore(overallScore)}<span className="text-muted-foreground"> / {MAX_SCORE}</span>
+          </span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Field Coverage */}
         <div className="space-y-2">
-          {dataFields.map((field) => (
+          {normalizedFields.map((field) => (
             <div key={field.field} className="flex items-center gap-2">
               {getStatusIcon(field.status)}
               <span className="text-sm text-foreground flex-1">{field.field}</span>
               <div className="w-16">
-                <Progress value={field.coverage} className="h-1" />
+                <Progress value={(field.coverage / MAX_SCORE) * 100} className="h-1" />
               </div>
-              <span className="text-xs text-muted-foreground w-7 text-right">{field.coverage}%</span>
+              <span className="text-xs text-muted-foreground w-12 text-right tabular-nums">
+                {formatScore(field.coverage)} / {MAX_SCORE}
+              </span>
             </div>
           ))}
         </div>
