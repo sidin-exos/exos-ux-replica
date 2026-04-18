@@ -1,15 +1,16 @@
-import { FileText, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { FileText, CheckCircle2, AlertCircle, XCircle, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import type { SOWAnalysisData } from "@/lib/dashboard-data-parser";
 
 interface SOWAnalysisDashboardProps {
   parsedData?: SOWAnalysisData;
 }
 
+const MAX_SCORE = 5;
+
 const defaultSowAnalysis = {
-  clarity: 72,
+  clarity: 3.5, // 5-star scale
   sections: [
     { name: "Scope Definition", status: "partial", note: "Vague deliverables in 3.2, 4.1" },
     { name: "Timeline & Milestones", status: "complete", note: "Clear schedule defined" },
@@ -24,6 +25,24 @@ const defaultSowAnalysis = {
     "Define dispute resolution mechanism",
   ],
 };
+
+const StarRating = ({ value, max }: { value: number; max: number }) => (
+  <div className="flex items-center gap-0.5" aria-label={`${value} of ${max}`}>
+    {Array.from({ length: max }).map((_, i) => {
+      const fill = Math.max(0, Math.min(1, value - i));
+      return (
+        <span key={i} className="relative inline-block w-3.5 h-3.5">
+          <Star className="absolute inset-0 w-3.5 h-3.5 text-muted-foreground/30" />
+          {fill > 0 && (
+            <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+              <Star className="w-3.5 h-3.5 text-warning fill-warning" />
+            </span>
+          )}
+        </span>
+      );
+    })}
+  </div>
+);
 
 const SOWAnalysisDashboard = ({ parsedData }: SOWAnalysisDashboardProps) => {
   const sowAnalysis = parsedData
@@ -76,9 +95,11 @@ const SOWAnalysisDashboard = ({ parsedData }: SOWAnalysisDashboardProps) => {
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Document Clarity</span>
-            <span className="text-sm font-medium text-foreground">{sowAnalysis.clarity}%</span>
+            <span className="text-sm font-medium text-foreground tabular-nums">{sowAnalysis.clarity.toFixed(1).replace(/\.0$/, "")}</span>
           </div>
-          <Progress value={sowAnalysis.clarity} className="h-1.5" />
+          <div className="flex items-center gap-3">
+            <StarRating value={sowAnalysis.clarity} max={MAX_SCORE} />
+          </div>
           <p className="text-xs text-muted-foreground mt-1.5">
             {completeCount} of {totalCount} sections complete
           </p>
