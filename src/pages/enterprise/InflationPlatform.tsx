@@ -222,11 +222,20 @@ const InflationPlatform = () => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {newsFeed.map((n, i) => (
-                        <div key={i} className="space-y-1">
-                          <p className="text-xs font-medium text-foreground leading-snug">{n.title}</p>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge variant="secondary" className="text-xs px-1.5 py-0">{n.tracker}</Badge>
-                            <span className="text-xs text-muted-foreground">{n.source} · {n.date}</span>
+                        <div
+                          key={i}
+                          className="group space-y-1 rounded-md -mx-1.5 px-1.5 py-1 transition-colors hover:bg-iris/10"
+                        >
+                          <p className="text-xs font-medium text-foreground leading-snug line-clamp-1 group-hover:line-clamp-none transition-all">
+                            {n.title}
+                          </p>
+                          <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out">
+                            <div className="overflow-hidden">
+                              <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                <Badge variant="secondary" className="text-xs px-1.5 py-0">{n.tracker}</Badge>
+                                <span className="text-xs text-muted-foreground">{n.source} · {n.date}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
