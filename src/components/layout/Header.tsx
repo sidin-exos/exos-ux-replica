@@ -139,10 +139,8 @@ const navigateWithHash = (path: string, navigate: (p: string) => void) => {
 
 // Shared mega-dropdown content renderer
 const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: string) => void }) => {
-  const hasFeature = !!group.feature;
-  const FeatureIcon = group.feature?.icon;
   return (
-    <div className={`grid ${hasFeature ? "w-[640px] grid-cols-3" : "w-[420px] grid-cols-2"}`}>
+    <div className="grid w-[420px] grid-cols-2">
       <div className="col-span-2 p-5">
         <p className="font-display text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground mb-3">
           {group.label}
@@ -176,29 +174,6 @@ const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: s
           })}
         </ul>
       </div>
-      {group.feature && FeatureIcon && (
-        <div className="border-l border-border bg-muted/30 p-5 flex flex-col">
-          <p className="font-display text-[11px] font-semibold tracking-[0.18em] uppercase text-primary mb-3">
-            {group.feature.eyebrow}
-          </p>
-          <div className="aspect-[4/3] rounded-md bg-gradient-to-br from-primary via-accent to-primary/60 mb-3 flex items-center justify-center">
-            <FeatureIcon className="w-8 h-8 text-primary-foreground/90" />
-          </div>
-          <h4 className="font-display font-semibold text-sm text-foreground leading-tight mb-1">
-            {group.feature.title}
-          </h4>
-          <p className="text-xs text-muted-foreground leading-snug mb-3 flex-1">
-            {group.feature.description}
-          </p>
-          <button
-            onClick={() => navigate(group.feature!.ctaPath)}
-            type="button"
-            className="text-xs font-semibold text-primary hover:underline text-left"
-          >
-            {group.feature.ctaLabel} →
-          </button>
-        </div>
-      )}
     </div>
   );
 };
