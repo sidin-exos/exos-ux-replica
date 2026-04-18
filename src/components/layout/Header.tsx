@@ -507,9 +507,15 @@ const Header = () => {
                   {user.email?.charAt(0).toUpperCase() || "U"}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-3 py-2">
-                  <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+              <DropdownMenuContent align="end" className="w-64">
+                <div className="px-3 py-2.5">
+                  <p className="font-display text-sm font-semibold text-foreground leading-tight">
+                    {personalGreeting.greeting}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                    {personalGreeting.subtitle}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/70 truncate mt-1.5">{user.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
