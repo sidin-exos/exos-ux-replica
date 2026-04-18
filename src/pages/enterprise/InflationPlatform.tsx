@@ -141,11 +141,11 @@ const InflationPlatform = () => {
               <div className="flex flex-wrap gap-8 pt-4 border-t border-border">
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 1</div>
-                  <div className="text-sm font-medium text-foreground">Define goods</div>
+                  <div className="text-sm font-medium text-foreground">Define goods or services</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 2</div>
-                  <div className="text-sm font-medium text-foreground">Tune 5 triggers</div>
+                  <div className="text-sm font-medium text-foreground">Tune and approve triggers</div>
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 3</div>
