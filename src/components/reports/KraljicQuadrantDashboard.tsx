@@ -125,7 +125,7 @@ const KraljicQuadrantDashboard = ({
             </div>
             {/* High / Low Y labels */}
             <div className="absolute left-3 top-1 text-[9px] text-muted-foreground/70">High</div>
-            <div className="absolute left-3 bottom-6 text-[9px] text-muted-foreground/70">Low</div>
+            
 
             {/* Grid */}
             <div className="ml-8 grid grid-cols-2 grid-rows-2 border border-border/30 rounded-lg overflow-hidden">
