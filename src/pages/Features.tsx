@@ -241,7 +241,7 @@ const Features = () => {
             How EXOS <span className="text-gradient">Works</span>
           </h1>
           <p className="text-muted-foreground text-base max-w-2xl mx-auto mb-4">
-            Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS is a human-in-the-loop companion built for the projects where the right decision matters most — surfacing cost breakdowns, negotiation scenarios, and risk assessments enriched with industry knowledge and live market intelligence, so your judgement stays in the driver's seat.
+            Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS is a human-in-the-loop platform built to support you with your most valuable projects where decision matters most, adding multiple analytical dimensions to your decision-making. Procurement scenarios, risk assessments, inflation analytics and live market intelligence working together to ensure your competitive edge.
           </p>
         </section>
 
