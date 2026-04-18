@@ -88,7 +88,7 @@ const DataQualityDashboard = ({ parsedData }: DataQualityDashboardProps) => {
             </div>
           </div>
           <span className="text-sm font-medium text-foreground tabular-nums">
-            {formatScore(overallScore)}<span className="text-muted-foreground"> / {MAX_SCORE}</span>
+            {formatScore(overallScore)}
           </span>
         </div>
       </CardHeader>
