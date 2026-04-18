@@ -38,9 +38,6 @@ const DataQualityDashboard = ({ parsedData }: DataQualityDashboardProps) => {
   const dataFields = parsedData?.fields || defaultDataFields;
   const limitations = parsedData?.limitations || defaultLimitations;
 
-  const overallScore = Math.round(
-    dataFields.reduce((acc, f) => acc + f.coverage, 0) / dataFields.length
-  );
 
   const normalizedFields = dataFields.map((f) => ({ ...f, coverage: toFiveScale(f.coverage) }));
 
