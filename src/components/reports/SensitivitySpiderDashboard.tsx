@@ -99,15 +99,15 @@ const SensitivitySpiderDashboard = ({
         {/* Tornado Chart */}
         <div className="space-y-3">
           {sortedImpacts.map((variable) => {
-            const lowBarWidth = (Math.abs(variable.lowImpact) / maxOverallImpact) * 45;
-            const highBarWidth = (Math.abs(variable.highImpact) / maxOverallImpact) * 45;
+            const lowBarWidth = (Math.abs(variable.lowPct) / maxOverallPct) * 45;
+            const highBarWidth = (Math.abs(variable.highPct) / maxOverallPct) * 45;
 
             return (
               <div key={variable.name} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-foreground">{variable.name}</span>
-                  <span className="text-muted-foreground">
-                    ±{formatCurrency(variable.maxImpact, effectiveCurrency)}
+                  <span className="text-muted-foreground tabular-nums">
+                    −{Math.abs(variable.lowPct).toFixed(1)}% / +{Math.abs(variable.highPct).toFixed(1)}%
                   </span>
                 </div>
 
