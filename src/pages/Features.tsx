@@ -241,7 +241,7 @@ const Features = () => {
             How EXOS <span className="text-gradient">Works</span>
           </h1>
           <p className="text-muted-foreground text-base max-w-2xl mx-auto mb-4">
-            Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
+            Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS is a human-in-the-loop companion built for the projects where the right decision matters most — surfacing cost breakdowns, negotiation scenarios, and risk assessments enriched with industry knowledge and live market intelligence, so your judgement stays in the driver's seat.
           </p>
         </section>
 
