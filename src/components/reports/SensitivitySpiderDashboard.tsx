@@ -164,7 +164,7 @@ const SensitivitySpiderDashboard = ({
         {/* Key Insight */}
         <div className="pt-3 border-t border-border/30">
           <p className="text-xs text-muted-foreground">
-            <span className="text-warning font-medium">Key Risk:</span> {sortedImpacts[0]?.name} has the highest impact (±{formatCurrency(sortedImpacts[0]?.maxImpact || 0, effectiveCurrency)}) on total cost
+            <span className="text-warning font-medium">Key Risk:</span> {sortedImpacts[0]?.name} has the highest impact (±{(sortedImpacts[0]?.maxPct || 0).toFixed(1)}%) on total cost
           </p>
         </div>
 
