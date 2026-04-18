@@ -19,12 +19,14 @@ interface SensitivitySpiderDashboardProps {
   parsedData?: SensitivityData;
 }
 
+// Variations are entered as ±% deviations from base; component derives low/high cases.
+// Defaults reflect typical procurement sensitivity ranges.
 const defaultVariables: SensitivityVariable[] = [
-  { name: "Material Cost", baseCase: 450000, lowCase: 380000, highCase: 540000, unit: "$" },
-  { name: "Labor Rate", baseCase: 180000, lowCase: 150000, highCase: 225000, unit: "$" },
-  { name: "Volume", baseCase: 100000, lowCase: 80000, highCase: 120000, unit: "units" },
-  { name: "Exchange Rate", baseCase: 1.0, lowCase: 0.85, highCase: 1.15, unit: "multiplier" },
-  { name: "Overhead %", baseCase: 15, lowCase: 12, highCase: 20, unit: "%" },
+  { name: "Material Cost", baseCase: 450000, lowCase: 382500, highCase: 540000, unit: "$" }, // -15% / +20%
+  { name: "Labor Rate", baseCase: 180000, lowCase: 162000, highCase: 207000, unit: "$" }, // -10% / +15%
+  { name: "Volume", baseCase: 100000, lowCase: 75000, highCase: 115000, unit: "units" }, // -25% / +15%
+  { name: "Exchange Rate", baseCase: 1.0, lowCase: 0.92, highCase: 1.12, unit: "multiplier" }, // -8% / +12%
+  { name: "Overhead %", baseCase: 15, lowCase: 12.75, highCase: 18, unit: "%" }, // -15% / +20%
 ];
 
 const formatCurrency = (value: number, currency: string = "$"): string => {
