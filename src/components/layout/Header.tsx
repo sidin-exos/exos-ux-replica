@@ -89,7 +89,7 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-3 z-50 mx-3 md:mx-6 mt-3 rounded-2xl bg-background/80 backdrop-blur-md border border-border/50 shadow-lg">
+    <header className="sticky top-0 z-50 mx-3 md:mx-6 rounded-b-2xl bg-background/80 backdrop-blur-md border border-t-0 border-border/50 shadow-lg">
       <div className="px-4 md:px-6 flex h-16 items-center justify-between">
         {/* Logo */}
         <NavLink to="/welcome" className="flex items-center hover:opacity-90 transition-opacity">
