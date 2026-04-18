@@ -140,7 +140,7 @@ const RiskPlatform = () => {
         {/* Monitoring Modules + Case Studies */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left 2/3 — Vertical-tab module switcher */}
-          <Card className="lg:col-span-2 border-border/50 bg-card/50">
+          <Card className="lg:col-span-2 border-border/50 bg-card">
             <CardContent className="pt-5 pb-5">
               <Tabs defaultValue="DM-1" orientation="vertical" className="w-full flex flex-col sm:flex-row gap-5">
                 <TabsList className="flex sm:flex-col h-auto w-full sm:w-48 shrink-0 gap-1 bg-transparent p-0 justify-start">
