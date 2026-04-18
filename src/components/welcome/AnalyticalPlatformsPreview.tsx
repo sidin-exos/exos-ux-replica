@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import riskSignalsPreview from "@/assets/risk-signals-preview.png";
 import inflationPreview1 from "@/assets/inflation-preview-1.png";
-import inflationPreview2 from "@/assets/inflation-preview-2.png";
 
-const IMAGES = [riskSignalsPreview, inflationPreview1, inflationPreview2];
+const IMAGES = [riskSignalsPreview, inflationPreview1];
 const DISPLAY_MS = 5000;
 
 export const AnalyticalPlatformsPreview = () => {
