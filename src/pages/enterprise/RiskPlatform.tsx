@@ -133,7 +133,7 @@ const RiskPlatform = () => {
             The Dynamic Monitoring Module saves you time by continuously analysing publicly available information linked to risk scenarios you define, flagging focus areas for further investigation and decision-making. It follows a <strong className="font-semibold text-primary">Signal-First</strong> approach, prioritising the <strong className="font-semibold text-foreground">direction</strong> and <strong className="font-semibold text-foreground">velocity</strong> of change over static positions.
           </p>
           <p className="text-sm text-muted-foreground max-w-3xl mt-2 leading-relaxed">
-            Designed to inform your judgement, not replace it.
+            Designed to empower your judgement, not replace it.
           </p>
         </div>
 
