@@ -10,18 +10,47 @@ interface NegotiationPrepDashboardProps {
 const defaultNegotiationFramework = {
   batna: {
     strength: 65,
-    description: "2 alternative suppliers identified with 6-week switching timeline",
+    description:
+      "Two pre-qualified alternative suppliers identified, both with confirmed capacity and a realistic 6-week switching timeline including technical validation, contract paperwork and onboarding. This gives the team credible walk-away leverage without disrupting operational continuity.",
   },
   leveragePoints: [
-    { point: "Volume Commitment", tactic: "Offer 2-year contract for 12% discount" },
-    { point: "Payment Terms", tactic: "Propose net-60 for 3% reduction" },
-    { point: "Service Bundling", tactic: "Combine maintenance + support for package pricing" },
-    { point: "Competitive Pressure", tactic: "Reference alternative quote at 8% lower" },
+    {
+      point: "Volume Commitment",
+      tactic:
+        "Offer a 2-year volume commitment with quarterly forecast updates in exchange for a 12% unit price discount and a price-hold clause protecting against mid-term increases.",
+    },
+    {
+      point: "Payment Terms",
+      tactic:
+        "Propose extending payment terms from net-30 to net-60 in return for a 3% price reduction, improving working capital while giving the supplier predictable cash flow visibility.",
+    },
+    {
+      point: "Service Bundling",
+      tactic:
+        "Bundle maintenance, support and training into a single multi-year package to unlock 8–10% blended savings, reduce administrative overhead and simplify SLA governance.",
+    },
+    {
+      point: "Competitive Pressure",
+      tactic:
+        "Reference a validated alternative quote priced 8% lower with comparable scope, signalling that the market is contestable while keeping the conversation collaborative rather than adversarial.",
+    },
   ],
   sequence: [
-    { step: "Open Position", detail: "Request 20% discount based on volume commitment" },
-    { step: "Value Exchange", detail: "Offer longer contract term for better pricing" },
-    { step: "Walk-Away Point", detail: "Below 8% savings, proceed with BATNA" },
+    {
+      step: "Open Position",
+      detail:
+        "Anchor the conversation with a 20% discount request justified by volume commitment, multi-year horizon and competitive benchmarks, framing it as a partnership reset rather than a price-only ask.",
+    },
+    {
+      step: "Value Exchange",
+      detail:
+        "Trade a longer contract term, exclusivity on selected SKUs and joint forecasting for improved unit economics, payment terms and a documented continuous-improvement commitment.",
+    },
+    {
+      step: "Walk-Away Point",
+      detail:
+        "If total savings fall below 8% and no meaningful non-price concessions are secured, pause the negotiation and activate the BATNA path with the pre-qualified alternative supplier.",
+    },
   ],
 };
 
