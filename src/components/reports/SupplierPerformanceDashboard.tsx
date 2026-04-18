@@ -1,14 +1,5 @@
 import { Users, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Cell,
-  ReferenceLine,
-} from "recharts";
 import type { SupplierScorecardData } from "@/lib/dashboard-data-parser";
 
 interface SupplierPerformanceDashboardProps {
@@ -23,12 +14,25 @@ const defaultSupplierData = [
   { name: "Epsilon Materials", score: 88, trend: "up", spend: "$210K" },
 ];
 
+// Parse "$450K" / "$1.2M" → number in thousands
+const parseSpend = (s: string): number => {
+  const m = s.match(/([\d.]+)\s*([KMB]?)/i);
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  const unit = m[2].toUpperCase();
+  return unit === "M" ? n * 1000 : unit === "B" ? n * 1_000_000 : n;
+};
+
 const SupplierPerformanceDashboard = ({ parsedData }: SupplierPerformanceDashboardProps) => {
   const supplierData = parsedData?.suppliers || defaultSupplierData;
-  const getScoreColor = (score: number) => {
-    if (score >= 85) return "hsl(174, 30%, 45%)";
-    if (score >= 70) return "hsl(38, 35%, 48%)";
-    return "hsl(220, 20%, 48%)";
+
+  const spends = supplierData.map((s) => parseSpend(s.spend));
+  const maxSpend = Math.max(...spends, 1);
+
+  const getTier = (score: number) => {
+    if (score >= 85) return { color: "hsl(var(--success))", label: "≥85" };
+    if (score >= 70) return { color: "hsl(var(--warning))", label: "70–84" };
+    return { color: "hsl(var(--destructive))", label: "<70" };
   };
 
   const getTrendIcon = (trend: string) => {
@@ -36,11 +40,18 @@ const SupplierPerformanceDashboard = ({ parsedData }: SupplierPerformanceDashboa
       case "up":
         return <TrendingUp className="w-3 h-3 text-success" />;
       case "down":
-        return <TrendingDown className="w-3 h-3 text-muted-foreground" />;
+        return <TrendingDown className="w-3 h-3 text-destructive" />;
       default:
         return <Minus className="w-3 h-3 text-muted-foreground" />;
     }
   };
+
+  // Position points: x = spend / maxSpend, y = score / 100
+  const points = supplierData.map((s, i) => {
+    const x = (spends[i] / maxSpend) * 100;
+    const y = s.score;
+    return { ...s, x, y, tier: getTier(s.score) };
+  });
 
   return (
     <Card className="card-elevated h-full">
@@ -52,53 +63,95 @@ const SupplierPerformanceDashboard = ({ parsedData }: SupplierPerformanceDashboa
             </div>
             <div>
               <CardTitle className="font-display text-base">Supplier Scorecard</CardTitle>
-              <p className="text-xs text-muted-foreground">Performance rankings</p>
+              <p className="text-xs text-muted-foreground">Performance vs Spend</p>
             </div>
           </div>
           <span className="text-xs text-muted-foreground">{supplierData.length} suppliers</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Bar Chart */}
-        <div className="h-32">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={supplierData} layout="vertical">
-              <XAxis type="number" domain={[0, 100]} hide />
-              <YAxis 
-                type="category" 
-                dataKey="name" 
-                hide
-              />
-              <ReferenceLine x={75} stroke="hsl(220, 15%, 30%)" strokeDasharray="2 2" />
-              <Bar dataKey="score" radius={[0, 3, 3, 0]} barSize={12}>
-                {supplierData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getScoreColor(entry.score)} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Quadrant Matrix */}
+        <div className="relative pl-8 pb-6">
+          <div className="relative h-56 border-l-2 border-b-2 border-border">
+            {/* Axis labels */}
+            <span className="absolute -left-7 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-muted-foreground origin-center whitespace-nowrap">
+              Score →
+            </span>
+            <span className="absolute -bottom-5 right-0 text-[10px] text-muted-foreground">
+              Spend →
+            </span>
+
+            {/* Quadrant zones */}
+            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+              <div className="border-r border-b border-dashed border-border bg-success/5 relative">
+                <span className="absolute top-1 left-1 text-[9px] font-medium text-success/80 uppercase tracking-wide">
+                  Develop
+                </span>
+              </div>
+              <div className="border-b border-dashed border-border bg-success/10 relative">
+                <span className="absolute top-1 right-1 text-[9px] font-medium text-success/80 uppercase tracking-wide">
+                  Strategic
+                </span>
+              </div>
+              <div className="border-r border-dashed border-border bg-destructive/5 relative">
+                <span className="absolute bottom-1 left-1 text-[9px] font-medium text-destructive/80 uppercase tracking-wide">
+                  Phase out
+                </span>
+              </div>
+              <div className="bg-warning/5 relative">
+                <span className="absolute bottom-1 right-1 text-[9px] font-medium text-warning/80 uppercase tracking-wide">
+                  Manage
+                </span>
+              </div>
+            </div>
+
+            {/* Plotted suppliers */}
+            {points.map((p) => (
+              <div
+                key={p.name}
+                className="absolute -translate-x-1/2 translate-y-1/2"
+                style={{ left: `${p.x}%`, bottom: `${p.y}%` }}
+              >
+                <div
+                  className="w-3 h-3 rounded-full ring-2 ring-background shadow-sm"
+                  style={{ backgroundColor: p.tier.color }}
+                  title={`${p.name} — ${p.score} / ${p.spend}`}
+                />
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-foreground whitespace-nowrap">
+                  {p.name} <span className="text-muted-foreground">{p.score}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Supplier List */}
-        <div className="space-y-2 pt-2 border-t border-border/30">
+        {/* Legend */}
+        <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-1">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(var(--success))" }} />
+            ≥85 Excellent
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(var(--warning))" }} />
+            70–84 Good
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(var(--destructive))" }} />
+            &lt;70 At risk
+          </span>
+        </div>
+
+        {/* Compact supplier list with trends */}
+        <div className="space-y-1.5 pt-3 border-t border-border/30">
           {supplierData.map((supplier) => (
-            <div
-              key={supplier.name}
-              className="flex items-center gap-3"
-            >
-              <span 
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
-                style={{ 
-                  backgroundColor: getScoreColor(supplier.score) + "20", 
-                  color: getScoreColor(supplier.score) 
-                }}
-              >
-                {supplier.score}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground truncate">{supplier.name}</p>
-                <p className="text-xs text-muted-foreground">{supplier.spend}</p>
-              </div>
+            <div key={supplier.name} className="flex items-center gap-2 text-xs">
+              <span
+                className="w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: getTier(supplier.score).color }}
+              />
+              <span className="flex-1 truncate text-foreground">{supplier.name}</span>
+              <span className="tabular-nums font-medium text-foreground">{supplier.score}</span>
+              <span className="text-muted-foreground tabular-nums w-12 text-right">{supplier.spend}</span>
               {getTrendIcon(supplier.trend)}
             </div>
           ))}
