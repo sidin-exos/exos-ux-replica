@@ -151,7 +151,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
           {data.deteriorating.map((item, i) => (
             <div
               key={i}
-              className="rounded-md border border-destructive/20 bg-destructive/5 p-2.5 space-y-1"
+              className="group rounded-md border border-destructive/20 bg-destructive/5 p-2.5 space-y-1 transition-colors hover:bg-destructive/10 hover:border-destructive/30"
             >
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 min-w-0">
@@ -166,9 +166,11 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
-                {item.signal}
-              </p>
+              <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out">
+                <p className="text-[11px] text-muted-foreground leading-relaxed overflow-hidden">
+                  {item.signal}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -184,7 +186,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
           {data.improving.map((item, i) => (
             <div
               key={i}
-              className="rounded-md border border-emerald-600/20 bg-emerald-600/5 p-2.5 space-y-1"
+              className="group rounded-md border border-emerald-600/20 bg-emerald-600/5 p-2.5 space-y-1 transition-colors hover:bg-emerald-600/10 hover:border-emerald-600/30"
             >
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 min-w-0">
@@ -199,9 +201,11 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
-                {item.signal}
-              </p>
+              <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out">
+                <p className="text-[11px] text-muted-foreground leading-relaxed overflow-hidden">
+                  {item.signal}
+                </p>
+              </div>
             </div>
           ))}
         </div>
