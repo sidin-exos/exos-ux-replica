@@ -115,15 +115,20 @@ const NAV_GROUPS: readonly NavGroup[] = [
 ] as const;
 
 // Smart navigation that handles hash links to the current page
+const HEADER_OFFSET = 96;
+const scrollToHashId = (hashPart: string) => {
+  const el = document.getElementById(hashPart);
+  if (!el) return false;
+  const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+  window.scrollTo({ top, behavior: "smooth" });
+  return true;
+};
 const navigateWithHash = (path: string, navigate: (p: string) => void) => {
   const hashIndex = path.indexOf("#");
   if (hashIndex !== -1) {
     const [pathPart, hashPart] = [path.slice(0, hashIndex) || "/", path.slice(hashIndex + 1)];
     if (window.location.pathname === pathPart) {
-      const el = document.getElementById(hashPart);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        // Update hash without triggering navigation
+      if (scrollToHashId(hashPart)) {
         window.history.replaceState(null, "", `${pathPart}#${hashPart}`);
         return;
       }
