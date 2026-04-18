@@ -57,17 +57,21 @@ const SensitivitySpiderDashboard = ({
   const effectiveVars = parsedData?.variables || variables;
   const effectiveBaseCaseTotal = parsedData?.baseCaseTotal || baseCaseTotal;
   const effectiveCurrency = parsedData?.currency || currency;
-  // Calculate impact for each variable
+  // Calculate impact for each variable as % deviation from base — keeps mixed-unit
+  // variables (USD, %, multipliers) comparable on a single tornado axis.
   const impacts = effectiveVars.map((v) => {
     const lowImpact = v.lowCase - v.baseCase;
     const highImpact = v.highCase - v.baseCase;
-    const maxImpact = Math.max(Math.abs(lowImpact), Math.abs(highImpact));
-    return { ...v, lowImpact, highImpact, maxImpact };
+    const base = Math.abs(v.baseCase) || 1;
+    const lowPct = (lowImpact / base) * 100;
+    const highPct = (highImpact / base) * 100;
+    const maxPct = Math.max(Math.abs(lowPct), Math.abs(highPct));
+    return { ...v, lowImpact, highImpact, lowPct, highPct, maxPct };
   });
 
-  // Sort by maximum impact
-  const sortedImpacts = [...impacts].sort((a, b) => b.maxImpact - a.maxImpact);
-  const maxOverallImpact = Math.max(...sortedImpacts.map((i) => i.maxImpact));
+  // Sort by maximum % impact
+  const sortedImpacts = [...impacts].sort((a, b) => b.maxPct - a.maxPct);
+  const maxOverallPct = Math.max(...sortedImpacts.map((i) => i.maxPct), 1);
 
   return (
     <Card className="card-elevated h-full">
