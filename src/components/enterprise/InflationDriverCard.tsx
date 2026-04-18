@@ -32,7 +32,7 @@ const InflationDriverCard = ({ driver }: Props) => {
           <p className="text-sm font-semibold text-foreground">{driver.driver_name}</p>
           <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1"><Radio className="w-3 h-3" />{cadenceLabel}</span>
-            {driver.weight != null && <span>Weight: <span className="font-medium text-foreground">{driver.weight}</span></span>}
+            {driver.weight != null && <span>Importance: <span className="font-medium text-foreground">{driver.weight}</span></span>}
             {driver.rationale && <span className="hidden sm:inline">· {driver.rationale}</span>}
           </div>
         </div>

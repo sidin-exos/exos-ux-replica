@@ -198,7 +198,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                 </div>
                 <div className="flex items-start gap-2">
                   <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">3</Badge>
-                  <p>Assign weights and define trigger events for monitoring.</p>
+                  <p>Assign importance and define trigger events for monitoring.</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">4</Badge>
@@ -237,7 +237,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                       </div>
                       {d.accepted && (
                         <div className="pl-10 flex items-center gap-3">
-                          <Label className="text-xs text-muted-foreground shrink-0">Weight</Label>
+                          <Label className="text-xs text-muted-foreground shrink-0">Importance</Label>
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Low</span>
                             {[20, 40, 60, 80, 100].map((stepVal) => {
@@ -256,7 +256,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                                         ? "border-primary/60 bg-primary/40"
                                         : "border-border bg-muted hover:border-primary/50"
                                   }`}
-                                  aria-label={`Set weight to ${stepVal}`}
+                                  aria-label={`Set importance to ${stepVal}`}
                                 />
                               );
                             })}
@@ -304,7 +304,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                   </div>
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">2</Badge>
-                    <p className="text-xs">Adjust weight sliders to set relative importance.</p>
+                    <p className="text-xs">Adjust importance to set relative priority.</p>
                   </div>
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">3</Badge>
@@ -404,7 +404,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                     <div key={i} className="p-3 rounded-lg border border-border/60 space-y-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-foreground">{d.name}</p>
-                        {d.weight != null && <Badge variant="secondary" className="text-xs">Weight: {d.weight}</Badge>}
+                        {d.weight != null && <Badge variant="secondary" className="text-xs">Importance: {d.weight}</Badge>}
                       </div>
                       {d.trigger && (
                         <p className="text-xs text-muted-foreground">Trigger: {d.trigger}</p>

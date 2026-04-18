@@ -184,7 +184,7 @@ const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
           ...activeDrivers.map(d => [
             `#### ${d.driver_name}`,
             `- **Status:** ${d.current_status}`,
-            d.weight ? `- **Weight:** ${d.weight}%` : null,
+            d.weight ? `- **Importance:** ${d.weight}%` : null,
             d.rationale ? `- **Rationale:** ${d.rationale}` : null,
             d.trigger_description ? `- **Trigger:** ${d.trigger_description}` : null,
             d.context_summary ? `\n${d.context_summary}` : null,
