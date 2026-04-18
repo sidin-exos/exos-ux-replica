@@ -285,8 +285,8 @@ const Welcome = () => {
 
       {/* ───── Architectural Intelligence Heading ───── */}
       <section className="container py-10 md:py-12">
-        <div className="max-w-2xl">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+        <div className="max-w-4xl">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground whitespace-nowrap">
             EXOS works as three interconnected layers:
           </h2>
           <ul className="space-y-2 pl-1 mt-4 text-muted-foreground">
