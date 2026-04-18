@@ -1,6 +1,6 @@
-import { Target, ArrowRight } from "lucide-react";
+import { Target, ArrowRight, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+
 import type { NegotiationPrepData } from "@/lib/dashboard-data-parser";
 
 interface NegotiationPrepDashboardProps {
