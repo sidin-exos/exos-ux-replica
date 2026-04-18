@@ -28,7 +28,7 @@ export const AnalyticalPlatformsPreview = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1.6, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-cover object-top"
+          className="absolute inset-0 w-full h-full object-contain object-top"
         />
       </AnimatePresence>
     </div>
