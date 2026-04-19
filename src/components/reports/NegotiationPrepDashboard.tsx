@@ -172,6 +172,7 @@ const NegotiationPrepDashboard = ({ parsedData }: NegotiationPrepDashboardProps)
           </div>
         </div>
       </CardContent>
+      </div>
     </Card>
   );
 };
