@@ -1,7 +1,27 @@
 import { useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RiskMatrixData } from "@/lib/dashboard-data-parser";
+
+const IMPACT_SCORE: Record<string, number> = { high: 3, medium: 2, low: 1 };
+const PROB_SCORE: Record<string, number> = { high: 3, medium: 2, low: 1 };
+
+const getRiskScore = (impact: string, probability: string) =>
+  (IMPACT_SCORE[impact] ?? 1) * (PROB_SCORE[probability] ?? 1);
+
+const getActionLabel = (score: number) => {
+  if (score >= 9) return { label: "Escalate", className: "bg-destructive text-destructive-foreground" };
+  if (score >= 6) return { label: "Mitigate", className: "bg-warning text-warning-foreground" };
+  if (score >= 3) return { label: "Monitor", className: "bg-success text-success-foreground" };
+  return { label: "Accept", className: "bg-muted text-muted-foreground" };
+};
+
+const getScoreAccent = (score: number) => {
+  if (score >= 9) return { border: "border-l-destructive", text: "text-destructive" };
+  if (score >= 6) return { border: "border-l-warning", text: "text-warning" };
+  if (score >= 3) return { border: "border-l-success", text: "text-success" };
+  return { border: "border-l-muted-foreground/40", text: "text-muted-foreground" };
+};
 
 interface RiskMatrixDashboardProps {
   parsedData?: RiskMatrixData;
@@ -136,38 +156,53 @@ const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
             </div>
           </div>
 
-          {/* Side Supplier List */}
+          {/* Priority Register */}
           <div className="md:border-l md:border-border/40 md:pl-4">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
-              Suppliers
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Priority Register
             </p>
             <ul className="space-y-1.5">
-              {riskData.map((r) => {
-                const tone = getRiskTone(r.impact, r.probability);
-                const isHovered = hoveredId === r.id;
-                return (
-                  <li
-                    key={r.id}
-                    onMouseEnter={() => setHoveredId(r.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    className={`flex items-center gap-2 p-1.5 rounded-md cursor-pointer transition-colors ${
-                      isHovered ? "bg-muted" : "hover:bg-muted/50"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full flex-shrink-0 ${dotClass(tone)} flex items-center justify-center text-[10px] font-medium`}
+              {[...riskData]
+                .map((r) => ({ ...r, score: getRiskScore(r.impact, r.probability) }))
+                .sort((a, b) => b.score - a.score)
+                .map((r) => {
+                  const action = getActionLabel(r.score);
+                  const accent = getScoreAccent(r.score);
+                  const isHovered = hoveredId === r.id;
+                  return (
+                    <li
+                      key={r.id}
+                      onMouseEnter={() => setHoveredId(r.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                      className={`flex items-center gap-2.5 p-2 pl-2.5 rounded-md border-l-[3px] ${accent.border} bg-muted/40 cursor-pointer transition-colors ${
+                        isHovered ? "bg-muted" : "hover:bg-muted/60"
+                      }`}
                     >
-                      {r.id}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-foreground truncate">{r.supplier}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">
-                        {r.category} · {riskLabel(tone)}
+                      <div className="flex flex-col items-center justify-center w-7 flex-shrink-0">
+                        <span className={`text-base font-bold leading-none ${accent.text}`}>
+                          {r.score}
+                        </span>
+                        <span className="text-[8px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                          Score
+                        </span>
                       </div>
-                    </div>
-                  </li>
-                );
-              })}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-foreground truncate leading-tight">
+                          {r.supplier}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground truncate">
+                          {r.category}
+                        </div>
+                      </div>
+                      <span
+                        className={`text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${action.className}`}
+                      >
+                        {action.label}
+                      </span>
+                      <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                    </li>
+                  );
+                })}
             </ul>
           </div>
         </div>
