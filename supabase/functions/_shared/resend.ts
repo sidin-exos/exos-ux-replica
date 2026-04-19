@@ -10,6 +10,7 @@ export interface ResendEmailInput {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 }
 
 export interface ResendResult {
@@ -38,6 +39,7 @@ export async function sendResendEmail(
         to: [input.to],
         subject: input.subject,
         text: input.text,
+        ...(input.html ? { html: input.html } : {}),
       }),
     });
 
