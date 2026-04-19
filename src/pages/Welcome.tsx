@@ -85,8 +85,9 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+    <div className="min-h-screen flex flex-col bg-[hsl(210,22%,96%)] light" data-force-light="true">
+      <div className="contents text-foreground">
+        <Header />
 
       <main>
       {/* ───── Hero ───── */}
@@ -209,8 +210,8 @@ const Welcome = () => {
                           <line x1="4" y1="5" x2="24" y2="5" stroke="currentColor" strokeWidth="1.5" />
                           <path d="M0 5 L5 2 L5 8 Z" fill="currentColor" />
                         </svg>
-                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-copper/30 bg-copper/10 text-foreground shadow-sm cursor-default min-h-[56px]">
-                          <Radar className="w-4.5 h-4.5 text-copper shrink-0" />
+                        <div className="flex items-center gap-2.5 py-3.5 px-4 rounded-xl border border-iris/30 bg-iris/10 text-foreground shadow-sm cursor-default min-h-[56px]">
+                          <Radar className="w-4.5 h-4.5 text-iris shrink-0" />
                           <p className="text-xs font-bold leading-tight max-w-[7rem]">Market Intelligence</p>
                         </div>
                       </div>
@@ -285,8 +286,8 @@ const Welcome = () => {
 
       {/* ───── Architectural Intelligence Heading ───── */}
       <section className="container py-10 md:py-12">
-        <div className="max-w-2xl">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+        <div className="max-w-4xl">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground whitespace-nowrap">
             EXOS works as three interconnected layers:
           </h2>
           <ul className="space-y-2 pl-1 mt-4 text-muted-foreground">
@@ -461,6 +462,7 @@ const Welcome = () => {
       </main>
 
       <Footer />
+      </div>
     </div>
   );
 };

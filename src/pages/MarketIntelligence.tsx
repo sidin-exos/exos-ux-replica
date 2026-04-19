@@ -12,24 +12,38 @@ import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Sparkles, Database, Search, Mail, MessageSquare } from "lucide-react";
+import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useTheme } from "next-themes";
+import intelContextLight from "@/assets/intel-context-light-v2.jpg";
+import intelContextDark from "@/assets/intel-context-dark.jpg";
 
 const MarketIntelligence = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { resolvedTheme } = useTheme();
+  const intelContextImage = resolvedTheme === "dark" ? intelContextDark : intelContextLight;
 
-  // Derive active tab from URL path segment
+  // Derive active tab from URL path + mode param
   const activeTab = (() => {
     const segment = location.pathname.split('/').pop();
     if (segment === 'insights') return 'insights';
+    if (searchParams.get('mode') === 'regular') return 'scheduled';
     return 'queries';
   })();
 
   const handleTabChange = (tab: string) => {
-    navigate(`/market-intelligence/${tab}`);
+    if (tab === 'insights') {
+      navigate('/market-intelligence/insights');
+      return;
+    }
+    if (tab === 'scheduled') {
+      navigate('/market-intelligence/queries?mode=regular');
+      return;
+    }
+    navigate('/market-intelligence/queries');
   };
 
   // Derive selectedScenario directly from URL param
@@ -128,21 +142,43 @@ const MarketIntelligence = () => {
       <Header />
       
       <main className="container py-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary" />
+        <div className="flex items-start justify-between gap-6 mb-6">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <h1 className="exos-page-title-hero text-3xl">Market Intelligence</h1>
+            </div>
+            <p className="text-muted-foreground text-base max-w-2xl">
+              Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
+            </p>
           </div>
-          <h1 className="exos-page-title-hero text-3xl">Market Intelligence</h1>
+          <img
+            src={intelContextImage}
+            alt="Context injection into AI"
+            loading="lazy"
+            width={1408}
+            height={768}
+            className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 object-cover"
+            style={{
+              maskImage:
+                "radial-gradient(ellipse at center, hsl(0 0% 0% / 1) 50%, hsl(0 0% 0% / 0) 95%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse at center, hsl(0 0% 0% / 1) 50%, hsl(0 0% 0% / 0) 95%)",
+            }}
+          />
         </div>
-        <p className="text-muted-foreground text-base mb-6 max-w-2/3">
-          Get real-time analysis of supplier news, commodity trends, regulatory updates, and supply chain risks — powered by AI with grounded web search and source citations. Market Intelligence is a part of the EXOS engine, used as your knowledge base to improve analytical scenario results.
-        </p>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/70 p-1 border-dotted">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 bg-muted/70 p-1">
             <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
               <Search className="h-4 w-4" />
               Ad-hoc Queries
+            </TabsTrigger>
+            <TabsTrigger value="scheduled" className="flex items-center gap-2 data-[state=active]:bg-warning data-[state=active]:text-warning-foreground data-[state=active]:shadow-md">
+              <CalendarClock className="h-4 w-4" />
+              Scheduled Reports
             </TabsTrigger>
             <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-iris data-[state=active]:text-iris-foreground data-[state=active]:shadow-md">
               <Database className="h-4 w-4" />
@@ -151,11 +187,6 @@ const MarketIntelligence = () => {
           </TabsList>
 
           <TabsContent value="queries" className="space-y-6">
-            <IntelScenarioSelector
-              selected={selectedScenario}
-              onSelect={(val) => updateFilter('mode', val === 'adhoc' ? '' : val)}
-            />
-
             {error && (
               <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
@@ -163,7 +194,10 @@ const MarketIntelligence = () => {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            {renderScenarioContent()}
+          </TabsContent>
 
+          <TabsContent value="scheduled" className="space-y-6">
             {renderScenarioContent()}
           </TabsContent>
 
@@ -177,12 +211,12 @@ const MarketIntelligence = () => {
             <span>© {new Date().getFullYear()} EXOS Procurement · Market Intelligence</span>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/contact?subject=feedback">
+                <a href="/pricing?subject=feedback#contact">
                   <MessageSquare className="w-4 h-4" /> Leave Feedback
                 </a>
               </Button>
               <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/contact">
+                <a href="/pricing#contact">
                   Get in Touch <Mail className="w-4 h-4" />
                 </a>
               </Button>

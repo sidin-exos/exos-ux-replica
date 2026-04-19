@@ -1,17 +1,42 @@
 import { Badge } from "@/components/ui/badge";
 import { DashboardConfig, DashboardType } from "@/lib/dashboard-mappings";
-import { getDashboardScenarioTitles, getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
+import { getDashboardScenarioInfo, getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
 import { useState } from "react";
 import { ChevronDown, ChevronUp, BarChart3, HelpCircle, Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Scenario } from "@/lib/scenarios";
 
 interface DashboardContextCardProps {
   dashboardId: DashboardType;
   config: DashboardConfig;
 }
 
+const CATEGORY_CHIP: Record<Scenario["category"], { iconBg: string; iconText: string; accent: string }> = {
+  analysis: {
+    iconBg: "bg-copper/15",
+    iconText: "text-copper",
+    accent: "hover:border-copper/30",
+  },
+  planning: {
+    iconBg: "bg-iris/15",
+    iconText: "text-iris",
+    accent: "hover:border-iris/30",
+  },
+  risk: {
+    iconBg: "bg-destructive/10",
+    iconText: "text-destructive",
+    accent: "hover:border-destructive/30",
+  },
+  documentation: {
+    iconBg: "bg-info/15",
+    iconText: "text-info",
+    accent: "hover:border-info/30",
+  },
+};
+
 const DashboardContextCard = ({ dashboardId, config }: DashboardContextCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const scenarioTitles = getDashboardScenarioTitles(dashboardId);
+  const scenarioInfo = getDashboardScenarioInfo(dashboardId);
   const scenarioCount = getDashboardScenarioCount(dashboardId);
 
   return (
@@ -81,18 +106,38 @@ const DashboardContextCard = ({ dashboardId, config }: DashboardContextCardProps
           </div>
 
           {/* Scenarios */}
-          {scenarioTitles.length > 0 && (
-            <div className="pt-3 border-t border-border/40 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-medium text-foreground/80 uppercase tracking-wide">
-                <Layers className="h-3.5 w-3.5 text-primary/70" />
+          {scenarioInfo.length > 0 && (
+            <div className="pt-4 border-t border-border/40 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-foreground/80 uppercase tracking-wider">
+                <Layers className="h-4 w-4 text-primary" />
                 Available for Scenarios
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {scenarioTitles.map((title, i) => (
-                  <Badge key={i} variant="outline" className="text-xs font-normal">
-                    {title}
-                  </Badge>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {scenarioInfo.map(({ id, title, icon: Icon, category }) => {
+                  const c = CATEGORY_CHIP[category];
+                  return (
+                    <div
+                      key={id}
+                      className={cn(
+                        "group inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border border-border/60 bg-card/60 transition-all duration-200",
+                        "hover:-translate-y-0.5 hover:bg-card hover:shadow-sm",
+                        c.accent
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex items-center justify-center w-6 h-6 rounded-full shrink-0",
+                          c.iconBg
+                        )}
+                      >
+                        <Icon className={cn("w-3.5 h-3.5", c.iconText)} />
+                      </span>
+                      <span className="text-sm font-medium text-foreground leading-none">
+                        {title}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

@@ -140,11 +140,11 @@ const Pricing = () => {
         {/* Hero Section */}
         <section className="mb-12 text-center animate-fade-up">
           <div className="flex justify-center mb-6">
-            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-16 md:h-20 w-auto object-contain" />
+            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-24 md:h-32 w-auto object-contain" />
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-            Simple, Transparent Pricing.{" "}
-            <span className="text-gradient">ROI</span> from first day, first user.
+            Procurement AI at a fraction of enterprise cost. No implementation.
+            No minimum seats. Cancel anytime.
           </h1>
         </section>
 

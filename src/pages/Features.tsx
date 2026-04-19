@@ -178,7 +178,12 @@ const Features = () => {
     {
       icon: Layers,
       title: "Scenarios",
-      description: "Pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.",
+      description: (
+        <>
+          Pre-defined <strong className="font-semibold text-foreground">agentic AI flows</strong> enriched with procurement <strong className="font-semibold text-foreground">methodological layer</strong>, agentic loops, and custom LLM settings.
+        </>
+      ),
+      accent: "teal" as const,
       highlights: [
         "29 procurement-specific AI scenarios",
         "Multi-cycle Chain of Experts pipeline",
@@ -187,20 +192,14 @@ const Features = () => {
       ]
     },
     {
-      icon: Database,
-      title: "Market Intelligence & Knowledge Base",
-      description: "Use Market Intelligence as a self-sufficient tool or inject live market context from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
-      highlights: [
-        "Live supplier & category intelligence",
-        "30+ industry grounding profiles",
-        "30+ category strategy frameworks",
-        "Cited sources for full transparency"
-      ]
-    },
-    {
       icon: TrendingUp,
       title: "Inflation Monitor & Risk Assessment Platform",
-      description: "Continuously track the noise, surface what's changed, and flag only what requires your decision.",
+      description: (
+        <>
+          Continuously <strong className="font-semibold text-foreground">track the noise</strong>, surface what's changed, and <strong className="font-semibold text-foreground">flag only what requires your decision</strong>.
+        </>
+      ),
+      accent: "teal" as const,
       highlights: [
         "Automated inflation driver scanning",
         "Risk event detection & alerting",
@@ -209,18 +208,44 @@ const Features = () => {
       ]
     },
     {
+      icon: Database,
+      title: "Market Intelligence & Knowledge Base",
+      description: (
+        <>
+          Use Market Intelligence as a self-sufficient tool or <strong className="font-semibold text-foreground">inject live market context</strong> from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.
+        </>
+      ),
+      accent: "plum" as const,
+      highlights: [
+        "Live supplier & category intelligence",
+        "30+ industry grounding profiles",
+        "30+ category strategy frameworks",
+        "Cited sources for full transparency"
+      ]
+    },
+    {
       icon: Lock,
       title: "Commercial Data Safety",
-      description: "Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.",
+      description: (
+        <>
+          Your sensitive commercial data is <strong className="font-semibold text-foreground">masked before reaching external APIs</strong> — then grounded and validated on the way back.
+        </>
+      ),
+      accent: "amber" as const,
       highlights: [
         "Semantic anonymization of commercial data",
         "PII and financial identifier masking",
         "Enterprise InfoSec Gate for traffic audit",
         "Full data restoration after AI processing"
-      ],
-      link: "/architecture"
+      ]
     }
   ];
+
+  const accentMap = {
+    teal: { bg: "hsl(174, 35%, 38%)", soft: "hsl(174, 35%, 38% / 0.12)", text: "hsl(174, 35%, 38%)" },
+    plum: { bg: "hsl(358, 38%, 48%)", soft: "hsl(358, 38%, 48% / 0.12)", text: "hsl(358, 38%, 48%)" },
+    amber: { bg: "hsl(35, 28%, 45%)", soft: "hsl(35, 28%, 45% / 0.12)", text: "hsl(35, 28%, 45%)" },
+  };
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -241,30 +266,46 @@ const Features = () => {
             How EXOS <span className="text-gradient">Works</span>
           </h1>
           <p className="text-muted-foreground text-base max-w-2xl mx-auto mb-4">
-            Critical procurement decisions are often made without adequate preparation due to lack of time, knowledge, or a specialised function. EXOS gives you AI-powered analysis in minutes — cost breakdowns, negotiation scenarios, risk assessments — enriched with industry knowledge and online market intelligence.
+            Critical procurement decisions are often made without adequate preparation — due to lack of time, knowledge, or a specialised procurement function. EXOS is a <strong className="font-semibold text-foreground">human-in-the-loop</strong> platform built to support your <strong className="font-semibold text-foreground">most valuable projects</strong>, where every decision matters, by adding multiple analytical dimensions to your decision-making. Procurement scenarios, risk assessments, inflation analytics and live market intelligence work together to sharpen your competitive edge.
           </p>
         </section>
 
         {/* Value Props */}
         <section className="mb-20">
-          <div className="space-y-4">
-            {valuePropositions.map((prop, index) => (
-              <Card 
-                key={prop.title} 
-                className="card-elevated animate-fade-up border-border/50"
-                style={{ animationDelay: `${100 + index * 80}ms` }}
-              >
-                <div className="flex items-start gap-4 p-5">
-                  <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <prop.icon className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display text-lg font-semibold mb-1">{prop.title}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {valuePropositions.map((prop, index) => {
+              const accent = accentMap[prop.accent];
+              return (
+                <Card
+                  key={prop.title}
+                  className="card-elevated animate-fade-up border-border/50 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group relative overflow-hidden"
+                  style={{
+                    animationDelay: `${100 + index * 80}ms`,
+                    backgroundImage: `linear-gradient(135deg, ${accent.soft}, transparent 55%)`,
+                  }}
+                >
+                  {/* Top accent bar */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-0.5"
+                    style={{ backgroundColor: accent.bg, opacity: 0.7 }}
+                  />
+                  <div className="flex flex-col h-full p-5">
+                    <div className="flex items-start gap-4 mb-3">
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm"
+                        style={{
+                          backgroundImage: `linear-gradient(135deg, ${accent.bg}, ${accent.text})`,
+                        }}
+                      >
+                        <prop.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="font-display text-lg font-semibold leading-tight pt-1.5">{prop.title}</h3>
+                    </div>
                     <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    <div className="flex flex-col gap-1 mt-auto">
                       {prop.highlights.map((h) => (
-                        <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70">
-                          <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
+                        <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/80 transition-transform duration-200 hover:translate-x-1">
+                          <ArrowRight className="w-2.5 h-2.5 flex-shrink-0" style={{ color: accent.text }} />
                           {h}
                         </span>
                       ))}
@@ -272,16 +313,17 @@ const Features = () => {
                     {"link" in prop && prop.link && (
                       <NavLink
                         to={prop.link as string}
-                        className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
+                        className="inline-flex items-center gap-1.5 mt-3 text-xs font-medium hover:opacity-80 transition-opacity"
+                        style={{ color: accent.text }}
                       >
                         Learn about EXOS architecture
                         <ArrowRight className="w-3 h-3" />
                       </NavLink>
                     )}
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </section>
 
@@ -313,10 +355,17 @@ const Features = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="card-elevated border-border/50">
+            <Card
+              className="card-elevated border-border/50 relative overflow-hidden"
+              style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.teal.soft}, transparent 60%)` }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: accentMap.teal.bg, opacity: 0.7 }} />
               <CardHeader className="pb-2">
-                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center mb-2">
-                  <Brain className="w-5 h-5 text-primary-foreground" />
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-2 shadow-sm"
+                  style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.teal.bg}, ${accentMap.teal.text})` }}
+                >
+                  <Brain className="w-5 h-5 text-white" />
                 </div>
                 <CardTitle className="font-display text-lg">Agentic Structure & Chain of Experts</CardTitle>
               </CardHeader>
@@ -331,10 +380,17 @@ const Features = () => {
               </CardContent>
             </Card>
 
-            <Card className="card-elevated border-border/50">
+            <Card
+              className="card-elevated border-border/50 relative overflow-hidden"
+              style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.plum.soft}, transparent 60%)` }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: accentMap.plum.bg, opacity: 0.7 }} />
               <CardHeader className="pb-2">
-                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center mb-2">
-                  <Lock className="w-5 h-5 text-primary-foreground" />
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-2 shadow-sm"
+                  style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.plum.bg}, ${accentMap.plum.text})` }}
+                >
+                  <Lock className="w-5 h-5 text-white" />
                 </div>
                 <CardTitle className="font-display text-lg">Anti-Hallucination & Grounding</CardTitle>
               </CardHeader>
@@ -350,17 +406,6 @@ const Features = () => {
             </Card>
           </div>
 
-          {isSuperAdmin && (
-            <div className="text-center">
-              <NavLink
-                to="/architecture"
-                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
-              >
-                Explore full architecture diagram
-                <ArrowRight className="w-4 h-4" />
-              </NavLink>
-            </div>
-          )}
         </section>
 
         {/* Data Flow Section */}
@@ -408,13 +453,15 @@ const Features = () => {
                     key={cat.label}
                     onClick={() => setSelectedDashboard(cat.dashboards[0].id)}
                     className={`group rounded-xl border p-3 text-left transition-all duration-300
-                      bg-card shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]
+                      shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)]
                       hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5
                       active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)]
-                      ${isActive ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30" : "border-border/60"}`}
+                      ${isActive
+                        ? "border-primary bg-primary/15 ring-1 ring-primary/40 shadow-[0_2px_0_0_hsl(var(--primary)/0.5),0_6px_16px_-4px_hsl(var(--primary)/0.18)]"
+                        : "bg-card border-border/60"}`}
                   >
                     <Icon className={`h-5 w-5 mb-2 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"}`} />
-                    <p className="text-sm font-medium text-foreground">{cat.label}</p>
+                    <p className={`text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-foreground"}`}>{cat.label}</p>
                     <p className="text-xs text-muted-foreground mt-1 hidden md:block">{cat.description}</p>
                   </button>
                 );

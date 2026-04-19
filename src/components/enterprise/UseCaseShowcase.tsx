@@ -87,7 +87,7 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
 
   // Card variant — compact sidebar
   return (
-    <Card className={`border-border/50 bg-card/50 ${className || ""}`}>
+    <Card className={`border-border/50 bg-card ${className || ""}`}>
       <CardContent className="pt-4 pb-3 space-y-2.5">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-foreground flex items-center gap-2">

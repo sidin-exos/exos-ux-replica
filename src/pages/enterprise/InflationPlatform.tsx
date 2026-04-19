@@ -116,30 +116,47 @@ const InflationPlatform = () => {
     <EnterpriseLayout>
       <Header />
       <main className="container py-8 space-y-6">
-        {/* Header row: 2/3 title + 1/3 status badges */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-warning/10">
-              <TrendingUp className="w-6 h-6 text-warning" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-semibold text-foreground">
+        {/* Polished intro banner */}
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-muted/40 via-background to-warning/5 p-8 lg:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+            <div className="lg:col-span-2 relative max-w-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-px w-8 bg-warning" />
+                <span className="text-xs font-medium tracking-[0.2em] uppercase text-warning">
+                  Inflation Monitoring
+                </span>
+              </div>
+              <h1 className="text-3xl lg:text-4xl font-display font-semibold tracking-tight text-foreground mb-3">
                 Inflation Monitoring
               </h1>
-              <p className="text-sm text-muted-foreground max-w-2xl mt-1">
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                 A human-in-the-loop AI platform that helps you structure inflation monitoring with an easy-to-use framework for decision-making. It is not intended to replace enterprise-grade financial analytical platforms or serve as a tool for commodity traders.
               </p>
-              <ul className="mt-2 space-y-1 text-sm text-muted-foreground max-w-2xl list-disc list-inside">
+              <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside mb-2">
                 <li>Choose the goods or service you want to monitor</li>
                 <li>EXOS recommends 5 inflation triggers — adjust the list and set relative importance</li>
                 <li>Pick a monitoring schedule to manage your AI usage</li>
               </ul>
-              <p className="mt-1.5 text-sm font-medium text-foreground/70">Our monitoring pipeline is set. Simple as that!</p>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">Our monitoring pipeline is set. Simple as that!</p>
+              <div className="flex flex-wrap gap-8 pt-4 border-t border-border">
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 1</div>
+                  <div className="text-sm font-medium text-foreground">Define goods or services</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 2</div>
+                  <div className="text-sm font-medium text-foreground">Tune and approve triggers</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Step 3</div>
+                  <div className="text-sm font-medium text-foreground">Set AI usage</div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="hidden lg:flex items-center justify-center">
-            <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80 mix-blend-multiply dark:hidden" />
-            <img src={signalRadarDarkImg} alt="Signal radar illustration" loading="lazy" width={256} height={384} className="w-64 h-auto object-contain opacity-80 hidden dark:block" />
+            <div className="hidden lg:flex items-center justify-center">
+              <img src={signalRadarImg} alt="Signal radar illustration" loading="lazy" width={256} height={128} className="w-64 h-auto object-contain opacity-80 mix-blend-multiply dark:hidden" />
+              <img src={signalRadarDarkImg} alt="Signal radar illustration" loading="lazy" width={256} height={384} className="w-64 h-auto object-contain opacity-80 hidden dark:block" />
+            </div>
           </div>
         </div>
 
@@ -177,7 +194,7 @@ const InflationPlatform = () => {
                       <p className="text-muted-foreground">No trackers yet. Create your first tracker to start monitoring.</p>
                       <Button
                         onClick={() => navigate('/enterprise/inflation/setup')}
-                        className="bg-gradient-to-r from-primary via-iris to-copper text-white font-semibold shadow-brand hover:opacity-90 transition-opacity"
+                        variant="outline"
                       >
                         <TrendingUp className="w-4 h-4 mr-2" />
                         Create Your First Tracker
@@ -205,11 +222,26 @@ const InflationPlatform = () => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {newsFeed.map((n, i) => (
-                        <div key={i} className="space-y-1">
-                          <p className="text-xs font-medium text-foreground leading-snug">{n.title}</p>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge variant="secondary" className="text-xs px-1.5 py-0">{n.tracker}</Badge>
-                            <span className="text-xs text-muted-foreground">{n.source} · {n.date}</span>
+                        <div
+                          key={i}
+                          className="group space-y-1 rounded-md -mx-1.5 px-1.5 py-1 transition-colors hover:bg-iris/10"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span
+                              aria-hidden="true"
+                              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-iris/60 group-hover:bg-iris transition-colors"
+                            />
+                            <p className="text-xs font-medium text-foreground leading-snug line-clamp-1 group-hover:line-clamp-none transition-all flex-1">
+                              {n.title}
+                            </p>
+                          </div>
+                          <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out">
+                            <div className="overflow-hidden">
+                              <div className="flex items-center gap-1.5 flex-wrap pt-0.5 pl-3.5">
+                                <Badge variant="secondary" className="text-xs px-1.5 py-0">{n.tracker}</Badge>
+                                <span className="text-xs text-muted-foreground">{n.source} · {n.date}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -242,12 +274,12 @@ const InflationPlatform = () => {
             <span>© {new Date().getFullYear()} EXOS Procurement · Inflation Monitoring</span>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/contact?subject=feedback">
+                <a href="/pricing?subject=feedback#contact">
                   <MessageSquare className="w-4 h-4" /> Leave Feedback
                 </a>
               </Button>
               <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/contact">
+                <a href="/pricing#contact">
                   Get in Touch <Mail className="w-4 h-4" />
                 </a>
               </Button>

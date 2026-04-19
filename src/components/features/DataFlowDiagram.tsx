@@ -1,5 +1,34 @@
-import { FileText, Shield, Cloud, FileCheck, Lock, Compass, Globe, CheckCircle, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { FileText, Shield, Cloud, FileCheck, Lock, Compass, Globe, CheckCircle, RefreshCw, FileBarChart, LayoutDashboard, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface CloudAgent {
+  name: string;
+  short: string;
+  role: string;
+  output: string;
+}
+
+const cloudAgents: CloudAgent[] = [
+  {
+    name: "Auditor Agent",
+    short: "AUD",
+    role: "Challenges assumptions, verifies arithmetic (ROI, NPV, break-even).",
+    output: "Validation log · flagged risks · math corrections",
+  },
+  {
+    name: "Optimizer Agent",
+    short: "OPT",
+    role: "Refines parameters, identifies cost levers and savings opportunities.",
+    output: "Optimized scenario · ranked levers · sensitivity",
+  },
+  {
+    name: "Strategist Agent",
+    short: "STR",
+    role: "Synthesizes findings into a board-ready recommendation.",
+    output: "Executive summary · roadmap · trade-off matrix",
+  },
+];
 
 const DataFlowDiagram = () => {
   const pipelineSteps = [
@@ -30,6 +59,12 @@ const DataFlowDiagram = () => {
       items: ["Validated Report", "Interactive Dashboards", "Action Roadmaps"],
     },
   };
+
+  const outputIcons = [
+    { icon: FileBarChart, label: "Validated Report", desc: "Board-ready analysis" },
+    { icon: LayoutDashboard, label: "Interactive Dashboards", desc: "Drill-down visuals" },
+    { icon: Map, label: "Action Roadmaps", desc: "Sequenced next steps" },
+  ];
 
   return (
     <div role="img" aria-label="EXOS privacy-first data flow diagram" className="relative">
@@ -103,17 +138,17 @@ const DataFlowDiagram = () => {
             {/* Bidirectional Arrow: Core Engine ↔ Cloud AI */}
             <VerticalBidirectionalConnector />
 
-            {/* Layer 3: Cloud AI */}
-            <div className="w-full max-w-sm">
-              <LayerCard layer={layers.cloud} centered />
+            {/* Layer 3: Cloud AI — Bloomberg-style tabbed */}
+            <div className="w-full max-w-2xl">
+              <CloudAILayerCard />
             </div>
 
             {/* Down Arrow: Cloud AI → User Interface */}
             <VerticalConnector />
 
-            {/* Layer 4: User Interface */}
-            <div className="w-full max-w-sm">
-              <LayerCard layer={layers.output} centered />
+            {/* Layer 4: User Interface — 3 icons */}
+            <div className="w-full max-w-2xl">
+              <OutputLayerCard icons={outputIcons} />
             </div>
           </div>
 
@@ -171,13 +206,82 @@ const DataFlowDiagram = () => {
           </div>
           <MobileConnector />
 
-          {/* Layer 3: Cloud AI */}
-          <MobileLayerCard layer={layers.cloud} />
+          {/* Layer 3: Cloud AI — Bloomberg-style tabbed */}
+          <CloudAILayerCard mobile />
           <MobileConnector />
 
-          {/* Layer 4: Output */}
-          <MobileLayerCard layer={layers.output} />
+          {/* Layer 4: Output — 3 icons */}
+          <OutputLayerCard icons={outputIcons} mobile />
         </div>
+      </div>
+    </div>
+  );
+};
+
+/* Output Layer Card — 3 icon tiles */
+interface OutputIcon {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  desc: string;
+}
+
+const OutputLayerCard = ({ icons, mobile = false }: { icons: OutputIcon[]; mobile?: boolean }) => {
+  return (
+    <div
+      className={cn(
+        "glass-effect rounded-xl border border-border/40",
+        mobile ? "p-4" : "p-5"
+      )}
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-border/40">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-muted">
+            <FileCheck className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
+              Layer 4
+            </span>
+            <h4 className="font-display font-semibold text-foreground text-base leading-tight">
+              User Interface
+            </h4>
+          </div>
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
+          3 Outputs
+        </span>
+      </div>
+
+      {/* 3 icon tiles */}
+      <div className="grid grid-cols-3 gap-3">
+        {icons.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.label}
+              className="group flex flex-col items-center text-center p-3 rounded-lg border border-border/30 bg-muted/30 hover:bg-muted/50 hover:border-primary/40 transition-colors"
+            >
+              <div className="relative mb-2">
+                <div className="absolute inset-0 rounded-full bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md shadow-primary/20">
+                  <Icon className="w-5 h-5 text-primary-foreground" />
+                </div>
+              </div>
+              <span className={cn(
+                "font-medium text-foreground leading-tight",
+                mobile ? "text-[10px]" : "text-xs"
+              )}>
+                {item.label}
+              </span>
+              {!mobile && (
+                <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                  {item.desc}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -391,5 +495,95 @@ const MobileConnector = () => (
     </div>
   </div>
 );
+
+/* Bloomberg-style tabbed Cloud AI Layer Card */
+const CloudAILayerCard = ({ mobile = false }: { mobile?: boolean }) => {
+  const [activeTab, setActiveTab] = useState(0);
+  const agent = cloudAgents[activeTab];
+
+  return (
+    <div
+      className={cn(
+        "glass-effect rounded-xl border border-border/40",
+        mobile ? "p-4" : "p-5"
+      )}
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-border/40">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-muted">
+            <Cloud className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
+              Layer 3
+            </span>
+            <h4 className="font-display font-semibold text-foreground text-base leading-tight">
+              Cloud AI
+            </h4>
+          </div>
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
+          3 Agents
+        </span>
+      </div>
+
+      {/* Tab strip */}
+      <div role="tablist" className="flex gap-0 border-b border-border/40 mb-3">
+        {cloudAgents.map((a, i) => {
+          const isActive = i === activeTab;
+          return (
+            <button
+              key={a.short}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(i)}
+              className={cn(
+                "flex-1 px-2 py-2 text-xs font-mono tracking-wider uppercase transition-colors border-b-2 -mb-px",
+                isActive
+                  ? "text-primary border-primary"
+                  : "text-muted-foreground border-transparent hover:text-foreground hover:border-border"
+              )}
+            >
+              <span className="font-semibold">{a.short}</span>
+              <span className="hidden sm:inline ml-1.5 normal-case tracking-normal text-[11px]">
+                {a.name.replace(" Agent", "")}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab content — data table style */}
+      <div className="space-y-2 font-mono text-xs">
+        <div className="flex gap-3">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground w-16 pt-0.5 shrink-0">
+            Role
+          </span>
+          <span className="text-foreground/90 leading-snug normal-case font-sans">
+            {agent.role}
+          </span>
+        </div>
+        <div className="flex gap-3">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground w-16 pt-0.5 shrink-0">
+            Output
+          </span>
+          <span className="text-foreground/80 leading-snug normal-case font-sans">
+            {agent.output}
+          </span>
+        </div>
+        <div className="flex gap-3">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground w-16 pt-0.5 shrink-0">
+            Status
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-primary">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            Active
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default DataFlowDiagram;

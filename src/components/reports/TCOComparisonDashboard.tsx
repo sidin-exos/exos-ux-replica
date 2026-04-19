@@ -34,11 +34,14 @@ interface TCOComparisonDashboardProps {
   parsedData?: TCOComparisonData;
 }
 
+// Muted EXOS palette: teal (best), amber (mid), plum (highest)
 const defaultOptions: TCOOption[] = [
-  { id: "optionA", name: "Buy Outright", color: "hsl(174, 30%, 45%)", totalTCO: 485000 },
-  { id: "optionB", name: "3-Year Lease", color: "hsl(220, 25%, 55%)", totalTCO: 520000 },
-  { id: "optionC", name: "Subscription", color: "hsl(260, 20%, 52%)", totalTCO: 595000 },
+  { id: "optionA", name: "Buy Outright", color: "hsl(174, 35%, 38%)", totalTCO: 485000 },
+  { id: "optionB", name: "3-Year Lease", color: "hsl(35, 28%, 45%)", totalTCO: 520000 },
+  { id: "optionC", name: "Subscription", color: "hsl(358, 38%, 48%)", totalTCO: 595000 },
 ];
+
+const PALETTE_BY_RANK = ["hsl(174, 35%, 38%)", "hsl(35, 28%, 45%)", "hsl(358, 38%, 48%)", "hsl(220, 22%, 48%)"];
 
 const defaultData: TCODataPoint[] = [
   { year: "Y0", optionA: 350000, optionB: 50000, optionC: 80000 },
@@ -68,18 +71,66 @@ const TCOComparisonDashboard = ({
   parsedData,
 }: TCOComparisonDashboardProps) => {
   const effectiveData = parsedData?.data || data;
-  const effectiveOptions = parsedData?.options || options;
+  const rawOptions = parsedData?.options || options;
   const effectiveCurrency = parsedData?.currency || currency;
-  const lowestTCO = [...effectiveOptions].sort((a, b) => a.totalTCO - b.totalTCO)[0];
-  const highestTCO = [...effectiveOptions].sort((a, b) => b.totalTCO - a.totalTCO)[0];
+  // Rank-based color override so best=teal, mid=amber, worst=plum regardless of input order.
+  const ranked = [...rawOptions].sort((a, b) => a.totalTCO - b.totalTCO);
+  const colorById = new Map(
+    ranked.map((opt, i) => [opt.id, PALETTE_BY_RANK[Math.min(i, PALETTE_BY_RANK.length - 1)]]),
+  );
+  const effectiveOptions = rawOptions.map((opt) => ({ ...opt, color: colorById.get(opt.id) || opt.color }));
+  const sortedOptions = [...effectiveOptions].sort((a, b) => a.totalTCO - b.totalTCO);
+  const lowestTCO = sortedOptions[0];
+  const runnerUp = sortedOptions[1];
+  const highestTCO = sortedOptions[sortedOptions.length - 1];
   const savings = highestTCO.totalTCO - lowestTCO.totalTCO;
+
+  // Parse year label "Y0", "Y1"... into a number
+  const yearOf = (label: string): number => {
+    const m = label.match(/(\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : 0;
+  };
+
+  // Find the crossover: first time `lowestTCO` becomes ≤ `runnerUp` and stays so.
+  // Returns null if `lowestTCO` was already cheapest from Y0.
+  const findCrossover = (): { years: number; months: number } | null => {
+    if (!runnerUp) return null;
+    const aKey = lowestTCO.id as keyof TCODataPoint;
+    const bKey = runnerUp.id as keyof TCODataPoint;
+    for (let i = 1; i < effectiveData.length; i++) {
+      const prev = effectiveData[i - 1];
+      const curr = effectiveData[i];
+      const prevA = Number(prev[aKey] ?? 0);
+      const prevB = Number(prev[bKey] ?? 0);
+      const currA = Number(curr[aKey] ?? 0);
+      const currB = Number(curr[bKey] ?? 0);
+      // Crossover when sign of (A - B) flips from positive to non-positive
+      if (prevA > prevB && currA <= currB) {
+        const t = (prevA - prevB) / ((prevA - prevB) - (currA - currB));
+        const y0 = yearOf(prev.year);
+        const y1 = yearOf(curr.year);
+        const exact = y0 + t * (y1 - y0);
+        const years = Math.floor(exact);
+        const months = Math.round((exact - years) * 12);
+        return months === 12 ? { years: years + 1, months: 0 } : { years, months };
+      }
+    }
+    return null;
+  };
+
+  const crossover = findCrossover();
+  const conclusion = crossover
+    ? `${lowestTCO.name} becomes the cheapest option after ${crossover.years} year${crossover.years === 1 ? "" : "s"}${
+        crossover.months > 0 ? ` and ${crossover.months} month${crossover.months === 1 ? "" : "s"}` : ""
+      }, saving ${formatCurrency(savings, effectiveCurrency)} over ${runnerUp ? runnerUp.name : highestTCO.name} across the full horizon.`
+    : `${lowestTCO.name} is the cheapest option from day one, saving ${formatCurrency(savings, effectiveCurrency)} versus ${highestTCO.name} across the full horizon.`;
 
   return (
     <Card className="card-elevated">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-4 h-4 text-foreground" />
             </div>
             <div>
@@ -87,18 +138,32 @@ const TCOComparisonDashboard = ({
               <p className="text-xs text-muted-foreground">{subtitle}</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-lg font-semibold text-primary">
-              {formatCurrency(savings, effectiveCurrency)}
-            </p>
-            <p className="text-xs text-muted-foreground">potential savings</p>
+          <div className="flex items-start gap-3 flex-shrink-0">
+            <div
+              className="max-w-[280px] rounded-md border px-3 py-2"
+              style={{ borderColor: "hsl(174, 35%, 38%, 0.25)", backgroundColor: "hsl(174, 35%, 38%, 0.06)" }}
+            >
+              <p
+                className="text-[10px] uppercase tracking-wider font-semibold mb-0.5"
+                style={{ color: "hsl(174, 35%, 38%)" }}
+              >
+                Conclusion
+              </p>
+              <p className="text-xs text-foreground leading-snug">{conclusion}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-semibold tabular-nums" style={{ color: "hsl(174, 35%, 38%)" }}>
+                {formatCurrency(savings, effectiveCurrency)}
+              </p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">potential savings</p>
+            </div>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {/* Legend */}
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
           {effectiveOptions.map((opt) => (
             <div key={opt.id} className="flex items-center gap-1.5 text-xs">
               <div className="w-3 h-3 rounded" style={{ backgroundColor: opt.color }} />
@@ -177,8 +242,17 @@ const TCOComparisonDashboard = ({
                     <td className="py-1.5 text-right text-foreground font-medium">
                       {formatCurrency(opt.totalTCO, effectiveCurrency)}
                     </td>
-                    <td className={`py-1.5 text-right ${diff === 0 ? "text-primary" : "text-muted-foreground"}`}>
-                      {diff === 0 ? "Best" : `+${formatCurrency(diff, effectiveCurrency)}`}
+                    <td className="py-1.5 text-right tabular-nums">
+                      {diff === 0 ? (
+                        <span
+                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                          style={{ color: "hsl(174, 35%, 38%)", backgroundColor: "hsl(174, 35%, 38%, 0.1)" }}
+                        >
+                          Best
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">+{formatCurrency(diff, effectiveCurrency)}</span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -187,10 +261,6 @@ const TCOComparisonDashboard = ({
           </table>
         </div>
 
-        {/* Recommendation */}
-        <p className="text-xs text-muted-foreground pt-2">
-          <span className="text-primary font-medium">Recommendation:</span> {lowestTCO.name} offers the lowest total cost of ownership
-        </p>
       </CardContent>
     </Card>
   );
