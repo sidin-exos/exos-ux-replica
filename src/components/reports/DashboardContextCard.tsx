@@ -110,18 +110,39 @@ const DashboardContextCard = ({ dashboardId, config }: DashboardContextCardProps
           </div>
 
           {/* Scenarios */}
-          {scenarioTitles.length > 0 && (
-            <div className="pt-3 border-t border-border/40 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-medium text-foreground/80 uppercase tracking-wide">
-                <Layers className="h-3.5 w-3.5 text-primary/70" />
+          {scenarioInfo.length > 0 && (
+            <div className="pt-4 border-t border-border/40 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-foreground/80 uppercase tracking-wider">
+                <Layers className="h-4 w-4 text-primary" />
                 Available for Scenarios
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {scenarioTitles.map((title, i) => (
-                  <Badge key={i} variant="outline" className="text-xs font-normal">
-                    {title}
-                  </Badge>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {scenarioInfo.map(({ id, title, icon: Icon, category }) => {
+                  const c = CATEGORY_CHIP[category];
+                  return (
+                    <div
+                      key={id}
+                      className={cn(
+                        "group inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border transition-all duration-200",
+                        "shadow-[0_1px_0_0_hsl(var(--border)/0.5)] hover:-translate-y-0.5 hover:shadow-md",
+                        c.bg,
+                        c.border
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex items-center justify-center w-6 h-6 rounded-full shrink-0",
+                          c.iconBg
+                        )}
+                      >
+                        <Icon className={cn("w-3.5 h-3.5", c.iconText)} />
+                      </span>
+                      <span className="text-sm font-medium text-foreground leading-none">
+                        {title}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
