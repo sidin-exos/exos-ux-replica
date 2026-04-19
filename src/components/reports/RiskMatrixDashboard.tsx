@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RiskMatrixData } from "@/lib/dashboard-data-parser";
@@ -14,22 +15,58 @@ const defaultRiskData = [
   { id: 5, supplier: "Epsilon Materials", impact: "medium", probability: "low", category: "Leverage" },
 ];
 
-const getRiskColor = (impact: string, probability: string) => {
-  if (impact === "high" && probability === "high") return "bg-destructive/60";
-  if (impact === "high" || probability === "high") return "bg-warning/60";
-  if (impact === "medium" && probability === "medium") return "bg-warning/40";
-  return "bg-muted";
+const getRiskTone = (impact: string, probability: string) => {
+  if (impact === "high" && probability === "high") return "destructive";
+  if (impact === "high" || probability === "high") return "warning";
+  if (impact === "medium" && probability === "medium") return "warning-soft";
+  return "muted";
 };
+
+const dotClass = (tone: string) => {
+  switch (tone) {
+    case "destructive":
+      return "bg-destructive text-destructive-foreground";
+    case "warning":
+      return "bg-warning text-warning-foreground";
+    case "warning-soft":
+      return "bg-warning/70 text-warning-foreground";
+    default:
+      return "bg-muted-foreground/30 text-foreground";
+  }
+};
+
+const cellTone = (tone: string) => {
+  switch (tone) {
+    case "destructive":
+      return "bg-destructive/10";
+    case "warning":
+      return "bg-warning/10";
+    case "warning-soft":
+      return "bg-warning/5";
+    default:
+      return "bg-muted/40";
+  }
+};
+
+const riskLabel = (tone: string) => {
+  if (tone === "destructive") return "High";
+  if (tone === "warning" || tone === "warning-soft") return "Medium";
+  return "Low";
+};
+
+const IMPACT_ROWS = ["high", "medium", "low"] as const;
+const PROB_COLS = ["low", "medium", "high"] as const;
 
 const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
   const riskData = parsedData?.risks
     ? parsedData.risks.map((r, i) => ({ id: i + 1, ...r }))
     : defaultRiskData;
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
   const criticalCount = riskData.filter(r => r.impact === "high" && r.probability === "high").length;
 
   return (
     <Card className="card-elevated h-full">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
@@ -46,95 +83,91 @@ const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        {/* Matrix Grid */}
-        <div className="relative mb-4">
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-muted-foreground">
-            Impact
-          </div>
-          
-          <div className="ml-5">
-            <div className="grid grid-cols-3 gap-1 mb-1.5">
-              {/* High Impact Row */}
-              {["low", "medium", "high"].map((prob) => (
-                <div
-                  key={`high-${prob}`}
-                  className="h-14 rounded bg-secondary/30 flex flex-wrap items-center justify-center gap-1 p-1"
-                >
-                  {riskData
-                    .filter((r) => r.impact === "high" && r.probability === prob)
-                    .map((r) => (
-                      <div
-                        key={r.id}
-                        className={`w-5 h-5 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[10px] font-medium text-foreground`}
-                        title={r.supplier}
-                      >
-                        {r.id}
-                      </div>
-                    ))}
-                </div>
-              ))}
-              
-              {/* Medium Impact Row */}
-              {["low", "medium", "high"].map((prob) => (
-                <div
-                  key={`medium-${prob}`}
-                  className="h-14 rounded bg-secondary/30 flex flex-wrap items-center justify-center gap-1 p-1"
-                >
-                  {riskData
-                    .filter((r) => r.impact === "medium" && r.probability === prob)
-                    .map((r) => (
-                      <div
-                        key={r.id}
-                        className={`w-5 h-5 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[10px] font-medium text-foreground`}
-                        title={r.supplier}
-                      >
-                        {r.id}
-                      </div>
-                    ))}
-                </div>
-              ))}
-              
-              {/* Low Impact Row */}
-              {["low", "medium", "high"].map((prob) => (
-                <div
-                  key={`low-${prob}`}
-                  className="h-14 rounded bg-secondary/30 flex flex-wrap items-center justify-center gap-1 p-1"
-                >
-                  {riskData
-                    .filter((r) => r.impact === "low" && r.probability === prob)
-                    .map((r) => (
-                      <div
-                        key={r.id}
-                        className={`w-5 h-5 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[10px] font-medium text-foreground`}
-                        title={r.supplier}
-                      >
-                        {r.id}
-                      </div>
-                    ))}
-                </div>
-              ))}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_180px] gap-4">
+          {/* Compact Matrix */}
+          <div className="relative">
+            <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-muted-foreground tracking-wide uppercase">
+              Impact
             </div>
-            
-            <div className="grid grid-cols-3 gap-1 text-center text-[10px] text-muted-foreground">
-              <span>Low</span>
-              <span>Medium</span>
-              <span>High</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-0.5">Probability</p>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="space-y-1.5 pt-2 border-t border-border/30">
-          {riskData.map((r) => (
-            <div key={r.id} className="flex items-center gap-2 text-xs">
-              <div className={`w-4 h-4 rounded-full ${getRiskColor(r.impact, r.probability)} flex items-center justify-center text-[9px] font-medium`}>
-                {r.id}
+            <div className="ml-4">
+              <div className="grid grid-cols-3 gap-1">
+                {IMPACT_ROWS.map((impact) =>
+                  PROB_COLS.map((prob) => {
+                    const tone = getRiskTone(impact, prob);
+                    const cellRisks = riskData.filter(
+                      (r) => r.impact === impact && r.probability === prob
+                    );
+                    return (
+                      <div
+                        key={`${impact}-${prob}`}
+                        className={`h-12 rounded ${cellTone(tone)} flex flex-wrap items-center justify-center gap-1 p-1 transition-colors`}
+                      >
+                        {cellRisks.map((r) => {
+                          const isHovered = hoveredId === r.id;
+                          return (
+                            <div
+                              key={r.id}
+                              onMouseEnter={() => setHoveredId(r.id)}
+                              onMouseLeave={() => setHoveredId(null)}
+                              className={`w-5 h-5 rounded-full ${dotClass(getRiskTone(r.impact, r.probability))} flex items-center justify-center text-[10px] font-medium cursor-pointer transition-all ${
+                                isHovered ? "ring-2 ring-foreground/40 scale-110" : ""
+                              }`}
+                              title={r.supplier}
+                            >
+                              {r.id}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })
+                )}
               </div>
-              <span className="text-foreground">{r.supplier}</span>
-              <span className="text-muted-foreground ml-auto">{r.category}</span>
+              <div className="grid grid-cols-3 gap-1 text-center text-[10px] text-muted-foreground mt-1">
+                <span>Low</span>
+                <span>Medium</span>
+                <span>High</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center mt-0.5 tracking-wide uppercase">
+                Probability
+              </p>
             </div>
-          ))}
+          </div>
+
+          {/* Side Supplier List */}
+          <div className="md:border-l md:border-border/40 md:pl-4">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
+              Suppliers
+            </p>
+            <ul className="space-y-1.5">
+              {riskData.map((r) => {
+                const tone = getRiskTone(r.impact, r.probability);
+                const isHovered = hoveredId === r.id;
+                return (
+                  <li
+                    key={r.id}
+                    onMouseEnter={() => setHoveredId(r.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    className={`flex items-center gap-2 p-1.5 rounded-md cursor-pointer transition-colors ${
+                      isHovered ? "bg-muted" : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full flex-shrink-0 ${dotClass(tone)} flex items-center justify-center text-[10px] font-medium`}
+                    >
+                      {r.id}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-medium text-foreground truncate">{r.supplier}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {r.category} · {riskLabel(tone)}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       </CardContent>
     </Card>
