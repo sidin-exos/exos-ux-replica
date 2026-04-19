@@ -34,23 +34,28 @@ const formatCurrency = (value: number, currency: string = "$"): string => {
   return `${currency}${value}`;
 };
 
-// Neutral grey palette for the "Maximum Cost" pie
+// Muted EXOS palette
+const COLOR_TEAL = "hsl(174, 35%, 38%)";
+const COLOR_AMBER = "hsl(35, 28%, 45%)";
+const COLOR_PLUM = "hsl(358, 38%, 48%)";
+
+// Cost donut: top driver = plum, second = amber, rest in muted neutrals
 const GREY_PALETTE = [
-  "hsl(var(--muted-foreground) / 0.85)",
-  "hsl(var(--muted-foreground) / 0.70)",
-  "hsl(var(--muted-foreground) / 0.55)",
-  "hsl(var(--muted-foreground) / 0.40)",
-  "hsl(var(--muted-foreground) / 0.30)",
-  "hsl(var(--muted-foreground) / 0.22)",
-  "hsl(var(--muted-foreground) / 0.18)",
+  COLOR_PLUM,
+  COLOR_AMBER,
+  "hsl(220, 12%, 55%)",
+  "hsl(220, 10%, 65%)",
+  "hsl(220, 10%, 75%)",
+  "hsl(220, 10%, 82%)",
+  "hsl(220, 10%, 88%)",
 ];
 
-// Primary tints for the "Potential Improvements" pie
+// Savings donut: teal tints
 const PRIMARY_PALETTE = [
-  "hsl(var(--primary))",
-  "hsl(var(--primary) / 0.75)",
-  "hsl(var(--primary) / 0.55)",
-  "hsl(var(--primary) / 0.40)",
+  COLOR_TEAL,
+  "hsl(174, 35%, 38% / 0.75)",
+  "hsl(174, 35%, 38% / 0.55)",
+  "hsl(174, 35%, 38% / 0.40)",
 ];
 
 interface PieDatum {
