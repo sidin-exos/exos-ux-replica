@@ -85,8 +85,9 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+    <div className="min-h-screen flex flex-col bg-[hsl(210,22%,96%)] light" data-force-light="true">
+      <div className="contents text-foreground">
+        <Header />
 
       <main>
       {/* ───── Hero ───── */}
@@ -461,6 +462,7 @@ const Welcome = () => {
       </main>
 
       <Footer />
+      </div>
     </div>
   );
 };
