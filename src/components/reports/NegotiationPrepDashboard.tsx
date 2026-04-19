@@ -1,5 +1,6 @@
 import { Target, ArrowRight, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useThemedLogo } from "@/hooks/useThemedLogo";
 
 import type { NegotiationPrepData } from "@/lib/dashboard-data-parser";
 
@@ -92,8 +93,22 @@ const NegotiationPrepDashboard = ({ parsedData }: NegotiationPrepDashboardProps)
   const negotiationFramework = parsedData
     ? { batna: parsedData.batna, leveragePoints: parsedData.leveragePoints, sequence: parsedData.sequence }
     : defaultNegotiationFramework;
+  const logo = useThemedLogo();
   return (
-    <Card className="card-elevated">
+    <Card className="card-elevated relative overflow-hidden">
+      {/* Watermark */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 flex items-center justify-center select-none z-0"
+      >
+        <div className="flex flex-col items-center gap-2 opacity-[0.06] rotate-[-18deg]">
+          <img src={logo} alt="" className="w-32 h-32" />
+          <span className="font-display text-2xl font-bold tracking-wider text-foreground whitespace-nowrap">
+            EXOS Procurement Intelligence
+          </span>
+        </div>
+      </div>
+      <div className="relative z-10">
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
@@ -157,6 +172,7 @@ const NegotiationPrepDashboard = ({ parsedData }: NegotiationPrepDashboardProps)
           </div>
         </div>
       </CardContent>
+      </div>
     </Card>
   );
 };
