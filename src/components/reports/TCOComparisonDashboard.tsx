@@ -139,17 +139,23 @@ const TCOComparisonDashboard = ({
             </div>
           </div>
           <div className="flex items-start gap-3 flex-shrink-0">
-            <div className="max-w-[280px] rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-0.5">
+            <div
+              className="max-w-[280px] rounded-md border px-3 py-2"
+              style={{ borderColor: "hsl(174, 35%, 38%, 0.25)", backgroundColor: "hsl(174, 35%, 38%, 0.06)" }}
+            >
+              <p
+                className="text-[10px] uppercase tracking-wider font-semibold mb-0.5"
+                style={{ color: "hsl(174, 35%, 38%)" }}
+              >
                 Conclusion
               </p>
               <p className="text-xs text-foreground leading-snug">{conclusion}</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-semibold text-primary">
+              <p className="text-lg font-semibold tabular-nums" style={{ color: "hsl(174, 35%, 38%)" }}>
                 {formatCurrency(savings, effectiveCurrency)}
               </p>
-              <p className="text-xs text-muted-foreground">potential savings</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">potential savings</p>
             </div>
           </div>
         </div>
@@ -157,7 +163,7 @@ const TCOComparisonDashboard = ({
 
       <CardContent className="space-y-4">
         {/* Legend */}
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
           {effectiveOptions.map((opt) => (
             <div key={opt.id} className="flex items-center gap-1.5 text-xs">
               <div className="w-3 h-3 rounded" style={{ backgroundColor: opt.color }} />
