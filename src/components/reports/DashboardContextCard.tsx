@@ -11,30 +11,26 @@ interface DashboardContextCardProps {
   config: DashboardConfig;
 }
 
-const CATEGORY_CHIP: Record<Scenario["category"], { bg: string; border: string; iconBg: string; iconText: string }> = {
+const CATEGORY_CHIP: Record<Scenario["category"], { iconBg: string; iconText: string; accent: string }> = {
   analysis: {
-    bg: "bg-copper/10 hover:bg-copper/20",
-    border: "border-copper/40",
-    iconBg: "bg-copper/20",
+    iconBg: "bg-copper/15",
     iconText: "text-copper",
+    accent: "hover:border-copper/30",
   },
   planning: {
-    bg: "bg-iris/10 hover:bg-iris/20",
-    border: "border-iris/40",
-    iconBg: "bg-iris/20",
+    iconBg: "bg-iris/15",
     iconText: "text-iris",
+    accent: "hover:border-iris/30",
   },
   risk: {
-    bg: "bg-destructive/10 hover:bg-destructive/20",
-    border: "border-destructive/40",
-    iconBg: "bg-destructive/15",
+    iconBg: "bg-destructive/10",
     iconText: "text-destructive",
+    accent: "hover:border-destructive/30",
   },
   documentation: {
-    bg: "bg-info/10 hover:bg-info/20",
-    border: "border-info/40",
-    iconBg: "bg-info/20",
+    iconBg: "bg-info/15",
     iconText: "text-info",
+    accent: "hover:border-info/30",
   },
 };
 
@@ -123,10 +119,9 @@ const DashboardContextCard = ({ dashboardId, config }: DashboardContextCardProps
                     <div
                       key={id}
                       className={cn(
-                        "group inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border transition-all duration-200",
-                        "shadow-[0_1px_0_0_hsl(var(--border)/0.5)] hover:-translate-y-0.5 hover:shadow-md",
-                        c.bg,
-                        c.border
+                        "group inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border border-border/60 bg-card/60 transition-all duration-200",
+                        "hover:-translate-y-0.5 hover:bg-card hover:shadow-sm",
+                        c.accent
                       )}
                     >
                       <span
