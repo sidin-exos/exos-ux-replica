@@ -97,53 +97,83 @@ const SensitivitySpiderDashboard = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Tornado Chart */}
-        <div className="space-y-3">
-          {sortedImpacts.map((variable) => {
+        {/* Tornado Rows */}
+        <div className="space-y-2">
+          {sortedImpacts.map((variable, idx) => {
             const lowBarWidth = (Math.abs(variable.lowPct) / maxOverallPct) * 45;
             const highBarWidth = (Math.abs(variable.highPct) / maxOverallPct) * 45;
+            const isTopRisk = idx === 0;
 
             return (
-              <div key={variable.name} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-foreground">{variable.name}</span>
-                  <span className="text-muted-foreground tabular-nums">
-                    −{Math.abs(variable.lowPct).toFixed(1)}% / +{Math.abs(variable.highPct).toFixed(1)}%
-                  </span>
+              <div
+                key={variable.name}
+                className={`rounded-lg border p-2.5 space-y-1.5 ${
+                  isTopRisk
+                    ? "border-warning/40 bg-warning/5"
+                    : "border-border/50 bg-muted/20"
+                }`}
+              >
+                {/* Header row: rank + name + value chips */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                        isTopRisk
+                          ? "bg-warning text-warning-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {idx + 1}
+                    </span>
+                    <span className="text-xs font-semibold text-foreground truncate">
+                      {variable.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <Badge
+                      variant="outline"
+                      className="gap-1 px-1.5 py-0 h-5 text-[10px] font-medium border-destructive/30 bg-destructive/10 text-destructive"
+                    >
+                      <TrendingDown className="w-2.5 h-2.5" />
+                      −{Math.abs(variable.lowPct).toFixed(1)}%
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="gap-1 px-1.5 py-0 h-5 text-[10px] font-medium border-primary/30 bg-primary/10 text-primary"
+                    >
+                      <TrendingUp className="w-2.5 h-2.5" />
+                      +{Math.abs(variable.highPct).toFixed(1)}%
+                    </Badge>
+                  </div>
                 </div>
 
-                {/* Tornado bar */}
-                <div className="relative h-6 flex items-center">
-                  {/* Center line */}
-                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border" />
-
-                  {/* Low case bar (left of center) */}
-                  <div className="absolute right-1/2 h-5 flex items-center justify-end">
-                    <div
-                      className={`h-full rounded-l ${
-                        variable.lowImpact < 0 ? "bg-destructive/70" : "bg-primary/70"
-                      }`}
-                      style={{ width: `${lowBarWidth}%`, minWidth: lowBarWidth > 0 ? "4px" : "0" }}
-                    />
-                  </div>
-
-                  {/* High case bar (right of center) */}
-                  <div className="absolute left-1/2 h-5 flex items-center">
-                    <div
-                      className={`h-full rounded-r ${
-                        variable.highImpact > 0 ? "bg-destructive/70" : "bg-primary/70"
-                      }`}
-                      style={{ width: `${highBarWidth}%`, minWidth: highBarWidth > 0 ? "4px" : "0" }}
-                    />
-                  </div>
-
-                  {/* Labels */}
-                  <div className="absolute left-0 text-xs text-muted-foreground">
+                {/* Tornado bar with inline anchor values */}
+                <div className="flex items-center gap-2">
+                  <span className="w-12 text-[10px] text-muted-foreground tabular-nums text-right flex-shrink-0">
                     {formatValue(variable.lowCase, variable.unit)}
+                  </span>
+                  <div className="relative h-4 flex-1 flex items-center">
+                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border" />
+                    <div className="absolute right-1/2 h-3 flex items-center justify-end">
+                      <div
+                        className={`h-full rounded-l ${
+                          variable.lowImpact < 0 ? "bg-destructive/70" : "bg-primary/70"
+                        }`}
+                        style={{ width: `${lowBarWidth * 2}%`, minWidth: lowBarWidth > 0 ? "4px" : "0" }}
+                      />
+                    </div>
+                    <div className="absolute left-1/2 h-3 flex items-center">
+                      <div
+                        className={`h-full rounded-r ${
+                          variable.highImpact > 0 ? "bg-destructive/70" : "bg-primary/70"
+                        }`}
+                        style={{ width: `${highBarWidth * 2}%`, minWidth: highBarWidth > 0 ? "4px" : "0" }}
+                      />
+                    </div>
                   </div>
-                  <div className="absolute right-0 text-xs text-muted-foreground">
+                  <span className="w-12 text-[10px] text-muted-foreground tabular-nums flex-shrink-0">
                     {formatValue(variable.highCase, variable.unit)}
-                  </div>
+                  </span>
                 </div>
               </div>
             );
@@ -151,7 +181,7 @@ const SensitivitySpiderDashboard = ({
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-6 text-xs pt-2">
+        <div className="flex items-center justify-center gap-6 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-primary/70" />
             <span className="text-muted-foreground">Favorable</span>
