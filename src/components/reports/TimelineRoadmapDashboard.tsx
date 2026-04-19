@@ -107,12 +107,16 @@ const TimelineRoadmapDashboard = ({
                 {/* Gantt bar */}
                 <div className="relative h-6 bg-secondary/30 rounded">
                   <div
-                    className={`absolute h-full rounded ${statusConfig[phase.status].barClass}`}
+                    className={`absolute h-full rounded flex items-center justify-center ${statusConfig[phase.status].barClass}`}
                     style={{
                       left: `${startPercent}%`,
                       width: `${widthPercent}%`,
                     }}
-                  />
+                  >
+                    <span className="text-xs font-semibold text-background whitespace-nowrap px-2">
+                      W{phase.startWeek}–W{phase.endWeek}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Milestones */}
