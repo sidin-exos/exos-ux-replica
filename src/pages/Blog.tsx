@@ -39,12 +39,24 @@ const Blog = () => {
                 to={`/blog/${post.slug}`}
                 className="group flex flex-col rounded-xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <img
-                  src={post.heroImage}
-                  alt={post.title}
-                  className="w-full h-48 object-cover"
-                  loading="lazy"
-                />
+                <div className="relative w-full h-48 overflow-hidden bg-muted">
+                  <img
+                    src={post.heroImage}
+                    alt={post.title}
+                    className="w-full h-full object-cover"
+                    style={{ filter: "grayscale(100%) contrast(1.05) brightness(0.92)" }}
+                    loading="lazy"
+                  />
+                  <div
+                    className="absolute inset-0 bg-primary"
+                    style={{ mixBlendMode: "multiply", opacity: 0.55 }}
+                  />
+                  <div className="absolute bottom-3 left-3 px-2 py-1 rounded bg-background/95 backdrop-blur-sm">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-primary">
+                      {post.tags[0] ?? "Article"}
+                    </span>
+                  </div>
+                </div>
                 <div className="p-5 flex flex-col gap-2 flex-1">
                   <div className="flex flex-wrap gap-1.5">
                     {post.tags.slice(0, 2).map((tag) => (
