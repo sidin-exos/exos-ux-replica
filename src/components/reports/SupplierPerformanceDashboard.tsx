@@ -30,9 +30,9 @@ const SupplierPerformanceDashboard = ({ parsedData }: SupplierPerformanceDashboa
   const maxSpend = Math.max(...spends, 1);
 
   const getTier = (score: number) => {
-    if (score >= 85) return { color: "hsl(var(--success))", label: "≥85" };
-    if (score >= 70) return { color: "hsl(var(--warning))", label: "70–84" };
-    return { color: "hsl(var(--destructive))", label: "<70" };
+    if (score >= 85) return { color: "hsl(var(--success) / 0.55)", label: "≥85" };
+    if (score >= 70) return { color: "hsl(var(--warning) / 0.55)", label: "70–84" };
+    return { color: "hsl(var(--destructive) / 0.55)", label: "<70" };
   };
 
   const getTrendIcon = (trend: string) => {
@@ -109,15 +109,15 @@ const SupplierPerformanceDashboard = ({ parsedData }: SupplierPerformanceDashboa
             {points.map((p) => (
               <div
                 key={p.name}
-                className="absolute -translate-x-1/2 translate-y-1/2"
+                className="absolute -translate-x-1/2 translate-y-1/2 flex flex-col items-center"
                 style={{ left: `${p.x}%`, bottom: `${p.y}%` }}
               >
                 <div
-                  className="w-3 h-3 rounded-full ring-2 ring-background shadow-sm"
+                  className="w-5 h-5 rounded-full ring-2 ring-background shadow-sm"
                   style={{ backgroundColor: p.tier.color }}
                   title={`${p.name} — ${p.score} / ${p.spend}`}
                 />
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-foreground whitespace-nowrap">
+                <span className="mt-1 text-[11px] font-medium text-foreground whitespace-nowrap leading-tight">
                   {p.name} <span className="text-muted-foreground">{p.score}</span>
                 </span>
               </div>
