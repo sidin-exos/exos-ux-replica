@@ -85,11 +85,13 @@ const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-[1fr_180px] gap-4">
           {/* Compact Matrix */}
-          <div className="relative">
-            <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] text-muted-foreground tracking-wide uppercase">
-              Impact
+          <div className="relative flex">
+            <div className="flex items-center justify-center w-5">
+              <span className="-rotate-90 whitespace-nowrap text-xs font-bold text-foreground tracking-wide uppercase">
+                Impact
+              </span>
             </div>
-            <div className="ml-4">
+            <div className="flex-1 ml-2">
               <div className="grid grid-cols-3 gap-1">
                 {IMPACT_ROWS.map((impact) =>
                   PROB_COLS.map((prob) => {
