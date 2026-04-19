@@ -1,5 +1,34 @@
+import { useState } from "react";
 import { FileText, Shield, Cloud, FileCheck, Lock, Compass, Globe, CheckCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface CloudAgent {
+  name: string;
+  short: string;
+  role: string;
+  output: string;
+}
+
+const cloudAgents: CloudAgent[] = [
+  {
+    name: "Auditor Agent",
+    short: "AUD",
+    role: "Challenges assumptions, verifies arithmetic (ROI, NPV, break-even).",
+    output: "Validation log · flagged risks · math corrections",
+  },
+  {
+    name: "Optimizer Agent",
+    short: "OPT",
+    role: "Refines parameters, identifies cost levers and savings opportunities.",
+    output: "Optimized scenario · ranked levers · sensitivity",
+  },
+  {
+    name: "Strategist Agent",
+    short: "STR",
+    role: "Synthesizes findings into a board-ready recommendation.",
+    output: "Executive summary · roadmap · trade-off matrix",
+  },
+];
 
 const DataFlowDiagram = () => {
   const pipelineSteps = [
