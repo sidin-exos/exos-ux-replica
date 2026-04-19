@@ -1,7 +1,27 @@
 import { useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RiskMatrixData } from "@/lib/dashboard-data-parser";
+
+const IMPACT_SCORE: Record<string, number> = { high: 3, medium: 2, low: 1 };
+const PROB_SCORE: Record<string, number> = { high: 3, medium: 2, low: 1 };
+
+const getRiskScore = (impact: string, probability: string) =>
+  (IMPACT_SCORE[impact] ?? 1) * (PROB_SCORE[probability] ?? 1);
+
+const getActionLabel = (score: number) => {
+  if (score >= 9) return { label: "Escalate", className: "bg-destructive text-destructive-foreground" };
+  if (score >= 6) return { label: "Mitigate", className: "bg-warning text-warning-foreground" };
+  if (score >= 3) return { label: "Monitor", className: "bg-success text-success-foreground" };
+  return { label: "Accept", className: "bg-muted text-muted-foreground" };
+};
+
+const getScoreAccent = (score: number) => {
+  if (score >= 9) return { border: "border-l-destructive", text: "text-destructive" };
+  if (score >= 6) return { border: "border-l-warning", text: "text-warning" };
+  if (score >= 3) return { border: "border-l-success", text: "text-success" };
+  return { border: "border-l-muted-foreground/40", text: "text-muted-foreground" };
+};
 
 interface RiskMatrixDashboardProps {
   parsedData?: RiskMatrixData;
