@@ -324,7 +324,7 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-1">
-          <ThemeToggle />
+          {location.pathname !== "/welcome" && <ThemeToggle />}
 
           {/* Mobile hamburger */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
