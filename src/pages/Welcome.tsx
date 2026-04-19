@@ -462,6 +462,7 @@ const Welcome = () => {
       </main>
 
       <Footer />
+      </div>
     </div>
   );
 };
