@@ -34,11 +34,14 @@ interface TCOComparisonDashboardProps {
   parsedData?: TCOComparisonData;
 }
 
+// Muted EXOS palette: teal (best), amber (mid), plum (highest)
 const defaultOptions: TCOOption[] = [
-  { id: "optionA", name: "Buy Outright", color: "hsl(174, 30%, 45%)", totalTCO: 485000 },
-  { id: "optionB", name: "3-Year Lease", color: "hsl(220, 25%, 55%)", totalTCO: 520000 },
-  { id: "optionC", name: "Subscription", color: "hsl(260, 20%, 52%)", totalTCO: 595000 },
+  { id: "optionA", name: "Buy Outright", color: "hsl(174, 35%, 38%)", totalTCO: 485000 },
+  { id: "optionB", name: "3-Year Lease", color: "hsl(35, 28%, 45%)", totalTCO: 520000 },
+  { id: "optionC", name: "Subscription", color: "hsl(358, 38%, 48%)", totalTCO: 595000 },
 ];
+
+const PALETTE_BY_RANK = ["hsl(174, 35%, 38%)", "hsl(35, 28%, 45%)", "hsl(358, 38%, 48%)", "hsl(220, 22%, 48%)"];
 
 const defaultData: TCODataPoint[] = [
   { year: "Y0", optionA: 350000, optionB: 50000, optionC: 80000 },
