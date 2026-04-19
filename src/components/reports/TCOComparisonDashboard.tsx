@@ -119,9 +119,9 @@ const TCOComparisonDashboard = ({
   return (
     <Card className="card-elevated">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-4 h-4 text-foreground" />
             </div>
             <div>
@@ -129,11 +129,19 @@ const TCOComparisonDashboard = ({
               <p className="text-xs text-muted-foreground">{subtitle}</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-lg font-semibold text-primary">
-              {formatCurrency(savings, effectiveCurrency)}
-            </p>
-            <p className="text-xs text-muted-foreground">potential savings</p>
+          <div className="flex items-start gap-3 flex-shrink-0">
+            <div className="max-w-[280px] rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-0.5">
+                Conclusion
+              </p>
+              <p className="text-xs text-foreground leading-snug">{conclusion}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-semibold text-primary">
+                {formatCurrency(savings, effectiveCurrency)}
+              </p>
+              <p className="text-xs text-muted-foreground">potential savings</p>
+            </div>
           </div>
         </div>
       </CardHeader>
