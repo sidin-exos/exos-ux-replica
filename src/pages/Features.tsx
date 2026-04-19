@@ -221,8 +221,7 @@ const Features = () => {
         "PII and financial identifier masking",
         "Enterprise InfoSec Gate for traffic audit",
         "Full data restoration after AI processing"
-      ],
-      link: "/architecture"
+      ]
     }
   ];
 
