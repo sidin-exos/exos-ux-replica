@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Settings, LogIn, User, CreditCard, LogOut, HelpCircle, FileText, Database, Menu, ShieldAlert, TrendingUp, BarChart3, Sparkles, BookOpen, DollarSign, Zap, ClipboardList, AlertTriangle, FileCheck, PenLine } from "lucide-react";
 import ThemeToggle from "@/components/layout/ThemeToggle";
@@ -40,33 +40,180 @@ import { Separator } from "@/components/ui/separator";
 
 // -- Navigation data ----------------------------------------------------------
 
-const NAV_GROUPS = [
+type NavItem = {
+  label: string;
+  path: string;
+  icon: typeof BarChart3;
+  description?: string;
+};
+
+type NavFeature = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  ctaPath: string;
+  icon: typeof Sparkles;
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+  feature?: NavFeature;
+};
+
+const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: "Scenarios",
     items: [
-      { label: "Analysis", path: "/#category-analysis", icon: BarChart3 },
-      { label: "Planning", path: "/#category-planning", icon: ClipboardList },
-      { label: "Risk", path: "/#category-risk", icon: AlertTriangle },
-      { label: "Documentation", path: "/#category-documentation", icon: FileCheck },
+      { label: "Analysis", path: "/#category-analysis", icon: BarChart3, description: "TCO, should-cost & cost waterfalls" },
+      { label: "Planning", path: "/#category-planning", icon: ClipboardList, description: "Make-or-buy & sourcing strategy" },
+      { label: "Risk", path: "/#category-risk", icon: AlertTriangle, description: "Supplier, geopolitical & black swan" },
+      { label: "Documentation", path: "/#category-documentation", icon: FileCheck, description: "SOW reviews & negotiation prep" },
     ],
+    feature: {
+      eyebrow: "Featured",
+      title: "29 Scenarios Library",
+      description: "Human-in-the-loop analyses for the procurement decisions that matter most.",
+      ctaLabel: "Explore scenarios",
+      ctaPath: "/",
+      icon: Sparkles,
+    },
   },
   {
     label: "Analytical Platforms",
     items: [
-      { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert },
-      { label: "Inflation Analysis Platform", path: "/enterprise/inflation", icon: TrendingUp },
+      { label: "Risk Assessment Platform", path: "/enterprise/risk", icon: ShieldAlert, description: "Continuous monitoring of suppliers & exposure" },
+      { label: "Inflation Analysis Platform", path: "/enterprise/inflation", icon: TrendingUp, description: "Driver-level signal radar for cost shifts" },
     ],
+    feature: {
+      eyebrow: "New",
+      title: "Delta-First Monitoring",
+      description: "Catch material changes early — focus your team on what actually moved.",
+      ctaLabel: "See how it works",
+      ctaPath: "/features",
+      icon: TrendingUp,
+    },
   },
   {
     label: "About EXOS",
     items: [
-      { label: "Technology & AI", path: "/features", icon: Sparkles },
-      { label: "Blog", path: "/blog", icon: PenLine },
-      { label: "Pricing", path: "/pricing", icon: DollarSign },
-      { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle },
+      { label: "Technology & AI", path: "/features", icon: Sparkles, description: "Agentic workflow & grounding stack" },
+      { label: "Blog", path: "/blog", icon: PenLine, description: "Procurement insights & playbooks" },
+      { label: "Pricing", path: "/pricing", icon: DollarSign, description: "Plans for SMB to enterprise" },
+      { label: "Help & FAQ", path: "/pricing#faq", icon: HelpCircle, description: "Answers to common questions" },
     ],
+    feature: {
+      eyebrow: "Get started",
+      title: "ROI from day one",
+      description: "Transparent pricing, no consultants needed. Start with the Starter plan.",
+      ctaLabel: "View pricing",
+      ctaPath: "/pricing",
+      icon: DollarSign,
+    },
   },
 ] as const;
+
+// Smart navigation that handles hash links to the current page
+const HEADER_OFFSET = 96;
+const scrollToHashId = (hashPart: string) => {
+  const el = document.getElementById(hashPart);
+  if (!el) return false;
+  const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+  window.scrollTo({ top, behavior: "smooth" });
+  return true;
+};
+const navigateWithHash = (path: string, navigate: (p: string) => void) => {
+  const hashIndex = path.indexOf("#");
+  if (hashIndex !== -1) {
+    const [pathPart, hashPart] = [path.slice(0, hashIndex) || "/", path.slice(hashIndex + 1)];
+    if (window.location.pathname === pathPart) {
+      if (scrollToHashId(hashPart)) {
+        window.history.replaceState(null, "", `${pathPart}#${hashPart}`);
+        return;
+      }
+    }
+  }
+  navigate(path);
+};
+
+// Shared mega-dropdown content renderer
+const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: string) => void }) => {
+  return (
+    <div className="grid w-[420px] grid-cols-2">
+      <div className="col-span-2 p-5">
+        <p className="font-display text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground mb-3">
+          {group.label}
+        </p>
+        <ul className="grid grid-cols-2 gap-1.5">
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.path}>
+                <button
+                  onClick={() => navigateWithHash(item.path, navigate)}
+                  type="button"
+                  className="group flex items-start gap-3 w-full rounded-lg p-2.5 hover:bg-accent transition-colors text-left"
+                >
+                  <div className="shrink-0 w-9 h-9 rounded-md bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center text-primary transition-colors">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm text-foreground group-hover:text-primary transition-colors leading-tight">
+                      {item.label}
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+// -- Personal greeting --------------------------------------------------------
+
+const getPersonalGreeting = (firstName: string): { greeting: string; subtitle: string } => {
+  const now = new Date();
+  const hour = now.getHours();
+  const day = now.getDay(); // 0=Sun..6=Sat
+  const date = now.getDate();
+  const month = now.getMonth(); // 0=Jan
+  const name = firstName || "there";
+
+  // Special dates first
+  if (month === 0 && date === 1) return { greeting: `Happy New Year, ${name}! 🎉`, subtitle: "Fresh start, fresh wins." };
+  if (month === 11 && date >= 24 && date <= 26) return { greeting: `Happy holidays, ${name} 🎄`, subtitle: "Hope you're taking it easy." };
+  if (month === 11 && date === 31) return { greeting: `Last day of the year, ${name}!`, subtitle: "One more push, then celebrate." };
+
+  // Day-of-week vibes
+  if (day === 5) {
+    if (hour < 12) return { greeting: `Happy Friday, ${name} 🙌`, subtitle: "Almost the weekend — let's wrap it up." };
+    return { greeting: `Friday afternoon, ${name}`, subtitle: "Sneak in one last win before the weekend." };
+  }
+  if (day === 6) return { greeting: `Working on a Saturday, ${name}? 💪`, subtitle: "Respect. Make it count." };
+  if (day === 0) return { greeting: `Sunday vibes, ${name} ☕`, subtitle: "Easing into the week ahead?" };
+  if (day === 1) {
+    if (hour < 12) return { greeting: `Monday mode, ${name} ☕`, subtitle: "Let's set the tone for the week." };
+    return { greeting: `Powering through Monday, ${name}`, subtitle: "You've got this." };
+  }
+  if (day === 3) return { greeting: `Hump day, ${name} 🐫`, subtitle: "Halfway there." };
+  if (day === 4) return { greeting: `Almost Friday, ${name}`, subtitle: "Keep the momentum going." };
+
+  // Generic time-of-day
+  if (hour < 5) return { greeting: `Burning the midnight oil, ${name}? 🌙`, subtitle: "Don't forget to rest." };
+  if (hour < 12) return { greeting: `Good morning, ${name} ☀️`, subtitle: "What are we tackling today?" };
+  if (hour < 17) return { greeting: `Good afternoon, ${name}`, subtitle: "Hope the day's treating you well." };
+  if (hour < 22) return { greeting: `Good evening, ${name} 🌆`, subtitle: "Wrapping up or just getting started?" };
+  return { greeting: `Late night, ${name}? 🌙`, subtitle: "Make it a productive one." };
+};
 
 // -- Component ----------------------------------------------------------------
 
@@ -76,7 +223,33 @@ const Header = () => {
   const { user } = useUser();
   const { isSuperAdmin } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [firstName, setFirstName] = useState<string>("");
   const exosLogo = useThemedLogo();
+
+  // Fetch first name from profile for personalised greeting
+  useEffect(() => {
+    if (!user?.id) {
+      setFirstName("");
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("full_name, display_name")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const raw = data?.display_name || data?.full_name || user.email?.split("@")[0] || "";
+        const first = raw.trim().split(/\s+/)[0] || "";
+        setFirstName(first.charAt(0).toUpperCase() + first.slice(1));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.email]);
+
+  const personalGreeting = useMemo(() => getPersonalGreeting(firstName), [firstName]);
 
   // Close transient navigation UI on route changes
   useEffect(() => {
@@ -85,15 +258,19 @@ const Header = () => {
 
   const mobileNavigate = (path: string) => {
     setMobileOpen(false);
-    navigate(path);
+    setTimeout(() => navigateWithHash(path, navigate), 50);
   };
 
   return (
-    <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 mx-3 md:mx-6 rounded-b-2xl bg-background/80 dark:bg-card/95 backdrop-blur-md border border-t-0 border-border/50 dark:border-border shadow-lg dark:shadow-2xl dark:shadow-black/40">
+      <div className="px-4 md:px-6 flex h-16 items-center justify-between">
         {/* Logo */}
-        <NavLink to="/welcome" className="flex items-center hover:opacity-90 transition-opacity">
-          <img src={exosLogo} alt="EXOS procurement platform logo" className="h-10 md:h-12 w-auto object-contain" />
+        <NavLink to="/welcome" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+          <img src={exosLogo} alt="EXOS procurement platform logo" className="h-9 md:h-10 w-auto object-contain" />
+          <div className="h-7 w-px bg-border/60" />
+          <span className="font-display font-bold text-2xl md:text-[28px] tracking-[0.15em] text-foreground leading-none">
+            EXOS
+          </span>
         </NavLink>
 
         {/* Desktop Mega-Menu */}
@@ -103,7 +280,7 @@ const Header = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
-                    className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                    className="font-display font-semibold tracking-tight text-[15px] text-foreground/80 bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
                     onClick={() => {
                       if (group.label === "Scenarios") {
                         navigate("/");
@@ -114,23 +291,7 @@ const Header = () => {
                     {group.label}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
-                      {group.items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.path}>
-                            <button
-                              onClick={() => navigate(item.path)}
-                              type="button"
-                              className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
-                            >
-                              {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
-                              {item.label}
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <MegaDropdown group={group} navigate={navigate} />
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               </NavigationMenuList>
@@ -139,7 +300,7 @@ const Header = () => {
 
           <button
             onClick={() => navigate("/market-intelligence")}
-            className="text-sm font-medium text-muted-foreground px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="font-display font-semibold tracking-tight text-[15px] text-foreground/80 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             Market Intelligence
           </button>
@@ -149,28 +310,12 @@ const Header = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
-                    className="text-sm font-medium text-muted-foreground bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
+                    className="font-display font-semibold tracking-tight text-[15px] text-foreground/80 bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50"
                   >
                     {group.label}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className={`grid gap-2 p-4 ${group.items.length > 3 ? "w-[480px] grid-cols-2" : "w-[320px] grid-cols-1"}`}>
-                      {group.items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <li key={item.path}>
-                            <button
-                              onClick={() => navigate(item.path)}
-                              type="button"
-                              className="flex items-center gap-3 w-full rounded-md p-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
-                            >
-                              {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" />}
-                              {item.label}
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <MegaDropdown group={group} navigate={navigate} />
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               </NavigationMenuList>
@@ -179,7 +324,7 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-1">
-          <ThemeToggle />
+          {location.pathname !== "/welcome" && <ThemeToggle />}
 
           {/* Mobile hamburger */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -337,9 +482,15 @@ const Header = () => {
                   {user.email?.charAt(0).toUpperCase() || "U"}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-3 py-2">
-                  <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+              <DropdownMenuContent align="end" className="w-64">
+                <div className="px-3 py-2.5">
+                  <p className="font-display text-sm font-semibold text-foreground leading-tight">
+                    {personalGreeting.greeting}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                    {personalGreeting.subtitle}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/70 truncate mt-1.5">{user.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
@@ -350,12 +501,6 @@ const Header = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/market-intelligence?tab=insights")}>
                   <Database className="w-4 h-4" /> My Knowledge Database
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/account")}>
-                  <Settings className="w-4 h-4" /> Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/pricing")}>
-                  <CreditCard className="w-4 h-4" /> Manage Subscription
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigate("/pricing#faq")}>
                   <HelpCircle className="w-4 h-4" /> Help & FAQ

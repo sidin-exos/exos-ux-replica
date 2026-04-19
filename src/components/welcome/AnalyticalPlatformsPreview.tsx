@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import riskSignalsPreview from "@/assets/risk-signals-preview.png";
 import inflationPreview1 from "@/assets/inflation-preview-1.png";
-import inflationPreview2 from "@/assets/inflation-preview-2.png";
 
-const IMAGES = [riskSignalsPreview, inflationPreview1, inflationPreview2];
+const IMAGES = [riskSignalsPreview, inflationPreview1];
 const DISPLAY_MS = 5000;
 
 export const AnalyticalPlatformsPreview = () => {
@@ -28,7 +27,7 @@ export const AnalyticalPlatformsPreview = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1.6, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-cover object-top"
+          className="absolute inset-0 w-full h-full object-contain object-top"
         />
       </AnimatePresence>
     </div>

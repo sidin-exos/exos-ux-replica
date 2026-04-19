@@ -198,7 +198,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                 </div>
                 <div className="flex items-start gap-2">
                   <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">3</Badge>
-                  <p>Assign weights and define trigger events for monitoring.</p>
+                  <p>Assign importance and define trigger events for monitoring.</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">4</Badge>
@@ -237,18 +237,31 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                       </div>
                       {d.accepted && (
                         <div className="pl-10 flex items-center gap-3">
-                          <Label className="text-xs text-muted-foreground shrink-0">Weight</Label>
-                          <Slider
-                            value={[d.weight ?? 50]}
-                            onValueChange={([v]) => {
-                              setDrivers(prev => prev.map((dr, di) => di === i ? { ...dr, weight: v } : dr));
-                            }}
-                            min={1}
-                            max={100}
-                            step={1}
-                            className="flex-1"
-                          />
-                          <span className="text-xs font-mono w-6 text-right text-foreground">{d.weight ?? "—"}</span>
+                          <Label className="text-xs text-muted-foreground shrink-0">Importance</Label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Low</span>
+                            {[20, 40, 60, 80, 100].map((stepVal) => {
+                              const current = d.weight ?? 60;
+                              const isActive = current >= stepVal - 10 && current <= stepVal + 10;
+                              const isFilled = current >= stepVal - 10;
+                              return (
+                                <button
+                                  key={stepVal}
+                                  type="button"
+                                  onClick={() => setDrivers(prev => prev.map((dr, di) => di === i ? { ...dr, weight: stepVal } : dr))}
+                                  className={`w-3.5 h-3.5 rounded-full border transition-all ${
+                                    isActive
+                                      ? "border-primary bg-primary scale-110"
+                                      : isFilled
+                                        ? "border-primary/60 bg-primary/40"
+                                        : "border-border bg-muted hover:border-primary/50"
+                                  }`}
+                                  aria-label={`Set importance to ${stepVal}`}
+                                />
+                              );
+                            })}
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">High</span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -291,7 +304,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                   </div>
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">2</Badge>
-                    <p className="text-xs">Adjust weight sliders to set relative importance.</p>
+                    <p className="text-xs">Adjust importance to set relative priority.</p>
                   </div>
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="shrink-0 mt-0.5 text-xs">3</Badge>
@@ -391,7 +404,7 @@ const InflationSetupWizard = ({ onActivate, onComplete }: Props) => {
                     <div key={i} className="p-3 rounded-lg border border-border/60 space-y-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-foreground">{d.name}</p>
-                        {d.weight != null && <Badge variant="secondary" className="text-xs">Weight: {d.weight}</Badge>}
+                        {d.weight != null && <Badge variant="secondary" className="text-xs">Importance: {d.weight}</Badge>}
                       </div>
                       {d.trigger && (
                         <p className="text-xs text-muted-foreground">Trigger: {d.trigger}</p>

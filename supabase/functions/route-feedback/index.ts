@@ -1,6 +1,10 @@
 /**
  * route-feedback — Routes feedback submissions to Plain (support threads)
- * and Resend (backup email notification to support@exosproc.com).
+ * and Resend (backup email notification).
+ *
+ * Recipient per source:
+ *   - contact_form → contact@exosproc.com  (public "Contact Us" form)
+ *   - everything else → support@exosproc.com  (in-app feedback widgets)
  *
  * Auth note: verify_jwt is FALSE in config.toml because this endpoint must be
  * callable by unauthenticated users (e.g., public contact form, anonymous
@@ -29,7 +33,13 @@ const FEEDBACK_SOURCES = [
 type FeedbackSource = (typeof FEEDBACK_SOURCES)[number];
 
 const RESEND_FROM = "EXOS Feedback <feedback@exosproc.com>";
-const RESEND_TO = "support@exosproc.com";
+const RESEND_TO_BY_SOURCE: Record<FeedbackSource, string> = {
+  contact_form: "contact@exosproc.com",
+  site_feedback: "support@exosproc.com",
+  output_feedback: "support@exosproc.com",
+  chat_feedback: "support@exosproc.com",
+  scenario_feedback: "support@exosproc.com",
+};
 
 const PLAIN_LABELS: Record<string, string[]> = {
   contact_form: ["lt_01KN20XXT6VKQNERR38S9B93VS", "lt_01KN216H0XKR8Z88KZD6S76EVB"], // contact, inbound
@@ -121,11 +131,11 @@ Deno.serve(async (req) => {
           })
         : Promise.resolve({ ok: false, error: "PLAIN_API_KEY not configured" }),
 
-      // Resend: backup email notification
+      // Resend: backup email notification (routed by source)
       resendApiKey
         ? sendResendEmail(resendApiKey, {
             from: RESEND_FROM,
-            to: RESEND_TO,
+            to: RESEND_TO_BY_SOURCE[source],
             subject: emailSubject,
             text: emailBody,
           })

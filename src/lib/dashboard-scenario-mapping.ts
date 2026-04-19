@@ -27,6 +27,15 @@ export const getDashboardScenarioTitles = (dashboardId: DashboardType): string[]
   });
 };
 
+// Get full scenario info (id, title, icon, category) for chips/cards
+export const getDashboardScenarioInfo = (dashboardId: DashboardType) => {
+  const scenarioIds = getDashboardScenarios(dashboardId);
+  return scenarioIds
+    .map(id => scenarios.find(s => s.id === id))
+    .filter((s): s is NonNullable<typeof s> => Boolean(s))
+    .map(s => ({ id: s.id, title: s.title, icon: s.icon, category: s.category }));
+};
+
 // Get count of scenarios using this dashboard
 export const getDashboardScenarioCount = (dashboardId: DashboardType): number => {
   return getDashboardScenarios(dashboardId).length;
