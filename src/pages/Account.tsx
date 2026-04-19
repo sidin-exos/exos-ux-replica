@@ -10,6 +10,7 @@ import { useShareableMode } from "@/hooks/useShareableMode";
 import { ModelConfigPanel } from "@/components/settings/ModelConfigPanel";
 import UserFilesManager from "@/components/files/UserFilesManager";
 import AccountSidebar from "@/components/account/AccountSidebar";
+import TeamManagement from "@/components/account/TeamManagement";
 import { useAccountData } from "@/hooks/useAccountData";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -173,6 +174,14 @@ const Account = () => {
                 <UsageTile icon={FolderOpen} label="Files Uploaded" value={String(usage.fileCount)} />
               </div>
             </div>
+
+            {/* Team (admin-only) */}
+            {profile?.role === "admin" && user && (
+              <TeamManagement
+                organizationId={profile.organization_id}
+                currentUserId={user.id}
+              />
+            )}
 
             {/* Upgrade Plans */}
             <div id="section-profile" className="bg-card border border-border p-6 lg:p-8 rounded-lg">
