@@ -340,10 +340,17 @@ const Features = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="card-elevated border-border/50">
+            <Card
+              className="card-elevated border-border/50 relative overflow-hidden"
+              style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.teal.soft}, transparent 60%)` }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: accentMap.teal.bg, opacity: 0.7 }} />
               <CardHeader className="pb-2">
-                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center mb-2">
-                  <Brain className="w-5 h-5 text-primary-foreground" />
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-2 shadow-sm"
+                  style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.teal.bg}, ${accentMap.teal.text})` }}
+                >
+                  <Brain className="w-5 h-5 text-white" />
                 </div>
                 <CardTitle className="font-display text-lg">Agentic Structure & Chain of Experts</CardTitle>
               </CardHeader>
@@ -358,10 +365,17 @@ const Features = () => {
               </CardContent>
             </Card>
 
-            <Card className="card-elevated border-border/50">
+            <Card
+              className="card-elevated border-border/50 relative overflow-hidden"
+              style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.plum.soft}, transparent 60%)` }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: accentMap.plum.bg, opacity: 0.7 }} />
               <CardHeader className="pb-2">
-                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center mb-2">
-                  <Lock className="w-5 h-5 text-primary-foreground" />
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-2 shadow-sm"
+                  style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.plum.bg}, ${accentMap.plum.text})` }}
+                >
+                  <Lock className="w-5 h-5 text-white" />
                 </div>
                 <CardTitle className="font-display text-lg">Anti-Hallucination & Grounding</CardTitle>
               </CardHeader>
