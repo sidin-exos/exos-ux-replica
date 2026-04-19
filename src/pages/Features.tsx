@@ -178,7 +178,11 @@ const Features = () => {
     {
       icon: Layers,
       title: "Scenarios",
-      description: "Pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.",
+      description: (
+        <>
+          Pre-defined <strong className="font-semibold text-foreground">agentic AI flows</strong> enriched with procurement <strong className="font-semibold text-foreground">methodological layer</strong>, agentic loops, and custom LLM settings.
+        </>
+      ),
       accent: "teal" as const,
       highlights: [
         "29 procurement-specific AI scenarios",
@@ -190,7 +194,11 @@ const Features = () => {
     {
       icon: TrendingUp,
       title: "Inflation Monitor & Risk Assessment Platform",
-      description: "Continuously track the noise, surface what's changed, and flag only what requires your decision.",
+      description: (
+        <>
+          Continuously <strong className="font-semibold text-foreground">track the noise</strong>, surface what's changed, and <strong className="font-semibold text-foreground">flag only what requires your decision</strong>.
+        </>
+      ),
       accent: "teal" as const,
       highlights: [
         "Automated inflation driver scanning",
@@ -202,7 +210,11 @@ const Features = () => {
     {
       icon: Database,
       title: "Market Intelligence & Knowledge Base",
-      description: "Use Market Intelligence as a self-sufficient tool or inject live market context from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
+      description: (
+        <>
+          Use Market Intelligence as a self-sufficient tool or <strong className="font-semibold text-foreground">inject live market context</strong> from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.
+        </>
+      ),
       accent: "plum" as const,
       highlights: [
         "Live supplier & category intelligence",
@@ -214,7 +226,11 @@ const Features = () => {
     {
       icon: Lock,
       title: "Commercial Data Safety",
-      description: "Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.",
+      description: (
+        <>
+          Your sensitive commercial data is <strong className="font-semibold text-foreground">masked before reaching external APIs</strong> — then grounded and validated on the way back.
+        </>
+      ),
       accent: "amber" as const,
       highlights: [
         "Semantic anonymization of commercial data",
