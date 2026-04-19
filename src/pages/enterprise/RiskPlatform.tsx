@@ -260,12 +260,12 @@ const RiskPlatform = () => {
             <span>© {new Date().getFullYear()} EXOS Procurement · Dynamic Risk Monitoring</span>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/contact?subject=feedback">
+                <a href="/pricing?subject=feedback#contact">
                   <MessageSquare className="w-4 h-4" /> Leave Feedback
                 </a>
               </Button>
               <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/contact">
+                <a href="/pricing#contact">
                   Get in Touch <Mail className="w-4 h-4" />
                 </a>
               </Button>
