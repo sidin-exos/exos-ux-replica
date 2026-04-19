@@ -60,6 +60,12 @@ const DataFlowDiagram = () => {
     },
   };
 
+  const outputIcons = [
+    { icon: FileBarChart, label: "Validated Report", desc: "Board-ready analysis" },
+    { icon: LayoutDashboard, label: "Interactive Dashboards", desc: "Drill-down visuals" },
+    { icon: Map, label: "Action Roadmaps", desc: "Sequenced next steps" },
+  ];
+
   return (
     <div role="img" aria-label="EXOS privacy-first data flow diagram" className="relative">
       {/* Desktop Layout */}
