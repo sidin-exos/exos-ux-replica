@@ -28,6 +28,8 @@ const forgotPasswordSchema = z.object({
 type SignInValues = z.infer<typeof signInSchema>;
 type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,6 +38,10 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [view, setView] = useState<"auth" | "forgot-password">("auth");
+
+  const rawInvite = searchParams.get("invite");
+  const inviteToken = rawInvite && UUID_RE.test(rawInvite) ? rawInvite : undefined;
+  const defaultTab = inviteToken || searchParams.get("tab") === "sign-up" ? "sign-up" : "sign-in";
 
   const signInForm = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
@@ -169,7 +175,7 @@ const Auth = () => {
           <CardContent className="space-y-4">
             {view === "auth" ? (
               <>
-                <Tabs defaultValue={searchParams.get("tab") === "sign-up" ? "sign-up" : "sign-in"} onValueChange={handleTabChange}>
+                <Tabs defaultValue={defaultTab} onValueChange={handleTabChange}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="sign-in">Sign In</TabsTrigger>
                     <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
@@ -222,7 +228,7 @@ const Auth = () => {
                   </TabsContent>
 
                   <TabsContent value="sign-up" className="mt-4">
-                    <SignUpForm />
+                    <SignUpForm inviteToken={inviteToken} />
                   </TabsContent>
                 </Tabs>
 
