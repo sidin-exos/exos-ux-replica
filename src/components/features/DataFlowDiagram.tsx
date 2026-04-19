@@ -200,8 +200,8 @@ const DataFlowDiagram = () => {
           </div>
           <MobileConnector />
 
-          {/* Layer 3: Cloud AI */}
-          <MobileLayerCard layer={layers.cloud} />
+          {/* Layer 3: Cloud AI — Bloomberg-style tabbed */}
+          <CloudAILayerCard mobile />
           <MobileConnector />
 
           {/* Layer 4: Output */}
