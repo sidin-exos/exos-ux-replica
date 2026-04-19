@@ -1,5 +1,6 @@
 import { Target, ArrowRight, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useThemedLogo } from "@/hooks/useThemedLogo";
 
 import type { NegotiationPrepData } from "@/lib/dashboard-data-parser";
 
