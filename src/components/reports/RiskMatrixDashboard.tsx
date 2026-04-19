@@ -83,7 +83,7 @@ const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_180px] gap-4">
           {/* Compact Matrix */}
           <div className="relative flex">
             <div className="flex items-center justify-center w-5">
@@ -137,68 +137,32 @@ const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
           </div>
 
           {/* Side Supplier List */}
-          <div className="md:border-l md:border-border/40 md:pl-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                Suppliers
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                {riskData.length} tracked
-              </p>
-            </div>
-            <ul className="space-y-1">
+          <div className="md:border-l md:border-border/40 md:pl-4">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
+              Suppliers
+            </p>
+            <ul className="space-y-1.5">
               {riskData.map((r) => {
                 const tone = getRiskTone(r.impact, r.probability);
                 const isHovered = hoveredId === r.id;
-                const impactPct = r.impact === "high" ? 100 : r.impact === "medium" ? 60 : 30;
-                const probPct = r.probability === "high" ? 100 : r.probability === "medium" ? 60 : 30;
-                const barColor =
-                  tone === "destructive"
-                    ? "bg-destructive"
-                    : tone === "warning" || tone === "warning-soft"
-                    ? "bg-warning"
-                    : "bg-muted-foreground/40";
-                const badgeClass =
-                  tone === "destructive"
-                    ? "bg-destructive/15 text-destructive"
-                    : tone === "warning" || tone === "warning-soft"
-                    ? "bg-warning/15 text-warning-foreground"
-                    : "bg-muted text-muted-foreground";
                 return (
                   <li
                     key={r.id}
                     onMouseEnter={() => setHoveredId(r.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors border border-transparent ${
-                      isHovered ? "bg-muted border-border/60" : "hover:bg-muted/50"
+                    className={`flex items-center gap-2 p-1.5 rounded-md cursor-pointer transition-colors ${
+                      isHovered ? "bg-muted" : "hover:bg-muted/50"
                     }`}
                   >
                     <div
-                      className={`w-6 h-6 rounded-full flex-shrink-0 ${dotClass(tone)} flex items-center justify-center text-[11px] font-semibold`}
+                      className={`w-5 h-5 rounded-full flex-shrink-0 ${dotClass(tone)} flex items-center justify-center text-[10px] font-medium`}
                     >
                       {r.id}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="text-xs font-semibold text-foreground truncate">{r.supplier}</span>
-                        <span className="text-[10px] text-muted-foreground flex-shrink-0">{r.category}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wide w-8 flex-shrink-0">Imp</span>
-                          <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                            <div className={`h-full ${barColor} transition-all`} style={{ width: `${impactPct}%` }} />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wide w-8 flex-shrink-0">Prob</span>
-                          <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                            <div className={`h-full ${barColor} transition-all`} style={{ width: `${probPct}%` }} />
-                          </div>
-                        </div>
-                        <span className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded ${badgeClass} flex-shrink-0`}>
-                          {riskLabel(tone)}
-                        </span>
+                      <div className="text-xs font-medium text-foreground truncate">{r.supplier}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {r.category} · {riskLabel(tone)}
                       </div>
                     </div>
                   </li>
