@@ -119,10 +119,9 @@ const DashboardContextCard = ({ dashboardId, config }: DashboardContextCardProps
                     <div
                       key={id}
                       className={cn(
-                        "group inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border transition-all duration-200",
-                        "shadow-[0_1px_0_0_hsl(var(--border)/0.5)] hover:-translate-y-0.5 hover:shadow-md",
-                        c.bg,
-                        c.border
+                        "group inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border border-border/60 bg-card/60 transition-all duration-200",
+                        "hover:-translate-y-0.5 hover:bg-card hover:shadow-sm",
+                        c.accent
                       )}
                     >
                       <span
