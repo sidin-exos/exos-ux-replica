@@ -210,9 +210,78 @@ const DataFlowDiagram = () => {
           <CloudAILayerCard mobile />
           <MobileConnector />
 
-          {/* Layer 4: Output */}
-          <MobileLayerCard layer={layers.output} />
+          {/* Layer 4: Output — 3 icons */}
+          <OutputLayerCard icons={outputIcons} mobile />
         </div>
+      </div>
+    </div>
+  );
+};
+
+/* Output Layer Card — 3 icon tiles */
+interface OutputIcon {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  desc: string;
+}
+
+const OutputLayerCard = ({ icons, mobile = false }: { icons: OutputIcon[]; mobile?: boolean }) => {
+  return (
+    <div
+      className={cn(
+        "glass-effect rounded-xl border border-border/40",
+        mobile ? "p-4" : "p-5"
+      )}
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-border/40">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-muted">
+            <FileCheck className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
+              Layer 4
+            </span>
+            <h4 className="font-display font-semibold text-foreground text-base leading-tight">
+              User Interface
+            </h4>
+          </div>
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
+          3 Outputs
+        </span>
+      </div>
+
+      {/* 3 icon tiles */}
+      <div className="grid grid-cols-3 gap-3">
+        {icons.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.label}
+              className="group flex flex-col items-center text-center p-3 rounded-lg border border-border/30 bg-muted/30 hover:bg-muted/50 hover:border-primary/40 transition-colors"
+            >
+              <div className="relative mb-2">
+                <div className="absolute inset-0 rounded-full bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md shadow-primary/20">
+                  <Icon className="w-5 h-5 text-primary-foreground" />
+                </div>
+              </div>
+              <span className={cn(
+                "font-medium text-foreground leading-tight",
+                mobile ? "text-[10px]" : "text-xs"
+              )}>
+                {item.label}
+              </span>
+              {!mobile && (
+                <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                  {item.desc}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
