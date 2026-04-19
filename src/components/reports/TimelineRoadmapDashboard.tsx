@@ -37,7 +37,7 @@ const statusConfig: Record<PhaseStatus, { label: string; className: string; barC
 };
 
 const TimelineRoadmapDashboard = ({
-  title = "Project Timeline",
+  title = "Proposed Project Timeline",
   subtitle = "Implementation roadmap",
   phases = defaultPhases,
   totalWeeks = 24,
