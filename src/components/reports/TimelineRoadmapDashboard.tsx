@@ -22,14 +22,14 @@ interface TimelineRoadmapDashboardProps {
   parsedData?: TimelineRoadmapData;
 }
 
-// Muted EXOS-aligned palette (matching License Distribution direction)
+// Diversified EXOS-aligned palette — distinct hues, balanced saturation
 const phaseColors = [
-  "hsl(174, 35%, 38%)", // teal
-  "hsl(220, 22%, 48%)", // slate-blue
-  "hsl(258, 22%, 50%)", // muted violet
-  "hsl(35, 28%, 45%)",  // muted amber
-  "hsl(195, 28%, 42%)", // muted cyan
-  "hsl(280, 18%, 48%)", // muted plum
+  "hsl(174, 55%, 40%)",  // teal
+  "hsl(212, 60%, 50%)",  // ocean blue
+  "hsl(265, 45%, 55%)",  // violet
+  "hsl(28, 75%, 52%)",   // warm amber
+  "hsl(340, 55%, 52%)",  // raspberry
+  "hsl(155, 45%, 40%)",  // forest green
 ];
 
 const defaultPhases: Phase[] = [
