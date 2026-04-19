@@ -1,6 +1,5 @@
 import { Activity, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import type { SensitivityData } from "@/lib/dashboard-data-parser";
 
 interface SensitivityVariable {
@@ -20,23 +19,24 @@ interface SensitivitySpiderDashboardProps {
   parsedData?: SensitivityData;
 }
 
-// Variations are entered as ±% deviations from base; component derives low/high cases.
-// Defaults reflect typical procurement sensitivity ranges.
 const defaultVariables: SensitivityVariable[] = [
-  { name: "Material Cost", baseCase: 450000, lowCase: 382500, highCase: 540000, unit: "$" }, // -15% / +20%
-  { name: "Labor Rate", baseCase: 180000, lowCase: 162000, highCase: 207000, unit: "$" }, // -10% / +15%
-  { name: "Volume", baseCase: 100000, lowCase: 75000, highCase: 115000, unit: "units" }, // -25% / +15%
-  { name: "Exchange Rate", baseCase: 1.0, lowCase: 0.92, highCase: 1.12, unit: "multiplier" }, // -8% / +12%
-  { name: "Overhead %", baseCase: 15, lowCase: 12.75, highCase: 18, unit: "%" }, // -15% / +20%
+  { name: "Material Cost", baseCase: 450000, lowCase: 382500, highCase: 540000, unit: "$" },
+  { name: "Labor Rate", baseCase: 180000, lowCase: 162000, highCase: 207000, unit: "$" },
+  { name: "Volume", baseCase: 100000, lowCase: 75000, highCase: 115000, unit: "units" },
+  { name: "Exchange Rate", baseCase: 1.0, lowCase: 0.92, highCase: 1.12, unit: "multiplier" },
+  { name: "Overhead %", baseCase: 15, lowCase: 12.75, highCase: 18, unit: "%" },
 ];
 
+// Muted EXOS palette
+const COLOR_FAVORABLE = "hsl(174, 35%, 38%)"; // teal
+const COLOR_UNFAVORABLE = "hsl(358, 38%, 48%)"; // plum
+const COLOR_TIER_HIGH = "hsl(358, 38%, 48%)";
+const COLOR_TIER_MED = "hsl(35, 28%, 45%)";
+const COLOR_TIER_LOW = "hsl(174, 35%, 38%)";
+
 const formatCurrency = (value: number, currency: string = "$"): string => {
-  if (value >= 1000000) {
-    return `${currency}${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `${currency}${(value / 1000).toFixed(0)}K`;
-  }
+  if (value >= 1000000) return `${currency}${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `${currency}${(value / 1000).toFixed(0)}K`;
   return `${currency}${value}`;
 };
 
@@ -47,9 +47,15 @@ const formatValue = (value: number, unit?: string): string => {
   return value.toFixed(2);
 };
 
+const tierFor = (maxPct: number): { label: string; color: string } => {
+  if (maxPct >= 20) return { label: "High", color: COLOR_TIER_HIGH };
+  if (maxPct >= 10) return { label: "Medium", color: COLOR_TIER_MED };
+  return { label: "Low", color: COLOR_TIER_LOW };
+};
+
 const SensitivitySpiderDashboard = ({
   title = "Sensitivity Analysis",
-  subtitle = "Impact of variable changes",
+  subtitle = "Impact on total cost",
   variables = defaultVariables,
   baseCaseTotal = 1200000,
   currency = "$",
@@ -58,8 +64,7 @@ const SensitivitySpiderDashboard = ({
   const effectiveVars = parsedData?.variables || variables;
   const effectiveBaseCaseTotal = parsedData?.baseCaseTotal || baseCaseTotal;
   const effectiveCurrency = parsedData?.currency || currency;
-  // Calculate impact for each variable as % deviation from base — keeps mixed-unit
-  // variables (USD, %, multipliers) comparable on a single tornado axis.
+
   const impacts = effectiveVars.map((v) => {
     const lowImpact = v.lowCase - v.baseCase;
     const highImpact = v.highCase - v.baseCase;
@@ -67,17 +72,31 @@ const SensitivitySpiderDashboard = ({
     const lowPct = (lowImpact / base) * 100;
     const highPct = (highImpact / base) * 100;
     const maxPct = Math.max(Math.abs(lowPct), Math.abs(highPct));
-    return { ...v, lowImpact, highImpact, lowPct, highPct, maxPct };
+    return { ...v, lowImpact, highImpact, lowPct, highPct, maxPct, tier: tierFor(maxPct) };
   });
 
-  // Sort by maximum % impact
   const sortedImpacts = [...impacts].sort((a, b) => b.maxPct - a.maxPct);
   const maxOverallPct = Math.max(...sortedImpacts.map((i) => i.maxPct), 1);
+
+  // Tier distribution
+  const tierCounts = sortedImpacts.reduce(
+    (acc, i) => {
+      acc[i.tier.label] = (acc[i.tier.label] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+  const total = sortedImpacts.length || 1;
+  const tierOrder: Array<{ label: "High" | "Medium" | "Low"; color: string }> = [
+    { label: "High", color: COLOR_TIER_HIGH },
+    { label: "Medium", color: COLOR_TIER_MED },
+    { label: "Low", color: COLOR_TIER_LOW },
+  ];
 
   return (
     <Card className="card-elevated h-full">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
               <Activity className="w-4 h-4 text-foreground" />
@@ -88,135 +107,183 @@ const SensitivitySpiderDashboard = ({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-lg font-semibold text-foreground">
-              {formatCurrency(effectiveBaseCaseTotal, effectiveCurrency)}
+            <p className="text-2xl font-bold text-foreground tabular-nums leading-none">
+              ±{maxOverallPct.toFixed(1)}%
             </p>
-            <p className="text-xs text-muted-foreground">base case</p>
+            <p className="text-[10px] text-muted-foreground mt-1">max impact</p>
+          </div>
+        </div>
+
+        {/* Stacked tier distribution */}
+        <div className="mt-4 space-y-1.5">
+          <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+            {tierOrder.map((t) => {
+              const count = tierCounts[t.label] || 0;
+              const pct = (count / total) * 100;
+              if (pct === 0) return null;
+              return (
+                <div
+                  key={t.label}
+                  style={{ width: `${pct}%`, backgroundColor: t.color }}
+                  title={`${t.label}: ${count}`}
+                />
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+            {tierOrder.map((t) => (
+              <div key={t.label} className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.color }} />
+                <span>
+                  {t.label} <span className="tabular-nums">({tierCounts[t.label] || 0})</span>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Tornado Rows */}
-        <div className="space-y-2">
-          {sortedImpacts.map((variable, idx) => {
-            const lowBarWidth = (Math.abs(variable.lowPct) / maxOverallPct) * 45;
-            const highBarWidth = (Math.abs(variable.highPct) / maxOverallPct) * 45;
-            const isTopRisk = idx === 0;
-
-            return (
-              <div
-                key={variable.name}
-                className={`rounded-lg border p-2.5 space-y-1.5 ${
-                  isTopRisk
-                    ? "border-warning/40 bg-warning/5"
-                    : "border-border/50 bg-muted/20"
-                }`}
-              >
-                {/* Header row: rank + name + value chips */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                        isTopRisk
-                          ? "bg-warning text-warning-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {idx + 1}
-                    </span>
-                    <span className="text-xs font-semibold text-foreground truncate">
-                      {variable.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <Badge
-                      variant="outline"
-                      className="gap-1 px-1.5 py-0 h-5 text-[10px] font-medium border-destructive/30 bg-destructive/10 text-destructive"
-                    >
-                      <TrendingDown className="w-2.5 h-2.5" />
-                      −{Math.abs(variable.lowPct).toFixed(1)}%
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="gap-1 px-1.5 py-0 h-5 text-[10px] font-medium border-primary/30 bg-primary/10 text-primary"
-                    >
-                      <TrendingUp className="w-2.5 h-2.5" />
-                      +{Math.abs(variable.highPct).toFixed(1)}%
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Tornado bar with inline anchor values */}
-                <div className="flex items-center gap-2">
-                  <span className="w-12 text-[10px] text-muted-foreground tabular-nums text-right flex-shrink-0">
-                    {formatValue(variable.lowCase, variable.unit)}
-                  </span>
-                  <div className="relative h-4 flex-1 flex items-center">
-                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border" />
-                    <div className="absolute right-1/2 h-3 flex items-center justify-end">
-                      <div
-                        className={`h-full rounded-l ${
-                          variable.lowImpact < 0 ? "bg-destructive/70" : "bg-primary/70"
-                        }`}
-                        style={{ width: `${lowBarWidth * 2}%`, minWidth: lowBarWidth > 0 ? "4px" : "0" }}
-                      />
+        {/* Two-column: tornado + Key Drivers panel */}
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(200px,220px)] gap-4">
+          {/* Tornado chart */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+              <span>Variable</span>
+              <span>% deviation from base</span>
+            </div>
+            <div className="space-y-1.5">
+              {sortedImpacts.map((v) => {
+                const lowBarWidth = (Math.abs(v.lowPct) / maxOverallPct) * 50;
+                const highBarWidth = (Math.abs(v.highPct) / maxOverallPct) * 50;
+                return (
+                  <div key={v.name} className="flex items-center gap-2">
+                    <div className="w-24 flex-shrink-0 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate" title={v.name}>
+                        {v.name}
+                      </p>
                     </div>
-                    <div className="absolute left-1/2 h-3 flex items-center">
-                      <div
-                        className={`h-full rounded-r ${
-                          variable.highImpact > 0 ? "bg-destructive/70" : "bg-primary/70"
-                        }`}
-                        style={{ width: `${highBarWidth * 2}%`, minWidth: highBarWidth > 0 ? "4px" : "0" }}
-                      />
+                    <div className="relative h-6 flex-1">
+                      {/* Center axis */}
+                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border" />
+                      {/* Left (low) bar */}
+                      <div className="absolute right-1/2 top-1/2 -translate-y-1/2 h-4 flex items-center justify-end">
+                        <div
+                          className="h-full rounded-l"
+                          style={{
+                            width: `${lowBarWidth * 2}%`,
+                            backgroundColor: v.lowImpact < 0 ? COLOR_UNFAVORABLE : COLOR_FAVORABLE,
+                            opacity: 0.85,
+                            minWidth: lowBarWidth > 0 ? "3px" : "0",
+                          }}
+                        />
+                      </div>
+                      {/* Right (high) bar */}
+                      <div className="absolute left-1/2 top-1/2 -translate-y-1/2 h-4 flex items-center">
+                        <div
+                          className="h-full rounded-r"
+                          style={{
+                            width: `${highBarWidth * 2}%`,
+                            backgroundColor: v.highImpact > 0 ? COLOR_UNFAVORABLE : COLOR_FAVORABLE,
+                            opacity: 0.85,
+                            minWidth: highBarWidth > 0 ? "3px" : "0",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="w-24 flex-shrink-0 flex items-center justify-end gap-1.5 text-[10px] tabular-nums">
+                      <span className="text-destructive flex items-center gap-0.5">
+                        <TrendingDown className="w-2.5 h-2.5" />
+                        {Math.abs(v.lowPct).toFixed(1)}%
+                      </span>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="text-primary flex items-center gap-0.5">
+                        <TrendingUp className="w-2.5 h-2.5" />
+                        {Math.abs(v.highPct).toFixed(1)}%
+                      </span>
                     </div>
                   </div>
-                  <span className="w-12 text-[10px] text-muted-foreground tabular-nums flex-shrink-0">
-                    {formatValue(variable.highCase, variable.unit)}
-                  </span>
-                </div>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-5 text-[10px] text-muted-foreground pt-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded" style={{ backgroundColor: COLOR_FAVORABLE }} />
+                <span>Favorable</span>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Legend */}
-        <div className="flex items-center justify-center gap-6 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-primary/70" />
-            <span className="text-muted-foreground">Favorable</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded" style={{ backgroundColor: COLOR_UNFAVORABLE }} />
+                <span>Unfavorable</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-destructive/70" />
-            <span className="text-muted-foreground">Unfavorable</span>
-          </div>
-        </div>
 
-        {/* Key Insight */}
-        <div className="pt-3 border-t border-border/30">
-          <p className="text-xs text-muted-foreground">
-            <span className="text-warning font-medium">Key Risk:</span> {sortedImpacts[0]?.name} has the highest impact (±{(sortedImpacts[0]?.maxPct || 0).toFixed(1)}%) on total cost
-          </p>
+          {/* Key Drivers side panel */}
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium px-1">
+              Key Drivers
+            </p>
+            <div className="space-y-1.5">
+              {sortedImpacts.slice(0, 4).map((v, idx) => (
+                <div
+                  key={v.name}
+                  className="rounded-lg border border-border/60 bg-muted/20 p-2 flex gap-2"
+                >
+                  <div
+                    className="w-1 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: v.tier.color }}
+                  />
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-xs font-semibold text-foreground truncate">{v.name}</p>
+                      <span
+                        className="text-[9px] font-medium px-1 py-0 rounded tabular-nums"
+                        style={{ color: v.tier.color, backgroundColor: `${v.tier.color}15` }}
+                      >
+                        ±{v.maxPct.toFixed(1)}%
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground tabular-nums">
+                      Base {formatValue(v.baseCase, v.unit)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground tabular-nums">
+                      Range {formatValue(v.lowCase, v.unit)} – {formatValue(v.highCase, v.unit)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Range Summary */}
-        <div className="grid grid-cols-3 gap-4 text-center pt-3 border-t border-border/30">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Best Case</p>
-            <p className="text-sm font-semibold text-primary">
-              {formatCurrency(effectiveBaseCaseTotal - sortedImpacts.reduce((sum, v) => sum + Math.abs(v.lowImpact < 0 ? v.lowImpact : 0), 0), effectiveCurrency)}
+        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/30">
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Best Case</p>
+            <p className="text-sm font-semibold" style={{ color: COLOR_FAVORABLE }}>
+              {formatCurrency(
+                effectiveBaseCaseTotal -
+                  sortedImpacts.reduce((sum, v) => sum + Math.abs(v.lowImpact < 0 ? v.lowImpact : 0), 0),
+                effectiveCurrency,
+              )}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Base Case</p>
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Base Case</p>
             <p className="text-sm font-semibold text-foreground">
               {formatCurrency(effectiveBaseCaseTotal, effectiveCurrency)}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Worst Case</p>
-            <p className="text-sm font-semibold text-destructive">
-              {formatCurrency(effectiveBaseCaseTotal + sortedImpacts.reduce((sum, v) => sum + Math.abs(v.highImpact > 0 ? v.highImpact : 0), 0), effectiveCurrency)}
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Worst Case</p>
+            <p className="text-sm font-semibold" style={{ color: COLOR_UNFAVORABLE }}>
+              {formatCurrency(
+                effectiveBaseCaseTotal +
+                  sortedImpacts.reduce((sum, v) => sum + Math.abs(v.highImpact > 0 ? v.highImpact : 0), 0),
+                effectiveCurrency,
+              )}
             </p>
           </div>
         </div>
