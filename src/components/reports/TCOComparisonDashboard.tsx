@@ -34,11 +34,14 @@ interface TCOComparisonDashboardProps {
   parsedData?: TCOComparisonData;
 }
 
+// Muted EXOS palette: teal (best), amber (mid), plum (highest)
 const defaultOptions: TCOOption[] = [
-  { id: "optionA", name: "Buy Outright", color: "hsl(174, 30%, 45%)", totalTCO: 485000 },
-  { id: "optionB", name: "3-Year Lease", color: "hsl(220, 25%, 55%)", totalTCO: 520000 },
-  { id: "optionC", name: "Subscription", color: "hsl(260, 20%, 52%)", totalTCO: 595000 },
+  { id: "optionA", name: "Buy Outright", color: "hsl(174, 35%, 38%)", totalTCO: 485000 },
+  { id: "optionB", name: "3-Year Lease", color: "hsl(35, 28%, 45%)", totalTCO: 520000 },
+  { id: "optionC", name: "Subscription", color: "hsl(358, 38%, 48%)", totalTCO: 595000 },
 ];
+
+const PALETTE_BY_RANK = ["hsl(174, 35%, 38%)", "hsl(35, 28%, 45%)", "hsl(358, 38%, 48%)", "hsl(220, 22%, 48%)"];
 
 const defaultData: TCODataPoint[] = [
   { year: "Y0", optionA: 350000, optionB: 50000, optionC: 80000 },
@@ -68,8 +71,14 @@ const TCOComparisonDashboard = ({
   parsedData,
 }: TCOComparisonDashboardProps) => {
   const effectiveData = parsedData?.data || data;
-  const effectiveOptions = parsedData?.options || options;
+  const rawOptions = parsedData?.options || options;
   const effectiveCurrency = parsedData?.currency || currency;
+  // Rank-based color override so best=teal, mid=amber, worst=plum regardless of input order.
+  const ranked = [...rawOptions].sort((a, b) => a.totalTCO - b.totalTCO);
+  const colorById = new Map(
+    ranked.map((opt, i) => [opt.id, PALETTE_BY_RANK[Math.min(i, PALETTE_BY_RANK.length - 1)]]),
+  );
+  const effectiveOptions = rawOptions.map((opt) => ({ ...opt, color: colorById.get(opt.id) || opt.color }));
   const sortedOptions = [...effectiveOptions].sort((a, b) => a.totalTCO - b.totalTCO);
   const lowestTCO = sortedOptions[0];
   const runnerUp = sortedOptions[1];
@@ -130,17 +139,23 @@ const TCOComparisonDashboard = ({
             </div>
           </div>
           <div className="flex items-start gap-3 flex-shrink-0">
-            <div className="max-w-[280px] rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-0.5">
+            <div
+              className="max-w-[280px] rounded-md border px-3 py-2"
+              style={{ borderColor: "hsl(174, 35%, 38%, 0.25)", backgroundColor: "hsl(174, 35%, 38%, 0.06)" }}
+            >
+              <p
+                className="text-[10px] uppercase tracking-wider font-semibold mb-0.5"
+                style={{ color: "hsl(174, 35%, 38%)" }}
+              >
                 Conclusion
               </p>
               <p className="text-xs text-foreground leading-snug">{conclusion}</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-semibold text-primary">
+              <p className="text-lg font-semibold tabular-nums" style={{ color: "hsl(174, 35%, 38%)" }}>
                 {formatCurrency(savings, effectiveCurrency)}
               </p>
-              <p className="text-xs text-muted-foreground">potential savings</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">potential savings</p>
             </div>
           </div>
         </div>
@@ -148,7 +163,7 @@ const TCOComparisonDashboard = ({
 
       <CardContent className="space-y-4">
         {/* Legend */}
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
           {effectiveOptions.map((opt) => (
             <div key={opt.id} className="flex items-center gap-1.5 text-xs">
               <div className="w-3 h-3 rounded" style={{ backgroundColor: opt.color }} />
@@ -227,8 +242,17 @@ const TCOComparisonDashboard = ({
                     <td className="py-1.5 text-right text-foreground font-medium">
                       {formatCurrency(opt.totalTCO, effectiveCurrency)}
                     </td>
-                    <td className={`py-1.5 text-right ${diff === 0 ? "text-primary" : "text-muted-foreground"}`}>
-                      {diff === 0 ? "Best" : `+${formatCurrency(diff, effectiveCurrency)}`}
+                    <td className="py-1.5 text-right tabular-nums">
+                      {diff === 0 ? (
+                        <span
+                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                          style={{ color: "hsl(174, 35%, 38%)", backgroundColor: "hsl(174, 35%, 38%, 0.1)" }}
+                        >
+                          Best
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">+{formatCurrency(diff, effectiveCurrency)}</span>
+                      )}
                     </td>
                   </tr>
                 );
