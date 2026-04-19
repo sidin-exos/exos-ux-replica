@@ -234,10 +234,10 @@ const CostWaterfallDashboard = ({
             <Legend data={costItems} palette={GREY_PALETTE} currency={effectiveCurrency} total={grossCost} />
           </div>
 
-          {/* Potential Improvements — primary */}
+          {/* Potential Improvements — teal */}
           <div className="space-y-3">
             <div className="text-center">
-              <p className="text-xs uppercase tracking-wide text-primary">Potential Improvements</p>
+              <p className="text-xs uppercase tracking-wide font-medium" style={{ color: COLOR_TEAL }}>Potential Improvements</p>
               <p className="text-[11px] text-muted-foreground/80">Identified savings levers</p>
             </div>
             {reductionItems.length > 0 ? (
@@ -273,8 +273,8 @@ const CostWaterfallDashboard = ({
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Reductions</p>
-              <p className="text-sm font-semibold text-primary">
-                -{formatCurrency(totalReductions, effectiveCurrency)}
+              <p className="text-sm font-semibold tabular-nums" style={{ color: COLOR_TEAL }}>
+                −{formatCurrency(totalReductions, effectiveCurrency)}
               </p>
             </div>
             <div>
