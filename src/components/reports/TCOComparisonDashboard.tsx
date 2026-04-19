@@ -71,8 +71,14 @@ const TCOComparisonDashboard = ({
   parsedData,
 }: TCOComparisonDashboardProps) => {
   const effectiveData = parsedData?.data || data;
-  const effectiveOptions = parsedData?.options || options;
+  const rawOptions = parsedData?.options || options;
   const effectiveCurrency = parsedData?.currency || currency;
+  // Rank-based color override so best=teal, mid=amber, worst=plum regardless of input order.
+  const ranked = [...rawOptions].sort((a, b) => a.totalTCO - b.totalTCO);
+  const colorById = new Map(
+    ranked.map((opt, i) => [opt.id, PALETTE_BY_RANK[Math.min(i, PALETTE_BY_RANK.length - 1)]]),
+  );
+  const effectiveOptions = rawOptions.map((opt) => ({ ...opt, color: colorById.get(opt.id) || opt.color }));
   const sortedOptions = [...effectiveOptions].sort((a, b) => a.totalTCO - b.totalTCO);
   const lowestTCO = sortedOptions[0];
   const runnerUp = sortedOptions[1];
