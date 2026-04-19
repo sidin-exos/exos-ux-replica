@@ -194,7 +194,7 @@ const InflationPlatform = () => {
                       <p className="text-muted-foreground">No trackers yet. Create your first tracker to start monitoring.</p>
                       <Button
                         onClick={() => navigate('/enterprise/inflation/setup')}
-                        className="bg-gradient-to-r from-primary via-iris to-copper text-white font-semibold shadow-brand hover:opacity-90 transition-opacity"
+                        variant="outline"
                       >
                         <TrendingUp className="w-4 h-4 mr-2" />
                         Create Your First Tracker
