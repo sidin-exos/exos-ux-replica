@@ -146,9 +146,9 @@ const DataFlowDiagram = () => {
             {/* Down Arrow: Cloud AI → User Interface */}
             <VerticalConnector />
 
-            {/* Layer 4: User Interface */}
-            <div className="w-full max-w-sm">
-              <LayerCard layer={layers.output} centered />
+            {/* Layer 4: User Interface — 3 icons */}
+            <div className="w-full max-w-2xl">
+              <OutputLayerCard icons={outputIcons} />
             </div>
           </div>
 
