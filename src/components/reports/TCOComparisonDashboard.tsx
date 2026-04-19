@@ -242,8 +242,17 @@ const TCOComparisonDashboard = ({
                     <td className="py-1.5 text-right text-foreground font-medium">
                       {formatCurrency(opt.totalTCO, effectiveCurrency)}
                     </td>
-                    <td className={`py-1.5 text-right ${diff === 0 ? "text-primary" : "text-muted-foreground"}`}>
-                      {diff === 0 ? "Best" : `+${formatCurrency(diff, effectiveCurrency)}`}
+                    <td className="py-1.5 text-right tabular-nums">
+                      {diff === 0 ? (
+                        <span
+                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                          style={{ color: "hsl(174, 35%, 38%)", backgroundColor: "hsl(174, 35%, 38%, 0.1)" }}
+                        >
+                          Best
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">+{formatCurrency(diff, effectiveCurrency)}</span>
+                      )}
                     </td>
                   </tr>
                 );
