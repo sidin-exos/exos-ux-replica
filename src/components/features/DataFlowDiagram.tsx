@@ -421,4 +421,94 @@ const MobileConnector = () => (
   </div>
 );
 
+/* Bloomberg-style tabbed Cloud AI Layer Card */
+const CloudAILayerCard = ({ mobile = false }: { mobile?: boolean }) => {
+  const [activeTab, setActiveTab] = useState(0);
+  const agent = cloudAgents[activeTab];
+
+  return (
+    <div
+      className={cn(
+        "glass-effect rounded-xl border border-border/40",
+        mobile ? "p-4" : "p-5"
+      )}
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-border/40">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-muted">
+            <Cloud className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
+              Layer 3
+            </span>
+            <h4 className="font-display font-semibold text-foreground text-base leading-tight">
+              Cloud AI
+            </h4>
+          </div>
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
+          3 Agents
+        </span>
+      </div>
+
+      {/* Tab strip */}
+      <div role="tablist" className="flex gap-0 border-b border-border/40 mb-3">
+        {cloudAgents.map((a, i) => {
+          const isActive = i === activeTab;
+          return (
+            <button
+              key={a.short}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(i)}
+              className={cn(
+                "flex-1 px-2 py-2 text-xs font-mono tracking-wider uppercase transition-colors border-b-2 -mb-px",
+                isActive
+                  ? "text-primary border-primary"
+                  : "text-muted-foreground border-transparent hover:text-foreground hover:border-border"
+              )}
+            >
+              <span className="font-semibold">{a.short}</span>
+              <span className="hidden sm:inline ml-1.5 normal-case tracking-normal text-[11px]">
+                {a.name.replace(" Agent", "")}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab content — data table style */}
+      <div className="space-y-2 font-mono text-xs">
+        <div className="flex gap-3">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground w-16 pt-0.5 shrink-0">
+            Role
+          </span>
+          <span className="text-foreground/90 leading-snug normal-case font-sans">
+            {agent.role}
+          </span>
+        </div>
+        <div className="flex gap-3">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground w-16 pt-0.5 shrink-0">
+            Output
+          </span>
+          <span className="text-foreground/80 leading-snug normal-case font-sans">
+            {agent.output}
+          </span>
+        </div>
+        <div className="flex gap-3">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground w-16 pt-0.5 shrink-0">
+            Status
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-primary">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            Active
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default DataFlowDiagram;
