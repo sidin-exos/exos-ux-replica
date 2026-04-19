@@ -132,9 +132,9 @@ const DataFlowDiagram = () => {
             {/* Bidirectional Arrow: Core Engine ↔ Cloud AI */}
             <VerticalBidirectionalConnector />
 
-            {/* Layer 3: Cloud AI */}
-            <div className="w-full max-w-sm">
-              <LayerCard layer={layers.cloud} centered />
+            {/* Layer 3: Cloud AI — Bloomberg-style tabbed */}
+            <div className="w-full max-w-2xl">
+              <CloudAILayerCard />
             </div>
 
             {/* Down Arrow: Cloud AI → User Interface */}
