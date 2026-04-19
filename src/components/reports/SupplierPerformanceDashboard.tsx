@@ -30,9 +30,9 @@ const SupplierPerformanceDashboard = ({ parsedData }: SupplierPerformanceDashboa
   const maxSpend = Math.max(...spends, 1);
 
   const getTier = (score: number) => {
-    if (score >= 85) return { color: "hsl(var(--success))", label: "≥85" };
-    if (score >= 70) return { color: "hsl(var(--warning))", label: "70–84" };
-    return { color: "hsl(var(--destructive))", label: "<70" };
+    if (score >= 85) return { color: "hsl(var(--success) / 0.55)", label: "≥85" };
+    if (score >= 70) return { color: "hsl(var(--warning) / 0.55)", label: "70–84" };
+    return { color: "hsl(var(--destructive) / 0.55)", label: "<70" };
   };
 
   const getTrendIcon = (trend: string) => {
