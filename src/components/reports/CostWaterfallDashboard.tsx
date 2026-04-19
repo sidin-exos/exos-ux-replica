@@ -181,14 +181,39 @@ const CostWaterfallDashboard = ({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-lg font-semibold text-foreground">
+            <p className="text-lg font-semibold text-foreground tabular-nums">
               {formatCurrency(netCost, effectiveCurrency)}
             </p>
-            <p className="text-xs text-primary">
-              {formatCurrency(totalReductions, effectiveCurrency)} saved ({reductionPercent}%)
+            <p className="text-xs tabular-nums" style={{ color: COLOR_TEAL }}>
+              −{formatCurrency(totalReductions, effectiveCurrency)} saved ({reductionPercent}%)
             </p>
           </div>
         </div>
+
+        {/* Tier distribution bar: each cost segment + savings tail */}
+        {grossCost > 0 && (
+          <div className="mt-4 flex h-2 w-full overflow-hidden rounded-full bg-muted">
+            {costItems.map((c, i) => {
+              const pct = (c.value / (grossCost + totalReductions)) * 100;
+              return (
+                <div
+                  key={`c-${c.name}`}
+                  style={{ width: `${pct}%`, backgroundColor: GREY_PALETTE[i % GREY_PALETTE.length] }}
+                  title={`${c.name}: ${formatCurrency(c.value, effectiveCurrency)}`}
+                />
+              );
+            })}
+            {totalReductions > 0 && (
+              <div
+                style={{
+                  width: `${(totalReductions / (grossCost + totalReductions)) * 100}%`,
+                  backgroundColor: COLOR_TEAL,
+                }}
+                title={`Savings: −${formatCurrency(totalReductions, effectiveCurrency)}`}
+              />
+            )}
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-4">
