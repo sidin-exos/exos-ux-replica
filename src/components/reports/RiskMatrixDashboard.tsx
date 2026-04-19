@@ -83,7 +83,7 @@ const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_180px] gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-5">
           {/* Compact Matrix */}
           <div className="relative flex">
             <div className="flex items-center justify-center w-5">
