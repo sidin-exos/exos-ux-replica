@@ -36,6 +36,16 @@ const step1Schema = z.object({
   password: z.string().min(10, "Password must be at least 10 characters"),
 });
 
+const step1InviteSchema = z.object({
+  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  workEmail: z
+    .string()
+    .trim()
+    .email("Please enter a valid email")
+    .max(255),
+  password: z.string().min(10, "Password must be at least 10 characters"),
+});
+
 const step2Schema = z.object({
   jobTitle: z.string().trim().min(2, "Job title is required").max(200),
   industry: z.string().min(1, "Please select an industry"),
@@ -43,8 +53,14 @@ const step2Schema = z.object({
   referralSource: z.string().optional(),
 });
 
+const step2InviteSchema = z.object({
+  jobTitle: z.string().trim().min(2, "Job title is required").max(200),
+});
+
 type Step1Values = z.infer<typeof step1Schema>;
+type Step1InviteValues = z.infer<typeof step1InviteSchema>;
 type Step2Values = z.infer<typeof step2Schema>;
+type Step2InviteValues = z.infer<typeof step2InviteSchema>;
 
 const COMPANY_SIZES = [
   { value: "1-50", label: "1–50 employees" },
@@ -82,7 +98,11 @@ function deriveCohort(companySize: string): string {
   return "C3";
 }
 
-const SignUpForm = () => {
+interface SignUpFormProps {
+  inviteToken?: string;
+}
+
+const SignUpForm = ({ inviteToken }: SignUpFormProps = {}) => {
   const { toast } = useToast();
   const { data: industryContexts } = useIndustryContexts();
   const [searchParams] = useSearchParams();
@@ -92,13 +112,15 @@ const SignUpForm = () => {
   const [success, setSuccess] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
 
+  const isInviteMode = !!inviteToken;
+
   // Consents (managed outside react-hook-form for simplicity)
   const [consentTerms, setConsentTerms] = useState(false);
   const [consentDataProcessing, setConsentDataProcessing] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
 
   const step1Form = useForm<Step1Values>({
-    resolver: zodResolver(step1Schema),
+    resolver: zodResolver(isInviteMode ? (step1InviteSchema as unknown as typeof step1Schema) : step1Schema),
     mode: "onChange",
     defaultValues: {
       fullName: "",
@@ -111,7 +133,7 @@ const SignUpForm = () => {
   });
 
   const step2Form = useForm<Step2Values>({
-    resolver: zodResolver(step2Schema),
+    resolver: zodResolver(isInviteMode ? (step2InviteSchema as unknown as typeof step2Schema) : step2Schema),
     mode: "onChange",
     defaultValues: {
       jobTitle: "",
@@ -137,28 +159,36 @@ const SignUpForm = () => {
       const utmMedium = searchParams.get("utm_medium") || undefined;
       const utmCampaign = searchParams.get("utm_campaign") || undefined;
 
+      const baseMetadata = {
+        full_name: s1.fullName,
+        job_title: step2Values.jobTitle,
+        consent_terms: true,
+        consent_data_processing: true,
+        consent_marketing: consentMarketing,
+        utm_source: utmSource,
+        utm_medium: utmMedium,
+        utm_campaign: utmCampaign,
+      };
+
+      const metadata = isInviteMode
+        ? { ...baseMetadata, invite_token: inviteToken }
+        : {
+            ...baseMetadata,
+            company_name: s1.companyName,
+            company_size: s1.companySize,
+            country: s1.country,
+            industry: step2Values.industry,
+            primary_challenge: step2Values.primaryChallenge,
+            referral_source: step2Values.referralSource || undefined,
+            cohort: deriveCohort(s1.companySize),
+          };
+
       const { error } = await supabase.auth.signUp({
         email: s1.workEmail,
         password: s1.password,
         options: {
           emailRedirectTo: window.location.origin + "/auth",
-          data: {
-            full_name: s1.fullName,
-            company_name: s1.companyName,
-            company_size: s1.companySize,
-            country: s1.country,
-            job_title: step2Values.jobTitle,
-            industry: step2Values.industry,
-            primary_challenge: step2Values.primaryChallenge,
-            referral_source: step2Values.referralSource || undefined,
-            consent_terms: true,
-            consent_data_processing: true,
-            consent_marketing: consentMarketing,
-            cohort: deriveCohort(s1.companySize),
-            utm_source: utmSource,
-            utm_medium: utmMedium,
-            utm_campaign: utmCampaign,
-          },
+          data: metadata,
         },
       });
 
@@ -216,6 +246,12 @@ const SignUpForm = () => {
 
   return (
     <div className="space-y-6">
+      {isInviteMode && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground">
+          You've been invited to join a team on EXOS. Finish creating your account to accept.
+        </div>
+      )}
+
       <StepIndicator currentStep={step} />
 
       {step === 1 && (
@@ -291,62 +327,66 @@ const SignUpForm = () => {
               )}
             />
 
-            <p className="text-[11px] uppercase tracking-widest text-primary font-medium pt-2">
-              Company Information
-            </p>
+            {!isInviteMode && (
+              <>
+                <p className="text-[11px] uppercase tracking-widest text-primary font-medium pt-2">
+                  Company Information
+                </p>
 
-            <FormField
-              control={step1Form.control}
-              name="companyName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Acme Corp" className="h-11" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={step1Form.control}
+                  name="companyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Acme Corp" className="h-11" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={step1Form.control}
-              name="companySize"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Size</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select size…" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {COMPANY_SIZES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={step1Form.control}
+                  name="companySize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Size</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Select size…" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COMPANY_SIZES.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>
+                              {s.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={step1Form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <CountrySelect value={field.value} onValueChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={step1Form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <CountrySelect value={field.value} onValueChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             <Button
               type="submit"
@@ -394,87 +434,91 @@ const SignUpForm = () => {
               )}
             />
 
-            <FormField
-              control={step2Form.control}
-              name="industry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Industry</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select industry…" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {industryContexts?.map((ic) => (
-                        <SelectItem key={ic.slug} value={ic.slug}>
-                          {ic.name}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!isInviteMode && (
+              <>
+                <FormField
+                  control={step2Form.control}
+                  name="industry"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Industry</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Select industry…" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {industryContexts?.map((ic) => (
+                            <SelectItem key={ic.slug} value={ic.slug}>
+                              {ic.name}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={step2Form.control}
-              name="primaryChallenge"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Main Procurement Challenge{" "}
-                    <span className="text-muted-foreground text-xs">(optional)</span>
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="What are you trying to solve?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {CHALLENGES.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={step2Form.control}
+                  name="primaryChallenge"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Main Procurement Challenge{" "}
+                        <span className="text-muted-foreground text-xs">(optional)</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="What are you trying to solve?" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {CHALLENGES.map((c) => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={step2Form.control}
-              name="referralSource"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    How did you hear about us?{" "}
-                    <span className="text-muted-foreground text-xs">(optional)</span>
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select…" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {REFERRAL_SOURCES.map((r) => (
-                        <SelectItem key={r.value} value={r.value}>
-                          {r.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={step2Form.control}
+                  name="referralSource"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        How did you hear about us?{" "}
+                        <span className="text-muted-foreground text-xs">(optional)</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Select…" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {REFERRAL_SOURCES.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>
+                              {r.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             <div className="pt-2">
               <ConsentBlock

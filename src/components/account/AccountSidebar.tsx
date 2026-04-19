@@ -43,6 +43,14 @@ const SECTIONS = [
   { id: "billing", label: "Billing & Invoices" },
 ];
 
+const ADMIN_SECTIONS = [
+  { id: "profile", label: "Profile Overview" },
+  { id: "plan", label: "Plan & Usage" },
+  { id: "team", label: "Team" },
+  { id: "files", label: "Storage Assets" },
+  { id: "billing", label: "Billing & Invoices" },
+];
+
 const AccountSidebar = ({
   profile,
   email,
@@ -182,7 +190,7 @@ const AccountSidebar = ({
 
       {/* Section nav */}
       <nav className="space-y-3 text-sm px-2">
-        {SECTIONS.map((s) => (
+        {(profile.role === "admin" ? ADMIN_SECTIONS : SECTIONS).map((s) => (
           <button
             key={s.id}
             onClick={() => onSectionChange(s.id)}
