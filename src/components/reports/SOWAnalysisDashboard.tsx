@@ -12,12 +12,12 @@ const MAX_SCORE = 5;
 const defaultSowAnalysis = {
   clarity: 3.5, // 5-star scale
   sections: [
-    { name: "Scope Definition", status: "partial", note: "Vague deliverables in 3.2, 4.1" },
-    { name: "Timeline & Milestones", status: "complete", note: "Clear schedule defined" },
-    { name: "Payment Terms", status: "partial", note: "No milestone-based structure" },
-    { name: "IP & Ownership", status: "complete", note: "Assignment clause present" },
-    { name: "SLA & Performance", status: "missing", note: "No uptime guarantees" },
-    { name: "Termination Rights", status: "missing", note: "Clause not found" },
+    { name: "Scope Definition", status: "partial", note: "Deliverables in sections 3.2 and 4.1 are vague and lack measurable acceptance criteria, leaving room for scope creep and disputes during execution and final sign-off." },
+    { name: "Timeline & Milestones", status: "complete", note: "Schedule is clearly defined with specific dates, dependencies, and milestone owners, providing a solid baseline for tracking progress and managing delivery risk." },
+    { name: "Payment Terms", status: "partial", note: "Payment schedule is present but not tied to milestone completion or deliverable acceptance, creating cash-flow exposure if work slips or quality issues arise post-invoicing." },
+    { name: "IP & Ownership", status: "complete", note: "Intellectual property assignment clause is explicitly included, covering work product, derivative works, and background IP usage rights for both parties throughout the engagement." },
+    { name: "SLA & Performance", status: "missing", note: "No service level agreements, uptime guarantees, response times, or performance KPIs are defined, leaving the buyer without contractual remedies if delivery quality degrades." },
+    { name: "Termination Rights", status: "missing", note: "Termination clauses are absent, including notice periods, cause vs convenience triggers, and wind-down obligations, exposing both parties to costly disputes if the relationship ends." },
   ],
   recommendations: [
     "Add specific deliverable acceptance criteria",
