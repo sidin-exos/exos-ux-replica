@@ -130,7 +130,7 @@ const RiskMatrixDashboard = ({ parsedData }: RiskMatrixDashboardProps) => {
                 <span>Medium</span>
                 <span>High</span>
               </div>
-              <p className="text-[10px] text-muted-foreground text-center mt-0.5 tracking-wide uppercase">
+              <p className="text-xs font-bold text-foreground text-center mt-1 tracking-wide uppercase">
                 Probability
               </p>
             </div>
