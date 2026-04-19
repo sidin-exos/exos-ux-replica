@@ -179,6 +179,7 @@ const Features = () => {
       icon: Layers,
       title: "Scenarios",
       description: "Pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.",
+      accent: "teal" as const,
       highlights: [
         "29 procurement-specific AI scenarios",
         "Multi-cycle Chain of Experts pipeline",
@@ -190,6 +191,7 @@ const Features = () => {
       icon: TrendingUp,
       title: "Inflation Monitor & Risk Assessment Platform",
       description: "Continuously track the noise, surface what's changed, and flag only what requires your decision.",
+      accent: "teal" as const,
       highlights: [
         "Automated inflation driver scanning",
         "Risk event detection & alerting",
@@ -201,6 +203,7 @@ const Features = () => {
       icon: Database,
       title: "Market Intelligence & Knowledge Base",
       description: "Use Market Intelligence as a self-sufficient tool or inject live market context from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
+      accent: "plum" as const,
       highlights: [
         "Live supplier & category intelligence",
         "30+ industry grounding profiles",
@@ -212,6 +215,7 @@ const Features = () => {
       icon: Lock,
       title: "Commercial Data Safety",
       description: "Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.",
+      accent: "amber" as const,
       highlights: [
         "Semantic anonymization of commercial data",
         "PII and financial identifier masking",
@@ -221,6 +225,12 @@ const Features = () => {
       link: "/architecture"
     }
   ];
+
+  const accentMap = {
+    teal: { bg: "hsl(174, 35%, 38%)", soft: "hsl(174, 35%, 38% / 0.12)", text: "hsl(174, 35%, 38%)" },
+    plum: { bg: "hsl(358, 38%, 48%)", soft: "hsl(358, 38%, 48% / 0.12)", text: "hsl(358, 38%, 48%)" },
+    amber: { bg: "hsl(35, 28%, 45%)", soft: "hsl(35, 28%, 45% / 0.12)", text: "hsl(35, 28%, 45%)" },
+  };
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -248,40 +258,47 @@ const Features = () => {
         {/* Value Props */}
         <section className="mb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {valuePropositions.map((prop, index) => (
-              <Card
-                key={prop.title}
-                className="card-elevated animate-fade-up border-border/50 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
-                style={{ animationDelay: `${100 + index * 80}ms` }}
-              >
-                <div className="flex flex-col h-full p-5">
-                  <div className="flex items-start gap-4 mb-3">
-                    <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                      <prop.icon className="w-5 h-5 text-primary-foreground" />
+            {valuePropositions.map((prop, index) => {
+              const accent = accentMap[prop.accent];
+              return (
+                <Card
+                  key={prop.title}
+                  className="card-elevated animate-fade-up border-border/50 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
+                  style={{ animationDelay: `${100 + index * 80}ms` }}
+                >
+                  <div className="flex flex-col h-full p-5">
+                    <div className="flex items-start gap-4 mb-3">
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 border border-border/40"
+                        style={{ backgroundColor: accent.soft }}
+                      >
+                        <prop.icon className="w-5 h-5" style={{ color: accent.text }} />
+                      </div>
+                      <h3 className="font-display text-lg font-semibold leading-tight pt-1.5">{prop.title}</h3>
                     </div>
-                    <h3 className="font-display text-lg font-semibold leading-tight pt-1.5">{prop.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
+                    <div className="flex flex-col gap-1 mt-auto">
+                      {prop.highlights.map((h) => (
+                        <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70 transition-transform duration-200 hover:translate-x-1">
+                          <ArrowRight className="w-2.5 h-2.5 flex-shrink-0" style={{ color: accent.text }} />
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                    {"link" in prop && prop.link && (
+                      <NavLink
+                        to={prop.link as string}
+                        className="inline-flex items-center gap-1.5 mt-3 text-xs hover:opacity-80 transition-opacity"
+                        style={{ color: accent.text }}
+                      >
+                        Learn about EXOS architecture
+                        <ArrowRight className="w-3 h-3" />
+                      </NavLink>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">{prop.description}</p>
-                  <div className="flex flex-col gap-1 mt-auto">
-                    {prop.highlights.map((h) => (
-                      <span key={h} className="flex items-center gap-1.5 text-xs text-foreground/70 transition-transform duration-200 hover:translate-x-1">
-                        <ArrowRight className="w-2.5 h-2.5 text-primary flex-shrink-0" />
-                        {h}
-                      </span>
-                    ))}
-                  </div>
-                  {"link" in prop && prop.link && (
-                    <NavLink
-                      to={prop.link as string}
-                      className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:text-primary/80 transition-colors"
-                    >
-                      Learn about EXOS architecture
-                      <ArrowRight className="w-3 h-3" />
-                    </NavLink>
-                  )}
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </section>
 
