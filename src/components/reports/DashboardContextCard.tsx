@@ -1,17 +1,46 @@
 import { Badge } from "@/components/ui/badge";
 import { DashboardConfig, DashboardType } from "@/lib/dashboard-mappings";
-import { getDashboardScenarioTitles, getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
+import { getDashboardScenarioInfo, getDashboardScenarioCount } from "@/lib/dashboard-scenario-mapping";
 import { useState } from "react";
 import { ChevronDown, ChevronUp, BarChart3, HelpCircle, Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Scenario } from "@/lib/scenarios";
 
 interface DashboardContextCardProps {
   dashboardId: DashboardType;
   config: DashboardConfig;
 }
 
+const CATEGORY_CHIP: Record<Scenario["category"], { bg: string; border: string; iconBg: string; iconText: string }> = {
+  analysis: {
+    bg: "bg-copper/10 hover:bg-copper/20",
+    border: "border-copper/40",
+    iconBg: "bg-copper/20",
+    iconText: "text-copper",
+  },
+  planning: {
+    bg: "bg-iris/10 hover:bg-iris/20",
+    border: "border-iris/40",
+    iconBg: "bg-iris/20",
+    iconText: "text-iris",
+  },
+  risk: {
+    bg: "bg-destructive/10 hover:bg-destructive/20",
+    border: "border-destructive/40",
+    iconBg: "bg-destructive/15",
+    iconText: "text-destructive",
+  },
+  documentation: {
+    bg: "bg-info/10 hover:bg-info/20",
+    border: "border-info/40",
+    iconBg: "bg-info/20",
+    iconText: "text-info",
+  },
+};
+
 const DashboardContextCard = ({ dashboardId, config }: DashboardContextCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const scenarioTitles = getDashboardScenarioTitles(dashboardId);
+  const scenarioInfo = getDashboardScenarioInfo(dashboardId);
   const scenarioCount = getDashboardScenarioCount(dashboardId);
 
   return (
