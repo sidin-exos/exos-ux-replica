@@ -179,6 +179,7 @@ const Features = () => {
       icon: Layers,
       title: "Scenarios",
       description: "Pre-defined agentic AI flows enriched with procurement methodological layer, agentic loops, and custom LLM settings.",
+      accent: "teal" as const,
       highlights: [
         "29 procurement-specific AI scenarios",
         "Multi-cycle Chain of Experts pipeline",
@@ -190,6 +191,7 @@ const Features = () => {
       icon: TrendingUp,
       title: "Inflation Monitor & Risk Assessment Platform",
       description: "Continuously track the noise, surface what's changed, and flag only what requires your decision.",
+      accent: "teal" as const,
       highlights: [
         "Automated inflation driver scanning",
         "Risk event detection & alerting",
@@ -201,6 +203,7 @@ const Features = () => {
       icon: Database,
       title: "Market Intelligence & Knowledge Base",
       description: "Use Market Intelligence as a self-sufficient tool or inject live market context from our Knowledge Base directly into AI results — benchmarks, risks, pricing signals, regulatory shifts.",
+      accent: "plum" as const,
       highlights: [
         "Live supplier & category intelligence",
         "30+ industry grounding profiles",
@@ -212,6 +215,7 @@ const Features = () => {
       icon: Lock,
       title: "Commercial Data Safety",
       description: "Your sensitive commercial data is masked before reaching external APIs — then grounded and validated on the way back.",
+      accent: "amber" as const,
       highlights: [
         "Semantic anonymization of commercial data",
         "PII and financial identifier masking",
@@ -221,6 +225,12 @@ const Features = () => {
       link: "/architecture"
     }
   ];
+
+  const accentMap = {
+    teal: { bg: "hsl(174, 35%, 38%)", soft: "hsl(174, 35%, 38% / 0.12)", text: "hsl(174, 35%, 38%)" },
+    plum: { bg: "hsl(358, 38%, 48%)", soft: "hsl(358, 38%, 48% / 0.12)", text: "hsl(358, 38%, 48%)" },
+    amber: { bg: "hsl(35, 28%, 45%)", soft: "hsl(35, 28%, 45% / 0.12)", text: "hsl(35, 28%, 45%)" },
+  };
 
   return (
     <div className="min-h-screen gradient-hero">
