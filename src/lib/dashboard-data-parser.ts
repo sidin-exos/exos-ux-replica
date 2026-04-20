@@ -136,6 +136,19 @@ export interface DataQualityData {
   limitations?: { title: string; impact: string }[];
 }
 
+// Wave 1 — re-exported from sentinel/types so dashboards have a single import surface.
+export type {
+  ShouldCostGapData,
+  SavingsRealizationFunnelData,
+  SavingsClassification,
+  CFOAcceptance,
+} from "./sentinel/types";
+
+import type {
+  ShouldCostGapData as _ShouldCostGapData,
+  SavingsRealizationFunnelData as _SavingsRealizationFunnelData,
+} from "./sentinel/types";
+
 // ============================================
 // Top-level union type
 // ============================================
@@ -155,6 +168,8 @@ export interface DashboardData {
   sowAnalysis?: SOWAnalysisData;
   negotiationPrep?: NegotiationPrepData;
   dataQuality?: DataQualityData;
+  shouldCostGap?: _ShouldCostGapData;
+  savingsRealizationFunnel?: _SavingsRealizationFunnelData;
 }
 
 // ============================================
@@ -179,6 +194,8 @@ const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
   sow_analysis: 'sowAnalysis',
   negotiation_prep: 'negotiationPrep',
   data_quality: 'dataQuality',
+  should_cost_gap: 'shouldCostGap',
+  savings_realization_funnel: 'savingsRealizationFunnel',
 };
 
 const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
