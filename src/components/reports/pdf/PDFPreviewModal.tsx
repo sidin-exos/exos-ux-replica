@@ -122,7 +122,8 @@ const PDFPreviewModal = ({
           structuredData,
           formData,
           timestamp,
-          selectedDashboards,
+          // Edge function still uses legacy dashboard ids; translate at the boundary.
+          selectedDashboards: selectedDashboards.map(toLegacyDashboardId),
           pdfTheme,
           evaluationScore: evaluationScore ?? undefined,
           evaluationConfidence: evaluationConfidence ?? undefined,
