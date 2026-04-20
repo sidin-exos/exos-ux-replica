@@ -117,3 +117,41 @@ describe("getDashboardScenarios — wiring fixes", () => {
     expect(getDashboardScenarios("sensitivity-spider")).not.toContain("supplier-dependency-planner");
   });
 });
+
+describe("audit cull — 6 weak-fit scenario wirings removed", () => {
+  it("tco-comparison drops cost-breakdown but keeps tco-analysis", () => {
+    const scenarios = getDashboardScenarios("tco-comparison");
+    expect(scenarios).not.toContain("cost-breakdown");
+    expect(scenarios).toContain("tco-analysis");
+  });
+
+  it("should-cost-gap drops savings-calculation but keeps cost-breakdown and negotiation-preparation", () => {
+    const scenarios = getDashboardScenarios("should-cost-gap");
+    expect(scenarios).not.toContain("savings-calculation");
+    expect(scenarios).toContain("cost-breakdown");
+    expect(scenarios).toContain("negotiation-preparation");
+  });
+
+  it("working-capital-dpo drops forecasting-budgeting and category-strategy but keeps savings-calculation and spend-analysis-categorization", () => {
+    const scenarios = getDashboardScenarios("working-capital-dpo");
+    expect(scenarios).not.toContain("forecasting-budgeting");
+    expect(scenarios).not.toContain("category-strategy");
+    expect(scenarios).toContain("savings-calculation");
+    expect(scenarios).toContain("spend-analysis-categorization");
+  });
+
+  it("timeline-roadmap drops supplier-review but keeps category-strategy, procurement-project-planning, disruption-management", () => {
+    const scenarios = getDashboardScenarios("timeline-roadmap");
+    expect(scenarios).not.toContain("supplier-review");
+    expect(scenarios).toContain("category-strategy");
+    expect(scenarios).toContain("procurement-project-planning");
+    expect(scenarios).toContain("disruption-management");
+  });
+
+  it("savings-realization-funnel drops volume-consolidation but keeps savings-calculation and category-strategy", () => {
+    const scenarios = getDashboardScenarios("savings-realization-funnel");
+    expect(scenarios).not.toContain("volume-consolidation");
+    expect(scenarios).toContain("savings-calculation");
+    expect(scenarios).toContain("category-strategy");
+  });
+});
