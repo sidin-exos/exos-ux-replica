@@ -648,19 +648,45 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
   parts.push(parsed.summary);
   parts.push('');
 
+  // Defensive coercion: AI sometimes emits objects where strings are expected.
+  // Extract a sensible string field rather than letting `${obj}` render as "[object Object]".
+  const coerceToString = (v: unknown): string => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+    if (typeof v === 'object') {
+      const o = v as Record<string, unknown>;
+      const candidate = o.text ?? o.finding ?? o.bullet ?? o.description ?? o.summary ?? o.title ?? o.action ?? o.label;
+      if (typeof candidate === 'string') return candidate;
+      try { return JSON.stringify(v); } catch { return ''; }
+    }
+    return String(v);
+  };
+
   if (parsed.executive_bullets?.length > 0) {
     parts.push('### Key Findings');
-    parsed.executive_bullets.forEach(b => parts.push(`- ${b}`));
+    parsed.executive_bullets.forEach(b => {
+      const text = coerceToString(b).trim();
+      if (text && text !== '[object Object]') parts.push(`- ${text}`);
+    });
     parts.push('');
   }
 
   if (parsed.recommendations?.length > 0) {
     parts.push('### Recommendations');
-    parsed.recommendations.forEach((r, i) => {
-      const priority = r?.priority ?? 'Medium';
-      const action = r?.action ?? (typeof r === 'string' ? r : 'See details');
-      const impact = r?.financial_impact ? ` — ${r.financial_impact}` : '';
-      parts.push(`${i + 1}. **[${priority}]** ${action}${impact}`);
+    let idx = 0;
+    parsed.recommendations.forEach((r) => {
+      const isObj = r && typeof r === 'object';
+      const priority = (isObj && typeof (r as { priority?: unknown }).priority === 'string')
+        ? (r as { priority: string }).priority
+        : 'Medium';
+      const actionRaw = isObj ? (r as { action?: unknown }).action : r;
+      const action = (coerceToString(actionRaw).trim() || coerceToString(r).trim());
+      if (!action || action === '[object Object]' || action === 'See details') return;
+      const fi = isObj ? (r as { financial_impact?: unknown }).financial_impact : null;
+      const impact = fi ? ` — ${coerceToString(fi)}` : '';
+      idx += 1;
+      parts.push(`${idx}. **[${priority}]** ${action}${impact}`);
     });
     parts.push('');
   }
