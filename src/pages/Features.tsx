@@ -34,6 +34,8 @@ import SupplierPerformanceDashboard from "@/components/reports/SupplierPerforman
 import SOWAnalysisDashboard from "@/components/reports/SOWAnalysisDashboard";
 import NegotiationPrepDashboard from "@/components/reports/NegotiationPrepDashboard";
 import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
+import ShouldCostGapDashboard from "@/components/reports/ShouldCostGapDashboard";
+import SavingsRealizationFunnelDashboard from "@/components/reports/SavingsRealizationFunnelDashboard";
 import { LucideIcon } from "lucide-react";
 
 
@@ -97,6 +99,8 @@ const dashboardCategories: DashboardCategory[] = [
     dashboards: [
       { id: "cost-waterfall", subtitle: "Component cost breakdown" },
       { id: "tco-comparison", subtitle: "Total cost of ownership" },
+      { id: "should-cost-gap", subtitle: "Price vs benchmark headroom" },
+      { id: "savings-realization-funnel", subtitle: "Hard/Soft/Avoided savings funnel" },
       { id: "license-tier", subtitle: "License cost distribution" },
       { id: "sensitivity-spider", subtitle: "Assumption stress testing" },
     ],
@@ -153,6 +157,10 @@ const renderDashboard = (id: DashboardType) => {
       return <NegotiationPrepDashboard />;
     case "data-quality":
       return <DataQualityDashboard />;
+    case "should-cost-gap":
+      return <ShouldCostGapDashboard />;
+    case "savings-realization-funnel":
+      return <SavingsRealizationFunnelDashboard />;
     default:
       return null;
   }
