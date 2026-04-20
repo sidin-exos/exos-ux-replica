@@ -17,7 +17,9 @@ export type DashboardType =
   | "negotiation-prep"
   | "data-quality"
   | "should-cost-gap"
-  | "savings-realization-funnel";
+  | "savings-realization-funnel"
+  | "working-capital-dpo"
+  | "supplier-concentration-map";
 
 /**
  * Backwards-compatibility alias map for renamed dashboard IDs.
@@ -64,6 +66,13 @@ export interface DashboardConfig {
   keyMetrics: string[];
   whenToUse: string;
   questionsAnswered: string[];
+  /**
+   * Whether DashboardRenderer should fall back to the dashboard's hardcoded
+   * sample data when AI envelope data is missing. Defaults to true.
+   * Set to false for finance-sensitive dashboards where misleading sample
+   * figures could be mistaken for real benchmarks (e.g. working-capital-dpo).
+   */
+  showSampleDataFallback?: boolean;
 }
 
 export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
@@ -210,6 +219,25 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
     keyMetrics: ["Hard / Soft / Avoided segmentation", "Identified → Committed → Realized progression", "CFO-acceptance indicator", "Baseline verification status"],
     whenToUse: "Use to report savings in a way Finance will accept. Separates Hard P&L impact from Soft cost avoidance and inflation-protected (Avoided) value, and shows how much of identified savings actually realised.",
     questionsAnswered: ["How much of our reported savings is Finance-grade?", "Where does value leak between identified and realized?", "Is our baseline verified or estimated?"],
+  },
+  "working-capital-dpo": {
+    id: "working-capital-dpo",
+    name: "Working Capital & DPO",
+    description: "Payment-terms distribution and working-capital release potential",
+    icon: "Wallet",
+    keyMetrics: ["Current vs target weighted DPO", "Working capital impact (€)", "Payment terms distribution by spend share", "EU Late Payment Directive risk flags"],
+    whenToUse: "Use to surface the working-capital release available from a DPO extension and to flag suppliers whose terms exceed the EU 60-day B2B statutory limit.",
+    questionsAnswered: ["How much working capital can we release by extending payment terms?", "Which suppliers are above the EU 60-day Late Payment Directive limit?", "Are there early-payment discount opportunities worth taking?"],
+    showSampleDataFallback: false,
+  },
+  "supplier-concentration-map": {
+    id: "supplier-concentration-map",
+    name: "Supplier Concentration Map",
+    description: "Category → supplier flow with HHI and single-source flags",
+    icon: "Network",
+    keyMetrics: ["HHI per category (LOW / MODERATE / HIGH / EXTREME)", "Single-source flags (>70% of category spend)", "Tier-2 dependencies", "Geographic concentration"],
+    whenToUse: "Use to expose concentration risk at category, supplier, and geography level — and to surface tier-2 dependencies hidden behind tier-1 suppliers.",
+    questionsAnswered: ["Where are we dangerously concentrated on a single supplier?", "Which categories have monopolistic supply structures?", "Where do tier-2 dependencies create hidden risk?"],
   },
 };
 
