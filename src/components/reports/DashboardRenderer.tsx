@@ -35,6 +35,8 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "sow-analysis": "sowAnalysis",
   "negotiation-prep": "negotiationPrep",
   "data-quality": "dataQuality",
+  "should-cost-gap": "shouldCostGap",
+  "savings-realization-funnel": "savingsRealizationFunnel",
 };
 
 interface DashboardRendererProps {
