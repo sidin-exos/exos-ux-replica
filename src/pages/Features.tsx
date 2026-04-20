@@ -34,6 +34,8 @@ import SupplierPerformanceDashboard from "@/components/reports/SupplierPerforman
 import SOWAnalysisDashboard from "@/components/reports/SOWAnalysisDashboard";
 import NegotiationPrepDashboard from "@/components/reports/NegotiationPrepDashboard";
 import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
+import ShouldCostGapDashboard from "@/components/reports/ShouldCostGapDashboard";
+import SavingsRealizationFunnelDashboard from "@/components/reports/SavingsRealizationFunnelDashboard";
 import { LucideIcon } from "lucide-react";
 
 
