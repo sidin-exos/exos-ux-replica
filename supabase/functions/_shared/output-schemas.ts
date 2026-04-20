@@ -100,7 +100,23 @@ export const GROUP_SCHEMAS: Record<string, string> = {
       "top_cost_drivers": [
         { "rank": 1, "category": null, "amount": null, "percentage_of_total": null, "insight": null }
       ],
-      "benchmark_comparison": { "industry_benchmark": null, "user_value": null, "gap": null, "benchmark_source": null }
+      "benchmark_comparison": { "industry_benchmark": null, "user_value": null, "gap": null, "benchmark_source": null, "industry_margin_pct": null },
+      "working_capital": {
+        "current_weighted_dpo": null,
+        "target_weighted_dpo": null,
+        "working_capital_delta_eur": null,
+        "annual_spend_eur": null,
+        "terms_distribution": [
+          { "term_label": "NET 30 | NET 45 | NET 60 | NET 90+", "spend_share_pct": null, "supplier_count": null }
+        ],
+        "by_supplier": [
+          { "supplier_label": "string (tokenised)", "category": null, "payment_terms_days": null, "annual_spend": null, "late_payment_directive_risk": false }
+        ],
+        "early_payment_discount_opportunities": [
+          { "supplier_label": "string (tokenised)", "discount_structure": "e.g. 2/10 NET 30", "annualised_value": null }
+        ],
+        "currency": "EUR"
+      }
     },
     "scenario_specific": {}
   }
@@ -138,6 +154,11 @@ Then ALSO populate scenario_specific with the per-scenario structure below — t
   Classify every savings figure into exactly one of three CIPS categories: HARD (direct P&L impact — price reduction on confirmed volume), SOFT (cost avoidance — benefit not reflected in P&L, e.g. scope reduction), or AVOIDED (inflation-adjusted baseline protection). Do not aggregate across categories. If the user has not specified a category, default to SOFT and add a data_gaps[] entry requesting classification confirmation. Set baseline_verified=true ONLY if the user provided a documented historical baseline, not an estimate.
 - capex-vs-opex (S3): scenario_specific.options — array of >= 2 { option_label, total_capex, total_opex, year_by_year } entries.
 - For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
+
+WORKING CAPITAL (financial_model.working_capital) — OPTIONAL:
+Populate working_capital ONLY if the user has provided payment terms data (e.g. NET 30, supplier payment schedules, DPO figures, or equivalent). Do not invent payment terms. If no terms data is present in the input, leave working_capital = null and do NOT add to data_gaps[] (this is optional, not mandatory).
+Formula: working_capital_delta_eur = annual_spend_eur × (target_weighted_dpo - current_weighted_dpo) / 365.
+Flag late_payment_directive_risk=true for any supplier whose payment_terms_days exceeds 60 (EU Late Payment Directive 2011/7 B2B statutory limit). Use tokenised supplier labels — never emit legal entity names.
 
 Every numeric field must be derived from user inputs. Use null + confidence_flags entry ONLY when input is genuinely missing — do not use null as a shortcut to skip computation when you have the data.`,
 
@@ -191,7 +212,26 @@ Every risk must reference a regulatory standard or contractual clause. Use RAG s
       ],
       "negotiation_scenarios": [
         { "name": "Conservative | Balanced | Aggressive", "description": "string", "expected_savings_pct": 0, "risk_level": "low | medium | high", "recommended": false }
-      ]
+      ],
+      // S20 / S24 / S25 / S27 — Concentration risk:
+      "concentration": {
+        "categories": [
+          { "category_id": "CAT-1", "category_name": "string", "hhi": null, "hhi_interpretation": "LOW | MODERATE | HIGH | EXTREME", "annual_spend": null }
+        ],
+        "flows": [
+          { "source": "CAT-1", "target": "supplier_label (tokenised)", "value": 0, "tier": 1, "single_source_flag": false }
+        ],
+        "suppliers": [
+          { "supplier_label": "string (tokenised)", "geography": "ISO-3166 alpha-2 or UNKNOWN", "total_spend": 0, "category_count": 0, "exit_cost_estimate": null, "exit_cost_rationale": null }
+        ],
+        "tier2_dependencies": [
+          { "tier1_supplier": "string", "tier2_supplier": "string", "dependency_description": null }
+        ],
+        "geographic_concentration": [
+          { "country_code": "DE", "spend_share_pct": 0 }
+        ],
+        "currency": "EUR"
+      }
     }
   }
 }
@@ -199,10 +239,18 @@ Populate scenario_specific based on the scenario:
 - S21 Negotiation Prep: batna (with batna_strength_pct), zopa, leverage_points[], negotiation_scenarios[] (always 3, exactly one recommended).
 - S22 Category Strategy: kraljic_position, porters_five_forces.
 - S23 Make vs Buy: make_cost, buy_cost, verdict.
-- S24 Volume Consolidation: consolidation_scenarios.
-- S25 SRM: development_plan.
+- S24 Volume Consolidation: consolidation_scenarios + concentration.
+- S25 SRM / Supplier Dependency: development_plan + concentration (PRIMARY view for S25).
 - S26 Total Value: value_dimensions.
-- S27 Maturity Assessment: maturity dimensions.
+- S27 Black Swan / Maturity: maturity dimensions + concentration.
+- S20 Category Risk Evaluator: concentration (secondary to kraljic-quadrant).
+
+CONCENTRATION RULES (S20, S24, S25, S27):
+Populate concentration when supplier and category spend data is available. Calculate HHI per category as sum of (supplier_spend_share_pct)^2.
+Interpret HHI: <1500 = LOW (competitive), 1500-2500 = MODERATE, 2500-5000 = HIGH, >5000 = EXTREME (monopolistic / near-sole-source).
+Set single_source_flag=true for any supplier holding >70% of a single category's spend.
+Use tokenised supplier_label references — do not emit legal entity names (these will be restored by the de-anonymisation layer). Use ISO 3166-1 alpha-2 country codes for geography.
+
 All framework outputs must reference the user's specific inputs. Never produce generic textbook descriptions.`,
 
   E: `GROUP E PAYLOAD SCHEMA (Real-Time Knowledge — S28–S29):
