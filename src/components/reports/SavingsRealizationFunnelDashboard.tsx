@@ -165,11 +165,13 @@ const SavingsRealizationFunnelDashboard = ({ parsedData }: Props) => {
                 tickFormatter={(v) => formatCurrency(v, data.currency)}
               />
               <Tooltip
+                cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
                 contentStyle={{
                   background: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: 8,
                   fontSize: 11,
+                  color: "hsl(var(--foreground))",
                 }}
                 formatter={(value: number, name: string) => [
                   formatCurrency(value, data.currency),
