@@ -272,8 +272,8 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   // Planning and Sourcing
   "tail-spend-sourcing": ["action-checklist", "data-quality"],
   "requirements-gathering": ["action-checklist", "data-quality"],
-  // Wave 2: working-capital-dpo on forecasting-budgeting.
-  "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider", "working-capital-dpo"],
+  // Audit cull: removed working-capital-dpo (S6 is P&L forecasting; DPO is balance-sheet/treasury).
+  "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider"],
   "negotiation-preparation": ["negotiation-prep", "scenario-comparison", "should-cost-gap"],
   "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-heatmap"],
 
