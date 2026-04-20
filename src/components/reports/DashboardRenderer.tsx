@@ -65,7 +65,7 @@ const DashboardRenderer = ({
     if (structuredData) {
       try {
         const envelope = JSON.parse(structuredData);
-        if (envelope?.schema_version === '1.0') {
+        if (['1.0','2.0'].includes(envelope?.schema_version)) {
           return extractFromEnvelope(envelope);
         }
       } catch { /* fall through to legacy */ }
