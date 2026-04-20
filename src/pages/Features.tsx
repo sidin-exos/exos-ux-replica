@@ -557,8 +557,8 @@ const Features = () => {
                             onClick={() => setSelectedDashboard(d.id)}
                             className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border-l-2 ${
                               isActive
-                                ? "border-l-primary bg-muted text-foreground"
-                                : "border-l-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                ? "border-l-primary bg-gradient-to-b from-muted to-muted/60 text-foreground shadow-md ring-1 ring-border/60"
+                                : "border-l-border/40 bg-gradient-to-b from-card to-card/40 text-foreground/90 shadow-sm ring-1 ring-border/30 hover:from-muted/70 hover:to-muted/40 hover:shadow-md hover:-translate-y-0.5 hover:border-l-primary/50"
                             }`}
                           >
                             <div className="flex items-center justify-between">
