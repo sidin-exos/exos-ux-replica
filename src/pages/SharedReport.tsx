@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ReportExportButtons from "@/components/reports/ReportExportButtons";
-import DashboardRenderer from "@/components/reports/DashboardRenderer";
+import DashboardRenderer, { dashboardHasRealData } from "@/components/reports/DashboardRenderer";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
 import { supabase } from "@/integrations/supabase/client";
 import { stripDashboardData } from "@/lib/dashboard-data-parser";
