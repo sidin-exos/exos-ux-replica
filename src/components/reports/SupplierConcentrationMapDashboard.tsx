@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Network, AlertTriangle } from "lucide-react";
+import { Network, AlertTriangle, Info } from "lucide-react";
 import { ResponsiveSankey } from "@nivo/sankey";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +97,14 @@ const SupplierConcentrationMapDashboard = ({ parsedData }: Props) => {
   const data = parsedData ?? sample;
   const [view, setView] = useState<ViewMode>("category");
 
+  // Concentration analysis is meaningless with a single supplier — show notice instead.
+  const uniqueSuppliers = useMemo(() => {
+    const ids = new Set<string>();
+    data.suppliers?.forEach((s) => ids.add(s.supplier_label));
+    data.flows?.forEach((f) => ids.add(f.target));
+    return ids.size;
+  }, [data]);
+
   const sankeyData = useMemo(() => {
     const categoryMap = new Map(data.categories.map((c) => [c.category_id, c.category_name]));
     const nodeIds = new Set<string>();
@@ -132,6 +140,36 @@ const SupplierConcentrationMapDashboard = ({ parsedData }: Props) => {
   );
 
   const showTier2 = data.tier2_dependencies != null && data.tier2_dependencies.length > 0;
+
+  if (uniqueSuppliers <= 1) {
+    const supplierName =
+      data.suppliers?.[0]?.supplier_label ?? data.flows?.[0]?.target ?? "this supplier";
+    return (
+      <Card className="card-elevated h-full">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+              <Network className="w-4 h-4 text-foreground" />
+            </div>
+            <div>
+              <CardTitle className="font-display text-base">Supplier Concentration Map</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Spend flow with HHI and single-source flags
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              Only one supplier analysed ({supplierName}) — no supplier concentration map available.
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="card-elevated h-full">
