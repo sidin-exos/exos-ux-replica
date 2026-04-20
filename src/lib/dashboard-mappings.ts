@@ -254,18 +254,22 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "supplier-review": ["supplier-scorecard", "timeline-roadmap", "action-checklist"],
   "tco-analysis": ["tco-comparison", "cost-waterfall", "scenario-comparison"],
   "software-licensing": ["license-tier", "cost-waterfall"],
-  "volume-consolidation": ["scenario-comparison", "cost-waterfall", "savings-realization-funnel"],
+  // Wave 2: supplier-concentration-map added to S24, savings-realization-funnel kept.
+  "volume-consolidation": ["scenario-comparison", "cost-waterfall", "savings-realization-funnel", "supplier-concentration-map"],
   "cost-breakdown": ["should-cost-gap", "cost-waterfall", "data-quality"],
-  "category-strategy": ["kraljic-quadrant", "timeline-roadmap", "savings-realization-funnel"],
+  // Wave 2: working-capital-dpo added to S22 (category-strategy).
+  "category-strategy": ["kraljic-quadrant", "timeline-roadmap", "savings-realization-funnel", "working-capital-dpo"],
   "capex-vs-opex": ["scenario-comparison", "sensitivity-spider"],
-  "savings-calculation": ["savings-realization-funnel", "cost-waterfall", "should-cost-gap", "action-checklist"],
+  // Wave 2: working-capital-dpo added to S4 alongside the funnel.
+  "savings-calculation": ["savings-realization-funnel", "cost-waterfall", "should-cost-gap", "working-capital-dpo", "action-checklist"],
   "saas-optimization": ["license-tier", "cost-waterfall"],
   "specification-optimizer": ["decision-matrix", "cost-waterfall", "action-checklist", "data-quality"],
 
   // Planning and Sourcing
   "tail-spend-sourcing": ["action-checklist", "data-quality"],
   "requirements-gathering": ["action-checklist", "data-quality"],
-  "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider"],
+  // Wave 2: working-capital-dpo on forecasting-budgeting.
+  "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider", "working-capital-dpo"],
   "negotiation-preparation": ["negotiation-prep", "scenario-comparison", "should-cost-gap"],
   "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-heatmap"],
 
@@ -279,9 +283,12 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "risk-assessment": ["risk-heatmap", "scenario-comparison", "action-checklist", "data-quality"],
   "risk-matrix": ["risk-heatmap", "action-checklist"],
   "pre-flight-audit": ["data-quality", "risk-heatmap"],
-  "category-risk-evaluator": ["risk-heatmap", "kraljic-quadrant", "action-checklist"],
-  "supplier-dependency-planner": ["risk-heatmap"],
-  "black-swan-scenario": ["risk-heatmap", "sensitivity-spider", "scenario-comparison"],
+  // Wave 2: supplier-concentration-map secondary on S20 (kraljic stays primary).
+  "category-risk-evaluator": ["kraljic-quadrant", "risk-heatmap", "supplier-concentration-map", "action-checklist"],
+  // Wave 2: supplier-concentration-map is now PRIMARY on S25; risk-heatmap secondary.
+  "supplier-dependency-planner": ["supplier-concentration-map", "risk-heatmap"],
+  // Wave 2: supplier-concentration-map added to S27.
+  "black-swan-scenario": ["risk-heatmap", "sensitivity-spider", "scenario-comparison", "supplier-concentration-map"],
 
   // Documentation and Contracts
   "sow-critic": ["sow-analysis", "data-quality"],
@@ -290,7 +297,8 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "contract-template": ["action-checklist", "data-quality"],
 
   // Spend Analysis
-  "spend-analysis-categorization": ["data-quality", "cost-waterfall"],
+  // Wave 2: working-capital-dpo added to S5.
+  "spend-analysis-categorization": ["data-quality", "cost-waterfall", "working-capital-dpo"],
 
   // Market Snapshot
   "market-snapshot": [],
