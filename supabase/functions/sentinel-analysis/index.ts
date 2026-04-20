@@ -1208,9 +1208,9 @@ serve(async (req) => {
         const status = (aiError as Error & { status?: number }).status;
         const processingTime = Math.round(performance.now() - startTime);
 
-        // Retry on 503
-        if (status === 503 && attempt < MAX_RETRIES - 1) {
-          console.warn(`[Sentinel] Google AI Studio 503 on attempt ${attempt + 1}`);
+        // Retry on 503 (overloaded) or 504 (timeout) — fall back to flash
+        if ((status === 503 || status === 504) && attempt < MAX_RETRIES - 1) {
+          console.warn(`[Sentinel] Google AI ${status} on attempt ${attempt + 1}, falling back to flash`);
           continue;
         }
 
