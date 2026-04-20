@@ -251,7 +251,8 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   // cost-waterfall is intentionally retained on S2 + S4 + S24 for backwards
   // compatibility with historical runs that lack the new payload fields.
   "make-vs-buy": ["decision-matrix", "scenario-comparison", "cost-waterfall"],
-  "supplier-review": ["supplier-scorecard", "timeline-roadmap", "action-checklist"],
+  // Audit cull: removed timeline-roadmap (single review is not a phased project).
+  "supplier-review": ["supplier-scorecard", "action-checklist"],
   "tco-analysis": ["tco-comparison", "cost-waterfall", "scenario-comparison"],
   "software-licensing": ["license-tier", "cost-waterfall"],
   // Wave 2: supplier-concentration-map added to S24, savings-realization-funnel kept.
