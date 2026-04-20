@@ -155,6 +155,11 @@ Then ALSO populate scenario_specific with the per-scenario structure below — t
 - capex-vs-opex (S3): scenario_specific.options — array of >= 2 { option_label, total_capex, total_opex, year_by_year } entries.
 - For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
 
+WORKING CAPITAL (financial_model.working_capital) — OPTIONAL:
+Populate working_capital ONLY if the user has provided payment terms data (e.g. NET 30, supplier payment schedules, DPO figures, or equivalent). Do not invent payment terms. If no terms data is present in the input, leave working_capital = null and do NOT add to data_gaps[] (this is optional, not mandatory).
+Formula: working_capital_delta_eur = annual_spend_eur × (target_weighted_dpo - current_weighted_dpo) / 365.
+Flag late_payment_directive_risk=true for any supplier whose payment_terms_days exceeds 60 (EU Late Payment Directive 2011/7 B2B statutory limit). Use tokenised supplier labels — never emit legal entity names.
+
 Every numeric field must be derived from user inputs. Use null + confidence_flags entry ONLY when input is genuinely missing — do not use null as a shortcut to skip computation when you have the data.`,
 
   B: `GROUP B PAYLOAD SCHEMA (Workflow & Convenience — S9–S15):
