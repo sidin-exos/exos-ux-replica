@@ -100,7 +100,23 @@ export const GROUP_SCHEMAS: Record<string, string> = {
       "top_cost_drivers": [
         { "rank": 1, "category": null, "amount": null, "percentage_of_total": null, "insight": null }
       ],
-      "benchmark_comparison": { "industry_benchmark": null, "user_value": null, "gap": null, "benchmark_source": null }
+      "benchmark_comparison": { "industry_benchmark": null, "user_value": null, "gap": null, "benchmark_source": null, "industry_margin_pct": null },
+      "working_capital": {
+        "current_weighted_dpo": null,
+        "target_weighted_dpo": null,
+        "working_capital_delta_eur": null,
+        "annual_spend_eur": null,
+        "terms_distribution": [
+          { "term_label": "NET 30 | NET 45 | NET 60 | NET 90+", "spend_share_pct": null, "supplier_count": null }
+        ],
+        "by_supplier": [
+          { "supplier_label": "string (tokenised)", "category": null, "payment_terms_days": null, "annual_spend": null, "late_payment_directive_risk": false }
+        ],
+        "early_payment_discount_opportunities": [
+          { "supplier_label": "string (tokenised)", "discount_structure": "e.g. 2/10 NET 30", "annualised_value": null }
+        ],
+        "currency": "EUR"
+      }
     },
     "scenario_specific": {}
   }
