@@ -18,6 +18,8 @@ import SupplierPerformanceDashboard from "./SupplierPerformanceDashboard";
 import SOWAnalysisDashboard from "./SOWAnalysisDashboard";
 import NegotiationPrepDashboard from "./NegotiationPrepDashboard";
 import DataQualityDashboard from "./DataQualityDashboard";
+import ShouldCostGapDashboard from "./ShouldCostGapDashboard";
+import SavingsRealizationFunnelDashboard from "./SavingsRealizationFunnelDashboard";
 
 /** Map dashboard type slug to the corresponding key in DashboardData */
 const dashboardDataKey: Record<string, keyof DashboardData> = {
