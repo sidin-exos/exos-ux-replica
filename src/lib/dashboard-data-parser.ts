@@ -136,17 +136,24 @@ export interface DataQualityData {
   limitations?: { title: string; impact: string }[];
 }
 
-// Wave 1 — re-exported from sentinel/types so dashboards have a single import surface.
+// Wave 1+2 — re-exported from sentinel/types so dashboards have a single import surface.
 export type {
   ShouldCostGapData,
   SavingsRealizationFunnelData,
   SavingsClassification,
   CFOAcceptance,
+  WorkingCapitalData,
+  ConcentrationData,
+  HhiInterpretation,
 } from "./sentinel/types";
+
+export { interpretHhi } from "./sentinel/types";
 
 import type {
   ShouldCostGapData as _ShouldCostGapData,
   SavingsRealizationFunnelData as _SavingsRealizationFunnelData,
+  WorkingCapitalData as _WorkingCapitalData,
+  ConcentrationData as _ConcentrationData,
 } from "./sentinel/types";
 
 // ============================================
@@ -170,6 +177,8 @@ export interface DashboardData {
   dataQuality?: DataQualityData;
   shouldCostGap?: _ShouldCostGapData;
   savingsRealizationFunnel?: _SavingsRealizationFunnelData;
+  workingCapitalDpo?: _WorkingCapitalData;
+  supplierConcentrationMap?: _ConcentrationData;
 }
 
 // ============================================
@@ -196,6 +205,8 @@ const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
   data_quality: 'dataQuality',
   should_cost_gap: 'shouldCostGap',
   savings_realization_funnel: 'savingsRealizationFunnel',
+  working_capital_dpo: 'workingCapitalDpo',
+  supplier_concentration_map: 'supplierConcentrationMap',
 };
 
 const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
