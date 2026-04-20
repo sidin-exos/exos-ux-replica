@@ -207,61 +207,294 @@ Mark incomplete sections with [DATA NEEDED: description] in the content. Never f
   }
 }
 Populate scenario_specific based on the scenario (e.g. issues/missing_clauses for SOW Critic, risk_register for Risk Assessment, risk items with rag_status for Risk Matrix, entitlements/compliance_gaps for Licensing Audit, risk_dimensions for Category Risk).
-Every risk must reference a regulatory standard or contractual clause. Use RAG status consistently.`,
+Every risk must reference a regulatory standard or contractual clause. Use RAG status consistently.
+
+S20 Category Risk Evaluation — additionally populate scenario_specific.concentration when supplier-to-category spend data is available (per §5.5 of the schema):
+${CONCENTRATION_SCHEMA_FRAGMENT}`,
 
   D: `GROUP D PAYLOAD SCHEMA (Strategic Mentorship — S21–S27):
 {
   "payload": {
     "framework_applied": null,
     "strategic_verdict": null,
-    "scenario_specific": {
-      // S21 Negotiation Preparation:
-      "batna": {
-        "batna_strength_pct": 0,
-        "description": "string — 1-2 sentences explaining the BATNA assessment",
-        "best_alternative": "string — the specific best alternative identified"
-      },
-      "zopa": { "low": null, "high": null, "currency": "EUR" },
-      "leverage_points": [
-        { "title": "string ≤8 words", "description": "string referencing user data", "impact": "high | medium | low" }
-      ],
-      "negotiation_sequence": [
-        { "step": "string — short action label", "detail": "string — 1-2 sentences on execution" }
-      ],
-      "negotiation_scenarios": [
-        { "name": "Conservative | Balanced | Aggressive", "description": "string", "expected_savings_pct": 0, "risk_level": "low | medium | high", "recommended": false }
-      ],
-      // S20 / S24 / S25 / S27 — Concentration risk:
-      "concentration": {
-        "categories": [
-          { "category_id": "CAT-1", "category_name": "string", "hhi": null, "hhi_interpretation": "LOW | MODERATE | HIGH | EXTREME", "annual_spend": null }
-        ],
-        "flows": [
-          { "source": "CAT-1", "target": "supplier_label (tokenised)", "value": 0, "tier": 1, "single_source_flag": false }
-        ],
-        "suppliers": [
-          { "supplier_label": "string (tokenised)", "geography": "ISO-3166 alpha-2 or UNKNOWN", "total_spend": 0, "category_count": 0, "exit_cost_estimate": null, "exit_cost_rationale": null }
-        ],
-        "tier2_dependencies": [
-          { "tier1_supplier": "string", "tier2_supplier": "string", "dependency_description": null }
-        ],
-        "geographic_concentration": [
-          { "country_code": "DE", "spend_share_pct": 0 }
-        ],
-        "currency": "EUR"
-      }
+    "scenario_specific": {}
+  }
+}
+Populate scenario_specific based on the scenario, using the structures below verbatim.
+
+— S21 Negotiation Preparation (§6.1):
+{
+  "scenario_specific": {
+    "negotiation_subject": null,
+    "batna": {
+      "buyer_batna": null,
+      "buyer_batna_value": null,
+      "supplier_batna_estimated": null
+    },
+    "zopa": {
+      "buyer_walk_away": "[CONFIDENTIAL — MASK IN SHARED EXPORTS]",
+      "buyer_target": null,
+      "supplier_likely_floor": null,
+      "zopa_exists": true
+    },
+    "opening_position": null,
+    "negotiation_tactics": [],
+    "leverage_analysis": {
+      "buyer_leverage_factors": [],
+      "supplier_leverage_factors": [],
+      "power_balance": "BUYER_ADVANTAGE | BALANCED | SUPPLIER_ADVANTAGE"
+    },
+    "financial_outcome_range": {
+      "optimistic": null,
+      "realistic": null,
+      "pessimistic": null
+    },
+    "mar_flag": false,
+    "mar_note": null
+  }
+}
+
+— S22 Category Strategy (§6.2):
+{
+  "scenario_specific": {
+    "category": null,
+    "annual_spend": null,
+    "kraljic_position": {
+      "current": "STRATEGIC | LEVERAGE | BOTTLENECK | NON_CRITICAL",
+      "recommended": "STRATEGIC | LEVERAGE | BOTTLENECK | NON_CRITICAL",
+      "movement_rationale": null
+    },
+    "porters_five_forces": {
+      "supplier_power": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null },
+      "buyer_power": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null },
+      "threat_of_substitutes": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null },
+      "threat_of_new_entrants": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null },
+      "competitive_rivalry": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null }
+    },
+    "three_year_roadmap": [
+      { "year": 1, "objectives": [], "kpis": [] }
+    ],
+    "esg_considerations": null,
+    "mar_flag": false
+  }
+}
+
+— S23 Make vs. Buy Analysis (§6.3) — Type 1H, bilateral cost separation mandatory:
+{
+  "scenario_specific": {
+    "item_or_capability": null,
+    "make_option": {
+      "direct_costs": null,
+      "indirect_costs": null,
+      "capex_required": null,
+      "total_annual_cost": null,
+      "break_even_years": null
+    },
+    "buy_option": {
+      "quoted_price": null,
+      "annual_volume": null,
+      "total_annual_cost": null,
+      "contract_term_years": null
+    },
+    "cost_delta": null,
+    "qualitative_factors": [
+      { "factor": "Core competency alignment", "make_score": null, "buy_score": null, "weight_pct": null }
+    ],
+    "verdict": {
+      "recommendation": "MAKE | BUY | HYBRID | FURTHER_ANALYSIS_NEEDED",
+      "financial_rationale": null,
+      "strategic_rationale": null,
+      "risk_caveat": null
     }
   }
 }
-Populate scenario_specific based on the scenario:
-- S21 Negotiation Prep: batna (with batna_strength_pct), zopa, leverage_points[], negotiation_scenarios[] (always 3, exactly one recommended).
-- S22 Category Strategy: kraljic_position, porters_five_forces.
-- S23 Make vs Buy: make_cost, buy_cost, verdict.
-- S24 Volume Consolidation: consolidation_scenarios + concentration.
-- S25 SRM / Supplier Dependency: development_plan + concentration (PRIMARY view for S25).
-- S26 Total Value: value_dimensions.
-- S27 Black Swan / Maturity: maturity dimensions + concentration.
-- S20 Category Risk Evaluator: concentration (secondary to kraljic-quadrant).
+
+— S24 Volume Consolidation (§6.4) — includes concentration block:
+{
+  "scenario_specific": {
+    "category": null,
+    "current_supplier_count": null,
+    "current_total_spend": null,
+    "consolidation_scenarios": [
+      {
+        "scenario_label": "2-Supplier Model",
+        "supplier_count": null,
+        "estimated_saving_pct": null,
+        "estimated_saving_value": null,
+        "supply_risk_level": "HIGH | MEDIUM | LOW",
+        "implementation_complexity": "HIGH | MEDIUM | LOW"
+      }
+    ],
+    "recommended_model": null,
+    "volume_leverage_analysis": null,
+    ${CONCENTRATION_SCHEMA_FRAGMENT}
+  }
+}
+
+— S25 Supplier Dependency Planner (§6.5) — REPLACES v1.0 "Supplier Relationship Management". Includes concentration:
+{
+  "scenario_specific": {
+    "portfolio_scope": null,
+    "dependency_portfolio": [
+      {
+        "dependency_id": "DEP-001",
+        "vendor_label": "Supplier_001",
+        "dependency_type": "SYSTEM | CONTRACT | DATA | CAPABILITY",
+        "integration_depth": "HIGH | MEDIUM | LOW",
+        "data_portability": "FULL | PARTIAL | NONE",
+        "termination_provision": null,
+        "estimated_switching_cost": null,
+        "switching_cost_confidence": "HIGH | MEDIUM | LOW",
+        "alternatives_available": null,
+        "regulatory_constraints": null,
+        "dependency_risk_score": null,
+        "rag_status": "RED | AMBER | GREEN"
+      }
+    ],
+    "heat_map_summary": {
+      "high_risk_count": null,
+      "medium_risk_count": null,
+      "low_risk_count": null
+    },
+    "de_risking_plan": [
+      {
+        "phase": "Phase 1 — Stabilisation",
+        "timeline": null,
+        "actions": [],
+        "target_dependencies": [],
+        "owner": "Role-based reference"
+      }
+    ],
+    "data_portability_assessment": {
+      "critical_data_sources": [],
+      "export_format_availability": null,
+      "regulatory_retention_requirements": null
+    },
+    "hidden_switching_cost_alert": null,
+    ${CONCENTRATION_SCHEMA_FRAGMENT}
+  }
+}
+S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switching cost appears more than 3× below the industry benchmark of 300–500% underestimation (per CIPS/Gartner). Never emit specific API keys, integration credentials, or internal system architecture details beyond what is necessary for dependency assessment (GDPR Art. 5(1)(c) + commercial sensitivity).
+
+— S26 Disruption Management (§6.6) — REPLACES v1.0 "Total Value Delivery":
+{
+  "scenario_specific": {
+    "disruption_type": "SUPPLIER_FAILURE | LOGISTICS | GEOPOLITICAL | FORCE_MAJEURE | CYBER | NATURAL_DISASTER | OTHER",
+    "disruption_description": null,
+    "affected_product_lines": [],
+    "affected_categories": [],
+    "current_inventory_buffer_days": null,
+    "estimated_revenue_impact_per_day": null,
+    "overall_urgency": "CRITICAL | HIGH | MEDIUM | LOW",
+    "response_plan": {
+      "stage_1_assess": {
+        "actions": [],
+        "owner": "Role-based reference",
+        "target_duration_hours": null
+      },
+      "stage_2_contain": {
+        "immediate_actions": [],
+        "customer_communication_template": null,
+        "internal_communication_template": null,
+        "owner": "Role-based reference",
+        "target_duration_hours": null
+      },
+      "stage_3_recover": {
+        "alternative_supply_options": [
+          {
+            "option_label": null,
+            "supplier_label": "Supplier_001",
+            "lead_time_days": null,
+            "cost_premium_pct": null,
+            "capacity_available": null,
+            "contractual_readiness": "READY | NEEDS_NEGOTIATION | NEW_QUALIFICATION_REQUIRED"
+          }
+        ],
+        "owner": "Role-based reference",
+        "target_duration_days": null
+      },
+      "stage_4_prevent": {
+        "recurrence_prevention_checklist": [],
+        "process_changes": [],
+        "owner": "Role-based reference"
+      }
+    },
+    "stakeholder_comms": [
+      {
+        "stakeholder_group": "Customers | Finance | Operations | Board | Regulator",
+        "key_message": null,
+        "delivery_channel": null,
+        "timing": null
+      }
+    ],
+    "bridge_to_scenario": "S27"
+  }
+}
+S26 AI guidance: speed of output is the value — prioritise completeness of the 4 stages over depth of any single stage. Mask exact inventory depletion dates (commercially sensitive with customers) and specific emergency cash reserves (financially sensitive with lenders). If the user has not provided an inventory buffer, flag current_inventory_buffer_days = null and add to data_gaps[] — the response plan urgency cannot be calibrated without it.
+
+— S27 Black Swan Scenario Simulation (§6.7) — REPLACES v1.0 "Procurement Maturity Assessment". Includes concentration:
+{
+  "scenario_specific": {
+    "scenario_type": "PANDEMIC | NATURAL_DISASTER | GEOPOLITICAL_EMBARGO | CYBER_ATTACK | FINANCIAL_SHOCK | COMPOSITE",
+    "scenario_description": null,
+    "scope": "SINGLE_CATEGORY | END_TO_END | GEOGRAPHY | ENTIRE_OPERATION",
+    "historical_precedent": null,
+    "bcp_status": "FORMAL_BCP | INFORMAL_BCP | NO_BCP",
+    "supply_chain_nodes": [
+      {
+        "node_id": "NODE-001",
+        "node_label": null,
+        "node_type": "SUPPLIER | LOGISTICS_ROUTE | PRODUCTION_SITE | DATA_CENTRE | WAREHOUSE",
+        "criticality": "SINGLE_POINT_OF_FAILURE | HIGH | MEDIUM | LOW",
+        "geography": null,
+        "alternative_available": false
+      }
+    ],
+    "impact_model": {
+      "direct_impact_estimate": null,
+      "cascade_effects": [
+        {
+          "triggered_node": null,
+          "delay_days": null,
+          "revenue_at_risk": null,
+          "cascade_confidence": "HIGH | MEDIUM | LOW"
+        }
+      ],
+      "total_impact_estimate": null
+    },
+    "rto_rpo_analysis": {
+      "target_rto_hours": null,
+      "current_rto_estimate_hours": null,
+      "rto_gap_hours": null,
+      "target_rpo_hours": null,
+      "current_rpo_estimate_hours": null,
+      "rpo_gap_hours": null,
+      "gap_commentary": null
+    },
+    "resilience_investments": [
+      {
+        "investment": null,
+        "estimated_cost": null,
+        "rto_improvement_hours": null,
+        "risk_reduction_pct": null,
+        "roi_rationale": null,
+        "priority": "HIGH | MEDIUM | LOW"
+      }
+    ],
+    "prioritised_vulnerabilities": [
+      {
+        "vulnerability": null,
+        "associated_node": "NODE-001",
+        "severity_if_triggered": "CRITICAL | HIGH | MEDIUM | LOW",
+        "mitigation_available": null
+      }
+    ],
+    "overall_resilience_rag": "RED | AMBER | GREEN",
+    "bridge_to_scenario": "S26",
+    ${CONCENTRATION_SCHEMA_FRAGMENT}
+  }
+}
+S27 AI guidance: financial impact modelling accuracy depends on the user providing RTO/RPO targets and recovery cost estimates — if absent, leave rto_rpo_analysis fields as null and flag in data_gaps[]. Never emit exact critical cash reserve amounts or specific banking / credit facility details — use liquidity tier references ("Tier 1 reserve: 3 months OPEX") instead.
 
 CONCENTRATION RULES (S20, S24, S25, S27):
 Populate concentration when supplier and category spend data is available. Calculate HHI per category as sum of (supplier_spend_share_pct)^2.
