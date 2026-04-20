@@ -333,3 +333,86 @@ export interface SavingsRealizationFunnelData {
   currency: string;
   lowConfidenceWatermark: boolean;
 }
+
+// ============================================
+// 10. WAVE 2 DASHBOARD TYPES
+// ============================================
+
+/**
+ * working-capital-dpo (S4 + S5 + S6 + S22).
+ * Lives at payload.financial_model.working_capital — base Group A dimension.
+ */
+export interface WorkingCapitalData {
+  current_weighted_dpo: number | null;
+  target_weighted_dpo: number | null;
+  working_capital_delta_eur: number | null;
+  annual_spend_eur: number | null;
+  terms_distribution: Array<{
+    term_label: string;
+    spend_share_pct: number;
+    supplier_count: number | null;
+  }>;
+  by_supplier: Array<{
+    supplier_label: string;
+    category: string | null;
+    payment_terms_days: number;
+    annual_spend: number | null;
+    late_payment_directive_risk: boolean;
+  }>;
+  early_payment_discount_opportunities: Array<{
+    supplier_label: string;
+    discount_structure: string;
+    annualised_value: number | null;
+  }>;
+  currency: string;
+}
+
+/**
+ * supplier-concentration-map (S20 + S24 + S25 + S27).
+ * Lives at payload.scenario_specific.concentration on Group D.
+ */
+export type HhiInterpretation = 'LOW' | 'MODERATE' | 'HIGH' | 'EXTREME';
+
+export interface ConcentrationData {
+  categories: Array<{
+    category_id: string;
+    category_name: string;
+    hhi: number | null;
+    hhi_interpretation: HhiInterpretation | null;
+    annual_spend: number | null;
+  }>;
+  flows: Array<{
+    source: string;
+    target: string;
+    value: number;
+    tier: 1 | 2;
+    single_source_flag: boolean;
+  }>;
+  suppliers: Array<{
+    supplier_label: string;
+    geography: string | null;
+    total_spend: number;
+    category_count: number;
+    exit_cost_estimate: number | null;
+    exit_cost_rationale: string | null;
+  }>;
+  tier2_dependencies: Array<{
+    tier1_supplier: string;
+    tier2_supplier: string;
+    dependency_description: string | null;
+  }> | null;
+  geographic_concentration: Array<{
+    country_code: string;
+    spend_share_pct: number;
+  }>;
+  currency: string;
+}
+
+/** Helper for HHI interpretation per the documented thresholds. */
+export const interpretHhi = (hhi: number | null | undefined): HhiInterpretation | null => {
+  if (hhi == null || !Number.isFinite(hhi)) return null;
+  if (hhi < 1500) return 'LOW';
+  if (hhi < 2500) return 'MODERATE';
+  if (hhi <= 5000) return 'HIGH';
+  return 'EXTREME';
+};

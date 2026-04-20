@@ -136,17 +136,24 @@ export interface DataQualityData {
   limitations?: { title: string; impact: string }[];
 }
 
-// Wave 1 — re-exported from sentinel/types so dashboards have a single import surface.
+// Wave 1+2 — re-exported from sentinel/types so dashboards have a single import surface.
 export type {
   ShouldCostGapData,
   SavingsRealizationFunnelData,
   SavingsClassification,
   CFOAcceptance,
+  WorkingCapitalData,
+  ConcentrationData,
+  HhiInterpretation,
 } from "./sentinel/types";
+
+export { interpretHhi } from "./sentinel/types";
 
 import type {
   ShouldCostGapData as _ShouldCostGapData,
   SavingsRealizationFunnelData as _SavingsRealizationFunnelData,
+  WorkingCapitalData as _WorkingCapitalData,
+  ConcentrationData as _ConcentrationData,
 } from "./sentinel/types";
 
 // ============================================
@@ -170,6 +177,8 @@ export interface DashboardData {
   dataQuality?: DataQualityData;
   shouldCostGap?: _ShouldCostGapData;
   savingsRealizationFunnel?: _SavingsRealizationFunnelData;
+  workingCapitalDpo?: _WorkingCapitalData;
+  supplierConcentrationMap?: _ConcentrationData;
 }
 
 // ============================================
@@ -196,6 +205,8 @@ const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
   data_quality: 'dataQuality',
   should_cost_gap: 'shouldCostGap',
   savings_realization_funnel: 'savingsRealizationFunnel',
+  working_capital_dpo: 'workingCapitalDpo',
+  supplier_concentration_map: 'supplierConcentrationMap',
 };
 
 const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
@@ -716,11 +727,19 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   const funnelResult = extractSavingsRealizationFunnel(payload, ss, watermark);
   if (funnelResult) result.savingsRealizationFunnel = funnelResult;
 
+  // ── Wave 2: working-capital-dpo (Group A base — payload.financial_model.working_capital)
+  const wcResult = extractWorkingCapitalDpo(payload);
+  if (wcResult) result.workingCapitalDpo = wcResult;
+
+  // ── Wave 2: supplier-concentration-map (Group D scenario_specific.concentration)
+  const concResult = extractSupplierConcentrationMap(payload, ss);
+  if (concResult) result.supplierConcentrationMap = concResult;
+
   return Object.keys(result).length === 0 ? null : result;
 }
 
 // ============================================
-// Wave 1 sub-extractors (exported for unit tests)
+// Wave 1 + Wave 2 sub-extractors (exported for unit tests)
 // ============================================
 
 import type {
@@ -728,7 +747,11 @@ import type {
   SavingsRealizationFunnelData,
   CFOAcceptance,
   ConfidenceLevel,
+  WorkingCapitalData,
+  ConcentrationData,
+  HhiInterpretation,
 } from './sentinel/types';
+import { interpretHhi as _interpretHhi } from './sentinel/types';
 
 const normaliseConfidence = (v: unknown): ConfidenceLevel => {
   const s = String(v ?? '').toUpperCase();
@@ -937,4 +960,208 @@ export function extractDashboardData(text: string): DashboardData | null {
 export function stripDashboardData(text: string): string {
   if (!text) return text;
   return text.replace(DASHBOARD_DATA_REGEX, '').trim();
+}
+
+// ============================================
+// Wave 2 sub-extractors
+// ============================================
+
+/**
+ * Extract working-capital-dpo dashboard data from the envelope.
+ * Reads payload.financial_model.working_capital. If null, returns null.
+ * If weighted DPO totals are missing but by_supplier[] has entries, computes
+ * the spend-weighted current DPO client-side.
+ */
+export function extractWorkingCapitalDpo(
+  payload: Record<string, any>
+): WorkingCapitalData | null {
+  const wc = payload?.financial_model?.working_capital;
+  if (!wc || typeof wc !== 'object') return null;
+
+  const bySupplierRaw: any[] = Array.isArray(wc.by_supplier) ? wc.by_supplier : [];
+  const by_supplier = bySupplierRaw
+    .filter((s: any) => s && s.supplier_label && s.payment_terms_days != null)
+    .map((s: any) => {
+      const days = Number(s.payment_terms_days);
+      return {
+        supplier_label: String(s.supplier_label),
+        category: s.category ?? null,
+        payment_terms_days: days,
+        annual_spend: s.annual_spend != null ? Number(s.annual_spend) : null,
+        late_payment_directive_risk:
+          typeof s.late_payment_directive_risk === 'boolean'
+            ? s.late_payment_directive_risk
+            : days > 60,
+      };
+    });
+
+  // Compute weighted DPO client-side if missing.
+  let current_weighted_dpo: number | null =
+    wc.current_weighted_dpo != null ? Number(wc.current_weighted_dpo) : null;
+  if (current_weighted_dpo == null && by_supplier.length > 0) {
+    const withSpend = by_supplier.filter((s) => s.annual_spend != null && s.annual_spend > 0);
+    const totalSpend = withSpend.reduce((acc, s) => acc + (s.annual_spend ?? 0), 0);
+    if (totalSpend > 0) {
+      current_weighted_dpo =
+        withSpend.reduce((acc, s) => acc + s.payment_terms_days * (s.annual_spend ?? 0), 0) /
+        totalSpend;
+    }
+  }
+
+  const target_weighted_dpo: number | null =
+    wc.target_weighted_dpo != null ? Number(wc.target_weighted_dpo) : null;
+
+  const annual_spend_eur: number | null =
+    wc.annual_spend_eur != null ? Number(wc.annual_spend_eur) : null;
+
+  let working_capital_delta_eur: number | null =
+    wc.working_capital_delta_eur != null ? Number(wc.working_capital_delta_eur) : null;
+  if (
+    working_capital_delta_eur == null &&
+    annual_spend_eur != null &&
+    current_weighted_dpo != null &&
+    target_weighted_dpo != null
+  ) {
+    working_capital_delta_eur =
+      (annual_spend_eur * (target_weighted_dpo - current_weighted_dpo)) / 365;
+  }
+
+  const terms_distribution: WorkingCapitalData['terms_distribution'] = (
+    Array.isArray(wc.terms_distribution) ? wc.terms_distribution : []
+  )
+    .filter((t: any) => t && t.term_label && t.spend_share_pct != null)
+    .map((t: any) => ({
+      term_label: String(t.term_label),
+      spend_share_pct: Number(t.spend_share_pct),
+      supplier_count: t.supplier_count != null ? Number(t.supplier_count) : null,
+    }));
+
+  const early_payment_discount_opportunities: WorkingCapitalData['early_payment_discount_opportunities'] =
+    (Array.isArray(wc.early_payment_discount_opportunities)
+      ? wc.early_payment_discount_opportunities
+      : [])
+      .filter((o: any) => o && o.supplier_label && o.discount_structure)
+      .map((o: any) => ({
+        supplier_label: String(o.supplier_label),
+        discount_structure: String(o.discount_structure),
+        annualised_value: o.annualised_value != null ? Number(o.annualised_value) : null,
+      }));
+
+  return {
+    current_weighted_dpo,
+    target_weighted_dpo,
+    working_capital_delta_eur,
+    annual_spend_eur,
+    terms_distribution,
+    by_supplier,
+    early_payment_discount_opportunities,
+    currency: payload?.financial_model?.currency ?? 'EUR',
+  };
+}
+
+/**
+ * Extract supplier-concentration-map dashboard data.
+ * Reads payload.scenario_specific.concentration. Returns null if missing or
+ * flows[] empty. Skips flows whose source/target don't resolve.
+ */
+export function extractSupplierConcentrationMap(
+  payload: Record<string, any>,
+  ss: Record<string, any>
+): ConcentrationData | null {
+  const c = ss?.concentration;
+  if (!c || typeof c !== 'object') return null;
+
+  const rawFlows: any[] = Array.isArray(c.flows) ? c.flows : [];
+  if (rawFlows.length === 0) return null;
+
+  const categoriesRaw: any[] = Array.isArray(c.categories) ? c.categories : [];
+  const suppliersRaw: any[] = Array.isArray(c.suppliers) ? c.suppliers : [];
+
+  const categoryIds = new Set(
+    categoriesRaw
+      .filter((cat: any) => cat?.category_id)
+      .map((cat: any) => String(cat.category_id))
+  );
+  const supplierLabels = new Set(
+    suppliersRaw
+      .filter((s: any) => s?.supplier_label)
+      .map((s: any) => String(s.supplier_label))
+  );
+
+  const flows = rawFlows
+    .filter((f: any) => {
+      if (!f || f.value == null) return false;
+      const sourceOk = categoryIds.size === 0 || categoryIds.has(String(f.source));
+      const targetOk = supplierLabels.size === 0 || supplierLabels.has(String(f.target));
+      return sourceOk && targetOk;
+    })
+    .map((f: any) => ({
+      source: String(f.source),
+      target: String(f.target),
+      value: Number(f.value),
+      tier: (Number(f.tier) === 2 ? 2 : 1) as 1 | 2,
+      single_source_flag: Boolean(f.single_source_flag),
+    }));
+
+  if (flows.length === 0) return null;
+
+  const categories = categoriesRaw
+    .filter((cat: any) => cat?.category_id && cat?.category_name)
+    .map((cat: any) => {
+      const hhiNum = cat.hhi != null ? Number(cat.hhi) : null;
+      const interpretation: HhiInterpretation | null =
+        cat.hhi_interpretation && ['LOW', 'MODERATE', 'HIGH', 'EXTREME'].includes(
+          String(cat.hhi_interpretation).toUpperCase()
+        )
+          ? (String(cat.hhi_interpretation).toUpperCase() as HhiInterpretation)
+          : _interpretHhi(hhiNum);
+      return {
+        category_id: String(cat.category_id),
+        category_name: String(cat.category_name),
+        hhi: hhiNum,
+        hhi_interpretation: interpretation,
+        annual_spend: cat.annual_spend != null ? Number(cat.annual_spend) : null,
+      };
+    });
+
+  const suppliers = suppliersRaw
+    .filter((s: any) => s?.supplier_label)
+    .map((s: any) => ({
+      supplier_label: String(s.supplier_label),
+      geography: s.geography ?? null,
+      total_spend: s.total_spend != null ? Number(s.total_spend) : 0,
+      category_count: s.category_count != null ? Number(s.category_count) : 0,
+      exit_cost_estimate: s.exit_cost_estimate != null ? Number(s.exit_cost_estimate) : null,
+      exit_cost_rationale: s.exit_cost_rationale ?? null,
+    }));
+
+  const tier2Raw: any[] | null = Array.isArray(c.tier2_dependencies) ? c.tier2_dependencies : null;
+  const tier2_dependencies =
+    tier2Raw && tier2Raw.length > 0
+      ? tier2Raw
+          .filter((t: any) => t?.tier1_supplier && t?.tier2_supplier)
+          .map((t: any) => ({
+            tier1_supplier: String(t.tier1_supplier),
+            tier2_supplier: String(t.tier2_supplier),
+            dependency_description: t.dependency_description ?? null,
+          }))
+      : null;
+
+  const geographic_concentration: ConcentrationData['geographic_concentration'] = (
+    Array.isArray(c.geographic_concentration) ? c.geographic_concentration : []
+  )
+    .filter((g: any) => g?.country_code && g?.spend_share_pct != null)
+    .map((g: any) => ({
+      country_code: String(g.country_code),
+      spend_share_pct: Number(g.spend_share_pct),
+    }));
+
+  return {
+    categories,
+    flows,
+    suppliers,
+    tier2_dependencies: tier2_dependencies && tier2_dependencies.length > 0 ? tier2_dependencies : null,
+    geographic_concentration,
+    currency: payload?.financial_model?.currency ?? c.currency ?? 'EUR',
+  };
 }
