@@ -128,6 +128,12 @@ const DashboardRenderer = ({
     case "data-quality":
       return wrapWithFallbackBanner(<DataQualityDashboard parsedData={parsedData?.dataQuality} />);
 
+    case "should-cost-gap":
+      return wrapWithFallbackBanner(<ShouldCostGapDashboard parsedData={parsedData?.shouldCostGap} />);
+
+    case "savings-realization-funnel":
+      return wrapWithFallbackBanner(<SavingsRealizationFunnelDashboard parsedData={parsedData?.savingsRealizationFunnel} />);
+
     default:
       return (
         <div className="p-4 rounded-lg border border-border bg-secondary/20 text-center">
