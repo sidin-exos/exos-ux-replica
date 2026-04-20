@@ -99,6 +99,8 @@ const dashboardCategories: DashboardCategory[] = [
     dashboards: [
       { id: "cost-waterfall", subtitle: "Component cost breakdown" },
       { id: "tco-comparison", subtitle: "Total cost of ownership" },
+      { id: "should-cost-gap", subtitle: "Price vs benchmark headroom" },
+      { id: "savings-realization-funnel", subtitle: "Hard/Soft/Avoided savings funnel" },
       { id: "license-tier", subtitle: "License cost distribution" },
       { id: "sensitivity-spider", subtitle: "Assumption stress testing" },
     ],
