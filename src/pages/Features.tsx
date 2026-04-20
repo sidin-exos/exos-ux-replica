@@ -36,6 +36,8 @@ import NegotiationPrepDashboard from "@/components/reports/NegotiationPrepDashbo
 import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
 import ShouldCostGapDashboard from "@/components/reports/ShouldCostGapDashboard";
 import SavingsRealizationFunnelDashboard from "@/components/reports/SavingsRealizationFunnelDashboard";
+import WorkingCapitalDpoDashboard from "@/components/reports/WorkingCapitalDpoDashboard";
+import SupplierConcentrationMapDashboard from "@/components/reports/SupplierConcentrationMapDashboard";
 import { LucideIcon } from "lucide-react";
 
 
@@ -101,6 +103,7 @@ const dashboardCategories: DashboardCategory[] = [
       { id: "tco-comparison", subtitle: "Total cost of ownership" },
       { id: "should-cost-gap", subtitle: "Price vs benchmark headroom" },
       { id: "savings-realization-funnel", subtitle: "Hard/Soft/Avoided savings funnel" },
+      { id: "working-capital-dpo", subtitle: "DPO & working-capital release" },
       { id: "license-tier", subtitle: "License cost distribution" },
       { id: "sensitivity-spider", subtitle: "Assumption stress testing" },
     ],
@@ -111,6 +114,7 @@ const dashboardCategories: DashboardCategory[] = [
     description: "Assess supply risks, contract gaps, and data reliability",
     dashboards: [
       { id: "risk-heatmap", subtitle: "Probability × impact mapping" },
+      { id: "supplier-concentration-map", subtitle: "Category → supplier flow & HHI" },
       { id: "sow-analysis", subtitle: "Scope & contract gap analysis" },
       { id: "data-quality", subtitle: "Analysis reliability scoring" },
     ],
@@ -161,6 +165,10 @@ const renderDashboard = (id: DashboardType) => {
       return <ShouldCostGapDashboard />;
     case "savings-realization-funnel":
       return <SavingsRealizationFunnelDashboard />;
+    case "working-capital-dpo":
+      return <WorkingCapitalDpoDashboard />;
+    case "supplier-concentration-map":
+      return <SupplierConcentrationMapDashboard />;
     default:
       return null;
   }
