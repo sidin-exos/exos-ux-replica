@@ -29,7 +29,7 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "tco-comparison": "tcoComparison",
   "license-tier": "licenseTier",
   "sensitivity-spider": "sensitivitySpider",
-  "risk-matrix": "riskMatrix",
+  "risk-heatmap": "riskMatrix",
   "scenario-comparison": "scenarioComparison",
   "supplier-scorecard": "supplierScorecard",
   "sow-analysis": "sowAnalysis",
@@ -106,7 +106,7 @@ const DashboardRenderer = ({
     case "sensitivity-spider":
       return wrapWithFallbackBanner(<SensitivitySpiderDashboard parsedData={parsedData?.sensitivitySpider} />);
 
-    case "risk-matrix":
+    case "risk-heatmap":
       return wrapWithFallbackBanner(<RiskMatrixDashboard parsedData={parsedData?.riskMatrix} />);
 
     case "scenario-comparison":
