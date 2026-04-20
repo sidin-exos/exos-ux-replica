@@ -75,6 +75,31 @@ const tcoCostBreakdown = [
   { name: "Trade-in Credit", value: -35000, type: "reduction" as const },
 ];
 
+// Example data for the working-capital-dpo dashboard catalogue entry.
+// Tokenised supplier labels — never real entity names.
+const workingCapitalExample = {
+  current_weighted_dpo: 32,
+  target_weighted_dpo: 48,
+  working_capital_delta_eur: 525_000,
+  annual_spend_eur: 12_000_000,
+  terms_distribution: [
+    { term_label: "NET 30", spend_share_pct: 45, supplier_count: 28 },
+    { term_label: "NET 45", spend_share_pct: 25, supplier_count: 14 },
+    { term_label: "NET 60", spend_share_pct: 20, supplier_count: 9 },
+    { term_label: "NET 90+", spend_share_pct: 10, supplier_count: 4 },
+  ],
+  by_supplier: [
+    { supplier_label: "[Supplier-A]", category: "MRO", payment_terms_days: 90, annual_spend: 1_200_000, late_payment_directive_risk: true },
+    { supplier_label: "[Supplier-B]", category: "Logistics", payment_terms_days: 75, annual_spend: 850_000, late_payment_directive_risk: true },
+    { supplier_label: "[Supplier-C]", category: "IT services", payment_terms_days: 30, annual_spend: 2_100_000, late_payment_directive_risk: false },
+  ],
+  early_payment_discount_opportunities: [
+    { supplier_label: "[Supplier-D]", discount_structure: "2/10 NET 30", annualised_value: 48_000 },
+    { supplier_label: "[Supplier-E]", discount_structure: "1.5/15 NET 45", annualised_value: 22_500 },
+  ],
+  currency: "€",
+};
+
 interface DashboardCategory {
   label: string;
   icon: LucideIcon;
@@ -166,7 +191,7 @@ const renderDashboard = (id: DashboardType) => {
     case "savings-realization-funnel":
       return <SavingsRealizationFunnelDashboard />;
     case "working-capital-dpo":
-      return <WorkingCapitalDpoDashboard />;
+      return <WorkingCapitalDpoDashboard exampleData={workingCapitalExample} />;
     case "supplier-concentration-map":
       return <SupplierConcentrationMapDashboard />;
     default:

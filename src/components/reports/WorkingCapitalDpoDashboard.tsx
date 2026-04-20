@@ -19,6 +19,12 @@ import type { WorkingCapitalData } from "@/lib/dashboard-data-parser";
 
 interface Props {
   parsedData?: WorkingCapitalData;
+  /**
+   * Sample data shown on the /features catalogue page when no parsed AI
+   * data is available. When provided, replaces the empty-state message
+   * with the dashboard rendered against the example payload.
+   */
+  exampleData?: WorkingCapitalData;
 }
 
 const COLOR_NET30 = "hsl(var(--primary))";
@@ -42,9 +48,12 @@ const formatCurrency = (value: number | null, currency: string): string => {
   return `${sign}${currency}${Math.round(abs)}`;
 };
 
-const WorkingCapitalDpoDashboard = ({ parsedData }: Props) => {
-  // No sample-data fallback by design — render an empty state instead.
-  if (!parsedData) {
+const WorkingCapitalDpoDashboard = ({ parsedData, exampleData }: Props) => {
+  const data = parsedData ?? exampleData;
+  const isExample = !parsedData && !!exampleData;
+
+  // No fallback unless an explicit example is provided (e.g. /features catalogue).
+  if (!data) {
     return (
       <Card className="card-elevated h-full">
         <CardHeader className="pb-4">
@@ -76,7 +85,6 @@ const WorkingCapitalDpoDashboard = ({ parsedData }: Props) => {
     );
   }
 
-  const data = parsedData;
   const dpoDelta =
     data.target_weighted_dpo != null && data.current_weighted_dpo != null
       ? data.target_weighted_dpo - data.current_weighted_dpo
@@ -261,6 +269,13 @@ const WorkingCapitalDpoDashboard = ({ parsedData }: Props) => {
               </table>
             </CollapsibleContent>
           </Collapsible>
+        )}
+
+        {isExample && (
+          <div className="flex items-start gap-2 text-[11px] text-muted-foreground border-t border-border/40 pt-3">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>Example data — illustrative only. Run a Savings Calculation analysis with payment terms to populate this view.</span>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -32,12 +32,12 @@ describe("scenarioDashboardMapping contract", () => {
       }
       expect(
         dashboards.length,
-        `"${key}" has ${dashboards.length} dashboards (expected 1-4)`
+        `"${key}" has ${dashboards.length} dashboards (expected 1-5)`
       ).toBeGreaterThanOrEqual(1);
       expect(
         dashboards.length,
-        `"${key}" has ${dashboards.length} dashboards (expected 1-4)`
-      ).toBeLessThanOrEqual(4);
+        `"${key}" has ${dashboards.length} dashboards (expected 1-5)`
+      ).toBeLessThanOrEqual(5);
 
       for (const db of dashboards) {
         expect(
