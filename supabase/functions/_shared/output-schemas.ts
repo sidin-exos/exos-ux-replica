@@ -103,7 +103,26 @@ S21 Negotiation Preparation — SPECIFIC RULES:
 };
 
 // ── Group Schemas ───────────────────────────────────────────────────
-// Full JSON schema templates from EXOS_AI_Output_Schema_v1.md Sections 3-7
+// Full JSON schema templates from EXOS_AI_Output_Schema_v2.md Sections 3-7.
+
+// Reusable concentration block (S20, S24, S25, S27) — keeps the four
+// scenario schemas in lock-step. Interpolated into Group C / Group D strings.
+export const CONCENTRATION_SCHEMA_FRAGMENT = `"concentration": {
+      "categories": [
+        { "category_id": "CAT-001", "category_name": null, "hhi": null, "hhi_interpretation": "LOW | MODERATE | HIGH | EXTREME", "annual_spend": null }
+      ],
+      "flows": [
+        { "source": "CAT-001", "target": "Supplier_001", "value": null, "tier": 1, "single_source_flag": false }
+      ],
+      "suppliers": [
+        { "supplier_label": "Supplier_001", "geography": null, "total_spend": null, "category_count": null, "exit_cost_estimate": null, "exit_cost_rationale": null }
+      ],
+      "tier2_dependencies": null,
+      "geographic_concentration": [
+        { "country_code": "DE", "spend_share_pct": null }
+      ],
+      "currency": "EUR"
+    }`;
 
 export const GROUP_SCHEMAS: Record<string, string> = {
   A: `GROUP A PAYLOAD SCHEMA (Analytical Value — S1–S8):
@@ -531,10 +550,13 @@ You MUST use the following schema structure:
 - Universal envelope fields: schema_version, scenario_id, scenario_name, group, group_label,
   confidence_level, low_confidence_watermark, confidence_flags, summary, executive_bullets,
   data_gaps, recommendations, gdpr_flags, export_metadata, payload.
-- schema_version must always be exactly the string "1.0".
 - payload must contain the group-specific structure defined below.
 - Every defined field must be present. Use null for missing values — never omit a field.
+- Set schema_version to "2.0".
 - Set low_confidence_watermark to true if confidence_level is LOW.
+- Add an entry to data_gaps for every null field that is null due to missing user input,
+  EXCEPT for these optional fields which do not require a data_gaps entry when absent:
+  financial_model.working_capital (optional, populated only when payment terms provided).
 - data_gaps RULES (strict):
   1. Maximum 3 entries. Pick the ones with the highest analytical impact.
   2. Each entry MUST name a specific field from the user's input form (e.g. "annual_spend", "contract_end_date"), not generic labels like "Unknown field".
@@ -542,9 +564,31 @@ You MUST use the following schema structure:
   4. "resolution" MUST be a specific, actionable coaching tip (e.g. "Add your annual spend figure to unlock cost-per-unit calculations"), never "Provide missing data".
   5. FORBIDDEN placeholder values: "Unknown field", "Impact not specified", "Provide missing data", "Not available", "N/A". If you cannot write a specific entry, omit it entirely.
   6. Tone: helpful coaching, not punitive. Frame as "Add [specific field] to unlock [specific benefit]" rather than "Missing: [field]". Do NOT start resolutions with "To strengthen this analysis" — the UI already provides that heading.
-- Add an entry to gdpr_flags if any output field appears to contain unanonymised personal
-  data (real names, email addresses, phone numbers, salary amounts). Set that field to null
-  and explain in gdpr_flags. Never write PII into any output field.
+- Add an entry to gdpr_flags if any field you are about to write appears to contain
+  unanonymised personal data (real names, email addresses, phone numbers, salary amounts).
+  Set that field to null and explain in gdpr_flags instead.
+
+DASHBOARD-SUPPORTING FIELD RULES:
+- For S4 (Savings Calculation): you MUST populate both savings_breakdown and
+  savings_classification. Classify every savings figure into exactly one of hard, soft,
+  or avoided. Set baseline_verified=true only if a documented historical baseline was
+  provided — never for estimates. If the user has not specified a category, default to
+  soft and add a data_gaps[] entry requesting classification confirmation.
+- For any Group A scenario: populate financial_model.working_capital ONLY when the user
+  provides payment-terms data (DPO figures, NET terms, supplier payment schedules).
+  Compute working_capital_delta_eur = annual_spend × (target_dpo - current_dpo) / 365.
+  Flag late_payment_directive_risk=true for any supplier with payment_terms_days > 60
+  (EU Late Payment Directive 2011/7 statutory B2B limit).
+- For S20, S24, S25, S27: populate scenario_specific.concentration when supplier-to-
+  category spend data is available. Compute HHI per category as sum of
+  (supplier_spend_share_pct)^2. Interpret HHI:
+    <1500 = LOW (competitive)
+    1500-2500 = MODERATE
+    2500-5000 = HIGH
+    >5000 = EXTREME (monopolistic or near-sole-source)
+  Set single_source_flag=true for any supplier holding >70% of a single category's
+  spend. Use tokenised supplier_label references only — never legal entity names.
+  Use ISO 3166-1 alpha-2 country codes.
 
 GROUP INSTRUCTION AND SCHEMA:
 `;
