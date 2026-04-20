@@ -1036,7 +1036,7 @@ serve(async (req) => {
       const parsedEnvelope = parseAIResponse(finalContent);
       let responseContent = multiDeanon.restoredText;
       let deanonEnvelopeObj = parsedEnvelope;
-      if (parsedEnvelope?.schema_version === '1.0') {
+      if (['1.0','2.0'].includes(parsedEnvelope?.schema_version)) {
         // Deanonymize the envelope itself so structured data has real names.
         // Wrapped in try/catch because deanonymizeText does plain text replacement
         // and original PII values containing ", \, or newlines will break the JSON.
@@ -1058,6 +1058,7 @@ serve(async (req) => {
           scenario_id: deanonEnvelopeObj.scenario_id, confidence_level: deanonEnvelopeObj.confidence_level,
           data_gaps_count: deanonEnvelopeObj.data_gaps?.length ?? 0, gdpr_flags_count: deanonEnvelopeObj.gdpr_flags?.length ?? 0,
           schema_version: deanonEnvelopeObj.schema_version,
+          schema_version_emitted: deanonEnvelopeObj.schema_version,
         });
       }
 
@@ -1069,7 +1070,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           content: responseContent,
-          structured: deanonEnvelopeObj?.schema_version === '1.0' ? deanonEnvelopeObj : undefined,
+          structured: ['1.0','2.0'].includes(deanonEnvelopeObj?.schema_version) ? deanonEnvelopeObj : undefined,
           validation,
           model: googleModel,
           source: "google_ai_studio",
@@ -1158,7 +1159,7 @@ serve(async (req) => {
         const singleParsedEnvelope = parseAIResponse(content);
         let responseContent = singleDeanon.restoredText;
         let deanonSingleEnvelope = singleParsedEnvelope;
-        if (singleParsedEnvelope?.schema_version === '1.0') {
+        if (['1.0','2.0'].includes(singleParsedEnvelope?.schema_version)) {
           // Deanonymize the envelope itself so structured data has real names.
           // Wrapped in try/catch because deanonymizeText does plain text replacement
           // and original PII values containing ", \, or newlines will break the JSON.
@@ -1178,7 +1179,7 @@ serve(async (req) => {
         }
 
         tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog,
-          ...(singleParsedEnvelope?.schema_version === '1.0' ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: '1.0' } : {}),
+          ...(['1.0','2.0'].includes(singleParsedEnvelope?.schema_version) ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: singleParsedEnvelope.schema_version, schema_version_emitted: singleParsedEnvelope.schema_version } : {}),
         });
         tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
 
@@ -1190,7 +1191,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             content: responseContent,
-            structured: deanonSingleEnvelope?.schema_version === '1.0' ? deanonSingleEnvelope : undefined,
+            structured: ['1.0','2.0'].includes(deanonSingleEnvelope?.schema_version) ? deanonSingleEnvelope : undefined,
             validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }

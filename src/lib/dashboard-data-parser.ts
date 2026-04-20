@@ -218,7 +218,7 @@ export function isStructuredOutput(raw: string): boolean {
   if (!raw) return false;
   try {
     const parsed = JSON.parse(raw);
-    return parsed?.schema_version === '1.0';
+    return ['1.0','2.0'].includes(parsed?.schema_version);
   } catch {
     return false;
   }
@@ -308,7 +308,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   let envelope: Record<string, any>;
   try {
     const p = JSON.parse(rawString);
-    if (p?.schema_version !== '1.0') return null;
+    if (!['1.0','2.0'].includes(p?.schema_version)) return null;
     envelope = p;
   } catch {
     return null;
@@ -902,7 +902,7 @@ export function extractDashboardData(text: string): DashboardData | null {
   // Try structured EXOS Output Schema v1.0 first
   try {
     const parsed = JSON.parse(text);
-    if (parsed?.schema_version === '1.0') {
+    if (['1.0','2.0'].includes(parsed?.schema_version)) {
       return extractFromEnvelope(parsed);
     }
   } catch { /* not JSON, fall through to legacy */ }

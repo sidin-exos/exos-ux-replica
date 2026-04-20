@@ -178,7 +178,7 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   let envelope: Record<string, any>;
   try {
     const parsed = JSON.parse(rawString);
-    if (parsed?.schema_version !== '1.0') return null;
+    if (!['1.0','2.0'].includes(parsed?.schema_version)) return null;
     envelope = parsed;
   } catch {
     return null;

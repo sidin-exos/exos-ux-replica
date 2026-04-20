@@ -210,6 +210,13 @@ export interface ShadowLog {
 
 export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW';
 export type RAGStatus = 'RED' | 'AMBER' | 'GREEN';
+export type SchemaVersion = '1.0' | '2.0';
+export const SUPPORTED_SCHEMA_VERSIONS: readonly SchemaVersion[] = ['1.0', '2.0'];
+
+export function validateSchemaVersion(envelope: { schema_version?: string } | null | undefined): boolean {
+  if (!envelope?.schema_version) return false;
+  return (SUPPORTED_SCHEMA_VERSIONS as readonly string[]).includes(envelope.schema_version);
+}
 
 export interface ConfidenceFlag {
   field: string;
@@ -238,7 +245,7 @@ export interface ExportMetadata {
 }
 
 export interface ExosOutput {
-  schema_version: '1.0';
+  schema_version: SchemaVersion;
   scenario_id: string;
   scenario_name: string;
   group: 'A' | 'B' | 'C' | 'D' | 'E';
