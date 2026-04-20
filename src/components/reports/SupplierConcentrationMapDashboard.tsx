@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Network, AlertTriangle } from "lucide-react";
+import { Network, AlertTriangle, Info } from "lucide-react";
 import { ResponsiveSankey } from "@nivo/sankey";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
