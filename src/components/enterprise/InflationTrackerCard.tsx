@@ -14,31 +14,6 @@ interface Props {
   onDelete?: (trackerId: string) => void;
 }
 
-/** Summarise driver info into a short preview string */
-const buildPreview = (tracker: InflationTracker): string => {
-  const activeDrivers = tracker.drivers.filter(d => d.is_active);
-  if (activeDrivers.length === 0) return "No active drivers configured yet. Open to set up inflation monitoring.";
-
-  const driverNames = activeDrivers.slice(0, 3).map(d => d.driver_name).join(", ");
-  const statusCounts = activeDrivers.reduce(
-    (acc, d) => {
-      acc[d.current_status] = (acc[d.current_status] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-
-  const statusParts: string[] = [];
-  if (statusCounts.deteriorating) statusParts.push(`${statusCounts.deteriorating} deteriorating`);
-  if (statusCounts.improving) statusParts.push(`${statusCounts.improving} improving`);
-  if (statusCounts.stable) statusParts.push(`${statusCounts.stable} stable`);
-
-  const statusSummary = statusParts.length > 0 ? ` Status: ${statusParts.join(", ")}.` : "";
-  const moreCount = activeDrivers.length > 3 ? ` +${activeDrivers.length - 3} more.` : "";
-
-  return `Tracking ${activeDrivers.length} inflation driver${activeDrivers.length !== 1 ? "s" : ""}: ${driverNames}${moreCount}${statusSummary}`;
-};
-
 /** Get dominant status for border colour */
 const getDominantStatus = (tracker: InflationTracker): string => {
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
