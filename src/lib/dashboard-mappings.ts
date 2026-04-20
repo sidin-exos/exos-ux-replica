@@ -251,25 +251,29 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   // cost-waterfall is intentionally retained on S2 + S4 + S24 for backwards
   // compatibility with historical runs that lack the new payload fields.
   "make-vs-buy": ["decision-matrix", "scenario-comparison", "cost-waterfall"],
-  "supplier-review": ["supplier-scorecard", "timeline-roadmap", "action-checklist"],
+  // Audit cull: removed timeline-roadmap (single review is not a phased project).
+  "supplier-review": ["supplier-scorecard", "action-checklist"],
   "tco-analysis": ["tco-comparison", "cost-waterfall", "scenario-comparison"],
   "software-licensing": ["license-tier", "cost-waterfall"],
   // Wave 2: supplier-concentration-map added to S24, savings-realization-funnel kept.
-  "volume-consolidation": ["scenario-comparison", "cost-waterfall", "savings-realization-funnel", "supplier-concentration-map"],
+  // Audit cull: removed savings-realization-funnel (consolidation savings are
+  // structurally noisy in a CIPS Hard/Soft/Avoided funnel).
+  "volume-consolidation": ["scenario-comparison", "cost-waterfall", "supplier-concentration-map"],
   "cost-breakdown": ["should-cost-gap", "cost-waterfall", "data-quality"],
-  // Wave 2: working-capital-dpo added to S22 (category-strategy).
-  "category-strategy": ["kraljic-quadrant", "timeline-roadmap", "savings-realization-funnel", "working-capital-dpo"],
+  // Audit cull: removed working-capital-dpo (strategy view too high-level for DPO detail).
+  "category-strategy": ["kraljic-quadrant", "timeline-roadmap", "savings-realization-funnel"],
   "capex-vs-opex": ["scenario-comparison", "sensitivity-spider"],
-  // Wave 2: working-capital-dpo added to S4 alongside the funnel.
-  "savings-calculation": ["savings-realization-funnel", "cost-waterfall", "should-cost-gap", "working-capital-dpo", "action-checklist"],
+  // Audit cull: removed should-cost-gap (savings reporting and component
+  // should-cost answer different questions).
+  "savings-calculation": ["savings-realization-funnel", "cost-waterfall", "working-capital-dpo", "action-checklist"],
   "saas-optimization": ["license-tier", "cost-waterfall"],
   "specification-optimizer": ["decision-matrix", "cost-waterfall", "action-checklist", "data-quality"],
 
   // Planning and Sourcing
   "tail-spend-sourcing": ["action-checklist", "data-quality"],
   "requirements-gathering": ["action-checklist", "data-quality"],
-  // Wave 2: working-capital-dpo on forecasting-budgeting.
-  "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider", "working-capital-dpo"],
+  // Audit cull: removed working-capital-dpo (S6 is P&L forecasting; DPO is balance-sheet/treasury).
+  "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider"],
   "negotiation-preparation": ["negotiation-prep", "scenario-comparison", "should-cost-gap"],
   "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-heatmap"],
 
