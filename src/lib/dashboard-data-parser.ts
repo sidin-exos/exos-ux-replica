@@ -727,6 +727,14 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   const funnelResult = extractSavingsRealizationFunnel(payload, ss, watermark);
   if (funnelResult) result.savingsRealizationFunnel = funnelResult;
 
+  // ── Wave 2: working-capital-dpo (Group A base — payload.financial_model.working_capital)
+  const wcResult = extractWorkingCapitalDpo(payload);
+  if (wcResult) result.workingCapitalDpo = wcResult;
+
+  // ── Wave 2: supplier-concentration-map (Group D scenario_specific.concentration)
+  const concResult = extractSupplierConcentrationMap(payload, ss);
+  if (concResult) result.supplierConcentrationMap = concResult;
+
   return Object.keys(result).length === 0 ? null : result;
 }
 
