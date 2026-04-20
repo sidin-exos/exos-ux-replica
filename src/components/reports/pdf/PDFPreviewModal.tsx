@@ -25,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardType } from "@/lib/dashboard-mappings";
+import { DashboardType, toLegacyDashboardId } from "@/lib/dashboard-mappings";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
