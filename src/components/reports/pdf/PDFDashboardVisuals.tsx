@@ -182,7 +182,7 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
       const data = parsedData?.sensitivitySpider;
       return data ? <PDFSensitivityAnalysis data={data} themeMode={themeMode} /> : placeholder();
     }
-    case "risk-matrix": {
+    case "risk-heatmap": {
       const data = parsedData?.riskMatrix;
       return data ? <PDFRiskMatrix data={data} themeMode={themeMode} /> : placeholder();
     }
