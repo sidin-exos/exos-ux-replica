@@ -27,7 +27,7 @@ interface Props {
 
 const COLOR_HARD = "hsl(var(--primary))";
 const COLOR_SOFT = "hsl(var(--accent))";
-const COLOR_AVOIDED = "hsl(var(--muted-foreground))";
+const COLOR_AVOIDED = "hsl(var(--muted-foreground) / 0.5)";
 
 const ACCEPTANCE_STYLE: Record<CFOAcceptance, { bg: string; fg: string; label: string }> = {
   GREEN: {
