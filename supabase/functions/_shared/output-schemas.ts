@@ -332,7 +332,7 @@ Populate scenario_specific based on the scenario, using the structures below ver
   }
 }
 
-— S25 Supplier Dependency Planner (§6.5) — REPLACES v1.0 "Supplier Relationship Management". Includes concentration:
+— S25 Supplier Dependency Planner (§6.5) — includes concentration:
 {
   "scenario_specific": {
     "portfolio_scope": null,
@@ -377,7 +377,7 @@ Populate scenario_specific based on the scenario, using the structures below ver
 }
 S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switching cost appears more than 3× below the industry benchmark of 300–500% underestimation (per CIPS/Gartner). Never emit specific API keys, integration credentials, or internal system architecture details beyond what is necessary for dependency assessment (GDPR Art. 5(1)(c) + commercial sensitivity).
 
-— S26 Disruption Management (§6.6) — REPLACES v1.0 "Total Value Delivery":
+— S26 Disruption Management (§6.6):
 {
   "scenario_specific": {
     "disruption_type": "SUPPLIER_FAILURE | LOGISTICS | GEOPOLITICAL | FORCE_MAJEURE | CYBER | NATURAL_DISASTER | OTHER",
@@ -433,7 +433,7 @@ S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switchi
 }
 S26 AI guidance: speed of output is the value — prioritise completeness of the 4 stages over depth of any single stage. Mask exact inventory depletion dates (commercially sensitive with customers) and specific emergency cash reserves (financially sensitive with lenders). If the user has not provided an inventory buffer, flag current_inventory_buffer_days = null and add to data_gaps[] — the response plan urgency cannot be calibrated without it.
 
-— S27 Black Swan Scenario Simulation (§6.7) — REPLACES v1.0 "Procurement Maturity Assessment". Includes concentration:
+— S27 Black Swan Scenario Simulation (§6.7) — includes concentration:
 {
   "scenario_specific": {
     "scenario_type": "PANDEMIC | NATURAL_DISASTER | GEOPOLITICAL_EMBARGO | CYBER_ATTACK | FINANCIAL_SHOCK | COMPOSITE",
