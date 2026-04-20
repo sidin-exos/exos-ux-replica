@@ -212,7 +212,26 @@ Every risk must reference a regulatory standard or contractual clause. Use RAG s
       ],
       "negotiation_scenarios": [
         { "name": "Conservative | Balanced | Aggressive", "description": "string", "expected_savings_pct": 0, "risk_level": "low | medium | high", "recommended": false }
-      ]
+      ],
+      // S20 / S24 / S25 / S27 — Concentration risk:
+      "concentration": {
+        "categories": [
+          { "category_id": "CAT-1", "category_name": "string", "hhi": null, "hhi_interpretation": "LOW | MODERATE | HIGH | EXTREME", "annual_spend": null }
+        ],
+        "flows": [
+          { "source": "CAT-1", "target": "supplier_label (tokenised)", "value": 0, "tier": 1, "single_source_flag": false }
+        ],
+        "suppliers": [
+          { "supplier_label": "string (tokenised)", "geography": "ISO-3166 alpha-2 or UNKNOWN", "total_spend": 0, "category_count": 0, "exit_cost_estimate": null, "exit_cost_rationale": null }
+        ],
+        "tier2_dependencies": [
+          { "tier1_supplier": "string", "tier2_supplier": "string", "dependency_description": null }
+        ],
+        "geographic_concentration": [
+          { "country_code": "DE", "spend_share_pct": 0 }
+        ],
+        "currency": "EUR"
+      }
     }
   }
 }
@@ -220,10 +239,18 @@ Populate scenario_specific based on the scenario:
 - S21 Negotiation Prep: batna (with batna_strength_pct), zopa, leverage_points[], negotiation_scenarios[] (always 3, exactly one recommended).
 - S22 Category Strategy: kraljic_position, porters_five_forces.
 - S23 Make vs Buy: make_cost, buy_cost, verdict.
-- S24 Volume Consolidation: consolidation_scenarios.
-- S25 SRM: development_plan.
+- S24 Volume Consolidation: consolidation_scenarios + concentration.
+- S25 SRM / Supplier Dependency: development_plan + concentration (PRIMARY view for S25).
 - S26 Total Value: value_dimensions.
-- S27 Maturity Assessment: maturity dimensions.
+- S27 Black Swan / Maturity: maturity dimensions + concentration.
+- S20 Category Risk Evaluator: concentration (secondary to kraljic-quadrant).
+
+CONCENTRATION RULES (S20, S24, S25, S27):
+Populate concentration when supplier and category spend data is available. Calculate HHI per category as sum of (supplier_spend_share_pct)^2.
+Interpret HHI: <1500 = LOW (competitive), 1500-2500 = MODERATE, 2500-5000 = HIGH, >5000 = EXTREME (monopolistic / near-sole-source).
+Set single_source_flag=true for any supplier holding >70% of a single category's spend.
+Use tokenised supplier_label references — do not emit legal entity names (these will be restored by the de-anonymisation layer). Use ISO 3166-1 alpha-2 country codes for geography.
+
 All framework outputs must reference the user's specific inputs. Never produce generic textbook descriptions.`,
 
   E: `GROUP E PAYLOAD SCHEMA (Real-Time Knowledge — S28–S29):
