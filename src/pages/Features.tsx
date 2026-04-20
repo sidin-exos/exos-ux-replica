@@ -166,7 +166,7 @@ const renderDashboard = (id: DashboardType) => {
     case "savings-realization-funnel":
       return <SavingsRealizationFunnelDashboard />;
     case "working-capital-dpo":
-      return <WorkingCapitalDpoDashboard />;
+      return <WorkingCapitalDpoDashboard exampleData={workingCapitalExample} />;
     case "supplier-concentration-map":
       return <SupplierConcentrationMapDashboard />;
     default:
