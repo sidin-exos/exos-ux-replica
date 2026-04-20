@@ -1,6 +1,6 @@
 import { type ReactNode, useMemo } from "react";
 import { AlertCircle } from "lucide-react";
-import { DashboardType } from "@/lib/dashboard-mappings";
+import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
 import { extractDashboardData, extractFromEnvelope, type DashboardData } from "@/lib/dashboard-data-parser";
 
 // Dashboard components
@@ -20,6 +20,8 @@ import NegotiationPrepDashboard from "./NegotiationPrepDashboard";
 import DataQualityDashboard from "./DataQualityDashboard";
 import ShouldCostGapDashboard from "./ShouldCostGapDashboard";
 import SavingsRealizationFunnelDashboard from "./SavingsRealizationFunnelDashboard";
+import WorkingCapitalDpoDashboard from "./WorkingCapitalDpoDashboard";
+import SupplierConcentrationMapDashboard from "./SupplierConcentrationMapDashboard";
 
 /** Map dashboard type slug to the corresponding key in DashboardData */
 const dashboardDataKey: Record<string, keyof DashboardData> = {
@@ -39,6 +41,8 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "data-quality": "dataQuality",
   "should-cost-gap": "shouldCostGap",
   "savings-realization-funnel": "savingsRealizationFunnel",
+  "working-capital-dpo": "workingCapitalDpo",
+  "supplier-concentration-map": "supplierConcentrationMap",
 };
 
 interface DashboardRendererProps {
@@ -71,9 +75,15 @@ const DashboardRenderer = ({
 
   const dataKey = dashboardDataKey[dashboardType];
   const hasRealData = !!(parsedData && dataKey && parsedData[dataKey]);
+  const config = dashboardConfigs[dashboardType];
+  const allowSampleFallback = config?.showSampleDataFallback !== false;
 
   const wrapWithFallbackBanner = (element: ReactNode) => {
     if (hasRealData) return element;
+    // Some dashboards (e.g. working-capital-dpo) opt out of the sample-data
+    // fallback because misleading placeholder figures could be mistaken for
+    // real benchmarks. They render their own empty state instead.
+    if (!allowSampleFallback) return element;
     return (
       <div>
         <div className="bg-warning/10 text-warning border border-warning/30 rounded-lg px-3 py-2 text-xs mb-2 flex items-center gap-2">
@@ -133,6 +143,13 @@ const DashboardRenderer = ({
 
     case "savings-realization-funnel":
       return wrapWithFallbackBanner(<SavingsRealizationFunnelDashboard parsedData={parsedData?.savingsRealizationFunnel} />);
+
+    case "working-capital-dpo":
+      // No fallback banner — component renders its own empty state when parsedData missing.
+      return <WorkingCapitalDpoDashboard parsedData={parsedData?.workingCapitalDpo} />;
+
+    case "supplier-concentration-map":
+      return wrapWithFallbackBanner(<SupplierConcentrationMapDashboard parsedData={parsedData?.supplierConcentrationMap} />);
 
     default:
       return (
