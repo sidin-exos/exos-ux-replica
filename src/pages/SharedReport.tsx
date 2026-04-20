@@ -388,35 +388,56 @@ export default function SharedReport() {
             </Card>
 
             {/* Dashboards */}
-            {selectedDashboards.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-primary" />
-                  <h2 className="font-display text-lg font-semibold">
-                    Analysis Dashboards
-                  </h2>
-                  <Badge variant="secondary">{selectedDashboards.length}</Badge>
+            {selectedDashboards.length > 0 && (() => {
+              const renderable = selectedDashboards.filter((dt) =>
+                dashboardHasRealData(dt, safeAnalysisResult, structuredData)
+              );
+              const skipped = selectedDashboards.filter(
+                (dt) => !dashboardHasRealData(dt, safeAnalysisResult, structuredData)
+              );
+              if (renderable.length === 0 && skipped.length === 0) return null;
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-primary" />
+                    <h2 className="font-display text-lg font-semibold">
+                      Analysis Dashboards
+                    </h2>
+                    <Badge variant="secondary">{renderable.length}</Badge>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {renderable.map((dashboardType, index) => (
+                      <motion.div
+                        key={dashboardType}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 + index * 0.05 }}
+                      >
+                        <DashboardRenderer
+                          dashboardType={dashboardType}
+                          scenarioTitle={scenarioTitle}
+                          analysisResult={safeAnalysisResult}
+                          structuredData={structuredData}
+                          formData={formData}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                  {skipped.length > 0 && (
+                    <div className="text-xs text-muted-foreground border border-border rounded-lg p-3 bg-secondary/20">
+                      <p className="font-medium text-foreground mb-1">
+                        {skipped.length} dashboard{skipped.length === 1 ? '' : 's'} skipped — insufficient AI data
+                      </p>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {skipped.map((dt) => (
+                          <li key={dt}>{dashboardConfigs[dt]?.name ?? dt}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 gap-4">
-                  {selectedDashboards.map((dashboardType, index) => (
-                    <motion.div
-                      key={dashboardType}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 + index * 0.05 }}
-                    >
-                      <DashboardRenderer
-                        dashboardType={dashboardType}
-                        scenarioTitle={scenarioTitle}
-                        analysisResult={safeAnalysisResult}
-                        structuredData={structuredData}
-                        formData={formData}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Full Analysis */}
             <Card className="card-elevated">
