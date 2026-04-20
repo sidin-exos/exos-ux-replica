@@ -39,9 +39,7 @@ const statusBadgeClass: Record<string, string> = {
 };
 
 const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
-  const [expanded, setExpanded] = useState(false);
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
-  const preview = buildPreview(tracker);
 
   const lastScanned = activeDrivers
     .map(d => d.last_scanned_at)
@@ -51,12 +49,6 @@ const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
 
   const dominantStatus = getDominantStatus(tracker);
   const borderClass = statusBorderClass[dominantStatus] || statusBorderClass.none;
-
-  // Build per-status mini badges
-  const statusCounts = activeDrivers.reduce(
-    (acc, d) => { acc[d.current_status] = (acc[d.current_status] || 0) + 1; return acc; },
-    {} as Record<string, number>
-  );
 
   return (
     <div
@@ -68,43 +60,32 @@ const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
         <Package className="w-4 h-4 text-copper" />
       </div>
 
-      {/* Name + preview */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Name + driver chips */}
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
             {tracker.goods_definition}
           </span>
           <span className="text-[10px] font-medium border rounded px-1.5 py-0.5 bg-iris/10 text-iris border-iris/30 shrink-0">
             {activeDrivers.length} driver{activeDrivers.length !== 1 ? "s" : ""}
           </span>
-          {Object.entries(statusCounts).map(([status, count]) => (
-            <span
-              key={status}
-              className={`text-[10px] font-medium border rounded-full px-2 py-0.5 capitalize shrink-0 ${statusBadgeClass[status] || "bg-muted text-muted-foreground border-border"}`}
-            >
-              {count} {status}
-            </span>
-          ))}
         </div>
-        <p
-          className={`text-xs text-muted-foreground leading-relaxed mt-1.5 ${expanded ? "" : "line-clamp-2"}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded(!expanded);
-          }}
-        >
-          {preview}
-        </p>
-        {!expanded && preview.length > 120 && (
-          <button
-            className="text-[11px] font-semibold text-primary hover:text-primary/80 underline underline-offset-2 mt-0.5"
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpanded(true);
-            }}
-          >
-            Show more
-          </button>
+        {activeDrivers.length === 0 ? (
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            No active drivers configured yet. Open to set up inflation monitoring.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {activeDrivers.map(d => (
+              <span
+                key={d.id}
+                title={`${d.driver_name} — ${d.current_status}`}
+                className={`text-[11px] font-medium border rounded-full px-2 py-0.5 ${statusBadgeClass[d.current_status] || "bg-muted text-muted-foreground border-border"}`}
+              >
+                {d.driver_name}
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
