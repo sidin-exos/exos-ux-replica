@@ -15,7 +15,9 @@ export type DashboardType =
   | "supplier-scorecard"
   | "sow-analysis"
   | "negotiation-prep"
-  | "data-quality";
+  | "data-quality"
+  | "should-cost-gap"
+  | "savings-realization-funnel";
 
 /**
  * Backwards-compatibility alias map for renamed dashboard IDs.
@@ -191,21 +193,44 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
     whenToUse: "Use to understand how reliable the analysis output is. Shows which input fields were provided vs. missing, and how gaps affect confidence in the results.",
     questionsAnswered: ["How much can I trust this analysis?", "What data is missing and does it matter?", "Would providing more data significantly improve the results?"],
   },
+  "should-cost-gap": {
+    id: "should-cost-gap",
+    name: "Should-Cost Gap",
+    description: "Component-level price vs benchmark vs should-cost target",
+    icon: "Scale",
+    keyMetrics: ["Current price % per component", "Benchmark % per component", "Headroom (gap) %", "Supplier margin vs benchmark margin"],
+    whenToUse: "Use to expose the negotiation headroom on each component of a quoted price. Pairs the cost decomposition with a should-cost anchor and a benchmark margin check.",
+    questionsAnswered: ["Where is the supplier overpriced vs benchmark?", "What is a defensible should-cost target?", "Is the supplier's margin out of line with the industry?"],
+  },
+  "savings-realization-funnel": {
+    id: "savings-realization-funnel",
+    name: "Savings Realization Funnel",
+    description: "CIPS Hard / Soft / Avoided savings across the funnel",
+    icon: "Filter",
+    keyMetrics: ["Hard / Soft / Avoided segmentation", "Identified → Committed → Realized progression", "CFO-acceptance indicator", "Baseline verification status"],
+    whenToUse: "Use to report savings in a way Finance will accept. Separates Hard P&L impact from Soft cost avoidance and inflation-protected (Avoided) value, and shows how much of identified savings actually realised.",
+    questionsAnswered: ["How much of our reported savings is Finance-grade?", "Where does value leak between identified and realized?", "Is our baseline verified or estimated?"],
+  },
 };
 
 // Scenario to dashboard mapping
 // Each scenario has 2-4 relevant dashboards, ordered by relevance
 export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   // Analysis and Optimization
+  // Wave 1 additions:
+  // - should-cost-gap is wired to S2 (primary), S21 (negotiation anchor), S4 (validation baseline).
+  // - savings-realization-funnel is wired to S4 (primary), S22 (ROI), S24 (consolidation reporting).
+  // cost-waterfall is intentionally retained on S2 + S4 + S24 for backwards
+  // compatibility with historical runs that lack the new payload fields.
   "make-vs-buy": ["decision-matrix", "scenario-comparison", "cost-waterfall"],
   "supplier-review": ["supplier-scorecard", "timeline-roadmap", "action-checklist"],
   "tco-analysis": ["tco-comparison", "cost-waterfall", "scenario-comparison"],
   "software-licensing": ["license-tier", "cost-waterfall"],
-  "volume-consolidation": ["scenario-comparison", "cost-waterfall"],
-  "cost-breakdown": ["cost-waterfall", "tco-comparison", "data-quality"],
-  "category-strategy": ["kraljic-quadrant", "timeline-roadmap"],
+  "volume-consolidation": ["scenario-comparison", "cost-waterfall", "savings-realization-funnel"],
+  "cost-breakdown": ["should-cost-gap", "cost-waterfall", "data-quality"],
+  "category-strategy": ["kraljic-quadrant", "timeline-roadmap", "savings-realization-funnel"],
   "capex-vs-opex": ["scenario-comparison", "sensitivity-spider"],
-  "savings-calculation": ["cost-waterfall", "action-checklist"],
+  "savings-calculation": ["savings-realization-funnel", "cost-waterfall", "should-cost-gap", "action-checklist"],
   "saas-optimization": ["license-tier", "cost-waterfall"],
   "specification-optimizer": ["decision-matrix", "cost-waterfall", "action-checklist", "data-quality"],
 
@@ -213,7 +238,7 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "tail-spend-sourcing": ["action-checklist", "data-quality"],
   "requirements-gathering": ["action-checklist", "data-quality"],
   "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider"],
-  "negotiation-preparation": ["negotiation-prep", "scenario-comparison"],
+  "negotiation-preparation": ["negotiation-prep", "scenario-comparison", "should-cost-gap"],
   "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-heatmap"],
 
   // Risk Management

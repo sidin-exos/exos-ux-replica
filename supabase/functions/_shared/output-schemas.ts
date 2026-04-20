@@ -116,6 +116,26 @@ Then ALSO populate scenario_specific with the per-scenario structure below — t
 - tco-analysis (S1): scenario_specific.vendor_options MUST be an array of AT LEAST 2 objects, each with vendor_label (string), total_tco (number), year_breakdown (array of { year: number, cost: number }). If the user provided only one option to analyse, generate the comparison against a clearly-labelled status-quo / do-nothing / industry-benchmark alternative. Never return fewer than 2 vendor_options for tco-analysis. The financial_model.cost_breakdown for tco-analysis represents the categorical decomposition of the PRIMARY (recommended) option's total_tco.
 - cost-breakdown (S2): use financial_model.cost_breakdown as the primary source. scenario_specific can stay empty {} or hold optional commentary.
 - savings-calculation (S4): scenario_specific.savings_breakdown — array of { lever (string), annual_savings (number), one_off_savings (number), confidence (HIGH|MEDIUM|LOW) }.
+  ADDITIONALLY for S4, you MUST populate scenario_specific.savings_classification with the following structure (every field initialised to null when unknown):
+  {
+    "savings_classification": {
+      "baseline_verified": false,
+      "hard": {
+        "baseline_value": null, "new_value": null, "annual_volume": null,
+        "annualised_savings": null, "pnl_impact": null
+      },
+      "soft": {
+        "baseline_value": null, "new_value": null,
+        "annualised_avoidance": null, "justification": null
+      },
+      "avoided": {
+        "inflation_index_applied": null, "inflation_rate_pct": null,
+        "baseline_adjusted_value": null, "protected_value": null
+      },
+      "funnel": { "identified": null, "committed": null, "realized": null }
+    }
+  }
+  Classify every savings figure into exactly one of three CIPS categories: HARD (direct P&L impact — price reduction on confirmed volume), SOFT (cost avoidance — benefit not reflected in P&L, e.g. scope reduction), or AVOIDED (inflation-adjusted baseline protection). Do not aggregate across categories. If the user has not specified a category, default to SOFT and add a data_gaps[] entry requesting classification confirmation. Set baseline_verified=true ONLY if the user provided a documented historical baseline, not an estimate.
 - capex-vs-opex (S3): scenario_specific.options — array of >= 2 { option_label, total_capex, total_opex, year_by_year } entries.
 - For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
 

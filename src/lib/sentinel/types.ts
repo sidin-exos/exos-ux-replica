@@ -254,3 +254,82 @@ export interface ExosOutput {
   export_metadata: ExportMetadata;
   payload: Record<string, unknown>;
 }
+
+// ============================================
+// 9. WAVE 1 DASHBOARD TYPES
+// ============================================
+
+/**
+ * should-cost-gap (S2 + S21 + S4 secondary).
+ * Renderer-only: consumes existing payload.scenario_specific.cost_decomposition[]
+ * and payload.scenario_specific.negotiation_anchor — no schema bump.
+ */
+export interface ShouldCostGapData {
+  components: Array<{
+    name: string;
+    currentPricePct: number;     // from estimated_pct
+    benchmarkPct: number | null; // from benchmark_pct
+    gapPct: number | null;       // from gap_pct (positive = headroom above benchmark)
+    confidence: ConfidenceLevel;
+  }>;
+  negotiationAnchor: {
+    currentPrice: number | null;
+    shouldCostTarget: number | null;
+    headroomPct: number | null;
+    rationale: string | null;
+  };
+  supplierMarginPct: number | null;
+  benchmarkMarginPct: number | null;
+  currency: string;
+}
+
+/**
+ * savings-realization-funnel (S4 + S22 + S24).
+ * Backed by the new additive payload.scenario_specific.savings_classification
+ * field on Group A. Backwards compatible: null = not present in historical runs.
+ */
+export interface SavingsClassification {
+  baseline_verified: boolean;
+  hard: {
+    baseline_value: number | null;
+    new_value: number | null;
+    annual_volume: number | null;
+    annualised_savings: number | null;
+    pnl_impact: number | null;
+  } | null;
+  soft: {
+    baseline_value: number | null;
+    new_value: number | null;
+    annualised_avoidance: number | null;
+    justification: string | null;
+  } | null;
+  avoided: {
+    inflation_index_applied: string | null;
+    inflation_rate_pct: number | null;
+    baseline_adjusted_value: number | null;
+    protected_value: number | null;
+  } | null;
+  funnel: {
+    identified: number | null;
+    committed: number | null;
+    realized: number | null;
+  };
+}
+
+export type CFOAcceptance = 'GREEN' | 'AMBER' | 'RED';
+
+export interface SavingsRealizationFunnelData {
+  baselineVerified: boolean;
+  cfoAcceptance: CFOAcceptance;
+  funnel: Array<{
+    stage: 'Baseline' | 'Identified' | 'Committed' | 'Realized';
+    hard: number;
+    soft: number;
+    avoided: number;
+  }>;
+  hardAnnualised: number | null;
+  softAnnualised: number | null;
+  avoidedProtected: number | null;
+  currency: string;
+  lowConfidenceWatermark: boolean;
+}

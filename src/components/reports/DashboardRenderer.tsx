@@ -18,6 +18,8 @@ import SupplierPerformanceDashboard from "./SupplierPerformanceDashboard";
 import SOWAnalysisDashboard from "./SOWAnalysisDashboard";
 import NegotiationPrepDashboard from "./NegotiationPrepDashboard";
 import DataQualityDashboard from "./DataQualityDashboard";
+import ShouldCostGapDashboard from "./ShouldCostGapDashboard";
+import SavingsRealizationFunnelDashboard from "./SavingsRealizationFunnelDashboard";
 
 /** Map dashboard type slug to the corresponding key in DashboardData */
 const dashboardDataKey: Record<string, keyof DashboardData> = {
@@ -35,6 +37,8 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "sow-analysis": "sowAnalysis",
   "negotiation-prep": "negotiationPrep",
   "data-quality": "dataQuality",
+  "should-cost-gap": "shouldCostGap",
+  "savings-realization-funnel": "savingsRealizationFunnel",
 };
 
 interface DashboardRendererProps {
@@ -123,6 +127,12 @@ const DashboardRenderer = ({
 
     case "data-quality":
       return wrapWithFallbackBanner(<DataQualityDashboard parsedData={parsedData?.dataQuality} />);
+
+    case "should-cost-gap":
+      return wrapWithFallbackBanner(<ShouldCostGapDashboard parsedData={parsedData?.shouldCostGap} />);
+
+    case "savings-realization-funnel":
+      return wrapWithFallbackBanner(<SavingsRealizationFunnelDashboard parsedData={parsedData?.savingsRealizationFunnel} />);
 
     default:
       return (

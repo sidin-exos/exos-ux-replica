@@ -136,6 +136,19 @@ export interface DataQualityData {
   limitations?: { title: string; impact: string }[];
 }
 
+// Wave 1 — re-exported from sentinel/types so dashboards have a single import surface.
+export type {
+  ShouldCostGapData,
+  SavingsRealizationFunnelData,
+  SavingsClassification,
+  CFOAcceptance,
+} from "./sentinel/types";
+
+import type {
+  ShouldCostGapData as _ShouldCostGapData,
+  SavingsRealizationFunnelData as _SavingsRealizationFunnelData,
+} from "./sentinel/types";
+
 // ============================================
 // Top-level union type
 // ============================================
@@ -155,6 +168,8 @@ export interface DashboardData {
   sowAnalysis?: SOWAnalysisData;
   negotiationPrep?: NegotiationPrepData;
   dataQuality?: DataQualityData;
+  shouldCostGap?: _ShouldCostGapData;
+  savingsRealizationFunnel?: _SavingsRealizationFunnelData;
 }
 
 // ============================================
@@ -179,6 +194,8 @@ const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
   sow_analysis: 'sowAnalysis',
   negotiation_prep: 'negotiationPrep',
   data_quality: 'dataQuality',
+  should_cost_gap: 'shouldCostGap',
+  savings_realization_funnel: 'savingsRealizationFunnel',
 };
 
 const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
@@ -687,7 +704,168 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     }
   }
 
+  // ── Wave 1: should-cost-gap (renderer-only, no schema bump)
+  // Source: payload.scenario_specific.cost_decomposition[] +
+  //         payload.scenario_specific.negotiation_anchor +
+  //         payload.scenario_specific.estimated_supplier_margin_pct
+  const shouldCostResult = extractShouldCostGap(payload, ss);
+  if (shouldCostResult) result.shouldCostGap = shouldCostResult;
+
+  // ── Wave 1: savings-realization-funnel (S4 — additive payload field)
+  const watermark = Boolean(envelope.low_confidence_watermark);
+  const funnelResult = extractSavingsRealizationFunnel(payload, ss, watermark);
+  if (funnelResult) result.savingsRealizationFunnel = funnelResult;
+
   return Object.keys(result).length === 0 ? null : result;
+}
+
+// ============================================
+// Wave 1 sub-extractors (exported for unit tests)
+// ============================================
+
+import type {
+  ShouldCostGapData,
+  SavingsRealizationFunnelData,
+  CFOAcceptance,
+  ConfidenceLevel,
+} from './sentinel/types';
+
+const normaliseConfidence = (v: unknown): ConfidenceLevel => {
+  const s = String(v ?? '').toUpperCase();
+  return s === 'HIGH' || s === 'MEDIUM' || s === 'LOW' ? (s as ConfidenceLevel) : 'MEDIUM';
+};
+
+export function extractShouldCostGap(
+  payload: Record<string, any>,
+  ss: Record<string, any>
+): ShouldCostGapData | null {
+  if (!ss || typeof ss !== 'object') return null;
+  const decomposition: any[] = Array.isArray(ss.cost_decomposition) ? ss.cost_decomposition : [];
+  if (decomposition.length === 0) return null;
+
+  const components = decomposition
+    .filter((c: any) => c && c.component && c.estimated_pct != null)
+    .map((c: any) => ({
+      name: String(c.component),
+      currentPricePct: Number(c.estimated_pct),
+      benchmarkPct: c.benchmark_pct != null ? Number(c.benchmark_pct) : null,
+      gapPct: c.gap_pct != null ? Number(c.gap_pct) : null,
+      confidence: normaliseConfidence(c.confidence),
+    }));
+
+  if (components.length === 0) return null;
+
+  const anchor = ss.negotiation_anchor ?? {};
+  const benchmark = payload.financial_model?.benchmark_comparison ?? {};
+
+  return {
+    components,
+    negotiationAnchor: {
+      currentPrice: anchor.current_price != null ? Number(anchor.current_price) : null,
+      shouldCostTarget: anchor.should_cost_target != null ? Number(anchor.should_cost_target) : null,
+      headroomPct: anchor.headroom_pct != null ? Number(anchor.headroom_pct) : null,
+      rationale: anchor.rationale ?? null,
+    },
+    supplierMarginPct:
+      ss.estimated_supplier_margin_pct != null ? Number(ss.estimated_supplier_margin_pct) : null,
+    benchmarkMarginPct:
+      benchmark.industry_margin_pct != null ? Number(benchmark.industry_margin_pct) : null,
+    currency: payload.financial_model?.currency ?? 'EUR',
+  };
+}
+
+export function deriveCfoAcceptance(
+  baselineVerified: boolean,
+  hardPresent: boolean
+): CFOAcceptance {
+  if (!baselineVerified) return 'RED';
+  if (hardPresent) return 'GREEN';
+  return 'AMBER';
+}
+
+export function extractSavingsRealizationFunnel(
+  payload: Record<string, any>,
+  ss: Record<string, any>,
+  lowConfidenceWatermark: boolean
+): SavingsRealizationFunnelData | null {
+  if (!ss || typeof ss !== 'object') return null;
+  const sc = ss.savings_classification;
+  if (!sc || typeof sc !== 'object') return null;
+
+  const funnelRaw = sc.funnel ?? {};
+  const identified = funnelRaw.identified;
+  const committed = funnelRaw.committed;
+  const realized = funnelRaw.realized;
+
+  const hard = sc.hard ?? null;
+  const soft = sc.soft ?? null;
+  const avoided = sc.avoided ?? null;
+
+  // Bail if every funnel value AND every class is empty.
+  const funnelEmpty = identified == null && committed == null && realized == null;
+  const classesEmpty = !hard && !soft && !avoided;
+  if (funnelEmpty && classesEmpty) return null;
+  if (funnelEmpty) return null;
+
+  // Baseline = sum of class baselines (treat null as 0 only if at least one
+  // class has data).
+  const anyClassData = !!(hard || soft || avoided);
+  const numOrZero = (n: unknown) =>
+    anyClassData && n != null && Number.isFinite(Number(n)) ? Number(n) : 0;
+
+  const baselineHard = anyClassData && hard ? numOrZero(hard.baseline_value) : 0;
+  const baselineSoft = anyClassData && soft ? numOrZero(soft.baseline_value) : 0;
+  const baselineAvoided = anyClassData && avoided ? numOrZero(avoided.baseline_adjusted_value) : 0;
+
+  // Distribute each non-baseline stage proportionally across classes that have
+  // annualised contributions, so the stacked bars stay readable.
+  const hardWeight = hard ? numOrZero(hard.annualised_savings) : 0;
+  const softWeight = soft ? numOrZero(soft.annualised_avoidance) : 0;
+  const avoidedWeight = avoided ? numOrZero(avoided.protected_value) : 0;
+  const totalWeight = hardWeight + softWeight + avoidedWeight;
+
+  const split = (total: number | null | undefined) => {
+    if (total == null || !Number.isFinite(Number(total))) {
+      return { hard: 0, soft: 0, avoided: 0 };
+    }
+    const t = Number(total);
+    if (totalWeight <= 0) {
+      // No weights — attribute everything to the only present class, else hard.
+      if (hard) return { hard: t, soft: 0, avoided: 0 };
+      if (soft) return { hard: 0, soft: t, avoided: 0 };
+      if (avoided) return { hard: 0, soft: 0, avoided: t };
+      return { hard: t, soft: 0, avoided: 0 };
+    }
+    return {
+      hard: (t * hardWeight) / totalWeight,
+      soft: (t * softWeight) / totalWeight,
+      avoided: (t * avoidedWeight) / totalWeight,
+    };
+  };
+
+  const baselineVerified = Boolean(sc.baseline_verified);
+  const cfoAcceptance = deriveCfoAcceptance(baselineVerified, !!hard);
+
+  return {
+    baselineVerified,
+    cfoAcceptance,
+    funnel: [
+      {
+        stage: 'Baseline',
+        hard: baselineHard,
+        soft: baselineSoft,
+        avoided: baselineAvoided,
+      },
+      { stage: 'Identified', ...split(identified) },
+      { stage: 'Committed', ...split(committed) },
+      { stage: 'Realized', ...split(realized) },
+    ],
+    hardAnnualised: hard?.annualised_savings != null ? Number(hard.annualised_savings) : null,
+    softAnnualised: soft?.annualised_avoidance != null ? Number(soft.annualised_avoidance) : null,
+    avoidedProtected: avoided?.protected_value != null ? Number(avoided.protected_value) : null,
+    currency: payload.financial_model?.currency ?? 'EUR',
+    lowConfidenceWatermark,
+  };
 }
 
 /**
