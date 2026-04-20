@@ -157,6 +157,10 @@ const renderDashboard = (id: DashboardType) => {
       return <NegotiationPrepDashboard />;
     case "data-quality":
       return <DataQualityDashboard />;
+    case "should-cost-gap":
+      return <ShouldCostGapDashboard />;
+    case "savings-realization-funnel":
+      return <SavingsRealizationFunnelDashboard />;
     default:
       return null;
   }
