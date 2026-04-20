@@ -739,7 +739,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
 }
 
 // ============================================
-// Wave 1 sub-extractors (exported for unit tests)
+// Wave 1 + Wave 2 sub-extractors (exported for unit tests)
 // ============================================
 
 import type {
@@ -747,7 +747,11 @@ import type {
   SavingsRealizationFunnelData,
   CFOAcceptance,
   ConfidenceLevel,
+  WorkingCapitalData,
+  ConcentrationData,
+  HhiInterpretation,
 } from './sentinel/types';
+import { interpretHhi as _interpretHhi } from './sentinel/types';
 
 const normaliseConfidence = (v: unknown): ConfidenceLevel => {
   const s = String(v ?? '').toUpperCase();
