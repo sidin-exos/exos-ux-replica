@@ -270,6 +270,13 @@ const WorkingCapitalDpoDashboard = ({ parsedData, exampleData }: Props) => {
             </CollapsibleContent>
           </Collapsible>
         )}
+
+        {isExample && (
+          <div className="flex items-start gap-2 text-[11px] text-muted-foreground border-t border-border/40 pt-3">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>Example data — illustrative only. Run a Savings Calculation analysis with payment terms to populate this view.</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
