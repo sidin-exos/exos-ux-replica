@@ -1,11 +1,29 @@
 /**
- * EXOS AI Output Schema v1.0 — Shared Module
+ * EXOS AI Output Schema v2.0 — Shared Module
  *
  * Centralises the scenario group registry, AI prompt contract,
  * group-specific schemas, and defensive JSON parser.
  *
+ * v2.0 changes:
+ *   - Group D S25/S26/S27 fully replaced (Supplier Dependency Planner /
+ *     Disruption Management / Black Swan Scenario Simulation).
+ *   - Additive: working_capital (Group A), savings_classification (S4),
+ *     concentration (S20/S24/S25/S27).
+ *   - schema_version now "2.0" on emit; "1.0" still accepted on read.
+ *
  * Imported by: sentinel-analysis, market-intelligence
  */
+
+// ── Schema version handling ────────────────────────────────────────
+// v1.0 envelopes (historical reports) must continue to parse;
+// new AI output emits "2.0".
+export const SUPPORTED_SCHEMA_VERSIONS = ['1.0', '2.0'] as const;
+export type SchemaVersion = typeof SUPPORTED_SCHEMA_VERSIONS[number];
+
+export function validateSchemaVersion(envelope: { schema_version?: string } | null | undefined): boolean {
+  if (!envelope?.schema_version) return false;
+  return (SUPPORTED_SCHEMA_VERSIONS as readonly string[]).includes(envelope.schema_version);
+}
 
 // ── Scenario Group Registry ─────────────────────────────────────────
 // Server-side only. Never accept group from client request.
