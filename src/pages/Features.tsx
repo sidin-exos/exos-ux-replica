@@ -106,7 +106,7 @@ const dashboardCategories: DashboardCategory[] = [
     icon: ShieldAlert,
     description: "Assess supply risks, contract gaps, and data reliability",
     dashboards: [
-      { id: "risk-matrix", subtitle: "Probability × impact mapping" },
+      { id: "risk-heatmap", subtitle: "Probability × impact mapping" },
       { id: "sow-analysis", subtitle: "Scope & contract gap analysis" },
       { id: "data-quality", subtitle: "Analysis reliability scoring" },
     ],
@@ -141,7 +141,7 @@ const renderDashboard = (id: DashboardType) => {
       return <LicenseTierDashboard />;
     case "sensitivity-spider":
       return <SensitivitySpiderDashboard />;
-    case "risk-matrix":
+    case "risk-heatmap":
       return <RiskMatrixDashboard />;
     case "scenario-comparison":
       return <ScenarioComparisonDashboard />;

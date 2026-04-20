@@ -10,12 +10,49 @@ export type DashboardType =
   | "tco-comparison"
   | "license-tier"
   | "sensitivity-spider"
-  | "risk-matrix"
+  | "risk-heatmap"
   | "scenario-comparison"
   | "supplier-scorecard"
   | "sow-analysis"
   | "negotiation-prep"
   | "data-quality";
+
+/**
+ * Backwards-compatibility alias map for renamed dashboard IDs.
+ *
+ * Persisted records (shared_reports, scenario_feedback, test_reports, export
+ * metadata, etc.) may still reference legacy IDs. We resolve at read time
+ * rather than migrating historical rows — this preserves the original audit
+ * trail and avoids RLS / migration churn.
+ *
+ * Add a new entry whenever a dashboard ID is renamed.
+ */
+export const DASHBOARD_ID_ALIASES: Record<string, DashboardType> = {
+  "risk-matrix": "risk-heatmap",
+};
+
+/**
+ * Resolve a raw dashboard id (possibly a legacy alias) to its canonical
+ * DashboardType. Unknown ids are returned unchanged so callers can decide
+ * how to treat them. Use this anywhere a dashboard id may originate from a
+ * persisted source.
+ */
+export const resolveDashboardId = (rawId: string): DashboardType => {
+  return (DASHBOARD_ID_ALIASES[rawId] ?? rawId) as DashboardType;
+};
+
+/**
+ * Convert a canonical DashboardType back to the legacy id expected by
+ * downstream consumers that have not yet been migrated (e.g. PDF/Excel
+ * edge function dashboard switches). Inverse of resolveDashboardId.
+ */
+const LEGACY_DASHBOARD_IDS: Partial<Record<DashboardType, string>> = {
+  "risk-heatmap": "risk-matrix",
+};
+
+export const toLegacyDashboardId = (id: DashboardType): string => {
+  return LEGACY_DASHBOARD_IDS[id] ?? id;
+};
 
 export interface DashboardConfig {
   id: DashboardType;
@@ -100,9 +137,9 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
     whenToUse: "Use to stress-test your assumptions. Shows which input variables have the biggest impact on the outcome — critical for budget planning and risk quantification.",
     questionsAnswered: ["Which assumption, if wrong, would hurt us the most?", "How robust is our business case?", "What's the range of possible outcomes?"],
   },
-  "risk-matrix": {
-    id: "risk-matrix",
-    name: "Risk Matrix",
+  "risk-heatmap": {
+    id: "risk-heatmap",
+    name: "Risk Heatmap",
     description: "Probability vs impact risk assessment grid",
     icon: "Shield",
     keyMetrics: ["Risks by severity zone (critical/high/medium/low)", "Risk count per quadrant", "Top 3 risks by composite score", "Mitigation coverage %"],
@@ -177,16 +214,21 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "requirements-gathering": ["action-checklist", "data-quality"],
   "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider"],
   "negotiation-preparation": ["negotiation-prep", "scenario-comparison"],
-  "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-matrix"],
+  "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-heatmap"],
 
   // Risk Management
-  "disruption-management": ["action-checklist", "timeline-roadmap", "risk-matrix"],
-  "risk-assessment": ["risk-matrix", "scenario-comparison", "action-checklist", "data-quality"],
-  "risk-matrix": ["risk-matrix", "supplier-scorecard", "action-checklist"],
-  "pre-flight-audit": ["data-quality", "risk-matrix"],
-  "category-risk-evaluator": ["risk-matrix", "kraljic-quadrant", "sow-analysis", "action-checklist"],
-  "supplier-dependency-planner": ["risk-matrix", "sensitivity-spider"],
-  "black-swan-scenario": ["risk-matrix", "sensitivity-spider", "scenario-comparison"],
+  // NOTE: the scenario id "risk-matrix" (S18) is unrelated to the dashboard
+  // formerly named "risk-matrix" (now "risk-heatmap"). The collision is the
+  // reason the dashboard was renamed — see DASHBOARD_ID_ALIASES.
+  // S18 ("risk-matrix") is a risk-positioning scenario, not a supplier-perf
+  // review, so supplier-scorecard is intentionally NOT mapped here.
+  "disruption-management": ["action-checklist", "timeline-roadmap", "risk-heatmap"],
+  "risk-assessment": ["risk-heatmap", "scenario-comparison", "action-checklist", "data-quality"],
+  "risk-matrix": ["risk-heatmap", "action-checklist"],
+  "pre-flight-audit": ["data-quality", "risk-heatmap"],
+  "category-risk-evaluator": ["risk-heatmap", "kraljic-quadrant", "action-checklist"],
+  "supplier-dependency-planner": ["risk-heatmap"],
+  "black-swan-scenario": ["risk-heatmap", "sensitivity-spider", "scenario-comparison"],
 
   // Documentation and Contracts
   "sow-critic": ["sow-analysis", "data-quality"],
