@@ -45,6 +45,32 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "supplier-concentration-map": "supplierConcentrationMap",
 };
 
+/**
+ * Determine whether a given dashboard has real AI-generated data available
+ * (as opposed to needing the hardcoded sample fallback). Used by report pages
+ * to skip rendering dashboards with no real data and list them as skipped.
+ */
+export function dashboardHasRealData(
+  dashboardType: DashboardType,
+  analysisResult?: string,
+  structuredData?: string,
+): boolean {
+  let parsed: DashboardData | null = null;
+  if (structuredData) {
+    try {
+      const envelope = JSON.parse(structuredData);
+      if (['1.0', '2.0'].includes(envelope?.schema_version)) {
+        parsed = extractFromEnvelope(envelope);
+      }
+    } catch { /* fall through */ }
+  }
+  if (!parsed) {
+    parsed = extractDashboardData(analysisResult || '');
+  }
+  const key = dashboardDataKey[dashboardType];
+  return !!(parsed && key && parsed[key]);
+}
+
 interface DashboardRendererProps {
   dashboardType: DashboardType;
   scenarioTitle?: string;
