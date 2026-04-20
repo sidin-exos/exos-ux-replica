@@ -1091,22 +1091,30 @@ serve(async (req) => {
       model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
     }, { parentRunId });
 
-    const MAX_RETRIES = 3;
-    const RETRY_DELAYS = [1000, 2000, 4000];
+    // NOTE: callGoogleAI already retries internally (5 attempts w/ exp backoff)
+    // and falls back to gemini-2.5-flash on overload. Outer retries here just
+    // multiply latency and cause 150s edge-function IDLE_TIMEOUTs.
+    // We keep ONE outer attempt with a single fallback to flash on timeout/5xx.
+    const MAX_RETRIES = 2;
+    const RETRY_DELAYS = [500];
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         if (attempt > 0) {
-          console.warn(`[Sentinel] Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms`);
+          console.warn(`[Sentinel] Outer retry ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms (fallback to flash)`);
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
         }
+
+        // On retry, downshift to faster model to fit inside 150s edge timeout
+        const modelForAttempt = attempt === 0 ? googleModel : "gemini-2.5-flash";
 
         const aiResponse = await callGoogleAI({
           systemPrompt,
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           temperature: 0.4,
           maxOutputTokens: 8192,
-          model: googleModel,
+          model: modelForAttempt,
+          timeoutMs: 45_000,
         });
 
         const processingTime = Math.round(performance.now() - startTime);
@@ -1200,9 +1208,9 @@ serve(async (req) => {
         const status = (aiError as Error & { status?: number }).status;
         const processingTime = Math.round(performance.now() - startTime);
 
-        // Retry on 503
-        if (status === 503 && attempt < MAX_RETRIES - 1) {
-          console.warn(`[Sentinel] Google AI Studio 503 on attempt ${attempt + 1}`);
+        // Retry on 503 (overloaded) or 504 (timeout) — fall back to flash
+        if ((status === 503 || status === 504) && attempt < MAX_RETRIES - 1) {
+          console.warn(`[Sentinel] Google AI ${status} on attempt ${attempt + 1}, falling back to flash`);
           continue;
         }
 
