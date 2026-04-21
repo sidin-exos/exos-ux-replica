@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { FolderPlus, ChevronRight, RefreshCw, Loader2, FileText } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { FolderPlus, ChevronRight } from "lucide-react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,43 +15,46 @@ interface TrackerListProps {
   onSelectTracker?: (tracker: EnterpriseTracker) => void;
 }
 
-const statusConfig: Record<string, { variant: "default" | "secondary" | "outline"; className: string }> = {
-  active: { variant: "default", className: "bg-success/15 text-success border-success/30" },
-  setup: { variant: "secondary", className: "bg-warning/15 text-warning border-warning/30" },
-  paused: { variant: "outline", className: "bg-muted text-muted-foreground border-border" },
+const statusDotClass: Record<string, string> = {
+  deteriorating: "bg-destructive",
+  improving: "bg-success",
+  stable: "bg-accent",
 };
 
-const monitorTypeColors: Record<string, string> = {
-  "DM-1": "bg-accent/10 text-accent border-accent/30",
-  "DM-2": "bg-copper/10 text-copper border-copper/30",
-  "DM-3": "bg-iris/10 text-iris border-iris/30",
-  "DM-4": "bg-primary/10 text-primary border-primary/30",
-  "DM-5": "bg-highlight/10 text-highlight border-highlight/30",
-};
+const DETERIORATING_KEYWORDS = [
+  "deteriorat", "declin", "worsen", "increas.*risk", "negative",
+  "concern", "threat", "escala", "weaken", "vulnerab", "disrupt",
+  "sanction", "tariff", "shortage", "downgrad", "default", "loss",
+  "unstable", "volatile", "critical", "warning",
+];
 
-const monitorTypeBorderColors: Record<string, string> = {
-  "DM-1": "border-l-accent",
-  "DM-2": "border-l-copper",
-  "DM-3": "border-l-iris",
-  "DM-4": "border-l-primary",
-  "DM-5": "border-l-highlight",
-};
+const IMPROVING_KEYWORDS = [
+  "improv", "strengthen", "positive", "stabili", "recover",
+  "growth", "opportunit", "favorable", "upgrad", "gain",
+  "resili", "diversif", "mitigat", "progress", "expansion",
+  "innovation", "efficien", "reduc.*risk",
+];
 
-/** Truncate to ~first 2 sentences or 120 chars */
-const summarise = (content: string): string => {
-  const cleaned = content.replace(/^#+\s.+$/gm, "").replace(/\*\*/g, "").trim();
-  const sentences = cleaned.split(/(?<=[.!?])\s+/).slice(0, 5).join(" ");
-  return sentences.length > 350 ? sentences.slice(0, 347) + "…" : sentences;
-};
+function classifySignal(content: string): "deteriorating" | "improving" | "stable" {
+  const lower = content.toLowerCase();
+  let detScore = 0;
+  let impScore = 0;
+  for (const kw of DETERIORATING_KEYWORDS) {
+    const matches = lower.match(new RegExp(kw, "gi"));
+    if (matches) detScore += matches.length;
+  }
+  for (const kw of IMPROVING_KEYWORDS) {
+    const matches = lower.match(new RegExp(kw, "gi"));
+    if (matches) impScore += matches.length;
+  }
+  if (detScore > impScore * 1.3) return "deteriorating";
+  if (impScore > detScore * 1.3) return "improving";
+  return "stable";
+}
 
 const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [scanningId, setScanningId] = useState<string | null>(null);
-
   const trackerIds = trackers.map((t) => t.id);
 
-  // Fetch latest report per tracker in one query
   const { data: latestReports = {} } = useQuery({
     queryKey: ["monitor_reports_latest", trackerIds],
     enabled: trackerIds.length > 0,
@@ -66,13 +67,12 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
 
       if (error) throw error;
 
-      // Keep only the latest per tracker
-      const map: Record<string, { summary: string; date: string }> = {};
+      const map: Record<string, { status: "deteriorating" | "improving" | "stable"; date: string }> = {};
       for (const row of data ?? []) {
         const r = row as any;
         if (!map[r.tracker_id]) {
           map[r.tracker_id] = {
-            summary: summarise(r.report_content),
+            status: classifySignal(r.report_content || ""),
             date: r.created_at,
           };
         }
@@ -81,39 +81,11 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
     },
   });
 
-  const handleScanNow = async (e: React.MouseEvent, tracker: EnterpriseTracker) => {
-    e.stopPropagation();
-    setScanningId(tracker.id);
-    try {
-      const { error } = await supabase.functions.invoke("run-monitor-scan", {
-        body: { tracker_id: tracker.id },
-      });
-      if (error) throw error;
-      toast({ title: "Scan complete", description: `Report generated for "${tracker.name}".` });
-      queryClient.invalidateQueries({ queryKey: ["enterprise_trackers"] });
-      queryClient.invalidateQueries({ queryKey: ["monitor_reports", tracker.id] });
-      queryClient.invalidateQueries({ queryKey: ["monitor_reports_latest"] });
-    } catch (err: any) {
-      toast({ title: "Scan failed", description: err.message || "Unknown error", variant: "destructive" });
-    } finally {
-      setScanningId(null);
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-2">
         {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-5 w-16 rounded-full" />
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-16" />
-            </CardContent>
-          </Card>
+          <Skeleton key={i} className="h-10 w-full" />
         ))}
       </div>
     );
@@ -132,54 +104,37 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {trackers.map((t) => {
         const params = t.parameters as MonitorParameters;
         const monitorType = (params?.monitor_type ?? "DM-2") as MonitorType;
         const typeMeta = MONITOR_TYPE_META[monitorType];
         const latest = latestReports[t.id];
-
-        const typeColorClass = monitorTypeColors[monitorType] || "bg-highlight/10 text-highlight border-highlight/30";
-        const borderColorClass = monitorTypeBorderColors[monitorType] || "border-l-highlight";
-        const statusCfg = statusConfig[t.status] || statusConfig.active;
+        const status = latest?.status;
+        const dotClass = status ? statusDotClass[status] : "bg-muted-foreground/40";
 
         return (
           <div
             key={t.id}
-            className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderColorClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
+            className="group flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-muted/40 cursor-pointer transition-colors"
             onClick={() => onSelectTracker?.(t)}
           >
-            {/* Name + summary */}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">{t.name}</span>
-                <span className={`text-[10px] font-medium border rounded px-1.5 py-0.5 shrink-0 ${typeColorClass}`}>{typeMeta?.label}</span>
-                <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 capitalize shrink-0 ${statusCfg.className}`}>
-                  {t.status}
-                </span>
-              </div>
-              {latest && (
-                <p className="text-xs text-muted-foreground leading-relaxed mt-1.5 line-clamp-3 max-w-lg">
-                  {latest.summary}
-                </p>
-              )}
-            </div>
-
-            {/* Dates column */}
-            <div className="shrink-0 text-right space-y-1">
-              <div className="text-[11px]">
-                <span className="text-muted-foreground/60 block">Created</span>
-                <span className="text-muted-foreground">{format(new Date(t.created_at), "MMM d, yyyy")}</span>
-              </div>
-              {latest && (
-                <div className="text-[11px]">
-                  <span className="text-muted-foreground/60 block">Updated</span>
-                  <span className="text-muted-foreground">{format(new Date(latest.date), "MMM d, yyyy")}</span>
-                </div>
-              )}
-            </div>
-
-            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+            <span
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClass}`}
+              title={status ? `Status: ${status}` : "No reports yet"}
+            />
+            <span className="text-sm text-foreground group-hover:text-primary transition-colors truncate flex-1">
+              {t.name}
+            </span>
+            <span className="text-[11px] text-muted-foreground shrink-0">
+              {typeMeta?.label}
+            </span>
+            {latest && (
+              <span className="text-[11px] text-muted-foreground/70 shrink-0 hidden sm:inline">
+                {format(new Date(latest.date), "MMM d")}
+              </span>
+            )}
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
           </div>
         );
       })}
