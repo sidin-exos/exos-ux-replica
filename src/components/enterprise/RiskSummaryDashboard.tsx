@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingDown, TrendingUp, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { TrendingDown, TrendingUp, AlertTriangle, ArrowUpRight, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
-import type { MonitorType } from "@/hooks/useEnterpriseTrackers";
 
 type Status = "deteriorating" | "improving" | "stable";
 
@@ -117,6 +117,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
       const seenTracker = new Set<string>();
       const deteriorating: SignalItem[] = [];
       const improving: SignalItem[] = [];
+      const areasByTracker = new Map<string, { name: string; status: Status }[]>();
 
       // Latest report per tracker
       for (const report of reports as any[]) {
@@ -128,6 +129,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
         const monitorLabel = trackerName;
 
         const areas = extractRiskAreas(report.report_content || "");
+        areasByTracker.set(report.tracker_id, areas);
         for (const a of areas) {
           const item: SignalItem = {
             trackerName,
@@ -147,7 +149,11 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
       deteriorating.sort(byDate);
       improving.sort(byDate);
 
-      return { deteriorating: deteriorating.slice(0, 6), improving: improving.slice(0, 6) };
+      return {
+        deteriorating: deteriorating.slice(0, 6),
+        improving: improving.slice(0, 6),
+        areasByTracker: Object.fromEntries(areasByTracker.entries()) as Record<string, { name: string; status: Status }[]>,
+      };
     },
     staleTime: 60_000,
   });
@@ -186,23 +192,12 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
             <span className="text-xs font-medium text-destructive">Requiring Attention</span>
           </div>
           {data.deteriorating.map((item, i) => (
-            <div
-              key={i}
-              className="rounded-md border border-destructive/20 bg-destructive/5 px-2.5 py-1.5 transition-colors hover:bg-destructive/10 hover:border-destructive/30"
-              title={`${item.trackerName} — ${item.riskArea}`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <TrendingDown className="w-3 h-3 text-destructive flex-shrink-0" />
-                  <span className="text-[11px] font-medium text-destructive truncate">
-                    {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.riskArea}
-                  </span>
-                </div>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                </span>
-              </div>
-            </div>
+            <SignalRow
+              key={`d-${i}`}
+              item={item}
+              tone="deteriorating"
+              areas={data.areasByTracker?.[item.trackerId] ?? []}
+            />
           ))}
         </div>
       )}
@@ -215,26 +210,98 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
             <span className="text-xs font-medium text-emerald-600">Improving</span>
           </div>
           {data.improving.map((item, i) => (
-            <div
-              key={i}
-              className="rounded-md border border-emerald-600/20 bg-emerald-600/5 px-2.5 py-1.5 transition-colors hover:bg-emerald-600/10 hover:border-emerald-600/30"
-              title={`${item.trackerName} — ${item.riskArea}`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <TrendingUp className="w-3 h-3 text-emerald-600 flex-shrink-0" />
-                  <span className="text-[11px] font-medium text-emerald-600 truncate">
-                    {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.riskArea}
-                  </span>
-                </div>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                </span>
-              </div>
-            </div>
+            <SignalRow
+              key={`i-${i}`}
+              item={item}
+              tone="improving"
+              areas={data.areasByTracker?.[item.trackerId] ?? []}
+            />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+interface SignalRowProps {
+  item: SignalItem;
+  tone: "deteriorating" | "improving";
+  areas: { name: string; status: Status }[];
+}
+
+function SignalRow({ item, tone, areas }: SignalRowProps) {
+  const isDet = tone === "deteriorating";
+  const containerCls = isDet
+    ? "rounded-md border border-destructive/20 bg-destructive/5 px-2.5 py-1.5 transition-colors hover:bg-destructive/10 hover:border-destructive/30 cursor-default"
+    : "rounded-md border border-emerald-600/20 bg-emerald-600/5 px-2.5 py-1.5 transition-colors hover:bg-emerald-600/10 hover:border-emerald-600/30 cursor-default";
+  const Icon = isDet ? TrendingDown : TrendingUp;
+  const textCls = isDet ? "text-destructive" : "text-emerald-600";
+
+  // Up to 4 areas, prioritising same tone first
+  const ordered = [...areas].sort((a, b) => {
+    const score = (s: Status) => (s === tone ? 0 : s === "stable" ? 1 : 2);
+    return score(a.status) - score(b.status);
+  });
+  const preview = ordered.slice(0, 4);
+
+  return (
+    <HoverCard openDelay={120} closeDelay={80}>
+      <HoverCardTrigger asChild>
+        <div className={containerCls} title={`${item.trackerName} — ${item.riskArea}`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Icon className={`w-3 h-3 ${textCls} flex-shrink-0`} />
+              <span className={`text-[11px] font-medium ${textCls} truncate`}>
+                {item.monitorLabel ? `${item.monitorLabel}: ` : ""}{item.riskArea}
+              </span>
+            </div>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            </span>
+          </div>
+        </div>
+      </HoverCardTrigger>
+      <HoverCardContent
+        side="right"
+        align="start"
+        className="w-72 p-3 animate-scale-in"
+      >
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-foreground truncate">{item.trackerName}</p>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {new Date(item.reportDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            </span>
+          </div>
+          {preview.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">No risk areas detected.</p>
+          ) : (
+            <ul className="space-y-1">
+              {preview.map((a, idx) => {
+                const AIcon =
+                  a.status === "deteriorating" ? TrendingDown : a.status === "improving" ? TrendingUp : Minus;
+                const aCls =
+                  a.status === "deteriorating"
+                    ? "text-destructive"
+                    : a.status === "improving"
+                    ? "text-emerald-600"
+                    : "text-muted-foreground";
+                return (
+                  <li key={idx} className="flex items-center gap-1.5 min-w-0">
+                    <AIcon className={`w-3 h-3 ${aCls} flex-shrink-0`} />
+                    <span className="text-[11px] text-foreground truncate">{a.name}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {areas.length > preview.length && (
+            <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
+              +{areas.length - preview.length} more risk areas
+            </p>
+          )}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
   );
 }
