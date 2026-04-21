@@ -265,6 +265,14 @@ const Header = () => {
 
   const mobileNavigate = (path: string) => {
     setMobileOpen(false);
+    // If guest tries to open a protected scenarios anchor on `/`, the Index
+    // route will redirect to /welcome and drop the hash. Send them through
+    // /auth with a redirect so they land on the right section after login.
+    const isProtectedHomeAnchor = path.startsWith("/#") || path === "/";
+    if (!user && isProtectedHomeAnchor) {
+      setTimeout(() => navigate(`/auth?redirect=${encodeURIComponent(path)}`), 50);
+      return;
+    }
     setTimeout(() => navigateWithHash(path, navigate), 50);
   };
 
