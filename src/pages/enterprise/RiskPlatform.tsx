@@ -249,7 +249,13 @@ const RiskPlatform = () => {
         {/* Active Monitors — full width below */}
         <Card className="rounded-sm">
           <CardContent className="pt-5">
-            <h2 className="text-base font-semibold text-foreground mb-4">Active Monitors</h2>
+            <h2 className="text-base font-semibold text-foreground mb-2">Active Monitors</h2>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 pb-3 text-[11px] text-muted-foreground">
+              <span className="font-medium text-foreground/70">Signal status:</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-destructive" />Deteriorating</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Stable</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-success" />Improving</span>
+            </div>
             <TrackerList trackers={trackers} isLoading={isLoading} onSelectTracker={handleSelectTracker} />
           </CardContent>
         </Card>
