@@ -130,31 +130,6 @@ export function MarketInsightsBanner({
               </div>
             )}
 
-            {/* Citations */}
-            {insight.citations.length > 0 && (
-              <div className="pt-2 border-t">
-                <h4 className="text-xs font-medium text-muted-foreground mb-2">
-                  Sources ({insight.citations.length})
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {insight.citations.slice(0, 5).map((citation) => {
-                    const domain = new URL(citation.url).hostname.replace("www.", "");
-                    return (
-                      <a
-                        key={citation.index}
-                        href={citation.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                      >
-                        [{citation.index}] {domain}
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
