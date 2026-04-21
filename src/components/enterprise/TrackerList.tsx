@@ -1,10 +1,7 @@
-import { useState } from "react";
 import { format } from "date-fns";
-import { FolderPlus, ChevronRight } from "lucide-react";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { ChevronRight, FolderPlus, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { EnterpriseTracker, MonitorType, MonitorParameters } from "@/hooks/useEnterpriseTrackers";
@@ -15,6 +12,15 @@ interface TrackerListProps {
   onSelectTracker?: (tracker: EnterpriseTracker) => void;
 }
 
+type Status = "deteriorating" | "improving" | "stable";
+
+const statusBorderClass: Record<string, string> = {
+  deteriorating: "border-l-destructive",
+  improving: "border-l-success",
+  stable: "border-l-accent",
+  none: "border-l-muted-foreground",
+};
+
 const statusDotClass: Record<string, string> = {
   deteriorating: "bg-destructive",
   improving: "bg-success",
@@ -22,41 +28,104 @@ const statusDotClass: Record<string, string> = {
 };
 
 const DETERIORATING_KEYWORDS = [
-  "deteriorat", "declin", "worsen", "increas.*risk", "negative",
-  "concern", "threat", "escala", "weaken", "vulnerab", "disrupt",
-  "sanction", "tariff", "shortage", "downgrad", "default", "loss",
-  "unstable", "volatile", "critical", "warning",
+  "deteriorat", "declin", "worsen", "negative", "concern", "threat",
+  "escala", "weaken", "vulnerab", "disrupt", "sanction", "tariff",
+  "shortage", "downgrad", "default", "loss", "unstable", "volatile",
+  "critical", "warning", "increase.*risk", "increased.*risk",
 ];
 
 const IMPROVING_KEYWORDS = [
-  "improv", "strengthen", "positive", "stabili", "recover",
-  "growth", "opportunit", "favorable", "upgrad", "gain",
-  "resili", "diversif", "mitigat", "progress", "expansion",
-  "innovation", "efficien", "reduc.*risk",
+  "improv", "strengthen", "positive", "stabili", "recover", "growth",
+  "opportunit", "favorable", "upgrad", "gain", "resili", "diversif",
+  "mitigat", "progress", "expansion", "innovation", "efficien",
+  "reduc.*risk", "reduced.*risk",
 ];
 
-function classifySignal(content: string): "deteriorating" | "improving" | "stable" {
-  const lower = content.toLowerCase();
-  let detScore = 0;
-  let impScore = 0;
+function classifyText(text: string): Status {
+  const lower = text.toLowerCase();
+  let det = 0;
+  let imp = 0;
   for (const kw of DETERIORATING_KEYWORDS) {
-    const matches = lower.match(new RegExp(kw, "gi"));
-    if (matches) detScore += matches.length;
+    const m = lower.match(new RegExp(kw, "gi"));
+    if (m) det += m.length;
   }
   for (const kw of IMPROVING_KEYWORDS) {
-    const matches = lower.match(new RegExp(kw, "gi"));
-    if (matches) impScore += matches.length;
+    const m = lower.match(new RegExp(kw, "gi"));
+    if (m) imp += m.length;
   }
-  if (detScore > impScore * 1.3) return "deteriorating";
-  if (impScore > detScore * 1.3) return "improving";
+  if (det > imp * 1.2) return "deteriorating";
+  if (imp > det * 1.2) return "improving";
   return "stable";
+}
+
+interface SubFactor {
+  name: string;
+  status: Status;
+}
+
+/** Extract sub-factor names from markdown headings/bold labels in the report. */
+function extractSubFactors(content: string): SubFactor[] {
+  if (!content) return [];
+  const factors: SubFactor[] = [];
+  const seen = new Set<string>();
+
+  // Match markdown ## or ### headings, or **bold labels:** at line start
+  const lines = content.split("\n");
+  let currentName: string | null = null;
+  let currentBuffer: string[] = [];
+
+  const flush = () => {
+    if (currentName && currentBuffer.length > 0) {
+      const text = currentBuffer.join(" ");
+      const status = classifyText(text);
+      const key = currentName.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        factors.push({ name: currentName, status });
+      }
+    }
+    currentBuffer = [];
+  };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    // ## or ### heading
+    const heading = line.match(/^#{2,4}\s+(.+?)\s*$/);
+    // **Label:** or **Label**
+    const boldLabel = !heading && line.match(/^\*\*([^*]{3,80}?):?\*\*\s*(.*)$/);
+
+    if (heading) {
+      flush();
+      const name = heading[1].replace(/[:#]+$/, "").trim();
+      // Skip generic section headings
+      if (!/^(summary|overview|conclusion|executive|introduction|sources|citations|references|methodology)\b/i.test(name)) {
+        currentName = name;
+      } else {
+        currentName = null;
+      }
+    } else if (boldLabel) {
+      flush();
+      const name = boldLabel[1].trim();
+      if (!/^(summary|overview|conclusion|sources|direction|status|risk area)$/i.test(name)) {
+        currentName = name;
+        if (boldLabel[2]) currentBuffer.push(boldLabel[2]);
+      } else {
+        currentName = null;
+      }
+    } else if (currentName) {
+      currentBuffer.push(line);
+    }
+  }
+  flush();
+
+  return factors.slice(0, 8);
 }
 
 const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps) => {
   const trackerIds = trackers.map((t) => t.id);
 
   const { data: latestReports = {} } = useQuery({
-    queryKey: ["monitor_reports_latest", trackerIds],
+    queryKey: ["monitor_reports_latest_factors", trackerIds],
     enabled: trackerIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -67,14 +136,18 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
 
       if (error) throw error;
 
-      const map: Record<string, { status: "deteriorating" | "improving" | "stable"; date: string }> = {};
+      const map: Record<string, { factors: SubFactor[]; date: string; dominant: Status }> = {};
       for (const row of data ?? []) {
         const r = row as any;
         if (!map[r.tracker_id]) {
-          map[r.tracker_id] = {
-            status: classifySignal(r.report_content || ""),
-            date: r.created_at,
-          };
+          const factors = extractSubFactors(r.report_content || "");
+          // Determine dominant status for left border
+          const counts: Record<string, number> = {};
+          factors.forEach((f) => { counts[f.status] = (counts[f.status] || 0) + 1; });
+          let dominant: Status = "stable";
+          if (counts.deteriorating) dominant = "deteriorating";
+          else if (counts.improving && !counts.deteriorating) dominant = "improving";
+          map[r.tracker_id] = { factors, date: r.created_at, dominant };
         }
       }
       return map;
@@ -85,7 +158,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
     return (
       <div className="space-y-2">
         {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-10 w-full" />
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );
@@ -104,37 +177,71 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {trackers.map((t) => {
         const params = t.parameters as MonitorParameters;
         const monitorType = (params?.monitor_type ?? "DM-2") as MonitorType;
         const typeMeta = MONITOR_TYPE_META[monitorType];
         const latest = latestReports[t.id];
-        const status = latest?.status;
-        const dotClass = status ? statusDotClass[status] : "bg-muted-foreground/40";
+        const dominant = latest?.dominant ?? "none";
+        const borderClass = statusBorderClass[dominant] || statusBorderClass.none;
 
         return (
           <div
             key={t.id}
-            className="group flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-muted/40 cursor-pointer transition-colors"
+            className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
             onClick={() => onSelectTracker?.(t)}
           >
-            <span
-              className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClass}`}
-              title={status ? `Status: ${status}` : "No reports yet"}
-            />
-            <span className="text-sm text-foreground group-hover:text-primary transition-colors truncate flex-1">
-              {t.name}
-            </span>
-            <span className="text-[11px] text-muted-foreground shrink-0">
-              {typeMeta?.label}
-            </span>
-            {latest && (
-              <span className="text-[11px] text-muted-foreground/70 shrink-0 hidden sm:inline">
-                {format(new Date(latest.date), "MMM d")}
-              </span>
-            )}
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+            {/* Icon */}
+            <div className="p-1.5 rounded-md bg-iris/10 shrink-0">
+              <Activity className="w-4 h-4 text-iris" />
+            </div>
+
+            {/* Name + sub-factor chips */}
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                  {t.name}
+                </span>
+                <span className="text-[10px] font-medium border rounded px-1.5 py-0.5 bg-iris/10 text-iris border-iris/30 shrink-0">
+                  {typeMeta?.label}
+                </span>
+              </div>
+              {!latest || latest.factors.length === 0 ? (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  No signals yet. Run a scan to populate sub-factors.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+                  {latest.factors.map((f, i) => (
+                    <span
+                      key={i}
+                      title={`${f.name} — ${f.status}`}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass[f.status] || "bg-muted-foreground"}`} />
+                      {f.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Dates column */}
+            <div className="shrink-0 text-right space-y-1">
+              <div className="text-[11px]">
+                <span className="text-muted-foreground/60 block">Created</span>
+                <span className="text-muted-foreground">{format(new Date(t.created_at), "MMM d, yyyy")}</span>
+              </div>
+              {latest && (
+                <div className="text-[11px]">
+                  <span className="text-muted-foreground/60 block">Updated</span>
+                  <span className="text-muted-foreground">{format(new Date(latest.date), "MMM d, yyyy")}</span>
+                </div>
+              )}
+            </div>
+
+            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
           </div>
         );
       })}
