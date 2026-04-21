@@ -48,13 +48,26 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   AlertTriangle,
 };
 
-const TYPE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  supplier:   { bg: "bg-info/15",       border: "border-info",       text: "text-info" },
-  commodity:  { bg: "bg-warning/15",    border: "border-warning",    text: "text-warning" },
-  industry:   { bg: "bg-highlight/15",  border: "border-highlight",  text: "text-highlight" },
-  regulatory: { bg: "bg-iris/15",       border: "border-iris",       text: "text-iris" },
-  "m&a":      { bg: "bg-accent/15",     border: "border-accent",     text: "text-accent" },
-  risk:       { bg: "bg-destructive/15",border: "border-destructive",text: "text-destructive" },
+// Glass-Quadrant palette: pale icon chips, soft borders, lift on hover.
+// Three category accents rotate across the six tiles to echo the dashboard system.
+const TYPE_TONES: Record<string, {
+  border: string;
+  hoverBorder: string;
+  hoverBg: string;
+  hoverShadow: string;
+  selectedBg: string;
+  selectedRing: string;
+  chipBg: string;
+  iconText: string;
+  eyebrow: string;
+  eyebrowText: string;
+}> = {
+  supplier:   { border: "border-teal/30",   hoverBorder: "hover:border-teal/50",   hoverBg: "hover:bg-teal/5",   hoverShadow: "hover:shadow-teal/10",   selectedBg: "bg-teal/10",   selectedRing: "ring-teal/40",   chipBg: "bg-teal/15",   iconText: "text-teal",   eyebrow: "Supply",  eyebrowText: "text-teal" },
+  commodity:  { border: "border-copper/30", hoverBorder: "hover:border-copper/50", hoverBg: "hover:bg-copper/5", hoverShadow: "hover:shadow-copper/10", selectedBg: "bg-copper/10", selectedRing: "ring-copper/40", chipBg: "bg-copper/15", iconText: "text-copper", eyebrow: "Markets", eyebrowText: "text-copper" },
+  industry:   { border: "border-iris/30",   hoverBorder: "hover:border-iris/50",   hoverBg: "hover:bg-iris/5",   hoverShadow: "hover:shadow-iris/10",   selectedBg: "bg-iris/10",   selectedRing: "ring-iris/40",   chipBg: "bg-iris/15",   iconText: "text-iris",   eyebrow: "Trends",  eyebrowText: "text-iris" },
+  regulatory: { border: "border-teal/30",   hoverBorder: "hover:border-teal/50",   hoverBg: "hover:bg-teal/5",   hoverShadow: "hover:shadow-teal/10",   selectedBg: "bg-teal/10",   selectedRing: "ring-teal/40",   chipBg: "bg-teal/15",   iconText: "text-teal",   eyebrow: "Policy",  eyebrowText: "text-teal" },
+  "m&a":      { border: "border-copper/30", hoverBorder: "hover:border-copper/50", hoverBg: "hover:bg-copper/5", hoverShadow: "hover:shadow-copper/10", selectedBg: "bg-copper/10", selectedRing: "ring-copper/40", chipBg: "bg-copper/15", iconText: "text-copper", eyebrow: "Deals",   eyebrowText: "text-copper" },
+  risk:       { border: "border-iris/30",   hoverBorder: "hover:border-iris/50",   hoverBg: "hover:bg-iris/5",   hoverShadow: "hover:shadow-iris/10",   selectedBg: "bg-iris/10",   selectedRing: "ring-iris/40",   chipBg: "bg-iris/15",   iconText: "text-iris",   eyebrow: "Risk",    eyebrowText: "text-iris" },
 };
 
 interface QueryBuilderProps {
