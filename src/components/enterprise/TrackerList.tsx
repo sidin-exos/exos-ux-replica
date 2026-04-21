@@ -206,16 +206,75 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-                  {latest.factors.map((f, i) => (
-                    <span
-                      key={i}
-                      title={`${f.name} — ${f.status}`}
-                      className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass[f.status] || "bg-muted-foreground"}`} />
-                      {f.name}
-                    </span>
-                  ))}
+                  {latest.factors.map((f, i) => {
+                    const StatusIcon =
+                      f.status === "deteriorating" ? TrendingDown :
+                      f.status === "improving" ? TrendingUp : Minus;
+                    const statusTextCls =
+                      f.status === "deteriorating" ? "text-destructive" :
+                      f.status === "improving" ? "text-success" :
+                      "text-muted-foreground";
+                    // Up to 4 related factors prioritising same status
+                    const ordered = [...latest.factors].sort((a, b) => {
+                      const score = (s: Status) => (s === f.status ? 0 : s === "stable" ? 1 : 2);
+                      return score(a.status) - score(b.status);
+                    });
+                    const preview = ordered.slice(0, 4);
+                    return (
+                      <HoverCard key={i} openDelay={120} closeDelay={80}>
+                        <HoverCardTrigger asChild>
+                          <span
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground cursor-default"
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass[f.status] || "bg-muted-foreground"}`} />
+                            {f.name}
+                          </span>
+                        </HoverCardTrigger>
+                        <HoverCardContent
+                          side="top"
+                          align="start"
+                          className="w-72 p-3 animate-scale-in"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-xs font-semibold text-foreground truncate">{t.name}</p>
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${statusTextCls} shrink-0`}>
+                                <StatusIcon className="w-3 h-3" />
+                                {f.status}
+                              </span>
+                            </div>
+                            <ul className="space-y-1">
+                              {preview.map((p, idx) => {
+                                const PIcon =
+                                  p.status === "deteriorating" ? TrendingDown :
+                                  p.status === "improving" ? TrendingUp : Minus;
+                                const pCls =
+                                  p.status === "deteriorating" ? "text-destructive" :
+                                  p.status === "improving" ? "text-success" :
+                                  "text-muted-foreground";
+                                return (
+                                  <li key={idx} className="flex items-center gap-1.5 min-w-0">
+                                    <PIcon className={`w-3 h-3 ${pCls} flex-shrink-0`} />
+                                    <span className="text-[11px] text-foreground truncate">{p.name}</span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                            {latest.factors.length > preview.length && (
+                              <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
+                                +{latest.factors.length - preview.length} more risk areas
+                              </p>
+                            )}
+                            <p className="text-[10px] text-muted-foreground/70 pt-1">
+                              Updated {format(new Date(latest.date), "d MMM")}
+                            </p>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    );
+                  })}
                 </div>
               )}
             </div>
