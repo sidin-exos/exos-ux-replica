@@ -15,17 +15,6 @@ interface Props {
   onDelete?: (trackerId: string) => void;
 }
 
-/** Get dominant status for border colour */
-const getDominantStatus = (tracker: InflationTracker): string => {
-  const activeDrivers = tracker.drivers.filter(d => d.is_active);
-  if (activeDrivers.length === 0) return "none";
-  const counts: Record<string, number> = {};
-  activeDrivers.forEach(d => { counts[d.current_status] = (counts[d.current_status] || 0) + 1; });
-  if (counts.deteriorating && counts.deteriorating > 0) return "deteriorating";
-  if (counts.improving && counts.improving > 0) return "improving";
-  return "stable";
-};
-
 const statusDotClass: Record<string, string> = {
   deteriorating: "bg-destructive",
   improving: "bg-success",
