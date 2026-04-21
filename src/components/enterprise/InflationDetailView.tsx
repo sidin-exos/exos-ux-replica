@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import InflationDriverCard from "./InflationDriverCard";
 import type { InflationTracker, DriverStatus } from "@/hooks/useInflationTrackers";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 interface InflationDetailViewProps {
   tracker: InflationTracker;
@@ -28,6 +29,7 @@ const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
   const queryClient = useQueryClient();
   const [isScanning, setIsScanning] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
+  const { isSuperAdmin } = useAdminAuth();
 
   const activeDrivers = tracker.drivers.filter(d => d.is_active);
 
@@ -75,7 +77,7 @@ const InflationDetailView = ({ tracker, onBack }: InflationDetailViewProps) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {activeDrivers.length > 0 && (
+          {isSuperAdmin && activeDrivers.length > 0 && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowPdf(true)}>
               <FileDown className="w-4 h-4" />
               Download PDF
