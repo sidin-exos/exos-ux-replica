@@ -15,24 +15,6 @@ interface Props {
   onDelete?: (trackerId: string) => void;
 }
 
-/** Get dominant status for border colour */
-const getDominantStatus = (tracker: InflationTracker): string => {
-  const activeDrivers = tracker.drivers.filter(d => d.is_active);
-  if (activeDrivers.length === 0) return "none";
-  const counts: Record<string, number> = {};
-  activeDrivers.forEach(d => { counts[d.current_status] = (counts[d.current_status] || 0) + 1; });
-  if (counts.deteriorating && counts.deteriorating > 0) return "deteriorating";
-  if (counts.improving && counts.improving > 0) return "improving";
-  return "stable";
-};
-
-const statusBorderClass: Record<string, string> = {
-  deteriorating: "border-l-destructive",
-  improving: "border-l-success",
-  stable: "border-l-accent",
-  none: "border-l-muted-foreground",
-};
-
 const statusDotClass: Record<string, string> = {
   deteriorating: "bg-destructive",
   improving: "bg-success",
@@ -48,8 +30,9 @@ const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
     .sort()
     .reverse()[0];
 
-  const dominantStatus = getDominantStatus(tracker);
-  const borderClass = statusBorderClass[dominantStatus] || statusBorderClass.none;
+  // Decorative left border uses the platform accent (copper) — never status colours,
+  // to avoid clashing with the red/green semantics of "deteriorating"/"improving".
+  const borderClass = "border-l-copper/60";
 
   return (
     <div
