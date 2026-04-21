@@ -1,11 +1,12 @@
 
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Package, Trash2 } from "lucide-react";
+import { ChevronRight, Package, Trash2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { InflationTracker } from "@/hooks/useInflationTrackers";
 
 interface Props {
