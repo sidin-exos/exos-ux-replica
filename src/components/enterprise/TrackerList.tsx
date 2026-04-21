@@ -1,6 +1,7 @@
 import { format } from "date-fns";
-import { ChevronRight, FolderPlus } from "lucide-react";
+import { ChevronRight, FolderPlus, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
