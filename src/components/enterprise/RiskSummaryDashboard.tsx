@@ -125,8 +125,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
 
         const tracker = trackerMap.get(report.tracker_id);
         const trackerName = tracker?.name || "Unknown";
-        const monitorType = (tracker?.parameters as any)?.monitor_type as MonitorType | undefined;
-        const monitorLabel = monitorType || "";
+        const monitorLabel = trackerName;
 
         const areas = extractRiskAreas(report.report_content || "");
         for (const a of areas) {
