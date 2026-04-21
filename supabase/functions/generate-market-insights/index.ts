@@ -405,6 +405,8 @@ serve(async (req) => {
             industry_name: combo.industryName,
             category_slug: combo.categorySlug,
             category_name: combo.categoryName,
+            country_slug: (combo as any).countrySlug || combo.geography?.toLowerCase().replace(/\s+/g, "-") || "eu",
+            country_name: combo.geography || "European Union",
             confidence_score: validation.confidence,
             content: insights.content,
             citations: insights.citations.map((url, i) => ({ index: i + 1, url })),
