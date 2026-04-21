@@ -186,7 +186,7 @@ const InflationPlatform = () => {
             <TabsContent value="dashboard" className="mt-4">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* 2/3 — Tracker list */}
-                <div className="lg:col-span-2 space-y-2">
+                <div className="lg:col-span-2 space-y-6">
                   {isLoading ? (
                     <div className="text-center py-16 text-muted-foreground">Loading trackers…</div>
                   ) : trackers.length === 0 ? (
@@ -201,14 +201,22 @@ const InflationPlatform = () => {
                       </Button>
                     </div>
                   ) : (
-                    trackers.map(t => (
-                      <InflationTrackerCard
-                        key={t.id}
-                        tracker={t}
-                        onSelect={handleSelectTracker}
-                        onDelete={(id) => deleteTracker.mutate(id)}
-                      />
-                    ))
+                    <>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 pb-1 text-[11px] text-muted-foreground">
+                        <span className="font-medium text-foreground/70">Driver status:</span>
+                        <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-destructive" />Deteriorating</span>
+                        <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-accent" />Stable</span>
+                        <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-success" />Improving</span>
+                      </div>
+                      {trackers.map(t => (
+                        <InflationTrackerCard
+                          key={t.id}
+                          tracker={t}
+                          onSelect={handleSelectTracker}
+                          onDelete={(id) => deleteTracker.mutate(id)}
+                        />
+                      ))}
+                    </>
                   )}
                 </div>
 

@@ -25,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardType } from "@/lib/dashboard-mappings";
+import { DashboardType, toLegacyDashboardId } from "@/lib/dashboard-mappings";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -122,7 +122,8 @@ const PDFPreviewModal = ({
           structuredData,
           formData,
           timestamp,
-          selectedDashboards,
+          // Edge function still uses legacy dashboard ids; translate at the boundary.
+          selectedDashboards: selectedDashboards.map(toLegacyDashboardId),
           pdfTheme,
           evaluationScore: evaluationScore ?? undefined,
           evaluationConfidence: evaluationConfidence ?? undefined,

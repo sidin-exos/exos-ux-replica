@@ -10,12 +10,53 @@ export type DashboardType =
   | "tco-comparison"
   | "license-tier"
   | "sensitivity-spider"
-  | "risk-matrix"
+  | "risk-heatmap"
   | "scenario-comparison"
   | "supplier-scorecard"
   | "sow-analysis"
   | "negotiation-prep"
-  | "data-quality";
+  | "data-quality"
+  | "should-cost-gap"
+  | "savings-realization-funnel"
+  | "working-capital-dpo"
+  | "supplier-concentration-map";
+
+/**
+ * Backwards-compatibility alias map for renamed dashboard IDs.
+ *
+ * Persisted records (shared_reports, scenario_feedback, test_reports, export
+ * metadata, etc.) may still reference legacy IDs. We resolve at read time
+ * rather than migrating historical rows — this preserves the original audit
+ * trail and avoids RLS / migration churn.
+ *
+ * Add a new entry whenever a dashboard ID is renamed.
+ */
+export const DASHBOARD_ID_ALIASES: Record<string, DashboardType> = {
+  "risk-matrix": "risk-heatmap",
+};
+
+/**
+ * Resolve a raw dashboard id (possibly a legacy alias) to its canonical
+ * DashboardType. Unknown ids are returned unchanged so callers can decide
+ * how to treat them. Use this anywhere a dashboard id may originate from a
+ * persisted source.
+ */
+export const resolveDashboardId = (rawId: string): DashboardType => {
+  return (DASHBOARD_ID_ALIASES[rawId] ?? rawId) as DashboardType;
+};
+
+/**
+ * Convert a canonical DashboardType back to the legacy id expected by
+ * downstream consumers that have not yet been migrated (e.g. PDF/Excel
+ * edge function dashboard switches). Inverse of resolveDashboardId.
+ */
+const LEGACY_DASHBOARD_IDS: Partial<Record<DashboardType, string>> = {
+  "risk-heatmap": "risk-matrix",
+};
+
+export const toLegacyDashboardId = (id: DashboardType): string => {
+  return LEGACY_DASHBOARD_IDS[id] ?? id;
+};
 
 export interface DashboardConfig {
   id: DashboardType;
@@ -25,6 +66,13 @@ export interface DashboardConfig {
   keyMetrics: string[];
   whenToUse: string;
   questionsAnswered: string[];
+  /**
+   * Whether DashboardRenderer should fall back to the dashboard's hardcoded
+   * sample data when AI envelope data is missing. Defaults to true.
+   * Set to false for finance-sensitive dashboards where misleading sample
+   * figures could be mistaken for real benchmarks (e.g. working-capital-dpo).
+   */
+  showSampleDataFallback?: boolean;
 }
 
 export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
@@ -100,9 +148,9 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
     whenToUse: "Use to stress-test your assumptions. Shows which input variables have the biggest impact on the outcome — critical for budget planning and risk quantification.",
     questionsAnswered: ["Which assumption, if wrong, would hurt us the most?", "How robust is our business case?", "What's the range of possible outcomes?"],
   },
-  "risk-matrix": {
-    id: "risk-matrix",
-    name: "Risk Matrix",
+  "risk-heatmap": {
+    id: "risk-heatmap",
+    name: "Risk Heatmap",
     description: "Probability vs impact risk assessment grid",
     icon: "Shield",
     keyMetrics: ["Risks by severity zone (critical/high/medium/low)", "Risk count per quadrant", "Top 3 risks by composite score", "Mitigation coverage %"],
@@ -154,39 +202,97 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
     whenToUse: "Use to understand how reliable the analysis output is. Shows which input fields were provided vs. missing, and how gaps affect confidence in the results.",
     questionsAnswered: ["How much can I trust this analysis?", "What data is missing and does it matter?", "Would providing more data significantly improve the results?"],
   },
+  "should-cost-gap": {
+    id: "should-cost-gap",
+    name: "Should-Cost Gap",
+    description: "Component-level price vs benchmark vs should-cost target",
+    icon: "Scale",
+    keyMetrics: ["Current price % per component", "Benchmark % per component", "Headroom (gap) %", "Supplier margin vs benchmark margin"],
+    whenToUse: "Use to expose the negotiation headroom on each component of a quoted price. Pairs the cost decomposition with a should-cost anchor and a benchmark margin check.",
+    questionsAnswered: ["Where is the supplier overpriced vs benchmark?", "What is a defensible should-cost target?", "Is the supplier's margin out of line with the industry?"],
+  },
+  "savings-realization-funnel": {
+    id: "savings-realization-funnel",
+    name: "Savings Realization Funnel",
+    description: "CIPS Hard / Soft / Avoided savings across the funnel",
+    icon: "Filter",
+    keyMetrics: ["Hard / Soft / Avoided segmentation", "Identified → Committed → Realized progression", "CFO-acceptance indicator", "Baseline verification status"],
+    whenToUse: "Use to report savings in a way Finance will accept. Separates Hard P&L impact from Soft cost avoidance and inflation-protected (Avoided) value, and shows how much of identified savings actually realised.",
+    questionsAnswered: ["How much of our reported savings is Finance-grade?", "Where does value leak between identified and realized?", "Is our baseline verified or estimated?"],
+  },
+  "working-capital-dpo": {
+    id: "working-capital-dpo",
+    name: "Working Capital & DPO",
+    description: "Payment-terms distribution and working-capital release potential",
+    icon: "Wallet",
+    keyMetrics: ["Current vs target weighted DPO", "Working capital impact (€)", "Payment terms distribution by spend share", "EU Late Payment Directive risk flags"],
+    whenToUse: "Use to surface the working-capital release available from a DPO extension and to flag suppliers whose terms exceed the EU 60-day B2B statutory limit.",
+    questionsAnswered: ["How much working capital can we release by extending payment terms?", "Which suppliers are above the EU 60-day Late Payment Directive limit?", "Are there early-payment discount opportunities worth taking?"],
+    showSampleDataFallback: false,
+  },
+  "supplier-concentration-map": {
+    id: "supplier-concentration-map",
+    name: "Supplier Concentration Map",
+    description: "Category → supplier flow with HHI and single-source flags",
+    icon: "Network",
+    keyMetrics: ["HHI per category (LOW / MODERATE / HIGH / EXTREME)", "Single-source flags (>70% of category spend)", "Tier-2 dependencies", "Geographic concentration"],
+    whenToUse: "Use to expose concentration risk at category, supplier, and geography level — and to surface tier-2 dependencies hidden behind tier-1 suppliers.",
+    questionsAnswered: ["Where are we dangerously concentrated on a single supplier?", "Which categories have monopolistic supply structures?", "Where do tier-2 dependencies create hidden risk?"],
+  },
 };
 
 // Scenario to dashboard mapping
 // Each scenario has 2-4 relevant dashboards, ordered by relevance
 export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   // Analysis and Optimization
+  // Wave 1 additions:
+  // - should-cost-gap is wired to S2 (primary), S21 (negotiation anchor), S4 (validation baseline).
+  // - savings-realization-funnel is wired to S4 (primary), S22 (ROI), S24 (consolidation reporting).
+  // cost-waterfall is intentionally retained on S2 + S4 + S24 for backwards
+  // compatibility with historical runs that lack the new payload fields.
   "make-vs-buy": ["decision-matrix", "scenario-comparison", "cost-waterfall"],
-  "supplier-review": ["supplier-scorecard", "timeline-roadmap", "action-checklist"],
+  // Audit cull: removed timeline-roadmap (single review is not a phased project).
+  "supplier-review": ["supplier-scorecard", "action-checklist"],
   "tco-analysis": ["tco-comparison", "cost-waterfall", "scenario-comparison"],
   "software-licensing": ["license-tier", "cost-waterfall"],
-  "volume-consolidation": ["scenario-comparison", "cost-waterfall"],
-  "cost-breakdown": ["cost-waterfall", "tco-comparison", "data-quality"],
-  "category-strategy": ["kraljic-quadrant", "timeline-roadmap"],
+  // Wave 2: supplier-concentration-map added to S24, savings-realization-funnel kept.
+  // Audit cull: removed savings-realization-funnel (consolidation savings are
+  // structurally noisy in a CIPS Hard/Soft/Avoided funnel).
+  "volume-consolidation": ["scenario-comparison", "cost-waterfall", "supplier-concentration-map"],
+  "cost-breakdown": ["should-cost-gap", "cost-waterfall", "data-quality"],
+  // Audit cull: removed working-capital-dpo (strategy view too high-level for DPO detail).
+  "category-strategy": ["kraljic-quadrant", "timeline-roadmap", "savings-realization-funnel"],
   "capex-vs-opex": ["scenario-comparison", "sensitivity-spider"],
-  "savings-calculation": ["cost-waterfall", "action-checklist"],
+  // Audit cull: removed should-cost-gap (savings reporting and component
+  // should-cost answer different questions).
+  "savings-calculation": ["savings-realization-funnel", "cost-waterfall", "working-capital-dpo", "action-checklist"],
   "saas-optimization": ["license-tier", "cost-waterfall"],
   "specification-optimizer": ["decision-matrix", "cost-waterfall", "action-checklist", "data-quality"],
 
   // Planning and Sourcing
   "tail-spend-sourcing": ["action-checklist", "data-quality"],
   "requirements-gathering": ["action-checklist", "data-quality"],
+  // Audit cull: removed working-capital-dpo (S6 is P&L forecasting; DPO is balance-sheet/treasury).
   "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider"],
-  "negotiation-preparation": ["negotiation-prep", "scenario-comparison"],
-  "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-matrix"],
+  "negotiation-preparation": ["negotiation-prep", "scenario-comparison", "should-cost-gap"],
+  "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-heatmap"],
 
   // Risk Management
-  "disruption-management": ["action-checklist", "timeline-roadmap", "risk-matrix"],
-  "risk-assessment": ["risk-matrix", "scenario-comparison", "action-checklist", "data-quality"],
-  "risk-matrix": ["risk-matrix", "supplier-scorecard", "action-checklist"],
-  "pre-flight-audit": ["data-quality", "risk-matrix"],
-  "category-risk-evaluator": ["risk-matrix", "kraljic-quadrant", "sow-analysis", "action-checklist"],
-  "supplier-dependency-planner": ["risk-matrix", "sensitivity-spider"],
-  "black-swan-scenario": ["risk-matrix", "sensitivity-spider", "scenario-comparison"],
+  // NOTE: the scenario id "risk-matrix" (S18) is unrelated to the dashboard
+  // formerly named "risk-matrix" (now "risk-heatmap"). The collision is the
+  // reason the dashboard was renamed — see DASHBOARD_ID_ALIASES.
+  // S18 ("risk-matrix") is a risk-positioning scenario, not a supplier-perf
+  // review, so supplier-scorecard is intentionally NOT mapped here.
+  "disruption-management": ["action-checklist", "timeline-roadmap", "risk-heatmap"],
+  "risk-assessment": ["risk-heatmap", "scenario-comparison", "action-checklist", "data-quality"],
+  "risk-matrix": ["risk-heatmap", "action-checklist"],
+  "pre-flight-audit": ["data-quality", "risk-heatmap"],
+  // Wave 2: supplier-concentration-map secondary on S20 (kraljic stays primary).
+  "category-risk-evaluator": ["kraljic-quadrant", "risk-heatmap", "supplier-concentration-map", "action-checklist"],
+  // Wave 2: supplier-concentration-map is now PRIMARY on S25; risk-heatmap secondary.
+  "supplier-dependency-planner": ["supplier-concentration-map", "risk-heatmap"],
+  // Wave 2: supplier-concentration-map added to S27.
+  "black-swan-scenario": ["risk-heatmap", "sensitivity-spider", "scenario-comparison", "supplier-concentration-map"],
 
   // Documentation and Contracts
   "sow-critic": ["sow-analysis", "data-quality"],
@@ -195,7 +301,8 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "contract-template": ["action-checklist", "data-quality"],
 
   // Spend Analysis
-  "spend-analysis-categorization": ["data-quality", "cost-waterfall"],
+  // Wave 2: working-capital-dpo added to S5.
+  "spend-analysis-categorization": ["data-quality", "cost-waterfall", "working-capital-dpo"],
 
   // Market Snapshot
   "market-snapshot": [],

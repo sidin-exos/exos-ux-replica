@@ -240,8 +240,15 @@ const Header = () => {
       .maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
-        const raw = data?.display_name || data?.full_name || user.email?.split("@")[0] || "";
-        const first = raw.trim().split(/\s+/)[0] || "";
+        // Prefer real names over display_name (which may have been seeded with
+        // the email address). Never appeal to an email — derive a first name
+        // by taking the leading token of the local-part.
+        const isEmail = (s: string) => /\S+@\S+\.\S+/.test(s);
+        const candidates = [data?.full_name, data?.display_name].filter(
+          (s): s is string => !!s && !isEmail(s)
+        );
+        const raw = candidates[0] || user.email?.split("@")[0] || "";
+        const first = raw.trim().split(/[\s._-]+/)[0] || "";
         setFirstName(first.charAt(0).toUpperCase() + first.slice(1));
       });
     return () => {

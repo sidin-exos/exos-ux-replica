@@ -238,6 +238,7 @@ export function MarketInsightsAdmin() {
           industryName: industry.name,
           categorySlug: catSlug,
           categoryName: category?.name || catSlug,
+          countrySlug: country?.slug || countrySlug,
           geography: country?.name || countrySlug,
         };
       });
@@ -425,12 +426,12 @@ export function MarketInsightsAdmin() {
         </div>
 
         {batchProgress && (
-          <div className="space-y-2 p-4 rounded-lg bg-muted/50">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-xs">{batchProgress.currentItem}</span>
-              <span className="text-xs">{batchProgress.current} of {batchProgress.total}</span>
+          <div className="space-y-1.5 px-3 py-2 rounded-md bg-muted/40 border border-border/50">
+            <div className="flex justify-between items-center text-[11px]">
+              <span className="font-medium text-foreground truncate pr-2">{batchProgress.currentItem}</span>
+              <span className="text-muted-foreground tabular-nums shrink-0">{batchProgress.current} / {batchProgress.total}</span>
             </div>
-            <Progress value={(batchProgress.current / batchProgress.total) * 100} />
+            <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-1" />
           </div>
         )}
 

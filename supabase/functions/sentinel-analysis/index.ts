@@ -1036,7 +1036,7 @@ serve(async (req) => {
       const parsedEnvelope = parseAIResponse(finalContent);
       let responseContent = multiDeanon.restoredText;
       let deanonEnvelopeObj = parsedEnvelope;
-      if (parsedEnvelope?.schema_version === '1.0') {
+      if (['1.0','2.0'].includes(parsedEnvelope?.schema_version)) {
         // Deanonymize the envelope itself so structured data has real names.
         // Wrapped in try/catch because deanonymizeText does plain text replacement
         // and original PII values containing ", \, or newlines will break the JSON.
@@ -1058,6 +1058,7 @@ serve(async (req) => {
           scenario_id: deanonEnvelopeObj.scenario_id, confidence_level: deanonEnvelopeObj.confidence_level,
           data_gaps_count: deanonEnvelopeObj.data_gaps?.length ?? 0, gdpr_flags_count: deanonEnvelopeObj.gdpr_flags?.length ?? 0,
           schema_version: deanonEnvelopeObj.schema_version,
+          schema_version_emitted: deanonEnvelopeObj.schema_version,
         });
       }
 
@@ -1069,7 +1070,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           content: responseContent,
-          structured: deanonEnvelopeObj?.schema_version === '1.0' ? deanonEnvelopeObj : undefined,
+          structured: ['1.0','2.0'].includes(deanonEnvelopeObj?.schema_version) ? deanonEnvelopeObj : undefined,
           validation,
           model: googleModel,
           source: "google_ai_studio",
@@ -1090,22 +1091,30 @@ serve(async (req) => {
       model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
     }, { parentRunId });
 
-    const MAX_RETRIES = 3;
-    const RETRY_DELAYS = [1000, 2000, 4000];
+    // NOTE: callGoogleAI already retries internally (5 attempts w/ exp backoff)
+    // and falls back to gemini-2.5-flash on overload. Outer retries here just
+    // multiply latency and cause 150s edge-function IDLE_TIMEOUTs.
+    // We keep ONE outer attempt with a single fallback to flash on timeout/5xx.
+    const MAX_RETRIES = 2;
+    const RETRY_DELAYS = [500];
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         if (attempt > 0) {
-          console.warn(`[Sentinel] Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms`);
+          console.warn(`[Sentinel] Outer retry ${attempt + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[attempt - 1]}ms (fallback to flash)`);
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
         }
+
+        // On retry, downshift to faster model to fit inside 150s edge timeout
+        const modelForAttempt = attempt === 0 ? googleModel : "gemini-2.5-flash";
 
         const aiResponse = await callGoogleAI({
           systemPrompt,
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           temperature: 0.4,
           maxOutputTokens: 8192,
-          model: googleModel,
+          model: modelForAttempt,
+          timeoutMs: 45_000,
         });
 
         const processingTime = Math.round(performance.now() - startTime);
@@ -1158,7 +1167,7 @@ serve(async (req) => {
         const singleParsedEnvelope = parseAIResponse(content);
         let responseContent = singleDeanon.restoredText;
         let deanonSingleEnvelope = singleParsedEnvelope;
-        if (singleParsedEnvelope?.schema_version === '1.0') {
+        if (['1.0','2.0'].includes(singleParsedEnvelope?.schema_version)) {
           // Deanonymize the envelope itself so structured data has real names.
           // Wrapped in try/catch because deanonymizeText does plain text replacement
           // and original PII values containing ", \, or newlines will break the JSON.
@@ -1178,7 +1187,7 @@ serve(async (req) => {
         }
 
         tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog,
-          ...(singleParsedEnvelope?.schema_version === '1.0' ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: '1.0' } : {}),
+          ...(['1.0','2.0'].includes(singleParsedEnvelope?.schema_version) ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: singleParsedEnvelope.schema_version, schema_version_emitted: singleParsedEnvelope.schema_version } : {}),
         });
         tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
 
@@ -1190,7 +1199,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             content: responseContent,
-            structured: deanonSingleEnvelope?.schema_version === '1.0' ? deanonSingleEnvelope : undefined,
+            structured: ['1.0','2.0'].includes(deanonSingleEnvelope?.schema_version) ? deanonSingleEnvelope : undefined,
             validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1199,9 +1208,9 @@ serve(async (req) => {
         const status = (aiError as Error & { status?: number }).status;
         const processingTime = Math.round(performance.now() - startTime);
 
-        // Retry on 503
-        if (status === 503 && attempt < MAX_RETRIES - 1) {
-          console.warn(`[Sentinel] Google AI Studio 503 on attempt ${attempt + 1}`);
+        // Retry on 503 (overloaded) or 504 (timeout) — fall back to flash
+        if ((status === 503 || status === 504) && attempt < MAX_RETRIES - 1) {
+          console.warn(`[Sentinel] Google AI ${status} on attempt ${attempt + 1}, falling back to flash`);
           continue;
         }
 

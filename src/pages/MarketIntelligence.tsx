@@ -162,10 +162,14 @@ const MarketIntelligence = () => {
             height={768}
             className="hidden md:block shrink-0 w-72 lg:w-96 h-40 lg:h-52 object-cover"
             style={{
+              // Smooth crossfade on all four sides: intersect a horizontal and a vertical
+              // linear mask so top, bottom, left and right edges all blend into the page.
               maskImage:
-                "radial-gradient(ellipse at center, hsl(0 0% 0% / 1) 50%, hsl(0 0% 0% / 0) 95%)",
+                "linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%)",
               WebkitMaskImage:
-                "radial-gradient(ellipse at center, hsl(0 0% 0% / 1) 50%, hsl(0 0% 0% / 0) 95%)",
+                "linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%)",
+              maskComposite: "intersect",
+              WebkitMaskComposite: "source-in",
             }}
           />
         </div>
