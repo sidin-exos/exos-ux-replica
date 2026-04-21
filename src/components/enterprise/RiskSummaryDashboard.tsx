@@ -149,8 +149,8 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
       improving.sort(byDate);
 
       return {
-        deteriorating: deteriorating.slice(0, 6),
-        improving: improving.slice(0, 6),
+        deteriorating: deteriorating.slice(0, 3),
+        improving: improving.slice(0, 3),
         areasByTracker: Object.fromEntries(areasByTracker.entries()) as Record<string, { name: string; status: Status }[]>,
       };
     },
