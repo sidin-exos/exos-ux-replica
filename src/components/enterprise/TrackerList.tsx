@@ -63,60 +63,57 @@ interface SubFactor {
   status: Status;
 }
 
-/** Extract sub-factor names from markdown headings/bold labels in the report. */
+const DIRECTION_TO_STATUS: Record<string, Status> = {
+  improving: "improving",
+  stable: "stable",
+  moderate: "stable",
+  low: "stable",
+  deteriorating: "deteriorating",
+  critical: "deteriorating",
+};
+
+const GENERIC_NAMES = /^(risk area|topic|area|category|item|n\/a|—|-)$/i;
+
+/** Extract risk-area names + direction from the report's "Risk Signals" markdown table. */
 function extractSubFactors(content: string): SubFactor[] {
   if (!content) return [];
   const factors: SubFactor[] = [];
   const seen = new Set<string>();
-
-  // Match markdown ## or ### headings, or **bold labels:** at line start
   const lines = content.split("\n");
-  let currentName: string | null = null;
-  let currentBuffer: string[] = [];
-
-  const flush = () => {
-    if (currentName && currentBuffer.length > 0) {
-      const text = currentBuffer.join(" ");
-      const status = classifyText(text);
-      const key = currentName.toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        factors.push({ name: currentName, status });
-      }
-    }
-    currentBuffer = [];
-  };
 
   for (const raw of lines) {
     const line = raw.trim();
-    // ## or ### heading
-    const heading = line.match(/^#{2,4}\s+(.+?)\s*$/);
-    // **Label:** or **Label**
-    const boldLabel = !heading && line.match(/^\*\*([^*]{3,80}?):?\*\*\s*(.*)$/);
+    // Markdown table row: | cell1 | cell2 | ...
+    if (!line.startsWith("|") || !line.includes("|", 1)) continue;
+    // Skip alignment separator rows like |---|---|
+    if (/^\|\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(line)) continue;
 
-    if (heading) {
-      flush();
-      const name = heading[1].replace(/[:#]+$/, "").trim();
-      // Skip generic section headings
-      if (!/^(summary|overview|conclusion|executive|introduction|sources|citations|references|methodology)\b/i.test(name)) {
-        currentName = name;
-      } else {
-        currentName = null;
+    const cells = line.split("|").map((c) => c.trim()).filter((c, i, arr) => !(i === 0 && c === "") && !(i === arr.length - 1 && c === ""));
+    if (cells.length < 2) continue;
+
+    const name = cells[0].replace(/\*\*/g, "").replace(/^[-–•*#>\s]+/, "").trim();
+    if (!name || name.length < 3 || name.length > 80) continue;
+    if (GENERIC_NAMES.test(name)) continue;
+    // Skip header row
+    if (/^risk\s+area$/i.test(name) || /^topic$/i.test(name)) continue;
+
+    // Find direction keyword in any cell (usually 2nd)
+    let status: Status | null = null;
+    for (const cell of cells.slice(1)) {
+      const stripped = cell.replace(/\*\*/g, "").trim().toLowerCase();
+      if (DIRECTION_TO_STATUS[stripped]) {
+        status = DIRECTION_TO_STATUS[stripped];
+        break;
       }
-    } else if (boldLabel) {
-      flush();
-      const name = boldLabel[1].trim();
-      if (!/^(summary|overview|conclusion|sources|direction|status|risk area)$/i.test(name)) {
-        currentName = name;
-        if (boldLabel[2]) currentBuffer.push(boldLabel[2]);
-      } else {
-        currentName = null;
-      }
-    } else if (currentName) {
-      currentBuffer.push(line);
     }
+    // If no explicit direction, classify from row text
+    if (!status) status = classifyText(cells.slice(1).join(" "));
+
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    factors.push({ name, status });
   }
-  flush();
 
   return factors.slice(0, 8);
 }
