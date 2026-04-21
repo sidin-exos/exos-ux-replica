@@ -26,13 +26,6 @@ const getDominantStatus = (tracker: InflationTracker): string => {
   return "stable";
 };
 
-const statusBorderClass: Record<string, string> = {
-  deteriorating: "border-l-destructive",
-  improving: "border-l-success",
-  stable: "border-l-accent",
-  none: "border-l-muted-foreground",
-};
-
 const statusDotClass: Record<string, string> = {
   deteriorating: "bg-destructive",
   improving: "bg-success",
@@ -48,8 +41,9 @@ const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
     .sort()
     .reverse()[0];
 
-  const dominantStatus = getDominantStatus(tracker);
-  const borderClass = statusBorderClass[dominantStatus] || statusBorderClass.none;
+  // Decorative left border uses the platform accent (copper) — never status colours,
+  // to avoid clashing with the red/green semantics of "deteriorating"/"improving".
+  const borderClass = "border-l-copper/60";
 
   return (
     <div
