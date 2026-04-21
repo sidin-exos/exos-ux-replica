@@ -115,8 +115,6 @@ function extractSubFactors(content: string): SubFactor[] {
     factors.push({ name, status });
   }
 
-  flush();
-
   return factors.slice(0, 8);
 }
 
