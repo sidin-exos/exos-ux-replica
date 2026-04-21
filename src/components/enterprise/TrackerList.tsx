@@ -15,10 +15,10 @@ interface TrackerListProps {
 type Status = "deteriorating" | "improving" | "stable";
 
 const statusBorderClass: Record<string, string> = {
-  deteriorating: "border-l-destructive",
-  improving: "border-l-success",
-  stable: "border-l-accent",
-  none: "border-l-muted-foreground",
+  deteriorating: "border-l-iris",
+  improving: "border-l-iris",
+  stable: "border-l-iris/60",
+  none: "border-l-muted-foreground/40",
 };
 
 const statusDotClass: Record<string, string> = {
