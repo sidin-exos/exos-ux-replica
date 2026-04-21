@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { ChevronRight, FolderPlus, Activity } from "lucide-react";
+import { ChevronRight, FolderPlus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -192,11 +192,6 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
             className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
             onClick={() => onSelectTracker?.(t)}
           >
-            {/* Icon */}
-            <div className="p-1.5 rounded-md bg-iris/10 shrink-0">
-              <Activity className="w-4 h-4 text-iris" />
-            </div>
-
             {/* Name + sub-factor chips */}
             <div className="min-w-0 flex-1 space-y-1.5">
               <div className="flex items-center gap-2">
