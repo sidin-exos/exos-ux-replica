@@ -145,27 +145,30 @@ export function QueryBuilder({ onSubmit, isLoading, renderBeforeSubmit }: QueryB
           {/* Query Type Selection */}
           <div className="space-y-3">
             <Label>Intelligence Type</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {(Object.entries(QUERY_TYPE_LABELS) as [QueryType, typeof QUERY_TYPE_LABELS[QueryType]][]).map(([type, info]) => {
                 const Icon = ICONS[info.icon];
                 const isSelected = queryType === type;
-                const colors = TYPE_COLORS[type];
+                const tone = TYPE_TONES[type];
                 return (
                   <button
                     key={type}
                     type="button"
                     onClick={() => updateFilter('type', type === 'supplier' ? '' : type)}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      isSelected
-                        ? `${colors.border} ${colors.bg} text-foreground ring-1 ring-offset-1 ring-offset-background ${colors.border.replace('border-', 'ring-')}`
-                        : "border-border hover:border-muted-foreground/40 hover:bg-secondary/50"
+                    className={`text-left rounded-xl p-4 bg-card/70 backdrop-blur-md border ${tone.border} ${tone.hoverBorder} ${tone.hoverBg} ${tone.hoverShadow} hover:-translate-y-0.5 hover:shadow-lg shadow-sm transition-all duration-200 ${
+                      isSelected ? `${tone.selectedBg} ring-2 ${tone.selectedRing}` : ""
                     }`}
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      {Icon && <Icon className={`w-4 h-4 ${isSelected ? colors.text : "text-muted-foreground"}`} />}
-                      <span className={`font-medium text-sm ${isSelected ? colors.text : ""}`}>{info.label}</span>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className={`size-8 rounded-lg ${tone.chipBg} flex items-center justify-center shrink-0`}>
+                        {Icon && <Icon className={`w-4 h-4 ${tone.iconText}`} />}
+                      </div>
+                      <span className={`text-[10px] font-medium uppercase tracking-wider ${tone.eyebrowText}`}>
+                        {tone.eyebrow}
+                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <div className="text-sm font-semibold text-foreground mb-1">{info.label}</div>
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
                       {info.description}
                     </p>
                   </button>
