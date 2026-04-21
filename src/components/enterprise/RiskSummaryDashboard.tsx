@@ -117,6 +117,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
       const seenTracker = new Set<string>();
       const deteriorating: SignalItem[] = [];
       const improving: SignalItem[] = [];
+      const areasByTracker = new Map<string, { name: string; status: Status }[]>();
 
       // Latest report per tracker
       for (const report of reports as any[]) {
@@ -128,6 +129,7 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
         const monitorLabel = trackerName;
 
         const areas = extractRiskAreas(report.report_content || "");
+        areasByTracker.set(report.tracker_id, areas);
         for (const a of areas) {
           const item: SignalItem = {
             trackerName,
@@ -147,7 +149,11 @@ export default function RiskSummaryDashboard({ trackers }: Props) {
       deteriorating.sort(byDate);
       improving.sort(byDate);
 
-      return { deteriorating: deteriorating.slice(0, 6), improving: improving.slice(0, 6) };
+      return {
+        deteriorating: deteriorating.slice(0, 6),
+        improving: improving.slice(0, 6),
+        areasByTracker: Object.fromEntries(areasByTracker.entries()) as Record<string, { name: string; status: Status }[]>,
+      };
     },
     staleTime: 60_000,
   });
