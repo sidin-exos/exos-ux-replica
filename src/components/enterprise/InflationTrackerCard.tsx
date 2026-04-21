@@ -1,11 +1,12 @@
 
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Package, Trash2 } from "lucide-react";
+import { ChevronRight, Package, Trash2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { InflationTracker } from "@/hooks/useInflationTrackers";
 
 interface Props {
@@ -76,16 +77,59 @@ const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
           </p>
         ) : (
           <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-            {activeDrivers.map(d => (
-              <span
-                key={d.id}
-                title={`${d.driver_name} — ${d.current_status}`}
-                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
-              >
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass[d.current_status] || "bg-muted-foreground"}`} />
-                {d.driver_name}
-              </span>
-            ))}
+            {activeDrivers.map(d => {
+              const StatusIcon =
+                d.current_status === "deteriorating" ? TrendingDown :
+                d.current_status === "improving" ? TrendingUp : Minus;
+              const statusTextCls =
+                d.current_status === "deteriorating" ? "text-destructive" :
+                d.current_status === "improving" ? "text-success" :
+                "text-muted-foreground";
+              return (
+                <HoverCard key={d.id} openDelay={120} closeDelay={80}>
+                  <HoverCardTrigger asChild>
+                    <span
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground cursor-default"
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass[d.current_status] || "bg-muted-foreground"}`} />
+                      {d.driver_name}
+                    </span>
+                  </HoverCardTrigger>
+                  <HoverCardContent
+                    side="top"
+                    align="start"
+                    className="w-72 p-3 animate-scale-in"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-foreground truncate">{d.driver_name}</p>
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${statusTextCls} shrink-0`}>
+                          <StatusIcon className="w-3 h-3" />
+                          {d.current_status}
+                        </span>
+                      </div>
+                      {d.rationale && (
+                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-4">
+                          {d.rationale}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border">
+                        <span className="text-[10px] text-muted-foreground/70">
+                          {d.source ? `Source: ${d.source}` : "—"}
+                        </span>
+                        {d.last_scanned_at && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(d.last_scanned_at), "d MMM")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              );
+            })}
           </div>
         )}
       </div>
