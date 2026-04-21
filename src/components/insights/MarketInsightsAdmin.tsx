@@ -238,6 +238,7 @@ export function MarketInsightsAdmin() {
           industryName: industry.name,
           categorySlug: catSlug,
           categoryName: category?.name || catSlug,
+          countrySlug: country?.slug || countrySlug,
           geography: country?.name || countrySlug,
         };
       });
