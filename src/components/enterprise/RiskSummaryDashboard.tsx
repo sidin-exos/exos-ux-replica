@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingDown, TrendingUp, AlertTriangle, ArrowUpRight, Minus } from "lucide-react";
+import { TrendingDown, TrendingUp, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { EnterpriseTracker } from "@/hooks/useEnterpriseTrackers";
 
 type Status = "deteriorating" | "improving" | "stable";
