@@ -34,6 +34,10 @@ import SupplierPerformanceDashboard from "@/components/reports/SupplierPerforman
 import SOWAnalysisDashboard from "@/components/reports/SOWAnalysisDashboard";
 import NegotiationPrepDashboard from "@/components/reports/NegotiationPrepDashboard";
 import DataQualityDashboard from "@/components/reports/DataQualityDashboard";
+import ShouldCostGapDashboard from "@/components/reports/ShouldCostGapDashboard";
+import SavingsRealizationFunnelDashboard from "@/components/reports/SavingsRealizationFunnelDashboard";
+import WorkingCapitalDpoDashboard from "@/components/reports/WorkingCapitalDpoDashboard";
+import SupplierConcentrationMapDashboard from "@/components/reports/SupplierConcentrationMapDashboard";
 import { LucideIcon } from "lucide-react";
 
 
@@ -71,6 +75,31 @@ const tcoCostBreakdown = [
   { name: "Trade-in Credit", value: -35000, type: "reduction" as const },
 ];
 
+// Example data for the working-capital-dpo dashboard catalogue entry.
+// Tokenised supplier labels — never real entity names.
+const workingCapitalExample = {
+  current_weighted_dpo: 32,
+  target_weighted_dpo: 48,
+  working_capital_delta_eur: 525_000,
+  annual_spend_eur: 12_000_000,
+  terms_distribution: [
+    { term_label: "NET 30", spend_share_pct: 45, supplier_count: 28 },
+    { term_label: "NET 45", spend_share_pct: 25, supplier_count: 14 },
+    { term_label: "NET 60", spend_share_pct: 20, supplier_count: 9 },
+    { term_label: "NET 90+", spend_share_pct: 10, supplier_count: 4 },
+  ],
+  by_supplier: [
+    { supplier_label: "[Supplier-A]", category: "MRO", payment_terms_days: 90, annual_spend: 1_200_000, late_payment_directive_risk: true },
+    { supplier_label: "[Supplier-B]", category: "Logistics", payment_terms_days: 75, annual_spend: 850_000, late_payment_directive_risk: true },
+    { supplier_label: "[Supplier-C]", category: "IT services", payment_terms_days: 30, annual_spend: 2_100_000, late_payment_directive_risk: false },
+  ],
+  early_payment_discount_opportunities: [
+    { supplier_label: "[Supplier-D]", discount_structure: "2/10 NET 30", annualised_value: 48_000 },
+    { supplier_label: "[Supplier-E]", discount_structure: "1.5/15 NET 45", annualised_value: 22_500 },
+  ],
+  currency: "€",
+};
+
 interface DashboardCategory {
   label: string;
   icon: LucideIcon;
@@ -97,6 +126,9 @@ const dashboardCategories: DashboardCategory[] = [
     dashboards: [
       { id: "cost-waterfall", subtitle: "Component cost breakdown" },
       { id: "tco-comparison", subtitle: "Total cost of ownership" },
+      { id: "should-cost-gap", subtitle: "Price vs benchmark headroom" },
+      { id: "savings-realization-funnel", subtitle: "Hard/Soft/Avoided savings funnel" },
+      { id: "working-capital-dpo", subtitle: "DPO & working-capital release" },
       { id: "license-tier", subtitle: "License cost distribution" },
       { id: "sensitivity-spider", subtitle: "Assumption stress testing" },
     ],
@@ -106,7 +138,8 @@ const dashboardCategories: DashboardCategory[] = [
     icon: ShieldAlert,
     description: "Assess supply risks, contract gaps, and data reliability",
     dashboards: [
-      { id: "risk-matrix", subtitle: "Probability × impact mapping" },
+      { id: "risk-heatmap", subtitle: "Probability × impact mapping" },
+      { id: "supplier-concentration-map", subtitle: "Category → supplier flow & HHI" },
       { id: "sow-analysis", subtitle: "Scope & contract gap analysis" },
       { id: "data-quality", subtitle: "Analysis reliability scoring" },
     ],
@@ -141,7 +174,7 @@ const renderDashboard = (id: DashboardType) => {
       return <LicenseTierDashboard />;
     case "sensitivity-spider":
       return <SensitivitySpiderDashboard />;
-    case "risk-matrix":
+    case "risk-heatmap":
       return <RiskMatrixDashboard />;
     case "scenario-comparison":
       return <ScenarioComparisonDashboard />;
@@ -153,6 +186,14 @@ const renderDashboard = (id: DashboardType) => {
       return <NegotiationPrepDashboard />;
     case "data-quality":
       return <DataQualityDashboard />;
+    case "should-cost-gap":
+      return <ShouldCostGapDashboard />;
+    case "savings-realization-funnel":
+      return <SavingsRealizationFunnelDashboard />;
+    case "working-capital-dpo":
+      return <WorkingCapitalDpoDashboard exampleData={workingCapitalExample} />;
+    case "supplier-concentration-map":
+      return <SupplierConcentrationMapDashboard />;
     default:
       return null;
   }
@@ -433,12 +474,14 @@ const Features = () => {
             <p className="text-muted-foreground max-w-xl mx-auto">
               EXOS dashboards — empowering your decision-making with transparency.
             </p>
-            <a href="/samples/EXOS_Specification_Optimizer_2026-02-28.pdf" download="EXOS_Report_Sample.pdf" className="inline-block mt-4">
-              <Button variant="outline" size="sm" className="gap-2 shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)] hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)] transition-all duration-300">
-                <FileText className="h-4 w-4" />
-                Download Report Sample
-              </Button>
-            </a>
+            {isSuperAdmin && (
+              <a href="/samples/EXOS_Specification_Optimizer_2026-02-28.pdf" download="EXOS_Report_Sample.pdf" className="inline-block mt-4">
+                <Button variant="outline" size="sm" className="gap-2 shadow-[0_2px_0_0_hsl(var(--border)),0_4px_12px_-4px_hsl(var(--foreground)/0.08)] hover:shadow-[0_2px_0_0_hsl(var(--primary)/0.4),0_6px_16px_-4px_hsl(var(--primary)/0.12)] hover:border-primary/50 hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_1px_0_0_hsl(var(--border)),0_2px_4px_-2px_hsl(var(--foreground)/0.06)] transition-all duration-300">
+                  <FileText className="h-4 w-4" />
+                  Download Report Sample
+                </Button>
+              </a>
+            )}
           </div>
 
           {/* Guide Me — 4-category cards */}
@@ -516,8 +559,8 @@ const Features = () => {
                             onClick={() => setSelectedDashboard(d.id)}
                             className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border-l-2 ${
                               isActive
-                                ? "border-l-primary bg-muted text-foreground"
-                                : "border-l-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                ? "border-l-primary bg-gradient-to-b from-muted to-muted/60 text-foreground shadow-md ring-1 ring-border/60"
+                                : "border-l-border/40 bg-gradient-to-b from-card to-card/40 text-foreground/90 shadow-sm ring-1 ring-border/30 hover:from-muted/70 hover:to-muted/40 hover:shadow-md hover:-translate-y-0.5 hover:border-l-primary/50"
                             }`}
                           >
                             <div className="flex items-center justify-between">

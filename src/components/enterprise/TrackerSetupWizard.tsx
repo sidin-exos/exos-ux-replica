@@ -180,25 +180,27 @@ const TrackerSetupWizard = ({
       {/* Step 0: Monitor type selection */}
       {step === 0 && (
         <Card>
-          <CardContent className="pt-5 space-y-3">
-            {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setMonitorType(id)}
-                className={`w-full text-left rounded-lg border p-3 transition-colors bg-muted/60 dark:bg-white/5 ${
-                  monitorType === id
-                    ? "border-primary bg-primary/10 dark:bg-primary/10"
-                    : "border-border hover:border-primary/40"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Badge variant="default" className="text-[10px]">{id}</Badge>
-                  <span className="text-sm font-medium text-foreground">{m.label}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{m.purpose}</p>
-              </button>
-            ))}
+          <CardContent className="pt-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META["DM-1"]][]).map(([id, m]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setMonitorType(id)}
+                  className={`text-left rounded-md border p-2.5 transition-colors bg-muted/60 dark:bg-white/5 ${
+                    monitorType === id
+                      ? "border-primary bg-primary/10 dark:bg-primary/10"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="default" className="text-[9px] px-1.5 py-0">{id}</Badge>
+                    <span className="text-xs font-medium text-foreground leading-tight">{m.label}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-2">{m.purpose}</p>
+                </button>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

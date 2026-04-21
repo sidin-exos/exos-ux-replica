@@ -1,12 +1,7 @@
-import { useState } from "react";
 import { format } from "date-fns";
-import { FolderPlus, ChevronRight, RefreshCw, Loader2, FileText } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ChevronRight, FolderPlus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
 import type { EnterpriseTracker, MonitorType, MonitorParameters } from "@/hooks/useEnterpriseTrackers";
@@ -17,45 +12,117 @@ interface TrackerListProps {
   onSelectTracker?: (tracker: EnterpriseTracker) => void;
 }
 
-const statusConfig: Record<string, { variant: "default" | "secondary" | "outline"; className: string }> = {
-  active: { variant: "default", className: "bg-success/15 text-success border-success/30" },
-  setup: { variant: "secondary", className: "bg-warning/15 text-warning border-warning/30" },
-  paused: { variant: "outline", className: "bg-muted text-muted-foreground border-border" },
+type Status = "deteriorating" | "improving" | "stable";
+
+const statusBorderClass: Record<string, string> = {
+  deteriorating: "border-l-iris",
+  improving: "border-l-iris",
+  stable: "border-l-iris/60",
+  none: "border-l-muted-foreground/40",
 };
 
-const monitorTypeColors: Record<string, string> = {
-  "DM-1": "bg-accent/10 text-accent border-accent/30",
-  "DM-2": "bg-copper/10 text-copper border-copper/30",
-  "DM-3": "bg-iris/10 text-iris border-iris/30",
-  "DM-4": "bg-primary/10 text-primary border-primary/30",
-  "DM-5": "bg-highlight/10 text-highlight border-highlight/30",
+const statusDotClass: Record<string, string> = {
+  deteriorating: "bg-destructive",
+  improving: "bg-success",
+  stable: "bg-accent",
 };
 
-const monitorTypeBorderColors: Record<string, string> = {
-  "DM-1": "border-l-accent",
-  "DM-2": "border-l-copper",
-  "DM-3": "border-l-iris",
-  "DM-4": "border-l-primary",
-  "DM-5": "border-l-highlight",
+const DETERIORATING_KEYWORDS = [
+  "deteriorat", "declin", "worsen", "negative", "concern", "threat",
+  "escala", "weaken", "vulnerab", "disrupt", "sanction", "tariff",
+  "shortage", "downgrad", "default", "loss", "unstable", "volatile",
+  "critical", "warning", "increase.*risk", "increased.*risk",
+];
+
+const IMPROVING_KEYWORDS = [
+  "improv", "strengthen", "positive", "stabili", "recover", "growth",
+  "opportunit", "favorable", "upgrad", "gain", "resili", "diversif",
+  "mitigat", "progress", "expansion", "innovation", "efficien",
+  "reduc.*risk", "reduced.*risk",
+];
+
+function classifyText(text: string): Status {
+  const lower = text.toLowerCase();
+  let det = 0;
+  let imp = 0;
+  for (const kw of DETERIORATING_KEYWORDS) {
+    const m = lower.match(new RegExp(kw, "gi"));
+    if (m) det += m.length;
+  }
+  for (const kw of IMPROVING_KEYWORDS) {
+    const m = lower.match(new RegExp(kw, "gi"));
+    if (m) imp += m.length;
+  }
+  if (det > imp * 1.2) return "deteriorating";
+  if (imp > det * 1.2) return "improving";
+  return "stable";
+}
+
+interface SubFactor {
+  name: string;
+  status: Status;
+}
+
+const DIRECTION_TO_STATUS: Record<string, Status> = {
+  improving: "improving",
+  stable: "stable",
+  moderate: "stable",
+  low: "stable",
+  deteriorating: "deteriorating",
+  critical: "deteriorating",
 };
 
-/** Truncate to ~first 2 sentences or 120 chars */
-const summarise = (content: string): string => {
-  const cleaned = content.replace(/^#+\s.+$/gm, "").replace(/\*\*/g, "").trim();
-  const sentences = cleaned.split(/(?<=[.!?])\s+/).slice(0, 5).join(" ");
-  return sentences.length > 350 ? sentences.slice(0, 347) + "…" : sentences;
-};
+const GENERIC_NAMES = /^(risk area|topic|area|category|item|n\/a|—|-)$/i;
+
+/** Extract risk-area names + direction from the report's "Risk Signals" markdown table. */
+function extractSubFactors(content: string): SubFactor[] {
+  if (!content) return [];
+  const factors: SubFactor[] = [];
+  const seen = new Set<string>();
+  const lines = content.split("\n");
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    // Markdown table row: | cell1 | cell2 | ...
+    if (!line.startsWith("|") || !line.includes("|", 1)) continue;
+    // Skip alignment separator rows like |---|---|
+    if (/^\|\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(line)) continue;
+
+    const cells = line.split("|").map((c) => c.trim()).filter((c, i, arr) => !(i === 0 && c === "") && !(i === arr.length - 1 && c === ""));
+    if (cells.length < 2) continue;
+
+    const name = cells[0].replace(/\*\*/g, "").replace(/^[-–•*#>\s]+/, "").trim();
+    if (!name || name.length < 3 || name.length > 80) continue;
+    if (GENERIC_NAMES.test(name)) continue;
+    // Skip header row
+    if (/^risk\s+area$/i.test(name) || /^topic$/i.test(name)) continue;
+
+    // Find direction keyword in any cell (usually 2nd)
+    let status: Status | null = null;
+    for (const cell of cells.slice(1)) {
+      const stripped = cell.replace(/\*\*/g, "").trim().toLowerCase();
+      if (DIRECTION_TO_STATUS[stripped]) {
+        status = DIRECTION_TO_STATUS[stripped];
+        break;
+      }
+    }
+    // If no explicit direction, classify from row text
+    if (!status) status = classifyText(cells.slice(1).join(" "));
+
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    factors.push({ name, status });
+  }
+
+  return factors.slice(0, 8);
+}
 
 const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [scanningId, setScanningId] = useState<string | null>(null);
-
   const trackerIds = trackers.map((t) => t.id);
 
-  // Fetch latest report per tracker in one query
   const { data: latestReports = {} } = useQuery({
-    queryKey: ["monitor_reports_latest", trackerIds],
+    queryKey: ["monitor_reports_latest_factors", trackerIds],
     enabled: trackerIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -66,54 +133,29 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
 
       if (error) throw error;
 
-      // Keep only the latest per tracker
-      const map: Record<string, { summary: string; date: string }> = {};
+      const map: Record<string, { factors: SubFactor[]; date: string; dominant: Status }> = {};
       for (const row of data ?? []) {
         const r = row as any;
         if (!map[r.tracker_id]) {
-          map[r.tracker_id] = {
-            summary: summarise(r.report_content),
-            date: r.created_at,
-          };
+          const factors = extractSubFactors(r.report_content || "");
+          // Determine dominant status for left border
+          const counts: Record<string, number> = {};
+          factors.forEach((f) => { counts[f.status] = (counts[f.status] || 0) + 1; });
+          let dominant: Status = "stable";
+          if (counts.deteriorating) dominant = "deteriorating";
+          else if (counts.improving && !counts.deteriorating) dominant = "improving";
+          map[r.tracker_id] = { factors, date: r.created_at, dominant };
         }
       }
       return map;
     },
   });
 
-  const handleScanNow = async (e: React.MouseEvent, tracker: EnterpriseTracker) => {
-    e.stopPropagation();
-    setScanningId(tracker.id);
-    try {
-      const { error } = await supabase.functions.invoke("run-monitor-scan", {
-        body: { tracker_id: tracker.id },
-      });
-      if (error) throw error;
-      toast({ title: "Scan complete", description: `Report generated for "${tracker.name}".` });
-      queryClient.invalidateQueries({ queryKey: ["enterprise_trackers"] });
-      queryClient.invalidateQueries({ queryKey: ["monitor_reports", tracker.id] });
-      queryClient.invalidateQueries({ queryKey: ["monitor_reports_latest"] });
-    } catch (err: any) {
-      toast({ title: "Scan failed", description: err.message || "Unknown error", variant: "destructive" });
-    } finally {
-      setScanningId(null);
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-2">
         {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-5 w-16 rounded-full" />
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-16" />
-            </CardContent>
-          </Card>
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );
@@ -138,30 +180,42 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
         const monitorType = (params?.monitor_type ?? "DM-2") as MonitorType;
         const typeMeta = MONITOR_TYPE_META[monitorType];
         const latest = latestReports[t.id];
-
-        const typeColorClass = monitorTypeColors[monitorType] || "bg-highlight/10 text-highlight border-highlight/30";
-        const borderColorClass = monitorTypeBorderColors[monitorType] || "border-l-highlight";
-        const statusCfg = statusConfig[t.status] || statusConfig.active;
+        const dominant = latest?.dominant ?? "none";
+        const borderClass = statusBorderClass[dominant] || statusBorderClass.none;
 
         return (
           <div
             key={t.id}
-            className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderColorClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
+            className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
             onClick={() => onSelectTracker?.(t)}
           >
-            {/* Name + summary */}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">{t.name}</span>
-                <span className={`text-[10px] font-medium border rounded px-1.5 py-0.5 shrink-0 ${typeColorClass}`}>{typeMeta?.label}</span>
-                <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 capitalize shrink-0 ${statusCfg.className}`}>
-                  {t.status}
+            {/* Name + sub-factor chips */}
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                  {t.name}
+                </span>
+                <span className="text-[10px] font-medium border rounded px-1.5 py-0.5 bg-iris/10 text-iris border-iris/30 shrink-0">
+                  {typeMeta?.label}
                 </span>
               </div>
-              {latest && (
-                <p className="text-xs text-muted-foreground leading-relaxed mt-1.5 line-clamp-3 max-w-lg">
-                  {latest.summary}
+              {!latest || latest.factors.length === 0 ? (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  No signals yet. Run a scan to populate sub-factors.
                 </p>
+              ) : (
+                <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+                  {latest.factors.map((f, i) => (
+                    <span
+                      key={i}
+                      title={`${f.name} — ${f.status}`}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass[f.status] || "bg-muted-foreground"}`} />
+                      {f.name}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
 
