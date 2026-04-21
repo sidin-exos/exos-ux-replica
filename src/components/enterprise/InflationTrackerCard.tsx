@@ -32,10 +32,10 @@ const statusBorderClass: Record<string, string> = {
   none: "border-l-muted-foreground",
 };
 
-const statusBadgeClass: Record<string, string> = {
-  deteriorating: "bg-destructive/15 text-destructive border-destructive/30",
-  improving: "bg-success/15 text-success border-success/30",
-  stable: "bg-accent/15 text-accent border-accent/30",
+const statusDotClass: Record<string, string> = {
+  deteriorating: "bg-destructive",
+  improving: "bg-success",
+  stable: "bg-accent",
 };
 
 const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
@@ -75,13 +75,14 @@ const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
             No active drivers configured yet. Open to set up inflation monitoring.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5">
             {activeDrivers.map(d => (
               <span
                 key={d.id}
                 title={`${d.driver_name} — ${d.current_status}`}
-                className={`text-[11px] font-medium border rounded-full px-2 py-0.5 ${statusBadgeClass[d.current_status] || "bg-muted text-muted-foreground border-border"}`}
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
               >
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass[d.current_status] || "bg-muted-foreground"}`} />
                 {d.driver_name}
               </span>
             ))}
