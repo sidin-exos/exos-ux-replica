@@ -200,7 +200,7 @@ async function generateMarketInsights(
       max_tokens: 5000, // 5x increase for comprehensive insights
       search_recency_filter: "month",
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(120_000),
   });
 
   if (!response.ok) {
