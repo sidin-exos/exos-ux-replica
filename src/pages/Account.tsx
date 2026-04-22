@@ -11,6 +11,7 @@ import { ModelConfigPanel } from "@/components/settings/ModelConfigPanel";
 import UserFilesManager from "@/components/files/UserFilesManager";
 import AccountSidebar from "@/components/account/AccountSidebar";
 import TeamManagement from "@/components/account/TeamManagement";
+import BillingSubscriptionCard from "@/components/account/BillingSubscriptionCard";
 import { useAccountData } from "@/hooks/useAccountData";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -174,6 +175,14 @@ const Account = () => {
                 <UsageTile icon={FolderOpen} label="Files Uploaded" value={String(usage.fileCount)} />
               </div>
             </div>
+
+            {/* Billing & Subscription */}
+            <BillingSubscriptionCard
+              status="trialing"
+              planName="Professional"
+              trialEndsAt={null}
+              currentPeriodEnd={null}
+            />
 
             {/* Team (admin-only) */}
             {profile?.role === "admin" && user && (

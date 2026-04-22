@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail, Loader2 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import {
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const pricingTiers = [
   {
@@ -25,6 +27,7 @@ const pricingTiers = [
     period: "month",
     icon: Zap,
     featured: false,
+    priceId: "price_smb_test",
     features: [
       "Distilled procurement knowledge in one place",
       "29 Analytical scanarios",
@@ -33,7 +36,7 @@ const pricingTiers = [
       "100 AI reports a month",
       "Email support",
     ],
-    cta: "Get Started",
+    cta: "Start Free Trial",
   },
   {
     id: "professional",
@@ -44,6 +47,7 @@ const pricingTiers = [
     period: "month",
     icon: Shield,
     featured: true,
+    priceId: "price_professional_test",
     features: [
       "Full EXOS Platform functionality",
       "Risk Assessment Platform",
@@ -64,6 +68,7 @@ const pricingTiers = [
     icon: Building2,
     featured: false,
     comingSoon: false,
+    priceId: null,
     features: [
       "Everything in Professional, plus:",
       "Custom data integrations",
@@ -118,6 +123,9 @@ const faqData = [
 const Pricing = () => {
   const exosLogo = useThemedLogo();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   useEffect(() => {
     if (location.hash) {
@@ -126,6 +134,38 @@ const Pricing = () => {
       }, 100);
     }
   }, [location.hash]);
+
+  const handleSubscribe = async (tier: typeof pricingTiers[number]) => {
+    if (tier.id === "enterprise") {
+      document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    if (!tier.priceId) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/auth?redirect=" + encodeURIComponent("/pricing"));
+      return;
+    }
+
+    setLoadingTier(tier.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: { price_id: tier.priceId },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error("No checkout URL returned");
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("[checkout] failed", err);
+      toast({
+        title: "Could not start checkout",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+      setLoadingTier(null);
+    }
+  };
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -214,15 +254,29 @@ const Pricing = () => {
                   <Button
                     className={`w-full mt-auto ${tier.featured ? "" : "variant-outline"}`}
                     variant={tier.featured ? "default" : "outline"}
-                    disabled={tier.comingSoon}
+                    disabled={tier.comingSoon || loadingTier === tier.id}
+                    onClick={() => handleSubscribe(tier)}
                   >
-                    {tier.cta}
+                    {loadingTier === tier.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Redirecting…
+                      </>
+                    ) : (
+                      tier.cta
+                    )}
                   </Button>
                 </CardContent>
               </Card>
             );
           })}
         </div>
+
+        {/* Trial disclaimer */}
+        <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
+          30-day free trial. Cancel anytime before the trial ends to avoid being charged.
+        </p>
+
 
         {/* Feature Comparison Table */}
         <section className="mt-20 max-w-5xl mx-auto animate-fade-up" style={{ animationDelay: "250ms" }}>
