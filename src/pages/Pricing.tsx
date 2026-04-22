@@ -27,6 +27,7 @@ const pricingTiers = [
     period: "month",
     icon: Zap,
     featured: false,
+    priceId: "price_smb_test",
     features: [
       "Distilled procurement knowledge in one place",
       "29 Analytical scanarios",
@@ -35,7 +36,7 @@ const pricingTiers = [
       "100 AI reports a month",
       "Email support",
     ],
-    cta: "Get Started",
+    cta: "Start Free Trial",
   },
   {
     id: "professional",
@@ -46,6 +47,7 @@ const pricingTiers = [
     period: "month",
     icon: Shield,
     featured: true,
+    priceId: "price_professional_test",
     features: [
       "Full EXOS Platform functionality",
       "Risk Assessment Platform",
@@ -66,6 +68,7 @@ const pricingTiers = [
     icon: Building2,
     featured: false,
     comingSoon: false,
+    priceId: null,
     features: [
       "Everything in Professional, plus:",
       "Custom data integrations",
