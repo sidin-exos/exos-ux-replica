@@ -1071,6 +1071,7 @@ export type Database = {
           company_size: string | null
           country: string | null
           created_at: string
+          current_period_end: string | null
           display_name: string | null
           email: string | null
           full_name: string | null
@@ -1081,6 +1082,11 @@ export type Database = {
           organization_id: string | null
           primary_challenge: string | null
           role: Database["public"]["Enums"]["org_role"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
           updated_at: string
         }
         Insert: {
@@ -1089,6 +1095,7 @@ export type Database = {
           company_size?: string | null
           country?: string | null
           created_at?: string
+          current_period_end?: string | null
           display_name?: string | null
           email?: string | null
           full_name?: string | null
@@ -1099,6 +1106,11 @@ export type Database = {
           organization_id?: string | null
           primary_challenge?: string | null
           role?: Database["public"]["Enums"]["org_role"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_price_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -1107,6 +1119,7 @@ export type Database = {
           company_size?: string | null
           country?: string | null
           created_at?: string
+          current_period_end?: string | null
           display_name?: string | null
           email?: string | null
           full_name?: string | null
@@ -1117,6 +1130,11 @@ export type Database = {
           organization_id?: string | null
           primary_challenge?: string | null
           role?: Database["public"]["Enums"]["org_role"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_price_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
         }
         Relationships: [
