@@ -254,15 +254,29 @@ const Pricing = () => {
                   <Button
                     className={`w-full mt-auto ${tier.featured ? "" : "variant-outline"}`}
                     variant={tier.featured ? "default" : "outline"}
-                    disabled={tier.comingSoon}
+                    disabled={tier.comingSoon || loadingTier === tier.id}
+                    onClick={() => handleSubscribe(tier)}
                   >
-                    {tier.cta}
+                    {loadingTier === tier.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Redirecting…
+                      </>
+                    ) : (
+                      tier.cta
+                    )}
                   </Button>
                 </CardContent>
               </Card>
             );
           })}
         </div>
+
+        {/* Trial disclaimer */}
+        <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
+          30-day free trial. Cancel anytime before the trial ends to avoid being charged.
+        </p>
+
 
         {/* Feature Comparison Table */}
         <section className="mt-20 max-w-5xl mx-auto animate-fade-up" style={{ animationDelay: "250ms" }}>
