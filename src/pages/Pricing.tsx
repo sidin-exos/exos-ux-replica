@@ -123,6 +123,9 @@ const faqData = [
 const Pricing = () => {
   const exosLogo = useThemedLogo();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   useEffect(() => {
     if (location.hash) {
@@ -131,6 +134,38 @@ const Pricing = () => {
       }, 100);
     }
   }, [location.hash]);
+
+  const handleSubscribe = async (tier: typeof pricingTiers[number]) => {
+    if (tier.id === "enterprise") {
+      document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    if (!tier.priceId) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/auth?redirect=" + encodeURIComponent("/pricing"));
+      return;
+    }
+
+    setLoadingTier(tier.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: { price_id: tier.priceId },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error("No checkout URL returned");
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("[checkout] failed", err);
+      toast({
+        title: "Could not start checkout",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+      setLoadingTier(null);
+    }
+  };
 
   return (
     <div className="min-h-screen gradient-hero">
