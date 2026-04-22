@@ -176,6 +176,14 @@ const Account = () => {
               </div>
             </div>
 
+            {/* Billing & Subscription */}
+            <BillingSubscriptionCard
+              status="trialing"
+              planName="Professional"
+              trialEndsAt={null}
+              currentPeriodEnd={null}
+            />
+
             {/* Team (admin-only) */}
             {profile?.role === "admin" && user && (
               <TeamManagement
