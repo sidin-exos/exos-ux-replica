@@ -56,39 +56,44 @@ const formatCurrency = (value: number | null, currency: string): string => {
   return `${currency}${Math.round(abs)}`;
 };
 
-// Sample data: tokenised labels only — NO real legal entities pre-de-anonymisation.
+// Sample data: realistic SaaS/tech company spend portfolio (€5M across 3 categories).
+// Named suppliers used here for illustration only — production reports remain anonymised.
 const sample: ConcentrationData = {
   categories: [
-    { category_id: "CAT-1", category_name: "MRO", hhi: 6400, hhi_interpretation: "EXTREME", annual_spend: 4_200_000 },
-    { category_id: "CAT-2", category_name: "Logistics", hhi: 2100, hhi_interpretation: "MODERATE", annual_spend: 3_100_000 },
-    { category_id: "CAT-3", category_name: "IT services", hhi: 1200, hhi_interpretation: "LOW", annual_spend: 2_800_000 },
+    { category_id: "CAT-1", category_name: "Cloud Infrastructure", hhi: 7800, hhi_interpretation: "EXTREME", annual_spend: 2_400_000 },
+    { category_id: "CAT-2", category_name: "SaaS Tools", hhi: 2400, hhi_interpretation: "MODERATE", annual_spend: 1_500_000 },
+    { category_id: "CAT-3", category_name: "Professional Services", hhi: 1500, hhi_interpretation: "LOW", annual_spend: 1_100_000 },
   ],
   flows: [
-    { source: "CAT-1", target: "[Supplier-A]", value: 3_200_000, tier: 1, single_source_flag: true },
-    { source: "CAT-1", target: "[Supplier-B]", value: 1_000_000, tier: 1, single_source_flag: false },
-    { source: "CAT-2", target: "[Supplier-C]", value: 1_500_000, tier: 1, single_source_flag: false },
-    { source: "CAT-2", target: "[Supplier-D]", value: 1_600_000, tier: 1, single_source_flag: false },
-    { source: "CAT-3", target: "[Supplier-E]", value: 1_400_000, tier: 1, single_source_flag: false },
-    { source: "CAT-3", target: "[Supplier-F]", value: 1_400_000, tier: 1, single_source_flag: false },
+    // Cloud — heavy single-source concentration on AWS
+    { source: "CAT-1", target: "AWS", value: 2_100_000, tier: 1, single_source_flag: true },
+    { source: "CAT-1", target: "Cloudflare", value: 300_000, tier: 1, single_source_flag: false },
+    // SaaS Tools — moderate split
+    { source: "CAT-2", target: "Datadog", value: 620_000, tier: 1, single_source_flag: false },
+    { source: "CAT-2", target: "Snowflake", value: 540_000, tier: 1, single_source_flag: false },
+    { source: "CAT-2", target: "GitHub", value: 340_000, tier: 1, single_source_flag: false },
+    // Professional services — healthy diversification
+    { source: "CAT-3", target: "Deloitte", value: 480_000, tier: 1, single_source_flag: false },
+    { source: "CAT-3", target: "Accenture", value: 380_000, tier: 1, single_source_flag: false },
+    { source: "CAT-3", target: "Local boutiques", value: 240_000, tier: 1, single_source_flag: false },
   ],
   suppliers: [
-    { supplier_label: "[Supplier-A]", geography: "DE", total_spend: 3_200_000, category_count: 1, exit_cost_estimate: 450_000, exit_cost_rationale: "Tooling re-qualification + 9-month transition." },
-    { supplier_label: "[Supplier-B]", geography: "PL", total_spend: 1_000_000, category_count: 1, exit_cost_estimate: 80_000, exit_cost_rationale: null },
-    { supplier_label: "[Supplier-C]", geography: "NL", total_spend: 1_500_000, category_count: 1, exit_cost_estimate: null, exit_cost_rationale: null },
-    { supplier_label: "[Supplier-D]", geography: "FR", total_spend: 1_600_000, category_count: 1, exit_cost_estimate: null, exit_cost_rationale: null },
-    { supplier_label: "[Supplier-E]", geography: "IE", total_spend: 1_400_000, category_count: 1, exit_cost_estimate: 120_000, exit_cost_rationale: "Data migration + integration rebuild." },
-    { supplier_label: "[Supplier-F]", geography: "IN", total_spend: 1_400_000, category_count: 1, exit_cost_estimate: null, exit_cost_rationale: null },
+    { supplier_label: "AWS", geography: "US", total_spend: 2_100_000, category_count: 1, exit_cost_estimate: 850_000, exit_cost_rationale: "Re-platforming + 12-month parallel run for production workloads." },
+    { supplier_label: "Cloudflare", geography: "US", total_spend: 300_000, category_count: 1, exit_cost_estimate: 60_000, exit_cost_rationale: "DNS / CDN cutover and edge rule rebuild." },
+    { supplier_label: "Datadog", geography: "US", total_spend: 620_000, category_count: 1, exit_cost_estimate: 180_000, exit_cost_rationale: "Observability re-instrumentation across services." },
+    { supplier_label: "Snowflake", geography: "US", total_spend: 540_000, category_count: 1, exit_cost_estimate: 220_000, exit_cost_rationale: "Data warehouse migration + pipeline rewrites." },
+    { supplier_label: "GitHub", geography: "US", total_spend: 340_000, category_count: 1, exit_cost_estimate: 90_000, exit_cost_rationale: "CI/CD pipelines and access tooling rebuild." },
+    { supplier_label: "Deloitte", geography: "IE", total_spend: 480_000, category_count: 1, exit_cost_estimate: null, exit_cost_rationale: null },
+    { supplier_label: "Accenture", geography: "IE", total_spend: 380_000, category_count: 1, exit_cost_estimate: null, exit_cost_rationale: null },
+    { supplier_label: "Local boutiques", geography: "DE", total_spend: 240_000, category_count: 1, exit_cost_estimate: null, exit_cost_rationale: null },
   ],
   tier2_dependencies: [
-    { tier1_supplier: "[Supplier-A]", tier2_supplier: "[Supplier-Z]", dependency_description: "Sole source of rare-earth component" },
+    { tier1_supplier: "Snowflake", tier2_supplier: "AWS", dependency_description: "Snowflake EU region runs on AWS — compounds AWS exposure." },
   ],
   geographic_concentration: [
-    { country_code: "DE", spend_share_pct: 32 },
-    { country_code: "FR", spend_share_pct: 16 },
-    { country_code: "NL", spend_share_pct: 15 },
-    { country_code: "PL", spend_share_pct: 10 },
-    { country_code: "IE", spend_share_pct: 14 },
-    { country_code: "IN", spend_share_pct: 13 },
+    { country_code: "US", spend_share_pct: 78 },
+    { country_code: "IE", spend_share_pct: 17 },
+    { country_code: "DE", spend_share_pct: 5 },
   ],
   currency: "€",
 };
