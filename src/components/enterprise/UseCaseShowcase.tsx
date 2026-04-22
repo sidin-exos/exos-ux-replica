@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, Building2, Lightbulb, BookOpen, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { USE_CASE_LIBRARY, INDUSTRIES, type UseCase, type IndustryName } from "@/lib/use-case-library";
+import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
+
+// Titles in the use-case library that reflect monitor types we actually ship.
+// Library was generated from an older taxonomy; mismatched entries are hidden.
+const VALID_RISK_REFS = new Set(
+  Object.entries(MONITOR_TYPE_META).map(([id, meta]) => `${id} — ${meta.label}`)
+);
 
 type Platform = "scenarios" | "risk";
 
@@ -24,8 +31,9 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
   const cases = useMemo(() => {
     const lib = USE_CASE_LIBRARY[industry];
     const all = platform === "scenarios" ? lib.scenarios : lib.risk;
-    // For risk platform, only show DM- monitoring scenarios
-    return platform === "risk" ? all.filter((uc) => uc.ref.startsWith("DM-")) : all;
+    if (platform !== "risk") return all;
+    // Only show risk use cases whose ref matches a monitor type currently shipped
+    return all.filter((uc) => VALID_RISK_REFS.has(uc.ref));
   }, [industry, platform]);
 
   const current = cases[index] || cases[0];
