@@ -85,7 +85,7 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[hsl(210,22%,96%)] light" data-force-light="true">
+    <div className="force-light min-h-screen flex flex-col bg-background text-foreground" data-force-light="true">
       <div className="contents text-foreground">
         <Header />
 
