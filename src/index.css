@@ -95,6 +95,63 @@
     --shadow-brand: 0 4px 20px hsl(174 48% 30% / 0.20);
   }
 
+  .force-light,
+  .dark .force-light {
+    /* Re-apply light theme tokens to override any .dark ancestor */
+    --background: 210 22% 96%;
+    --foreground: 222 30% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 30% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 30% 10%;
+    --border: 218 18% 83%;
+    --input: 218 15% 90%;
+    --ring: 174 48% 30%;
+    --muted: 220 16% 93%;
+    --muted-foreground: 218 15% 36%;
+    --surface: 210 20% 90%;
+    --surface-foreground: 222 30% 10%;
+    --primary: 174 48% 30%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 212 50% 44%;
+    --accent-foreground: 0 0% 100%;
+    --secondary: 220 16% 91%;
+    --secondary-foreground: 220 22% 28%;
+    --success: 152 60% 32%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 48%;
+    --warning-foreground: 222 30% 10%;
+    --destructive: 0 70% 44%;
+    --destructive-foreground: 0 0% 100%;
+    --info: 204 52% 42%;
+    --info-foreground: 0 0% 100%;
+    --highlight: 158 44% 36%;
+    --highlight-foreground: 0 0% 100%;
+    --iris: 248 34% 52%;
+    --iris-foreground: 0 0% 100%;
+    --copper: 24 58% 44%;
+    --copper-foreground: 0 0% 100%;
+    --positive: 152 60% 32%;
+    --positive-foreground: 0 0% 100%;
+    --negative: 0 70% 44%;
+    --negative-foreground: 0 0% 100%;
+    --neutral-change: 220 16% 52%;
+    --neutral-change-foreground: 0 0% 100%;
+    --sidebar-background: 210 20% 95%;
+    --sidebar-foreground: 222 30% 18%;
+    --sidebar-primary: 174 48% 30%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 16% 91%;
+    --sidebar-accent-foreground: 220 28% 16%;
+    --sidebar-border: 218 18% 87%;
+    --sidebar-ring: 174 48% 30%;
+    --gradient-primary: linear-gradient(135deg, hsl(174, 48%, 30%) 0%, hsl(212, 50%, 44%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(248, 34%, 52%) 0%, hsl(212, 50%, 44%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(210, 22%, 96%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(210, 22%, 98%) 0%, hsl(210, 20%, 94%) 50%, hsl(210, 22%, 96%) 100%);
+    --gradient-glow: radial-gradient(ellipse at 50% 0%, hsl(174 48% 30% / 0.05) 0%, transparent 50%);
+  }
+
   .dark {
     /* ── Dark Theme ── */
     /* Structural */
