@@ -191,7 +191,15 @@ interface CategoryRow {
   exos_scenarios_primary?: string[] | null;
   exos_scenarios_secondary?: string[] | null;
   kpis_v2?: KpiV2Item[] | null;
+  category_hot_yaml?: string | null;
+  category_cold_yaml?: string | null;
 }
+
+// Scenarios that need full COLD-tier category context (risk/strategy-heavy)
+// Per EXOS_Procurement_Category_Context_v3 spec
+const CATEGORY_COLD_SCENARIOS = new Set([
+  "S17", "S20", "S22", "S25", "S26", "S27",
+]);
 
 function buildIndustryXML(industry: IndustryRow, scenarioCode?: string): string {
   // ── v2 Tier Loader: prefer compact YAML when available (token-optimised) ──
@@ -248,7 +256,24 @@ ${kpisXML}
 </industry-context>`;
 }
 
-function buildCategoryXML(category: CategoryRow): string {
+function buildCategoryXML(category: CategoryRow, scenarioCode?: string): string {
+  // ── v3 Tier Loader: prefer compact YAML when available (token-optimised) ──
+  const hot = category.category_hot_yaml?.trim();
+  const cold = category.category_cold_yaml?.trim();
+  if (hot) {
+    const includeCold = !!scenarioCode && CATEGORY_COLD_SCENARIOS.has(scenarioCode) && !!cold;
+    const tier = includeCold ? "HOT+COLD" : "HOT";
+    const body = includeCold ? `${hot}\n\n${cold}` : hot;
+    return `<category-context tier="${tier}">
+  <category-name>${escapeXML(category.name)}</category-name>
+  <category-id>${escapeXML(category.slug)}</category-id>
+  <yaml><![CDATA[
+${body}
+]]></yaml>
+</category-context>`;
+  }
+
+  // ── Legacy fallback (constraints_v2 / kpis_v2 / enriched fields) ──
   const hasV2K = Array.isArray(category.kpis_v2) && category.kpis_v2.length > 0;
 
   const kpisXML = hasV2K
@@ -485,7 +510,7 @@ function buildServerGroundedPrompts(
 
   const _scenarioCodeForIndustry = SCENARIO_ID_REGISTRY[scenarioType] || scenarioType;
   if (industry) contextParts.push(buildIndustryXML(industry, _scenarioCodeForIndustry));
-  if (category) contextParts.push(buildCategoryXML(category));
+  if (category) contextParts.push(buildCategoryXML(category, _scenarioCodeForIndustry));
   if (marketInsight) contextParts.push(buildMarketIntelligenceXML(marketInsight));
 
   // Derive scenario group server-side
@@ -859,7 +884,7 @@ serve(async (req) => {
             ? supabase.from("industry_contexts").select("name, slug, constraints, kpis, constraints_v2, kpis_v2, industry_hot_yaml, industry_cold_yaml").eq("slug", industrySlug).single()
             : Promise.resolve({ data: null, error: null }),
           categorySlug
-            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis, category_group, spend_type, kraljic_position, kraljic_rationale, price_volatility, market_structure, supply_concentration, key_cost_drivers, procurement_levers, negotiation_dynamics, should_cost_components, eu_regulatory_context, common_failure_modes, exos_scenarios_primary, exos_scenarios_secondary, kpis_v2").eq("slug", categorySlug).single()
+            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis, category_group, spend_type, kraljic_position, kraljic_rationale, price_volatility, market_structure, supply_concentration, key_cost_drivers, procurement_levers, negotiation_dynamics, should_cost_components, eu_regulatory_context, common_failure_modes, exos_scenarios_primary, exos_scenarios_secondary, kpis_v2, category_hot_yaml, category_cold_yaml").eq("slug", categorySlug).single()
             : Promise.resolve({ data: null, error: null }),
           (industrySlug && categorySlug)
             ? supabase.from("market_insights")
