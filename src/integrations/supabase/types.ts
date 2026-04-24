@@ -994,7 +994,9 @@ export type Database = {
       }
       procurement_categories: {
         Row: {
+          category_cold_yaml: string | null
           category_group: string | null
+          category_hot_yaml: string | null
           characteristics: string
           common_failure_modes: Json | null
           created_at: string
@@ -1019,7 +1021,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_cold_yaml?: string | null
           category_group?: string | null
+          category_hot_yaml?: string | null
           characteristics: string
           common_failure_modes?: Json | null
           created_at?: string
@@ -1044,7 +1048,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_cold_yaml?: string | null
           category_group?: string | null
+          category_hot_yaml?: string | null
           characteristics?: string
           common_failure_modes?: Json | null
           created_at?: string
