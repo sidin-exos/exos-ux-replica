@@ -1167,6 +1167,17 @@ serve(async (req) => {
         const singleParsedEnvelope = parseAIResponse(content);
         let responseContent = singleDeanon.restoredText;
         let deanonSingleEnvelope = singleParsedEnvelope;
+
+        // Defensive guard: detect when the deanonymized content is raw JSON
+        // (e.g. flash fallback returned envelope-only without prose). We must
+        // never leak raw JSON or any internal metadata (shadow_log, validation
+        // traces, payload internals) into the user-facing `content` string.
+        const looksLikeRawJson = (s: string): boolean => {
+          const trimmed = s.trim();
+          return (trimmed.startsWith('{') && trimmed.endsWith('}'))
+            || (trimmed.startsWith('```') && /```\s*json/i.test(trimmed));
+        };
+
         if (['1.0','2.0'].includes(singleParsedEnvelope?.schema_version)) {
           // Deanonymize the envelope itself so structured data has real names.
           // Wrapped in try/catch because deanonymizeText does plain text replacement
