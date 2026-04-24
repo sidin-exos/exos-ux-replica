@@ -1195,6 +1195,34 @@ serve(async (req) => {
           if (deanonSingleEnvelope.gdpr_flags?.length > 0) {
             console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonSingleEnvelope.scenario_id, flag_count: deanonSingleEnvelope.gdpr_flags.length });
           }
+        } else if (singleParsedEnvelope && typeof singleParsedEnvelope === 'object') {
+          // AI returned a JSON object but without a recognised schema_version
+          // (e.g. flash fallback emitted a partial envelope). Render it through
+          // the defensive markdown builder rather than leaking raw JSON to the UI.
+          try {
+            const envelopeStr = JSON.stringify(singleParsedEnvelope);
+            const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
+            deanonSingleEnvelope = JSON.parse(deanonEnvelope.restoredText);
+          } catch (_e) {
+            deanonSingleEnvelope = singleParsedEnvelope;
+          }
+          // Coerce to the shape buildMarkdownFromEnvelope expects, with safe defaults.
+          const safe = {
+            scenario_name: (deanonSingleEnvelope as Record<string, unknown>).scenario_name as string ?? 'Analysis',
+            summary: (deanonSingleEnvelope as Record<string, unknown>).summary as string ?? '',
+            executive_bullets: (deanonSingleEnvelope as Record<string, unknown>).executive_bullets as unknown[] ?? [],
+            recommendations: (deanonSingleEnvelope as Record<string, unknown>).recommendations as unknown[] ?? [],
+            data_gaps: (deanonSingleEnvelope as Record<string, unknown>).data_gaps as unknown[] ?? [],
+          } as unknown as Parameters<typeof buildMarkdownFromEnvelope>[0];
+          const rendered = buildMarkdownFromEnvelope(safe);
+          // If the rendered markdown is essentially empty, surface a friendly fallback
+          // instead of the raw JSON string the user previously saw.
+          responseContent = rendered.replace(/\s+/g, '').length > 20
+            ? rendered
+            : 'The analysis completed but the model returned an incomplete response. Please retry — if the issue persists, regenerate the report.';
+        } else if (looksLikeRawJson(responseContent)) {
+          // Last-resort guard: never let raw JSON reach the UI.
+          responseContent = 'The analysis completed but the model returned an unparseable response. Please retry to regenerate.';
         }
 
         tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog,
