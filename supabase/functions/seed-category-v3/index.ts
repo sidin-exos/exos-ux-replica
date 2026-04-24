@@ -12,28 +12,34 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "missing auth" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify super-admin
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData } = await userClient.auth.getUser();
-    if (!userData?.user) {
-      return new Response(JSON.stringify({ error: "invalid auth" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Allow either: service-role bearer (for direct admin invocation) OR
+    // a valid super-admin user token.
+    const authHeader = req.headers.get("Authorization") || "";
+    const bearer = authHeader.replace(/^Bearer\s+/i, "");
+    let authorized = bearer === serviceKey;
+
+    if (!authorized && bearer) {
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: userData } = await userClient.auth.getUser();
+      if (userData?.user) {
+        const adm = createClient(supabaseUrl, serviceKey);
+        const { data: profile } = await adm.from("profiles").select("is_super_admin").eq("id", userData.user.id).single();
+        authorized = !!profile?.is_super_admin;
+      }
     }
-    const admin = createClient(supabaseUrl, serviceKey);
-    const { data: profile } = await admin.from("profiles").select("is_super_admin").eq("id", userData.user.id).single();
-    if (!profile?.is_super_admin) {
+
+    if (!authorized) {
       return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    const admin = createClient(supabaseUrl, serviceKey);
 
     const results: Array<{ slug: string; ok: boolean; error?: string }> = [];
     for (const row of SEED_DATA) {
