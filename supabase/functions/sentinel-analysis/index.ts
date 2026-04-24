@@ -195,10 +195,11 @@ interface CategoryRow {
   category_cold_yaml?: string | null;
 }
 
-// Scenarios that need full COLD-tier category context (risk/strategy-heavy)
-// Per EXOS_Procurement_Category_Context_v3 spec
+// Scenarios that need full COLD-tier category context (truly risk-heavy only).
+// Narrowed from v3 spec (was S17/S20/S22/S25/S26/S27) to keep token budget aligned
+// with the ~2.3x reduction target. Strategy scenarios (S20/S22/S25) now use HOT-only.
 const CATEGORY_COLD_SCENARIOS = new Set([
-  "S17", "S20", "S22", "S25", "S26", "S27",
+  "S17", "S26", "S27",
 ]);
 
 function buildIndustryXML(industry: IndustryRow, scenarioCode?: string): string {
