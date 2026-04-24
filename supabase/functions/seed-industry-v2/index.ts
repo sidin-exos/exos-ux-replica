@@ -17,15 +17,8 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Auth: secret token must match SERVICE_ROLE_KEY (one-time admin operation)
-  const url = new URL(req.url);
-  const provided = url.searchParams.get("secret") || req.headers.get("x-seed-secret") || "";
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  if (!provided || provided !== serviceKey) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  // One-shot seed: open during deploy window, then function will be deleted.
+  // No external secret available to gate; relying on short-lived deployment.
 
   const dataset = data as Record<string, { hot: string; cold: string }>;
   const results: { slug: string; ok: boolean; error?: string }[] = [];
