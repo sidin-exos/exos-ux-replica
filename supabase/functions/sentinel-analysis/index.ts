@@ -161,7 +161,14 @@ interface IndustryRow {
   kpis: string[];
   constraints_v2?: ConstraintV2Item[] | null;
   kpis_v2?: KpiV2Item[] | null;
+  industry_hot_yaml?: string | null;
+  industry_cold_yaml?: string | null;
 }
+
+// Scenarios that need full COLD-tier industry context (regulatory/risk-heavy)
+const INDUSTRY_COLD_SCENARIOS = new Set([
+  "S16", "S17", "S20", "S22", "S25", "S26", "S27", "S29",
+]);
 
 interface CategoryRow {
   name: string;
@@ -186,7 +193,24 @@ interface CategoryRow {
   kpis_v2?: KpiV2Item[] | null;
 }
 
-function buildIndustryXML(industry: IndustryRow): string {
+function buildIndustryXML(industry: IndustryRow, scenarioCode?: string): string {
+  // ── v2 Tier Loader: prefer compact YAML when available (token-optimised) ──
+  const hot = industry.industry_hot_yaml?.trim();
+  const cold = industry.industry_cold_yaml?.trim();
+  if (hot) {
+    const includeCold = !!scenarioCode && INDUSTRY_COLD_SCENARIOS.has(scenarioCode) && !!cold;
+    const tier = includeCold ? "HOT+COLD" : "HOT";
+    const body = includeCold ? `${hot}\n\n${cold}` : hot;
+    return `<industry-context tier="${tier}">
+  <industry-name>${escapeXML(industry.name)}</industry-name>
+  <industry-id>${escapeXML(industry.slug)}</industry-id>
+  <yaml><![CDATA[
+${body}
+  ]]></yaml>
+</industry-context>`;
+  }
+
+  // ── Legacy fallback (constraints_v2 / kpis_v2 / arrays) ──
   const hasV2C = Array.isArray(industry.constraints_v2) && industry.constraints_v2.length > 0;
   const hasV2K = Array.isArray(industry.kpis_v2) && industry.kpis_v2.length > 0;
 
@@ -206,7 +230,7 @@ function buildIndustryXML(industry: IndustryRow): string {
       }).join('\n')
     : industry.kpis.map((k, i) => `      <kpi index="${i + 1}">${escapeXML(k)}</kpi>`).join('\n');
 
-  return `<industry-context>
+  return `<industry-context tier="LEGACY">
   <industry-name>${escapeXML(industry.name)}</industry-name>
   <industry-id>${escapeXML(industry.slug)}</industry-id>
   <regulatory-constraints>

@@ -436,6 +436,8 @@ export type Database = {
           constraints_v2: Json | null
           created_at: string
           id: string
+          industry_cold_yaml: string | null
+          industry_hot_yaml: string | null
           kpis: string[]
           kpis_v2: Json | null
           name: string
@@ -447,6 +449,8 @@ export type Database = {
           constraints_v2?: Json | null
           created_at?: string
           id?: string
+          industry_cold_yaml?: string | null
+          industry_hot_yaml?: string | null
           kpis?: string[]
           kpis_v2?: Json | null
           name: string
@@ -458,6 +462,8 @@ export type Database = {
           constraints_v2?: Json | null
           created_at?: string
           id?: string
+          industry_cold_yaml?: string | null
+          industry_hot_yaml?: string | null
           kpis?: string[]
           kpis_v2?: Json | null
           name?: string
