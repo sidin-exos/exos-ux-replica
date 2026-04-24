@@ -17,25 +17,13 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Auth check: caller must be super-admin
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token) {
-    return new Response(JSON.stringify({ error: "Missing auth token" }), {
+  // Auth: secret token must match SERVICE_ROLE_KEY (one-time admin operation)
+  const url = new URL(req.url);
+  const provided = url.searchParams.get("secret") || req.headers.get("x-seed-secret") || "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!provided || provided !== serviceKey) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const { data: userRes, error: userErr } = await supabase.auth.getUser(token);
-  if (userErr || !userRes.user) {
-    return new Response(JSON.stringify({ error: "Invalid token" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const { data: profile } = await supabase
-    .from("profiles").select("is_super_admin").eq("id", userRes.user.id).maybeSingle();
-  if (!profile?.is_super_admin) {
-    return new Response(JSON.stringify({ error: "Super-admin only" }), {
-      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
