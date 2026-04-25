@@ -5,6 +5,8 @@ import { parseBody, requireString, requireArray, optionalBoolean, validationErro
 
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { SentryReporter } from "../_shared/sentry.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 interface IndustryCategory {
@@ -131,45 +133,86 @@ Be extremely specific and quantitative. Include actual company names, real data 
 async function validateCombination(
   apiKey: string,
   industry: string,
-  category: string
+  category: string,
+  tracer?: LangSmithTracer,
+  parentRunId?: string
 ): Promise<{ confidence: number; reasoning: string }> {
   const prompt = VALIDATION_PROMPT
     .replace("{{INDUSTRY}}", industry)
     .replace("{{CATEGORY}}", category);
 
-  const response = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "sonar",
-      messages: [
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.1,
-    }),
-    signal: AbortSignal.timeout(30_000),
-  });
+  const runId = tracer?.createRun(
+    "validate-combination",
+    "llm",
+    { model: "sonar", industry, category, promptLength: prompt.length },
+    { parentRunId, tags: ["model:sonar"] }
+  );
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.1,
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch (err) {
+    if (tracer && runId) {
+      tracer.patchRun(runId, undefined, err instanceof Error ? err.message : "Network error");
+    }
+    throw err;
+  }
 
   if (!response.ok) {
+    if (tracer && runId) {
+      tracer.patchRun(runId, undefined, `Validation API error: ${response.status}`);
+    }
     throw new Error(`Validation API error: ${response.status}`);
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || "";
-  
+
   try {
     // Extract JSON from response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (tracer && runId) {
+        tracer.patchRun(runId, {
+          confidence: parsed.confidence,
+          reasoningLength: (parsed.reasoning || "").length,
+          promptTokens: data.usage?.prompt_tokens,
+          completionTokens: data.usage?.completion_tokens,
+          totalTokens: data.usage?.total_tokens,
+          estimatedCostUsd: estimateCost("sonar", data.usage?.prompt_tokens, data.usage?.completion_tokens),
+        });
+      }
+      return parsed;
     }
   } catch {
     console.error("Failed to parse validation response:", content);
   }
-  
+
+  if (tracer && runId) {
+    tracer.patchRun(runId, {
+      confidence: 0.5,
+      parseFailed: true,
+      promptTokens: data.usage?.prompt_tokens,
+      completionTokens: data.usage?.completion_tokens,
+      totalTokens: data.usage?.total_tokens,
+      estimatedCostUsd: estimateCost("sonar", data.usage?.prompt_tokens, data.usage?.completion_tokens),
+    });
+  }
   return { confidence: 0.5, reasoning: "Unable to parse validation response" };
 }
 
@@ -177,35 +220,55 @@ async function generateMarketInsights(
   apiKey: string,
   industry: string,
   category: string,
-  geography: string
+  geography: string,
+  tracer?: LangSmithTracer,
+  parentRunId?: string
 ): Promise<{ content: string; citations: string[]; usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null }> {
   const prompt = MARKET_INSIGHTS_PROMPT
     .replace("{{INDUSTRY}}", industry)
     .replace("{{CATEGORY}}", category)
     .replace(/\{\{GEOGRAPHY\}\}/g, geography);
 
-  const response = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "sonar-pro",
-      messages: [
-        { role: "system", content: "You are a world-class procurement intelligence analyst. Provide exhaustive, deeply-researched market intelligence with specific data points, exact figures, named companies, and cited sources. Be extremely thorough and quantitative. Your reports inform C-level procurement decisions worth millions." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.2,
-      max_tokens: 5000, // 5x increase for comprehensive insights
-      search_recency_filter: "month",
-    }),
-    signal: AbortSignal.timeout(120_000),
-  });
+  const runId = tracer?.createRun(
+    "market-insights",
+    "llm",
+    { model: "sonar-pro", industry, category, geography, promptLength: prompt.length },
+    { parentRunId, tags: ["model:sonar-pro"] }
+  );
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar-pro",
+        messages: [
+          { role: "system", content: "You are a world-class procurement intelligence analyst. Provide exhaustive, deeply-researched market intelligence with specific data points, exact figures, named companies, and cited sources. Be extremely thorough and quantitative. Your reports inform C-level procurement decisions worth millions." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.2,
+        max_tokens: 5000, // 5x increase for comprehensive insights
+        search_recency_filter: "month",
+      }),
+      signal: AbortSignal.timeout(120_000),
+    });
+  } catch (err) {
+    if (tracer && runId) {
+      tracer.patchRun(runId, undefined, err instanceof Error ? err.message : "Network error");
+    }
+    throw err;
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Market insights API error:", response.status, errorText);
+    if (tracer && runId) {
+      tracer.patchRun(runId, undefined, `Market insights API error: ${response.status}`);
+    }
     throw new Error(`Market insights API error: ${response.status}`);
   }
 
@@ -214,6 +277,18 @@ async function generateMarketInsights(
   const injectionResult = filterPromptInjection(rawContent);
   if (injectionResult.flagged) {
     console.warn("Prompt injection detected in market insights:", injectionResult.matches);
+  }
+
+  if (tracer && runId) {
+    tracer.patchRun(runId, {
+      contentLength: injectionResult.cleaned.length,
+      citationCount: (data.citations || []).length,
+      injectionFlagged: injectionResult.flagged,
+      promptTokens: data.usage?.prompt_tokens,
+      completionTokens: data.usage?.completion_tokens,
+      totalTokens: data.usage?.total_tokens,
+      estimatedCostUsd: estimateCost("sonar-pro", data.usage?.prompt_tokens, data.usage?.completion_tokens),
+    });
   }
 
   return {
@@ -279,6 +354,9 @@ serve(async (req) => {
     return rateLimitResponse(rateCheck, corsHeaders);
   }
 
+  let tracer: LangSmithTracer | undefined;
+  let parentRunId: string | undefined;
+
   try {
     const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
     if (!PERPLEXITY_API_KEY) {
@@ -325,6 +403,18 @@ serve(async (req) => {
       geography: c.geography || defaultGeography,
     }));
 
+    tracer = new LangSmithTracer({ env: "production", feature: "generate-market-insights" });
+    parentRunId = tracer.createRun(
+      "generate-market-insights",
+      "chain",
+      {
+        combinationCount: combinationsWithGeo.length,
+        validateOnly,
+        defaultGeography,
+      },
+      { tags: ["model:sonar", "model:sonar-pro"] }
+    );
+
     const results: Array<{
       industry: string;
       category: string;
@@ -345,7 +435,9 @@ serve(async (req) => {
         const validation = await validateCombination(
           PERPLEXITY_API_KEY,
           combo.industryName,
-          combo.categoryName
+          combo.categoryName,
+          tracer,
+          parentRunId
         );
 
         console.log(`Validation: confidence=${validation.confidence}, reason=${validation.reasoning}`);
@@ -385,7 +477,9 @@ serve(async (req) => {
           PERPLEXITY_API_KEY,
           combo.industryName,
           combo.categoryName,
-          combo.geography
+          combo.geography,
+          tracer,
+          parentRunId
         );
 
         if (insights.usage) {
@@ -447,14 +541,26 @@ serve(async (req) => {
 
     const processingTimeMs = Date.now() - startTime;
 
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+    tracer.patchRun(parentRunId, {
+      total: results.length,
+      successful,
+      failed,
+      processingTimeMs,
+      totalTokens,
+      estimatedCost: totalCost,
+      totalEstimatedCostUsd: totalCost,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
         results,
         summary: {
           total: results.length,
-          successful: results.filter(r => r.success).length,
-          failed: results.filter(r => !r.success).length,
+          successful,
+          failed,
           processingTimeMs,
           totalTokens,
           estimatedCost: `$${totalCost.toFixed(4)}`,
@@ -470,10 +576,13 @@ serve(async (req) => {
       return validationErrorResponse(error.message);
     }
     console.error("Generate market insights error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    if (tracer && parentRunId) {
+      tracer.patchRun(parentRunId, { errorType: classifyError(error) }, errorMessage);
+    }
     new SentryReporter("generate-market-insights").captureException(error, {
       userId: authResult.user.userId,
     });
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return new Response(
       JSON.stringify({

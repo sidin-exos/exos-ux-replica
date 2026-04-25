@@ -3,6 +3,22 @@
  * Fire-and-forget tracing — only errors are logged.
  */
 
+export type ErrorType =
+  | "provider_unavailable"
+  | "rate_limited"
+  | "invalid_request"
+  | "timeout"
+  | "unknown";
+
+export function classifyError(err: unknown): ErrorType {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/\b(503|UNAVAILABLE|overloaded)\b/i.test(msg)) return "provider_unavailable";
+  if (/\b(429)\b|RATE.?LIMIT/i.test(msg)) return "rate_limited";
+  if (/\b(400)\b|INVALID|validation/i.test(msg)) return "invalid_request";
+  if (/timeout|timed out|DEADLINE|aborted/i.test(msg)) return "timeout";
+  return "unknown";
+}
+
 interface CreateRunOptions {
   parentRunId?: string;
   tags?: string[];

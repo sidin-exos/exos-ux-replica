@@ -2,11 +2,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  let tracer: LangSmithTracer | undefined;
+  let runId: string | undefined;
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -124,6 +129,20 @@ Be factual, cite sources where possible. Flag direction of change (improving/sta
 
     const startTime = Date.now();
 
+    tracer = new LangSmithTracer({ env: "production", feature: "run-monitor-scan" });
+    runId = tracer.createRun(
+      "run-monitor-scan",
+      "llm",
+      {
+        model: "sonar-pro",
+        monitorType,
+        trackerId: tracker_id,
+        systemPromptLen: systemPrompt.length,
+        userPromptLen: userPrompt.length,
+      },
+      { tags: ["model:sonar-pro"] }
+    );
+
     const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
@@ -150,6 +169,16 @@ Be factual, cite sources where possible. Flag direction of change (improving/sta
     const content = result.choices?.[0]?.message?.content || "No content returned";
     const citations = result.citations || [];
 
+    tracer.patchRun(runId, {
+      contentLength: content.length,
+      citationCount: citations.length,
+      processingTimeMs: processingTime,
+      promptTokens: result.usage?.prompt_tokens,
+      completionTokens: result.usage?.completion_tokens,
+      totalTokens: result.usage?.total_tokens,
+      estimatedCostUsd: estimateCost("sonar-pro", result.usage?.prompt_tokens, result.usage?.completion_tokens),
+    });
+
     // Save report with service role
     const { data: report, error: insertError } = await adminClient
       .from("monitor_reports")
@@ -174,10 +203,13 @@ Be factual, cite sources where possible. Flag direction of change (improving/sta
     });
   } catch (error) {
     console.error("run-monitor-scan error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    if (tracer && runId) {
+      tracer.patchRun(runId, { errorType: classifyError(error) }, message);
+    }
     new SentryReporter("run-monitor-scan").captureException(error, {
       userId: typeof user !== "undefined" ? user?.id : undefined,
     });
-    const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { parseBody, requireString, optionalBoolean, optionalStringOrNull, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
@@ -569,6 +570,14 @@ ${attachedDocumentsXml ? `  ${attachedDocumentsXml}\n` : ""}  <anonymized-query>
  * Encapsulates retry logic (3 attempts with exponential backoff on 503)
  * and LangSmith tracing. Used for both single-pass and multi-cycle flows.
  */
+interface CallLLMResult {
+  content: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  estimatedCostUsd: number;
+}
+
 async function callLLM(
   sysPrompt: string,
   usrPrompt: string,
@@ -578,7 +587,7 @@ async function callLLM(
     parentRunId: string;
     spanName: string;
   }
-): Promise<string> {
+): Promise<CallLLMResult> {
   const { googleModel, tracer, parentRunId, spanName } = opts;
 
   const spanId = tracer.createRun(spanName, "llm", {
@@ -586,7 +595,7 @@ async function callLLM(
     provider: "google_ai_studio",
     systemPromptLength: sysPrompt.length,
     userPromptLength: usrPrompt.length,
-  }, { parentRunId });
+  }, { parentRunId, tags: [`model:${googleModel}`, `cycle:${spanName}`] });
 
   const MAX_RETRIES = 3;
   const RETRY_DELAYS = [1000, 2000, 4000];
@@ -607,8 +616,20 @@ async function callLLM(
       });
 
       const content = response.text || "";
-      tracer.patchRun(spanId, { contentLength: content.length, provider: "google_ai_studio", usage: response.usageMetadata });
-      return content;
+      const promptTokens = response.usageMetadata?.promptTokenCount;
+      const completionTokens = response.usageMetadata?.candidatesTokenCount;
+      const totalTokens = response.usageMetadata?.totalTokenCount;
+      const estimatedCostUsd = estimateCost(googleModel, promptTokens, completionTokens);
+      tracer.patchRun(spanId, {
+        contentLength: content.length,
+        provider: "google_ai_studio",
+        usage: response.usageMetadata,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        estimatedCostUsd,
+      });
+      return { content, promptTokens, completionTokens, totalTokens, estimatedCostUsd };
     } catch (err) {
       const status = (err as Error & { status?: number }).status;
       if (status === 503 && attempt < MAX_RETRIES - 1) {
@@ -616,13 +637,17 @@ async function callLLM(
         continue;
       }
       if (attempt === MAX_RETRIES - 1) {
-        tracer.patchRun(spanId, undefined, err instanceof Error ? err.message : "Network error");
+        tracer.patchRun(
+          spanId,
+          { errorType: classifyError(err) },
+          err instanceof Error ? err.message : "Network error",
+        );
         throw err;
       }
     }
   }
 
-  tracer.patchRun(spanId, undefined, "All retry attempts exhausted");
+  tracer.patchRun(spanId, { errorType: "provider_unavailable" }, "All retry attempts exhausted");
   throw new Error("Google AI Studio unavailable after retries");
 }
 
@@ -762,6 +787,8 @@ serve(async (req) => {
 
     // === FETCH & ANONYMIZE ATTACHED FILE CONTENT ===
     let attachedDocumentsXml = "";
+    let attachedFileCount = 0;
+    let attachedFileTokens = 0;
     if (fileIds.length > 0) {
       try {
         const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -831,7 +858,11 @@ serve(async (req) => {
               }
 
               attachedDocumentsXml = `<attached-documents count="${includedFiles.length}">\n${docParts.join("\n")}\n</attached-documents>`;
-              console.log(`[Sentinel] Attached ${includedFiles.length} file(s), ~${includedFiles.reduce((s: number, f: { token_estimate: number | null }) => s + (f.token_estimate || 0), 0)} tokens`);
+              attachedFileCount = includedFiles.length;
+              attachedFileTokens = includedFiles.reduce(
+                (s: number, f: { token_estimate: number | null }) => s + (f.token_estimate || 0), 0
+              );
+              console.log(`[Sentinel] Attached ${attachedFileCount} file(s), ~${attachedFileTokens} tokens`);
             }
           }
         }
@@ -852,9 +883,22 @@ serve(async (req) => {
       serverSideGrounding,
       scenarioId: scenarioId || null,
       isMultiCycle,
+      analysisMode: isMultiCycle ? "deep" : "standard",
+      cycleCount: isMultiCycle ? 3 : 1,
+      attachedFileCount,
+      attachedFileTokens,
+      hasIndustrySlug: !!industrySlug,
+      hasCategorySlug: !!categorySlug,
     }, {
       metadata: { industrySlug, categorySlug, useLocalModel, isMultiCycle, cycleCount: isMultiCycle ? 3 : 1 },
-      tags: [googleModel, ...(isMultiCycle ? ["multi-cycle", "chain-of-experts"] : [])],
+      tags: [
+        googleModel,
+        `model:${googleModel}`,
+        `mode:${isMultiCycle ? "deep" : "standard"}`,
+        ...(scenarioType ? [`scenario:${scenarioType}`] : []),
+        ...(scenarioId ? [`scenarioId:${scenarioId}`] : []),
+        ...(isMultiCycle ? ["multi-cycle", "chain-of-experts"] : []),
+      ],
     });
 
     // Initialize Supabase client
@@ -865,8 +909,8 @@ serve(async (req) => {
       : null;
 
     // --- Resolve prompts ---
-    let systemPrompt: string;
-    let userPrompt: string;
+    let systemPrompt = "";
+    let userPrompt = "";
 
     if (serverSideGrounding && supabase) {
       // --- Child Run 1: fetch-context ---
@@ -903,11 +947,22 @@ serve(async (req) => {
         if (categoryResult.error) { console.error("[Sentinel] Failed to fetch category context:", categoryResult.error); fetchErrors.push("category: " + String(categoryResult.error)); }
         if (insightResult.error) { console.warn("[Sentinel] Failed to fetch market insight (non-fatal):", insightResult.error); }
       } finally {
+        const industryContextLength = industryResult.data ? JSON.stringify(industryResult.data).length : 0;
+        const categoryContextLength = categoryResult.data ? JSON.stringify(categoryResult.data).length : 0;
+        const marketIntelligenceLength = insightResult.data ? JSON.stringify(insightResult.data).length : 0;
+        const totalGroundingChars = industryContextLength + categoryContextLength + marketIntelligenceLength;
         tracer.patchRun(fetchRunId, {
           foundIndustry: !!industryResult.data,
           foundCategory: !!categoryResult.data,
           foundInsight: !!insightResult.data,
           errors: fetchErrors,
+          groundingContextSize: {
+            industryContextLength,
+            categoryContextLength,
+            marketIntelligenceLength,
+            totalGroundingTokens: Math.ceil(totalGroundingChars / 4),
+          },
+          ...(fetchErrors.length > 0 ? { errorType: "invalid_request" } : {}),
         }, fetchErrors.length > 0 ? fetchErrors.join("; ") : undefined);
       }
 
@@ -935,15 +990,18 @@ serve(async (req) => {
         systemPrompt = grounded.systemPrompt;
         userPrompt = grounded.userPrompt;
       } finally {
+        const _sp = systemPrompt as string | undefined;
+        const _up = userPrompt as string | undefined;
         tracer.patchRun(assembleRunId, {
-          systemPromptLength: systemPrompt?.length || 0,
-          userPromptLength: userPrompt?.length || 0,
+          systemPromptLength: _sp?.length || 0,
+          userPromptLength: _up?.length || 0,
+          totalPromptLength: (_sp?.length || 0) + (_up?.length || 0),
           contextPartsCount: (industryResult.data ? 1 : 0) + (categoryResult.data ? 1 : 0),
         });
       }
     } else if (body.systemPrompt) {
       // Legacy path: client sent full prompts
-      systemPrompt = body.systemPrompt;
+      systemPrompt = body.systemPrompt as string;
       // Inject schema for structured output if scenario type is known
       const legacyGroup = scenarioType ? SCENARIO_GROUP_REGISTRY[scenarioType] : null;
       if (legacyGroup) {
@@ -1024,7 +1082,8 @@ serve(async (req) => {
       const scenarioGroup = scenarioId ? SCENARIO_GROUP_REGISTRY[scenarioId] : null;
 
       // Cycle 1: Analyst Draft
-      const draft = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
+      const draftResult = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
+      const draft = draftResult.content;
       console.log(`[Sentinel] Cycle 1 (Analyst Draft): ${draft.length} chars`);
 
       // Cycles 2-3: strip attached-documents from original-request to save tokens
@@ -1035,13 +1094,22 @@ serve(async (req) => {
 
       // Cycle 2: Auditor Critique
       const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPromptWithoutDocs}\n</original-request>`;
-      const critique = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
+      const critiqueResult = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
+      const critique = critiqueResult.content;
       console.log(`[Sentinel] Cycle 2 (Auditor Critique): ${critique.length} chars`);
 
       // Cycle 3: Synthesizer Final (with schema injection)
       const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPromptWithoutDocs}\n</original-request>`;
-      const finalContent = await callLLM(buildSynthesizerPrompt(scenarioGroup, scenarioId), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      const synthResult = await callLLM(buildSynthesizerPrompt(scenarioGroup, scenarioId), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      const finalContent = synthResult.content;
       console.log(`[Sentinel] Cycle 3 (Synthesizer Final): ${finalContent.length} chars`);
+
+      // Aggregate token usage across all 3 cycles
+      const cycleResults = [draftResult, critiqueResult, synthResult];
+      const aggPromptTokens = cycleResults.reduce((s, r) => s + (r.promptTokens || 0), 0) || undefined;
+      const aggCompletionTokens = cycleResults.reduce((s, r) => s + (r.completionTokens || 0), 0) || undefined;
+      const aggTotalTokens = cycleResults.reduce((s, r) => s + (r.totalTokens || 0), 0) || undefined;
+      const aggEstimatedCostUsd = cycleResults.reduce((s, r) => s + r.estimatedCostUsd, 0);
 
       const processingTime = Math.round(performance.now() - startTime);
 
@@ -1081,6 +1149,11 @@ serve(async (req) => {
         source: "google_ai_studio",
         validationPassed: validation.passed,
         validationConfidence: validation.confidenceScore,
+        validationResult: { passed: validation.passed, confidenceScore: validation.confidenceScore, issuesCount: validation.issues?.length ?? 0 },
+        promptTokens: aggPromptTokens,
+        completionTokens: aggCompletionTokens,
+        totalTokens: aggTotalTokens,
+        estimatedCostUsd: aggEstimatedCostUsd,
       });
 
       // Try to parse structured envelope
@@ -1140,7 +1213,7 @@ serve(async (req) => {
     // --- Child Run 3: ai-inference ---
     const inferenceRunId = tracer.createRun("ai-inference", "llm", {
       model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
-    }, { parentRunId });
+    }, { parentRunId, tags: [`model:${googleModel}`] });
 
     // NOTE: callGoogleAI already retries internally (5 attempts w/ exp backoff)
     // and falls back to gemini-2.5-flash on overload. Outer retries here just
@@ -1276,10 +1349,26 @@ serve(async (req) => {
           responseContent = 'The analysis completed but the model returned an unparseable response. Please retry to regenerate.';
         }
 
+        const inferencePromptTokens = aiResponse.usageMetadata?.promptTokenCount;
+        const inferenceCompletionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
+        const inferenceTotalTokens = aiResponse.usageMetadata?.totalTokenCount;
+        const modelForAttemptCost = estimateCost(modelForAttempt, inferencePromptTokens, inferenceCompletionTokens);
         tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog,
+          promptTokens: inferencePromptTokens,
+          completionTokens: inferenceCompletionTokens,
+          totalTokens: inferenceTotalTokens,
+          estimatedCostUsd: modelForAttemptCost,
+          validationResult: { passed: validation.passed, confidenceScore: validation.confidenceScore, issuesCount: validation.issues?.length ?? 0 },
           ...(['1.0','2.0'].includes(singleParsedEnvelope?.schema_version) ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: singleParsedEnvelope.schema_version, schema_version_emitted: singleParsedEnvelope.schema_version } : {}),
         });
-        tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
+        tracer.patchRun(parentRunId, {
+          success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime,
+          promptTokens: inferencePromptTokens,
+          completionTokens: inferenceCompletionTokens,
+          totalTokens: inferenceTotalTokens,
+          estimatedCostUsd: modelForAttemptCost,
+          validationResult: { passed: validation.passed, confidenceScore: validation.confidenceScore, issuesCount: validation.issues?.length ?? 0 },
+        });
 
         // Funnel: first_action_completed (CP3) — only first analysis ever
         trackOnceEvent({ userId, event: "first_action_completed", checkpoint: "CP3", properties: { action_type: "scenario_started" } });
@@ -1314,7 +1403,7 @@ serve(async (req) => {
               ...(userOrgId ? { organization_id: userOrgId } : {}),
             });
           }
-          tracer.patchRun(inferenceRunId, undefined, "Rate limit exceeded (429)");
+          tracer.patchRun(inferenceRunId, { errorType: "rate_limited" }, "Rate limit exceeded (429)");
           return new Response(
             JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
             { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1332,7 +1421,7 @@ serve(async (req) => {
               ...(userOrgId ? { organization_id: userOrgId } : {}),
             });
           }
-          tracer.patchRun(inferenceRunId, undefined, errorMessage);
+          tracer.patchRun(inferenceRunId, { errorType: classifyError(aiError) }, errorMessage);
           return new Response(
             JSON.stringify({ error: "AI service error", details: "The AI service encountered an error processing your request" }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1342,7 +1431,7 @@ serve(async (req) => {
     }
 
     // Should not reach here, but safety fallback
-    tracer.patchRun(inferenceRunId, undefined, "All retry attempts exhausted");
+    tracer.patchRun(inferenceRunId, { errorType: "provider_unavailable" }, "All retry attempts exhausted");
     return new Response(
       JSON.stringify({ error: "AI service unavailable after retries" }),
       { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1354,7 +1443,7 @@ serve(async (req) => {
     }
     console.error("[Sentinel] Error:", error);
     new SentryReporter("sentinel-analysis").captureException(error, { userId });
-    try { tracer?.patchRun(parentRunId!, undefined, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
+    try { tracer?.patchRun(parentRunId!, { errorType: classifyError(error) }, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -1,6 +1,8 @@
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,6 +65,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    const tracer = new LangSmithTracer({ env: "production", feature: "im-driver-propose" });
+    const runId = tracer.createRun(
+      "im-driver-propose",
+      "llm",
+      {
+        model: "gemini-2.5-pro",
+        goodsDefinitionLength: goodsDefinition.length,
+        driverCountTarget,
+      },
+      { tags: ["model:gemini-2.5-pro"] }
+    );
+
     // Call Gemini 3.1 Pro with tool calling for structured output
     try {
       const response = await callGoogleAI({
@@ -110,6 +124,18 @@ Deno.serve(async (req) => {
         const drivers = (response.functionCall.args.drivers as Array<{ name: string; rationale: string }>)
           .slice(0, driverCountTarget);
 
+        const promptTokens = response.usageMetadata?.promptTokenCount;
+        const completionTokens = response.usageMetadata?.candidatesTokenCount;
+        tracer.patchRun(runId, {
+          source: "ai",
+          driverCount: drivers.length,
+          hasFunctionCall: true,
+          promptTokens,
+          completionTokens,
+          totalTokens: response.usageMetadata?.totalTokenCount,
+          estimatedCostUsd: estimateCost("gemini-2.5-pro", promptTokens, completionTokens),
+        });
+
         return new Response(JSON.stringify({ drivers, source: "ai" }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -118,12 +144,27 @@ Deno.serve(async (req) => {
 
       // If no function call, fall back
       console.warn("Gemini did not return a function call, using fallback drivers");
+      const fbPromptTokens = response.usageMetadata?.promptTokenCount;
+      const fbCompletionTokens = response.usageMetadata?.candidatesTokenCount;
+      tracer.patchRun(runId, {
+        source: "fallback",
+        hasFunctionCall: false,
+        promptTokens: fbPromptTokens,
+        completionTokens: fbCompletionTokens,
+        totalTokens: response.usageMetadata?.totalTokenCount,
+        estimatedCostUsd: estimateCost("gemini-2.5-pro", fbPromptTokens, fbCompletionTokens),
+      });
       return new Response(JSON.stringify({ drivers: FALLBACK_DRIVERS.slice(0, driverCountTarget), source: "fallback" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (aiError) {
       console.error("Gemini API error, using fallback:", aiError);
+      tracer.patchRun(
+        runId,
+        { errorType: classifyError(aiError), source: "fallback", estimatedCostUsd: 0 },
+        aiError instanceof Error ? aiError.message : "AI error",
+      );
       return new Response(JSON.stringify({ drivers: FALLBACK_DRIVERS.slice(0, driverCountTarget), source: "fallback" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import {
@@ -67,6 +68,9 @@ serve(async (req) => {
     );
   }
 
+  let tracer: LangSmithTracer | undefined;
+  let parentRunId: string | undefined;
+
   try {
     // --- Validate secrets ---
     const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
@@ -83,8 +87,8 @@ serve(async (req) => {
     const reqEnv = requireString(body.env, "env", { optional: true, maxLength: 50 });
 
     // --- LangSmith tracing ---
-    const tracer = new LangSmithTracer({ env: reqEnv, feature: "market_snapshot" });
-    const parentRunId = tracer.createRun("market-snapshot", "chain", {
+    tracer = new LangSmithTracer({ env: reqEnv, feature: "market_snapshot" });
+    parentRunId = tracer.createRun("market-snapshot", "chain", {
       region, analysisScopeLength: analysisScope.length, timeframe,
       hasSuccessCriteria: !!successCriteria, hasIndustryContext: !!industryContext,
     }, { tags: ["model:sonar-pro", "model:gemini-3.1-flash-lite-preview"] });
@@ -172,8 +176,15 @@ IMPORTANT: Cite your sources inline using [1], [2], etc. Be specific about data 
     }));
 
     const phase1TimeMs = Date.now() - startTime;
+    const phase1PromptTokens = perplexityData.usage?.prompt_tokens;
+    const phase1CompletionTokens = perplexityData.usage?.completion_tokens;
+    const phase1Cost = estimateCost("sonar-pro", phase1PromptTokens, phase1CompletionTokens);
     tracer.patchRun(phase1RunId, {
       outputLength: researchOutput.length, citationCount: citations.length, processingTimeMs: phase1TimeMs,
+      promptTokens: phase1PromptTokens,
+      completionTokens: phase1CompletionTokens,
+      totalTokens: perplexityData.usage?.total_tokens,
+      estimatedCostUsd: phase1Cost,
     });
 
     console.log("[Phase 1] Complete:", { outputLength: researchOutput.length, citations: citations.length, ms: phase1TimeMs });
@@ -234,6 +245,9 @@ OUTPUT FORMAT (use these exact headings):
 
     let qualityGateOutput = "";
     let completenessScore = 0;
+    let phase2PromptTokens: number | undefined;
+    let phase2CompletionTokens: number | undefined;
+    let phase2TotalTokens: number | undefined;
 
     try {
       const qualityResponse = await callGoogleAI({
@@ -243,6 +257,9 @@ OUTPUT FORMAT (use these exact headings):
       });
 
       qualityGateOutput = qualityResponse.text || "";
+      phase2PromptTokens = qualityResponse.usageMetadata?.promptTokenCount;
+      phase2CompletionTokens = qualityResponse.usageMetadata?.candidatesTokenCount;
+      phase2TotalTokens = qualityResponse.usageMetadata?.totalTokenCount;
 
       const scoreMatch = qualityGateOutput.match(/Overall Completeness Score:\s*(\d+)/i);
       if (scoreMatch) {
@@ -260,8 +277,13 @@ OUTPUT FORMAT (use these exact headings):
     }
 
     const phase2TimeMs = Date.now() - phase2Start;
+    const phase2Cost = estimateCost("gemini-3.1-flash-lite-preview", phase2PromptTokens, phase2CompletionTokens);
     tracer.patchRun(phase2RunId, {
       outputLength: qualityGateOutput.length, completenessScore, processingTimeMs: phase2TimeMs,
+      promptTokens: phase2PromptTokens,
+      completionTokens: phase2CompletionTokens,
+      totalTokens: phase2TotalTokens,
+      estimatedCostUsd: phase2Cost,
     });
 
     console.log("[Phase 2] Complete:", { completenessScore, ms: phase2TimeMs });
@@ -294,9 +316,16 @@ OUTPUT FORMAT (use these exact headings):
     }
 
     // Patch parent trace
+    const totalPromptTokens = (phase1PromptTokens || 0) + (phase2PromptTokens || 0);
+    const totalCompletionTokens = (phase1CompletionTokens || 0) + (phase2CompletionTokens || 0);
     tracer.patchRun(parentRunId, {
       success: true, completenessScore, citationCount: citations.length,
+      sourceCount: citations.length,
       processingTimeMs: totalProcessingTimeMs,
+      promptTokens: totalPromptTokens || undefined,
+      completionTokens: totalCompletionTokens || undefined,
+      totalTokens: (perplexityData.usage?.total_tokens || 0) + (phase2TotalTokens || 0) || undefined,
+      estimatedCostUsd: phase1Cost + phase2Cost,
     });
 
     // Return Sentinel-compatible response format so GenericScenarioWizard can render it
@@ -324,6 +353,10 @@ OUTPUT FORMAT (use these exact headings):
     const processingTimeMs = Date.now() - startTime;
     console.error("[market-snapshot] Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+    if (tracer && parentRunId) {
+      tracer.patchRun(parentRunId, { errorType: classifyError(error) }, errorMessage);
+    }
 
     // Log failure
     try {

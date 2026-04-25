@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { parseBody, requireString, requireArray, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
 import { checkRateLimit } from "../_shared/rate-limit.ts";
-import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import { callGoogleAI, convertOpenAITools } from "../_shared/google-ai.ts";
 import {
   buildScenarioNavBlock,
@@ -166,6 +167,7 @@ serve(async (req) => {
 
   // Init tracer
   const tracer = new LangSmithTracer({ env: "production", feature: "chat-copilot" });
+  const startTime = Date.now();
 
   try {
     const body = await parseBody(req);
@@ -204,7 +206,8 @@ serve(async (req) => {
       currentPath: currentPath || "/",
       messageCount: messages.length,
       scenarioCount: parsedScenarios?.length || 0,
-    }, { tags: ["chat"] });
+      hasContext: !!currentPath && currentPath !== "/",
+    }, { tags: ["chat", "model:gemini-2.5-pro"] });
 
     // Convert messages to Google format (frontend sends user/assistant roles)
     const typedMessages = messages as Array<{ role: string; content: string }>;
@@ -236,10 +239,18 @@ serve(async (req) => {
       }
 
       // Patch LangSmith with success
+      const promptTokens = aiResponse.usageMetadata?.promptTokenCount;
+      const completionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
       tracer.patchRun(parentRunId, {
         content,
         hasAction: !!action,
         actionPath: action?.payload,
+        promptTokens,
+        completionTokens,
+        totalTokens: aiResponse.usageMetadata?.totalTokenCount,
+        estimatedCostUsd: estimateCost("gemini-2.5-pro", promptTokens, completionTokens),
+        responseLength: content.length,
+        processingTimeMs: Date.now() - startTime,
       });
 
       return new Response(JSON.stringify({ content, action }), {
@@ -248,7 +259,7 @@ serve(async (req) => {
     } catch (aiError) {
       const status = (aiError as Error & { status?: number }).status;
       if (status === 429) {
-        tracer.patchRun(parentRunId, undefined, "rate_limited");
+        tracer.patchRun(parentRunId, { errorType: "rate_limited" }, "rate_limited");
         return new Response(
           JSON.stringify({
             content: "I'm receiving too many requests right now. Please try again in a moment.",
@@ -259,7 +270,11 @@ serve(async (req) => {
           }
         );
       }
-      tracer.patchRun(parentRunId, undefined, aiError instanceof Error ? aiError.message : "AI error");
+      tracer.patchRun(
+        parentRunId,
+        { errorType: classifyError(aiError) },
+        aiError instanceof Error ? aiError.message : "AI error",
+      );
       throw aiError;
     }
   } catch (error) {
