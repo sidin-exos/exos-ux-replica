@@ -9,12 +9,12 @@ const routes = [
   {
     path: '/welcome',
     title: 'EXOS — Agentic AI Procurement Platform | No Implementation',
-    description: 'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 29 expert scenarios. No implementation needed.',
+    description: 'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed.',
     h1: 'Agentic AI Procurement Analysis. No Implementation. No Wait.',
   },
   {
     path: '/features',
-    title: '29 AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS',
+    title: '20+ AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS',
     description: 'Explore how EXOS delivers AI-powered procurement analysis: cost breakdowns, supplier risk scoring, negotiation preparation, and market intelligence — all GDPR-native.',
     h1: 'How EXOS Works',
   },

@@ -76,7 +76,7 @@ const pillars = [
 
 /* ── Stats ── */
 const stats = [
-  { value: "29", label: "Procurement Scenarios" },
+  { value: "20+", label: "Procurement Scenarios" },
   { value: "30", label: "Industry Knowledge Bases" },
   { value: "70", label: "Procurement Categories Covered" },
 ];
@@ -91,7 +91,7 @@ const Welcome = () => {
         <title>EXOS — Agentic AI Procurement Platform | No Implementation</title>
         <meta
           name="description"
-          content="Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 29 expert scenarios. No implementation needed."
+          content="Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed."
         />
         <link rel="canonical" href="https://exosproc.com/" />
         <meta name="robots" content="index, follow" />
@@ -118,7 +118,7 @@ const Welcome = () => {
               </h1>
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  Most procurement platforms take months to implement and require company-wide adoption before delivering value. <strong className="text-foreground font-semibold">EXOS is an agentic AI procurement platform</strong> that works from day one, for one user, alongside the tools you already have. Negotiation preparation, supplier risk monitoring, TCO analysis, inflation tracking — and 25 more expert scenarios. <strong className="text-foreground font-semibold">No integration. No IT project. No change management.</strong>
+                  Most procurement platforms take months to implement and require company-wide adoption before delivering value. <strong className="text-foreground font-semibold">EXOS is an agentic AI procurement platform</strong> that works from day one, for one user, alongside the tools you already have. Negotiation preparation, supplier risk monitoring, TCO analysis, inflation tracking — and many more expert scenarios. <strong className="text-foreground font-semibold">No integration. No IT project. No change management.</strong>
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 mt-2">
@@ -136,7 +136,7 @@ const Welcome = () => {
               </div>
               <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <span className="font-display text-lg font-bold text-foreground">29</span>
+                  <span className="font-display text-lg font-bold text-foreground">20+</span>
                   <span className="uppercase tracking-wider">Scenarios</span>
                 </span>
                 <span className="w-px h-4 bg-border" />

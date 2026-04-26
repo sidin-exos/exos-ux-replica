@@ -145,7 +145,7 @@ const Index = () => {
           name="description"
           content={
             currentMeta?.description ??
-            'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 29 expert scenarios. No implementation needed.'
+            'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed.'
           }
         />
         <link
