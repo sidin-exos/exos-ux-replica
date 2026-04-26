@@ -205,8 +205,8 @@ const Welcome = () => {
                             <Shield className="w-3.5 h-3.5 text-primary-foreground" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-primary-foreground leading-tight">Core Engine</p>
-                            <p className="text-[10px] text-primary-foreground/70 leading-snug mt-0.5">Grounding, market enrichment, validation & de-anonymisation pipeline</p>
+                            <p className="text-xs font-bold text-primary-foreground leading-tight">Procurement Brain</p>
+                            <p className="text-[10px] text-primary-foreground/70 leading-snug mt-0.5">Distilled procurement knowledge with grounding, enrichment & validation pipeline</p>
                           </div>
                         </div>
                       </div>
