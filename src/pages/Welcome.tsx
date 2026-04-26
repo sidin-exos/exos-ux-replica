@@ -108,7 +108,7 @@ const Welcome = () => {
             {/* Left */}
             <div className="flex flex-col gap-6 max-w-xl">
               <Badge variant="outline" className="w-fit border-primary/30 text-primary text-xs tracking-wider uppercase animate-in fade-in slide-in-from-bottom-2 duration-500">
-                ✦ Agentic AI procurement — works alongside Zip, Coupa, and SAP Ariba
+                ✦ Agentic AI procurement — works alongside your existing tools
               </Badge>
               <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.1] tracking-tight">
                 Agentic AI Procurement Analysis.{" "}
