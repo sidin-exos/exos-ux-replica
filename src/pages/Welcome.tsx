@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { ArrowRight, BarChart3, Radar, Quote, Building2, CheckCircle, Lock, Compass, Globe, RefreshCw, Shield, Database } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,15 @@ const Welcome = () => {
 
   return (
     <div className="force-light min-h-screen flex flex-col bg-background text-foreground" data-force-light="true">
+      <Helmet>
+        <title>EXOS — Agentic AI Procurement Platform | No Implementation</title>
+        <meta
+          name="description"
+          content="Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 29 expert scenarios. No implementation needed."
+        />
+        <link rel="canonical" href="https://exosproc.com/" />
+        <meta name="robots" content="index, follow" />
+      </Helmet>
       <div className="contents text-foreground">
         <Header />
 
@@ -98,22 +108,17 @@ const Welcome = () => {
             {/* Left */}
             <div className="flex flex-col gap-6 max-w-xl">
               <Badge variant="outline" className="w-fit border-primary/30 text-primary text-xs tracking-wider uppercase animate-in fade-in slide-in-from-bottom-2 duration-500">
-                ✦ Agentic AI Procurement Analytical Platform
+                ✦ Agentic AI procurement — works alongside Zip, Coupa, and SAP Ariba
               </Badge>
               <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.1] tracking-tight">
-                Do More With Less.{" "}
+                Agentic AI Procurement Analysis.{" "}
                 <span className="italic" style={{ color: "hsl(var(--primary))" }}>
-                  Decide With Confidence.
+                  No Implementation. No Wait.
                 </span>
               </h1>
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  Critical <strong className="text-foreground font-semibold">procurement decisions</strong> are often made without adequate preparation due to lack of time, knowledge, or a specialised function.
-                  <br />
-                  <span className="text-base leading-relaxed text-muted-foreground">EXOS works from the <strong className="text-foreground font-semibold">first day and first user</strong>, no integration or company-wide adoption needed. Get better results with <strong className="text-foreground font-semibold">agentic AI</strong>.</span>
-                </p>
-                <p className="text-base leading-relaxed text-muted-foreground">
-                  Your <strong className="text-foreground font-semibold">sensitive commercial data</strong> is masked before reaching external APIs — then <strong className="text-foreground font-semibold">grounded and validated</strong> on the way back.
+                  Most procurement platforms take months to implement and require company-wide adoption before delivering value. <strong className="text-foreground font-semibold">EXOS is an agentic AI procurement platform</strong> that works from day one, for one user, alongside the tools you already have. Negotiation preparation, supplier risk monitoring, TCO analysis, inflation tracking — and 25 more expert scenarios. <strong className="text-foreground font-semibold">No integration. No IT project. No change management.</strong>
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 mt-2">
