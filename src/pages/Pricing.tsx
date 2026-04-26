@@ -100,8 +100,8 @@ const faqData = [
   },
   {
     id: "price-comparison",
-    question: "Why is the price higher than ChatGPT or Gemini?",
-    answer: `EXOS is not a mass product—it's designed for professionals seeking the best possible quality. For each request you make, we've run dozens of scenario simulations to improve quality, reduce hallucinations, and empower EXOS with best business practices.`,
+    question: "How is EXOS different from ChatGPT, Claude or Gemini?",
+    answer: `EXOS is a specialised procurement tool, not a general-purpose chatbot. Three things set it apart: (1) it is purpose-built for procurement scenarios—sourcing, negotiation, supplier risk, TCO, should-cost—with category and industry expertise baked in; (2) every analysis goes through grounding, validation, and semantic anonymisation, so commercial data never leaks to external providers and outputs are checked against best-practice business cases rather than hallucinated; (3) it injects current market updates—live trends, risk signals, and pricing benchmarks from your private knowledge base—directly into every report. The result is a decision-ready procurement deliverable, not a generic AI answer.`,
   },
   {
     id: "market-intelligence",
