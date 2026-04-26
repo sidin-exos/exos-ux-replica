@@ -3,11 +3,11 @@ import ScenarioLandingPage from '@/components/scenarios/ScenarioLandingPage';
 export default function MakeOrBuy() {
   return (
     <ScenarioLandingPage
-      metaTitle="Make vs Buy Analysis Tool | Outsourcing Decision Software | EXOS"
+      metaTitle="Make vs Buy Analysis Tool | EXOS"
       metaDescription="Evaluate whether to produce in-house or outsource. EXOS Make vs Buy analysis covers cost, capability, strategic fit, quality, and speed — with a structured recommendation for EU procurement teams."
       canonicalPath="/scenarios/make-or-buy-analysis"
       category="Analysis"
-      h1="Make vs Buy Analysis"
+      h1="Make vs Buy Analysis Tool"
       subtitle="One of the most consequential procurement decisions. Get a structured, multi-factor analysis before you commit to either path."
       heroMetric="5 factors"
       heroMetricLabel="Cost, capability, speed, quality, and strategic fit — all modelled simultaneously"
