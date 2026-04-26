@@ -7,7 +7,7 @@ export default function NegotiationPrep() {
       metaDescription="Calculate your BATNA, ZOPA, and buying power before any supplier negotiation. AI-powered negotiation strategy with tactical recommendations. Built for EU procurement teams."
       canonicalPath="/scenarios/negotiation-preparation"
       category="Planning"
-      h1="Negotiation Preparation"
+      h1="AI Negotiation Preparation Tool for Procurement"
       subtitle="Walk into every supplier negotiation knowing your BATNA, your leverage, and your walk-away position — calculated before you sit down."
       heroMetric="40 min"
       heroMetricLabel="Average time saved per negotiation brief vs manual preparation"
