@@ -416,21 +416,62 @@ const Welcome = () => {
         </div>
       </section>
 
-      {/* ───── Testimonial ───── */}
+      {/* ───── Problem / Solution ───── */}
       <section className="bg-muted/30 py-16 md:py-20">
         <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <Quote className="w-10 h-10 text-primary/30 mx-auto mb-6" />
-            <blockquote className="text-lg md:text-xl text-foreground italic leading-relaxed">
-              "EXOS didn't just give us another dashboard. They gave us a new way to see our supply chain architecture. The AI-driven insights have transformed our procurement team from a back-office function to a strategic powerhouse."
-            </blockquote>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-primary" />
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <p className="exos-label text-primary mb-3">The Procurement Software Problem</p>
+              <h2 className="font-display text-2xl md:text-4xl font-bold text-foreground leading-tight">
+                Six months to implement. Two years to adopt. <span className="italic text-primary">Still no answers.</span>
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Problem */}
+              <div className="rounded-lg border border-border bg-background p-6 md:p-7">
+                <p className="exos-label text-muted-foreground mb-3">The traditional way</p>
+                <ul className="space-y-3 text-sm md:text-base text-muted-foreground leading-relaxed">
+                  <li className="flex gap-3">
+                    <span className="text-destructive mt-1">✕</span>
+                    <span>Months of implementation before the first insight.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-destructive mt-1">✕</span>
+                    <span>Requires company-wide rollout to deliver any value.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-destructive mt-1">✕</span>
+                    <span>IT projects, change management, integration backlog.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-destructive mt-1">✕</span>
+                    <span>Dashboards full of data — but no decisions.</span>
+                  </li>
+                </ul>
               </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-foreground">Elena Rodriguez</p>
-                <p className="text-xs text-muted-foreground">Chief Procurement Officer, Global Logistics Corp.</p>
+
+              {/* Solution */}
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-6 md:p-7">
+                <p className="exos-label text-primary mb-3">The EXOS way</p>
+                <ul className="space-y-3 text-sm md:text-base text-foreground leading-relaxed">
+                  <li className="flex gap-3">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Works from day one — no setup, no integration.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Delivers value for one user, alongside Zip, Coupa, or SAP Ariba.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Agentic AI grounded in proven procurement methodology.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Decisions, not dashboards — with the reasoning behind them.</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
