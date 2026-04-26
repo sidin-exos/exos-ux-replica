@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Shield, Cloud, FileCheck, Lock, Compass, Globe, CheckCircle, RefreshCw, FileBarChart, LayoutDashboard, Map } from "lucide-react";
+import { FileText, Shield, Cloud, FileCheck, Lock, Compass, Globe, CheckCircle, RefreshCw, FileBarChart, LayoutDashboard, Map, ClipboardList, FileSpreadsheet, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CloudAgent {
@@ -60,6 +60,12 @@ const DataFlowDiagram = () => {
     },
   };
 
+  const inputIcons = [
+    { icon: ClipboardList, label: "Scenario Data", desc: "Goals & parameters" },
+    { icon: FileSpreadsheet, label: "Documents", desc: "Contracts & specs" },
+    { icon: Building2, label: "Supplier Info", desc: "Vendor profiles" },
+  ];
+
   const outputIcons = [
     { icon: FileBarChart, label: "Validated Report", desc: "Board-ready analysis" },
     { icon: LayoutDashboard, label: "Interactive Dashboards", desc: "Drill-down visuals" },
@@ -80,9 +86,15 @@ const DataFlowDiagram = () => {
 
           {/* Main Flow - Vertical Layout */}
           <div className="flex flex-col items-center">
-            {/* Layer 1: User Input */}
-            <div className="w-full max-w-sm">
-              <LayerCard layer={layers.input} centered />
+            {/* Layer 1: User Input — 3 icons */}
+            <div className="w-full max-w-2xl">
+              <OutputLayerCard
+                icons={inputIcons}
+                layerLabel="Layer 1"
+                title="User Input"
+                countLabel="3 Inputs"
+                headerIcon={FileText}
+              />
             </div>
 
             {/* Down Arrow: Input → Core Engine */}
@@ -171,8 +183,15 @@ const DataFlowDiagram = () => {
         </div>
 
         <div className="space-y-4">
-          {/* Layer 1: Input */}
-          <MobileLayerCard layer={layers.input} />
+          {/* Layer 1: User Input — 3 icons */}
+          <OutputLayerCard
+            icons={inputIcons}
+            mobile
+            layerLabel="Layer 1"
+            title="User Input"
+            countLabel="3 Inputs"
+            headerIcon={FileText}
+          />
           <MobileConnector />
 
           {/* Layer 2: EXOS Core */}
@@ -225,7 +244,21 @@ interface OutputIcon {
   desc: string;
 }
 
-const OutputLayerCard = ({ icons, mobile = false }: { icons: OutputIcon[]; mobile?: boolean }) => {
+const OutputLayerCard = ({
+  icons,
+  mobile = false,
+  layerLabel = "Layer 4",
+  title = "User Interface",
+  countLabel = "3 Outputs",
+  headerIcon: HeaderIcon = FileCheck,
+}: {
+  icons: OutputIcon[];
+  mobile?: boolean;
+  layerLabel?: string;
+  title?: string;
+  countLabel?: string;
+  headerIcon?: React.ComponentType<{ className?: string }>;
+}) => {
   return (
     <div
       className={cn(
@@ -237,19 +270,19 @@ const OutputLayerCard = ({ icons, mobile = false }: { icons: OutputIcon[]; mobil
       <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-border/40">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-muted">
-            <FileCheck className="w-4 h-4 text-primary" />
+            <HeaderIcon className="w-4 h-4 text-primary" />
           </div>
           <div>
             <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
-              Layer 4
+              {layerLabel}
             </span>
             <h4 className="font-display font-semibold text-foreground text-base leading-tight">
-              User Interface
+              {title}
             </h4>
           </div>
         </div>
         <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
-          3 Outputs
+          {countLabel}
         </span>
       </div>
 
