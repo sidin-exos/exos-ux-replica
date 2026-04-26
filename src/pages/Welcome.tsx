@@ -25,7 +25,7 @@ const pillars = [
       "Negotiation prep & SOW analysis",
       "Risk scoring & decision matrices",
     ],
-    impact: "Complex analyses in minutes, not weeks.",
+    impact: "Every scenario is enriched with industry-specific and procurement category knowledge for sharper, context-aware analysis.",
     icon: BarChart3,
     cta: "Explore Scenarios",
     href: "/",
