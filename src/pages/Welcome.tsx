@@ -43,7 +43,7 @@ const pillars = [
       "Inflation Analysis with category-level trends",
       "Cross-portfolio monitoring dashboards",
     ],
-    impact: "From periodic reviews to continuous monitoring.",
+    impact: "Continuous, AI-driven monitoring that surfaces risks and savings opportunities the moment they emerge.",
     icon: Building2,
     cta: "View Platforms",
     href: "/enterprise/risk",
