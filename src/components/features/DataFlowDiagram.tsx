@@ -86,9 +86,15 @@ const DataFlowDiagram = () => {
 
           {/* Main Flow - Vertical Layout */}
           <div className="flex flex-col items-center">
-            {/* Layer 1: User Input */}
-            <div className="w-full max-w-sm">
-              <LayerCard layer={layers.input} centered />
+            {/* Layer 1: User Input — 3 icons */}
+            <div className="w-full max-w-2xl">
+              <OutputLayerCard
+                icons={inputIcons}
+                layerLabel="Layer 1"
+                title="User Input"
+                countLabel="3 Inputs"
+                headerIcon={FileText}
+              />
             </div>
 
             {/* Down Arrow: Input → Core Engine */}
