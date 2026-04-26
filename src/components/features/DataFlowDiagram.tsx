@@ -60,6 +60,12 @@ const DataFlowDiagram = () => {
     },
   };
 
+  const inputIcons = [
+    { icon: ClipboardList, label: "Scenario Data", desc: "Goals & parameters" },
+    { icon: FileSpreadsheet, label: "Documents", desc: "Contracts & specs" },
+    { icon: Building2, label: "Supplier Info", desc: "Vendor profiles" },
+  ];
+
   const outputIcons = [
     { icon: FileBarChart, label: "Validated Report", desc: "Board-ready analysis" },
     { icon: LayoutDashboard, label: "Interactive Dashboards", desc: "Drill-down visuals" },
