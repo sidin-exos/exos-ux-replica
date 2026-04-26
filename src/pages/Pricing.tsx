@@ -99,11 +99,6 @@ const faqData = [
     answer: `Each scenario is enriched with industry-specific context, category expertise, and real-time market intelligence before analysis. EXOS validates your inputs against best-practice business cases, applies grounding from live market data—including trends, risk signals, and pricing benchmarks—and clearly flags its limitations when information is insufficient. The result is a decision-ready report, not a generic AI response.`,
   },
   {
-    id: "limited-requests",
-    question: "Why is the number of requests limited in the SMB option?",
-    answer: `EXOS is not designed to be creative but to provide best-in-class expertise. Each of your requests is enhanced with business knowledge, scenario fine-tuning, structured XML prompts, grounding, and validation after receiving an API response. This means your request goes through multiple checks before it returns to you. EXOS gives you straightforward answers, pointing out its limitations if it doesn't have sufficient data.`,
-  },
-  {
     id: "price-comparison",
     question: "Why is the price higher than ChatGPT or Gemini?",
     answer: `EXOS is not a mass product—it's designed for professionals seeking the best possible quality. For each request you make, we've run dozens of scenario simulations to improve quality, reduce hallucinations, and empower EXOS with best business practices.`,
