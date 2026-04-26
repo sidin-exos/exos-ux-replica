@@ -10,7 +10,7 @@ import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
-import SentinelCapabilities from "@/components/features/SentinelCapabilities";
+
 import exosMark from "@/assets/exos-mark.svg";
 import exosMarkDark from "@/assets/exos-mark-dark.svg";
 import { useTheme } from "next-themes";
