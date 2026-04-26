@@ -63,7 +63,7 @@ const pillars = [
       "Supplier benchmarking across industries",
       "Scheduled PDF intelligence reports",
     ],
-    impact: "Benchmark strategy against live industry data.",
+    impact: "Generate fresh market insights or reuse existing ones on the platform to sharpen your Procurement Scenario results.",
     icon: Radar,
     cta: "Open Intelligence Hub",
     href: "/market-intelligence",
