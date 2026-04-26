@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Shield, Cloud, FileCheck, Lock, Compass, Globe, CheckCircle, RefreshCw, FileBarChart, LayoutDashboard, Map } from "lucide-react";
+import { FileText, Shield, Cloud, FileCheck, Lock, Compass, Globe, CheckCircle, RefreshCw, FileBarChart, LayoutDashboard, Map, ClipboardList, FileSpreadsheet, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CloudAgent {
