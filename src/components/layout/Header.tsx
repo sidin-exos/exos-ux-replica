@@ -73,7 +73,7 @@ const NAV_GROUPS: readonly NavGroup[] = [
     ],
     feature: {
       eyebrow: "Featured",
-      title: "29 Scenarios Library",
+      title: "20+ Scenarios Library",
       description: "Human-in-the-loop analyses for the procurement decisions that matter most.",
       ctaLabel: "Explore scenarios",
       ctaPath: "/",

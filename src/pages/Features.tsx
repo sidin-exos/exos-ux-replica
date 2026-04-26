@@ -227,7 +227,7 @@ const Features = () => {
       ),
       accent: "teal" as const,
       highlights: [
-        "29 procurement-specific AI scenarios",
+        "20+ procurement-specific AI scenarios",
         "Multi-cycle Chain of Experts pipeline",
         "Methodology-driven agentic loops",
         "Custom LLM settings per scenario"
@@ -292,7 +292,7 @@ const Features = () => {
   return (
     <div className="min-h-screen gradient-hero">
       <Helmet>
-        <title>29 AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS</title>
+        <title>20+ AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS</title>
         <link rel="canonical" href="https://exosproc.com/features" />
       </Helmet>
       <div
