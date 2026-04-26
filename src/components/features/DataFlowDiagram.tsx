@@ -183,8 +183,15 @@ const DataFlowDiagram = () => {
         </div>
 
         <div className="space-y-4">
-          {/* Layer 1: Input */}
-          <MobileLayerCard layer={layers.input} />
+          {/* Layer 1: User Input — 3 icons */}
+          <OutputLayerCard
+            icons={inputIcons}
+            mobile
+            layerLabel="Layer 1"
+            title="User Input"
+            countLabel="3 Inputs"
+            headerIcon={FileText}
+          />
           <MobileConnector />
 
           {/* Layer 2: EXOS Core */}
