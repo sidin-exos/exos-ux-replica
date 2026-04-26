@@ -231,7 +231,21 @@ interface OutputIcon {
   desc: string;
 }
 
-const OutputLayerCard = ({ icons, mobile = false }: { icons: OutputIcon[]; mobile?: boolean }) => {
+const OutputLayerCard = ({
+  icons,
+  mobile = false,
+  layerLabel = "Layer 4",
+  title = "User Interface",
+  countLabel = "3 Outputs",
+  headerIcon: HeaderIcon = FileCheck,
+}: {
+  icons: OutputIcon[];
+  mobile?: boolean;
+  layerLabel?: string;
+  title?: string;
+  countLabel?: string;
+  headerIcon?: React.ComponentType<{ className?: string }>;
+}) => {
   return (
     <div
       className={cn(
@@ -243,19 +257,19 @@ const OutputLayerCard = ({ icons, mobile = false }: { icons: OutputIcon[]; mobil
       <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-border/40">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-muted">
-            <FileCheck className="w-4 h-4 text-primary" />
+            <HeaderIcon className="w-4 h-4 text-primary" />
           </div>
           <div>
             <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
-              Layer 4
+              {layerLabel}
             </span>
             <h4 className="font-display font-semibold text-foreground text-base leading-tight">
-              User Interface
+              {title}
             </h4>
           </div>
         </div>
         <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
-          3 Outputs
+          {countLabel}
         </span>
       </div>
 
