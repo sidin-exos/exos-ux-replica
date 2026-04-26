@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText, Layers, TrendingUp } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import Header from "@/components/layout/Header";
@@ -290,6 +291,10 @@ const Features = () => {
 
   return (
     <div className="min-h-screen gradient-hero">
+      <Helmet>
+        <title>29 AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS</title>
+        <link rel="canonical" href="https://exosproc.com/features" />
+      </Helmet>
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}

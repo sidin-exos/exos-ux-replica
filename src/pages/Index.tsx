@@ -139,13 +139,13 @@ const Index = () => {
     <div className="min-h-screen gradient-hero">
       <Helmet>
         <title>
-          {currentMeta?.title ?? 'AI Procurement Scenarios | EXOS'}
+          {currentMeta?.title ?? 'EXOS — Agentic AI Procurement Platform | No Implementation'}
         </title>
         <meta
           name="description"
           content={
             currentMeta?.description ??
-            'AI-powered procurement scenario analysis for EU mid-market teams.'
+            'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 29 expert scenarios. No implementation needed.'
           }
         />
         <link
@@ -156,6 +156,7 @@ const Index = () => {
               : 'https://exosproc.com/'
           }
         />
+        <meta name="robots" content="index, follow" />
       </Helmet>
       <div
         className="fixed inset-0 pointer-events-none"
