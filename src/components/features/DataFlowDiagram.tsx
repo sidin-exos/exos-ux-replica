@@ -523,9 +523,6 @@ const CloudAILayerCard = ({ mobile = false }: { mobile?: boolean }) => {
             </h4>
           </div>
         </div>
-        <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">
-          3 Agents
-        </span>
       </div>
 
       {/* Tab strip */}
