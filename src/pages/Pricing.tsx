@@ -106,7 +106,7 @@ const faqData = [
   {
     id: "market-intelligence",
     question: "How does Market Intelligence work?",
-    answer: `Market Intelligence continuously scans trusted sources to deliver real-time insights on suppliers, commodities, regulations, and industry trends. Every finding is stored in your private knowledge base—never shared externally—and automatically used to enrich your analytical reports with live market data, risk signals, and pricing benchmarks. The more you use it, the sharper your decision support becomes.`,
+    answer: `Market Intelligence continuously scans trusted sources to deliver real-time insights on suppliers, commodities, regulations, and industry trends. Every finding is stored in your private knowledge base—never shared externally—and automatically used to enrich your analytical reports with live market data, risk signals, and pricing benchmarks. The more market intelligence you accumulate in your private knowledge base, the richer the context available to enrich your analytical reports.`,
   },
   {
     id: "fine-tuning",
