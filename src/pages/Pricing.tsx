@@ -91,7 +91,7 @@ const faqData = [
   {
     id: "data-privacy",
     question: "How do you ensure commercial data privacy?",
-    answer: `Our internal engine is fine-tuned to identify and encrypt commercial data before sending it to external APIs. For the Enterprise tariff, we can deploy our engine on your server, giving you full visibility and control over all outgoing API requests.`,
+    answer: `All commercial data — supplier names, contract details, negotiation positions — is semantically anonymised before it reaches any external AI provider. For Enterprise users, we can additionally deploy our engine on your own server, giving your InfoSec team full visibility and control over all outgoing API requests.`,
   },
   {
     id: "fine-tuned-scenarios",
