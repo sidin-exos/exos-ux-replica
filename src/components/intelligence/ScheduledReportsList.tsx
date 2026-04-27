@@ -86,9 +86,7 @@ export function ScheduledReportsList({
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <CalendarClock className="w-4 h-4 text-warning" />
-          <h3 className="text-sm font-semibold">
-            {title} {configs.length > 0 && `(${configs.length})`}
-          </h3>
+          <h3 className="text-sm font-semibold">{title}</h3>
         </div>
         {body}
       </div>
