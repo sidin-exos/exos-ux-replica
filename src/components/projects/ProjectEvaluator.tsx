@@ -14,10 +14,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
 import { ChevronRight, Sparkles } from "lucide-react";
-import { scenarios, getMissingRequiredFields, getMissingOptionalFields } from "@/lib/scenarios";
-import { useInputEvaluator } from "@/hooks/useInputEvaluator";
-import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
-import DataRequirementsAlert from "@/components/consolidation/DataRequirementsAlert";
+import { scenarios } from "@/lib/scenarios";
 import { AICoverageCheck } from "@/components/consolidation/AICoverageCheck";
 
 interface ProjectEvaluatorProps {
@@ -47,8 +44,6 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
   );
 
   // Build a synthetic formData keyed by the scenario's required fields.
-  // The evaluator scores per-field text quality, so we feed the project
-  // description (+ a brief mention of attached files) into each field.
   const formData = useMemo<Record<string, string>>(() => {
     if (!scenario) return {};
     const text = [
@@ -66,16 +61,6 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
     return data;
   }, [scenario, description, fileNames]);
 
-  const { data: dbEvalConfig } = useScenarioEvalConfig(scenarioId || null);
-  const evaluation = useInputEvaluator(scenarioId || "noop", formData, 400, dbEvalConfig);
-
-  const missingRequired = scenario
-    ? getMissingRequiredFields(scenario.id, formData)
-    : [];
-  const missingOptional = scenario
-    ? getMissingOptionalFields(scenario.id, formData)
-    : [];
-
   return (
     <Card>
       <CardHeader>
@@ -85,7 +70,8 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
         </CardTitle>
         <CardDescription>
           Check whether your project context is rich enough to run a specific
-          scenario. Uses the same quality evaluator as the scenario wizard.
+          scenario. Uses an AI-based coverage check against the scenario's
+          recommended data sections.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -119,14 +105,6 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
 
         {scenario && scenario.dataRequirements && (
           <DataPrepCollapsible dataRequirements={scenario.dataRequirements} />
-        )}
-
-        {scenario && (description?.trim() || fileNames.length > 0) && (
-          <DataRequirementsAlert
-            missingRequired={missingRequired}
-            missingOptional={missingOptional}
-            evaluation={evaluation}
-          />
         )}
 
         {scenario?.dataRequirements && (description?.trim() || fileNames.length > 0) && (
