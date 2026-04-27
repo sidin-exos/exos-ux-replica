@@ -7,8 +7,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
-import { Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { scenarios, getMissingRequiredFields, getMissingOptionalFields } from "@/lib/scenarios";
 import { useInputEvaluator } from "@/hooks/useInputEvaluator";
 import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
