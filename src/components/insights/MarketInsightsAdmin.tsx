@@ -444,6 +444,7 @@ export function MarketInsightsAdmin() {
               </>
             )}
           </Button>
+          </div>
         </div>
 
         {batchProgress && (
