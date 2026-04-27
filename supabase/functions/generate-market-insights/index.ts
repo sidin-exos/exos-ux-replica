@@ -251,7 +251,7 @@ async function generateMarketInsights(
           { role: "user", content: prompt }
         ],
         temperature: 0.2,
-        max_tokens: 5000, // 5x increase for comprehensive insights
+        max_tokens: 1200, // Capped to keep injected context lightweight downstream
         search_recency_filter: "month",
       }),
       signal: AbortSignal.timeout(120_000),
