@@ -166,18 +166,33 @@ export function useProjectFileMutations(projectId?: string) {
       } = await supabase.auth.getUser();
       if (!currentUser) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", currentUser.id)
-        .single();
-      if (!profile?.organization_id) throw new Error("Organization not found.");
+      // Use the project's owner + organization so the link row matches the
+      // project's tenant (super-admins can manage projects across orgs).
+      const { data: project, error: projectErr } = await supabase
+        .from("projects")
+        .select("user_id, organization_id")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (projectErr) throw projectErr;
+      if (!project?.organization_id) throw new Error("Project not found.");
 
-      const rows = fileIds.map((fileId) => ({
+      // Skip files already attached to avoid unique-constraint errors when
+      // existing rows are hidden by RLS (e.g. cross-org super-admin view).
+      const { data: existing, error: existingErr } = await supabase
+        .from("project_files")
+        .select("file_id")
+        .eq("project_id", projectId)
+        .in("file_id", fileIds);
+      if (existingErr) throw existingErr;
+      const existingIds = new Set((existing ?? []).map((r) => r.file_id));
+      const toInsert = fileIds.filter((id) => !existingIds.has(id));
+      if (toInsert.length === 0) return;
+
+      const rows = toInsert.map((fileId) => ({
         project_id: projectId,
         file_id: fileId,
-        user_id: currentUser.id,
-        organization_id: profile.organization_id!,
+        user_id: project.user_id,
+        organization_id: project.organization_id!,
       }));
       const { error } = await supabase.from("project_files").insert(rows);
       if (error) throw error;
