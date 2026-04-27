@@ -32,6 +32,7 @@ const DashboardShowcase = lazy(() => import("./pages/DashboardShowcase"));
 const MarketIntelligence = lazy(() => import("./pages/MarketIntelligence"));
 const Projects = lazy(() => import("./pages/Projects"));
 const NewProject = lazy(() => import("./pages/NewProject"));
+const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 const ArchitectureDiagram = lazy(() => import("./pages/ArchitectureDiagram"));
 const DevWorkflow = lazy(() => import("./pages/DevWorkflow"));
 const TestingPipeline = lazy(() => import("./pages/TestingPipeline"));
