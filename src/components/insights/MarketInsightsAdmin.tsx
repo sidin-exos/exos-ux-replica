@@ -269,6 +269,18 @@ export function MarketInsightsAdmin() {
       title: "Generation Complete",
       description: `Generated ${successCount} insights. ${failCount > 0 ? `${failCount} failed.` : ""}`,
     });
+
+    // Auto-clear selections after a successful batch to prevent stale checkboxes
+    // leaking into the next generation run.
+    if (successCount > 0 && failCount === 0) {
+      setGenIndustry("");
+      setGenCategories([]);
+      setGenCountries([]);
+      setSearchIndustry("");
+      setSearchCountry("");
+      setSearchCategory("");
+    }
+
     refetch();
   };
 
