@@ -25,7 +25,7 @@ export const blogPosts: BlogPost[] = [
     author: "EXOS Research",
     heroImage: heroImage,
     excerpt: "Organizations are pouring millions into P2P systems designed to automate the bottom 80% of transactions. While reducing cost-per-PO is valid, it provides zero protection against supply shocks that break your P&L.",
-    tags: ["Strategy", "AI in Procurement", "Supply Chain Risk", "Category Management"],
+    tags: ["Strategy", "Chatbots", "Supply Chain Risk", "Category Management"],
     content: `## The Automation Paradox
 
 In the current procurement technology landscape, there is a dangerous and expensive obsession with operational "**efficiency**." Organisations are pouring millions of euros into Procure-to-Pay (P2P) systems and workflow tools designed specifically to automate the bottom 80% of their transactions — the low-value, high-volume tail spend. While reducing the administrative cost-per-purchase-order is a valid operational goal, it provides absolutely zero protection against the strategic supply shocks that actually break a company's P&L.
@@ -60,7 +60,7 @@ When organisations lack the analytical tools to predict and mitigate these syste
 
 The difference between a standard "Buyer" and a "Category Engineer" lies in the application of scientifically grounded, deterministic frameworks.
 
-The current wave of basic Artificial Intelligence in procurement is often misapplied. Standard Large Language Models (LLMs) act as brilliant "humanities majors" — they excel at writing polite emails and summarising long text documents. However, when tasked with complex financial analytics, they suffer from mathematical hallucinations and forgetfulness. If you ask a standard generative AI to calculate the TCO of a fleet of industrial assets, it will provide a basic formula but will inevitably forget to prompt the user for critical, hidden costs: WACC (Weighted Average Cost of Capital), tax depreciation logic, decommissioning fees, and macroeconomic inflation indices.
+The current wave of basic Chatbots is often misapplied. Standard Large Language Models (LLMs) act as brilliant "humanities majors" — they excel at writing polite emails and summarising long text documents. However, when tasked with complex financial analytics, they suffer from mathematical hallucinations and forgetfulness. If you ask a standard generative AI to calculate the TCO of a fleet of industrial assets, it will provide a basic formula but will inevitably forget to prompt the user for critical, hidden costs: WACC (Weighted Average Cost of Capital), tax depreciation logic, decommissioning fees, and macroeconomic inflation indices.
 
 This is precisely where **agentic AI** changes the equation. Unlike passive generative models that respond to prompts, agentic AI systems autonomously plan multi-step analytical workflows, enforce calculation guardrails, and iterate toward a complete, audit-ready output — without a human having to remember what to ask. Applied to procurement, this means a system that does not just answer questions but proactively surfaces the risks, costs, and scenarios a Category Manager needs to make a defensible decision. Deloitte's 2023 Global CPO Survey confirms that cost and inflation management (cited by 89% of CPOs) remains the top strategic challenge — one that generic AI tools are consistently under-equipped to solve.
 
@@ -166,14 +166,14 @@ Three capabilities, working together. A **Disruption Monitor** that tracks the s
   },
   {
     slug: "your-favorite-chatbot-for-everything",
-    title: "Your Favorite Chatbot for Everything: Rethinking AI in Procurement",
+    title: "Your Favorite Chatbot for Everything: Rethinking Chatbots",
     subtitle: "Why relying on a general-purpose chatbot for strategic category management is a technological dead end — and what domain-specific AI agents do differently.",
     date: "2026-04-27",
     readingTime: "9 min read",
     author: "EXOS Research",
     heroImage: chatbotFallacyHero,
     excerpt: "Across procurement, professionals are pasting complex contracts into general-purpose LLMs and asking an open text box for strategic guidance. As a technologist, I find this approach fundamentally flawed — an illusion of progress.",
-    tags: ["AI in Procurement", "Agentic AI", "Strategy", "Category Management"],
+    tags: ["Chatbots", "Agentic AI", "Strategy", "Category Management"],
     content: `## The Spreadsheet Fallacy
 
 Whenever a profound technological shift occurs, our first instinct is usually to misunderstand its impact on human labor. In the 1980s, the introduction of digital spreadsheets led to panicked headlines predicting the extinction of the accounting profession. Instead, the exact opposite happened. Freed from doing manual arithmetic on paper, accountants transitioned into financial analysts. The software did not replace the human; it elevated the human's strategic value.

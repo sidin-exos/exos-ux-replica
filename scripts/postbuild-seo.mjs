@@ -8,26 +8,26 @@ const OG_IMAGE = `${BASE_URL}/og-image.png`;
 const routes = [
   {
     path: '/welcome',
-    title: 'EXOS — Agentic AI Procurement Platform | No Implementation',
-    description: 'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed.',
-    h1: 'Agentic AI Procurement Analysis. No Implementation. No Wait.',
+    title: 'EXOS — Chatbots | No Implementation',
+    description: 'Chatbots — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed.',
+    h1: 'Chatbots. No Implementation. No Wait.',
   },
   {
     path: '/features',
-    title: '20+ AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS',
-    description: 'Explore how EXOS delivers AI-powered procurement analysis: cost breakdowns, supplier risk scoring, negotiation preparation, and market intelligence — all GDPR-native.',
+    title: '20+ Chatbot Scenarios — Risk, TCO & Negotiation | EXOS',
+    description: 'Explore how EXOS delivers Chatbot-powered procurement analysis: cost breakdowns, supplier risk scoring, negotiation preparation, and market intelligence — all GDPR-native.',
     h1: 'How EXOS Works',
   },
   {
     path: '/pricing',
-    title: 'Pricing | EXOS – AI Procurement Analysis',
+    title: 'Pricing | EXOS – Chatbot Analysis',
     description: 'Simple, transparent pricing for EU procurement teams. Get ROI from first day, first user. No integrations required, no company-wide approvals needed.',
     h1: 'Simple, Transparent Pricing for EU Procurement Teams',
   },
   {
     path: '/faq',
-    title: 'FAQ | EXOS – AI Procurement Analysis',
-    description: 'Frequently asked questions about EXOS: data privacy, GDPR compliance, supported scenarios, pricing, and how AI procurement analysis works.',
+    title: 'FAQ | EXOS – Chatbot Analysis',
+    description: 'Frequently asked questions about EXOS: data privacy, GDPR compliance, supported scenarios, pricing, and how Chatbot analysis works.',
     h1: 'Frequently Asked Questions',
   },
   {
@@ -39,7 +39,7 @@ const routes = [
   {
     path: '/enterprise/inflation',
     title: 'Inflation Monitoring | EXOS',
-    description: 'Track inflation drivers across your procurement categories with AI-powered market intelligence and early warning alerts.',
+    description: 'Track inflation drivers across your procurement categories with Chatbot-powered market intelligence and early warning alerts.',
     h1: 'Inflation Monitoring',
   },
   {
@@ -50,14 +50,14 @@ const routes = [
   },
   {
     path: '/scenarios/supplier-risk-assessment',
-    title: 'AI Supplier Risk Assessment Software | EXOS',
+    title: 'Chatbot Supplier Risk Assessment Software | EXOS',
     description: 'Comprehensive supplier risk analysis covering financial health, geopolitical exposure, legal, cyber, and operational risk. Real-time market intelligence. GDPR-native for EU teams.',
     h1: 'Supplier Risk Assessment',
   },
   {
     path: '/scenarios/negotiation-preparation',
     title: 'Procurement Negotiation Preparation Software | EXOS',
-    description: 'Calculate your BATNA, ZOPA, and buying power before any supplier negotiation. AI-powered negotiation strategy with tactical recommendations. Built for EU procurement teams.',
+    description: 'Calculate your BATNA, ZOPA, and buying power before any supplier negotiation. Chatbot-powered negotiation strategy with tactical recommendations. Built for EU procurement teams.',
     h1: 'Negotiation Preparation',
   },
   {

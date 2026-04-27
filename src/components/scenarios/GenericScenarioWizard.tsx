@@ -1252,7 +1252,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         variant="modal"
         open={showAuthPrompt}
         onOpenChange={setShowAuthPrompt}
-        feature="AI Procurement Analysis"
+        feature="Chatbots"
         description="Create a free account to get AI-powered insights on your procurement scenarios"
       />
 

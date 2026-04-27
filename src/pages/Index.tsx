@@ -141,13 +141,13 @@ const Index = () => {
     <div className="min-h-screen gradient-hero">
       <Helmet>
         <title>
-          {currentMeta?.title ?? 'EXOS — Agentic AI Procurement Platform | No Implementation'}
+          {currentMeta?.title ?? 'EXOS — Chatbots | No Implementation'}
         </title>
         <meta
           name="description"
           content={
             currentMeta?.description ??
-            'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed.'
+            'Chatbots — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed.'
           }
         />
         <link
