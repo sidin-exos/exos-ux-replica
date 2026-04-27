@@ -95,7 +95,6 @@ export const scenarios: Scenario[] = [
         { heading: "Asset Description & Lifecycle Duration", description: "Provide a clear asset/service description, estimated lifecycle duration in years, and annual volume or usage rate. Without lifecycle context, TCO models under-represent total cost by 30–60%." },
         { heading: "Full OPEX Breakdown by Category", description: "List all ongoing cost categories: maintenance, training, logistics, disposal, energy. Include per-category currency amounts where possible. Missing OPEX splits are the primary cause of vendor selection reversals in Year 2." },
         { heading: "Financial Parameters (NPV/WACC)", description: "Provide discount rate (WACC), inflation/escalation assumptions, and current vs. proposed vendor quotes. NPV and lifecycle cost accuracy degrades significantly without these — output should be marked 'indicative only' if absent." },
-        { heading: "GDPR Note", description: "Anonymise exact salary bands and internal cost-centre codes. Replace with generic 'Labour Rate Band A/B/C'. Do not paste HR system extracts (GDPR Art. 25 — data minimisation)." },
       ],
     },
     requiredFields: [
@@ -135,7 +134,6 @@ export const scenarios: Scenario[] = [
         { heading: "Product Specification & BOM Structure", description: "Provide a summary of the product/service specification and Bill of Materials with material families. Without material and labour splits, the AI produces a high-level estimate that suppliers will credibly rebut." },
         { heading: "Labour & Overhead Estimates", description: "Include estimated labour content (% of cost) and overhead benchmarks for your sector. Industry studies show Should-Cost modelling yields 8–14% additional price reduction — but only with this data." },
         { heading: "Comparative Supplier Quotes", description: "Collect at least 2 supplier quotes to enable competitive benchmarking. Without comparatives, the AI cannot identify inflated margins or anchor negotiation positions." },
-        { heading: "GDPR Note", description: "Remove patent-pending formulations, exact chemical compositions, or proprietary engineering drawings. Use material families (e.g. 'stainless steel grade 316') not exact proprietary alloy codes." },
       ],
     },
     requiredFields: [
@@ -166,7 +164,6 @@ export const scenarios: Scenario[] = [
         { heading: "Asset Description & Financial Lifespan", description: "Provide the asset description, financial lifespan, annual lease/subscription price, estimated purchase price, and preferred depreciation method (straight-line or declining)." },
         { heading: "Financial Parameters", description: "Include WACC/internal hurdle rate, corporate tax rate (jurisdiction), maintenance costs, and residual value estimates. Without these, NPV comparisons are unreliable and CFO recommendations lack credibility." },
         { heading: "Financial Impact", description: "A 5% WACC miscalculation on a €500k asset over 5 years = €25k+ in misallocated capital. Proper financial modelling prevents suboptimal lease vs. buy decisions." },
-        { heading: "GDPR Note", description: "Do not include internal hurdle rates or corporate tax strategies that constitute commercially sensitive information. Use generic rate bands where possible." },
       ],
     },
     requiredFields: [
@@ -197,7 +194,6 @@ export const scenarios: Scenario[] = [
         { heading: "Baseline Price & New Negotiated Price", description: "Provide historical baseline price (per unit or total spend), new negotiated price, estimated annual volume, and savings category (hard/soft/avoidance). Mixing hard and soft savings in a single figure causes Finance to invalidate the report." },
         { heading: "Inflation & FX Adjustments", description: "Include multi-year trend of baseline prices, inflation indices applied (CPI/PPI), maverick spend excluded from baseline, and currency/FX adjustments." },
         { heading: "Financial Impact", description: "CIPS: ~40% of reported savings are rejected by Finance due to categorisation errors. Correctly scoped savings reports protect headcount and budget allocations." },
-        { heading: "GDPR Note", description: "Anonymise exact supplier contract rates. Use percentage deltas ('15% reduction') rather than absolute figures if sharing outside the team." },
       ],
     },
     requiredFields: [
@@ -227,7 +223,6 @@ export const scenarios: Scenario[] = [
         { heading: "Raw Spend Data with Descriptions", description: "Export CSV/Excel with supplier name, spend amount, date, and a free-text description of what was purchased. Without PO descriptions, AI classification accuracy drops below 60% and rogue buying remains invisible." },
         { heading: "Existing Category Mapping", description: "Even a partial category mapping or preferred taxonomy (UNSPSC, eCl@ss) dramatically improves classification accuracy. Cost-centre or department codes help identify maverick spend." },
         { heading: "Financial Impact", description: "Gartner: organisations with mature spend analytics achieve 6–10% annual cost reduction. Unclassified tail spend hides 20–30% of addressable spend — making savings opportunities invisible." },
-        { heading: "GDPR Note", description: "Mandatory: replace supplier legal names with tokens (Supplier_001, Supplier_002) before upload. Individual employee names on POs must be removed (GDPR Art. 5(1)(c))." },
       ],
     },
     requiredFields: [
@@ -258,7 +253,6 @@ export const scenarios: Scenario[] = [
         { heading: "Category Spend History (2+ Years)", description: "Provide category spend history (minimum 2 years), key volume drivers, and planning horizon (1 or 3 year). Without trend data, the AI produces flat-line forecasts that ignore inflation and volume shifts." },
         { heading: "Macro Factors & Scenario Assumptions", description: "Include inflation, FX, energy macro factors to model, optimistic/pessimistic scenario assumptions, planned volume changes (new product launches, expansions), and commodity index benchmarks." },
         { heading: "Financial Impact", description: "A 5% CPI under-assumption on a €2M category budget = €100k unplanned spend. Multi-scenario modelling reduces that exposure by 70–80%." },
-        { heading: "GDPR Note", description: "Mask unreleased product launch dates and unannounced market expansion plans (inside information under MAR if listed entity). Use 'Demand Scenario A/B/C'." },
       ],
     },
     requiredFields: [
@@ -295,7 +289,6 @@ export const scenarios: Scenario[] = [
         { heading: "Active SaaS Tools & Licence Counts", description: "List all active SaaS tools, licence count per tool, approximate annual contract value, and renewal dates. Without this baseline, the AI cannot identify unused licences or missed cancellation windows." },
         { heading: "Utilisation & Overlap Analysis", description: "Provide feature utilisation rates from admin portals, overlap matrix (which tools share features), active vs. provisioned users, and vendor auto-renewal clauses." },
         { heading: "Financial Impact", description: "Gartner: average enterprise wastes 25% of its SaaS spend on unused licences. A 5-person team on a €50k SaaS stack leaves ~€12.5k on the table annually." },
-        { heading: "GDPR Note", description: "Do not include SSO architecture details, admin credentials, or user-level activity logs. Aggregate utilisation to tool level only (e.g. '42 of 60 licences active'). GDPR Art. 5(1)(b)." },
       ],
     },
     requiredFields: [
@@ -326,7 +319,6 @@ export const scenarios: Scenario[] = [
         { heading: "Technical Specification & Tolerances", description: "Provide a summary of the specification or technical requirements, performance tolerances required, and material/grade currently specified. Without the spec summary, the AI cannot identify where over-specification exists." },
         { heading: "Specification Source & Cost Differentials", description: "Include industry-standard tolerance benchmarks, reason for current specification (legacy, stakeholder preference, regulatory), and cost differential between grades." },
         { heading: "Financial Impact", description: "CIPS: over-specification is the single largest avoidable cost driver in indirect and MRO spend. Even a 10% spec reduction on a €200k contract = €20k saved. Industry benchmark: 15–25% cost premium on over-specified components." },
-        { heading: "GDPR Note", description: "Remove patent-pending IP, exact proprietary dimensions, and any source code or firmware versions that could identify unreleased products." },
       ],
     },
     requiredFields: [
@@ -368,7 +360,6 @@ export const scenarios: Scenario[] = [
         { heading: "Business Need & Delivery Timeline", description: "Provide a 2–5 sentence business need description, required delivery timeline, and mandatory regulatory/compliance standards (GDPR, ISO, SOC2). Without regulatory clauses, suppliers submit non-compliant proposals and legal review flags the document." },
         { heading: "Evaluation Criteria & Contract Structure", description: "Define evaluation weighting criteria (price/quality/sustainability/risk), preferred contract structure (framework, spot, call-off), and known incumbent supplier details. Missing evaluation criteria delay award by 3–6 weeks." },
         { heading: "Financial Impact", description: "A reissued RFP in a competitive tender delays award by 3–6 weeks and damages supplier confidence in the buying organisation." },
-        { heading: "GDPR Note", description: "Do not include maximum budget ceiling in the RFP prompt (negotiation leverage). Use 'indicative budget range' only. Mask internal project code names." },
       ],
     },
     requiredFields: [
@@ -405,7 +396,6 @@ export const scenarios: Scenario[] = [
         { heading: "Core Deliverables & Uptime Requirements", description: "Define core service deliverables, uptime/availability requirement, and critical failure definition with acceptable response time. An SLA without financial penalties is legally unenforceable." },
         { heading: "Escalation & Penalty Mechanisms", description: "Provide 3-tier escalation contacts and timescales, service credit/penalty mechanism (% of monthly fee), measurement/reporting frequency, and known peak demand periods." },
         { heading: "Financial Impact", description: "A supplier delivering 94% uptime against a 99.9% SLA without penalty clauses = 43 hours of uncompensated downtime per year. At €500/hour operational cost, that's €21.5k unrecovered." },
-        { heading: "GDPR Note", description: "Mask specific internal server names, IP ranges, exact physical facility coordinates, and key personnel home-office locations." },
       ],
     },
     requiredFields: [
@@ -465,7 +455,6 @@ export const scenarios: Scenario[] = [
         { heading: "Agreement Type & Governing Law", description: "Specify the agreement type (supply, services, NDA, framework), governing law jurisdiction, and key commercial terms (payment terms, liability cap). Governing law mismatches invalidate enforcement in cross-border disputes." },
         { heading: "Regulatory & IP Context", description: "Include specific regulatory context (GDPR DPA clauses, TUPE, IR35), preferred dispute resolution mechanism, IP ownership provisions, and auto-renewal/notice period preferences." },
         { heading: "Financial Impact", description: "GC survey (2024): 65% of contract disputes originate from ambiguous liability or IP clauses that could have been resolved in drafting. Legal review fees for a contested clause average €5–15k." },
-        { heading: "GDPR Note", description: "Mask exact legal entity names in the drafting phase. Use [BUYER ENTITY] and [SUPPLIER ENTITY] placeholders. Do not include current agreed pricing in template fields." },
       ],
     },
     requiredFields: [
@@ -522,7 +511,6 @@ export const scenarios: Scenario[] = [
         { heading: "Raw Stakeholder Requirements & Project Goal", description: "Provide the raw stakeholder requirement list (even bullet form), the project goal or business problem being solved, and known constraints (budget, timeline, technical). Failure to separate MoSCoW priorities means suppliers price all requirements equally." },
         { heading: "Priority Ranking & Existing Systems", description: "Include RACI chart of approvers, priority ranking (MoSCoW or similar), the existing system/process being replaced, and known risks or dependencies." },
         { heading: "Financial Impact", description: "PM Institute: scope creep on projects with ambiguous requirements increases final cost by 20–45% vs. baseline. Over-specified proposals follow without clear prioritisation." },
-        { heading: "GDPR Note", description: "Scrub internal corporate strategic expansion plans, unreleased product names, and unannounced market entry targets. Use 'Project Alpha / Beta' codenames." },
       ],
     },
     requiredFields: [
@@ -553,7 +541,6 @@ export const scenarios: Scenario[] = [
         { heading: "Performance Metrics (12 Months)", description: "Provide on-time delivery %, quality reject rate, invoice accuracy, and overall satisfaction rating from the last 12 months. Purely quantitative scores without qualitative context produce a report that is accurate but strategically useless." },
         { heading: "Qualitative Feedback & Trend Data", description: "Include 1–3 qualitative comments and quarter-on-quarter trend data. Weight each KPI to business priority. Without this, the supplier receives numbers with no improvement roadmap." },
         { heading: "Financial Impact", description: "Organisations with structured supplier performance programmes achieve 23% better on-time delivery and 15% quality improvement (CIPS, 2023). Without it, relationship drift is invisible." },
-        { heading: "GDPR Note", description: "Mask specific names of internal stakeholders providing feedback (retaliation risk). Use role-based attribution: 'Operations Lead', 'Plant Manager' (GDPR Art. 5(1)(c))." },
       ],
     },
     requiredFields: [
@@ -584,7 +571,6 @@ export const scenarios: Scenario[] = [
         { heading: "Project Objective & Milestones", description: "Provide the project objective, key milestones (tender launch, evaluation, award, go-live), and estimated duration per phase. Missing RACI leads to approval bottlenecks — the most common project delay cause." },
         { heading: "Stakeholder Roles & Approval Gates", description: "Include stakeholder roles involved, regulatory approval gates, IT security review requirements, legal sign-off timescales, and known holiday/resource constraints." },
         { heading: "Financial Impact", description: "Delayed contract award on a time-critical project = revenue risk. A 2-week slip on a go-live supporting €1M/month revenue = €500k exposure." },
-        { heading: "GDPR Note", description: "Use generic role titles rather than actual employee names in RACI charts (e.g. 'CPO', 'IT Security Lead'). Do not include personal email or phone data." },
       ],
     },
     requiredFields: [
@@ -619,7 +605,6 @@ export const scenarios: Scenario[] = [
         { heading: "Complete SOW Text & Engagement Type", description: "Paste or upload the full draft SOW text and specify the engagement type (fixed-price, T&M, milestone-based). The AI cannot identify gaps it cannot see — an incomplete SOW provided for review will receive an incomplete review." },
         { heading: "Milestone Definitions & Payment Triggers", description: "Include exact milestone definitions, acceptance criteria, payment trigger events, IP ownership provisions, and change request procedures. These are the clauses most commonly exploited in disputes." },
         { heading: "Financial Impact", description: "Ambiguous deliverables are the #1 cause of supplier disputes. PwC: scope dispute resolution averages €30–80k in legal and management cost per incident." },
-        { heading: "GDPR Note", description: "Remove PII of named project managers, individual contractors, and home-office addresses. Use role references only. Do not include uncommitted budget reserves." },
       ],
     },
     requiredFields: [
@@ -650,7 +635,6 @@ export const scenarios: Scenario[] = [
         { heading: "Operational Hazards & Dependencies", description: "Provide project/category context, known operational hazards, and critical supplier dependencies. Surface-level risk identification misses regulatory and systemic risks — a register that only captures operational risks is incomplete." },
         { heading: "Historical Incidents & Insurance", description: "Include historical incident logs, insurance coverage status, business continuity plan details, and interdependencies with other categories or projects." },
         { heading: "Financial Impact", description: "An unmitigated GDPR breach costs €10–20M or 4% of global turnover (Article 83). A single unidentified cyber supply-chain risk can cascade across all connected systems." },
-        { heading: "GDPR Note", description: "Mask specific facility security protocols, IT architecture details, and physical infrastructure vulnerabilities. These details, if exposed, create the very risks you are trying to mitigate." },
       ],
     },
     requiredFields: [
@@ -719,7 +703,6 @@ export const scenarios: Scenario[] = [
         { heading: "Licence Agreement & Usage Metrics", description: "Provide licence agreement text or summary, current usage metrics (users, CPU, revenue threshold), and contract expiry/true-up date. Metric definition mismatches are the most common software compliance risk." },
         { heading: "Utilisation & Overlap Data", description: "Include feature utilisation rates from admin portals, overlap matrix (which tools share features), active vs. provisioned users, and auto-renewal clauses. Gartner: average enterprise wastes 25% of SaaS spend on unused licences." },
         { heading: "Financial Impact", description: "68% of enterprises receive unexpected true-up invoices. Average overcharge on enterprise software = 15–30% of contract value. On a €200k contract, that is €30–60k." },
-        { heading: "GDPR Note", description: "Do not include SSO architecture details, admin credentials, or user-level activity logs. Aggregate utilisation to tool level only (e.g. '42 of 60 licences active'). GDPR Art. 5(1)(b)." },
       ],
     },
     requiredFields: [
@@ -759,7 +742,6 @@ export const scenarios: Scenario[] = [
         { heading: "Category & Supply Market Context", description: "Provide category name and description, number of active suppliers, estimated annual spend, and key supply chain geography. Categories assessed only on spend value — ignoring supply chain risk — leave single-source dependencies invisible until a crisis occurs." },
         { heading: "Concentration & Regulatory Exposure", description: "Include supplier concentration (% of spend with top 3 suppliers), regulatory exposure (restricted materials, emissions requirements), historical disruption events, and strategic importance to business." },
         { heading: "Financial Impact", description: "Supply chain disruptions cost large enterprises an average of $184M annually (McKinsey, 2023). Category risk assessment is the primary tool for prevention." },
-        { heading: "GDPR Note", description: "Mask exact historical spend by supplier (reveals negotiating position). Use concentration ratios ('top supplier = 60% of spend') rather than absolute values." },
       ],
     },
     requiredFields: [
@@ -803,7 +785,6 @@ export const scenarios: Scenario[] = [
         { heading: "Supplier's Proposal & Your Target Outcome", description: "Provide the supplier's initial proposal (price and key terms), your target outcome (price, payment terms, scope), and your realistic alternatives (other suppliers or internal option). Without a mathematically defined walk-away point, buyers concede margin under pressure." },
         { heading: "Leverage & Relationship Context", description: "Include supplier's known financial position (public accounts), your volume leverage (% of supplier's revenue you represent), relationship history, pain points, and regulatory leverage (certifications you control)." },
         { heading: "Financial Impact", description: "EIPM: buyers with structured BATNA/ZOPA preparation achieve 8–12% better commercial outcomes than unprepared counterparts. On a €1M contract, that is €80–120k." },
-        { heading: "GDPR Note", description: "Mask internal hard limits (walk-away price) if this document will be shared beyond the negotiation team. Use 'Target: [CONFIDENTIAL]' markers in exported outputs." },
       ],
     },
     requiredFields: [
@@ -843,7 +824,6 @@ export const scenarios: Scenario[] = [
         { heading: "Category Description & Spend", description: "Provide category description, current annual spend, primary supply market characteristics (competitive, oligopoly, specialist), and strategic importance to business (high/medium/low)." },
         { heading: "3-Year Business Context", description: "Include 3-year business growth plans affecting this category, current supplier relationship quality, sustainability/ESG targets, and regulatory changes on the horizon. Without this, a generic Kraljic plot replaces an actionable roadmap." },
         { heading: "Financial Impact", description: "Organisations with active category strategies reduce category spend by 6–15% over 3 years vs. transactional buying (Hackett Group, 2023)." },
-        { heading: "GDPR Note", description: "Scrub M&A plans, divestiture timelines, and structural reorganisation announcements. These constitute inside information if the organisation is publicly listed (MAR)." },
       ],
     },
     requiredFields: [
@@ -913,7 +893,6 @@ export const scenarios: Scenario[] = [
         { heading: "Spend Split & Volume per Supplier", description: "Provide current spend split across suppliers in the category, volume per supplier (annual), and the reason for category fragmentation (geography, spec differences, historical). Without this, consolidation modelling cannot identify optimal supplier ratios." },
         { heading: "Logistics & Capacity Data", description: "Include supplier capacity by geography, logistics cost differentials, preferred 'golden ratio' split for risk management (e.g. 70/30 dual-source), and incumbent contract expiry dates." },
         { heading: "Financial Impact", description: "CIPS: dual-source with 70/30 split achieves 90% of volume discount benefits while retaining full supply continuity protection. 100% consolidation destroys the continuity benefit." },
-        { heading: "GDPR Note", description: "Mask exact factory locations and proprietary logistics hub coordinates. Use regional references ('Central Europe Hub') rather than specific facility addresses." },
       ],
     },
     requiredFields: [
@@ -944,7 +923,6 @@ export const scenarios: Scenario[] = [
         { heading: "Systems & Contract Switching Risk", description: "List all systems/contracts with significant integration or switching risk, contract termination provisions, and estimated switching cost. Technical switching costs are routinely underestimated by 300–500% when data extraction complexity is not assessed." },
         { heading: "Data Portability & Alternatives", description: "Include data portability and export capabilities of current vendor, regulatory requirements for data retention/transfer, and competing alternatives with their integration complexity." },
         { heading: "Financial Impact", description: "Enterprise switching costs average 18–24 months of management time and 25–40% of the original contract value. An unplanned exit doubles these figures." },
-        { heading: "GDPR Note", description: "Mask specific legacy system architectures, API credentials, and data volumes that could identify operational vulnerabilities to external parties." },
       ],
     },
     requiredFields: [
@@ -985,7 +963,6 @@ export const scenarios: Scenario[] = [
         { heading: "Nature of Disruption & Inventory Buffer", description: "Describe the disruption (supplier failure, logistics event, geopolitical), affected product lines, and current inventory buffer in weeks of stock. Each hour without a structured plan compounds operational damage exponentially." },
         { heading: "Alternative Suppliers & Response Capabilities", description: "List pre-identified alternative supplier options, customer commitments at risk, cross-functional team availability, and financial reserves for emergency sourcing." },
         { heading: "Financial Impact", description: "Resilinc: the average supply chain disruption costs $184M and lasts 6.4 months when managed reactively. A structured 4-stage response plan reduces duration by 40–60%." },
-        { heading: "GDPR Note", description: "Mask exact inventory depletion dates (commercially sensitive with customers) and specific emergency cash reserves (financially sensitive with lenders)." },
       ],
     },
     requiredFields: [
@@ -1016,7 +993,6 @@ export const scenarios: Scenario[] = [
         { heading: "Core Supply Chain Nodes & Scenario Types", description: "Provide core supply chain nodes (key suppliers, logistics routes, production sites), scenario type to simulate (pandemic, natural disaster, geopolitical embargo, cyberattack), and business continuity plan status." },
         { heading: "RTO/RPO Targets & Financial Reserves", description: "Include Recovery Time Objective (RTO) and Recovery Point Objective (RPO) targets, financial reserve/liquidity buffer, insurance coverage by risk type, and historical precedent events. Without RTO/RPO parameters, scenario planning becomes a theoretical exercise." },
         { heading: "Financial Impact", description: "BCG: companies with stress-tested BCP frameworks recover from major disruptions 2.3x faster than those without, preserving €M in revenue and relationship equity." },
-        { heading: "GDPR Note", description: "Mask exact critical cash reserve amounts and specific banking/credit facility details. Use liquidity tier references ('Tier 1 reserve: 3 months OPEX') rather than absolute figures." },
       ],
     },
     requiredFields: [
@@ -1061,7 +1037,6 @@ export const scenarios: Scenario[] = [
         { heading: "Specific Industry Niche & Region", description: "Provide a specific industry niche (not just 'manufacturing' — be specific, e.g. 'automotive-grade MLCC capacitors'), target geographic region, and timeframe of interest. Vague queries return publicly available summaries that add no competitive advantage." },
         { heading: "Technology Focus & Benchmarks", description: "Include specific technology focus or material sub-segment, known competitors to benchmark, regulatory change signals to monitor, and sustainability/ESG lens if required. Specificity is the lever that unlocks actionable intelligence." },
         { heading: "Financial Impact", description: "A procurement team that identifies a key supplier's acquisition target 3 months before announcement can renegotiate contracts before leverage shifts. Generic market reports cannot deliver this." },
-        { heading: "GDPR Note", description: "Do not include why your organisation is researching this niche right now — the strategic rationale is inside information. The query should appear as general market research." },
       ],
     },
     requiredFields: [
@@ -1105,7 +1080,6 @@ export const scenarios: Scenario[] = [
         { heading: "Exact Legal Entity Name & Jurisdiction", description: "Provide the exact registered legal entity name (e.g. 'ACME Logistics GmbH', not just 'ACME'), primary jurisdiction (country of incorporation), and category of supply. Brand name vs. legal entity confusion pulls intelligence for the wrong company." },
         { heading: "Specific Risk Areas to Prioritise", description: "Include company registration number (for unambiguous matching), known subsidiary/trading name differences, and specific risk areas to prioritise (financial, ESG, cybersecurity, sanctions)." },
         { heading: "Financial Impact", description: "Onboarding a sanctioned supplier carries up to €5M in regulatory fines (EU Sanctions Regulation). A 10-minute pre-flight audit is the lowest-cost risk mitigation tool available." },
-        { heading: "GDPR Note", description: "Legal entity name is required for effective due diligence. Do not include your internal negotiation strategy, target price, or strategic rationale in the query." },
       ],
     },
     requiredFields: [
