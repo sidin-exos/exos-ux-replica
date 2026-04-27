@@ -14,10 +14,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
 import { ChevronRight, Sparkles } from "lucide-react";
-import { scenarios, getMissingRequiredFields, getMissingOptionalFields } from "@/lib/scenarios";
-import { useInputEvaluator } from "@/hooks/useInputEvaluator";
-import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
-import DataRequirementsAlert from "@/components/consolidation/DataRequirementsAlert";
+import { scenarios } from "@/lib/scenarios";
 import { AICoverageCheck } from "@/components/consolidation/AICoverageCheck";
 
 interface ProjectEvaluatorProps {
