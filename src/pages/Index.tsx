@@ -18,6 +18,7 @@ import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard"
 import ScenarioPreviewPanel from "@/components/scenarios/ScenarioPreviewPanel";
 import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
 import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
+import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 
 type ActiveView = "dashboard" | "scenario";
 
