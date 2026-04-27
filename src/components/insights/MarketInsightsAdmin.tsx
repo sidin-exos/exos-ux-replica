@@ -465,7 +465,14 @@ export function MarketInsightsAdmin() {
               <span className="font-medium text-foreground truncate pr-2">{batchProgress.currentItem}</span>
               <span className="text-muted-foreground tabular-nums shrink-0">{batchProgress.current} / {batchProgress.total}</span>
             </div>
-            <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-1" />
+            {batchProgress.total > 1 ? (
+              <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-1" />
+            ) : (
+              <div className="flex items-center gap-2 pt-0.5 text-[11px] text-muted-foreground">
+                <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                <span>Generating insight…</span>
+              </div>
+            )}
           </div>
         )}
 
