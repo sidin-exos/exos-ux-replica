@@ -13,7 +13,9 @@ import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare } from "lucide-react";
+import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare, FolderPlus } from "lucide-react";
+import { useState } from "react";
+import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
@@ -26,6 +28,7 @@ const MarketIntelligence = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { resolvedTheme } = useTheme();
   const intelContextImage = resolvedTheme === "dark" ? intelContextDark : intelContextLight;
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
 
   // Derive active tab from URL path + mode param
   const activeTab = (() => {
@@ -98,23 +101,35 @@ const MarketIntelligence = () => {
     );
   }
 
+  const leftSidebar = (
+    <div className="lg:col-span-1 space-y-3">
+      <Button
+        variant="outline"
+        className="w-full justify-start gap-2 border-dashed hover:border-primary hover:text-primary"
+        onClick={() => setCreateProjectOpen(true)}
+      >
+        <FolderPlus className="w-4 h-4" />
+        Create a project
+      </Button>
+      <div className="rounded-lg border border-border bg-card border-t-4 border-t-violet-500 p-6 space-y-6">
+        <RecentQueries
+          queries={recentQueries}
+          isLoading={isLoadingHistory}
+          onLoad={loadRecentQueries}
+          variant="inline"
+        />
+        <Separator />
+        <ScheduledReportsList variant="inline" />
+      </div>
+    </div>
+  );
+
   const renderScenarioContent = () => {
 
     if (selectedScenario === "regular") {
       return (
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <div className="rounded-lg border border-border bg-card border-t-4 border-t-violet-500 p-6 space-y-6">
-              <RecentQueries
-                queries={recentQueries}
-                isLoading={isLoadingHistory}
-                onLoad={loadRecentQueries}
-                variant="inline"
-              />
-              <Separator />
-              <ScheduledReportsList variant="inline" />
-            </div>
-          </div>
+          {leftSidebar}
           <div className="lg:col-span-2">
             <ScheduledReportsPanel />
           </div>
@@ -125,18 +140,7 @@ const MarketIntelligence = () => {
     // Ad-hoc flow
     return (
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <div className="rounded-lg border border-border bg-card border-t-4 border-t-violet-500 p-6 space-y-6">
-            <RecentQueries
-              queries={recentQueries}
-              isLoading={isLoadingHistory}
-              onLoad={loadRecentQueries}
-              variant="inline"
-            />
-            <Separator />
-            <ScheduledReportsList variant="inline" />
-          </div>
-        </div>
+        {leftSidebar}
         <div className="lg:col-span-2">
           {result ? (
             <IntelResults result={result} onNewQuery={clearResult} />
@@ -239,6 +243,11 @@ const MarketIntelligence = () => {
           </div>
         </div>
       </footer>
+
+      <CreateProjectDialog
+        open={createProjectOpen}
+        onOpenChange={setCreateProjectOpen}
+      />
     </div>
   );
 };
