@@ -60,7 +60,7 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
     return data;
   }, [scenario, description, fileNames]);
 
-  const { config: dbEvalConfig } = useScenarioEvalConfig(scenarioId || null);
+  const { data: dbEvalConfig } = useScenarioEvalConfig(scenarioId || null);
   const evaluation = useInputEvaluator(scenarioId || "noop", formData, 400, dbEvalConfig);
 
   const missingRequired = scenario
