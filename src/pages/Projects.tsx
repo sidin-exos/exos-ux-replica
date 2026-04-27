@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,7 @@ function ProjectFilesPreview({ projectId }: { projectId: string }) {
 
 export default function Projects() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const { projects, isLoading, deleteProject } = useProjects();
 
   return (
@@ -83,7 +85,11 @@ export default function Projects() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
-              <Card key={project.id} className="border-t-4 border-t-primary">
+              <Card
+                key={project.id}
+                className="border-t-4 border-t-primary cursor-pointer transition-shadow hover:shadow-md"
+                onClick={() => navigate(`/projects/${project.id}`)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base flex items-center gap-2">
@@ -97,11 +103,12 @@ export default function Projects() {
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
                           aria-label="Delete project"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete this project?</AlertDialogTitle>
                           <AlertDialogDescription>
