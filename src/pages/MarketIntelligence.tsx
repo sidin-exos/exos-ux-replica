@@ -106,12 +106,13 @@ const MarketIntelligence = () => {
           <div className="lg:col-span-2">
             <ScheduledReportsPanel />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
             <RecentQueries
               queries={recentQueries}
               isLoading={isLoadingHistory}
               onLoad={loadRecentQueries}
             />
+            <ScheduledReportsList />
           </div>
         </div>
       );
