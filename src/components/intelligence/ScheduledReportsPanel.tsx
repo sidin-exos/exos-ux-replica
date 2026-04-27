@@ -259,8 +259,6 @@ export function ScheduledReportsPanel() {
         </Card>
       )}
 
-      {/* Saved configs list (shared component) */}
-      <ScheduledReportsList />
     </div>
   );
 }
