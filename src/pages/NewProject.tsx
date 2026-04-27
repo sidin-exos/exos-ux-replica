@@ -120,8 +120,9 @@ export default function NewProject() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="What is this project about? Goals, scope, key suppliers, constraints…"
-                  rows={5}
+                  rows={12}
                   maxLength={2000}
+                  className="min-h-[260px]"
                 />
               </div>
 
