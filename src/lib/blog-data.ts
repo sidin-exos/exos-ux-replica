@@ -166,7 +166,7 @@ Three capabilities, working together. A **Disruption Monitor** that tracks the s
   },
   {
     slug: "your-favorite-chatbot-for-everything",
-    title: "Your Favorite Chatbot for Everything: Rethinking AI in Procurement",
+    title: "Your Favorite Chatbot for Everything: Rethinking Chatbots",
     subtitle: "Why relying on a general-purpose chatbot for strategic category management is a technological dead end — and what domain-specific AI agents do differently.",
     date: "2026-04-27",
     readingTime: "9 min read",
