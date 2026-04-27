@@ -103,7 +103,6 @@ const DataRequirementsAlert = ({
                               )}
                             >
                               <span className="font-medium text-foreground">{block.label}</span>
-                              <span className="text-muted-foreground ml-1">({block.wordCount} words)</span>
                             </button>
                             {block.checks.filter((c) => c.severity !== "INFO").map((check, ci) => (
                               <p key={ci} className="text-xs text-muted-foreground mt-0.5 pl-0">
