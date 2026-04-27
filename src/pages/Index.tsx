@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useUser } from "@/hooks/useUser";
 import { SCENARIO_META, DEFAULT_SCENARIO_SLUG } from "@/lib/scenarioSlugs";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3, FolderPlus } from "lucide-react";
+import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3, FolderPlus, Folder } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
