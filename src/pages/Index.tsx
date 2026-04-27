@@ -52,6 +52,7 @@ const Index = () => {
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
   const [activeCategory, setActiveCategory] = useState<Scenario["category"] | null>("analysis");
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const location = useLocation();
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
