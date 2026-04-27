@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useUser } from "@/hooks/useUser";
 import { SCENARIO_META, DEFAULT_SCENARIO_SLUG } from "@/lib/scenarioSlugs";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3 } from "lucide-react";
+import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3, FolderPlus } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard"
 import ScenarioPreviewPanel from "@/components/scenarios/ScenarioPreviewPanel";
 import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
 import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
+import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 
 type ActiveView = "dashboard" | "scenario";
 
@@ -51,6 +52,7 @@ const Index = () => {
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
   const [activeCategory, setActiveCategory] = useState<Scenario["category"] | null>("analysis");
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const location = useLocation();
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -292,7 +294,15 @@ const Index = () => {
               </div>
 
               {/* Right: Preview panel */}
-              <div className="hidden lg:block">
+              <div className="hidden lg:block space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 border-dashed hover:border-primary hover:text-primary"
+                  onClick={() => setCreateProjectOpen(true)}
+                >
+                  <FolderPlus className="w-4 h-4" />
+                  Create a project
+                </Button>
                 <ScenarioPreviewPanel scenario={hoveredScenario} activeCategory={activeCategory} />
               </div>
             </div>
@@ -340,6 +350,7 @@ const Index = () => {
       </main>
 
       <Footer />
+      <CreateProjectDialog open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
     </div>
   );
 };
