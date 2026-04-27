@@ -83,9 +83,9 @@ export function checkMinLength(
     return {
       id: "UNIVERSAL_MIN_LENGTH",
       severity,
-      message: `This field has ${wc} words but needs at least ${block.minWords} for meaningful analysis.`,
+      message: `Not enough detail in this field for meaningful analysis.`,
       fieldId,
-      suggestion: `Add more detail — use the placeholder prompts as a guide. Aim for ${block.minWords}+ words.`,
+      suggestion: `Add more detail — see "What data do I need to prepare?" above for guidance on what to include.`,
     };
   }
   return null;
