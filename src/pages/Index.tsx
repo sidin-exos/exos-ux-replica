@@ -350,6 +350,7 @@ const Index = () => {
       </main>
 
       <Footer />
+      <CreateProjectDialog open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
     </div>
   );
 };
