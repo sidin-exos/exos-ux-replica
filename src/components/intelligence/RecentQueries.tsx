@@ -64,6 +64,13 @@ export function RecentQueries({ queries, isLoading, onLoad, variant = "card" }: 
     setHasLoaded(true);
   }, [onLoad]);
 
+  // Auto-load history on mount so users see their recent queries immediately
+  // when entering /market-intelligence/queries.
+  useEffect(() => {
+    handleLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-refresh once history is loaded:
   // - every 24h on a timer (covers long-lived sessions)
   // - whenever the tab regains focus / becomes visible (covers users
