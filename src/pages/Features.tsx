@@ -222,7 +222,7 @@ const Features = () => {
       title: "Scenarios",
       description: (
         <>
-          Pre-defined <strong className="font-semibold text-foreground">Chatbot flows</strong> enriched with procurement <strong className="font-semibold text-foreground">methodological layer</strong>, agentic loops, and custom LLM settings.
+          Pre-defined <strong className="font-semibold text-foreground">agentic AI flows</strong> enriched with procurement <strong className="font-semibold text-foreground">methodological layer</strong>, agentic loops, and custom LLM settings.
         </>
       ),
       accent: "teal" as const,
@@ -292,7 +292,7 @@ const Features = () => {
   return (
     <div className="min-h-screen gradient-hero">
       <Helmet>
-        <title>20+ Chatbot Scenarios — Risk, TCO & Negotiation | EXOS</title>
+        <title>20+ AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS</title>
         <link rel="canonical" href="https://exosproc.com/features" />
       </Helmet>
       <div

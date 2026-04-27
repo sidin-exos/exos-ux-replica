@@ -88,10 +88,10 @@ const Welcome = () => {
   return (
     <div className="force-light min-h-screen flex flex-col bg-background text-foreground" data-force-light="true">
       <Helmet>
-        <title>EXOS — Chatbots | No Implementation</title>
+        <title>EXOS — Agentic AI Procurement Platform | No Implementation</title>
         <meta
           name="description"
-          content="Chatbots — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed."
+          content="Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed."
         />
         <link rel="canonical" href="https://exosproc.com/" />
         <meta name="robots" content="index, follow" />
@@ -108,17 +108,17 @@ const Welcome = () => {
             {/* Left */}
             <div className="flex flex-col gap-6 max-w-xl">
               <Badge variant="outline" className="w-fit border-primary/30 text-primary text-xs tracking-wider uppercase animate-in fade-in slide-in-from-bottom-2 duration-500">
-                ✦ Chatbots — works alongside your existing tools
+                ✦ Agentic AI procurement — works alongside your existing tools
               </Badge>
               <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.1] tracking-tight">
-                Chatbots.{" "}
+                Agentic AI Procurement Analysis.{" "}
                 <span className="italic" style={{ color: "hsl(var(--primary))" }}>
                   No Implementation. No Wait.
                 </span>
               </h1>
               <div className="text-muted-foreground text-base leading-relaxed space-y-3">
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  Most procurement platforms take months to implement and require company-wide adoption before delivering value. <strong className="text-foreground font-semibold">EXOS is a Chatbots</strong> that works from day one, for one user, alongside the tools you already have. Negotiation preparation, supplier risk monitoring, TCO analysis, inflation tracking — and many more expert scenarios. <strong className="text-foreground font-semibold">No integration. No IT project. No change management.</strong>
+                  Most procurement platforms take months to implement and require company-wide adoption before delivering value. <strong className="text-foreground font-semibold">EXOS is an agentic AI procurement platform</strong> that works from day one, for one user, alongside the tools you already have. Negotiation preparation, supplier risk monitoring, TCO analysis, inflation tracking — and many more expert scenarios. <strong className="text-foreground font-semibold">No integration. No IT project. No change management.</strong>
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 mt-2">
