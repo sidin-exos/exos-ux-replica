@@ -1,0 +1,124 @@
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Sparkles } from "lucide-react";
+import { scenarios, getMissingRequiredFields, getMissingOptionalFields } from "@/lib/scenarios";
+import { useInputEvaluator } from "@/hooks/useInputEvaluator";
+import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
+import DataRequirementsAlert from "@/components/consolidation/DataRequirementsAlert";
+
+interface ProjectEvaluatorProps {
+  description: string;
+  fileNames: string[];
+}
+
+/**
+ * Lets the user pick a scenario and evaluates whether the project's
+ * description + attached files would meet that scenario's input quality bar.
+ *
+ * The project description is fed as the value for every required textarea
+ * field of the chosen scenario, plus a short list of attached file names —
+ * which is what the input quality evaluator scores on.
+ */
+export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorProps) {
+  const availableScenarios = useMemo(
+    () => scenarios.filter((s) => s.status === "available"),
+    [],
+  );
+
+  const [scenarioId, setScenarioId] = useState<string>("");
+
+  const scenario = useMemo(
+    () => availableScenarios.find((s) => s.id === scenarioId) ?? null,
+    [availableScenarios, scenarioId],
+  );
+
+  // Build a synthetic formData keyed by the scenario's required fields.
+  // The evaluator scores per-field text quality, so we feed the project
+  // description (+ a brief mention of attached files) into each field.
+  const formData = useMemo<Record<string, string>>(() => {
+    if (!scenario) return {};
+    const text = [
+      description?.trim(),
+      fileNames.length
+        ? `Attached project files: ${fileNames.join(", ")}.`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    const data: Record<string, string> = {};
+    for (const field of scenario.requiredFields) {
+      data[field.id] = text;
+    }
+    return data;
+  }, [scenario, description, fileNames]);
+
+  const { config: dbEvalConfig } = useScenarioEvalConfig(scenarioId || null);
+  const evaluation = useInputEvaluator(scenarioId || "noop", formData, 400, dbEvalConfig);
+
+  const missingRequired = scenario
+    ? getMissingRequiredFields(scenario.id, formData)
+    : [];
+  const missingOptional = scenario
+    ? getMissingOptionalFields(scenario.id, formData)
+    : [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-primary" />
+          Evaluate for scenario
+        </CardTitle>
+        <CardDescription>
+          Check whether your project context is rich enough to run a specific
+          scenario. Uses the same quality evaluator as the scenario wizard.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="scenario-select">Scenario</Label>
+          <Select value={scenarioId} onValueChange={setScenarioId}>
+            <SelectTrigger id="scenario-select">
+              <SelectValue placeholder="Choose a scenario to evaluate against…" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableScenarios.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {!scenario && (
+          <p className="text-xs text-muted-foreground">
+            Pick a scenario above to see how your project content scores.
+          </p>
+        )}
+
+        {scenario && !description?.trim() && fileNames.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            Add a description or attach files to this project to get a meaningful evaluation.
+          </p>
+        )}
+
+        {scenario && (description?.trim() || fileNames.length > 0) && (
+          <DataRequirementsAlert
+            missingRequired={missingRequired}
+            missingOptional={missingOptional}
+            evaluation={evaluation}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
