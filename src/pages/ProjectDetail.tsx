@@ -38,6 +38,7 @@ import {
 import { useUserFiles } from "@/hooks/useUserFiles";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { ProjectEvaluator } from "@/components/projects/ProjectEvaluator";
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
