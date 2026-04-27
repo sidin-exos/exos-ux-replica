@@ -106,7 +106,104 @@ export function useProjects() {
     },
   });
 
-  return { projects, isLoading, createProject, deleteProject };
+  const updateProject = useMutation({
+    mutationFn: async (input: { id: string; name?: string; description?: string | null; color?: string | null; icon?: string | null }) => {
+      const { id, ...patch } = input;
+      const { data, error } = await supabase
+        .from("projects")
+        .update({
+          ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+          ...(patch.description !== undefined ? { description: patch.description?.trim() || null } : {}),
+          ...(patch.color !== undefined ? { color: patch.color } : {}),
+          ...(patch.icon !== undefined ? { icon: patch.icon } : {}),
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (project) => {
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
+      queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+      toast({ title: "Project updated" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  return { projects, isLoading, createProject, deleteProject, updateProject };
+}
+
+export function useProject(projectId?: string) {
+  const { user } = useUser();
+  return useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!projectId,
+  });
+}
+
+export function useProjectFileMutations(projectId?: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const attachFiles = useMutation({
+    mutationFn: async (fileIds: string[]) => {
+      if (!projectId || fileIds.length === 0) return;
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", currentUser.id)
+        .single();
+      if (!profile?.organization_id) throw new Error("Organization not found.");
+
+      const rows = fileIds.map((fileId) => ({
+        project_id: projectId,
+        file_id: fileId,
+        user_id: currentUser.id,
+        organization_id: profile.organization_id!,
+      }));
+      const { error } = await supabase.from("project_files").insert(rows);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PROJECT_FILES_KEY(projectId) });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Could not attach file", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const detachFile = useMutation({
+    mutationFn: async (linkId: string) => {
+      const { error } = await supabase.from("project_files").delete().eq("id", linkId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PROJECT_FILES_KEY(projectId) });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Could not remove file", description: err.message, variant: "destructive" });
+    },
+  });
+
+  return { attachFiles, detachFile };
 }
 
 export function useProjectFiles(projectId?: string) {
