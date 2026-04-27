@@ -28,6 +28,7 @@ const MarketIntelligence = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { resolvedTheme } = useTheme();
   const intelContextImage = resolvedTheme === "dark" ? intelContextDark : intelContextLight;
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
 
   // Derive active tab from URL path + mode param
   const activeTab = (() => {
