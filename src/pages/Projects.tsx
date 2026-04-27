@@ -44,6 +44,7 @@ function ProjectFilesPreview({ projectId }: { projectId: string }) {
 
 export default function Projects() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const { projects, isLoading, deleteProject } = useProjects();
 
   return (
