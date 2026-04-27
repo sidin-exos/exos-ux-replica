@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
-import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles, Building2, MapPin, FolderKanban } from "lucide-react";
+import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles, Building2, MapPin, FolderKanban, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -401,12 +401,33 @@ export function MarketInsightsAdmin() {
         </div>
 
         {/* Summary + Generate button */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
             {genIndustry && genCategories.length > 0 && genCountries.length > 0
               ? `${genCountries.length} × ${genCategories.length} = ${genCountries.length * genCategories.length} insight(s) will be generated`
               : "Select industry, countries, and categories to generate"}
           </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setGenIndustry("");
+                setGenCategories([]);
+                setGenCountries([]);
+                setSearchIndustry("");
+                setSearchCountry("");
+                setSearchCategory("");
+              }}
+              disabled={
+                isGenerating ||
+                batchProgress !== null ||
+                (!genIndustry && genCategories.length === 0 && genCountries.length === 0)
+              }
+            >
+              <X className="mr-2 h-4 w-4" />
+              Clear selections
+            </Button>
           <Button
             onClick={handleGenerate}
             disabled={isGenerating || batchProgress !== null || !genIndustry || genCategories.length === 0 || genCountries.length === 0}
