@@ -295,14 +295,19 @@ const Index = () => {
 
               {/* Right: Preview panel */}
               <div className="hidden lg:block space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 border-dashed hover:border-primary hover:text-primary"
+                <button
+                  type="button"
                   onClick={() => setCreateProjectOpen(true)}
+                  className="w-full text-left rounded-lg p-4 bg-gradient-to-br from-primary to-iris text-primary-foreground shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 group"
                 >
-                  <FolderPlus className="w-4 h-4" />
-                  Create a project
-                </Button>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <FolderPlus className="w-5 h-5" />
+                    <span className="font-display font-semibold text-base">Create a project</span>
+                  </div>
+                  <p className="text-xs text-primary-foreground/85 leading-snug">
+                    Upload info about your project and relevant files and use for multiple scenarios
+                  </p>
+                </button>
                 <ScenarioPreviewPanel scenario={hoveredScenario} activeCategory={activeCategory} />
               </div>
             </div>
