@@ -234,11 +234,6 @@ const MarketIntelligence = () => {
           </div>
         </div>
       </footer>
-
-      <CreateProjectDialog
-        open={createProjectOpen}
-        onOpenChange={setCreateProjectOpen}
-      />
     </div>
   );
 };
