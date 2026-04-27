@@ -224,7 +224,7 @@ export const scenarios: Scenario[] = [
     dataRequirements: {
       title: "What data prevents Value Leakage in Spend Analysis?",
       sections: [
-        { heading: "Raw Spend Data with Descriptions", description: "Export CSV/Excel with supplier name, spend amount, date, and a free-text description of what was purchased. Without PO descriptions, AI classification accuracy drops below 60% and rogue buying remains invisible." },
+        { heading: "Raw Spend Data with Descriptions", description: "Export CSV/Excel with supplier name, spend amount, date, and a free-text description of what was purchased. Without PO descriptions, Chatbots classification accuracy drops below 60% and rogue buying remains invisible." },
         { heading: "Existing Category Mapping", description: "Even a partial category mapping or preferred taxonomy (UNSPSC, eCl@ss) dramatically improves classification accuracy. Cost-centre or department codes help identify maverick spend." },
         { heading: "Financial Impact", description: "Gartner: organisations with mature spend analytics achieve 6–10% annual cost reduction. Unclassified tail spend hides 20–30% of addressable spend — making savings opportunities invisible." },
         { heading: "GDPR Note", description: "Mandatory: replace supplier legal names with tokens (Supplier_001, Supplier_002) before upload. Individual employee names on POs must be removed (GDPR Art. 5(1)(c))." },
