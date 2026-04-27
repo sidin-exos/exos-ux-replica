@@ -7,6 +7,7 @@ import { IntelResults } from "@/components/intelligence/IntelResults";
 import { RecentQueries } from "@/components/intelligence/RecentQueries";
 import { IntelScenarioSelector, type IntelScenario } from "@/components/intelligence/IntelScenarioSelector";
 import { ScheduledReportsPanel } from "@/components/intelligence/ScheduledReportsPanel";
+import { ScheduledReportsList } from "@/components/intelligence/ScheduledReportsList";
 
 import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
@@ -126,12 +127,13 @@ const MarketIntelligence = () => {
             <QueryBuilder onSubmit={query} isLoading={isLoading} />
           )}
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
           <RecentQueries
             queries={recentQueries}
             isLoading={isLoadingHistory}
             onLoad={loadRecentQueries}
           />
+          <ScheduledReportsList />
         </div>
       </div>
     );
