@@ -292,7 +292,15 @@ const Index = () => {
               </div>
 
               {/* Right: Preview panel */}
-              <div className="hidden lg:block">
+              <div className="hidden lg:block space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 border-dashed hover:border-primary hover:text-primary"
+                  onClick={() => setCreateProjectOpen(true)}
+                >
+                  <FolderPlus className="w-4 h-4" />
+                  Create a project
+                </Button>
                 <ScenarioPreviewPanel scenario={hoveredScenario} activeCategory={activeCategory} />
               </div>
             </div>
