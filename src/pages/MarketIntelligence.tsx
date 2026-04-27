@@ -212,25 +212,25 @@ const MarketIntelligence = () => {
             <MarketInsightsAdmin />
           </TabsContent>
         </Tabs>
-
-        <footer className="mt-8 border-t border-border/40 pt-4 pb-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-            <span>© {new Date().getFullYear()} EXOS Procurement · Market Intelligence</span>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/pricing?subject=feedback#contact">
-                  <MessageSquare className="w-4 h-4" /> Leave Feedback
-                </a>
-              </Button>
-              <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/pricing#contact">
-                  Get in Touch <Mail className="w-4 h-4" />
-                </a>
-              </Button>
-            </div>
-          </div>
-        </footer>
       </main>
+
+      <footer className="container border-t border-border/40 pt-4 pb-6 mt-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span>© {new Date().getFullYear()} EXOS Procurement · Market Intelligence</span>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+              <a href="/pricing?subject=feedback#contact">
+                <MessageSquare className="w-4 h-4" /> Leave Feedback
+              </a>
+            </Button>
+            <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+              <a href="/pricing#contact">
+                Get in Touch <Mail className="w-4 h-4" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
