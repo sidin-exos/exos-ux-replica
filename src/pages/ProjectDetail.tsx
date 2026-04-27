@@ -38,6 +38,7 @@ import {
 import { useUserFiles } from "@/hooks/useUserFiles";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { ProjectEvaluator } from "@/components/projects/ProjectEvaluator";
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -320,6 +321,13 @@ export default function ProjectDetail() {
             )}
           </CardContent>
         </Card>
+
+        <ProjectEvaluator
+          description={project.description ?? ""}
+          fileNames={projectFiles
+            .map((row: any) => row.user_files?.file_name)
+            .filter(Boolean)}
+        />
       </main>
     </div>
   );
