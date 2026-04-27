@@ -212,9 +212,10 @@ export default function ProjectDetail() {
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  rows={5}
+                  rows={12}
                   maxLength={2000}
                   placeholder="What is this project about? Goals, scope, key suppliers, constraints…"
+                  className="min-h-[260px]"
                 />
               </div>
               <div className="flex justify-end">
