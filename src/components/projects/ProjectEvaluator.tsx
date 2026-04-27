@@ -114,7 +114,13 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
               description={description}
               fileNames={fileNames}
               sections={scenario.dataRequirements.sections}
-              subtitle="Score project content against the recommended data sections."
+              draftableFields={scenario.requiredFields.map((f) => ({
+                id: f.id,
+                label: f.label,
+                description: f.description,
+                placeholder: f.placeholder,
+              }))}
+              subtitle="Score project content and draft scenario fields from your context."
             />
           </div>
         )}
