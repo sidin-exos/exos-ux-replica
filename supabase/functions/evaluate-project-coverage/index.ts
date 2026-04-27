@@ -56,7 +56,15 @@ ${sectionsList}
 Project context:
 ${projectContext}
 
-For each section, decide coverage: "covered", "partial", or "missing". Provide a one-sentence reason.`;
+For each section, decide coverage: "covered", "partial", or "missing". Provide a one-sentence reason.
+
+Then assign an overall score from 0 to 5, in 0.5-point increments only (allowed values: 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5). Maximum is 5. Use this rubric:
+- 5 = all sections fully covered with strong evidence
+- 4 = most sections covered, minor gaps
+- 3 = roughly half covered, analysis possible but limited
+- 2 = significant gaps, results will be weak
+- 1 = mostly missing, analysis not viable
+- 0 = no usable context
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -94,7 +102,10 @@ For each section, decide coverage: "covered", "partial", or "missing". Provide a
                   },
                   overallScore: {
                     type: "number",
-                    description: "0-100 overall coverage score",
+                    description: "Overall coverage score from 0 to 5, in 0.5 increments only. Maximum 5.",
+                    minimum: 0,
+                    maximum: 5,
+                    multipleOf: 0.5,
                   },
                   summary: { type: "string" },
                 },
@@ -139,6 +150,11 @@ For each section, decide coverage: "covered", "partial", or "missing". Provide a
     }
 
     const result = JSON.parse(toolCall.function.arguments);
+    // Clamp + snap to 0.5 increments, max 5
+    if (typeof result.overallScore === "number") {
+      const clamped = Math.max(0, Math.min(5, result.overallScore));
+      result.overallScore = Math.round(clamped * 2) / 2;
+    }
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

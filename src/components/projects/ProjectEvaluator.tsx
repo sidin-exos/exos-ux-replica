@@ -13,14 +13,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { ChevronRight, Sparkles, Loader2, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { scenarios, getMissingRequiredFields, getMissingOptionalFields } from "@/lib/scenarios";
 import { useInputEvaluator } from "@/hooks/useInputEvaluator";
 import { useScenarioEvalConfig } from "@/hooks/useScenarioEvalConfig";
 import DataRequirementsAlert from "@/components/consolidation/DataRequirementsAlert";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { AICoverageCheck } from "@/components/consolidation/AICoverageCheck";
 
 interface ProjectEvaluatorProps {
   description: string;
@@ -42,8 +40,6 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
   );
 
   const [scenarioId, setScenarioId] = useState<string>("");
-  const [coverage, setCoverage] = useState<CoverageResult | null>(null);
-  const [coverageLoading, setCoverageLoading] = useState(false);
 
   const scenario = useMemo(
     () => availableScenarios.find((s) => s.id === scenarioId) ?? null,
@@ -134,119 +130,18 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
         )}
 
         {scenario?.dataRequirements && (description?.trim() || fileNames.length > 0) && (
-          <div className="space-y-3 pt-2 border-t border-border">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-medium">AI coverage check</p>
-                <p className="text-xs text-muted-foreground">
-                  Score project content against the recommended data sections.
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={coverageLoading}
-                onClick={async () => {
-                  if (!scenario?.dataRequirements) return;
-                  setCoverageLoading(true);
-                  setCoverage(null);
-                  try {
-                    const { data, error } = await supabase.functions.invoke(
-                      "evaluate-project-coverage",
-                      {
-                        body: {
-                          scenarioTitle: scenario.title,
-                          description,
-                          fileNames,
-                          sections: scenario.dataRequirements.sections,
-                        },
-                      },
-                    );
-                    if (error) throw error;
-                    if ((data as any)?.error) throw new Error((data as any).error);
-                    setCoverage(data as CoverageResult);
-                  } catch (e) {
-                    toast.error(
-                      e instanceof Error ? e.message : "Failed to evaluate coverage",
-                    );
-                  } finally {
-                    setCoverageLoading(false);
-                  }
-                }}
-              >
-                {coverageLoading ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    Evaluating…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                    Run AI check
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {coverage && <CoverageResults result={coverage} />}
+          <div className="pt-2 border-t border-border">
+            <AICoverageCheck
+              scenarioTitle={scenario.title}
+              description={description}
+              fileNames={fileNames}
+              sections={scenario.dataRequirements.sections}
+              subtitle="Score project content against the recommended data sections."
+            />
           </div>
         )}
       </CardContent>
     </Card>
-  );
-}
-
-interface CoverageResult {
-  sections: { heading: string; status: "covered" | "partial" | "missing"; reason: string }[];
-  overallScore: number;
-  summary: string;
-}
-
-function CoverageResults({ result }: { result: CoverageResult }) {
-  const scoreColor =
-    result.overallScore >= 75
-      ? "text-emerald-600"
-      : result.overallScore >= 50
-      ? "text-amber-600"
-      : "text-destructive";
-
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Coverage score
-        </span>
-        <span className={`text-2xl font-display font-bold ${scoreColor}`}>
-          {result.overallScore}/100
-        </span>
-      </div>
-      <p className="text-sm text-foreground">{result.summary}</p>
-      <ul className="space-y-2">
-        {result.sections.map((s, i) => {
-          const Icon =
-            s.status === "covered"
-              ? CheckCircle2
-              : s.status === "partial"
-              ? AlertCircle
-              : XCircle;
-          const color =
-            s.status === "covered"
-              ? "text-emerald-600"
-              : s.status === "partial"
-              ? "text-amber-600"
-              : "text-destructive";
-          return (
-            <li key={i} className="flex items-start gap-2 text-sm">
-              <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${color}`} />
-              <div>
-                <p className="font-medium text-foreground">{s.heading}</p>
-                <p className="text-xs text-muted-foreground">{s.reason}</p>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
   );
 }
 
