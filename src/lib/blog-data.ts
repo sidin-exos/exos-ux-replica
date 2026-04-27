@@ -25,7 +25,7 @@ export const blogPosts: BlogPost[] = [
     author: "EXOS Research",
     heroImage: heroImage,
     excerpt: "Organizations are pouring millions into P2P systems designed to automate the bottom 80% of transactions. While reducing cost-per-PO is valid, it provides zero protection against supply shocks that break your P&L.",
-    tags: ["Strategy", "AI in Procurement", "Supply Chain Risk", "Category Management"],
+    tags: ["Strategy", "Chatbots", "Supply Chain Risk", "Category Management"],
     content: `## The Automation Paradox
 
 In the current procurement technology landscape, there is a dangerous and expensive obsession with operational "**efficiency**." Organisations are pouring millions of euros into Procure-to-Pay (P2P) systems and workflow tools designed specifically to automate the bottom 80% of their transactions — the low-value, high-volume tail spend. While reducing the administrative cost-per-purchase-order is a valid operational goal, it provides absolutely zero protection against the strategic supply shocks that actually break a company's P&L.
@@ -173,7 +173,7 @@ Three capabilities, working together. A **Disruption Monitor** that tracks the s
     author: "EXOS Research",
     heroImage: chatbotFallacyHero,
     excerpt: "Across procurement, professionals are pasting complex contracts into general-purpose LLMs and asking an open text box for strategic guidance. As a technologist, I find this approach fundamentally flawed — an illusion of progress.",
-    tags: ["AI in Procurement", "Agentic AI", "Strategy", "Category Management"],
+    tags: ["Chatbots", "Agentic AI", "Strategy", "Category Management"],
     content: `## The Spreadsheet Fallacy
 
 Whenever a profound technological shift occurs, our first instinct is usually to misunderstand its impact on human labor. In the 1980s, the introduction of digital spreadsheets led to panicked headlines predicting the extinction of the accounting profession. Instead, the exact opposite happened. Freed from doing manual arithmetic on paper, accountants transitioned into financial analysts. The software did not replace the human; it elevated the human's strategic value.
