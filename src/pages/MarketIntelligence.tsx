@@ -103,14 +103,6 @@ const MarketIntelligence = () => {
 
   const leftSidebar = (
     <div className="lg:col-span-1 space-y-3">
-      <Button
-        variant="outline"
-        className="w-full justify-start gap-2 border-dashed hover:border-primary hover:text-primary"
-        onClick={() => setCreateProjectOpen(true)}
-      >
-        <FolderPlus className="w-4 h-4" />
-        Create a project
-      </Button>
       <div className="rounded-lg border border-border bg-card border-t-4 border-t-violet-500 p-6 space-y-6">
         <RecentQueries
           queries={recentQueries}
