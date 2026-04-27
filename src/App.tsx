@@ -31,6 +31,7 @@ const SharedReport = lazy(() => import("./pages/SharedReport"));
 const DashboardShowcase = lazy(() => import("./pages/DashboardShowcase"));
 const MarketIntelligence = lazy(() => import("./pages/MarketIntelligence"));
 const Projects = lazy(() => import("./pages/Projects"));
+const NewProject = lazy(() => import("./pages/NewProject"));
 const ArchitectureDiagram = lazy(() => import("./pages/ArchitectureDiagram"));
 const DevWorkflow = lazy(() => import("./pages/DevWorkflow"));
 const TestingPipeline = lazy(() => import("./pages/TestingPipeline"));
@@ -101,6 +102,7 @@ const App = () => (
             <Route path="/market-intelligence/queries" element={<ProtectedRoute><MarketIntelligence /></ProtectedRoute>} />
             <Route path="/market-intelligence/insights" element={<ProtectedRoute><MarketIntelligence /></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/projects/new" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
             <Route path="/architecture" element={<ProtectedRoute requireSuperAdmin><ArchitectureDiagram /></ProtectedRoute>} />
             <Route path="/dev-workflow" element={<ProtectedRoute requireSuperAdmin><DevWorkflow /></ProtectedRoute>} />
             <Route path="/testing-pipeline" element={<ProtectedRoute requireSuperAdmin><TestingPipeline /></ProtectedRoute>} />

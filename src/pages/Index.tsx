@@ -297,7 +297,7 @@ const Index = () => {
               <div className="hidden lg:block space-y-3">
                 <button
                   type="button"
-                  onClick={() => setCreateProjectOpen(true)}
+                  onClick={() => navigate("/projects/new")}
                   className="w-full text-left rounded-lg p-4 bg-gradient-to-br from-primary to-iris text-primary-foreground shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 group"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
