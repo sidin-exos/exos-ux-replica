@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.evaluate-project-coverage]
 verify_jwt = false
+
+[functions.draft-scenario-fields]
+verify_jwt = false
