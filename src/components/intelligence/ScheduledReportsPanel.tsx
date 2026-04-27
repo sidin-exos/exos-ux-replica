@@ -259,37 +259,8 @@ export function ScheduledReportsPanel() {
         </Card>
       )}
 
-      {/* Saved configs list */}
-      {configs.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Your Scheduled Reports ({configs.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {configs.map(config => (
-              <div key={config.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm truncate">{config.name}</span>
-                    <Badge variant="outline" className="text-[10px] shrink-0">{config.schedule_cron}</Badge>
-                    {!config.is_active && <Badge variant="secondary" className="text-[10px] shrink-0">Paused</Badge>}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">{config.query_text}</p>
-                </div>
-                <div className="flex items-center gap-2 ml-3 shrink-0">
-                  <Switch
-                    checked={config.is_active}
-                    onCheckedChange={(checked) => toggleActive(config.id, checked)}
-                  />
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteConfig(config.id)}>
-                    <Trash2 className="w-4 h-4 text-muted-foreground" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      {/* Saved configs list (shared component) */}
+      <ScheduledReportsList />
     </div>
   );
 }
