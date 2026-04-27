@@ -52,83 +52,43 @@ Rate the plausibility on a scale of 0.0 to 1.0 where:
 Respond with ONLY a JSON object:
 {"confidence": 0.85, "reasoning": "Brief explanation"}`;
 
-const MARKET_INSIGHTS_PROMPT = `You are a senior procurement intelligence analyst with 20+ years of experience. Generate an exhaustive, deeply-researched market intelligence briefing for the following industry and procurement category combination.
+const MARKET_INSIGHTS_PROMPT = `You are a senior procurement intelligence analyst. Generate a CONCISE market intelligence briefing (~1000 tokens max) for the following industry/category/geography. This output will be injected into downstream AI analyses, so it must be dense, factual, and free of filler.
 
 Industry: {{INDUSTRY}}
 Procurement Category: {{CATEGORY}}
 Geographic Focus: {{GEOGRAPHY}}
 
-Provide a comprehensive market intelligence report covering ALL of the following sections in depth:
+Cover ALL sections below using terse bullets (no narrative paragraphs). Aim for 2–4 short bullets per section. Include specific figures, named suppliers, and dated events whenever possible.
 
-## 1. EXECUTIVE SUMMARY
-- 3-5 key takeaways for procurement leaders
-- Overall market outlook (bullish/bearish/neutral) with justification
-- Critical action items for the next 90 days
+## 1. MARKET SNAPSHOT
+- Market size & growth (YoY / CAGR) in {{GEOGRAPHY}}
+- Supply/demand balance, capacity utilisation
+- Key seasonality or cyclicality
 
-## 2. MARKET STRUCTURE & DYNAMICS
-- Market size and growth rates (YoY, 5-year CAGR) in {{GEOGRAPHY}}
-- Supply/demand balance and capacity utilization rates
-- Market concentration (HHI, CR4/CR5 ratios if available)
-- Entry barriers and switching costs
-- Seasonal patterns and cyclicality
+## 2. TOP SUPPLIERS
+- 5–7 leading suppliers in {{GEOGRAPHY}} with approximate market share
+- Recent M&A or new entrants (last 12 months)
 
-## 3. COMPETITIVE LANDSCAPE
-- Top 10-15 suppliers in {{GEOGRAPHY}} with estimated market shares
-- Recent M&A activity (last 24 months) and strategic implications
-- New market entrants and disruptors
-- Supplier financial health indicators
-- Vertical integration trends
+## 3. PRICING
+- Current price level and 12-month trajectory
+- Top 2–3 cost drivers (raw materials, energy, labour, logistics)
+- Relevant price index/benchmark
 
-## 4. PRICING ANALYSIS
-- Current price levels and 12-month price trajectory
-- Key price drivers (raw materials, labor, energy, logistics)
-- Price indices and benchmarks used in {{GEOGRAPHY}}
-- Currency exposure and hedging considerations
-- Total Cost of Ownership (TCO) components
+## 4. RISKS
+- Geopolitical / regulatory risks specific to {{GEOGRAPHY}}
+- Supply concentration or single-points-of-failure
+- ESG / compliance changes (current or pending)
 
-## 5. SUPPLY CHAIN RISK ASSESSMENT
-- Geopolitical risks affecting {{GEOGRAPHY}} supply chains
-- Single points of failure and concentration risks
-- Regulatory and compliance changes (current and pending)
-- ESG/sustainability mandates and implications
-- Force majeure history and vulnerability assessment
-- Lead time volatility and inventory considerations
+## 5. OPPORTUNITIES
+- Negotiation leverage points & optimal timing
+- Alternative sourcing regions / near-shoring options
+- Recommended contract structure
 
-## 6. TECHNOLOGY & INNOVATION
-- Emerging technologies disrupting this category
-- Automation and digitalization trends
-- Sustainability innovations and circular economy initiatives
-- R&D investment levels and innovation pipeline
-- Digital procurement tools and e-sourcing platforms
+## 6. 12-MONTH OUTLOOK
+- Base-case forecast in one line
+- Top 2 early-warning indicators to monitor
 
-## 7. REGULATORY & COMPLIANCE LANDSCAPE
-- Current regulations affecting procurement in {{GEOGRAPHY}}
-- Upcoming regulatory changes (next 12-24 months)
-- Certification and standard requirements
-- Trade policy and tariff considerations
-- Data privacy and security requirements
-
-## 8. STRATEGIC PROCUREMENT OPPORTUNITIES
-- Optimal timing for negotiations and tenders
-- Negotiation leverage points and BATNA strategies
-- Alternative sourcing regions and near-shoring options
-- Volume consolidation and demand pooling opportunities
-- Contract structure recommendations (length, pricing mechanisms)
-- Supplier development and partnership opportunities
-
-## 9. FORWARD-LOOKING INTELLIGENCE
-- 12-month market forecast with confidence levels
-- Emerging risks on the horizon
-- Strategic scenarios (best case, base case, worst case)
-- Early warning indicators to monitor
-
-## 10. RECOMMENDED ACTIONS
-- Immediate actions (0-30 days)
-- Short-term initiatives (1-6 months)
-- Strategic priorities (6-18 months)
-- KPIs and success metrics
-
-Be extremely specific and quantitative. Include actual company names, real data points, specific percentages, exact timeframes, and cite your sources. Reference {{GEOGRAPHY}}-specific regulations, standards, trade associations, and market dynamics. This report should be actionable for a Chief Procurement Officer making strategic decisions.`;
+Be quantitative and source-grounded. Cite sources inline where possible. Skip preamble, executive summary, and closing remarks — go straight into the sections.`;
 
 async function validateCombination(
   apiKey: string,
@@ -247,11 +207,11 @@ async function generateMarketInsights(
       body: JSON.stringify({
         model: "sonar-pro",
         messages: [
-          { role: "system", content: "You are a world-class procurement intelligence analyst. Provide exhaustive, deeply-researched market intelligence with specific data points, exact figures, named companies, and cited sources. Be extremely thorough and quantitative. Your reports inform C-level procurement decisions worth millions." },
+          { role: "system", content: "You are a senior procurement intelligence analyst. Produce concise, dense, source-grounded market briefings (~1000 tokens) that will be injected as context into downstream AI analyses. Use terse bullets, real figures, named suppliers, and dated events. No filler, no executive summary, no closing remarks." },
           { role: "user", content: prompt }
         ],
         temperature: 0.2,
-        max_tokens: 5000, // 5x increase for comprehensive insights
+        max_tokens: 1200, // Capped to keep injected context lightweight downstream
         search_recency_filter: "month",
       }),
       signal: AbortSignal.timeout(120_000),
