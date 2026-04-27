@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { QueryBuilder } from "@/components/intelligence/QueryBuilder";
+import { ScheduledReportsList } from "@/components/intelligence/ScheduledReportsList";
 import { useIndustryContexts, useProcurementCategories } from "@/hooks/useContextData";
 import { useSavedIntelConfigs, type CreateIntelConfigParams } from "@/hooks/useSavedIntelConfigs";
 import { CalendarClock, CalendarIcon, Info, Loader2, Trash2 } from "lucide-react";
