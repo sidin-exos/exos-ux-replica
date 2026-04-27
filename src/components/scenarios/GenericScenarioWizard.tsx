@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DataRequirementsAlert from "@/components/consolidation/DataRequirementsAlert";
+import { AICoverageCheck } from "@/components/consolidation/AICoverageCheck";
 import StrategySelector, { StrategyType, strategyPresets } from "./StrategySelector";
 import DashboardSelector from "./DashboardSelector";
 import { IndustrySelector } from "@/components/context/IndustrySelector";
@@ -1046,6 +1047,19 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               }}
             />
 
+            {scenario.dataRequirements && (
+              <div className="rounded-lg border border-border bg-card p-4">
+                <AICoverageCheck
+                  scenarioTitle={scenario.title}
+                  description={Object.entries(formData)
+                    .filter(([, v]) => v && String(v).trim())
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join("\n\n")}
+                  sections={scenario.dataRequirements.sections}
+                  subtitle='Score your input against "What data do I need to prepare?".'
+                />
+              </div>
+            )}
             {/* Expected Outputs */}
             <div className="rounded-lg border border-border bg-card p-4">
               <h4 className="font-medium mb-3">Analysis Will Generate:</h4>
