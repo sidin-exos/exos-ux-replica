@@ -36,6 +36,8 @@ interface RecentQueriesProps {
   queries: IntelQuery[];
   isLoading: boolean;
   onLoad: () => void;
+  /** Visual variant: full Card (default) or borderless inline block. */
+  variant?: "card" | "inline";
 }
 
 function QueryRowSkeleton() {
