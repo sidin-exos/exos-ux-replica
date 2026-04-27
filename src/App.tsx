@@ -30,6 +30,7 @@ const GeneratedReport = lazy(() => import("./pages/GeneratedReport"));
 const SharedReport = lazy(() => import("./pages/SharedReport"));
 const DashboardShowcase = lazy(() => import("./pages/DashboardShowcase"));
 const MarketIntelligence = lazy(() => import("./pages/MarketIntelligence"));
+const Projects = lazy(() => import("./pages/Projects"));
 const ArchitectureDiagram = lazy(() => import("./pages/ArchitectureDiagram"));
 const DevWorkflow = lazy(() => import("./pages/DevWorkflow"));
 const TestingPipeline = lazy(() => import("./pages/TestingPipeline"));
