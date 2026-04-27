@@ -158,7 +158,7 @@ Draft each field's content. Reuse facts from the project context. For any requir
     console.error("draft-scenario-fields error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
