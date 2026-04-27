@@ -150,6 +150,11 @@ Then assign an overall score from 0 to 5, in 0.5-point increments only (allowed 
     }
 
     const result = JSON.parse(toolCall.function.arguments);
+    // Clamp + snap to 0.5 increments, max 5
+    if (typeof result.overallScore === "number") {
+      const clamped = Math.max(0, Math.min(5, result.overallScore));
+      result.overallScore = Math.round(clamped * 2) / 2;
+    }
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
