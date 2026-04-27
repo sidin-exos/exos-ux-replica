@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,35 @@ export function RecentQueries({ queries, isLoading, onLoad }: RecentQueriesProps
     onLoad();
     setHasLoaded(true);
   }, [onLoad]);
+
+  // Auto-refresh once history is loaded:
+  // - every 24h on a timer (covers long-lived sessions)
+  // - whenever the tab regains focus / becomes visible (covers users
+  //   coming back after scheduled reports have run in the background)
+  useEffect(() => {
+    if (!hasLoaded) return;
+
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const interval = window.setInterval(() => {
+      onLoad();
+    }, DAY_MS);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        onLoad();
+      }
+    };
+    const handleFocus = () => onLoad();
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [hasLoaded, onLoad]);
 
   return (
     <Card className="h-full border-t-4 border-t-violet-500">
