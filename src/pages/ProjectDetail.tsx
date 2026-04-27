@@ -321,6 +321,13 @@ export default function ProjectDetail() {
             )}
           </CardContent>
         </Card>
+
+        <ProjectEvaluator
+          description={project.description ?? ""}
+          fileNames={projectFiles
+            .map((row: any) => row.user_files?.file_name)
+            .filter(Boolean)}
+        />
       </main>
     </div>
   );
