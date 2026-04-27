@@ -207,7 +207,7 @@ async function generateMarketInsights(
       body: JSON.stringify({
         model: "sonar-pro",
         messages: [
-          { role: "system", content: "You are a world-class procurement intelligence analyst. Provide exhaustive, deeply-researched market intelligence with specific data points, exact figures, named companies, and cited sources. Be extremely thorough and quantitative. Your reports inform C-level procurement decisions worth millions." },
+          { role: "system", content: "You are a senior procurement intelligence analyst. Produce concise, dense, source-grounded market briefings (~1000 tokens) that will be injected as context into downstream AI analyses. Use terse bullets, real figures, named suppliers, and dated events. No filler, no executive summary, no closing remarks." },
           { role: "user", content: prompt }
         ],
         temperature: 0.2,
