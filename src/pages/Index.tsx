@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useUser } from "@/hooks/useUser";
 import { SCENARIO_META, DEFAULT_SCENARIO_SLUG } from "@/lib/scenarioSlugs";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3, FolderPlus } from "lucide-react";
+import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3, FolderPlus, Folder } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -295,19 +295,29 @@ const Index = () => {
 
               {/* Right: Preview panel */}
               <div className="hidden lg:block space-y-3">
-                <button
-                  type="button"
-                  onClick={() => navigate("/projects/new")}
-                  className="w-full text-left rounded-lg p-4 bg-gradient-to-br from-primary to-iris text-primary-foreground shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 group"
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <FolderPlus className="w-5 h-5" />
-                    <span className="font-display font-semibold text-base">Create a project</span>
-                  </div>
-                  <p className="text-xs text-primary-foreground/85 leading-snug">
-                    Upload info about your project and relevant files and use for multiple scenarios
-                  </p>
-                </button>
+                <div className="flex items-stretch gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/projects/new")}
+                    className="flex-1 text-left rounded-lg p-3 bg-gradient-to-br from-primary to-iris text-primary-foreground shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <FolderPlus className="w-4 h-4" />
+                      <span className="font-display font-semibold text-sm">Create a project</span>
+                    </div>
+                    <p className="text-[11px] text-primary-foreground/85 leading-snug">
+                      Upload info and files, reuse across scenarios
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/projects")}
+                    className="rounded-lg px-3 py-2 border border-border bg-card hover:border-primary hover:text-primary text-xs font-medium flex flex-col items-center justify-center gap-1 transition-colors min-w-[80px]"
+                  >
+                    <Folder className="w-4 h-4" />
+                    My projects
+                  </button>
+                </div>
                 <ScenarioPreviewPanel scenario={hoveredScenario} activeCategory={activeCategory} />
               </div>
             </div>
