@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { callGoogleAI } from "../_shared/google-ai.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 
 interface Section {
   heading: string;
@@ -19,14 +22,6 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body = (await req.json()) as RequestBody;
     const { scenarioTitle, description, fileNames, sections } = body;
 
@@ -64,100 +59,120 @@ Then assign an overall score from 0 to 5, in 0.5-point increments only (allowed 
 - 3 = roughly half covered, analysis possible but limited
 - 2 = significant gaps, results will be weak
 - 1 = mostly missing, analysis not viable
-- 0 = no usable context
+- 0 = no usable context`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
+    const tracer = new LangSmithTracer({
+      env: "production",
+      feature: "evaluate-project-coverage",
+    });
+    const runId = tracer.createRun(
+      "evaluate-project-coverage",
+      "llm",
+      {
+        scenarioType: scenarioTitle,
+        projectContextLength: projectContext.length,
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+      { tags: ["model:gemini-3.1-pro-preview"] },
+    );
+
+    try {
+      const aiResponse = await callGoogleAI({
+        systemPrompt,
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        temperature: 0.3,
+        maxOutputTokens: 2048,
         tools: [
           {
-            type: "function",
-            function: {
-              name: "report_coverage",
-              description: "Report coverage assessment for each section.",
-              parameters: {
-                type: "object",
-                properties: {
-                  sections: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        heading: { type: "string" },
-                        status: { type: "string", enum: ["covered", "partial", "missing"] },
-                        reason: { type: "string" },
+            functionDeclarations: [
+              {
+                name: "report_coverage",
+                description: "Report coverage assessment for each section.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: {
+                    sections: {
+                      type: "ARRAY",
+                      items: {
+                        type: "OBJECT",
+                        properties: {
+                          heading: { type: "STRING" },
+                          status: {
+                            type: "STRING",
+                            enum: ["covered", "partial", "missing"],
+                          },
+                          reason: { type: "STRING" },
+                        },
+                        required: ["heading", "status", "reason"],
                       },
-                      required: ["heading", "status", "reason"],
-                      additionalProperties: false,
                     },
+                    overallScore: {
+                      type: "NUMBER",
+                      description:
+                        "Overall coverage score from 0 to 5, in 0.5 increments only. Maximum 5.",
+                    },
+                    summary: { type: "STRING" },
                   },
-                  overallScore: {
-                    type: "number",
-                    description: "Overall coverage score from 0 to 5, in 0.5 increments only. Maximum 5.",
-                    minimum: 0,
-                    maximum: 5,
-                    multipleOf: 0.5,
-                  },
-                  summary: { type: "string" },
+                  required: ["sections", "overallScore", "summary"],
                 },
-                required: ["sections", "overallScore", "summary"],
-                additionalProperties: false,
               },
-            },
+            ],
           },
         ],
-        tool_choice: { type: "function", function: { name: "report_coverage" } },
-      }),
-    });
+      });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded, try again shortly." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      if (
+        aiResponse.functionCall?.name !== "report_coverage" ||
+        !aiResponse.functionCall.args
+      ) {
+        tracer.patchRun(
+          runId,
+          { errorType: "no_function_call" },
+          "No structured response",
         );
+        return new Response(JSON.stringify({ error: "No structured response" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Add funds in Settings → Workspace → Usage." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
+
+      const result = aiResponse.functionCall.args as {
+        sections: Array<{ heading: string; status: string; reason: string }>;
+        overallScore: number;
+        summary: string;
+      };
+
+      // Clamp + snap to 0.5 increments, max 5
+      if (typeof result.overallScore === "number") {
+        const clamped = Math.max(0, Math.min(5, result.overallScore));
+        result.overallScore = Math.round(clamped * 2) / 2;
       }
-      const t = await response.text();
-      console.error("AI gateway error", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
+
+      const promptTokens = aiResponse.usageMetadata?.promptTokenCount;
+      const completionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
+      tracer.patchRun(runId, {
+        promptTokens,
+        completionTokens,
+        totalTokens: aiResponse.usageMetadata?.totalTokenCount,
+        estimatedCostUsd: estimateCost(
+          "gemini-3.1-pro-preview",
+          promptTokens,
+          completionTokens,
+        ),
+        overallScore: result.overallScore,
+        fieldCount: Array.isArray(result.sections) ? result.sections.length : 0,
+      });
+
+      return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    } catch (aiError) {
+      tracer.patchRun(
+        runId,
+        { errorType: classifyError(aiError) },
+        aiError instanceof Error ? aiError.message : "AI error",
+      );
+      throw aiError;
     }
-
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall?.function?.arguments) {
-      return new Response(JSON.stringify({ error: "No structured response" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const result = JSON.parse(toolCall.function.arguments);
-    // Clamp + snap to 0.5 increments, max 5
-    if (typeof result.overallScore === "number") {
-      const clamped = Math.max(0, Math.min(5, result.overallScore));
-      result.overallScore = Math.round(clamped * 2) / 2;
-    }
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     console.error("evaluate-project-coverage error:", e);
     return new Response(

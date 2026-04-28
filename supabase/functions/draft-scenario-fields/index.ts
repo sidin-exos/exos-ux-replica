@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { callGoogleAI } from "../_shared/google-ai.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 
 interface FieldSpec {
   id: string;
@@ -23,14 +26,6 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body = (await req.json()) as RequestBody;
     const { scenarioTitle, description, fileNames, fields, sections } = body;
 
@@ -77,83 +72,99 @@ Draft each field's content. Reuse facts from the project context. For any requir
     const properties: Record<string, unknown> = {};
     for (const f of fields) {
       properties[f.id] = {
-        type: "string",
+        type: "STRING",
         description: `Drafted content for field "${f.label}".`,
       };
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
+    const tracer = new LangSmithTracer({
+      env: "production",
+      feature: "draft-scenario-fields",
+    });
+    const runId = tracer.createRun(
+      "draft-scenario-fields",
+      "llm",
+      {
+        scenarioType: scenarioTitle,
+        fieldCount: fields.length,
+        projectContextLength: projectContext.length,
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+      { tags: ["model:gemini-3.1-pro-preview"] },
+    );
+
+    try {
+      const aiResponse = await callGoogleAI({
+        systemPrompt,
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        temperature: 0.4,
+        maxOutputTokens: 4096,
         tools: [
           {
-            type: "function",
-            function: {
-              name: "draft_fields",
-              description: "Return drafted text for each scenario input field.",
-              parameters: {
-                type: "object",
-                properties: {
-                  fields: {
-                    type: "object",
-                    properties,
-                    required: fields.map((f) => f.id),
-                    additionalProperties: false,
+            functionDeclarations: [
+              {
+                name: "draft_fields",
+                description: "Return drafted text for each scenario input field.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: {
+                    fields: {
+                      type: "OBJECT",
+                      properties,
+                      required: fields.map((f) => f.id),
+                    },
                   },
+                  required: ["fields"],
                 },
-                required: ["fields"],
-                additionalProperties: false,
               },
-            },
+            ],
           },
         ],
-        tool_choice: { type: "function", function: { name: "draft_fields" } },
-      }),
-    });
+      });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded, try again shortly." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      if (
+        aiResponse.functionCall?.name !== "draft_fields" ||
+        !aiResponse.functionCall.args
+      ) {
+        tracer.patchRun(
+          runId,
+          { errorType: "no_function_call" },
+          "No structured response",
         );
+        return new Response(JSON.stringify({ error: "No structured response" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Add funds in Settings → Workspace → Usage." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      const t = await response.text();
-      console.error("AI gateway error", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
+
+      const result = aiResponse.functionCall.args as {
+        fields: Record<string, string>;
+      };
+
+      const promptTokens = aiResponse.usageMetadata?.promptTokenCount;
+      const completionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
+      tracer.patchRun(runId, {
+        promptTokens,
+        completionTokens,
+        totalTokens: aiResponse.usageMetadata?.totalTokenCount,
+        estimatedCostUsd: estimateCost(
+          "gemini-3.1-pro-preview",
+          promptTokens,
+          completionTokens,
+        ),
+        draftedFieldCount: result.fields ? Object.keys(result.fields).length : 0,
+      });
+
+      return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    } catch (aiError) {
+      tracer.patchRun(
+        runId,
+        { errorType: classifyError(aiError) },
+        aiError instanceof Error ? aiError.message : "AI error",
+      );
+      throw aiError;
     }
-
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall?.function?.arguments) {
-      return new Response(JSON.stringify({ error: "No structured response" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const result = JSON.parse(toolCall.function.arguments);
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     console.error("draft-scenario-fields error:", e);
     return new Response(
