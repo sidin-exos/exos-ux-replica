@@ -576,6 +576,8 @@ interface CallLLMResult {
   completionTokens?: number;
   totalTokens?: number;
   estimatedCostUsd: number;
+  provider?: "google_ai_studio" | "nebius";
+  fallbackReason?: string;
 }
 
 async function callLLM(
@@ -613,23 +615,30 @@ async function callLLM(
         temperature: 0.4,
         maxOutputTokens: 8192,
         model: googleModel,
+        // Outer retries here re-enter callGoogleAI; on attempt > 0 we suppress
+        // the Nebius branch so we do not stack a 90s Nebius timeout on top of
+        // a fresh Google chain (~50s) inside the 150s edge-function budget.
+        skipNebiusFallback: attempt > 0,
       });
 
       const content = response.text || "";
       const promptTokens = response.usageMetadata?.promptTokenCount;
       const completionTokens = response.usageMetadata?.candidatesTokenCount;
       const totalTokens = response.usageMetadata?.totalTokenCount;
-      const estimatedCostUsd = estimateCost(googleModel, promptTokens, completionTokens);
+      const provider = response.provider ?? "google_ai_studio";
+      const billingModel = provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : googleModel;
+      const estimatedCostUsd = estimateCost(billingModel, promptTokens, completionTokens);
       tracer.patchRun(spanId, {
         contentLength: content.length,
-        provider: "google_ai_studio",
+        provider,
+        fallbackReason: response.fallbackReason,
         usage: response.usageMetadata,
         promptTokens,
         completionTokens,
         totalTokens,
         estimatedCostUsd,
       });
-      return { content, promptTokens, completionTokens, totalTokens, estimatedCostUsd };
+      return { content, promptTokens, completionTokens, totalTokens, estimatedCostUsd, provider, fallbackReason: response.fallbackReason };
     } catch (err) {
       const status = (err as Error & { status?: number }).status;
       if (status === 503 && attempt < MAX_RETRIES - 1) {
@@ -721,13 +730,14 @@ serve(async (req) => {
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
     const rawGoogleModel = (requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-2.5-pro").replace(/^google\//, "");
+      || "gemini-3.1-pro-preview").replace(/^google\//, "");
     // Server-side model whitelist — prevents cost amplification and model probing
     const ALLOWED_MODELS = [
+      "gemini-3.1-pro-preview",
       "gemini-3-flash-preview",
       "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
     ];
-    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-2.5-pro";
+    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-3.1-pro-preview";
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     // Accept but ignore — always use Google AI Studio
@@ -1191,16 +1201,28 @@ serve(async (req) => {
       // Funnel: report_generated (CP4)
       trackEvent({ userId, event: "report_generated", checkpoint: "CP4", properties: { report_type: scenarioType, scenario_id: scenarioId } });
 
+      const nebiusCycles = cycleResults.filter(r => r.provider === "nebius");
+      const fallbackUsed = nebiusCycles.length > 0;
+      const aggregateProvider = fallbackUsed ? "nebius" : "google_ai_studio";
+
       return new Response(
         JSON.stringify({
           content: responseContent,
           structured: ['1.0','2.0'].includes(deanonEnvelopeObj?.schema_version) ? deanonEnvelopeObj : undefined,
           validation,
           model: googleModel,
-          source: "google_ai_studio",
+          source: aggregateProvider,
           promptId,
           processingTimeMs: processingTime,
           isMultiCycle: true,
+          _meta: {
+            provider: aggregateProvider,
+            fallbackUsed,
+            fallbackReason: nebiusCycles[0]?.fallbackReason,
+            modelUsed: fallbackUsed ? "nvidia/nemotron-3-super-120b-a12b" : googleModel,
+            // Number of cycles (out of 3) that fell back to Nebius
+            nebiusCycleCount: nebiusCycles.length,
+          },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -1215,10 +1237,11 @@ serve(async (req) => {
       model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
     }, { parentRunId, tags: [`model:${googleModel}`] });
 
-    // NOTE: callGoogleAI already retries internally (5 attempts w/ exp backoff)
-    // and falls back to gemini-2.5-flash on overload. Outer retries here just
-    // multiply latency and cause 150s edge-function IDLE_TIMEOUTs.
-    // We keep ONE outer attempt with a single fallback to flash on timeout/5xx.
+    // NOTE: callGoogleAI already runs 5 attempts w/ exp backoff, falls back to
+    // gemini-3-flash-preview on overload, then to Nebius/Nemotron when both
+    // Google tiers fail. Outer retries here multiply latency, so we keep ONE
+    // outer attempt with a single fallback to flash on timeout/5xx, AND we
+    // pass skipNebiusFallback on retries to avoid stacking the Nebius branch.
     const MAX_RETRIES = 2;
     const RETRY_DELAYS = [500];
 
@@ -1230,7 +1253,7 @@ serve(async (req) => {
         }
 
         // On retry, downshift to faster model to fit inside 150s edge timeout
-        const modelForAttempt = attempt === 0 ? googleModel : "gemini-2.5-flash";
+        const modelForAttempt = attempt === 0 ? googleModel : "gemini-3-flash-preview";
 
         const aiResponse = await callGoogleAI({
           systemPrompt,
@@ -1239,6 +1262,7 @@ serve(async (req) => {
           maxOutputTokens: 8192,
           model: modelForAttempt,
           timeoutMs: 45_000,
+          skipNebiusFallback: attempt > 0,
         });
 
         const processingTime = Math.round(performance.now() - startTime);
@@ -1375,11 +1399,18 @@ serve(async (req) => {
         // Funnel: report_generated (CP4)
         trackEvent({ userId, event: "report_generated", checkpoint: "CP4", properties: { report_type: scenarioType, scenario_id: scenarioId } });
 
+        const provider = aiResponse.provider ?? "google_ai_studio";
         return new Response(
           JSON.stringify({
             content: responseContent,
             structured: ['1.0','2.0'].includes(deanonSingleEnvelope?.schema_version) ? deanonSingleEnvelope : undefined,
-            validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
+            validation, model: googleModel, source: provider, usage, promptId, processingTimeMs: processingTime,
+            _meta: {
+              provider,
+              fallbackUsed: provider === "nebius",
+              fallbackReason: aiResponse.fallbackReason,
+              modelUsed: provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : modelForAttempt,
+            },
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

@@ -1,20 +1,26 @@
 /**
- * Google AI Studio shared helper for all EXOS Edge Functions.
+ * AI provider helper for all EXOS Edge Functions.
  *
- * Two-tier model strategy:
- *   Heavy (default): "gemini-2.5-pro" — complex reasoning, tool use, multi-turn (GA, stable)
- *   Light:           "gemini-3.1-flash-lite-preview" — simple single-turn, cost-sensitive
+ * Three-tier fallback chain:
+ *   1. Gemini 3.1 Pro Preview (5 attempts, exp backoff)
+ *   2. Gemini 3 Flash Preview (only when default Pro caller is overloaded)
+ *   3. Nebius Nemotron (last resort when Google is unreachable)
  *
- * Note: gemini-3.1-pro-preview is currently affected by a known Google-side hang
- * (https://github.com/google-gemini/gemini-cli/issues/21937) — avoid until fixed.
+ * The Ghost 429 / RESOURCE_EXHAUSTED risk on gemini-3.1-pro-preview is mitigated
+ * by the Nebius fallback — when Google quota saturates, Nemotron picks up.
+ * Avoid the deprecated gemini-3-pro-preview entirely.
  */
 
-const DEFAULT_MODEL = "gemini-2.5-pro";
-const OVERLOAD_FALLBACK_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.1-pro-preview";
+const OVERLOAD_FALLBACK_MODEL = "gemini-3-flash-preview";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const DEFAULT_TIMEOUT_MS = 60_000;
 const MAX_ATTEMPTS = 5;
 const RETRY_BASE_DELAY_MS = 1_000;
+
+const NEBIUS_BASE_URL = "https://api.tokenfactory.us-central1.nebius.com/v1";
+const NEBIUS_MODEL = "nvidia/nemotron-3-super-120b-a12b";
+const NEBIUS_TIMEOUT_MS = 45_000;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -29,6 +35,9 @@ export interface GoogleAIRequest {
   model?: string;
   tools?: GoogleAITool[];
   timeoutMs?: number;
+  // Set true on outer-retry callers (e.g. sentinel-analysis) to prevent re-triggering
+  // the full Google→Flash→Nebius chain on every retry — avoids 150s edge timeout.
+  skipNebiusFallback?: boolean;
 }
 
 export interface GoogleAITool {
@@ -47,6 +56,8 @@ export interface GoogleAIResponse {
     candidatesTokenCount: number;
     totalTokenCount: number;
   };
+  provider?: "google_ai_studio" | "nebius";
+  fallbackReason?: string;
 }
 
 // ─── Main API call ──────────────────────────────────────────────────────────
@@ -111,13 +122,15 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
       const elapsedMs = Math.round(performance.now() - startTime);
       if (err instanceof Error && err.name === "AbortError") {
         console.error("[GoogleAI] TIMEOUT", JSON.stringify({ model, attempt, elapsedMs, timeoutMs }));
-        const error = new Error(`Google AI Studio request timed out after ${timeoutMs}ms`) as Error & { status: number };
-        error.status = 504;
-        throw error;
+        const timeoutError = new Error(`Google AI Studio request timed out after ${timeoutMs}ms`) as Error & { status: number };
+        timeoutError.status = 504;
+        return await maybeNebiusFallback(request, timeoutError, `google_timeout_${timeoutMs}ms`);
       }
       const errMsg = err instanceof Error ? err.message : String(err);
       console.error("[GoogleAI] NETWORK ERR", JSON.stringify({ model, attempt, elapsedMs, errMsg }));
-      throw err;
+      const networkError = (err instanceof Error ? err : new Error(errMsg)) as Error & { status?: number };
+      networkError.status = networkError.status ?? 502;
+      return await maybeNebiusFallback(request, networkError, "google_network_error");
     } finally {
       clearTimeout(timeoutId);
     }
@@ -137,13 +150,20 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
     const retriable = res.status >= 500 && res.status < 600;
     const overloaded = res.status === 503 || res.status === 429;
 
-    if (attempt === MAX_ATTEMPTS && overloaded && model !== OVERLOAD_FALLBACK_MODEL) {
+    // Pro→Flash escalation only fires for the default Pro caller. Flash-variant
+    // callers (e.g. scenario-tutorial uses gemini-3.1-flash-lite-preview) skip
+    // straight to Nebius rather than getting silently upgraded to a costlier model.
+    if (attempt === MAX_ATTEMPTS && overloaded && model === DEFAULT_MODEL) {
       console.warn(`[GoogleAI] ${res.status} exhausted on ${model}, falling back to ${OVERLOAD_FALLBACK_MODEL}`);
       return callGoogleAI({ ...request, model: OVERLOAD_FALLBACK_MODEL });
     }
 
-    if (!retriable || attempt === MAX_ATTEMPTS) {
+    if (!retriable) {
       throw error;
+    }
+
+    if (attempt === MAX_ATTEMPTS) {
+      return await maybeNebiusFallback(request, error, `google_${res.status}_after_${MAX_ATTEMPTS}_attempts`);
     }
 
     lastError = error;
@@ -187,7 +207,212 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
     text,
     functionCall,
     usageMetadata: data.usageMetadata,
+    provider: "google_ai_studio",
   };
+}
+
+// ─── Nebius / Nemotron fallback ─────────────────────────────────────────────
+
+async function maybeNebiusFallback(
+  request: GoogleAIRequest,
+  originalError: Error & { status?: number },
+  reason: string,
+): Promise<GoogleAIResponse> {
+  if (request.skipNebiusFallback) {
+    throw originalError;
+  }
+  if (!Deno.env.get("NEBIUS_API_KEY")) {
+    console.warn("[GoogleAI] Nebius fallback skipped: NEBIUS_API_KEY not configured");
+    throw originalError;
+  }
+  console.warn(`[GoogleAI] Falling back to Nebius (${reason})`);
+  try {
+    const nebiusResponse = await callNebiusAI(request);
+    nebiusResponse.provider = "nebius";
+    nebiusResponse.fallbackReason = reason;
+    return nebiusResponse;
+  } catch (nebiusError) {
+    const msg = nebiusError instanceof Error ? nebiusError.message : String(nebiusError);
+    console.error(`[GoogleAI] Nebius fallback failed: ${msg}`);
+    // Surface the ORIGINAL Google error to the caller — they expect Google semantics
+    // and the Nebius failure is incidental noise from their perspective.
+    throw originalError;
+  }
+}
+
+async function callNebiusAI(request: GoogleAIRequest): Promise<GoogleAIResponse> {
+  const apiKey = Deno.env.get("NEBIUS_API_KEY");
+  if (!apiKey) {
+    const err = new Error("NEBIUS_API_KEY is not configured") as Error & { status: number };
+    err.status = 500;
+    throw err;
+  }
+
+  const messages: Array<{ role: string; content: string }> = [];
+  if (request.systemPrompt) {
+    messages.push({ role: "system", content: request.systemPrompt });
+  }
+  for (const c of request.contents) {
+    messages.push({
+      role: c.role === "model" ? "assistant" : "user",
+      content: c.parts.map(p => p.text).join("\n"),
+    });
+  }
+
+  const body: Record<string, unknown> = {
+    model: NEBIUS_MODEL,
+    messages,
+    temperature: request.temperature ?? 0.4,
+    max_tokens: request.maxOutputTokens ?? 4096,
+  };
+
+  if (request.tools && request.tools.length > 0) {
+    body.tools = request.tools.flatMap(t =>
+      t.functionDeclarations.map(fn => ({
+        type: "function",
+        function: {
+          name: fn.name,
+          description: fn.description,
+          parameters: convertGoogleSchemaToJsonSchema(fn.parameters),
+        },
+      }))
+    );
+  }
+
+  const timeoutMs = NEBIUS_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  console.log("[Nebius] →", JSON.stringify({
+    model: NEBIUS_MODEL,
+    messageCount: messages.length,
+    temperature: body.temperature,
+    maxTokens: body.max_tokens,
+    hasTools: !!body.tools,
+    timeoutMs,
+  }));
+
+  const startTime = performance.now();
+  let res: Response;
+  try {
+    res = await fetch(`${NEBIUS_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    const elapsedMs = Math.round(performance.now() - startTime);
+    if (err instanceof Error && err.name === "AbortError") {
+      console.error("[Nebius] TIMEOUT", JSON.stringify({ elapsedMs, timeoutMs }));
+      const error = new Error(`Nebius request timed out after ${timeoutMs}ms`) as Error & { status: number };
+      error.status = 504;
+      throw error;
+    }
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[Nebius] NETWORK ERR", JSON.stringify({ elapsedMs, errMsg }));
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  const elapsedMs = Math.round(performance.now() - startTime);
+  console.log("[Nebius] ← HTTP", res.status, "in", elapsedMs, "ms");
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    const error = new Error(`Nebius error ${res.status}: ${errText}`) as Error & { status: number; body: string };
+    error.status = res.status;
+    error.body = errText;
+    throw error;
+  }
+
+  const data = await res.json();
+  const choice = data.choices?.[0];
+  if (!choice) {
+    const error = new Error("Nebius: no choices in response") as Error & { status: number };
+    error.status = 502;
+    throw error;
+  }
+
+  // Mirror Google's SAFETY semantics — callers already handle 400 as "blocked".
+  if (choice.finish_reason === "content_filter") {
+    const error = new Error("Response blocked by Nebius content filter") as Error & { status: number };
+    error.status = 400;
+    throw error;
+  }
+
+  const result: GoogleAIResponse = {
+    text: choice.message?.content ?? "",
+    usageMetadata: data.usage ? {
+      promptTokenCount: data.usage.prompt_tokens ?? 0,
+      candidatesTokenCount: data.usage.completion_tokens ?? 0,
+      totalTokenCount: data.usage.total_tokens ?? 0,
+    } : undefined,
+  };
+
+  // OpenAI returns tool_calls[0].function.arguments as a JSON STRING; Google returns
+  // the args as a parsed object. All our callers do `args.<key>` directly without
+  // JSON.parse, so we must parse here to keep the contract identical.
+  const toolCalls = choice.message?.tool_calls;
+  if (Array.isArray(toolCalls) && toolCalls.length > 0) {
+    const tc = toolCalls[0];
+    let args: Record<string, unknown> = {};
+    const raw = tc.function?.arguments;
+    if (typeof raw === "string") {
+      try {
+        args = JSON.parse(raw);
+      } catch {
+        console.error("[Nebius] tool_call arguments not valid JSON, defaulting to {}");
+      }
+    } else if (raw && typeof raw === "object") {
+      args = raw as Record<string, unknown>;
+    }
+    result.functionCall = { name: tc.function?.name ?? "", args };
+  }
+
+  return result;
+}
+
+// Reverse of convertJsonSchemaToGoogle: callers pass tools through
+// convertOpenAITools (which UPPERCASES type tags for Google); Nebius/OpenAI
+// expects standard lowercase JSON Schema, so we translate before sending.
+function convertGoogleSchemaToJsonSchema(schema: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  const typeMap: Record<string, string> = {
+    OBJECT: "object",
+    STRING: "string",
+    NUMBER: "number",
+    INTEGER: "integer",
+    BOOLEAN: "boolean",
+    ARRAY: "array",
+  };
+
+  if (typeof schema.type === "string") {
+    result.type = typeMap[schema.type] ?? schema.type.toLowerCase();
+  }
+  if (schema.description) {
+    result.description = schema.description;
+  }
+  if (schema.properties && typeof schema.properties === "object") {
+    const props: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(schema.properties as Record<string, Record<string, unknown>>)) {
+      props[k] = convertGoogleSchemaToJsonSchema(v);
+    }
+    result.properties = props;
+  }
+  if (Array.isArray(schema.required)) {
+    result.required = schema.required;
+  }
+  if (schema.items && typeof schema.items === "object") {
+    result.items = convertGoogleSchemaToJsonSchema(schema.items as Record<string, unknown>);
+  }
+
+  return result;
 }
 
 // ─── OpenAI → Google message converter ──────────────────────────────────────

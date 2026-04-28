@@ -15,6 +15,7 @@ import {
 import { useShareableMode } from "@/hooks/useShareableMode";
 
 export type AIModel =
+  | "gemini-3.1-pro-preview"
   | "gemini-3-flash-preview"
   | "gemini-3.1-flash-lite-preview"
   | "gemini-2.5-flash"
@@ -30,9 +31,16 @@ interface ModelOption {
 
 const modelOptions: ModelOption[] = [
   {
+    value: "gemini-3.1-pro-preview",
+    label: "Gemini 3.1 Pro",
+    description: "Latest Pro model (default).",
+    icon: <Brain className="w-4 h-4 text-iris" />,
+    tier: "premium",
+  },
+  {
     value: "gemini-2.5-pro",
     label: "Gemini 2.5 Pro",
-    description: "Stable GA Pro model (default).",
+    description: "Stable GA Pro model.",
     icon: <Brain className="w-4 h-4 text-iris" />,
     tier: "premium",
   },
@@ -64,7 +72,7 @@ interface ModelSelectorProps {
   onChange: (model: AIModel) => void;
 }
 
-export const DEFAULT_MODEL: AIModel = "gemini-2.5-pro";
+export const DEFAULT_MODEL: AIModel = "gemini-3.1-pro-preview";
 
 export function ModelSelector({ value, onChange }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -98,7 +106,7 @@ export function ModelSelector({ value, onChange }: ModelSelectorProps) {
         <div className="p-4 rounded-lg border border-border bg-card/50 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              Select the AI model for analysis. Default: Gemini 2.5 Pro.
+              Select the AI model for analysis. Default: Gemini 3.1 Pro.
             </p>
           </div>
 

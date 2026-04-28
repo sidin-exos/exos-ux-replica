@@ -30,6 +30,14 @@ export interface TokenUsage {
   total_tokens: number;
 }
 
+export interface FallbackMeta {
+  provider: "google_ai_studio" | "nebius";
+  fallbackUsed: boolean;
+  fallbackReason?: string;
+  modelUsed?: string;
+  nebiusCycleCount?: number;
+}
+
 interface SentinelState {
   isProcessing: boolean;
   currentStage: string | null;
@@ -38,6 +46,7 @@ interface SentinelState {
   tokenUsage: TokenUsage | null;
   processingTimeMs: number | null;
   structuredEnvelope: Record<string, unknown> | null;
+  fallbackMeta: FallbackMeta | null;
 }
 
 export function useSentinel(options: UseSentinelOptions = {}) {
@@ -49,6 +58,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
     tokenUsage: null,
     processingTimeMs: null,
     structuredEnvelope: null,
+    fallbackMeta: null,
   });
 
   const analyze = useCallback(
@@ -58,7 +68,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
       industry: IndustryContext | null,
       category: ProcurementCategory | null,
       config?: Partial<PipelineConfig>,
-      model: string = "gemini-2.5-pro",
+      model: string = "gemini-3.1-pro-preview",
       selectedDashboards: string[] = [],
       fileIds: string[] = []
     ): Promise<OrchestratorResponse | null> => {
@@ -159,6 +169,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           tokenUsage: data.usage || null,
           processingTimeMs: data.processingTimeMs || null,
           structuredEnvelope: data.structured || null,
+          fallbackMeta: (data._meta as FallbackMeta) || null,
         });
 
         return result;
@@ -181,6 +192,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
           tokenUsage: null,
           processingTimeMs: null,
           structuredEnvelope: null,
+          fallbackMeta: null,
         });
         return null;
       }
