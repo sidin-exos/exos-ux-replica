@@ -767,14 +767,14 @@ Deliberately trigger the common failure mode for this scenario.`;
   // LangSmith tracing
   const tracer = new LangSmithTracer({ env: "production", feature: "test-data-gen" });
   const runId = tracer.createRun("generate-test-data", "chain", {
-    model: "gemini-2.5-pro",
+    model: "gemini-3.1-pro-preview",
     scenarioType,
     qualityTier,
     deviationType,
     persona: selectedPersona.id,
     trick: trick?.category || "none",
   }, {
-    tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`, "model:gemini-2.5-pro"],
+    tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`, "model:gemini-3.1-pro-preview"],
     metadata: { qualityTier, deviationType, persona: selectedPersona.id },
   });
 
@@ -833,8 +833,10 @@ Deliberately trigger the common failure mode for this scenario.`;
     promptTokens,
     completionTokens,
     totalTokens: response.usageMetadata?.totalTokenCount,
-    estimatedCostUsd: estimateCost(response.modelUsed || "gemini-2.5-pro", promptTokens, completionTokens),
+    estimatedCostUsd: estimateCost(response.modelUsed || "gemini-3.1-pro-preview", promptTokens, completionTokens),
     modelUsed: response.modelUsed,
+    provider: response.provider ?? "google_ai_studio",
+    fallbackReason: response.fallbackReason,
   });
 
   return {
@@ -1012,6 +1014,8 @@ interface CallAIResult {
   error?: string;
   usageMetadata?: { promptTokenCount: number; candidatesTokenCount: number; totalTokenCount: number };
   modelUsed?: string;
+  provider?: "google_ai_studio" | "nebius";
+  fallbackReason?: string;
 }
 
 async function callAI(
@@ -1036,9 +1040,21 @@ async function callAIWithLimit(
     timeoutMs: 45_000,
   };
 
+  // When response.provider === "nebius", the request was answered by Nemotron via the
+  // shared fallback chain in google-ai.ts — surface that in modelUsed for trace accuracy.
+  const resolveModelUsed = (provider: string | undefined, googleModel: string): string =>
+    provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : googleModel;
+
   try {
     const response = await callGoogleAI(base);
-    return { success: true, content: response.text, usageMetadata: response.usageMetadata, modelUsed: "gemini-2.5-pro" };
+    return {
+      success: true,
+      content: response.text,
+      usageMetadata: response.usageMetadata,
+      modelUsed: resolveModelUsed(response.provider, "gemini-3.1-pro-preview"),
+      provider: response.provider,
+      fallbackReason: response.fallbackReason,
+    };
   } catch (error) {
     const status = (error as { status?: number })?.status;
     const primaryMsg = error instanceof Error ? error.message : String(error);
@@ -1049,13 +1065,20 @@ async function callAIWithLimit(
       return { success: false, content: "", error: primaryMsg };
     }
 
-    console.warn(`[TestDataGen] primary model overloaded (${status}), falling back to gemini-2.5-flash`);
+    console.warn(`[TestDataGen] primary model overloaded (${status}), falling back to gemini-3-flash-preview`);
     try {
-      const response = await callGoogleAI({ ...base, model: "gemini-2.5-flash" });
-      return { success: true, content: response.text, usageMetadata: response.usageMetadata, modelUsed: "gemini-2.5-flash" };
+      const response = await callGoogleAI({ ...base, model: "gemini-3-flash-preview" });
+      return {
+        success: true,
+        content: response.text,
+        usageMetadata: response.usageMetadata,
+        modelUsed: resolveModelUsed(response.provider, "gemini-3-flash-preview"),
+        provider: response.provider,
+        fallbackReason: response.fallbackReason,
+      };
     } catch (fallbackError) {
       const fbMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-      console.error("[TestDataGen] fallback gemini-2.5-flash also failed:", fbMsg);
+      console.error("[TestDataGen] fallback gemini-3-flash-preview also failed:", fbMsg);
       return { success: false, content: "", error: fbMsg };
     }
   }

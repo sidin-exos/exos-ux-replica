@@ -149,6 +149,11 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
 
     const retriable = res.status >= 500 && res.status < 600;
     const overloaded = res.status === 503 || res.status === 429;
+    // Auth failures: Google specifically can't answer due to credential / permission
+    // problems. Retrying won't help (the key won't change mid-loop), but Nebius can
+    // still serve the request, so we route straight there.
+    const isAuthFailure = res.status === 401 || res.status === 403 ||
+      (res.status === 400 && /API_KEY_INVALID|API key not valid/i.test(errText));
 
     // Pro→Flash escalation only fires for the default Pro caller. Flash-variant
     // callers (e.g. scenario-tutorial uses gemini-3.1-flash-lite-preview) skip
@@ -156,6 +161,11 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
     if (attempt === MAX_ATTEMPTS && overloaded && model === DEFAULT_MODEL) {
       console.warn(`[GoogleAI] ${res.status} exhausted on ${model}, falling back to ${OVERLOAD_FALLBACK_MODEL}`);
       return callGoogleAI({ ...request, model: OVERLOAD_FALLBACK_MODEL });
+    }
+
+    if (isAuthFailure) {
+      console.warn(`[GoogleAI] auth failure ${res.status} — going straight to Nebius`);
+      return await maybeNebiusFallback(request, error, `google_auth_${res.status}`);
     }
 
     if (!retriable) {

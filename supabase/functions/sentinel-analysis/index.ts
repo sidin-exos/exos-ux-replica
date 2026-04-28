@@ -1150,13 +1150,19 @@ serve(async (req) => {
         }
       }
 
+      const nebiusCycles = cycleResults.filter(r => r.provider === "nebius");
+      const fallbackUsed = nebiusCycles.length > 0;
+      const aggregateProvider = fallbackUsed ? "nebius" : "google_ai_studio";
+
       tracer.patchRun(parentRunId!, {
         success: true,
         isMultiCycle: true,
         cycleCount: 3,
         contentLength: finalContent.length,
         processingTimeMs: processingTime,
-        source: "google_ai_studio",
+        source: aggregateProvider,
+        fallbackUsed,
+        nebiusCycleCount: nebiusCycles.length,
         validationPassed: validation.passed,
         validationConfidence: validation.confidenceScore,
         validationResult: { passed: validation.passed, confidenceScore: validation.confidenceScore, issuesCount: validation.issues?.length ?? 0 },
@@ -1200,10 +1206,6 @@ serve(async (req) => {
       trackOnceEvent({ userId, event: "first_action_completed", checkpoint: "CP3", properties: { action_type: "scenario_started" } });
       // Funnel: report_generated (CP4)
       trackEvent({ userId, event: "report_generated", checkpoint: "CP4", properties: { report_type: scenarioType, scenario_id: scenarioId } });
-
-      const nebiusCycles = cycleResults.filter(r => r.provider === "nebius");
-      const fallbackUsed = nebiusCycles.length > 0;
-      const aggregateProvider = fallbackUsed ? "nebius" : "google_ai_studio";
 
       return new Response(
         JSON.stringify({
@@ -1376,7 +1378,11 @@ serve(async (req) => {
         const inferencePromptTokens = aiResponse.usageMetadata?.promptTokenCount;
         const inferenceCompletionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
         const inferenceTotalTokens = aiResponse.usageMetadata?.totalTokenCount;
-        const modelForAttemptCost = estimateCost(modelForAttempt, inferencePromptTokens, inferenceCompletionTokens);
+        const provider = aiResponse.provider ?? "google_ai_studio";
+        // When Nebius answered, bill against Nemotron pricing — modelForAttempt is the
+        // requested Google model, not the model that actually produced the tokens.
+        const billingModel = provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : modelForAttempt;
+        const modelForAttemptCost = estimateCost(billingModel, inferencePromptTokens, inferenceCompletionTokens);
         tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog,
           promptTokens: inferencePromptTokens,
           completionTokens: inferenceCompletionTokens,
@@ -1386,7 +1392,7 @@ serve(async (req) => {
           ...(['1.0','2.0'].includes(singleParsedEnvelope?.schema_version) ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: singleParsedEnvelope.schema_version, schema_version_emitted: singleParsedEnvelope.schema_version } : {}),
         });
         tracer.patchRun(parentRunId, {
-          success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime,
+          success: true, contentLength: content.length, source: provider, fallbackReason: aiResponse.fallbackReason, processingTimeMs: processingTime,
           promptTokens: inferencePromptTokens,
           completionTokens: inferenceCompletionTokens,
           totalTokens: inferenceTotalTokens,
@@ -1399,7 +1405,6 @@ serve(async (req) => {
         // Funnel: report_generated (CP4)
         trackEvent({ userId, event: "report_generated", checkpoint: "CP4", properties: { report_type: scenarioType, scenario_id: scenarioId } });
 
-        const provider = aiResponse.provider ?? "google_ai_studio";
         return new Response(
           JSON.stringify({
             content: responseContent,
