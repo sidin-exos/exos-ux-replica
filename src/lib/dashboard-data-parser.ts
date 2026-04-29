@@ -637,24 +637,12 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
 
   // ── Group C: riskMatrix + sowAnalysis
   if (group === 'C') {
-    const riskSource: any[] =
-      (ss.risk_register ?? []).length > 0
-        ? ss.risk_register
-        : (ss.risk_items ?? []).length > 0
-        ? ss.risk_items
-        : payload.risk_summary?.risks ?? [];
-
+    const riskSource = collectRiskSource(payload, ss);
     if (riskSource.length > 0) {
-      result.riskMatrix = {
-        risks: riskSource
-          .filter((r: any) => r)
-          .map((r: any) => ({
-            supplier: r.risk_description ?? r.label ?? r.risk ?? 'Unknown risk',
-            impact: normaliseRisk(r.impact),
-            probability: normaliseRisk(r.likelihood ?? r.probability),
-            category: r.category ?? 'Operational',
-          })),
-      };
+      const mapped = riskSource.map(mapRiskItem).filter((r): r is NonNullable<typeof r> => r !== null);
+      if (mapped.length > 0) {
+        result.riskMatrix = { risks: mapped };
+      }
     }
 
     const issues: any[] = ss.issues ?? [];
@@ -870,23 +858,15 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     }
   }
 
-  // ── Universal fallback: riskMatrix from risk_register / risk_items / risk_summary
+  // ── Universal fallback: riskMatrix — searches every known risk-bearing
+  // array name across all 29 scenarios (see RISK_ARRAY_KEYS).
   if (!result.riskMatrix) {
-    const riskSource: any[] =
-      (ss.risk_register ?? []).length > 0 ? ss.risk_register :
-      (ss.risk_items ?? []).length > 0 ? ss.risk_items :
-      (payload.risk_summary?.risks ?? []);
+    const riskSource = collectRiskSource(payload, ss);
     if (riskSource.length > 0) {
-      result.riskMatrix = {
-        risks: riskSource
-          .filter((r: any) => r)
-          .map((r: any) => ({
-            supplier: r.risk_description ?? r.label ?? r.risk ?? 'Unknown risk',
-            impact: normaliseRisk(r.impact),
-            probability: normaliseRisk(r.likelihood ?? r.probability),
-            category: r.category ?? 'Operational',
-          })),
-      };
+      const mapped = riskSource.map(mapRiskItem).filter((r): r is NonNullable<typeof r> => r !== null);
+      if (mapped.length > 0) {
+        result.riskMatrix = { risks: mapped };
+      }
     }
   }
 
