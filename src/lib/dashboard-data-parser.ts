@@ -237,10 +237,76 @@ const SCENARIO_COLORS: Record<string, string> = {
 const TCO_COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444'];
 
 function normaliseRisk(v: unknown): 'high' | 'medium' | 'low' {
-  const s = String(v ?? '').toLowerCase();
-  if (s === 'high' || s === 'red') return 'high';
-  if (s === 'low' || s === 'green') return 'low';
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    // Common 1–5 / 1–10 / 0–100 scoring scales
+    if (v >= 67 || v >= 7 || v >= 4) return 'high';
+    if (v <= 33 || v <= 3 || v <= 1) return 'low';
+    return 'medium';
+  }
+  const s = String(v ?? '').toLowerCase().trim();
+  if (!s) return 'medium';
+  if (s === 'high' || s === 'red' || s === 'critical' || s === 'severe' ||
+      s === 'h' || s === 'r' || s.includes('high') || s.includes('critical') ||
+      s.includes('red') || s.includes('severe')) return 'high';
+  if (s === 'low' || s === 'green' || s === 'minor' || s === 'l' || s === 'g' ||
+      s.includes('low') || s.includes('green') || s.includes('minor') ||
+      s.includes('negligible')) return 'low';
   return 'medium';
+}
+
+// Canonical names of arrays the model uses to express risk-bearing items
+// across all 29 scenarios (S17 risk_register, S18 risks/risk_matrix,
+// S20 risk_dimensions, S25 dependency_risks, S26 risk_factors,
+// S27 prioritised_vulnerabilities, etc.).
+const RISK_ARRAY_KEYS = [
+  'risk_register', 'risk_items', 'risks', 'risk_matrix', 'risk_assessment',
+  'risk_dimensions', 'risk_factors', 'risk_list', 'key_risks', 'top_risks',
+  'dependency_risks', 'prioritised_vulnerabilities', 'prioritized_vulnerabilities',
+  'vulnerabilities', 'threats', 'hazards',
+] as const;
+
+function collectRiskSource(payload: Record<string, any>, ss: Record<string, any>): any[] {
+  // Search scenario_specific first, then payload root, then nested risk_summary.
+  for (const key of RISK_ARRAY_KEYS) {
+    const v = ss?.[key];
+    if (Array.isArray(v) && v.length > 0) return v;
+  }
+  for (const key of RISK_ARRAY_KEYS) {
+    const v = payload?.[key];
+    if (Array.isArray(v) && v.length > 0) return v;
+  }
+  if (Array.isArray(payload?.risk_summary?.risks) && payload.risk_summary.risks.length > 0) {
+    return payload.risk_summary.risks;
+  }
+  return [];
+}
+
+function mapRiskItem(r: any): { supplier: string; impact: 'high' | 'medium' | 'low'; probability: 'high' | 'medium' | 'low'; category: string } | null {
+  if (!r) return null;
+  // Plain string entries — surface them with default medium/medium scoring.
+  if (typeof r === 'string') {
+    const t = r.trim();
+    if (!t) return null;
+    return { supplier: t, impact: 'medium', probability: 'medium', category: 'Operational' };
+  }
+  if (typeof r !== 'object') return null;
+  const title =
+    r.risk_description ?? r.label ?? r.risk ?? r.vulnerability ?? r.dimension ??
+    r.name ?? r.title ?? r.description ?? r.factor ?? r.threat ?? r.hazard ??
+    r.issue ?? null;
+  if (!title || !String(title).trim()) return null;
+  const impactRaw =
+    r.impact ?? r.severity ?? r.severity_if_triggered ?? r.consequence ??
+    r.business_impact ?? r.financial_impact_score ?? r.rag_status;
+  const probRaw =
+    r.likelihood ?? r.probability ?? r.dependency_risk_score ??
+    r.supply_risk_level ?? r.frequency ?? r.rag_status;
+  return {
+    supplier: String(title).trim(),
+    impact: normaliseRisk(impactRaw),
+    probability: normaliseRisk(probRaw),
+    category: r.category ?? r.risk_category ?? r.type ?? 'Operational',
+  };
 }
 
 const GENERIC_PHRASES = [
