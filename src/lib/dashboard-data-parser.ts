@@ -278,15 +278,35 @@ function collectRiskSource(payload: Record<string, any>, ss: Record<string, any>
   if (Array.isArray(payload?.risk_summary?.risks) && payload.risk_summary.risks.length > 0) {
     return payload.risk_summary.risks;
   }
+  // Fallback: severity-prefixed key_findings strings ("Critical: ...", "[High] ...").
+  const kf = ss?.key_findings ?? payload?.key_findings;
+  if (Array.isArray(kf) && kf.length > 0 && kf.some((x: any) =>
+      typeof x === 'string' && /^\s*\[?(critical|high|medium|low)\b/i.test(x))) {
+    return kf;
+  }
   return [];
 }
 
+const SEVERITY_PREFIX_RE = /^\s*\[?(critical|high|medium|low)\b\]?\s*[:\-—]?\s*/i;
+
 function mapRiskItem(r: any): { supplier: string; impact: 'high' | 'medium' | 'low'; probability: 'high' | 'medium' | 'low'; category: string } | null {
   if (!r) return null;
-  // Plain string entries — surface them with default medium/medium scoring.
+  // Plain string entries — surface them with default medium/medium scoring,
+  // unless prefixed with a severity word (Critical/High/Medium/Low).
   if (typeof r === 'string') {
     const t = r.trim();
     if (!t) return null;
+    const m = t.match(SEVERITY_PREFIX_RE);
+    if (m) {
+      const sev = m[1].toLowerCase();
+      const title = t.replace(SEVERITY_PREFIX_RE, '').trim();
+      return {
+        supplier: title || t,
+        impact: normaliseRisk(sev),
+        probability: sev === 'critical' || sev === 'high' ? 'high' : 'medium',
+        category: 'Risk',
+      };
+    }
     return { supplier: t, impact: 'medium', probability: 'medium', category: 'Operational' };
   }
   if (typeof r !== 'object') return null;
