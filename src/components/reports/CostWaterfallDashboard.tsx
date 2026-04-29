@@ -185,7 +185,9 @@ const CostWaterfallDashboard = ({
               {formatCurrency(netCost, effectiveCurrency)}
             </p>
             <p className="text-xs tabular-nums" style={{ color: COLOR_TEAL }}>
-              −{formatCurrency(totalReductions, effectiveCurrency)} saved ({reductionPercent}%)
+              {totalReductions > 0
+                ? `−${formatCurrency(totalReductions, effectiveCurrency)} saved (${reductionPercent}%)`
+                : "Savings not quantified"}
             </p>
           </div>
         </div>
