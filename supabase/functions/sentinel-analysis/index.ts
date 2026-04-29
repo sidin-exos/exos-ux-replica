@@ -523,7 +523,7 @@ function buildServerGroundedPrompts(
 
   // Build schema injection (replaces legacy <dashboard-data> XML instructions)
   const schemaInjection = scenarioGroup
-    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + GROUP_SCHEMAS[scenarioGroup]
+    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + getScenarioSchema(scenarioGroup, scenarioType)
     : '';
 
   const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
