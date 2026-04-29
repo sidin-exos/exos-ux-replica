@@ -604,6 +604,106 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
         currency: payload.financial_model?.currency ?? 'EUR',
       };
     }
+
+    // ── S3 capex-vs-opex: scenario_specific.options[] + sensitivity[] + flexibility_matrix[]
+    const capexOptions: any[] = Array.isArray(ss.options) ? ss.options : [];
+    const validCapexOptions = capexOptions.filter(
+      (o: any) => o?.option_label && (o?.total_capex_nominal != null || o?.total_opex_nominal != null || o?.npv != null)
+    );
+    if (validCapexOptions.length >= 1) {
+      const tcoOpts = validCapexOptions.map((o: any, i: number) => {
+        const total =
+          Number(o.npv ?? 0) !== 0
+            ? Math.abs(Number(o.npv))
+            : Number(o.total_capex_nominal ?? 0) + Number(o.total_opex_nominal ?? 0);
+        return {
+          id: String(i),
+          name: String(o.option_label),
+          color: TCO_COLORS[i % TCO_COLORS.length],
+          totalTCO: total,
+        };
+      });
+
+      const yearSet = new Set<number>();
+      validCapexOptions.forEach((o: any) => {
+        (o.year_by_year ?? []).forEach((yb: any) => {
+          const y = Number(yb?.year);
+          if (Number.isFinite(y)) yearSet.add(y);
+        });
+      });
+      const years = Array.from(yearSet).sort((a, b) => a - b);
+      let capexData: Array<{ year: string; [key: string]: number | string }> = [];
+      if (years.length > 0) {
+        const running: number[] = validCapexOptions.map(() => 0);
+        capexData = years.map((year) => {
+          const row: { year: string; [key: string]: number | string } = { year: `Y${year}` };
+          validCapexOptions.forEach((o: any, i: number) => {
+            const yb = (o.year_by_year ?? []).find((x: any) => Number(x?.year) === year);
+            const cf = Number(yb?.capex_cf ?? 0) + Number(yb?.opex_cf ?? 0);
+            running[i] += cf;
+            row[String(i)] = Math.abs(running[i]);
+          });
+          return row;
+        });
+      }
+      if (capexData.length >= 2) {
+        result.tcoComparison = {
+          options: tcoOpts,
+          data: capexData,
+          currency: payload.financial_model?.currency ?? 'EUR',
+        };
+      }
+
+      const sens: any[] = Array.isArray(ss.sensitivity) ? ss.sensitivity : [];
+      const validSens = sens
+        .map((s: any) => ({
+          name: String(s?.variable ?? ''),
+          baseCase: Number(s?.base),
+          lowCase: Number(s?.low),
+          highCase: Number(s?.high),
+          unit: s?.unit ? String(s.unit) : undefined,
+        }))
+        .filter((s) => s.name && Number.isFinite(s.baseCase) && Number.isFinite(s.lowCase) && Number.isFinite(s.highCase));
+      if (validSens.length > 0) {
+        result.sensitivitySpider = {
+          variables: validSens,
+          baseCaseTotal: Number(validCapexOptions[0]?.npv ?? validCapexOptions[0]?.total_capex_nominal ?? 0) || undefined,
+          currency: payload.financial_model?.currency ?? 'EUR',
+        };
+      }
+
+      const flex: any[] = Array.isArray(ss.flexibility_matrix) ? ss.flexibility_matrix : [];
+      if (flex.length > 0 && validCapexOptions.length >= 2) {
+        const scenarios = validCapexOptions.slice(0, 2).map((o: any, i: number) => ({
+          id: String(o.option_label).toLowerCase().replace(/\s+/g, '-'),
+          name: String(o.option_label),
+          color: TCO_COLORS[i % TCO_COLORS.length],
+        }));
+        const radarData = flex
+          .map((f: any) => {
+            const dim = f?.dimension;
+            const cap = Number(f?.capex_score);
+            const op = Number(f?.opex_score);
+            if (!dim || !Number.isFinite(cap) || !Number.isFinite(op)) return null;
+            return {
+              metric: String(dim),
+              [scenarios[0].name]: Math.max(0, Math.min(100, cap * 20)),
+              [scenarios[1].name]: Math.max(0, Math.min(100, op * 20)),
+            };
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
+        const summary = flex
+          .filter((f: any) => f?.dimension && f?.rationale)
+          .map((f: any) => ({
+            criteria: String(f.dimension),
+            [scenarios[0].name]: String(f.rationale),
+            [scenarios[1].name]: String(f.rationale),
+          }));
+        if (radarData.length > 0) {
+          result.scenarioComparison = { scenarios, radarData, summary };
+        }
+      }
+    }
   }
 
   // ── Group B: supplierScorecard
