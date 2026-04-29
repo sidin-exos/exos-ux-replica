@@ -201,18 +201,6 @@ const Pricing = () => {
           </h1>
         </section>
 
-        {/* Billing interval toggle */}
-        <div className="flex justify-center mb-8">
-          <Tabs value={billingInterval} onValueChange={(v) => setBillingInterval(v as BillingInterval)}>
-            <TabsList>
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
-              <TabsTrigger value="quarterly">
-                Quarterly <span className="ml-2 text-xs text-success">Save up to 33%</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {pricingTiers.map((tier, index) => {
