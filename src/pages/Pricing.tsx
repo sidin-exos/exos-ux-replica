@@ -13,21 +13,42 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const pricingTiers = [
+type BillingInterval = "monthly" | "quarterly";
+
+type PriceVariant = {
+  priceId: string;
+  price: number;
+  displayPerMonth: number;
+};
+
+type PricingTier = {
+  id: string;
+  name: string;
+  subtitle: string;
+  icon: typeof Zap;
+  featured: boolean;
+  comingSoon?: boolean;
+  features: string[];
+  cta: string;
+  monthly?: PriceVariant;
+  quarterly?: PriceVariant;
+};
+
+const pricingTiers: PricingTier[] = [
   {
     id: "smb",
     name: "Starter/SMB",
     subtitle: "For companies without a dedicated procurement function",
-    price: "29",
-    period: "month",
     icon: Zap,
     featured: false,
-    priceId: "price_smb_test",
+    monthly:   { priceId: "price_1TEPHc34h5FyPJ356pnUXQNs", price: 29, displayPerMonth: 29 },
+    quarterly: { priceId: "price_1TEPId34h5FyPJ35CAqDvL37", price: 72, displayPerMonth: 24 },
     features: [
       "Distilled procurement knowledge in one place",
       "29 Analytical scanarios",
@@ -42,12 +63,10 @@ const pricingTiers = [
     id: "professional",
     name: "Professional",
     subtitle: "For dedicated procurement teams",
-    price: "99",
-    annualNote: "or €66/mo billed quarterly till the end of 2026",
-    period: "month",
     icon: Shield,
     featured: true,
-    priceId: "price_professional_test",
+    monthly:   { priceId: "price_1TEPBt34h5FyPJ35YRdvRUc7", price: 99,  displayPerMonth: 99 },
+    quarterly: { priceId: "price_1TEPCj34h5FyPJ35fAYMOadX", price: 197, displayPerMonth: 66 },
     features: [
       "Full EXOS Platform functionality",
       "Risk Assessment Platform",
@@ -63,12 +82,9 @@ const pricingTiers = [
     id: "enterprise",
     name: "Enterprise",
     subtitle: "Custom solutions for large organizations",
-    price: null,
-    period: null,
     icon: Building2,
     featured: false,
     comingSoon: false,
-    priceId: null,
     features: [
       "Everything in Professional, plus:",
       "Custom data integrations",
@@ -121,6 +137,7 @@ const Pricing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
 
   useEffect(() => {
     if (location.hash) {
@@ -130,12 +147,13 @@ const Pricing = () => {
     }
   }, [location.hash]);
 
-  const handleSubscribe = async (tier: typeof pricingTiers[number]) => {
+  const handleSubscribe = async (tier: PricingTier) => {
     if (tier.id === "enterprise") {
       document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
-    if (!tier.priceId) return;
+    const variant = billingInterval === "quarterly" ? tier.quarterly : tier.monthly;
+    if (!variant?.priceId) return;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -146,7 +164,7 @@ const Pricing = () => {
     setLoadingTier(tier.id);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-        body: { price_id: tier.priceId },
+        body: { price_id: variant.priceId },
       });
       if (error) throw error;
       if (!data?.url) throw new Error("No checkout URL returned");
@@ -183,6 +201,18 @@ const Pricing = () => {
           </h1>
         </section>
 
+        {/* Billing interval toggle */}
+        <div className="flex justify-center mb-8">
+          <Tabs value={billingInterval} onValueChange={(v) => setBillingInterval(v as BillingInterval)}>
+            <TabsList>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              <TabsTrigger value="quarterly">
+                Quarterly <span className="ml-2 text-xs text-success">Save up to 33%</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {pricingTiers.map((tier, index) => {
@@ -216,23 +246,29 @@ const Pricing = () => {
                 <CardContent className="pt-4 flex flex-col flex-1">
                   {/* Price */}
                   <div className="text-center mb-6">
-                    {tier.price ? (
-                      <div>
-                        <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-4xl font-display font-bold text-foreground">
-                            €{tier.price}
-                          </span>
-                          <span className="text-muted-foreground">/{tier.period}</span>
-                        </div>
-                        {tier.annualNote && (
-                          <p className="text-xs text-muted-foreground mt-1">{tier.annualNote}</p>
-                        )}
-                      </div>
-                    ) : (
+                    {tier.id === "enterprise" ? (
                       <div className="text-2xl font-display font-semibold text-muted-foreground">
                         Custom Pricing
                       </div>
-                    )}
+                    ) : (() => {
+                      const variant = billingInterval === "quarterly" ? tier.quarterly : tier.monthly;
+                      if (!variant) return null;
+                      return (
+                        <div>
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-4xl font-display font-bold text-foreground">
+                              €{variant.displayPerMonth}
+                            </span>
+                            <span className="text-muted-foreground">/month</span>
+                          </div>
+                          {billingInterval === "quarterly" && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              €{variant.price} billed every 3 months
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Features */}

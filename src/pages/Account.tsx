@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/layout/Header";
-import { Loader2, FileText, BarChart3, FolderOpen, Check, Zap, Shield, Building2 } from "lucide-react";
+import { Loader2, FileText, BarChart3, FolderOpen, Check, Zap, Shield, Building2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useShareableMode } from "@/hooks/useShareableMode";
 import { ModelConfigPanel } from "@/components/settings/ModelConfigPanel";
@@ -13,7 +13,10 @@ import AccountSidebar from "@/components/account/AccountSidebar";
 import TeamManagement from "@/components/account/TeamManagement";
 import BillingSubscriptionCard from "@/components/account/BillingSubscriptionCard";
 import { useAccountData } from "@/hooks/useAccountData";
+import { getPlanName } from "@/lib/stripe-plans";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+
+type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | "incomplete" | "none";
 
 const PLANS = [
   {
@@ -25,6 +28,7 @@ const PLANS = [
     description: "Essential tools for small procurement teams.",
     features: ["AI-powered analysis", "5 reports/month", "Email support"],
     highlight: false,
+    priceId: "price_1TEPHc34h5FyPJ356pnUXQNs" as string | null,
   },
   {
     id: "professional",
@@ -35,6 +39,7 @@ const PLANS = [
     description: "Advanced analytics and team collaboration.",
     features: ["Unlimited simulations", "Priority support", "Market intelligence"],
     highlight: true,
+    priceId: "price_1TEPBt34h5FyPJ35YRdvRUc7" as string | null,
   },
   {
     id: "enterprise",
@@ -45,6 +50,7 @@ const PLANS = [
     description: "Bespoke infrastructure for global operations.",
     features: ["SSO & security", "Dedicated manager", "SLA guarantees"],
     highlight: false,
+    priceId: null as string | null,
   },
 ];
 
@@ -57,6 +63,7 @@ const Account = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [activeSection, setActiveSection] = useState("profile");
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const { profile, usage, emptyFieldCount, updateProfile, isLoading: profileLoading } = useAccountData();
 
@@ -96,8 +103,30 @@ const Account = () => {
     }
   };
 
-  const handleSubscribe = () => {
-    toast({ title: "Coming Soon", description: "Stripe payment integration will be configured shortly." });
+  const handleSubscribe = async (plan: typeof PLANS[number]) => {
+    if (plan.id === "enterprise") {
+      navigate("/pricing#contact");
+      return;
+    }
+    if (!plan.priceId) return;
+
+    setLoadingPlan(plan.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: { price_id: plan.priceId },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error("No checkout URL returned");
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("[checkout] failed", err);
+      toast({
+        title: "Could not start checkout",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+      setLoadingPlan(null);
+    }
   };
 
   const scrollTo = (id: string) => {
@@ -167,7 +196,9 @@ const Account = () => {
             <div id="section-plan" className="space-y-4">
               <div className="flex items-end justify-between">
                 <h2 className="font-display text-lg font-semibold text-foreground">Plan & Usage</h2>
-                <span className="text-xs uppercase tracking-wider text-muted-foreground">Free Plan</span>
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                  {getPlanName(profile?.subscription_price_id)}
+                </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <UsageTile icon={FileText} label="Reports Generated" value="—" />
@@ -176,12 +207,37 @@ const Account = () => {
               </div>
             </div>
 
+            {/* Trial expiration banner */}
+            {profile?.subscription_status === "trialing" && profile?.trial_ends_at && (() => {
+              const daysLeft = Math.ceil(
+                (new Date(profile.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+              );
+              if (daysLeft <= 7 && daysLeft > 0) {
+                return (
+                  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                    <div className="text-sm">
+                      <span className="font-medium text-amber-900 dark:text-amber-100">
+                        Your trial ends in {daysLeft} day{daysLeft !== 1 ? "s" : ""}.
+                      </span>
+                      <a href="/pricing" className="underline ml-2 text-amber-900 dark:text-amber-100">
+                        Upgrade now
+                      </a>
+                      <span className="text-amber-800 dark:text-amber-200"> to keep access.</span>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             {/* Billing & Subscription */}
             <BillingSubscriptionCard
-              status="trialing"
-              planName="Professional"
-              trialEndsAt={null}
-              currentPeriodEnd={null}
+              status={(profile?.subscription_status as SubscriptionStatus | undefined) ?? "none"}
+              planName={getPlanName(profile?.subscription_price_id)}
+              trialEndsAt={profile?.trial_ends_at}
+              currentPeriodEnd={profile?.current_period_end}
+              hasStripeCustomer={!!profile?.stripe_customer_id}
             />
 
             {/* Team (admin-only) */}
@@ -238,9 +294,19 @@ const Account = () => {
                         size="sm"
                         variant={isHighlight ? "secondary" : "outline"}
                         className="w-full"
-                        onClick={handleSubscribe}
+                        disabled={loadingPlan === plan.id}
+                        onClick={() => handleSubscribe(plan)}
                       >
-                        {plan.id === "enterprise" ? "Contact Sales" : "Subscribe"}
+                        {loadingPlan === plan.id ? (
+                          <>
+                            <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                            Redirecting…
+                          </>
+                        ) : plan.id === "enterprise" ? (
+                          "Contact Sales"
+                        ) : (
+                          "Subscribe"
+                        )}
                       </Button>
                     </div>
                   );
