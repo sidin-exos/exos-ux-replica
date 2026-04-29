@@ -193,7 +193,7 @@ const DataQualityDashboard = ({ parsedData }: DataQualityDashboardProps) => {
                           </span>
                           {isMissing ? (
                             <span className="text-[10px] text-warning">
-                              No data — affects analysis
+                              Insufficient detail for analysis
                             </span>
                           ) : (
                             <>
