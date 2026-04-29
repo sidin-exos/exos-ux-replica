@@ -764,10 +764,15 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     return String(v);
   };
 
+  // Replace Unicode comparators that some PDF fonts cannot render reliably.
+  // Em/en dashes and × are intentionally NOT touched — they are part of the brand voice.
+  const sanitiseAscii = (s: string): string =>
+    s.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=');
+
   if (parsed.executive_bullets?.length > 0) {
     parts.push('### Key Findings');
     parsed.executive_bullets.forEach(b => {
-      const text = coerceToString(b).trim();
+      const text = sanitiseAscii(coerceToString(b).trim());
       if (text && text !== '[object Object]') parts.push(`- ${text}`);
     });
     parts.push('');
