@@ -397,7 +397,13 @@ const PDFReportDocument = ({
   const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
   const confidenceLevel = evaluationConfidence ? (evaluationConfidence === "HIGH" ? "High" : "Low") : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
   const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
-  const batnaScore = parsedData?.negotiationPrep?.batna?.strength;
+  const batnaRawScore = parsedData?.negotiationPrep?.batna?.strength;
+  // Normalise legacy 0–100 values to the canonical 0–5 scale.
+  const batnaScore = batnaRawScore == null
+    ? null
+    : Number(batnaRawScore) > 5
+      ? Number((Number(batnaRawScore) / 20).toFixed(1))
+      : Number(Number(batnaRawScore).toFixed(1));
   const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
   const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
