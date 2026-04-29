@@ -818,7 +818,7 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       const fi = isObj ? (r as { financial_impact?: unknown }).financial_impact : null;
       const impact = fi ? ` — ${coerceToString(fi)}` : '';
       idx += 1;
-      parts.push(`${idx}. **[${priority}]** ${action}${impact}`);
+      parts.push(`${idx}. **[${priority}]** ${sanitiseAscii(action)}${sanitiseAscii(impact)}`);
     });
     parts.push('');
   }
