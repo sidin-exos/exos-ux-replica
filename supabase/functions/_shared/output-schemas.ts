@@ -196,7 +196,38 @@ Then ALSO populate scenario_specific with the per-scenario structure below — t
     }
   }
   Classify every savings figure into exactly one of three CIPS categories: HARD (direct P&L impact — price reduction on confirmed volume), SOFT (cost avoidance — benefit not reflected in P&L, e.g. scope reduction), or AVOIDED (inflation-adjusted baseline protection). Do not aggregate across categories. If the user has not specified a category, default to SOFT and add a data_gaps[] entry requesting classification confirmation. Set baseline_verified=true ONLY if the user provided a documented historical baseline, not an estimate.
-- capex-vs-opex (S3): scenario_specific.options — array of >= 2 { option_label, total_capex, total_opex, year_by_year } entries.
+- capex-vs-opex (S3): scenario_specific MUST contain ALL of the following structures:
+  {
+    "options": [
+      {
+        "option_label": "CAPEX (Buy) | OPEX (Lease) | string",
+        "total_capex_nominal": number,         // total upfront + maintenance over period (nominal €)
+        "total_opex_nominal": number,          // total lease/subscription + maintenance over period (nominal €)
+        "npv": number,                         // net present value at WACC; negative = net cost
+        "discount_rate_used_pct": number,      // WACC actually applied; if user gave none, use 8% and add data_gaps[] entry
+        "residual_value": number,              // 0 for OPEX
+        "ifrs16_on_balance_sheet": true | false,
+        "year_by_year": [
+          { "year": number, "capex_cf": number, "opex_cf": number, "discounted_capex": number, "discounted_opex": number }
+        ]
+      }
+    ],
+    "sensitivity": [
+      // 4–6 variables. Recompute the recommended option's NPV at low/high. Never invent variables outside user inputs.
+      { "variable": "WACC | Residual value | Lease rate | Maintenance inflation | Asset lifespan", "base": number, "low": number, "high": number, "unit": "% | € | years" }
+    ],
+    "flexibility_matrix": [
+      // Score each dimension 1–5 for both options.
+      { "dimension": "Upgrade flexibility | Exit cost | Balance-sheet impact | Cash preservation | Tax shield", "capex_score": 1-5, "opex_score": 1-5, "rationale": "string" }
+    ],
+    "cfo_recommendation": {
+      "verdict": "BUY | LEASE | HYBRID",
+      "cash_flow_rationale": "string — refer to year-1 cash impact and payback",
+      "ifrs16_note": "string — on-balance-sheet vs off-balance-sheet implications",
+      "wacc_assumed_pct": number
+    }
+  }
+  Recommendations array MUST follow {priority: HIGH|MEDIUM|LOW, action, financial_impact, next_scenario} contract — DO NOT pad with filler MEDIUM/LOW recommendations to reach a count. Emit only recommendations supported by user-provided data. Never write phrases like "from CAPEX" or "from OPEX" as if they were vendor names — these are option labels, not entities.
 - For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
 
 WORKING CAPITAL (financial_model.working_capital) — OPTIONAL:
