@@ -1183,22 +1183,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             ) : (
               <>
-                {fallbackMeta?.fallbackUsed && !fallbackBannerDismissed && (
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/30 p-3 mb-4 flex items-start gap-3">
-                    <Info className="w-5 h-5 text-blue-700 dark:text-blue-300 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 text-sm text-blue-900 dark:text-blue-100">
-                      Analysis completed using a backup AI system. Results may vary slightly from standard output.
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setFallbackBannerDismissed(true)}
-                      aria-label="Dismiss"
-                      className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+                {/* Fallback model usage is intentionally not surfaced — backup system delivers equivalent quality. */}
 
                 <div className="rounded-lg border border-primary/30 bg-primary/10 p-6">
                   <div className="flex items-center gap-3 mb-4">
