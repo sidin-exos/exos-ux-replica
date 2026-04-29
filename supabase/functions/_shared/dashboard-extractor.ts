@@ -161,14 +161,33 @@ function collectRiskSource(payload: Record<string, any>, ss: Record<string, any>
   if (Array.isArray(payload?.risk_summary?.risks) && payload.risk_summary.risks.length > 0) {
     return payload.risk_summary.risks;
   }
+  // Fallback: severity-prefixed key_findings strings ("Critical: ...", "[High] ...").
+  const kf = ss?.key_findings ?? payload?.key_findings;
+  if (Array.isArray(kf) && kf.length > 0 && kf.some((x: any) =>
+      typeof x === 'string' && /^\s*\[?(critical|high|medium|low)\b/i.test(x))) {
+    return kf;
+  }
   return [];
 }
+
+const SEVERITY_PREFIX_RE = /^\s*\[?(critical|high|medium|low)\b\]?\s*[:\-—]?\s*/i;
 
 function mapRiskItem(r: any): { supplier: string; impact: 'high' | 'medium' | 'low'; probability: 'high' | 'medium' | 'low'; category: string } | null {
   if (!r) return null;
   if (typeof r === 'string') {
     const t = r.trim();
     if (!t) return null;
+    const m = t.match(SEVERITY_PREFIX_RE);
+    if (m) {
+      const sev = m[1].toLowerCase();
+      const title = t.replace(SEVERITY_PREFIX_RE, '').trim();
+      return {
+        supplier: title || t,
+        impact: normaliseRisk(sev),
+        probability: sev === 'critical' || sev === 'high' ? 'high' : 'medium',
+        category: 'Risk',
+      };
+    }
     return { supplier: t, impact: 'medium', probability: 'medium', category: 'Operational' };
   }
   if (typeof r !== 'object') return null;
@@ -394,6 +413,37 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
       currency: payload.financial_model?.currency ?? 'EUR',
     };
   }
+
+  // ── Universal: kraljicQuadrant ─────────────────────────────────────────────
+  // Reads scenario_specific.kraljic_position (S20, S26, S1 and any scenario emitting it).
+  // supply_risk and business_impact are 1-5; map to 0-100 for the quadrant chart.
+  const kraljicSrc = ss?.kraljic_position ?? ss?.kraljic ?? null;
+  if (kraljicSrc && typeof kraljicSrc === 'object') {
+    const sr = Number((kraljicSrc as any).supply_risk ?? (kraljicSrc as any).supplyRisk);
+    const bi = Number((kraljicSrc as any).business_impact ?? (kraljicSrc as any).businessImpact);
+    if (Number.isFinite(sr) && Number.isFinite(bi)) {
+      const name = String(
+        (kraljicSrc as any).label ?? (kraljicSrc as any).category ?? ss?.category_name ?? envelope.scenario_label ?? 'Category'
+      );
+      const scale = (v: number) => Math.max(0, Math.min(100, v <= 5 ? v * 20 : v));
+      result.kraljicQuadrant = {
+        items: [{
+          id: '1',
+          name,
+          supplyRisk: scale(sr),
+          businessImpact: scale(bi),
+          spend: (kraljicSrc as any).quadrant ? String((kraljicSrc as any).quadrant) : undefined,
+        }],
+      };
+    }
+  }
+
+  // NOTE: supplier-concentration-map for PDF requires the full Sankey shape
+  // (categories[]/suppliers[]/flows[]) — handled by the frontend parser via
+  // extractSupplierConcentrationMap. PDF dashboard for concentration is opt-in
+  // and not currently rendered server-side.
+
+
 
   // ── Group A: tcoComparison ─────────────────────────────────────────────────
   // Render with >= 1 vendor. Single-vendor TCO renders as a one-bar chart;

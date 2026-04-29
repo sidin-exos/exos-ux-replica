@@ -266,8 +266,50 @@ Mark incomplete sections with [DATA NEEDED: description] in the content. Never f
 Populate scenario_specific based on the scenario (e.g. issues/missing_clauses for SOW Critic, risk_register for Risk Assessment, risk items with rag_status for Risk Matrix, entitlements/compliance_gaps for Licensing Audit, risk_dimensions for Category Risk).
 Every risk must reference a regulatory standard or contractual clause. Use RAG status consistently.
 
-S20 Category Risk Evaluation — additionally populate scenario_specific.concentration when supplier-to-category spend data is available (per §5.5 of the schema):
-${CONCENTRATION_SCHEMA_FRAGMENT}`,
+S20 Category Risk Evaluator — scenario_specific MUST contain ALL of the following structures (eight promised deliverables):
+{
+  "category_risk_score": {
+    "overall": 0-100,
+    "rag": "RED | AMBER | GREEN",
+    "decision": "PROCEED | PROCEED_WITH_CAUTION | HALT"
+  },
+  "score_breakdown": [
+    // 5 dimensions, each scored 0-100. Always include all five.
+    { "dimension": "Supply | Regulatory | Financial | Geopolitical | Demand", "score": 0-100, "rag": "RED|AMBER|GREEN", "rationale": "string" }
+  ],
+  "market_brief": {
+    "dynamics": "string — 2-3 sentences on supply/demand balance",
+    "price_outlook_pct": number,                       // expected 12-month price change %
+    "key_trends": ["string", "..."]                     // 3-5 bullets
+  },
+  "supply_health": {
+    "supplier_count": number | null,
+    "top3_share_pct": number | null,
+    "hhi": number | null,
+    "single_point_failures": ["string", "..."]
+  },
+  "budget_risk_forecast": {
+    "p10_pct": number,                                  // best-case variance vs budget
+    "p50_pct": number,                                  // median variance
+    "p90_pct": number,                                  // worst-case variance
+    "drivers": ["string", "..."]
+  },
+  "sow_ambiguity_findings": [
+    { "clause": "string", "severity": "CRITICAL|HIGH|MEDIUM|LOW", "recommended_fix": "string" }
+  ],
+  "recommended_contract_terms": [
+    { "clause_type": "DPA | NIS2 compliance | AI Act | Exit | Audit | Price cap | SLA | Indexation", "rationale": "string", "priority": "MUST|SHOULD|NICE_TO_HAVE" }
+  ],
+  "kraljic_position": {
+    "supply_risk": 1-5,                                 // 1 = abundant, 5 = scarce
+    "business_impact": 1-5,                             // 1 = low spend/criticality, 5 = critical
+    "quadrant": "Strategic | Leverage | Bottleneck | Routine"
+  },
+  // Concentration — see fragment below; populate even when only relative shares are known.
+  ${CONCENTRATION_SCHEMA_FRAGMENT}
+}
+
+Recommendations array MUST follow {priority: HIGH|MEDIUM|LOW, action, financial_impact, next_scenario}. Do NOT pad with filler MEDIUM/LOW items — emit only recommendations supported by user-provided data.`,
 
   D: `GROUP D PAYLOAD SCHEMA (Strategic Mentorship — S21–S27):
 {
