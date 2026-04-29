@@ -106,7 +106,7 @@ At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION
 function buildSynthesizerPrompt(scenarioGroup: string | null, scenarioId: string | null): string {
   // Synthesizer uses structured JSON output via schema injection
   const schemaInjection = scenarioGroup
-    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + GROUP_SCHEMAS[scenarioGroup]
+    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + getScenarioSchema(scenarioGroup, scenarioId)
     : '';
 
   const sid = scenarioId ? SCENARIO_ID_REGISTRY[scenarioId] || scenarioId : 'unknown';
