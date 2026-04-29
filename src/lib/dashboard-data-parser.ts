@@ -288,6 +288,67 @@ function parseAmount(raw: any): number | null {
 }
 
 /**
+ * Extract savings/reduction components for the Cost Breakdown dashboard.
+ * Sources, in priority order:
+ *  1. scenario_specific.savings_breakdown[] (S4 schema — { lever, annual_savings, ... })
+ *  2. Quantified recommendations[] (parses €/%/K/M from action + financial_impact)
+ *
+ * % values are converted to absolute amounts using the gross cost as base when available.
+ * Returns at most 6 entries to keep the dashboard legible.
+ */
+function extractReductionComponents(
+  ss: Record<string, any>,
+  recommendations: any[],
+  costComponents: Array<{ name: string; value: number; type: 'cost' }>,
+): Array<{ name: string; value: number; type: 'reduction' }> {
+  const out: Array<{ name: string; value: number; type: 'reduction' }> = [];
+  const grossCost = costComponents.reduce((s, c) => s + c.value, 0);
+
+  // 1. S4 savings_breakdown (preferred, structured)
+  const savingsBreakdown: any[] = Array.isArray(ss?.savings_breakdown) ? ss.savings_breakdown : [];
+  for (const s of savingsBreakdown) {
+    const annual = parseAmount(s?.annual_savings);
+    const oneOff = parseAmount(s?.one_off_savings);
+    const total = (annual ?? 0) + (oneOff ?? 0);
+    if (s?.lever && total > 0) {
+      out.push({ name: String(s.lever), value: total, type: 'reduction' });
+    }
+  }
+
+  // 2. Fallback: parse quantified recommendations (€/$/£ amounts or % of gross)
+  if (out.length === 0 && Array.isArray(recommendations)) {
+    for (const r of recommendations) {
+      if (!r?.action) continue;
+      const text = `${r.financial_impact ?? ''} ${r.action}`;
+      // Try absolute amounts first: €23,280 / $1.5M / EUR 100K
+      const amountMatch = text.match(/(?:€|\$|£|EUR|USD|GBP)\s?([\d.,]+\s?[KMB]?)/i);
+      let value: number | null = null;
+      let label = String(r.action).slice(0, 60).trim();
+      if (amountMatch) {
+        value = parseAmount(amountMatch[1]);
+      } else {
+        // Try percentage range or single % — use midpoint of range, applied to gross cost
+        const pctRange = text.match(/(\d+(?:\.\d+)?)\s?[-–]\s?(\d+(?:\.\d+)?)\s?%/);
+        const pctSingle = !pctRange ? text.match(/(\d+(?:\.\d+)?)\s?%/) : null;
+        if (pctRange && grossCost > 0) {
+          const mid = (Number(pctRange[1]) + Number(pctRange[2])) / 2;
+          value = (grossCost * mid) / 100;
+        } else if (pctSingle && grossCost > 0) {
+          value = (grossCost * Number(pctSingle[1])) / 100;
+        }
+      }
+      if (value !== null && value > 0) {
+        // Strip leading list markers/numbering for cleaner labels
+        label = label.replace(/^[-•\d.\s\[\]]+/, '').replace(/^\[(?:high|medium|low|critical)\]\s*/i, '');
+        out.push({ name: label.slice(0, 50), value, type: 'reduction' });
+      }
+    }
+  }
+
+  return out.slice(0, 6);
+}
+
+/**
  * Extract DashboardData from an EXOS Output Schema v1.0 envelope.
  * Accepts a pre-parsed object (frontend already has the parsed object).
  * Re-serialises internally to reuse the same extraction logic as the shared module.
