@@ -255,7 +255,10 @@ Populate scenario_specific based on the scenario, using the structures below ver
     "batna": {
       "buyer_batna": null,
       "buyer_batna_value": null,
-      "supplier_batna_estimated": null
+      "supplier_batna_estimated": null,
+      "batna_strength_pct": null,
+      "buyer_batna_description": null,
+      "batna_improvement_actions": []
     },
     "zopa": {
       "buyer_walk_away": "[CONFIDENTIAL — MASK IN SHARED EXPORTS]",
@@ -264,12 +267,37 @@ Populate scenario_specific based on the scenario, using the structures below ver
       "zopa_exists": true
     },
     "opening_position": null,
-    "negotiation_tactics": [],
+    "negotiation_tactics": [
+      { "title": null, "description": null }
+    ],
+    "negotiation_sequence": [
+      { "step": "Opening | Anchor | Value Exchange | Concession | Walk-away Trigger | Close", "detail": null }
+    ],
+    "counter_arguments": [
+      { "supplier_position": null, "buyer_response": null, "evidence": null }
+    ],
+    "walk_away_plan": {
+      "trigger_conditions": [],
+      "exit_steps": [],
+      "communication_script": null
+    },
+    "value_creation": [
+      { "opportunity": null, "buyer_benefit": null, "supplier_benefit": null }
+    ],
+    "risk_register": [
+      { "risk": null, "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": null }
+    ],
     "leverage_analysis": {
       "buyer_leverage_factors": [],
       "supplier_leverage_factors": [],
       "power_balance": "BUYER_ADVANTAGE | BALANCED | SUPPLIER_ADVANTAGE"
     },
+    "leverage_points": [
+      { "title": null, "description": null }
+    ],
+    "negotiation_scenarios": [
+      { "name": "Conservative | Aggressive | Hybrid", "expected_savings_pct": null, "estimated_timeline_months": null, "risk_level": "LOW | MEDIUM | HIGH" }
+    ],
     "financial_outcome_range": {
       "optimistic": null,
       "realistic": null,
