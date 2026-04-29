@@ -741,15 +741,43 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
 
   if (parsed.recommendations?.length > 0) {
     parts.push('### Recommendations');
+    // Normalise free-form priority labels to the canonical 4-tier scale.
+    const normalisePriority = (raw: unknown): string => {
+      if (typeof raw !== 'string') return '';
+      const v = raw.trim().toLowerCase();
+      if (!v) return '';
+      if (/(critical|p0|urgent|immediate|blocker|severe)/.test(v)) return 'Critical';
+      if (/(high|mandatory|must|p1|important)/.test(v)) return 'High';
+      if (/(low|nice[- ]?to[- ]?have|optional|p3|minor)/.test(v)) return 'Low';
+      if (/(medium|moderate|should|p2)/.test(v)) return 'Medium';
+      // Numeric scales: 1 = highest
+      const n = Number(v);
+      if (!Number.isNaN(n)) {
+        if (n <= 1) return 'Critical';
+        if (n === 2) return 'High';
+        if (n === 3) return 'Medium';
+        return 'Low';
+      }
+      // Unknown label: title-case it rather than discarding
+      return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+    };
+    // Heuristic priority inference for plain-string recommendations.
+    const inferPriority = (action: string): string => {
+      const a = action.toLowerCase();
+      if (/(immediately|halt|stop|urgent|critical|breach|before .* (deadline|expir)|by next week|this week)/.test(a)) return 'High';
+      if (/(must|required|mandatory|do not|cannot|avoid|prevent|eliminate|prior to)/.test(a)) return 'High';
+      if (/(consider|explore|investigate|evaluate|review|assess|nice[- ]to[- ]have|where possible|opportunistic)/.test(a)) return 'Low';
+      return 'Medium';
+    };
     let idx = 0;
     parsed.recommendations.forEach((r) => {
       const isObj = r && typeof r === 'object';
-      const priority = (isObj && typeof (r as { priority?: unknown }).priority === 'string')
-        ? (r as { priority: string }).priority
-        : 'Medium';
+      const rawPriority = isObj ? (r as { priority?: unknown }).priority : undefined;
       const actionRaw = isObj ? (r as { action?: unknown }).action : r;
       const action = (coerceToString(actionRaw).trim() || coerceToString(r).trim());
       if (!action || action === '[object Object]' || action === 'See details') return;
+      const normalised = normalisePriority(rawPriority);
+      const priority = normalised || inferPriority(action);
       const fi = isObj ? (r as { financial_impact?: unknown }).financial_impact : null;
       const impact = fi ? ` — ${coerceToString(fi)}` : '';
       idx += 1;
