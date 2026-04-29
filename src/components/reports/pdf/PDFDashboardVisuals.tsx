@@ -81,48 +81,9 @@ const sectionTitleWrapperStyle = {
   paddingBottom: 4,
 };
 
-export const PDFDashboardPlaceholder = ({ name }: { name: string; themeMode?: PdfThemeMode }) => {
-  const s = getPdfStyles();
-  const c = getPdfColors();
-  return (
-    <View style={s.dashboardCard}>
-      <View style={s.dashboardHeader}>
-        <View style={s.dashboardIcon} />
-        <View>
-          <Text style={s.dashboardTitle}>{name}</Text>
-          <Text style={s.dashboardSubtitle}>Visualization unavailable</Text>
-        </View>
-      </View>
-      <View style={{ padding: 12, alignItems: "center" }}>
-        <Text style={{ fontSize: 9, color: c.textMuted, textAlign: "center" }}>
-          This dashboard doesn't have a PDF visual yet.
-        </Text>
-      </View>
-    </View>
-  );
-};
+export const PDFDashboardPlaceholder = (_props: { name: string; themeMode?: PdfThemeMode }) => null;
 
-const PDFNoDataPlaceholder = ({ name }: { name: string; themeMode?: PdfThemeMode }) => {
-  return (
-    <View style={{
-      backgroundColor: "#F9FAFB",
-      padding: 24,
-      alignItems: "center",
-      justifyContent: "center",
-      minHeight: 150,
-      borderWidth: 1,
-      borderStyle: "dashed",
-      borderColor: "#D1D5DB",
-    }}>
-      <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: C.text, marginBottom: 8 }}>
-        {name}
-      </Text>
-      <Text style={{ fontSize: 10, fontFamily: "Helvetica", color: C.muted, textAlign: "center", lineHeight: 1.5 }}>
-        Visualization data could not be extracted automatically.{"\n"}Please refer to the detailed analysis section.
-      </Text>
-    </View>
-  );
-};
+const PDFNoDataPlaceholder = (_props: { name: string; themeMode?: PdfThemeMode }) => null;
 
 /** Map dashboard type to the corresponding key in DashboardData */
 const dashboardDataKey: Record<string, keyof DashboardData> = {
