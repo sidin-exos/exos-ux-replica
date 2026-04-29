@@ -836,7 +836,7 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     parts.push('💡 **To strengthen this analysis:**');
     validGaps.slice(0, 3).forEach(g => {
       // Strip redundant prefix that duplicates the heading
-      const cleaned = g.resolution.replace(/^To strengthen this analysis,?\s*/i, '');
+      const cleaned = sanitiseAscii(g.resolution.replace(/^To strengthen this analysis,?\s*/i, ''));
       // Capitalise the first letter after stripping
       const resolution = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
       parts.push(`- ${resolution}`);
