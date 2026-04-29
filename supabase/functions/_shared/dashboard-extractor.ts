@@ -208,14 +208,31 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   }
 
   // ── Universal: dataQuality ─────────────────────────────────────────────────
+  // Respect optional status/coverage hints from the AI. Items in data_gaps
+  // are not necessarily fully missing — the model often flags fields with
+  // partial detail. Default to 'partial' (coverage 2) so the dashboard does
+  // not show "0 / 5" for inputs the user actually provided.
   const validGaps = dataGaps.filter(isValidGap);
   if (validGaps.length > 0) {
+    const VALID_STATUSES = ['complete', 'partial', 'missing'] as const;
     result.dataQuality = {
-      fields: validGaps.map((g: any) => ({
-        field: g.field,
-        status: 'missing' as const,
-        coverage: 0,
-      })),
+      fields: validGaps.map((g: any) => {
+        const rawCoverage = Number(g?.coverage);
+        const hasCoverage = Number.isFinite(rawCoverage);
+        const rawStatus = String(g?.status ?? '').toLowerCase();
+        let status: 'complete' | 'partial' | 'missing';
+        if (VALID_STATUSES.includes(rawStatus as any)) {
+          status = rawStatus as 'complete' | 'partial' | 'missing';
+        } else if (hasCoverage) {
+          status = rawCoverage >= 4 ? 'complete' : rawCoverage >= 1 ? 'partial' : 'missing';
+        } else {
+          status = 'partial';
+        }
+        const coverage = hasCoverage
+          ? Math.max(0, Math.min(5, rawCoverage))
+          : status === 'complete' ? 5 : status === 'partial' ? 2 : 0;
+        return { field: g.field, status, coverage };
+      }),
       limitations: validGaps.map((g: any) => ({
         title: g.field,
         impact: g.impact,
