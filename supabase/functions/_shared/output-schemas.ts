@@ -913,6 +913,136 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     parts.push('');
   }
 
+  // ── S26 Disruption Management — render the three promised deliverables.
+  // (Emergency Map / Impact Table / Draft Letter + alt sourcing & comms matrices.)
+  if (parsed.scenario_id === 'S26') {
+    const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, unknown>;
+    const fmtMoney = (v: unknown): string => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+      if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+      return `€${n.toFixed(0)}`;
+    };
+    const rp = (ss.response_plan ?? {}) as Record<string, any>;
+    const stages: Array<{ key: string; label: string; iconWords: string }> = [
+      { key: 'stage_1_assess', label: 'Stage 1 — Assess', iconWords: 'actions' },
+      { key: 'stage_2_contain', label: 'Stage 2 — Contain', iconWords: 'immediate_actions' },
+      { key: 'stage_3_recover', label: 'Stage 3 — Recover', iconWords: 'actions' },
+      { key: 'stage_4_prevent', label: 'Stage 4 — Prevent', iconWords: 'recurrence_prevention_checklist' },
+    ];
+    const stagesPresent = stages.some(s => rp[s.key]);
+    if (stagesPresent) {
+      parts.push('### Emergency Map — 4-Stage Response Plan');
+      stages.forEach(s => {
+        const stage = rp[s.key] as Record<string, any> | undefined;
+        if (!stage) return;
+        const owner = stage.owner ? ` _(Owner: ${stage.owner})_` : '';
+        const dur = stage.target_duration_hours
+          ? ` _(Target: ${stage.target_duration_hours}h)_`
+          : stage.target_duration_days
+            ? ` _(Target: ${stage.target_duration_days}d)_`
+            : '';
+        parts.push(`**${s.label}**${owner}${dur}`);
+        const actions: unknown[] = Array.isArray(stage.actions) ? stage.actions
+          : Array.isArray(stage.immediate_actions) ? stage.immediate_actions
+          : Array.isArray(stage.recurrence_prevention_checklist) ? stage.recurrence_prevention_checklist
+          : [];
+        actions.slice(0, 6).forEach(a => {
+          const t = sanitiseAscii(coerceToString(a).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+        if (s.key === 'stage_4_prevent' && Array.isArray(stage.process_changes)) {
+          stage.process_changes.slice(0, 4).forEach((p: unknown) => {
+            const t = sanitiseAscii(coerceToString(p).trim());
+            if (t) parts.push(`- _Process change:_ ${t}`);
+          });
+        }
+        parts.push('');
+      });
+    }
+
+    // Alternative supply shortlist
+    const altOptions: any[] = Array.isArray(rp.stage_3_recover?.alternative_supply_options)
+      ? rp.stage_3_recover.alternative_supply_options
+      : [];
+    const validAlts = altOptions.filter(o => o && (o.supplier_label || o.option_label));
+    if (validAlts.length > 0) {
+      parts.push('### Alternative Sourcing Shortlist');
+      parts.push('| Option | Lead time | Cost premium | Capacity | Readiness |');
+      parts.push('|---|---|---|---|---|');
+      validAlts.slice(0, 8).forEach(o => {
+        const name = sanitiseAscii(coerceToString(o.option_label ?? o.supplier_label));
+        const lt = o.lead_time_days != null ? `${o.lead_time_days}d` : '—';
+        const cp = o.cost_premium_pct != null ? `+${o.cost_premium_pct}%` : '—';
+        const cap = o.capacity_available != null ? sanitiseAscii(coerceToString(o.capacity_available)) : '—';
+        const rd = o.contractual_readiness ? sanitiseAscii(coerceToString(o.contractual_readiness)).replace(/_/g, ' ') : '—';
+        parts.push(`| ${name} | ${lt} | ${cp} | ${cap} | ${rd} |`);
+      });
+      parts.push('');
+    }
+
+    // Impact Table
+    const impactRows: any[] = Array.isArray(ss.impact_scenarios) ? ss.impact_scenarios : [];
+    const validImpact = impactRows.filter(r => r && (r.delay_label || r.delay_weeks != null));
+    if (validImpact.length > 0) {
+      parts.push('### Impact Table — Financial Loss by Delay Scenario');
+      parts.push('| Delay | Revenue loss | Cumulative loss | Mitigation cost | Net impact |');
+      parts.push('|---|---|---|---|---|');
+      validImpact.slice(0, 8).forEach(r => {
+        const label = sanitiseAscii(coerceToString(r.delay_label ?? `${r.delay_weeks}w`));
+        parts.push(`| ${label} | ${fmtMoney(r.revenue_loss)} | ${fmtMoney(r.cumulative_loss)} | ${fmtMoney(r.mitigation_cost)} | ${fmtMoney(r.net_impact)} |`);
+      });
+      parts.push('');
+    }
+
+    // Stakeholder communications matrix
+    const comms: any[] = Array.isArray(ss.stakeholder_comms) ? ss.stakeholder_comms : [];
+    const validComms = comms.filter(c => c && (c.stakeholder_group || c.key_message));
+    if (validComms.length > 0) {
+      parts.push('### Stakeholder Communications Matrix');
+      parts.push('| Stakeholder | Key message | Channel | Timing |');
+      parts.push('|---|---|---|---|');
+      validComms.slice(0, 8).forEach(c => {
+        const sg = sanitiseAscii(coerceToString(c.stakeholder_group ?? '—'));
+        const km = sanitiseAscii(coerceToString(c.key_message ?? '—'));
+        const ch = sanitiseAscii(coerceToString(c.delivery_channel ?? '—'));
+        const tm = sanitiseAscii(coerceToString(c.timing ?? '—'));
+        parts.push(`| ${sg} | ${km} | ${ch} | ${tm} |`);
+      });
+      parts.push('');
+    }
+
+    // Draft Letters — claim letter + customer + internal comms templates
+    const claim = (ss.claim_letter_template ?? null) as Record<string, any> | null;
+    const custTpl = sanitiseAscii(coerceToString(rp.stage_2_contain?.customer_communication_template ?? ''));
+    const intTpl = sanitiseAscii(coerceToString(rp.stage_2_contain?.internal_communication_template ?? ''));
+    const claimBody = sanitiseAscii(coerceToString(claim?.body ?? ''));
+    if (claimBody || custTpl || intTpl) {
+      parts.push('### Draft Letters & Communications');
+      if (claimBody) {
+        parts.push(`**Claim / Partner-Assistance Letter**`);
+        if (claim?.addressee) parts.push(`_Addressee: ${sanitiseAscii(coerceToString(claim.addressee))}_`);
+        if (claim?.subject) parts.push(`_Subject: ${sanitiseAscii(coerceToString(claim.subject))}_`);
+        parts.push('');
+        parts.push(claimBody);
+        parts.push('');
+      }
+      if (custTpl) {
+        parts.push('**Customer Communication Template**');
+        parts.push('');
+        parts.push(custTpl);
+        parts.push('');
+      }
+      if (intTpl) {
+        parts.push('**Internal Communication Template**');
+        parts.push('');
+        parts.push(intTpl);
+        parts.push('');
+      }
+    }
+  }
+
   const GENERIC_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
   const validGaps = (parsed.data_gaps ?? []).filter(g => {
     if (!g?.field || !g?.impact || !g?.resolution) return false;
