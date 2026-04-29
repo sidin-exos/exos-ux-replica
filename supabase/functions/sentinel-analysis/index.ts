@@ -1016,7 +1016,7 @@ serve(async (req) => {
       // Inject schema for structured output if scenario type is known
       const legacyGroup = scenarioType ? SCENARIO_GROUP_REGISTRY[scenarioType] : null;
       if (legacyGroup) {
-        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[legacyGroup] + '\n\n' + GROUP_SCHEMAS[legacyGroup];
+        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[legacyGroup] + '\n\n' + getScenarioSchema(legacyGroup, scenarioType);
       }
       userPrompt = attachedDocumentsXml
         ? `${anonymizedUserPrompt}\n\n${attachedDocumentsXml}`
