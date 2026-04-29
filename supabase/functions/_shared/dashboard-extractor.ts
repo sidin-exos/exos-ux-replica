@@ -395,6 +395,57 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
     };
   }
 
+  // ── Universal: kraljicQuadrant ─────────────────────────────────────────────
+  // Reads scenario_specific.kraljic_position (S20, S26, S1 and any scenario emitting it).
+  // supply_risk and business_impact are 1-5; map to 0-100 for the quadrant chart.
+  const kraljicSrc = ss?.kraljic_position ?? ss?.kraljic ?? null;
+  if (kraljicSrc && typeof kraljicSrc === 'object') {
+    const sr = Number((kraljicSrc as any).supply_risk ?? (kraljicSrc as any).supplyRisk);
+    const bi = Number((kraljicSrc as any).business_impact ?? (kraljicSrc as any).businessImpact);
+    if (Number.isFinite(sr) && Number.isFinite(bi)) {
+      const name = String(
+        (kraljicSrc as any).label ?? (kraljicSrc as any).category ?? ss?.category_name ?? envelope.scenario_label ?? 'Category'
+      );
+      const scale = (v: number) => Math.max(0, Math.min(100, v <= 5 ? v * 20 : v));
+      result.kraljicQuadrant = {
+        items: [{
+          id: '1',
+          name,
+          supplyRisk: scale(sr),
+          businessImpact: scale(bi),
+          spend: (kraljicSrc as any).quadrant ? String((kraljicSrc as any).quadrant) : undefined,
+        }],
+      };
+    }
+  }
+
+  // ── Universal: supplierConcentrationMap ────────────────────────────────────
+  // Reads scenario_specific.concentration (S20, S24, S25, S27). Group-agnostic.
+  const conc: any = (ss as any)?.concentration;
+  if (conc && typeof conc === 'object') {
+    const suppliers = Array.isArray(conc.by_supplier) ? conc.by_supplier : [];
+    const validSuppliers = suppliers
+      .map((s: any) => ({
+        supplier_label: String(s?.supplier_label ?? s?.label ?? '').trim(),
+        spend_share_pct: Number(s?.spend_share_pct ?? s?.share_pct ?? 0),
+        annual_spend: s?.annual_spend != null ? Number(s.annual_spend) : null,
+        country: s?.country ?? null,
+        risk_flags: Array.isArray(s?.risk_flags) ? s.risk_flags : [],
+      }))
+      .filter((s: any) => s.supplier_label && Number.isFinite(s.spend_share_pct));
+    const top3 = Number(conc.top3_share_pct ?? conc.top_3_share_pct);
+    if (validSuppliers.length > 0 || Number.isFinite(top3)) {
+      (result as any).supplierConcentrationMap = {
+        suppliers: validSuppliers,
+        top3_share_pct: Number.isFinite(top3) ? top3 : null,
+        hhi: conc.hhi != null ? Number(conc.hhi) : null,
+        single_source_count: conc.single_source_count != null ? Number(conc.single_source_count) : null,
+        currency: conc.currency ?? 'EUR',
+      };
+    }
+  }
+
+
   // ── Group A: tcoComparison ─────────────────────────────────────────────────
   // Render with >= 1 vendor. Single-vendor TCO renders as a one-bar chart;
   // the AI is instructed to emit >= 2 vendors but we don't blank the dashboard
