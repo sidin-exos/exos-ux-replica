@@ -17,6 +17,12 @@ export interface ProfileData {
   organization_id: string | null;
   role: string;
   created_at: string;
+  subscription_status: string | null;
+  subscription_price_id: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
 }
 
 export interface UsageStats {

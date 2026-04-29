@@ -7,7 +7,36 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
+// Detect content that is actually a raw JSON envelope or fenced JSON block
+// rather than human-readable markdown. This guards against AI fallback paths
+// that occasionally leak structured payloads (including internal metadata
+// such as shadow_log) into the user-facing output.
+function looksLikeRawJsonPayload(content: string): boolean {
+  const trimmed = content.trim();
+  if (!trimmed) return false;
+  if (/```\s*json/i.test(trimmed)) return true;
+  if (/"shadow_log"\s*:/i.test(trimmed)) return true;
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    try { JSON.parse(trimmed); return true; } catch { return false; }
+  }
+  return false;
+}
+
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+  if (looksLikeRawJsonPayload(content)) {
+    return (
+      <div className={cn('text-foreground', className)}>
+        <div className="rounded-lg border border-warning/30 bg-warning/5 p-4 text-sm">
+          <p className="font-semibold text-warning mb-1">Analysis output unavailable</p>
+          <p className="text-muted-foreground">
+            The model returned a structured payload without a readable summary.
+            Please retry the analysis to regenerate a complete report.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn('text-foreground', className)}>
       <ReactMarkdown

@@ -53,3 +53,18 @@ verify_jwt = false
 
 [functions.route-feedback]
 verify_jwt = false
+
+[functions.create-checkout-session]
+verify_jwt = false
+
+[functions.create-portal-session]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.evaluate-project-coverage]
+verify_jwt = false
+
+[functions.draft-scenario-fields]
+verify_jwt = false

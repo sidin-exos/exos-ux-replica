@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText, Layers, TrendingUp } from "lucide-react";
+import { Helmet } from "react-helmet-async";
+import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText, Layers, TrendingUp, EyeOff, ShieldCheck } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -9,7 +10,7 @@ import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
-import SentinelCapabilities from "@/components/features/SentinelCapabilities";
+
 import exosMark from "@/assets/exos-mark.svg";
 import exosMarkDark from "@/assets/exos-mark-dark.svg";
 import { useTheme } from "next-themes";
@@ -226,7 +227,7 @@ const Features = () => {
       ),
       accent: "teal" as const,
       highlights: [
-        "29 procurement-specific AI scenarios",
+        "20+ procurement-specific AI scenarios",
         "Multi-cycle Chain of Experts pipeline",
         "Methodology-driven agentic loops",
         "Custom LLM settings per scenario"
@@ -290,6 +291,10 @@ const Features = () => {
 
   return (
     <div className="min-h-screen gradient-hero">
+      <Helmet>
+        <title>20+ AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS</title>
+        <link rel="canonical" href="https://exosproc.com/features" />
+      </Helmet>
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}
@@ -368,30 +373,16 @@ const Features = () => {
           </div>
         </section>
 
-        {/* Sentinel Capabilities Section */}
-        <section id="orchestration" className="mb-20 animate-fade-up" style={{ animationDelay: "300ms" }}>
-          <div className="text-center mb-10">
-            <h2 className="font-display text-2xl md:text-3xl font-bold mb-3">
-              Fine-Tuned <span className="text-gradient">AI Agentic Orchestration</span>
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Our custom-trained intelligence layer validates, enriches, and orchestrates 
-              best-in-class cloud AI—ensuring every recommendation is grounded in your reality.
-            </p>
-          </div>
-          
-          <SentinelCapabilities />
-        </section>
-
-        {/* Architecture Deep-Dive Section */}
+        {/* Architecture Deep-Dive Section (merged with AI Agentic Orchestration) */}
         <section id="architecture" className="mb-20 animate-fade-up" style={{ animationDelay: "350ms" }}>
           <div className="text-center mb-10">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-3">
-              Enterprise <span className="text-gradient">Architecture</span>
+              Enterprise <span className="text-gradient">Architecture</span> & Fine-Tuned AI Orchestration
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              A purpose-built, privacy-first AI backend designed for high-stakes procurement decisions 
-              in regulated European industries.
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              A purpose-built, privacy-first AI backend designed for high-stakes procurement decisions
+              in regulated European industries — orchestrating best-in-class cloud AI through a
+              custom-trained intelligence layer that validates, enriches, and grounds every output.
             </p>
           </div>
 
@@ -442,6 +433,58 @@ const Features = () => {
                   and regulatory context directly into prompts. Post-inference <strong className="text-foreground">validation</strong> cross-checks 
                   arithmetic (ROI, NPV, break-even), flags unsupported claims, and enforces separation 
                   of hard vs. soft savings — ensuring outputs you can trust in boardroom presentations.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Merged from Sentinel pipeline: Anonymizer + Restorer */}
+            <Card
+              className="card-elevated border-border/50 relative overflow-hidden"
+              style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.amber.soft}, transparent 60%)` }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: accentMap.amber.bg, opacity: 0.7 }} />
+              <CardHeader className="pb-2">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-2 shadow-sm"
+                  style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.amber.bg}, ${accentMap.amber.text})` }}
+                >
+                  <EyeOff className="w-5 h-5 text-white" />
+                </div>
+                <CardTitle className="font-display text-lg">Semantic Anonymization & Restoration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Sensitive entities — supplier names, prices, volumes — are replaced with{" "}
+                  <strong className="text-foreground">semantic tokens</strong> before any prompt leaves your environment
+                  (e.g. <span className="font-mono text-foreground/80">Acme Corp → [SUPPLIER_A]</span>). After cloud
+                  inference, the <strong className="text-foreground">Context Restorer</strong> seamlessly maps tokens
+                  back to your original data, so external models never see your real commercial information.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Merged from Sentinel pipeline: Grounding + Validator */}
+            <Card
+              className="card-elevated border-border/50 relative overflow-hidden"
+              style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.teal.soft}, transparent 60%)` }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: accentMap.teal.bg, opacity: 0.7 }} />
+              <CardHeader className="pb-2">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-2 shadow-sm"
+                  style={{ backgroundImage: `linear-gradient(135deg, ${accentMap.teal.bg}, ${accentMap.teal.text})` }}
+                >
+                  <ShieldCheck className="w-5 h-5 text-white" />
+                </div>
+                <CardTitle className="font-display text-lg">Live Intel Injection & Integrity Checks</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Anonymized prompts are enriched with <strong className="text-foreground">industry benchmarks</strong>,
+                  category strategies, and <strong className="text-foreground">real-time market intelligence</strong> from
+                  verified sources. Responses are then validated for token preservation, reasoning consistency, and
+                  factual grounding — so every delivered insight is both <strong className="text-foreground">private by design</strong>{" "}
+                  and traceable to its sources.
                 </p>
               </CardContent>
             </Card>

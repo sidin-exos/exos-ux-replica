@@ -8,13 +8,13 @@ const OG_IMAGE = `${BASE_URL}/og-image.png`;
 const routes = [
   {
     path: '/welcome',
-    title: 'EXOS – AI Procurement Analysis & Strategy Platform',
-    description: 'AI-powered procurement analysis in minutes. Cost breakdowns, negotiation scenarios, risk assessments, and supplier intelligence — enriched with live market data across 30 industries.',
-    h1: 'Do More With Less. Decide With Confidence.',
+    title: 'EXOS — Agentic AI Procurement Platform | No Implementation',
+    description: 'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed.',
+    h1: 'Agentic AI Procurement Analysis. No Implementation. No Wait.',
   },
   {
     path: '/features',
-    title: 'How EXOS Works | AI Procurement Analysis Platform',
+    title: '20+ AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS',
     description: 'Explore how EXOS delivers AI-powered procurement analysis: cost breakdowns, supplier risk scoring, negotiation preparation, and market intelligence — all GDPR-native.',
     h1: 'How EXOS Works',
   },

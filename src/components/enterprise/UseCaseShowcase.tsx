@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, Building2, Lightbulb, BookOpen, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { USE_CASE_LIBRARY, INDUSTRIES, type UseCase, type IndustryName } from "@/lib/use-case-library";
+import { MONITOR_TYPE_META } from "@/hooks/useEnterpriseTrackers";
+
+// Library was generated from an older taxonomy. Relabel DM-* refs to the
+// monitor names actually shipped today (display-only — data file unchanged).
+function normalizeRef(ref: string): string {
+  const match = ref.match(/^(DM-\d+)/);
+  if (!match) return ref;
+  const meta = MONITOR_TYPE_META[match[1] as keyof typeof MONITOR_TYPE_META];
+  return meta ? `${match[1]} — ${meta.label}` : ref;
+}
 
 type Platform = "scenarios" | "risk";
 
@@ -24,8 +34,10 @@ export function UseCaseShowcase({ platform, variant = "card", className }: UseCa
   const cases = useMemo(() => {
     const lib = USE_CASE_LIBRARY[industry];
     const all = platform === "scenarios" ? lib.scenarios : lib.risk;
-    // For risk platform, only show DM- monitoring scenarios
-    return platform === "risk" ? all.filter((uc) => uc.ref.startsWith("DM-")) : all;
+    if (platform !== "risk") return all;
+    return all
+      .filter((uc) => uc.ref.startsWith("DM-"))
+      .map((uc) => ({ ...uc, ref: normalizeRef(uc.ref) }));
   }, [industry, platform]);
 
   const current = cases[index] || cases[0];

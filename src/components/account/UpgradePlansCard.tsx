@@ -1,8 +1,11 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, Shield, Building2 } from "lucide-react";
+import { Check, Zap, Shield, Building2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const plans = [
   {
@@ -14,7 +17,7 @@ const plans = [
     color: "var(--info)",
     features: ["AI-powered analysis", "SOW review tools", "5 reports/month", "Email support"],
     recommended: false,
-    comingSoon: false,
+    priceId: "price_1TEPHc34h5FyPJ356pnUXQNs",
   },
   {
     id: "professional",
@@ -32,7 +35,7 @@ const plans = [
       "Team collaboration",
     ],
     recommended: true,
-    comingSoon: false,
+    priceId: "price_1TEPBt34h5FyPJ35YRdvRUc7",
   },
   {
     id: "enterprise",
@@ -43,18 +46,45 @@ const plans = [
     color: "var(--iris)",
     features: ["Custom integrations", "SSO & security", "Dedicated manager", "SLA guarantees"],
     recommended: false,
-    comingSoon: true,
+    priceId: null,
   },
 ];
 
 const UpgradePlansCard = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const handleSubscribe = (planId: string) => {
-    toast({
-      title: "Coming Soon",
-      description: "Stripe payment integration will be configured shortly.",
-    });
+  const handleSubscribe = async (plan: typeof plans[number]) => {
+    if (plan.id === "enterprise") {
+      navigate("/pricing#contact");
+      return;
+    }
+    if (!plan.priceId) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/auth?redirect=" + encodeURIComponent("/account"));
+      return;
+    }
+
+    setLoadingPlan(plan.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: { price_id: plan.priceId },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error("No checkout URL returned");
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("[checkout] failed", err);
+      toast({
+        title: "Could not start checkout",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+      setLoadingPlan(null);
+    }
   };
 
   return (
@@ -73,11 +103,6 @@ const UpgradePlansCard = () => {
             >
               {plan.recommended && (
                 <div className="absolute -top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent" />
-              )}
-              {plan.comingSoon && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <Badge variant="secondary">Coming Soon</Badge>
-                </div>
               )}
               {plan.recommended && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
@@ -115,10 +140,19 @@ const UpgradePlansCard = () => {
                 <Button
                   className="w-full"
                   variant={plan.recommended ? "default" : "outline"}
-                  disabled={plan.comingSoon}
-                  onClick={() => handleSubscribe(plan.id)}
+                  disabled={loadingPlan === plan.id}
+                  onClick={() => handleSubscribe(plan)}
                 >
-                  {plan.comingSoon ? "Coming Soon" : "Subscribe"}
+                  {loadingPlan === plan.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Redirecting…
+                    </>
+                  ) : plan.id === "enterprise" ? (
+                    "Contact Sales"
+                  ) : (
+                    "Subscribe"
+                  )}
                 </Button>
               </CardContent>
             </Card>

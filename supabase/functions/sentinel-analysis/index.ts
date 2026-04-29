@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { parseBody, requireString, optionalBoolean, optionalStringOrNull, optionalRecord, validationErrorResponse, ValidationError } from "../_shared/validate.ts";
@@ -161,7 +162,14 @@ interface IndustryRow {
   kpis: string[];
   constraints_v2?: ConstraintV2Item[] | null;
   kpis_v2?: KpiV2Item[] | null;
+  industry_hot_yaml?: string | null;
+  industry_cold_yaml?: string | null;
 }
+
+// Scenarios that need full COLD-tier industry context (regulatory/risk-heavy)
+const INDUSTRY_COLD_SCENARIOS = new Set([
+  "S16", "S17", "S20", "S22", "S25", "S26", "S27", "S29",
+]);
 
 interface CategoryRow {
   name: string;
@@ -184,9 +192,35 @@ interface CategoryRow {
   exos_scenarios_primary?: string[] | null;
   exos_scenarios_secondary?: string[] | null;
   kpis_v2?: KpiV2Item[] | null;
+  category_hot_yaml?: string | null;
+  category_cold_yaml?: string | null;
 }
 
-function buildIndustryXML(industry: IndustryRow): string {
+// Scenarios that need full COLD-tier category context (truly risk-heavy only).
+// Narrowed from v3 spec (was S17/S20/S22/S25/S26/S27) to keep token budget aligned
+// with the ~2.3x reduction target. Strategy scenarios (S20/S22/S25) now use HOT-only.
+const CATEGORY_COLD_SCENARIOS = new Set([
+  "S17", "S26", "S27",
+]);
+
+function buildIndustryXML(industry: IndustryRow, scenarioCode?: string): string {
+  // ── v2 Tier Loader: prefer compact YAML when available (token-optimised) ──
+  const hot = industry.industry_hot_yaml?.trim();
+  const cold = industry.industry_cold_yaml?.trim();
+  if (hot) {
+    const includeCold = !!scenarioCode && INDUSTRY_COLD_SCENARIOS.has(scenarioCode) && !!cold;
+    const tier = includeCold ? "HOT+COLD" : "HOT";
+    const body = includeCold ? `${hot}\n\n${cold}` : hot;
+    return `<industry-context tier="${tier}">
+  <industry-name>${escapeXML(industry.name)}</industry-name>
+  <industry-id>${escapeXML(industry.slug)}</industry-id>
+  <yaml><![CDATA[
+${body}
+  ]]></yaml>
+</industry-context>`;
+  }
+
+  // ── Legacy fallback (constraints_v2 / kpis_v2 / arrays) ──
   const hasV2C = Array.isArray(industry.constraints_v2) && industry.constraints_v2.length > 0;
   const hasV2K = Array.isArray(industry.kpis_v2) && industry.kpis_v2.length > 0;
 
@@ -206,7 +240,7 @@ function buildIndustryXML(industry: IndustryRow): string {
       }).join('\n')
     : industry.kpis.map((k, i) => `      <kpi index="${i + 1}">${escapeXML(k)}</kpi>`).join('\n');
 
-  return `<industry-context>
+  return `<industry-context tier="LEGACY">
   <industry-name>${escapeXML(industry.name)}</industry-name>
   <industry-id>${escapeXML(industry.slug)}</industry-id>
   <regulatory-constraints>
@@ -224,7 +258,24 @@ ${kpisXML}
 </industry-context>`;
 }
 
-function buildCategoryXML(category: CategoryRow): string {
+function buildCategoryXML(category: CategoryRow, scenarioCode?: string): string {
+  // ── v3 Tier Loader: prefer compact YAML when available (token-optimised) ──
+  const hot = category.category_hot_yaml?.trim();
+  const cold = category.category_cold_yaml?.trim();
+  if (hot) {
+    const includeCold = !!scenarioCode && CATEGORY_COLD_SCENARIOS.has(scenarioCode) && !!cold;
+    const tier = includeCold ? "HOT+COLD" : "HOT";
+    const body = includeCold ? `${hot}\n\n${cold}` : hot;
+    return `<category-context tier="${tier}">
+  <category-name>${escapeXML(category.name)}</category-name>
+  <category-id>${escapeXML(category.slug)}</category-id>
+  <yaml><![CDATA[
+${body}
+]]></yaml>
+</category-context>`;
+  }
+
+  // ── Legacy fallback (constraints_v2 / kpis_v2 / enriched fields) ──
   const hasV2K = Array.isArray(category.kpis_v2) && category.kpis_v2.length > 0;
 
   const kpisXML = hasV2K
@@ -459,8 +510,9 @@ function buildServerGroundedPrompts(
   // Build system prompt with injected context
   const contextParts: string[] = [];
 
-  if (industry) contextParts.push(buildIndustryXML(industry));
-  if (category) contextParts.push(buildCategoryXML(category));
+  const _scenarioCodeForIndustry = SCENARIO_ID_REGISTRY[scenarioType] || scenarioType;
+  if (industry) contextParts.push(buildIndustryXML(industry, _scenarioCodeForIndustry));
+  if (category) contextParts.push(buildCategoryXML(category, _scenarioCodeForIndustry));
   if (marketInsight) contextParts.push(buildMarketIntelligenceXML(marketInsight));
 
   // Derive scenario group server-side
@@ -518,6 +570,16 @@ ${attachedDocumentsXml ? `  ${attachedDocumentsXml}\n` : ""}  <anonymized-query>
  * Encapsulates retry logic (3 attempts with exponential backoff on 503)
  * and LangSmith tracing. Used for both single-pass and multi-cycle flows.
  */
+interface CallLLMResult {
+  content: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  estimatedCostUsd: number;
+  provider?: "google_ai_studio" | "nebius";
+  fallbackReason?: string;
+}
+
 async function callLLM(
   sysPrompt: string,
   usrPrompt: string,
@@ -527,7 +589,7 @@ async function callLLM(
     parentRunId: string;
     spanName: string;
   }
-): Promise<string> {
+): Promise<CallLLMResult> {
   const { googleModel, tracer, parentRunId, spanName } = opts;
 
   const spanId = tracer.createRun(spanName, "llm", {
@@ -535,7 +597,7 @@ async function callLLM(
     provider: "google_ai_studio",
     systemPromptLength: sysPrompt.length,
     userPromptLength: usrPrompt.length,
-  }, { parentRunId });
+  }, { parentRunId, tags: [`model:${googleModel}`, `cycle:${spanName}`] });
 
   const MAX_RETRIES = 3;
   const RETRY_DELAYS = [1000, 2000, 4000];
@@ -553,11 +615,30 @@ async function callLLM(
         temperature: 0.4,
         maxOutputTokens: 8192,
         model: googleModel,
+        // Outer retries here re-enter callGoogleAI; on attempt > 0 we suppress
+        // the Nebius branch so we do not stack a 90s Nebius timeout on top of
+        // a fresh Google chain (~50s) inside the 150s edge-function budget.
+        skipNebiusFallback: attempt > 0,
       });
 
       const content = response.text || "";
-      tracer.patchRun(spanId, { contentLength: content.length, provider: "google_ai_studio", usage: response.usageMetadata });
-      return content;
+      const promptTokens = response.usageMetadata?.promptTokenCount;
+      const completionTokens = response.usageMetadata?.candidatesTokenCount;
+      const totalTokens = response.usageMetadata?.totalTokenCount;
+      const provider = response.provider ?? "google_ai_studio";
+      const billingModel = provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : googleModel;
+      const estimatedCostUsd = estimateCost(billingModel, promptTokens, completionTokens);
+      tracer.patchRun(spanId, {
+        contentLength: content.length,
+        provider,
+        fallbackReason: response.fallbackReason,
+        usage: response.usageMetadata,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        estimatedCostUsd,
+      });
+      return { content, promptTokens, completionTokens, totalTokens, estimatedCostUsd, provider, fallbackReason: response.fallbackReason };
     } catch (err) {
       const status = (err as Error & { status?: number }).status;
       if (status === 503 && attempt < MAX_RETRIES - 1) {
@@ -565,13 +646,17 @@ async function callLLM(
         continue;
       }
       if (attempt === MAX_RETRIES - 1) {
-        tracer.patchRun(spanId, undefined, err instanceof Error ? err.message : "Network error");
+        tracer.patchRun(
+          spanId,
+          { errorType: classifyError(err) },
+          err instanceof Error ? err.message : "Network error",
+        );
         throw err;
       }
     }
   }
 
-  tracer.patchRun(spanId, undefined, "All retry attempts exhausted");
+  tracer.patchRun(spanId, { errorType: "provider_unavailable" }, "All retry attempts exhausted");
   throw new Error("Google AI Studio unavailable after retries");
 }
 
@@ -645,13 +730,14 @@ serve(async (req) => {
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
     const rawGoogleModel = (requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-2.5-pro").replace(/^google\//, "");
+      || "gemini-3.1-pro-preview").replace(/^google\//, "");
     // Server-side model whitelist — prevents cost amplification and model probing
     const ALLOWED_MODELS = [
+      "gemini-3.1-pro-preview",
       "gemini-3-flash-preview",
       "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
     ];
-    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-2.5-pro";
+    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-3.1-pro-preview";
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     // Accept but ignore — always use Google AI Studio
@@ -711,6 +797,8 @@ serve(async (req) => {
 
     // === FETCH & ANONYMIZE ATTACHED FILE CONTENT ===
     let attachedDocumentsXml = "";
+    let attachedFileCount = 0;
+    let attachedFileTokens = 0;
     if (fileIds.length > 0) {
       try {
         const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -780,7 +868,11 @@ serve(async (req) => {
               }
 
               attachedDocumentsXml = `<attached-documents count="${includedFiles.length}">\n${docParts.join("\n")}\n</attached-documents>`;
-              console.log(`[Sentinel] Attached ${includedFiles.length} file(s), ~${includedFiles.reduce((s: number, f: { token_estimate: number | null }) => s + (f.token_estimate || 0), 0)} tokens`);
+              attachedFileCount = includedFiles.length;
+              attachedFileTokens = includedFiles.reduce(
+                (s: number, f: { token_estimate: number | null }) => s + (f.token_estimate || 0), 0
+              );
+              console.log(`[Sentinel] Attached ${attachedFileCount} file(s), ~${attachedFileTokens} tokens`);
             }
           }
         }
@@ -801,9 +893,22 @@ serve(async (req) => {
       serverSideGrounding,
       scenarioId: scenarioId || null,
       isMultiCycle,
+      analysisMode: isMultiCycle ? "deep" : "standard",
+      cycleCount: isMultiCycle ? 3 : 1,
+      attachedFileCount,
+      attachedFileTokens,
+      hasIndustrySlug: !!industrySlug,
+      hasCategorySlug: !!categorySlug,
     }, {
       metadata: { industrySlug, categorySlug, useLocalModel, isMultiCycle, cycleCount: isMultiCycle ? 3 : 1 },
-      tags: [googleModel, ...(isMultiCycle ? ["multi-cycle", "chain-of-experts"] : [])],
+      tags: [
+        googleModel,
+        `model:${googleModel}`,
+        `mode:${isMultiCycle ? "deep" : "standard"}`,
+        ...(scenarioType ? [`scenario:${scenarioType}`] : []),
+        ...(scenarioId ? [`scenarioId:${scenarioId}`] : []),
+        ...(isMultiCycle ? ["multi-cycle", "chain-of-experts"] : []),
+      ],
     });
 
     // Initialize Supabase client
@@ -814,8 +919,8 @@ serve(async (req) => {
       : null;
 
     // --- Resolve prompts ---
-    let systemPrompt: string;
-    let userPrompt: string;
+    let systemPrompt = "";
+    let userPrompt = "";
 
     if (serverSideGrounding && supabase) {
       // --- Child Run 1: fetch-context ---
@@ -831,10 +936,10 @@ serve(async (req) => {
       try {
         [industryResult, categoryResult, insightResult] = await Promise.all([
           industrySlug
-            ? supabase.from("industry_contexts").select("name, slug, constraints, kpis, constraints_v2, kpis_v2").eq("slug", industrySlug).single()
+            ? supabase.from("industry_contexts").select("name, slug, constraints, kpis, constraints_v2, kpis_v2, industry_hot_yaml, industry_cold_yaml").eq("slug", industrySlug).single()
             : Promise.resolve({ data: null, error: null }),
           categorySlug
-            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis, category_group, spend_type, kraljic_position, kraljic_rationale, price_volatility, market_structure, supply_concentration, key_cost_drivers, procurement_levers, negotiation_dynamics, should_cost_components, eu_regulatory_context, common_failure_modes, exos_scenarios_primary, exos_scenarios_secondary, kpis_v2").eq("slug", categorySlug).single()
+            ? supabase.from("procurement_categories").select("name, slug, characteristics, kpis, category_group, spend_type, kraljic_position, kraljic_rationale, price_volatility, market_structure, supply_concentration, key_cost_drivers, procurement_levers, negotiation_dynamics, should_cost_components, eu_regulatory_context, common_failure_modes, exos_scenarios_primary, exos_scenarios_secondary, kpis_v2, category_hot_yaml, category_cold_yaml").eq("slug", categorySlug).single()
             : Promise.resolve({ data: null, error: null }),
           (industrySlug && categorySlug)
             ? supabase.from("market_insights")
@@ -852,11 +957,22 @@ serve(async (req) => {
         if (categoryResult.error) { console.error("[Sentinel] Failed to fetch category context:", categoryResult.error); fetchErrors.push("category: " + String(categoryResult.error)); }
         if (insightResult.error) { console.warn("[Sentinel] Failed to fetch market insight (non-fatal):", insightResult.error); }
       } finally {
+        const industryContextLength = industryResult.data ? JSON.stringify(industryResult.data).length : 0;
+        const categoryContextLength = categoryResult.data ? JSON.stringify(categoryResult.data).length : 0;
+        const marketIntelligenceLength = insightResult.data ? JSON.stringify(insightResult.data).length : 0;
+        const totalGroundingChars = industryContextLength + categoryContextLength + marketIntelligenceLength;
         tracer.patchRun(fetchRunId, {
           foundIndustry: !!industryResult.data,
           foundCategory: !!categoryResult.data,
           foundInsight: !!insightResult.data,
           errors: fetchErrors,
+          groundingContextSize: {
+            industryContextLength,
+            categoryContextLength,
+            marketIntelligenceLength,
+            totalGroundingTokens: Math.ceil(totalGroundingChars / 4),
+          },
+          ...(fetchErrors.length > 0 ? { errorType: "invalid_request" } : {}),
         }, fetchErrors.length > 0 ? fetchErrors.join("; ") : undefined);
       }
 
@@ -884,15 +1000,18 @@ serve(async (req) => {
         systemPrompt = grounded.systemPrompt;
         userPrompt = grounded.userPrompt;
       } finally {
+        const _sp = systemPrompt as string | undefined;
+        const _up = userPrompt as string | undefined;
         tracer.patchRun(assembleRunId, {
-          systemPromptLength: systemPrompt?.length || 0,
-          userPromptLength: userPrompt?.length || 0,
+          systemPromptLength: _sp?.length || 0,
+          userPromptLength: _up?.length || 0,
+          totalPromptLength: (_sp?.length || 0) + (_up?.length || 0),
           contextPartsCount: (industryResult.data ? 1 : 0) + (categoryResult.data ? 1 : 0),
         });
       }
     } else if (body.systemPrompt) {
       // Legacy path: client sent full prompts
-      systemPrompt = body.systemPrompt;
+      systemPrompt = body.systemPrompt as string;
       // Inject schema for structured output if scenario type is known
       const legacyGroup = scenarioType ? SCENARIO_GROUP_REGISTRY[scenarioType] : null;
       if (legacyGroup) {
@@ -973,7 +1092,8 @@ serve(async (req) => {
       const scenarioGroup = scenarioId ? SCENARIO_GROUP_REGISTRY[scenarioId] : null;
 
       // Cycle 1: Analyst Draft
-      const draft = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
+      const draftResult = await callLLM(systemPrompt, userPrompt, { ...llmOpts, spanName: "Analyst_Draft" });
+      const draft = draftResult.content;
       console.log(`[Sentinel] Cycle 1 (Analyst Draft): ${draft.length} chars`);
 
       // Cycles 2-3: strip attached-documents from original-request to save tokens
@@ -984,13 +1104,22 @@ serve(async (req) => {
 
       // Cycle 2: Auditor Critique
       const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPromptWithoutDocs}\n</original-request>`;
-      const critique = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
+      const critiqueResult = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
+      const critique = critiqueResult.content;
       console.log(`[Sentinel] Cycle 2 (Auditor Critique): ${critique.length} chars`);
 
       // Cycle 3: Synthesizer Final (with schema injection)
       const synthPrompt = `<draft>\n${draft}\n</draft>\n<critique>\n${critique}\n</critique>\n<original-request>\n${userPromptWithoutDocs}\n</original-request>`;
-      const finalContent = await callLLM(buildSynthesizerPrompt(scenarioGroup, scenarioId), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      const synthResult = await callLLM(buildSynthesizerPrompt(scenarioGroup, scenarioId), synthPrompt, { ...llmOpts, spanName: "Synthesizer_Final" });
+      const finalContent = synthResult.content;
       console.log(`[Sentinel] Cycle 3 (Synthesizer Final): ${finalContent.length} chars`);
+
+      // Aggregate token usage across all 3 cycles
+      const cycleResults = [draftResult, critiqueResult, synthResult];
+      const aggPromptTokens = cycleResults.reduce((s, r) => s + (r.promptTokens || 0), 0) || undefined;
+      const aggCompletionTokens = cycleResults.reduce((s, r) => s + (r.completionTokens || 0), 0) || undefined;
+      const aggTotalTokens = cycleResults.reduce((s, r) => s + (r.totalTokens || 0), 0) || undefined;
+      const aggEstimatedCostUsd = cycleResults.reduce((s, r) => s + r.estimatedCostUsd, 0);
 
       const processingTime = Math.round(performance.now() - startTime);
 
@@ -1021,15 +1150,26 @@ serve(async (req) => {
         }
       }
 
+      const nebiusCycles = cycleResults.filter(r => r.provider === "nebius");
+      const fallbackUsed = nebiusCycles.length > 0;
+      const aggregateProvider = fallbackUsed ? "nebius" : "google_ai_studio";
+
       tracer.patchRun(parentRunId!, {
         success: true,
         isMultiCycle: true,
         cycleCount: 3,
         contentLength: finalContent.length,
         processingTimeMs: processingTime,
-        source: "google_ai_studio",
+        source: aggregateProvider,
+        fallbackUsed,
+        nebiusCycleCount: nebiusCycles.length,
         validationPassed: validation.passed,
         validationConfidence: validation.confidenceScore,
+        validationResult: { passed: validation.passed, confidenceScore: validation.confidenceScore, issuesCount: validation.issues?.length ?? 0 },
+        promptTokens: aggPromptTokens,
+        completionTokens: aggCompletionTokens,
+        totalTokens: aggTotalTokens,
+        estimatedCostUsd: aggEstimatedCostUsd,
       });
 
       // Try to parse structured envelope
@@ -1073,10 +1213,18 @@ serve(async (req) => {
           structured: ['1.0','2.0'].includes(deanonEnvelopeObj?.schema_version) ? deanonEnvelopeObj : undefined,
           validation,
           model: googleModel,
-          source: "google_ai_studio",
+          source: aggregateProvider,
           promptId,
           processingTimeMs: processingTime,
           isMultiCycle: true,
+          _meta: {
+            provider: aggregateProvider,
+            fallbackUsed,
+            fallbackReason: nebiusCycles[0]?.fallbackReason,
+            modelUsed: fallbackUsed ? "nvidia/nemotron-3-super-120b-a12b" : googleModel,
+            // Number of cycles (out of 3) that fell back to Nebius
+            nebiusCycleCount: nebiusCycles.length,
+          },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -1089,12 +1237,13 @@ serve(async (req) => {
     // --- Child Run 3: ai-inference ---
     const inferenceRunId = tracer.createRun("ai-inference", "llm", {
       model: googleModel, promptLengths: { system: systemPrompt.length, user: userPrompt.length },
-    }, { parentRunId });
+    }, { parentRunId, tags: [`model:${googleModel}`] });
 
-    // NOTE: callGoogleAI already retries internally (5 attempts w/ exp backoff)
-    // and falls back to gemini-2.5-flash on overload. Outer retries here just
-    // multiply latency and cause 150s edge-function IDLE_TIMEOUTs.
-    // We keep ONE outer attempt with a single fallback to flash on timeout/5xx.
+    // NOTE: callGoogleAI already runs 5 attempts w/ exp backoff, falls back to
+    // gemini-3-flash-preview on overload, then to Nebius/Nemotron when both
+    // Google tiers fail. Outer retries here multiply latency, so we keep ONE
+    // outer attempt with a single fallback to flash on timeout/5xx, AND we
+    // pass skipNebiusFallback on retries to avoid stacking the Nebius branch.
     const MAX_RETRIES = 2;
     const RETRY_DELAYS = [500];
 
@@ -1106,7 +1255,7 @@ serve(async (req) => {
         }
 
         // On retry, downshift to faster model to fit inside 150s edge timeout
-        const modelForAttempt = attempt === 0 ? googleModel : "gemini-2.5-flash";
+        const modelForAttempt = attempt === 0 ? googleModel : "gemini-3-flash-preview";
 
         const aiResponse = await callGoogleAI({
           systemPrompt,
@@ -1115,6 +1264,7 @@ serve(async (req) => {
           maxOutputTokens: 8192,
           model: modelForAttempt,
           timeoutMs: 45_000,
+          skipNebiusFallback: attempt > 0,
         });
 
         const processingTime = Math.round(performance.now() - startTime);
@@ -1167,6 +1317,17 @@ serve(async (req) => {
         const singleParsedEnvelope = parseAIResponse(content);
         let responseContent = singleDeanon.restoredText;
         let deanonSingleEnvelope = singleParsedEnvelope;
+
+        // Defensive guard: detect when the deanonymized content is raw JSON
+        // (e.g. flash fallback returned envelope-only without prose). We must
+        // never leak raw JSON or any internal metadata (shadow_log, validation
+        // traces, payload internals) into the user-facing `content` string.
+        const looksLikeRawJson = (s: string): boolean => {
+          const trimmed = s.trim();
+          return (trimmed.startsWith('{') && trimmed.endsWith('}'))
+            || (trimmed.startsWith('```') && /```\s*json/i.test(trimmed));
+        };
+
         if (['1.0','2.0'].includes(singleParsedEnvelope?.schema_version)) {
           // Deanonymize the envelope itself so structured data has real names.
           // Wrapped in try/catch because deanonymizeText does plain text replacement
@@ -1184,12 +1345,60 @@ serve(async (req) => {
           if (deanonSingleEnvelope.gdpr_flags?.length > 0) {
             console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonSingleEnvelope.scenario_id, flag_count: deanonSingleEnvelope.gdpr_flags.length });
           }
+        } else if (singleParsedEnvelope && typeof singleParsedEnvelope === 'object') {
+          // AI returned a JSON object but without a recognised schema_version
+          // (e.g. flash fallback emitted a partial envelope). Render it through
+          // the defensive markdown builder rather than leaking raw JSON to the UI.
+          try {
+            const envelopeStr = JSON.stringify(singleParsedEnvelope);
+            const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
+            deanonSingleEnvelope = JSON.parse(deanonEnvelope.restoredText);
+          } catch (_e) {
+            deanonSingleEnvelope = singleParsedEnvelope;
+          }
+          // Coerce to the shape buildMarkdownFromEnvelope expects, with safe defaults.
+          const safe = {
+            scenario_name: (deanonSingleEnvelope as Record<string, unknown>).scenario_name as string ?? 'Analysis',
+            summary: (deanonSingleEnvelope as Record<string, unknown>).summary as string ?? '',
+            executive_bullets: (deanonSingleEnvelope as Record<string, unknown>).executive_bullets as unknown[] ?? [],
+            recommendations: (deanonSingleEnvelope as Record<string, unknown>).recommendations as unknown[] ?? [],
+            data_gaps: (deanonSingleEnvelope as Record<string, unknown>).data_gaps as unknown[] ?? [],
+          } as unknown as Parameters<typeof buildMarkdownFromEnvelope>[0];
+          const rendered = buildMarkdownFromEnvelope(safe);
+          // If the rendered markdown is essentially empty, surface a friendly fallback
+          // instead of the raw JSON string the user previously saw.
+          responseContent = rendered.replace(/\s+/g, '').length > 20
+            ? rendered
+            : 'The analysis completed but the model returned an incomplete response. Please retry — if the issue persists, regenerate the report.';
+        } else if (looksLikeRawJson(responseContent)) {
+          // Last-resort guard: never let raw JSON reach the UI.
+          responseContent = 'The analysis completed but the model returned an unparseable response. Please retry to regenerate.';
         }
 
+        const inferencePromptTokens = aiResponse.usageMetadata?.promptTokenCount;
+        const inferenceCompletionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
+        const inferenceTotalTokens = aiResponse.usageMetadata?.totalTokenCount;
+        const provider = aiResponse.provider ?? "google_ai_studio";
+        // When Nebius answered, bill against Nemotron pricing — modelForAttempt is the
+        // requested Google model, not the model that actually produced the tokens.
+        const billingModel = provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : modelForAttempt;
+        const modelForAttemptCost = estimateCost(billingModel, inferencePromptTokens, inferenceCompletionTokens);
         tracer.patchRun(inferenceRunId, { contentLength: content.length, usage, processingTimeMs: processingTime, hasShadowLog: !!shadowLog,
+          promptTokens: inferencePromptTokens,
+          completionTokens: inferenceCompletionTokens,
+          totalTokens: inferenceTotalTokens,
+          estimatedCostUsd: modelForAttemptCost,
+          validationResult: { passed: validation.passed, confidenceScore: validation.confidenceScore, issuesCount: validation.issues?.length ?? 0 },
           ...(['1.0','2.0'].includes(singleParsedEnvelope?.schema_version) ? { scenario_id: singleParsedEnvelope.scenario_id, confidence_level: singleParsedEnvelope.confidence_level, data_gaps_count: singleParsedEnvelope.data_gaps?.length ?? 0, schema_version: singleParsedEnvelope.schema_version, schema_version_emitted: singleParsedEnvelope.schema_version } : {}),
         });
-        tracer.patchRun(parentRunId, { success: true, contentLength: content.length, source: "google_ai_studio", processingTimeMs: processingTime });
+        tracer.patchRun(parentRunId, {
+          success: true, contentLength: content.length, source: provider, fallbackReason: aiResponse.fallbackReason, processingTimeMs: processingTime,
+          promptTokens: inferencePromptTokens,
+          completionTokens: inferenceCompletionTokens,
+          totalTokens: inferenceTotalTokens,
+          estimatedCostUsd: modelForAttemptCost,
+          validationResult: { passed: validation.passed, confidenceScore: validation.confidenceScore, issuesCount: validation.issues?.length ?? 0 },
+        });
 
         // Funnel: first_action_completed (CP3) — only first analysis ever
         trackOnceEvent({ userId, event: "first_action_completed", checkpoint: "CP3", properties: { action_type: "scenario_started" } });
@@ -1200,7 +1409,13 @@ serve(async (req) => {
           JSON.stringify({
             content: responseContent,
             structured: ['1.0','2.0'].includes(deanonSingleEnvelope?.schema_version) ? deanonSingleEnvelope : undefined,
-            validation, model: googleModel, source: "google_ai_studio", usage, promptId, processingTimeMs: processingTime
+            validation, model: googleModel, source: provider, usage, promptId, processingTimeMs: processingTime,
+            _meta: {
+              provider,
+              fallbackUsed: provider === "nebius",
+              fallbackReason: aiResponse.fallbackReason,
+              modelUsed: provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : modelForAttempt,
+            },
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -1224,7 +1439,7 @@ serve(async (req) => {
               ...(userOrgId ? { organization_id: userOrgId } : {}),
             });
           }
-          tracer.patchRun(inferenceRunId, undefined, "Rate limit exceeded (429)");
+          tracer.patchRun(inferenceRunId, { errorType: "rate_limited" }, "Rate limit exceeded (429)");
           return new Response(
             JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
             { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1242,7 +1457,7 @@ serve(async (req) => {
               ...(userOrgId ? { organization_id: userOrgId } : {}),
             });
           }
-          tracer.patchRun(inferenceRunId, undefined, errorMessage);
+          tracer.patchRun(inferenceRunId, { errorType: classifyError(aiError) }, errorMessage);
           return new Response(
             JSON.stringify({ error: "AI service error", details: "The AI service encountered an error processing your request" }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1252,7 +1467,7 @@ serve(async (req) => {
     }
 
     // Should not reach here, but safety fallback
-    tracer.patchRun(inferenceRunId, undefined, "All retry attempts exhausted");
+    tracer.patchRun(inferenceRunId, { errorType: "provider_unavailable" }, "All retry attempts exhausted");
     return new Response(
       JSON.stringify({ error: "AI service unavailable after retries" }),
       { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1264,7 +1479,7 @@ serve(async (req) => {
     }
     console.error("[Sentinel] Error:", error);
     new SentryReporter("sentinel-analysis").captureException(error, { userId });
-    try { tracer?.patchRun(parentRunId!, undefined, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
+    try { tracer?.patchRun(parentRunId!, { errorType: classifyError(error) }, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

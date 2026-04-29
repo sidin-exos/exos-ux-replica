@@ -3,6 +3,8 @@ import { parseBody, requireString, validationErrorResponse, ValidationError } fr
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -44,6 +46,20 @@ serve(async (req) => {
     if (categoryName) contextParts.push(`Category: ${categoryName}`);
     const contextStr = contextParts.join(", ");
 
+    const tracer = new LangSmithTracer({ env: "production", feature: "scenario-tutorial" });
+    const runId = tracer.createRun(
+      "scenario-tutorial",
+      "llm",
+      {
+        model: "gemini-3.1-flash-lite-preview",
+        scenarioTitle: scenarioTitle || null,
+        hasIndustry: !!industryName,
+        hasCategory: !!categoryName,
+        contextLength: contextStr.length,
+      },
+      { tags: ["model:gemini-3.1-flash-lite-preview"] }
+    );
+
     try {
       const response = await callGoogleAI({
         systemPrompt:
@@ -60,10 +76,26 @@ serve(async (req) => {
 
       const content = response.text || null;
 
+      const promptTokens = response.usageMetadata?.promptTokenCount;
+      const completionTokens = response.usageMetadata?.candidatesTokenCount;
+      tracer.patchRun(runId, {
+        contentLength: (response.text || "").length,
+        hasContent: !!response.text,
+        promptTokens,
+        completionTokens,
+        totalTokens: response.usageMetadata?.totalTokenCount,
+        estimatedCostUsd: estimateCost("gemini-3.1-flash-lite-preview", promptTokens, completionTokens),
+      });
+
       return new Response(JSON.stringify({ content }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (aiError) {
+      tracer.patchRun(
+        runId,
+        { errorType: classifyError(aiError) },
+        aiError instanceof Error ? aiError.message : "AI error",
+      );
       const status = (aiError as Error & { status?: number }).status;
       if (status === 429) {
         return new Response(

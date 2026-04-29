@@ -4,7 +4,8 @@ import { parseBody, requireString, requireStringEnum, optionalRecord, validation
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import {
   QUALITY_TIER_INSTRUCTIONS,
@@ -766,20 +767,25 @@ Deliberately trigger the common failure mode for this scenario.`;
   // LangSmith tracing
   const tracer = new LangSmithTracer({ env: "production", feature: "test-data-gen" });
   const runId = tracer.createRun("generate-test-data", "chain", {
+    model: "gemini-3.1-pro-preview",
     scenarioType,
     qualityTier,
     deviationType,
     persona: selectedPersona.id,
     trick: trick?.category || "none",
   }, {
-    tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`],
+    tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`, "model:gemini-3.1-pro-preview"],
     metadata: { qualityTier, deviationType, persona: selectedPersona.id },
   });
 
   const response = await callAI(system, user, temperature);
 
   if (!response.success) {
-    tracer.patchRun(runId, undefined, response.error || "AI call failed");
+    tracer.patchRun(
+      runId,
+      { errorType: classifyError(response.error) },
+      response.error || "AI call failed",
+    );
     return { success: false, error: response.error || "Failed to generate test data" };
   }
 
@@ -803,7 +809,11 @@ Deliberately trigger the common failure mode for this scenario.`;
   const expectedEvaluatorScore = rawData["expectedEvaluatorScore"] || "";
   
   if (Object.keys(data).length === 0) {
-    tracer.patchRun(runId, undefined, "Failed to parse generated data");
+    tracer.patchRun(
+      runId,
+      { errorType: "invalid_request" },
+      "Failed to parse generated data",
+    );
     return { success: false, error: "Failed to parse generated data" };
   }
 
@@ -814,10 +824,19 @@ Deliberately trigger the common failure mode for this scenario.`;
     console.log(`[TestDataGen] Trick embedding score: ${trickScore.subtletyScore}/100 - ${trickScore.feedback}`);
   }
 
+  const promptTokens = response.usageMetadata?.promptTokenCount;
+  const completionTokens = response.usageMetadata?.candidatesTokenCount;
   tracer.patchRun(runId, {
     fieldsGenerated: Object.keys(data).length,
     fieldsExpected: fields.length,
     qualityTier,
+    promptTokens,
+    completionTokens,
+    totalTokens: response.usageMetadata?.totalTokenCount,
+    estimatedCostUsd: estimateCost(response.modelUsed || "gemini-3.1-pro-preview", promptTokens, completionTokens),
+    modelUsed: response.modelUsed,
+    provider: response.provider ?? "google_ai_studio",
+    fallbackReason: response.fallbackReason,
   });
 
   return {
@@ -989,11 +1008,21 @@ Return ONLY the JSON object.`;
   };
 }
 
+interface CallAIResult {
+  success: boolean;
+  content: string;
+  error?: string;
+  usageMetadata?: { promptTokenCount: number; candidatesTokenCount: number; totalTokenCount: number };
+  modelUsed?: string;
+  provider?: "google_ai_studio" | "nebius";
+  fallbackReason?: string;
+}
+
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
   temperature: number = 0.7
-): Promise<{ success: boolean; content: string; error?: string }> {
+): Promise<CallAIResult> {
   return callAIWithLimit(systemPrompt, userPrompt, temperature, 8192);
 }
 
@@ -1002,7 +1031,7 @@ async function callAIWithLimit(
   userPrompt: string,
   temperature: number,
   maxOutputTokens: number
-): Promise<{ success: boolean; content: string; error?: string }> {
+): Promise<CallAIResult> {
   const base = {
     systemPrompt,
     contents: [{ role: "user" as const, parts: [{ text: userPrompt }] }],
@@ -1011,9 +1040,21 @@ async function callAIWithLimit(
     timeoutMs: 45_000,
   };
 
+  // When response.provider === "nebius", the request was answered by Nemotron via the
+  // shared fallback chain in google-ai.ts — surface that in modelUsed for trace accuracy.
+  const resolveModelUsed = (provider: string | undefined, googleModel: string): string =>
+    provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : googleModel;
+
   try {
     const response = await callGoogleAI(base);
-    return { success: true, content: response.text };
+    return {
+      success: true,
+      content: response.text,
+      usageMetadata: response.usageMetadata,
+      modelUsed: resolveModelUsed(response.provider, "gemini-3.1-pro-preview"),
+      provider: response.provider,
+      fallbackReason: response.fallbackReason,
+    };
   } catch (error) {
     const status = (error as { status?: number })?.status;
     const primaryMsg = error instanceof Error ? error.message : String(error);
@@ -1024,13 +1065,20 @@ async function callAIWithLimit(
       return { success: false, content: "", error: primaryMsg };
     }
 
-    console.warn(`[TestDataGen] primary model overloaded (${status}), falling back to gemini-2.5-flash`);
+    console.warn(`[TestDataGen] primary model overloaded (${status}), falling back to gemini-3-flash-preview`);
     try {
-      const response = await callGoogleAI({ ...base, model: "gemini-2.5-flash" });
-      return { success: true, content: response.text };
+      const response = await callGoogleAI({ ...base, model: "gemini-3-flash-preview" });
+      return {
+        success: true,
+        content: response.text,
+        usageMetadata: response.usageMetadata,
+        modelUsed: resolveModelUsed(response.provider, "gemini-3-flash-preview"),
+        provider: response.provider,
+        fallbackReason: response.fallbackReason,
+      };
     } catch (fallbackError) {
       const fbMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-      console.error("[TestDataGen] fallback gemini-2.5-flash also failed:", fbMsg);
+      console.error("[TestDataGen] fallback gemini-3-flash-preview also failed:", fbMsg);
       return { success: false, content: "", error: fbMsg };
     }
   }

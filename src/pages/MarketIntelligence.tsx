@@ -7,12 +7,14 @@ import { IntelResults } from "@/components/intelligence/IntelResults";
 import { RecentQueries } from "@/components/intelligence/RecentQueries";
 import { IntelScenarioSelector, type IntelScenario } from "@/components/intelligence/IntelScenarioSelector";
 import { ScheduledReportsPanel } from "@/components/intelligence/ScheduledReportsPanel";
+import { ScheduledReportsList } from "@/components/intelligence/ScheduledReportsList";
 
 import { MarketInsightsAdmin } from "@/components/insights/MarketInsightsAdmin";
 import { useMarketIntelligence } from "@/hooks/useMarketIntelligence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Sparkles, Database, Search, CalendarClock, Mail, MessageSquare } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
@@ -25,6 +27,7 @@ const MarketIntelligence = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { resolvedTheme } = useTheme();
   const intelContextImage = resolvedTheme === "dark" ? intelContextDark : intelContextLight;
+  
 
   // Derive active tab from URL path + mode param
   const activeTab = (() => {
@@ -97,20 +100,29 @@ const MarketIntelligence = () => {
     );
   }
 
+  const leftSidebar = (
+    <div className="lg:col-span-1 space-y-3">
+      <div className="rounded-lg border border-border bg-card border-t-4 border-t-violet-500 p-6 space-y-6">
+        <RecentQueries
+          queries={recentQueries}
+          isLoading={isLoadingHistory}
+          onLoad={loadRecentQueries}
+          variant="inline"
+        />
+        <Separator />
+        <ScheduledReportsList variant="inline" />
+      </div>
+    </div>
+  );
+
   const renderScenarioContent = () => {
 
     if (selectedScenario === "regular") {
       return (
         <div className="grid lg:grid-cols-3 gap-6">
+          {leftSidebar}
           <div className="lg:col-span-2">
             <ScheduledReportsPanel />
-          </div>
-          <div className="lg:col-span-1">
-            <RecentQueries
-              queries={recentQueries}
-              isLoading={isLoadingHistory}
-              onLoad={loadRecentQueries}
-            />
           </div>
         </div>
       );
@@ -119,19 +131,13 @@ const MarketIntelligence = () => {
     // Ad-hoc flow
     return (
       <div className="grid lg:grid-cols-3 gap-6">
+        {leftSidebar}
         <div className="lg:col-span-2">
           {result ? (
             <IntelResults result={result} onNewQuery={clearResult} />
           ) : (
             <QueryBuilder onSubmit={query} isLoading={isLoading} />
           )}
-        </div>
-        <div className="lg:col-span-1">
-          <RecentQueries
-            queries={recentQueries}
-            isLoading={isLoadingHistory}
-            onLoad={loadRecentQueries}
-          />
         </div>
       </div>
     );
@@ -209,25 +215,25 @@ const MarketIntelligence = () => {
             <MarketInsightsAdmin />
           </TabsContent>
         </Tabs>
-
-        <footer className="mt-8 border-t border-border/40 pt-4 pb-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-            <span>© {new Date().getFullYear()} EXOS Procurement · Market Intelligence</span>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/pricing?subject=feedback#contact">
-                  <MessageSquare className="w-4 h-4" /> Leave Feedback
-                </a>
-              </Button>
-              <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
-                <a href="/pricing#contact">
-                  Get in Touch <Mail className="w-4 h-4" />
-                </a>
-              </Button>
-            </div>
-          </div>
-        </footer>
       </main>
+
+      <footer className="container border-t border-border/40 pt-4 pb-6 mt-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span>© {new Date().getFullYear()} EXOS Procurement · Market Intelligence</span>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+              <a href="/pricing?subject=feedback#contact">
+                <MessageSquare className="w-4 h-4" /> Leave Feedback
+              </a>
+            </Button>
+            <Button variant="default" size="sm" className="h-9 px-5 text-sm gap-2" asChild>
+              <a href="/pricing#contact">
+                Get in Touch <Mail className="w-4 h-4" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

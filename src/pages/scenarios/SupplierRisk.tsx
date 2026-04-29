@@ -7,7 +7,7 @@ export default function SupplierRisk() {
       metaDescription="Comprehensive supplier risk analysis covering financial health, geopolitical exposure, legal, cyber, and operational risk. Real-time market intelligence. GDPR-native for EU teams."
       canonicalPath="/scenarios/supplier-risk-assessment"
       category="Risk"
-      h1="Supplier Risk Assessment"
+      h1="Supplier Risk Assessment Software"
       subtitle="Identify supplier vulnerabilities before they become supply chain crises. Powered by real-time market intelligence."
       heroMetric="6 weeks"
       heroMetricLabel="Average production halt avoided by early EXOS risk flagging"

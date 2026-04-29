@@ -2,11 +2,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { SentryReporter } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  let tracer: LangSmithTracer | undefined;
+  let runId: string | undefined;
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -120,6 +125,21 @@ Provide a current market scan for each driver. Focus on recent developments (las
 
     const startTime = Date.now();
 
+    tracer = new LangSmithTracer({ env: "production", feature: "run-inflation-scan" });
+    runId = tracer.createRun(
+      "run-inflation-scan",
+      "llm",
+      {
+        model: "sonar-pro",
+        trackerId: tracker_id,
+        goodsDefinition: tracker.goods_definition,
+        driverCount: drivers.length,
+        systemPromptLen: systemPrompt.length,
+        userPromptLen: userPrompt.length,
+      },
+      { tags: ["model:sonar-pro"] }
+    );
+
     const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
@@ -145,6 +165,16 @@ Provide a current market scan for each driver. Focus on recent developments (las
     const processingTime = Date.now() - startTime;
     const content = result.choices?.[0]?.message?.content || "No content returned";
     const citations = result.citations || [];
+
+    tracer.patchRun(runId, {
+      contentLength: content.length,
+      citationCount: citations.length,
+      processingTimeMs: processingTime,
+      promptTokens: result.usage?.prompt_tokens,
+      completionTokens: result.usage?.completion_tokens,
+      totalTokens: result.usage?.total_tokens,
+      estimatedCostUsd: estimateCost("sonar-pro", result.usage?.prompt_tokens, result.usage?.completion_tokens),
+    });
 
     // Store as a monitor report (reuse monitor_reports table via enterprise_trackers link)
     // First check if there's an enterprise_tracker linked, otherwise create a lightweight one
@@ -232,10 +262,13 @@ Provide a current market scan for each driver. Focus on recent developments (las
     });
   } catch (error) {
     console.error("run-inflation-scan error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    if (tracer && runId) {
+      tracer.patchRun(runId, { errorType: classifyError(error) }, message);
+    }
     new SentryReporter("run-inflation-scan").captureException(error, {
       userId: typeof user !== "undefined" ? user?.id : undefined,
     });
-    const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
