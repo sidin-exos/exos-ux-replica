@@ -196,10 +196,23 @@ interface PDFDashboardVisualsProps {
  * Returns an array of <Page> elements, each containing 1-2 dashboards.
  * Must be rendered as direct children of <Document>.
  */
+const hasDashboardData = (dashboardType: DashboardType, parsedData?: DashboardData | null): boolean => {
+  if (!parsedData) return false;
+  const key = dashboardDataKey[dashboardType as string];
+  if (!key) return false;
+  const value = parsedData[key];
+  return value !== undefined && value !== null;
+};
+
 export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, reportDate }: PDFDashboardVisualsProps) => {
   if (!selectedDashboards || selectedDashboards.length === 0) return null;
 
-  const pairs = chunkPairs(selectedDashboards);
+  const available = selectedDashboards.filter((d) => hasDashboardData(d, parsedData));
+  const skipped = selectedDashboards.filter((d) => !hasDashboardData(d, parsedData));
+
+  if (available.length === 0 && skipped.length === 0) return null;
+
+  const pairs = chunkPairs(available);
 
   return (
     <>
@@ -230,6 +243,22 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, re
             </View>
           ))}
 
+          {pairIdx === pairs.length - 1 && skipped.length > 0 && (
+            <View style={{ marginTop: 16, padding: 12, borderWidth: 1, borderColor: C.border, backgroundColor: "#F9FAFB" }} wrap={false}>
+              <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: C.heading, marginBottom: 4 }}>
+                {skipped.length} dashboard{skipped.length > 1 ? "s" : ""} skipped — insufficient AI data
+              </Text>
+              {skipped.map((d) => {
+                const config = dashboardConfigs[d as DashboardType];
+                return (
+                  <Text key={d} style={{ fontSize: 9, color: C.muted, marginTop: 2 }}>
+                    • {config?.name || String(d)}
+                  </Text>
+                );
+              })}
+            </View>
+          )}
+
           <View style={footerStyle} fixed>
             <Text style={{ fontSize: 8, color: C.muted }}>Confidential — EXOS</Text>
             <Text style={{ fontSize: 8, color: C.muted }} render={({ pageNumber }) => `Page ${pageNumber}`} />
@@ -237,6 +266,41 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, re
           </View>
         </Page>
       ))}
+
+      {available.length === 0 && skipped.length > 0 && (
+        <Page size="A4" style={pageStyle}>
+          <View style={runningHeaderStyle} fixed>
+            <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: C.heading }}>EXOS</Text>
+            <Text style={{ fontSize: 8, color: C.muted }}>PROCUREMENT ANALYSIS REPORT</Text>
+          </View>
+
+          <View style={sectionTitleWrapperStyle}>
+            <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: C.heading }}>
+              Analysis Visualizations
+            </Text>
+          </View>
+
+          <View style={{ padding: 12, borderWidth: 1, borderColor: C.border, backgroundColor: "#F9FAFB" }}>
+            <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: C.heading, marginBottom: 4 }}>
+              {skipped.length} dashboard{skipped.length > 1 ? "s" : ""} skipped — insufficient AI data
+            </Text>
+            {skipped.map((d) => {
+              const config = dashboardConfigs[d as DashboardType];
+              return (
+                <Text key={d} style={{ fontSize: 9, color: C.muted, marginTop: 2 }}>
+                  • {config?.name || String(d)}
+                </Text>
+              );
+            })}
+          </View>
+
+          <View style={footerStyle} fixed>
+            <Text style={{ fontSize: 8, color: C.muted }}>Confidential — EXOS</Text>
+            <Text style={{ fontSize: 8, color: C.muted }} render={({ pageNumber }) => `Page ${pageNumber}`} />
+            <Text style={{ fontSize: 8, color: C.muted }}>{reportDate || ""}</Text>
+          </View>
+        </Page>
+      )}
     </>
   );
 };
