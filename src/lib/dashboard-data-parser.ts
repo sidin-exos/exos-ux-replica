@@ -561,8 +561,10 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   }
 
   // ── Universal: kraljicQuadrant
-  // Reads scenario_specific.kraljic_position (S20, S26, S1 and any scenario emitting it).
-  const kraljicSrc: any = (ss as any)?.kraljic_position ?? (ss as any)?.kraljic ?? null;
+  // Reads scenario_specific.kraljic_position (S20, S1 and any scenario emitting it).
+  // Skip for S26 — Kraljic portfolio positioning is not relevant during a live crisis.
+  const scenarioId = String((envelope as any)?.scenario_id ?? '').toUpperCase();
+  const kraljicSrc: any = scenarioId === 'S26' ? null : ((ss as any)?.kraljic_position ?? (ss as any)?.kraljic ?? null);
   if (kraljicSrc && typeof kraljicSrc === 'object') {
     const sr = Number(kraljicSrc.supply_risk ?? kraljicSrc.supplyRisk);
     const bi = Number(kraljicSrc.business_impact ?? kraljicSrc.businessImpact);
