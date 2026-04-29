@@ -560,6 +560,30 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     };
   }
 
+  // ── Universal: kraljicQuadrant
+  // Reads scenario_specific.kraljic_position (S20, S26, S1 and any scenario emitting it).
+  const kraljicSrc: any = (ss as any)?.kraljic_position ?? (ss as any)?.kraljic ?? null;
+  if (kraljicSrc && typeof kraljicSrc === 'object') {
+    const sr = Number(kraljicSrc.supply_risk ?? kraljicSrc.supplyRisk);
+    const bi = Number(kraljicSrc.business_impact ?? kraljicSrc.businessImpact);
+    if (Number.isFinite(sr) && Number.isFinite(bi)) {
+      const name = String(
+        kraljicSrc.label ?? kraljicSrc.category ?? (ss as any)?.category_name ?? envelope.scenario_label ?? 'Category'
+      );
+      const scale = (v: number) => Math.max(0, Math.min(100, v <= 5 ? v * 20 : v));
+      result.kraljicQuadrant = {
+        items: [{
+          id: '1',
+          name,
+          supplyRisk: scale(sr),
+          businessImpact: scale(bi),
+          spend: kraljicSrc.quadrant ? String(kraljicSrc.quadrant) : undefined,
+        }],
+      };
+    }
+  }
+
+
   // ── Group A: tcoComparison
   // Render with >= 1 vendor. Single-vendor TCO renders as a one-bar chart;
   // the AI is instructed to emit >= 2 vendors but we don't blank the dashboard
