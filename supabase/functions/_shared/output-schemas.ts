@@ -503,7 +503,7 @@ Populate scenario_specific based on the scenario, using the structures below ver
 }
 S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switching cost appears more than 3× below the industry benchmark of 300–500% underestimation (per CIPS/Gartner). Never emit specific API keys, integration credentials, or internal system architecture details beyond what is necessary for dependency assessment (GDPR Art. 5(1)(c) + commercial sensitivity).
 
-— S26 Disruption Management (§6.6):
+— S26 Disruption Management (§6.6) — MUST contain ALL of the following structures (the eight promised deliverables):
 {
   "scenario_specific": {
     "disruption_type": "SUPPLIER_FAILURE | LOGISTICS | GEOPOLITICAL | FORCE_MAJEURE | CYBER | NATURAL_DISASTER | OTHER",
@@ -515,14 +515,14 @@ S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switchi
     "overall_urgency": "CRITICAL | HIGH | MEDIUM | LOW",
     "response_plan": {
       "stage_1_assess": {
-        "actions": [],
+        "actions": ["At least 2 specific assessment actions"],
         "owner": "Role-based reference",
         "target_duration_hours": null
       },
       "stage_2_contain": {
-        "immediate_actions": [],
-        "customer_communication_template": null,
-        "internal_communication_template": null,
+        "immediate_actions": ["At least 2 containment actions"],
+        "customer_communication_template": "Full ready-to-send message body (>= 60 words) addressed to customers",
+        "internal_communication_template": "Full ready-to-send message body (>= 60 words) addressed to internal stakeholders",
         "owner": "Role-based reference",
         "target_duration_hours": null
       },
@@ -541,11 +541,17 @@ S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switchi
         "target_duration_days": null
       },
       "stage_4_prevent": {
-        "recurrence_prevention_checklist": [],
-        "process_changes": [],
+        "recurrence_prevention_checklist": ["At least 2 prevention items"],
+        "process_changes": ["At least 1 process change"],
         "owner": "Role-based reference"
       }
     },
+    "impact_scenarios": [
+      { "delay_label": "1 week",   "delay_weeks": 1,  "revenue_loss": null, "cumulative_loss": null, "mitigation_cost": null, "net_impact": null },
+      { "delay_label": "2 weeks",  "delay_weeks": 2,  "revenue_loss": null, "cumulative_loss": null, "mitigation_cost": null, "net_impact": null },
+      { "delay_label": "4 weeks",  "delay_weeks": 4,  "revenue_loss": null, "cumulative_loss": null, "mitigation_cost": null, "net_impact": null },
+      { "delay_label": "8 weeks",  "delay_weeks": 8,  "revenue_loss": null, "cumulative_loss": null, "mitigation_cost": null, "net_impact": null }
+    ],
     "stakeholder_comms": [
       {
         "stakeholder_group": "Customers | Finance | Operations | Board | Regulator",
@@ -554,10 +560,20 @@ S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switchi
         "timing": null
       }
     ],
+    "claim_letter_template": {
+      "addressee": "Counterparty / supplier name placeholder",
+      "subject": "Formal subject line",
+      "body": "Full ready-to-send claim or partner-assistance letter (>= 120 words) referencing the contractual basis, the disruption event, the financial exposure, the requested remedy and the response deadline",
+      "cc": []
+    },
     "bridge_to_scenario": "S27"
   }
 }
-S26 AI guidance: speed of output is the value — prioritise completeness of the 4 stages over depth of any single stage. Mask exact inventory depletion dates (commercially sensitive with customers) and specific emergency cash reserves (financially sensitive with lenders). If the user has not provided an inventory buffer, flag current_inventory_buffer_days = null and add to data_gaps[] — the response plan urgency cannot be calibrated without it.
+S26 AI guidance: this scenario has THREE headline deliverables that the UI promises and you MUST emit:
+  (a) "Emergency Map" — the 4-stage response_plan with at least 2 concrete actions per stage and a target_duration on each stage.
+  (b) "Impact Table" — impact_scenarios[] MUST contain the four delay buckets (1/2/4/8 weeks) with numeric revenue_loss values; if estimated_revenue_impact_per_day is known, derive cumulative_loss = revenue_loss * delay_weeks * 7.
+  (c) "Draft Letter" — claim_letter_template.body MUST be a full, sendable letter the user can copy-paste; never leave it null. Also fill stage_2_contain.customer_communication_template AND internal_communication_template as ready-to-send messages.
+Speed of output is the value — prioritise completeness of all three deliverables over depth of any single stage. Mask exact inventory depletion dates (commercially sensitive with customers) and specific emergency cash reserves (financially sensitive with lenders). If the user has not provided an inventory buffer, flag current_inventory_buffer_days = null and add to data_gaps[] — the response plan urgency cannot be calibrated without it. DO NOT emit kraljic_position for S26 — portfolio positioning is not relevant during a live crisis.
 
 — S27 Black Swan Scenario Simulation (§6.7) — includes concentration:
 {
