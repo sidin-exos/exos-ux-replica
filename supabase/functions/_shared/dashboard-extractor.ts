@@ -438,31 +438,11 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
     }
   }
 
-  // ── Universal: supplierConcentrationMap ────────────────────────────────────
-  // Reads scenario_specific.concentration (S20, S24, S25, S27). Group-agnostic.
-  const conc: any = (ss as any)?.concentration;
-  if (conc && typeof conc === 'object') {
-    const suppliers = Array.isArray(conc.by_supplier) ? conc.by_supplier : [];
-    const validSuppliers = suppliers
-      .map((s: any) => ({
-        supplier_label: String(s?.supplier_label ?? s?.label ?? '').trim(),
-        spend_share_pct: Number(s?.spend_share_pct ?? s?.share_pct ?? 0),
-        annual_spend: s?.annual_spend != null ? Number(s.annual_spend) : null,
-        country: s?.country ?? null,
-        risk_flags: Array.isArray(s?.risk_flags) ? s.risk_flags : [],
-      }))
-      .filter((s: any) => s.supplier_label && Number.isFinite(s.spend_share_pct));
-    const top3 = Number(conc.top3_share_pct ?? conc.top_3_share_pct);
-    if (validSuppliers.length > 0 || Number.isFinite(top3)) {
-      (result as any).supplierConcentrationMap = {
-        suppliers: validSuppliers,
-        top3_share_pct: Number.isFinite(top3) ? top3 : null,
-        hhi: conc.hhi != null ? Number(conc.hhi) : null,
-        single_source_count: conc.single_source_count != null ? Number(conc.single_source_count) : null,
-        currency: conc.currency ?? 'EUR',
-      };
-    }
-  }
+  // NOTE: supplier-concentration-map for PDF requires the full Sankey shape
+  // (categories[]/suppliers[]/flows[]) — handled by the frontend parser via
+  // extractSupplierConcentrationMap. PDF dashboard for concentration is opt-in
+  // and not currently rendered server-side.
+
 
 
   // ── Group A: tcoComparison ─────────────────────────────────────────────────
