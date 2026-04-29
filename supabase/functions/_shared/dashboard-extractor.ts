@@ -307,9 +307,12 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
         : null;
     })
     .filter((c): c is { name: string; value: number; type: 'cost' } => c !== null);
-  if (validCostComponents.length > 0) {
+
+  const reductionComponents = extractReductionComponents(ss, recommendations, validCostComponents);
+
+  if (validCostComponents.length > 0 || reductionComponents.length > 0) {
     result.costWaterfall = {
-      components: validCostComponents,
+      components: [...validCostComponents, ...reductionComponents],
       currency: payload.financial_model?.currency ?? 'EUR',
     };
   }
