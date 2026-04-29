@@ -94,11 +94,17 @@ export const GROUP_AI_INSTRUCTIONS: Record<string, string> = {
   D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces, TCO, Make vs. Buy, RTO/RPO) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions. Quantify financial impact wherever possible. Flag inside information risks (MAR) when strategy documents contain unannounced business plans. When supplier and category spend data are available, populate concentration using the HHI formula: sum of (supplier_spend_share_pct)² per category.
 
 S21 Negotiation Preparation — SPECIFIC RULES:
-1. Populate batna with buyer_batna (the specific best alternative identified), buyer_batna_value (its quantified value where possible), and supplier_batna_estimated (estimate of the supplier's best alternative).
+1. Populate batna with buyer_batna (specific best alternative identified), buyer_batna_value (quantified value where possible), supplier_batna_estimated, batna_strength_pct (0–100 integer reflecting how credible/ready the buyer's BATNA is), and batna_improvement_actions[] (2–4 concrete steps to strengthen BATNA — e.g. "Pre-qualify second alternative supplier", "Run sample pilot to validate quality").
 2. Populate zopa with buyer_walk_away (kept confidential and masked in shared exports), buyer_target, supplier_likely_floor, and zopa_exists (boolean — true only if a positive zone exists).
 3. leverage_analysis: list buyer_leverage_factors[] and supplier_leverage_factors[] referencing the user's specific inputs; set power_balance to BUYER_ADVANTAGE | BALANCED | SUPPLIER_ADVANTAGE.
-4. negotiation_tactics[]: 3–6 tactical steps tailored to the user's situation — never generic advice.
-5. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data.`,
+4. negotiation_tactics[]: 3–6 tactical steps tailored to the user's situation — never generic advice. Each item: { "title": "...", "description": "..." }.
+5. negotiation_sequence[]: REQUIRED. Provide exactly 3–5 ordered tactical moves covering opening / anchoring / value exchange / concession / closing. Each item: { "step": "Opening | Anchor | Value Exchange | Concession | Walk-away Trigger | Close", "detail": "specific action tied to the user's case" }.
+6. counter_arguments[]: REQUIRED. 3–5 anticipated supplier objections with prepared responses. Each item: { "supplier_position": "what the supplier is likely to say", "buyer_response": "how to counter", "evidence": "fact / data point that supports the response" }.
+7. walk_away_plan: REQUIRED. { "trigger_conditions": ["specific thresholds, e.g. price increase >3%, refusal to remove volume floor"], "exit_steps": ["sequenced actions if BATNA activates"], "communication_script": "one short paragraph the buyer can use to walk away professionally" }.
+8. value_creation[]: REQUIRED. 2–4 win-win opportunities to expand the pie. Each item: { "opportunity": "...", "buyer_benefit": "...", "supplier_benefit": "..." }.
+9. risk_register[]: REQUIRED. 3–5 negotiation risks. Each item: { "risk": "...", "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": "..." }.
+10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data.
+11. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.`,
   E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
 };
 
@@ -249,7 +255,10 @@ Populate scenario_specific based on the scenario, using the structures below ver
     "batna": {
       "buyer_batna": null,
       "buyer_batna_value": null,
-      "supplier_batna_estimated": null
+      "supplier_batna_estimated": null,
+      "batna_strength_pct": null,
+      "buyer_batna_description": null,
+      "batna_improvement_actions": []
     },
     "zopa": {
       "buyer_walk_away": "[CONFIDENTIAL — MASK IN SHARED EXPORTS]",
@@ -258,12 +267,37 @@ Populate scenario_specific based on the scenario, using the structures below ver
       "zopa_exists": true
     },
     "opening_position": null,
-    "negotiation_tactics": [],
+    "negotiation_tactics": [
+      { "title": null, "description": null }
+    ],
+    "negotiation_sequence": [
+      { "step": "Opening | Anchor | Value Exchange | Concession | Walk-away Trigger | Close", "detail": null }
+    ],
+    "counter_arguments": [
+      { "supplier_position": null, "buyer_response": null, "evidence": null }
+    ],
+    "walk_away_plan": {
+      "trigger_conditions": [],
+      "exit_steps": [],
+      "communication_script": null
+    },
+    "value_creation": [
+      { "opportunity": null, "buyer_benefit": null, "supplier_benefit": null }
+    ],
+    "risk_register": [
+      { "risk": null, "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": null }
+    ],
     "leverage_analysis": {
       "buyer_leverage_factors": [],
       "supplier_leverage_factors": [],
       "power_balance": "BUYER_ADVANTAGE | BALANCED | SUPPLIER_ADVANTAGE"
     },
+    "leverage_points": [
+      { "title": null, "description": null }
+    ],
+    "negotiation_scenarios": [
+      { "name": "Conservative | Aggressive | Hybrid", "expected_savings_pct": null, "estimated_timeline_months": null, "risk_level": "LOW | MEDIUM | HIGH" }
+    ],
     "financial_outcome_range": {
       "optimistic": null,
       "realistic": null,
@@ -730,10 +764,15 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     return String(v);
   };
 
+  // Replace Unicode comparators that some PDF fonts cannot render reliably.
+  // Em/en dashes and × are intentionally NOT touched — they are part of the brand voice.
+  const sanitiseAscii = (s: string): string =>
+    s.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=');
+
   if (parsed.executive_bullets?.length > 0) {
     parts.push('### Key Findings');
     parsed.executive_bullets.forEach(b => {
-      const text = coerceToString(b).trim();
+      const text = sanitiseAscii(coerceToString(b).trim());
       if (text && text !== '[object Object]') parts.push(`- ${text}`);
     });
     parts.push('');
@@ -741,7 +780,6 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
 
   if (parsed.recommendations?.length > 0) {
     parts.push('### Recommendations');
-    // Normalise free-form priority labels to the canonical 4-tier scale.
     const normalisePriority = (raw: unknown): string => {
       if (typeof raw !== 'string') return '';
       const v = raw.trim().toLowerCase();
@@ -781,7 +819,7 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       const fi = isObj ? (r as { financial_impact?: unknown }).financial_impact : null;
       const impact = fi ? ` — ${coerceToString(fi)}` : '';
       idx += 1;
-      parts.push(`${idx}. **[${priority}]** ${action}${impact}`);
+      parts.push(`${idx}. **[${priority}]** ${sanitiseAscii(action)}${sanitiseAscii(impact)}`);
     });
     parts.push('');
   }
@@ -798,7 +836,7 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     parts.push('💡 **To strengthen this analysis:**');
     validGaps.slice(0, 3).forEach(g => {
       // Strip redundant prefix that duplicates the heading
-      const cleaned = g.resolution.replace(/^To strengthen this analysis,?\s*/i, '');
+      const cleaned = sanitiseAscii(g.resolution.replace(/^To strengthen this analysis,?\s*/i, ''));
       // Capitalise the first letter after stripping
       const resolution = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
       parts.push(`- ${resolution}`);

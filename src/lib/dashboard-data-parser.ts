@@ -699,22 +699,55 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
 
   // ── Group D: negotiationPrep + scenarioComparison + timelineRoadmap + decisionMatrix
   if (group === 'D') {
-    const batnaStrengthPct: number | null = ss.batna?.batna_strength_pct ?? null;
-    const batnaDescription: string | null = ss.batna?.buyer_batna_description ?? ss.batna?.description ?? null;
-    const leveragePoints = (ss.leverage_points ?? [])
-      .filter((lp: any) => lp?.title && lp?.description)
-      .map((lp: any) => ({
-        point: lp.title,
-        tactic: lp.description,
-      }));
-    const sequence = (ss.negotiation_sequence ?? [])
-      .filter((s: any) => s?.step && s?.detail)
-      .map((s: any) => ({ step: s.step, detail: s.detail }));
+    // Accept multiple aliases the AI may emit; normalise BATNA to 0–5.
+    const batnaRaw =
+      ss.batna?.batna_strength_pct ??
+      ss.batna?.strength_pct ??
+      ss.batna?.strength ??
+      ss.batna?.score ??
+      null;
+    const batnaStrength05 =
+      batnaRaw == null
+        ? null
+        : Number(batnaRaw) > 5
+          ? Math.max(0, Math.min(5, Number(batnaRaw) / 20))
+          : Math.max(0, Math.min(5, Number(batnaRaw)));
+    const batnaDescription: string | null =
+      ss.batna?.buyer_batna_description ??
+      ss.batna?.description ??
+      ss.batna?.buyer_batna ??
+      null;
 
-    if (batnaStrengthPct !== null || leveragePoints.length > 0) {
+    const leverageSource =
+      (Array.isArray(ss.leverage_points) && ss.leverage_points.length > 0 && ss.leverage_points) ||
+      (Array.isArray(ss.leverage_analysis?.buyer_leverage_factors) && ss.leverage_analysis.buyer_leverage_factors) ||
+      [];
+    const leveragePoints = leverageSource
+      .map((lp: any) => {
+        if (typeof lp === 'string') return { point: lp, tactic: '' };
+        const point = lp?.title ?? lp?.point ?? lp?.factor ?? lp?.name ?? lp?.label ?? null;
+        const tactic = lp?.description ?? lp?.tactic ?? lp?.detail ?? lp?.rationale ?? '';
+        return point ? { point: String(point), tactic: String(tactic) } : null;
+      })
+      .filter((x: any): x is { point: string; tactic: string } => !!x);
+
+    const sequenceSource =
+      (Array.isArray(ss.negotiation_sequence) && ss.negotiation_sequence.length > 0 && ss.negotiation_sequence) ||
+      (Array.isArray(ss.negotiation_tactics) && ss.negotiation_tactics) ||
+      [];
+    const sequence = sequenceSource
+      .map((s: any) => {
+        if (typeof s === 'string') return { step: s, detail: '' };
+        const step = s?.step ?? s?.title ?? s?.name ?? s?.phase ?? null;
+        const detail = s?.detail ?? s?.description ?? s?.action ?? '';
+        return step ? { step: String(step), detail: String(detail) } : null;
+      })
+      .filter((x: any): x is { step: string; detail: string } => !!x);
+
+    if (batnaStrength05 !== null || leveragePoints.length > 0 || sequence.length > 0) {
       result.negotiationPrep = {
         batna: {
-          strength: batnaStrengthPct ?? 0,
+          strength: batnaStrength05 ?? 0,
           description: batnaDescription ?? '',
         },
         leveragePoints,
