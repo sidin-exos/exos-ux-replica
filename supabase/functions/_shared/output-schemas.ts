@@ -539,6 +539,63 @@ Populate scenario_specific based on the scenario (e.g. intelligence_blocks/key_m
 Every factual claim must reference a source_id. Use null for any field where search returned no reliable result.`,
 };
 
+// ── Scenario-sliced schema (token optimisation) ─────────────────────
+//
+// Group D ships 7 sub-schemas (S21–S27) totalling ~10k chars. The model
+// only needs the one matching the active scenario. This helper returns
+// the group preamble + the matching sub-section + the shared footer
+// (concentration rules + closing line). Saves ~2k input tokens per call
+// for Group D scenarios with no quality loss.
+//
+// Group A's per-scenario rules are short bullets and are kept intact —
+// slicing them yielded < 200 token savings and risked breaking the
+// shared financial_model contract.
+
+const SCENARIO_ID_TO_CODE: Record<string, string> = {
+  'negotiation-preparation': 'S21',
+  'category-strategy': 'S22',
+  'make-vs-buy': 'S23',
+  'volume-consolidation': 'S24',
+  'supplier-dependency-planner': 'S25',
+  'disruption-management': 'S26',
+  'black-swan-scenario': 'S27',
+};
+
+/**
+ * Returns a scenario-specific slice of GROUP_SCHEMAS for the active scenario.
+ * Falls back to the full group schema if slicing is not supported for the
+ * group/scenario or if the regex match fails (defensive — never strip blindly).
+ */
+export function getScenarioSchema(group: string | null | undefined, scenarioId: string | null | undefined): string {
+  const full = group ? GROUP_SCHEMAS[group] : '';
+  if (!full) return '';
+
+  // Only Group D benefits meaningfully from slicing today.
+  if (group !== 'D' || !scenarioId) return full;
+
+  const code = SCENARIO_ID_TO_CODE[scenarioId];
+  if (!code) return full;
+
+  // Group D layout:
+  //   <preamble through "structures below verbatim.">
+  //   — S21 ... { ... }
+  //   — S22 ... { ... }
+  //   ...
+  //   — S27 ... { ... }
+  //   <CONCENTRATION RULES + closing line>
+  const preambleMatch = full.match(/^([\s\S]*?structures below verbatim\.\s*\n)/);
+  const footerMatch = full.match(/\n(CONCENTRATION RULES[\s\S]*)$/);
+  if (!preambleMatch || !footerMatch) return full;
+
+  // Match the target sub-scenario block: from "— S## …" up to (but not
+  // including) the next "— S##" or the CONCENTRATION RULES footer.
+  const blockRe = new RegExp(`(— ${code}\\b[\\s\\S]*?)(?=\\n— S\\d+\\b|\\nCONCENTRATION RULES)`, 'm');
+  const blockMatch = full.match(blockRe);
+  if (!blockMatch) return full;
+
+  return `${preambleMatch[1]}\n${blockMatch[1].trim()}\n\n${footerMatch[1]}`;
+}
+
 // ── AI Prompt Contract ──────────────────────────────────────────────
 
 export const AI_PROMPT_CONTRACT = `
