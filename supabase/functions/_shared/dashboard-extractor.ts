@@ -846,9 +846,53 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
       };
     }
 
+    // timelineRoadmap — S26 4-stage emergency response (priority over three_year_roadmap)
+    const rp26: any = ss.response_plan ?? null;
+    if (scenarioId === 'S26' && rp26 && typeof rp26 === 'object') {
+      const stageDefs: Array<{ key: string; name: string; actionKey: string }> = [
+        { key: 'stage_1_assess',  name: 'Stage 1 — Assess',  actionKey: 'actions' },
+        { key: 'stage_2_contain', name: 'Stage 2 — Contain', actionKey: 'immediate_actions' },
+        { key: 'stage_3_recover', name: 'Stage 3 — Recover', actionKey: 'actions' },
+        { key: 'stage_4_prevent', name: 'Stage 4 — Prevent', actionKey: 'recurrence_prevention_checklist' },
+      ];
+      const presentStages = stageDefs
+        .map(s => ({ ...s, stage: rp26[s.key] as any }))
+        .filter(s => s.stage && typeof s.stage === 'object');
+      if (presentStages.length > 0) {
+        // Convert each stage's target duration to weeks (round up) — minimum 1 week per stage so the chart renders.
+        let cursor = 1;
+        result.timelineRoadmap = {
+          phases: presentStages.map((s, i) => {
+            const hours = Number(s.stage.target_duration_hours);
+            const days = Number(s.stage.target_duration_days);
+            const weeks = Number.isFinite(hours) && hours > 0 ? Math.max(1, Math.ceil(hours / (24 * 7)))
+              : Number.isFinite(days) && days > 0 ? Math.max(1, Math.ceil(days / 7))
+              : 1;
+            const startWeek = cursor;
+            const endWeek = cursor + weeks - 1;
+            cursor = endWeek + 1;
+            const actions: any[] = Array.isArray(s.stage[s.actionKey]) ? s.stage[s.actionKey]
+              : Array.isArray(s.stage.actions) ? s.stage.actions : [];
+            const milestones = actions
+              .map(a => typeof a === 'string' ? a : (a?.action ?? a?.text ?? null))
+              .filter((a: any): a is string => typeof a === 'string' && a.length > 0)
+              .slice(0, 3);
+            return {
+              name: s.name,
+              startWeek,
+              endWeek,
+              status: i === 0 ? ('in-progress' as const) : ('upcoming' as const),
+              milestones,
+            };
+          }),
+          totalWeeks: cursor - 1,
+        };
+      }
+    }
+
     // timelineRoadmap — from three_year_roadmap[] (S22)
     const roadmap: any[] = ss.three_year_roadmap ?? [];
-    if (roadmap.length > 0) {
+    if (!result.timelineRoadmap && roadmap.length > 0) {
       let cursor = 1;
       result.timelineRoadmap = {
         phases: roadmap
