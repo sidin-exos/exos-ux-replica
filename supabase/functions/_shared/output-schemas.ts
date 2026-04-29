@@ -624,6 +624,16 @@ You MUST use the following schema structure:
 - Add an entry to gdpr_flags if any field you are about to write appears to contain
   unanonymised personal data (real names, email addresses, phone numbers, salary amounts).
   Set that field to null and explain in gdpr_flags instead.
+- recommendations RULES (strict):
+  1. Every entry MUST be a JSON object: { "priority": "...", "action": "...", "financial_impact": "..." | null, "next_scenario": "S##" | null }. Never emit plain strings.
+  2. priority MUST be one of: CRITICAL, HIGH, MEDIUM, LOW. Calibrate honestly — do not default everything to MEDIUM.
+     - CRITICAL = must act this week; failure causes contract loss, compliance breach, supply outage, or >10% margin hit.
+     - HIGH = act within 30 days; material savings/risk-reduction (>5% spend impact) or hard deadline within the quarter.
+     - MEDIUM = act this quarter; meaningful improvement but no immediate cliff.
+     - LOW = nice-to-have, opportunistic, or dependent on other actions completing first.
+  3. Aim for a realistic mix. A 4-item list should typically span at least two priority levels; flagging every item MEDIUM is a calibration failure.
+  4. action MUST be a specific imperative ("Issue RFP to 3 shortlisted vendors by 15 May"), not a generic theme.
+  5. financial_impact MUST be a quantified delta when the user provided spend/budget data ("~€120k annual saving" or "Avoids €40k late-payment penalty"); use null only when no numeric basis exists.
 
 DASHBOARD-SUPPORTING FIELD RULES:
 - For S4 (Savings Calculation): you MUST populate both savings_breakdown and
