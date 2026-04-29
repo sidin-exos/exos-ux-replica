@@ -283,7 +283,10 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   // reason the dashboard was renamed — see DASHBOARD_ID_ALIASES.
   // S18 ("risk-matrix") is a risk-positioning scenario, not a supplier-perf
   // review, so supplier-scorecard is intentionally NOT mapped here.
-  "disruption-management": ["action-checklist", "timeline-roadmap", "risk-heatmap"],
+  // S26 Disruption Management — Emergency Map (timeline) is the headline deliverable;
+  // action-checklist surfaces stage-1 immediate actions; risk-heatmap renders if the
+  // AI emits dependency_risks / risk_factors. Kraljic intentionally excluded (gated in extractor).
+  "disruption-management": ["timeline-roadmap", "action-checklist", "risk-heatmap"],
   "risk-assessment": ["risk-heatmap", "scenario-comparison", "action-checklist", "data-quality"],
   "risk-matrix": ["risk-heatmap", "action-checklist"],
   "pre-flight-audit": ["data-quality", "risk-heatmap"],
