@@ -244,10 +244,25 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   const result: DashboardData = {};
 
   // ── Universal: actionChecklist ─────────────────────────────────────────────
-  const validRecs = recommendations.filter((r: any) => r?.action);
-  if (validRecs.length > 0) {
+  // Accept both object form ({ action, priority }) and plain-string form
+  // ("Renegotiate vendor contract"). Coerce strings into the expected shape.
+  const normalizedRecs = recommendations
+    .map((r: any) => {
+      if (typeof r === 'string' && r.trim()) {
+        return { action: r.trim(), priority: 'medium' };
+      }
+      if (r && typeof r === 'object') {
+        const action = r.action ?? r.recommendation ?? r.text ?? r.title;
+        if (action && String(action).trim()) {
+          return { ...r, action: String(action).trim() };
+        }
+      }
+      return null;
+    })
+    .filter((r: any) => r !== null);
+  if (normalizedRecs.length > 0) {
     result.actionChecklist = {
-      actions: validRecs.map((r: any) => ({
+      actions: normalizedRecs.map((r: any) => ({
         action: r.action,
         priority: (['critical', 'high', 'medium', 'low'].includes(
           String(r.priority ?? '').toLowerCase()
@@ -616,20 +631,29 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   }
 
   // ── Universal fallback: timelineRoadmap from phases[] (Group B project planning)
+  // Accept multiple naming conventions the AI uses: name/heading/phase/title for
+  // the label, and duration_weeks/duration_months/duration_days for the length.
   if (!result.timelineRoadmap) {
-    const phases: any[] = ss.phases ?? [];
+    const phases: any[] = ss.phases ?? ss.timeline ?? ss.roadmap ?? [];
+    const getLabel = (p: any) => p?.name ?? p?.heading ?? p?.phase ?? p?.title ?? p?.label;
+    const getDurationWeeks = (p: any): number => {
+      if (typeof p?.duration_weeks === 'number') return p.duration_weeks;
+      if (typeof p?.duration_months === 'number') return Math.max(1, Math.round(p.duration_months * 4));
+      if (typeof p?.duration_days === 'number') return Math.max(1, Math.round(p.duration_days / 7));
+      return 4;
+    };
     if (phases.length > 0) {
       let cursor = 1;
-      result.timelineRoadmap = {
-        phases: phases
-          .filter((p: any) => p?.name || p?.heading)
-          .map((p: any, i: number) => {
-            const duration = p.duration_weeks ?? 4;
+      const validPhases = phases.filter((p: any) => getLabel(p));
+      if (validPhases.length > 0) {
+        result.timelineRoadmap = {
+          phases: validPhases.map((p: any, i: number) => {
+            const duration = getDurationWeeks(p);
             const startWeek = cursor;
             const endWeek = cursor + duration - 1;
             cursor = endWeek + 1;
             return {
-              name: p.name ?? p.heading ?? `Phase ${i + 1}`,
+              name: getLabel(p) ?? `Phase ${i + 1}`,
               startWeek,
               endWeek,
               status: (p.status === 'completed' ? 'completed' :
@@ -638,8 +662,9 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
                           Array.isArray(p.deliverables) ? p.deliverables.slice(0, 3) : [],
             };
           }),
-        totalWeeks: cursor - 1,
-      };
+          totalWeeks: cursor - 1,
+        };
+      }
     }
   }
 
