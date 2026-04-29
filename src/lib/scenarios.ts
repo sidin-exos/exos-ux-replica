@@ -881,7 +881,12 @@ export const scenarios: Scenario[] = [
       { id: "makeCosts", label: "Internal (Make) Cost & Capability", description: "Fully-loaded internal cost, capability assessment, IP risk, and build timeline", type: "textarea", required: true, placeholder: "• Description of what the internal option involves\n• Total internal annual cost — fully loaded (€): include direct labour + materials + overhead + management time\n• Internal capability assessment: full capability / partial capability (describe gap) / no current capability\n• IP and confidentiality risk if outsourced: high / medium / low — explain\n• Time to build internal capability if not currently in place" },
       { id: "buyCosts", label: "External (Buy) Cost & Contract Risk", description: "Vendor quote, transition cost, capability, contract flexibility, exit risk", type: "textarea", required: true, placeholder: "• External vendor quote or market rate (€ per year or per unit)\n• One-time integration and transition cost estimate (€)\n• Vendor capability and track record: proven / emerging / unknown\n• Contract flexibility: month-to-month / locked-in (term and notice period)\n• Exit risk: data portability / migration complexity / switching cost estimate (€)" },
     ],
-    outputs: ["Decision Matrix: Comparison across 5 criteria (Price, Speed, Quality, Risk, Control)", "Break-even Chart: Point where in-house becomes more cost-effective than outsourcing"],
+    outputs: [
+      "Decision Matrix: Comparison across 5 criteria (Price, Speed, Quality, Risk, Control)",
+      "Break-even Chart: Point where in-house becomes more cost-effective than outsourcing",
+      "Fully-Loaded Cost Comparison: Internal vs. external costs including hidden indirect costs",
+      "IP Risk & Exit Cost Assessment: Intellectual property exposure and cost of outsourcing reversal",
+    ],
     scenario_id: "S23",
     group: "D",
   },
