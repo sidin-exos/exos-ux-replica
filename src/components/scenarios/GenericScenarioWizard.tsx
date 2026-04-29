@@ -1038,16 +1038,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </p>
             </div>
 
-            <DataRequirementsAlert
-              missingRequired={missingRequired}
-              missingOptional={missingOptional}
-              evaluation={evaluation}
-              onFieldClick={(fieldId) => {
-                setStep("input");
-                setTimeout(() => handleFieldClick(fieldId), 100);
-              }}
-            />
-
             {scenario.dataRequirements && (
               <div className="rounded-lg border border-border bg-card p-4">
                 <AICoverageCheck
