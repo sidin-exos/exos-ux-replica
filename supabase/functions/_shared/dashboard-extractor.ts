@@ -415,9 +415,11 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   }
 
   // ── Universal: kraljicQuadrant ─────────────────────────────────────────────
-  // Reads scenario_specific.kraljic_position (S20, S26, S1 and any scenario emitting it).
+  // Reads scenario_specific.kraljic_position (S20, S1 and any scenario emitting it).
   // supply_risk and business_impact are 1-5; map to 0-100 for the quadrant chart.
-  const kraljicSrc = ss?.kraljic_position ?? ss?.kraljic ?? null;
+  // Skip for S26 — Kraljic portfolio positioning is not relevant during a live crisis.
+  const scenarioId = String(envelope.scenario_id ?? '').toUpperCase();
+  const kraljicSrc = scenarioId === 'S26' ? null : (ss?.kraljic_position ?? ss?.kraljic ?? null);
   if (kraljicSrc && typeof kraljicSrc === 'object') {
     const sr = Number((kraljicSrc as any).supply_risk ?? (kraljicSrc as any).supplyRisk);
     const bi = Number((kraljicSrc as any).business_impact ?? (kraljicSrc as any).businessImpact);
