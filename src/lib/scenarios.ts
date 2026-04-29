@@ -524,7 +524,12 @@ export const scenarios: Scenario[] = [
       { id: "stakeholderRequirements", label: "Stakeholder Requirements", description: "Raw stakeholder requirements — any format is acceptable", type: "textarea", required: true, placeholder: "Paste your raw stakeholder requirements here — any format is acceptable. Include wishlists, meeting notes, email threads, or bullet points. Unstructured input is fine. EXOS will structure it into a prioritised BRD.\n\nDo not over-curate — include everything you've been told." },
       { id: "constraintsPriority", label: "Constraints & Priority Context", description: "Budget, timeline, technical limitations, must-haves vs nice-to-haves", type: "textarea", required: false, placeholder: "Known constraints: budget ceiling, delivery timeline, technical platform limitations.\nPriority guidance: are there known must-haves vs. nice-to-haves?\nKnown dependencies on other projects or systems.\nRegulatory requirements that are non-negotiable." },
     ],
-    outputs: ["MoSCoW Matrix: Requirements prioritized by importance", "User Stories: Test scenarios for product validation", "Market Scan: 3-5 solutions matching requirements"],
+    outputs: [
+      "MoSCoW Matrix: Requirements prioritized by importance",
+      "User Stories: Test scenarios for product validation",
+      "Market Scan: 3-5 solutions matching requirements",
+      "Dependency Map: Requirement dependencies, conflicts, and prioritisation rationale",
+    ],
     scenario_id: "S13",
     group: "B",
   },
