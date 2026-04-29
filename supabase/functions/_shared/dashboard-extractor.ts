@@ -501,36 +501,54 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
     }
 
     // sowAnalysis — from issues[] and missing_clauses[]
-    const issues: any[] = ss.issues ?? [];
-    const missingClauses: any[] = ss.missing_clauses ?? [];
+    const issues: any[] = ss.issues ?? ss.sow_issues ?? [];
+    const missingClauses: any[] = ss.missing_clauses ?? ss.gaps ?? [];
     if (issues.length > 0 || missingClauses.length > 0) {
-      const criticalCount = issues.filter(
-        (i: any) => String(i?.severity ?? '').toUpperCase() === 'CRITICAL'
-      ).length;
-      const clarity = Math.max(0, 100 - criticalCount * 20 - missingClauses.length * 10);
+      const issueSections = issues
+        .map((i: any) => {
+          const name = i?.clause_reference ?? i?.clause ?? i?.title ?? i?.name ?? i?.issue_id ?? null;
+          const note = i?.issue_description ?? i?.description ?? i?.recommended_fix ?? '';
+          if (!name && !note) return null;
+          const sev = String(i?.severity ?? '').toUpperCase();
+          const status = sev === 'CRITICAL' || sev === 'HIGH' ? 'missing' : 'partial';
+          return { name: name ?? 'Clause', status: status as 'missing' | 'partial', note };
+        })
+        .filter((s: any): s is { name: string; status: 'missing' | 'partial'; note: string } => s !== null);
+
+      const missingSections = missingClauses
+        .map((c: any) => {
+          const name = c?.clause_type ?? c?.clause ?? c?.title ?? c?.name ?? null;
+          const note = c?.risk_if_absent ?? c?.description ?? c?.note ?? '';
+          if (!name && !note) return null;
+          return { name: name ?? 'Missing clause', status: 'missing' as const, note };
+        })
+        .filter((s: any): s is { name: string; status: 'missing'; note: string } => s !== null);
+
+      const sections = [...issueSections, ...missingSections];
+
+      // Clarity on a 0–5 scale (matches dashboard contract MAX_SCORE = 5).
+      // Derive from section mix when available so headline can't contradict the list.
+      let clarity: number;
+      if (sections.length > 0) {
+        const completeCount = sections.filter((s) => s.status === ('complete' as any)).length;
+        const partialCount = sections.filter((s) => s.status === 'partial').length;
+        const missingCount = sections.filter((s) => s.status === 'missing').length;
+        const weighted = completeCount * 1 + partialCount * 0.5 + missingCount * 0;
+        clarity = Math.max(0, Math.min(5, (weighted / sections.length) * 5));
+      } else {
+        const criticalCount = issues.filter(
+          (i: any) => String(i?.severity ?? '').toUpperCase() === 'CRITICAL'
+        ).length;
+        const penalty = criticalCount * 1 + missingClauses.length * 0.5;
+        clarity = Math.max(0, Math.min(5, 5 - penalty));
+      }
+
       result.sowAnalysis = {
-        clarity,
-        sections: [
-          ...issues
-            .filter((i: any) => i?.clause_reference || i?.issue_description)
-            .map((i: any) => ({
-              name: i.clause_reference ?? i.issue_id ?? 'Clause',
-              status: (String(i.severity ?? '').toUpperCase() === 'CRITICAL'
-                ? 'missing'
-                : 'partial') as any,
-              note: i.issue_description ?? i.recommended_fix ?? '',
-            })),
-          ...missingClauses
-            .filter((c: any) => c?.clause_type)
-            .map((c: any) => ({
-              name: c.clause_type,
-              status: 'missing' as const,
-              note: c.risk_if_absent ?? '',
-            })),
-        ],
+        clarity: Number(clarity.toFixed(1)),
+        sections,
         recommendations: issues
-          .filter((i: any) => i?.recommended_fix)
-          .map((i: any) => i.recommended_fix)
+          .map((i: any) => i?.recommended_fix ?? i?.recommendation ?? null)
+          .filter((r: any): r is string => typeof r === 'string' && r.length > 0)
           .slice(0, 5),
       };
     }
