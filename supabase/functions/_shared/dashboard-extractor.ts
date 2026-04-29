@@ -172,6 +172,58 @@ function parseAmount(raw: any): number | null {
   return Number.isFinite(n) ? n * multiplier : null;
 }
 
+/**
+ * Extract savings/reduction components for the Cost Breakdown dashboard.
+ * Sources: (1) ss.savings_breakdown[] (S4); (2) quantified recommendations[].
+ * Kept in sync with src/lib/dashboard-data-parser.ts::extractReductionComponents.
+ */
+function extractReductionComponents(
+  ss: Record<string, any>,
+  recommendations: any[],
+  costComponents: Array<{ name: string; value: number; type: 'cost' }>,
+): Array<{ name: string; value: number; type: 'reduction' }> {
+  const out: Array<{ name: string; value: number; type: 'reduction' }> = [];
+  const grossCost = costComponents.reduce((s, c) => s + c.value, 0);
+
+  const savingsBreakdown: any[] = Array.isArray(ss?.savings_breakdown) ? ss.savings_breakdown : [];
+  for (const s of savingsBreakdown) {
+    const annual = parseAmount(s?.annual_savings);
+    const oneOff = parseAmount(s?.one_off_savings);
+    const total = (annual ?? 0) + (oneOff ?? 0);
+    if (s?.lever && total > 0) {
+      out.push({ name: String(s.lever), value: total, type: 'reduction' });
+    }
+  }
+
+  if (out.length === 0 && Array.isArray(recommendations)) {
+    for (const r of recommendations) {
+      if (!r?.action) continue;
+      const text = `${r.financial_impact ?? ''} ${r.action}`;
+      const amountMatch = text.match(/(?:€|\$|£|EUR|USD|GBP)\s?([\d.,]+\s?[KMB]?)/i);
+      let value: number | null = null;
+      let label = String(r.action).slice(0, 60).trim();
+      if (amountMatch) {
+        value = parseAmount(amountMatch[1]);
+      } else {
+        const pctRange = text.match(/(\d+(?:\.\d+)?)\s?[-–]\s?(\d+(?:\.\d+)?)\s?%/);
+        const pctSingle = !pctRange ? text.match(/(\d+(?:\.\d+)?)\s?%/) : null;
+        if (pctRange && grossCost > 0) {
+          const mid = (Number(pctRange[1]) + Number(pctRange[2])) / 2;
+          value = (grossCost * mid) / 100;
+        } else if (pctSingle && grossCost > 0) {
+          value = (grossCost * Number(pctSingle[1])) / 100;
+        }
+      }
+      if (value !== null && value > 0) {
+        label = label.replace(/^[-•\d.\s\[\]]+/, '').replace(/^\[(?:high|medium|low|critical)\]\s*/i, '');
+        out.push({ name: label.slice(0, 50), value, type: 'reduction' });
+      }
+    }
+  }
+
+  return out.slice(0, 6);
+}
+
 // ── Main export ──────────────────────────────────────────────────────────────
 
 export function extractFromEnvelope(rawString: string): DashboardData | null {
