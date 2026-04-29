@@ -775,7 +775,9 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
 
   if (parsed.recommendations?.length > 0) {
     parts.push('### Recommendations');
-    // Normalise free-form priority labels to the canonical 4-tier scale.
+    // Replace Unicode comparators that some PDF fonts cannot render.
+    const sanitiseAscii = (s: string): string =>
+      s.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=').replace(/×/g, 'x').replace(/–/g, '-').replace(/—/g, '-');
     const normalisePriority = (raw: unknown): string => {
       if (typeof raw !== 'string') return '';
       const v = raw.trim().toLowerCase();
