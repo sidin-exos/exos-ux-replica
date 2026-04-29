@@ -2,7 +2,7 @@ import { useMemo, useCallback } from "react";
 import { useParams, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 import AuthPrompt from "@/components/auth/AuthPrompt";
-import { TrendingUp, BarChart3, Rss, Newspaper, Mail, MessageSquare } from "lucide-react";
+import { TrendingUp, BarChart3, Newspaper, Mail, MessageSquare } from "lucide-react";
 import signalRadarImg from "@/assets/design_variant_b.png";
 import signalRadarDarkImg from "@/assets/design_variant_b_transparent.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,7 +37,6 @@ const InflationPlatform = () => {
   const activeTab = (() => {
     const segment = location.pathname.split('/').pop();
     if (segment === 'setup') return 'setup';
-    if (segment === 'events') return 'events';
     return 'dashboard';
   })();
 
@@ -178,9 +177,6 @@ const InflationPlatform = () => {
                 <BarChart3 className="w-4 h-4 mr-1.5" /> Dashboard
               </TabsTrigger>
               <TabsTrigger value="setup">New Tracker</TabsTrigger>
-              <TabsTrigger value="events">
-                <Rss className="w-4 h-4 mr-1.5" /> Events
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard" className="mt-4">
@@ -269,11 +265,6 @@ const InflationPlatform = () => {
               />
             </TabsContent>
 
-            <TabsContent value="events" className="mt-4">
-              <div className="text-center py-16 text-muted-foreground">
-                Event feed will populate once drivers begin their scan cycles.
-              </div>
-            </TabsContent>
           </Tabs>
         </div>
         {/* Lightweight footer */}

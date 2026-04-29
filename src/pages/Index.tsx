@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useUser } from "@/hooks/useUser";
 import { SCENARIO_META, DEFAULT_SCENARIO_SLUG } from "@/lib/scenarioSlugs";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3 } from "lucide-react";
+import { ArrowLeft, Mail, LineChart, CalendarDays, ShieldAlert, FileText, LucideIcon, Workflow, Globe, BarChart3, FolderPlus, Folder } from "lucide-react";
 import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard"
 import ScenarioPreviewPanel from "@/components/scenarios/ScenarioPreviewPanel";
 import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
 import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
+import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 
 type ActiveView = "dashboard" | "scenario";
 
@@ -51,6 +52,7 @@ const Index = () => {
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [hoveredScenario, setHoveredScenario] = useState<Scenario | null>(null);
   const [activeCategory, setActiveCategory] = useState<Scenario["category"] | null>("analysis");
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const location = useLocation();
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -139,13 +141,13 @@ const Index = () => {
     <div className="min-h-screen gradient-hero">
       <Helmet>
         <title>
-          {currentMeta?.title ?? 'AI Procurement Scenarios | EXOS'}
+          {currentMeta?.title ?? 'EXOS — Agentic AI Procurement Platform | No Implementation'}
         </title>
         <meta
           name="description"
           content={
             currentMeta?.description ??
-            'AI-powered procurement scenario analysis for EU mid-market teams.'
+            'Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed.'
           }
         />
         <link
@@ -156,6 +158,7 @@ const Index = () => {
               : 'https://exosproc.com/'
           }
         />
+        <meta name="robots" content="index, follow" />
       </Helmet>
       <div
         className="fixed inset-0 pointer-events-none"
@@ -291,7 +294,30 @@ const Index = () => {
               </div>
 
               {/* Right: Preview panel */}
-              <div className="hidden lg:block">
+              <div className="hidden lg:block space-y-3">
+                <div className="flex items-stretch gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/projects/new")}
+                    className="flex-1 text-left rounded-lg p-3 bg-gradient-to-br from-primary to-iris text-primary-foreground shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <FolderPlus className="w-4 h-4" />
+                      <span className="font-display font-semibold text-sm">Create a project</span>
+                    </div>
+                    <p className="text-[11px] text-primary-foreground/85 leading-snug">
+                      Upload info and files, reuse across scenarios
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/projects")}
+                    className="rounded-lg px-3 py-2 border border-border bg-card hover:border-primary hover:text-primary text-xs font-medium flex flex-col items-center justify-center gap-1 transition-colors min-w-[80px]"
+                  >
+                    <Folder className="w-4 h-4" />
+                    My projects
+                  </button>
+                </div>
                 <ScenarioPreviewPanel scenario={hoveredScenario} activeCategory={activeCategory} />
               </div>
             </div>
@@ -339,6 +365,7 @@ const Index = () => {
       </main>
 
       <Footer />
+      <CreateProjectDialog open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
     </div>
   );
 };

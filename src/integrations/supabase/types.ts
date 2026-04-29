@@ -461,6 +461,8 @@ export type Database = {
           constraints_v2: Json | null
           created_at: string
           id: string
+          industry_cold_yaml: string | null
+          industry_hot_yaml: string | null
           kpis: string[]
           kpis_v2: Json | null
           name: string
@@ -472,6 +474,8 @@ export type Database = {
           constraints_v2?: Json | null
           created_at?: string
           id?: string
+          industry_cold_yaml?: string | null
+          industry_hot_yaml?: string | null
           kpis?: string[]
           kpis_v2?: Json | null
           name: string
@@ -483,6 +487,8 @@ export type Database = {
           constraints_v2?: Json | null
           created_at?: string
           id?: string
+          industry_cold_yaml?: string | null
+          industry_hot_yaml?: string | null
           kpis?: string[]
           kpis_v2?: Json | null
           name?: string
@@ -1013,7 +1019,9 @@ export type Database = {
       }
       procurement_categories: {
         Row: {
+          category_cold_yaml: string | null
           category_group: string | null
+          category_hot_yaml: string | null
           characteristics: string
           common_failure_modes: Json | null
           created_at: string
@@ -1038,7 +1046,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_cold_yaml?: string | null
           category_group?: string | null
+          category_hot_yaml?: string | null
           characteristics: string
           common_failure_modes?: Json | null
           created_at?: string
@@ -1063,7 +1073,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_cold_yaml?: string | null
           category_group?: string | null
+          category_hot_yaml?: string | null
           characteristics?: string
           common_failure_modes?: Json | null
           created_at?: string
@@ -1096,6 +1108,7 @@ export type Database = {
           company_size: string | null
           country: string | null
           created_at: string
+          current_period_end: string | null
           display_name: string | null
           email: string | null
           full_name: string | null
@@ -1106,6 +1119,11 @@ export type Database = {
           organization_id: string | null
           primary_challenge: string | null
           role: Database["public"]["Enums"]["org_role"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
           updated_at: string
         }
         Insert: {
@@ -1114,6 +1132,7 @@ export type Database = {
           company_size?: string | null
           country?: string | null
           created_at?: string
+          current_period_end?: string | null
           display_name?: string | null
           email?: string | null
           full_name?: string | null
@@ -1124,6 +1143,11 @@ export type Database = {
           organization_id?: string | null
           primary_challenge?: string | null
           role?: Database["public"]["Enums"]["org_role"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_price_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -1132,6 +1156,7 @@ export type Database = {
           company_size?: string | null
           country?: string | null
           created_at?: string
+          current_period_end?: string | null
           display_name?: string | null
           email?: string | null
           full_name?: string | null
@@ -1142,6 +1167,11 @@ export type Database = {
           organization_id?: string | null
           primary_challenge?: string | null
           role?: Database["public"]["Enums"]["org_role"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_price_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1153,6 +1183,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      project_files: {
+        Row: {
+          attached_at: string
+          file_id: string
+          id: string
+          organization_id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          attached_at?: string
+          file_id: string
+          id?: string
+          organization_id: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          attached_at?: string
+          file_id?: string
+          id?: string
+          organization_id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       rate_limits: {
         Row: {

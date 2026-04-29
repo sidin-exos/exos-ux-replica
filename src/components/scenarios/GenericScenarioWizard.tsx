@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/react";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare, CheckCircle2, AlertCircle, Send, Bug, Lightbulb, MousePointerClick, Database, Gauge, Palette, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, AlertTriangle, FlaskConical, Loader2, Wand2, BrainCircuit, ChevronRight, MessageSquare, CheckCircle2, AlertCircle, Send, Bug, Lightbulb, MousePointerClick, Database, Gauge, Palette, HelpCircle, Info, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import AuthPrompt from "@/components/auth/AuthPrompt";
@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DataRequirementsAlert from "@/components/consolidation/DataRequirementsAlert";
+import { AICoverageCheck } from "@/components/consolidation/AICoverageCheck";
 import StrategySelector, { StrategyType, strategyPresets } from "./StrategySelector";
 import DashboardSelector from "./DashboardSelector";
 import { IndustrySelector } from "@/components/context/IndustrySelector";
@@ -45,8 +46,8 @@ import {
 import OutputFeedback from "@/components/feedback/OutputFeedback";
 import { MasterXMLPreview } from "@/components/sentinel/MasterXMLPreview";
 import { FinalXMLPreview } from "@/components/sentinel/FinalXMLPreview";
+import { ModelSelector, type AIModel } from "./ModelSelector";
 import { BusinessContextField } from "./BusinessContextField";
-import { ModelSelector, DEFAULT_MODEL, type AIModel } from "./ModelSelector";
 import { DraftedParametersCard } from "./DraftedParametersCard";
 import { MarketInsightsBanner } from "@/components/insights/MarketInsightsBanner";
 import ScenarioTutorial from "./ScenarioTutorial";
@@ -166,8 +167,11 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [industryOverrides, setIndustryOverrides] = useState<IndustryContextOverrides>(getDefaultOverrides());
   const [categoryOverrides, setCategoryOverrides] = useState<CategoryContextOverrides>(getDefaultCategoryOverrides());
-  const [selectedModel, setSelectedModel] = useState<AIModel>(DEFAULT_MODEL);
   const [selectedDashboards, setSelectedDashboards] = useState<DashboardType[]>([]);
+  // Get model config from settings context — used to seed the inline picker.
+  // The inline picker can then override it for this analysis run only.
+  const { model: configModel } = useModelConfig();
+  const [selectedModel, setSelectedModel] = useState<AIModel>(configModel as AIModel);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [analysisTimestamp, setAnalysisTimestamp] = useState<string | null>(null);
   
@@ -258,12 +262,13 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const { isAvailable: hasMarketInsights, insight: marketInsight } = useMarketInsightsAvailability(industrySlug, categorySlug);
 
   // Sentinel AI pipeline
-  const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs, structuredEnvelope: sentinelEnvelope } = useSentinel({
+  const { analyze, isProcessing, currentStage, error: sentinelError, tokenUsage, processingTimeMs, structuredEnvelope: sentinelEnvelope, fallbackMeta } = useSentinel({
     onProgress: () => {},
     onError: (error) => {
       toast.error(`Analysis failed: ${error.message}`);
     },
   });
+  const [fallbackBannerDismissed, setFallbackBannerDismissed] = useState(false);
 
   // === DRAFTER-VALIDATOR WORKFLOW ===
 
@@ -409,9 +414,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   // Input quality evaluator (debounced 800ms)
   const evaluation = useInputEvaluator(scenario.id, formData, 800, dbEvalConfig);
 
-  // Get model config from settings context
-  const { model: configModel } = useModelConfig();
-
   const handleAnalyze = async () => {
     // Check auth before running analysis
     const { data: { session } } = await supabase.auth.getSession();
@@ -454,7 +456,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
     // --- Standard Sentinel pipeline for all other scenarios ---
     // Use the model from settings context (all inference goes through Google AI Studio)
-    const effectiveModel = configModel;
+    const effectiveModel = selectedModel;
 
     // Include strategy and market insights in form data for AI grounding
     const enrichedData = {
@@ -547,7 +549,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
       const queryText = queryParts.join('\n');
 
       const graphConfig: ModelConfigType = {
-        model: configModel,
+        model: selectedModel,
       };
 
       const result = await runExosGraph(queryText, graphConfig, scenario.id, selectedDashboards, attachedFileIds);
@@ -1046,6 +1048,19 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               }}
             />
 
+            {scenario.dataRequirements && (
+              <div className="rounded-lg border border-border bg-card p-4">
+                <AICoverageCheck
+                  scenarioTitle={scenario.title}
+                  description={Object.entries(formData)
+                    .filter(([, v]) => v && String(v).trim())
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join("\n\n")}
+                  sections={scenario.dataRequirements.sections}
+                  subtitle='Score your input against "What data do I need to prepare?".'
+                />
+              </div>
+            )}
             {/* Expected Outputs */}
             <div className="rounded-lg border border-border bg-card p-4">
               <h4 className="font-medium mb-3">Analysis Will Generate:</h4>
@@ -1178,6 +1193,23 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             ) : (
               <>
+                {fallbackMeta?.fallbackUsed && !fallbackBannerDismissed && (
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/30 p-3 mb-4 flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-700 dark:text-blue-300 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 text-sm text-blue-900 dark:text-blue-100">
+                      Analysis completed using a backup AI system. Results may vary slightly from standard output.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFallbackBannerDismissed(true)}
+                      aria-label="Dismiss"
+                      className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
                 <div className="rounded-lg border border-primary/30 bg-primary/10 p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Sparkles className="w-8 h-8 text-primary" />
@@ -1185,7 +1217,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                       Analysis Complete
                     </h3>
                   </div>
-                  
+
                   {analysisResult ? (
                     <div className="bg-card rounded-lg p-4 border border-border max-h-[500px] overflow-y-auto">
                       <MarkdownRenderer content={analysisResult} />

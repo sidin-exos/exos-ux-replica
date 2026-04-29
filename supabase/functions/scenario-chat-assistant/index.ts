@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { authenticateRequest } from "../_shared/auth.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
-import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import {
   parseBody,
   requireString,
@@ -152,6 +153,7 @@ serve(async (req) => {
     env: "production",
     feature: "scenario-chat-assistant",
   });
+  const startTime = Date.now();
 
   let parentRunId: string | undefined;
 
@@ -209,7 +211,7 @@ serve(async (req) => {
           messageCount: messages.length,
           filledCount: Object.keys(extractedSoFar).length,
         },
-        { tags: ["scenario-chat", scenarioId] }
+        { tags: ["scenario-chat", `scenario:${scenarioId}`, "model:gemini-2.5-pro"] }
       );
     }
 
@@ -256,9 +258,17 @@ serve(async (req) => {
 
       // Trace success
       if (tracer.isEnabled() && parentRunId) {
+        const promptTokens = aiResponse.usageMetadata?.promptTokenCount;
+        const completionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
         tracer.patchRun(parentRunId, {
           content: content?.slice(0, 200),
           extractedFieldCount: extractedFields ? Object.keys(extractedFields).length : 0,
+          promptTokens,
+          completionTokens,
+          totalTokens: aiResponse.usageMetadata?.totalTokenCount,
+          estimatedCostUsd: estimateCost("gemini-2.5-pro", promptTokens, completionTokens),
+          responseLength: content?.length ?? 0,
+          processingTimeMs: Date.now() - startTime,
         });
       }
 
@@ -291,7 +301,11 @@ serve(async (req) => {
     }
 
     if (tracer.isEnabled() && parentRunId) {
-      tracer.patchRun(parentRunId, undefined, e instanceof Error ? e.message : "Unknown error");
+      tracer.patchRun(
+        parentRunId,
+        { errorType: classifyError(e) },
+        e instanceof Error ? e.message : "Unknown error",
+      );
     }
 
     if (e instanceof ValidationError) {

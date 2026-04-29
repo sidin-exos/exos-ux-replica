@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { LangSmithTracer } from "../_shared/langsmith.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { parseBody, requireString, requireStringEnum, requireArray, validationErrorResponse, ValidationError, filterPromptInjection } from "../_shared/validate.ts";
@@ -258,9 +259,15 @@ serve(async (req) => {
     // Trace child LLM run (fire-and-forget)
     const llmRunId = tracer.createRun("perplexity-sonar-pro", "llm", {
       model: "sonar-pro", queryType,
-    }, { parentRunId });
+    }, { parentRunId, tags: ["model:sonar-pro"] });
+    const promptTokens = tokenUsage?.promptTokens;
+    const completionTokens = tokenUsage?.completionTokens;
     tracer.patchRun(llmRunId, {
       summaryLength: summary.length, citationCount: citations.length, tokenUsage, processingTimeMs,
+      promptTokens,
+      completionTokens,
+      totalTokens: tokenUsage?.totalTokens,
+      estimatedCostUsd: estimateCost("sonar-pro", promptTokens, completionTokens),
       ...(parsedEnvelope?.schema_version === '1.0' ? {
         schema_version: '1.0',
         confidence_level: parsedEnvelope.confidence_level,
@@ -300,6 +307,10 @@ serve(async (req) => {
     // Patch parent trace run
     tracer.patchRun(parentRunId, {
       success: true, summaryLength: summary.length, citationCount: formattedCitations.length, processingTimeMs,
+      promptTokens,
+      completionTokens,
+      totalTokens: tokenUsage?.totalTokens,
+      estimatedCostUsd: estimateCost("sonar-pro", promptTokens, completionTokens),
     });
 
     return new Response(
@@ -331,7 +342,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     // Patch parent trace with error (tracer may not exist if error was in parsing)
-    try { tracer.patchRun(parentRunId, undefined, errorMessage); } catch (_) { /* noop */ }
+    try { tracer.patchRun(parentRunId, { errorType: classifyError(error) }, errorMessage); } catch (_) { /* noop */ }
 
     // Try to log failed query
     try {

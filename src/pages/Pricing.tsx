@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail, Loader2 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -13,18 +13,42 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-const pricingTiers = [
+type BillingInterval = "monthly" | "quarterly";
+
+type PriceVariant = {
+  priceId: string;
+  price: number;
+  displayPerMonth: number;
+};
+
+type PricingTier = {
+  id: string;
+  name: string;
+  subtitle: string;
+  icon: typeof Zap;
+  featured: boolean;
+  comingSoon?: boolean;
+  features: string[];
+  cta: string;
+  monthly?: PriceVariant;
+  quarterly?: PriceVariant;
+};
+
+const pricingTiers: PricingTier[] = [
   {
     id: "smb",
     name: "Starter/SMB",
     subtitle: "For companies without a dedicated procurement function",
-    price: "29",
-    period: "month",
     icon: Zap,
     featured: false,
+    monthly:   { priceId: "price_1TEPHc34h5FyPJ356pnUXQNs", price: 29, displayPerMonth: 29 },
+    quarterly: { priceId: "price_1TEPId34h5FyPJ35CAqDvL37", price: 72, displayPerMonth: 24 },
     features: [
       "Distilled procurement knowledge in one place",
       "29 Analytical scanarios",
@@ -33,17 +57,16 @@ const pricingTiers = [
       "100 AI reports a month",
       "Email support",
     ],
-    cta: "Get Started",
+    cta: "Start Free Trial",
   },
   {
     id: "professional",
     name: "Professional",
     subtitle: "For dedicated procurement teams",
-    price: "99",
-    annualNote: "or €66/mo billed quarterly till the end of 2026",
-    period: "month",
     icon: Shield,
     featured: true,
+    monthly:   { priceId: "price_1TEPBt34h5FyPJ35YRdvRUc7", price: 99,  displayPerMonth: 99 },
+    quarterly: { priceId: "price_1TEPCj34h5FyPJ35fAYMOadX", price: 197, displayPerMonth: 66 },
     features: [
       "Full EXOS Platform functionality",
       "Risk Assessment Platform",
@@ -59,8 +82,6 @@ const pricingTiers = [
     id: "enterprise",
     name: "Enterprise",
     subtitle: "Custom solutions for large organizations",
-    price: null,
-    period: null,
     icon: Building2,
     featured: false,
     comingSoon: false,
@@ -80,13 +101,13 @@ const pricingTiers = [
 const faqData = [
   {
     id: "tariff",
-    question: "What is the right tariff for me?",
+    question: "What is the right plan for me?",
     answer: `Pick the SMB (small and medium-sized business) option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
   },
   {
     id: "data-privacy",
     question: "How do you ensure commercial data privacy?",
-    answer: `Our internal engine is fine-tuned to identify and encrypt commercial data before sending it to external APIs. For the Enterprise tariff, we can deploy our engine on your server, giving you full visibility and control over all outgoing API requests.`,
+    answer: `All commercial data — supplier names, contract details, negotiation positions — is semantically anonymised before it reaches any external AI provider. For Enterprise users, we can additionally deploy our engine on your own server, giving your InfoSec team full visibility and control over all outgoing API requests.`,
   },
   {
     id: "fine-tuned-scenarios",
@@ -94,30 +115,29 @@ const faqData = [
     answer: `Each scenario is enriched with industry-specific context, category expertise, and real-time market intelligence before analysis. EXOS validates your inputs against best-practice business cases, applies grounding from live market data—including trends, risk signals, and pricing benchmarks—and clearly flags its limitations when information is insufficient. The result is a decision-ready report, not a generic AI response.`,
   },
   {
-    id: "limited-requests",
-    question: "Why is the number of requests limited in the SMB option?",
-    answer: `EXOS is not designed to be creative but to provide best-in-class expertise. Each of your requests is enhanced with business knowledge, scenario fine-tuning, structured XML prompts, grounding, and validation after receiving an API response. This means your request goes through multiple checks before it returns to you. EXOS gives you straightforward answers, pointing out its limitations if it doesn't have sufficient data.`,
-  },
-  {
     id: "price-comparison",
-    question: "Why is the price higher than ChatGPT or Gemini?",
-    answer: `EXOS is not a mass product—it's designed for professionals seeking the best possible quality. For each request you make, we've run dozens of scenario simulations to improve quality, reduce hallucinations, and empower EXOS with best business practices.`,
+    question: "How is EXOS different from ChatGPT, Claude or Gemini?",
+    answer: `EXOS is a specialised procurement tool, not a general-purpose chatbot. Three things set it apart: (1) it is purpose-built for procurement scenarios—sourcing, negotiation, supplier risk, TCO, should-cost—with category and industry expertise baked in; (2) every analysis goes through grounding, validation, and semantic anonymisation, so commercial data never leaks to external providers and outputs are checked against best-practice business cases rather than hallucinated; (3) it injects current market updates—live trends, risk signals, and pricing benchmarks from your private knowledge base—directly into every report. The result is a decision-ready procurement deliverable, not a generic AI answer.`,
   },
   {
     id: "market-intelligence",
     question: "How does Market Intelligence work?",
-    answer: `Market Intelligence continuously scans trusted sources to deliver real-time insights on suppliers, commodities, regulations, and industry trends. Every finding is stored in your private knowledge base—never shared externally—and automatically used to enrich your analytical reports with live market data, risk signals, and pricing benchmarks. The more you use it, the sharper your decision support becomes.`,
+    answer: `Market Intelligence continuously scans trusted sources to deliver real-time insights on suppliers, commodities, regulations, and industry trends. Every finding is stored in your private knowledge base—never shared externally—and automatically used to enrich your analytical reports with live market data, risk signals, and pricing benchmarks. The more market intelligence you accumulate in your private knowledge base, the richer the context available to enrich your analytical reports.`,
   },
   {
     id: "fine-tuning",
     question: "Can I get EXOS fine-tuned for my purposes?",
-    answer: `Absolutely. We offer fine-tuning and customisation for every Pro and Enterprise user. Pro users can request one custom scenario and one custom dashboard per month. Enterprise users get fully customized analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
+    answer: `Absolutely. We can offer fine-tuning and customisation for Enterprise users. Pro users can request one custom scenario and one custom dashboard per month (conditions apply). Enterprise users get fully customised analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
   },
 ];
 
 const Pricing = () => {
   const exosLogo = useThemedLogo();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
 
   useEffect(() => {
     if (location.hash) {
@@ -126,6 +146,39 @@ const Pricing = () => {
       }, 100);
     }
   }, [location.hash]);
+
+  const handleSubscribe = async (tier: PricingTier) => {
+    if (tier.id === "enterprise") {
+      document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    const variant = billingInterval === "quarterly" ? tier.quarterly : tier.monthly;
+    if (!variant?.priceId) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/auth?redirect=" + encodeURIComponent("/pricing"));
+      return;
+    }
+
+    setLoadingTier(tier.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: { price_id: variant.priceId },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error("No checkout URL returned");
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("[checkout] failed", err);
+      toast({
+        title: "Could not start checkout",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+      setLoadingTier(null);
+    }
+  };
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -147,6 +200,18 @@ const Pricing = () => {
             No minimum seats. Cancel anytime.
           </h1>
         </section>
+
+        {/* Billing interval toggle */}
+        <div className="flex justify-center mb-8">
+          <Tabs value={billingInterval} onValueChange={(v) => setBillingInterval(v as BillingInterval)}>
+            <TabsList>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              <TabsTrigger value="quarterly">
+                Quarterly <span className="ml-2 text-xs text-success">Save up to 33%</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -181,23 +246,29 @@ const Pricing = () => {
                 <CardContent className="pt-4 flex flex-col flex-1">
                   {/* Price */}
                   <div className="text-center mb-6">
-                    {tier.price ? (
-                      <div>
-                        <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-4xl font-display font-bold text-foreground">
-                            €{tier.price}
-                          </span>
-                          <span className="text-muted-foreground">/{tier.period}</span>
-                        </div>
-                        {tier.annualNote && (
-                          <p className="text-xs text-muted-foreground mt-1">{tier.annualNote}</p>
-                        )}
-                      </div>
-                    ) : (
+                    {tier.id === "enterprise" ? (
                       <div className="text-2xl font-display font-semibold text-muted-foreground">
                         Custom Pricing
                       </div>
-                    )}
+                    ) : (() => {
+                      const variant = billingInterval === "quarterly" ? tier.quarterly : tier.monthly;
+                      if (!variant) return null;
+                      return (
+                        <div>
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-4xl font-display font-bold text-foreground">
+                              €{variant.displayPerMonth}
+                            </span>
+                            <span className="text-muted-foreground">/month</span>
+                          </div>
+                          {billingInterval === "quarterly" && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              €{variant.price} billed every 3 months
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Features */}
@@ -214,15 +285,29 @@ const Pricing = () => {
                   <Button
                     className={`w-full mt-auto ${tier.featured ? "" : "variant-outline"}`}
                     variant={tier.featured ? "default" : "outline"}
-                    disabled={tier.comingSoon}
+                    disabled={tier.comingSoon || loadingTier === tier.id}
+                    onClick={() => handleSubscribe(tier)}
                   >
-                    {tier.cta}
+                    {loadingTier === tier.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Redirecting…
+                      </>
+                    ) : (
+                      tier.cta
+                    )}
                   </Button>
                 </CardContent>
               </Card>
             );
           })}
         </div>
+
+        {/* Trial disclaimer */}
+        <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
+          30-day free trial. Cancel anytime before the trial ends to avoid being charged.
+        </p>
+
 
         {/* Feature Comparison Table */}
         <section className="mt-20 max-w-5xl mx-auto animate-fade-up" style={{ animationDelay: "250ms" }}>

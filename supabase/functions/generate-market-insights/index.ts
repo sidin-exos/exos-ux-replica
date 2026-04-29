@@ -5,6 +5,8 @@ import { parseBody, requireString, requireArray, optionalBoolean, validationErro
 
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { SentryReporter } from "../_shared/sentry.ts";
+import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
+import { estimateCost } from "../_shared/ai-pricing.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 interface IndustryCategory {
@@ -50,126 +52,127 @@ Rate the plausibility on a scale of 0.0 to 1.0 where:
 Respond with ONLY a JSON object:
 {"confidence": 0.85, "reasoning": "Brief explanation"}`;
 
-const MARKET_INSIGHTS_PROMPT = `You are a senior procurement intelligence analyst with 20+ years of experience. Generate an exhaustive, deeply-researched market intelligence briefing for the following industry and procurement category combination.
+const MARKET_INSIGHTS_PROMPT = `You are a senior procurement intelligence analyst. Generate a CONCISE market intelligence briefing (~1000 tokens max) for the following industry/category/geography. This output will be injected into downstream AI analyses, so it must be dense, factual, and free of filler.
 
 Industry: {{INDUSTRY}}
 Procurement Category: {{CATEGORY}}
 Geographic Focus: {{GEOGRAPHY}}
 
-Provide a comprehensive market intelligence report covering ALL of the following sections in depth:
+Cover ALL sections below using terse bullets (no narrative paragraphs). Aim for 2–4 short bullets per section. Include specific figures, named suppliers, and dated events whenever possible.
 
-## 1. EXECUTIVE SUMMARY
-- 3-5 key takeaways for procurement leaders
-- Overall market outlook (bullish/bearish/neutral) with justification
-- Critical action items for the next 90 days
+## 1. MARKET SNAPSHOT
+- Market size & growth (YoY / CAGR) in {{GEOGRAPHY}}
+- Supply/demand balance, capacity utilisation
+- Key seasonality or cyclicality
 
-## 2. MARKET STRUCTURE & DYNAMICS
-- Market size and growth rates (YoY, 5-year CAGR) in {{GEOGRAPHY}}
-- Supply/demand balance and capacity utilization rates
-- Market concentration (HHI, CR4/CR5 ratios if available)
-- Entry barriers and switching costs
-- Seasonal patterns and cyclicality
+## 2. TOP SUPPLIERS
+- 5–7 leading suppliers in {{GEOGRAPHY}} with approximate market share
+- Recent M&A or new entrants (last 12 months)
 
-## 3. COMPETITIVE LANDSCAPE
-- Top 10-15 suppliers in {{GEOGRAPHY}} with estimated market shares
-- Recent M&A activity (last 24 months) and strategic implications
-- New market entrants and disruptors
-- Supplier financial health indicators
-- Vertical integration trends
+## 3. PRICING
+- Current price level and 12-month trajectory
+- Top 2–3 cost drivers (raw materials, energy, labour, logistics)
+- Relevant price index/benchmark
 
-## 4. PRICING ANALYSIS
-- Current price levels and 12-month price trajectory
-- Key price drivers (raw materials, labor, energy, logistics)
-- Price indices and benchmarks used in {{GEOGRAPHY}}
-- Currency exposure and hedging considerations
-- Total Cost of Ownership (TCO) components
+## 4. RISKS
+- Geopolitical / regulatory risks specific to {{GEOGRAPHY}}
+- Supply concentration or single-points-of-failure
+- ESG / compliance changes (current or pending)
 
-## 5. SUPPLY CHAIN RISK ASSESSMENT
-- Geopolitical risks affecting {{GEOGRAPHY}} supply chains
-- Single points of failure and concentration risks
-- Regulatory and compliance changes (current and pending)
-- ESG/sustainability mandates and implications
-- Force majeure history and vulnerability assessment
-- Lead time volatility and inventory considerations
+## 5. OPPORTUNITIES
+- Negotiation leverage points & optimal timing
+- Alternative sourcing regions / near-shoring options
+- Recommended contract structure
 
-## 6. TECHNOLOGY & INNOVATION
-- Emerging technologies disrupting this category
-- Automation and digitalization trends
-- Sustainability innovations and circular economy initiatives
-- R&D investment levels and innovation pipeline
-- Digital procurement tools and e-sourcing platforms
+## 6. 12-MONTH OUTLOOK
+- Base-case forecast in one line
+- Top 2 early-warning indicators to monitor
 
-## 7. REGULATORY & COMPLIANCE LANDSCAPE
-- Current regulations affecting procurement in {{GEOGRAPHY}}
-- Upcoming regulatory changes (next 12-24 months)
-- Certification and standard requirements
-- Trade policy and tariff considerations
-- Data privacy and security requirements
-
-## 8. STRATEGIC PROCUREMENT OPPORTUNITIES
-- Optimal timing for negotiations and tenders
-- Negotiation leverage points and BATNA strategies
-- Alternative sourcing regions and near-shoring options
-- Volume consolidation and demand pooling opportunities
-- Contract structure recommendations (length, pricing mechanisms)
-- Supplier development and partnership opportunities
-
-## 9. FORWARD-LOOKING INTELLIGENCE
-- 12-month market forecast with confidence levels
-- Emerging risks on the horizon
-- Strategic scenarios (best case, base case, worst case)
-- Early warning indicators to monitor
-
-## 10. RECOMMENDED ACTIONS
-- Immediate actions (0-30 days)
-- Short-term initiatives (1-6 months)
-- Strategic priorities (6-18 months)
-- KPIs and success metrics
-
-Be extremely specific and quantitative. Include actual company names, real data points, specific percentages, exact timeframes, and cite your sources. Reference {{GEOGRAPHY}}-specific regulations, standards, trade associations, and market dynamics. This report should be actionable for a Chief Procurement Officer making strategic decisions.`;
+Be quantitative and source-grounded. Cite sources inline where possible. Skip preamble, executive summary, and closing remarks — go straight into the sections.`;
 
 async function validateCombination(
   apiKey: string,
   industry: string,
-  category: string
+  category: string,
+  tracer?: LangSmithTracer,
+  parentRunId?: string
 ): Promise<{ confidence: number; reasoning: string }> {
   const prompt = VALIDATION_PROMPT
     .replace("{{INDUSTRY}}", industry)
     .replace("{{CATEGORY}}", category);
 
-  const response = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "sonar",
-      messages: [
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.1,
-    }),
-    signal: AbortSignal.timeout(30_000),
-  });
+  const runId = tracer?.createRun(
+    "validate-combination",
+    "llm",
+    { model: "sonar", industry, category, promptLength: prompt.length },
+    { parentRunId, tags: ["model:sonar"] }
+  );
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.1,
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch (err) {
+    if (tracer && runId) {
+      tracer.patchRun(runId, undefined, err instanceof Error ? err.message : "Network error");
+    }
+    throw err;
+  }
 
   if (!response.ok) {
+    if (tracer && runId) {
+      tracer.patchRun(runId, undefined, `Validation API error: ${response.status}`);
+    }
     throw new Error(`Validation API error: ${response.status}`);
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || "";
-  
+
   try {
     // Extract JSON from response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (tracer && runId) {
+        tracer.patchRun(runId, {
+          confidence: parsed.confidence,
+          reasoningLength: (parsed.reasoning || "").length,
+          promptTokens: data.usage?.prompt_tokens,
+          completionTokens: data.usage?.completion_tokens,
+          totalTokens: data.usage?.total_tokens,
+          estimatedCostUsd: estimateCost("sonar", data.usage?.prompt_tokens, data.usage?.completion_tokens),
+        });
+      }
+      return parsed;
     }
   } catch {
     console.error("Failed to parse validation response:", content);
   }
-  
+
+  if (tracer && runId) {
+    tracer.patchRun(runId, {
+      confidence: 0.5,
+      parseFailed: true,
+      promptTokens: data.usage?.prompt_tokens,
+      completionTokens: data.usage?.completion_tokens,
+      totalTokens: data.usage?.total_tokens,
+      estimatedCostUsd: estimateCost("sonar", data.usage?.prompt_tokens, data.usage?.completion_tokens),
+    });
+  }
   return { confidence: 0.5, reasoning: "Unable to parse validation response" };
 }
 
@@ -177,35 +180,55 @@ async function generateMarketInsights(
   apiKey: string,
   industry: string,
   category: string,
-  geography: string
+  geography: string,
+  tracer?: LangSmithTracer,
+  parentRunId?: string
 ): Promise<{ content: string; citations: string[]; usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null }> {
   const prompt = MARKET_INSIGHTS_PROMPT
     .replace("{{INDUSTRY}}", industry)
     .replace("{{CATEGORY}}", category)
     .replace(/\{\{GEOGRAPHY\}\}/g, geography);
 
-  const response = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "sonar-pro",
-      messages: [
-        { role: "system", content: "You are a world-class procurement intelligence analyst. Provide exhaustive, deeply-researched market intelligence with specific data points, exact figures, named companies, and cited sources. Be extremely thorough and quantitative. Your reports inform C-level procurement decisions worth millions." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.2,
-      max_tokens: 5000, // 5x increase for comprehensive insights
-      search_recency_filter: "month",
-    }),
-    signal: AbortSignal.timeout(120_000),
-  });
+  const runId = tracer?.createRun(
+    "market-insights",
+    "llm",
+    { model: "sonar-pro", industry, category, geography, promptLength: prompt.length },
+    { parentRunId, tags: ["model:sonar-pro"] }
+  );
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar-pro",
+        messages: [
+          { role: "system", content: "You are a senior procurement intelligence analyst. Produce concise, dense, source-grounded market briefings (~1000 tokens) that will be injected as context into downstream AI analyses. Use terse bullets, real figures, named suppliers, and dated events. No filler, no executive summary, no closing remarks." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.2,
+        max_tokens: 1200, // Capped to keep injected context lightweight downstream
+        search_recency_filter: "month",
+      }),
+      signal: AbortSignal.timeout(120_000),
+    });
+  } catch (err) {
+    if (tracer && runId) {
+      tracer.patchRun(runId, undefined, err instanceof Error ? err.message : "Network error");
+    }
+    throw err;
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Market insights API error:", response.status, errorText);
+    if (tracer && runId) {
+      tracer.patchRun(runId, undefined, `Market insights API error: ${response.status}`);
+    }
     throw new Error(`Market insights API error: ${response.status}`);
   }
 
@@ -214,6 +237,18 @@ async function generateMarketInsights(
   const injectionResult = filterPromptInjection(rawContent);
   if (injectionResult.flagged) {
     console.warn("Prompt injection detected in market insights:", injectionResult.matches);
+  }
+
+  if (tracer && runId) {
+    tracer.patchRun(runId, {
+      contentLength: injectionResult.cleaned.length,
+      citationCount: (data.citations || []).length,
+      injectionFlagged: injectionResult.flagged,
+      promptTokens: data.usage?.prompt_tokens,
+      completionTokens: data.usage?.completion_tokens,
+      totalTokens: data.usage?.total_tokens,
+      estimatedCostUsd: estimateCost("sonar-pro", data.usage?.prompt_tokens, data.usage?.completion_tokens),
+    });
   }
 
   return {
@@ -279,6 +314,9 @@ serve(async (req) => {
     return rateLimitResponse(rateCheck, corsHeaders);
   }
 
+  let tracer: LangSmithTracer | undefined;
+  let parentRunId: string | undefined;
+
   try {
     const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
     if (!PERPLEXITY_API_KEY) {
@@ -325,6 +363,18 @@ serve(async (req) => {
       geography: c.geography || defaultGeography,
     }));
 
+    tracer = new LangSmithTracer({ env: "production", feature: "generate-market-insights" });
+    parentRunId = tracer.createRun(
+      "generate-market-insights",
+      "chain",
+      {
+        combinationCount: combinationsWithGeo.length,
+        validateOnly,
+        defaultGeography,
+      },
+      { tags: ["model:sonar", "model:sonar-pro"] }
+    );
+
     const results: Array<{
       industry: string;
       category: string;
@@ -345,7 +395,9 @@ serve(async (req) => {
         const validation = await validateCombination(
           PERPLEXITY_API_KEY,
           combo.industryName,
-          combo.categoryName
+          combo.categoryName,
+          tracer,
+          parentRunId
         );
 
         console.log(`Validation: confidence=${validation.confidence}, reason=${validation.reasoning}`);
@@ -385,7 +437,9 @@ serve(async (req) => {
           PERPLEXITY_API_KEY,
           combo.industryName,
           combo.categoryName,
-          combo.geography
+          combo.geography,
+          tracer,
+          parentRunId
         );
 
         if (insights.usage) {
@@ -447,14 +501,26 @@ serve(async (req) => {
 
     const processingTimeMs = Date.now() - startTime;
 
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+    tracer.patchRun(parentRunId, {
+      total: results.length,
+      successful,
+      failed,
+      processingTimeMs,
+      totalTokens,
+      estimatedCost: totalCost,
+      totalEstimatedCostUsd: totalCost,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
         results,
         summary: {
           total: results.length,
-          successful: results.filter(r => r.success).length,
-          failed: results.filter(r => !r.success).length,
+          successful,
+          failed,
           processingTimeMs,
           totalTokens,
           estimatedCost: `$${totalCost.toFixed(4)}`,
@@ -470,10 +536,13 @@ serve(async (req) => {
       return validationErrorResponse(error.message);
     }
     console.error("Generate market insights error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    if (tracer && parentRunId) {
+      tracer.patchRun(parentRunId, { errorType: classifyError(error) }, errorMessage);
+    }
     new SentryReporter("generate-market-insights").captureException(error, {
       userId: authResult.user.userId,
     });
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return new Response(
       JSON.stringify({

@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
-import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles, Building2, MapPin, FolderKanban } from "lucide-react";
+import { RefreshCw, Database, Clock, DollarSign, CheckCircle2, XCircle, Loader2, Globe, Search, Filter, Sparkles, Building2, MapPin, FolderKanban, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -269,6 +269,18 @@ export function MarketInsightsAdmin() {
       title: "Generation Complete",
       description: `Generated ${successCount} insights. ${failCount > 0 ? `${failCount} failed.` : ""}`,
     });
+
+    // Auto-clear selections after a successful batch to prevent stale checkboxes
+    // leaking into the next generation run.
+    if (successCount > 0 && failCount === 0) {
+      setGenIndustry("");
+      setGenCategories([]);
+      setGenCountries([]);
+      setSearchIndustry("");
+      setSearchCountry("");
+      setSearchCategory("");
+    }
+
     refetch();
   };
 
@@ -280,6 +292,12 @@ export function MarketInsightsAdmin() {
     });
     return groups;
   }, []);
+
+  const selectedCountries = useMemo(
+    () => genCountries.map(slug => COUNTRIES.find(c => c.slug === slug)).filter(Boolean) as typeof COUNTRIES,
+    [genCountries]
+  );
+  const requestedInsightCount = genCountries.length * genCategories.length;
 
   return (
     <div className="space-y-6">
@@ -344,6 +362,24 @@ export function MarketInsightsAdmin() {
                 <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input className="h-8 pl-7 text-xs border-accent/20 focus-visible:ring-accent/30" placeholder="Search countries..." value={searchCountry} onChange={e => setSearchCountry(e.target.value)} />
               </div>
+              {selectedCountries.length > 0 && (
+                <div className="mb-2 rounded-md border border-accent/15 bg-accent/5 p-2">
+                  <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-accent/80">Selected countries/regions</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedCountries.map(country => (
+                      <button
+                        key={country.slug}
+                        type="button"
+                        onClick={() => toggleCountry(country.slug)}
+                        className="inline-flex max-w-full items-center gap-1 rounded-md border border-accent/20 bg-background px-2 py-1 text-[11px] font-medium text-foreground hover:bg-accent/10"
+                      >
+                        <span className="truncate">{country.name}</span>
+                        <X className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="border border-accent/15 rounded-md p-3 max-h-64 overflow-y-auto space-y-3">
                 {Object.entries(countryGroups).map(([group, countries]) => {
                   const filtered = countries.filter(c => c.name.toLowerCase().includes(searchCountry.toLowerCase()));
@@ -401,12 +437,33 @@ export function MarketInsightsAdmin() {
         </div>
 
         {/* Summary + Generate button */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
             {genIndustry && genCategories.length > 0 && genCountries.length > 0
-              ? `${genCountries.length} × ${genCategories.length} = ${genCountries.length * genCategories.length} insight(s) will be generated`
+              ? `${genCountries.length} country/region × ${genCategories.length} category = ${requestedInsightCount} insight(s) will be generated`
               : "Select industry, countries, and categories to generate"}
           </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setGenIndustry("");
+                setGenCategories([]);
+                setGenCountries([]);
+                setSearchIndustry("");
+                setSearchCountry("");
+                setSearchCategory("");
+              }}
+              disabled={
+                isGenerating ||
+                batchProgress !== null ||
+                (!genIndustry && genCategories.length === 0 && genCountries.length === 0)
+              }
+            >
+              <X className="mr-2 h-4 w-4" />
+              Clear selections
+            </Button>
           <Button
             onClick={handleGenerate}
             disabled={isGenerating || batchProgress !== null || !genIndustry || genCategories.length === 0 || genCountries.length === 0}
@@ -419,10 +476,11 @@ export function MarketInsightsAdmin() {
             ) : (
               <>
                 <Globe className="mr-2 h-4 w-4" />
-                Generate Market Insights
+                Generate {requestedInsightCount || ""} Market Insight{requestedInsightCount === 1 ? "" : "s"}
               </>
             )}
           </Button>
+          </div>
         </div>
 
         {batchProgress && (
@@ -431,7 +489,14 @@ export function MarketInsightsAdmin() {
               <span className="font-medium text-foreground truncate pr-2">{batchProgress.currentItem}</span>
               <span className="text-muted-foreground tabular-nums shrink-0">{batchProgress.current} / {batchProgress.total}</span>
             </div>
-            <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-1" />
+            {batchProgress.total > 1 ? (
+              <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-1" />
+            ) : (
+              <div className="flex items-center gap-2 pt-0.5 text-[11px] text-muted-foreground">
+                <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                <span>Generating insight…</span>
+              </div>
+            )}
           </div>
         )}
 

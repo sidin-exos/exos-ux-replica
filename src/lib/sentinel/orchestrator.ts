@@ -26,7 +26,7 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
   enableValidation: true,
   useLocalModel: false, // Set to true when Mistral is available
   localModelEndpoint: undefined,
-  cloudModel: 'gemini-2.5-pro',
+  cloudModel: 'gemini-3.1-pro-preview',
   validationThreshold: 0.6,
 };
 

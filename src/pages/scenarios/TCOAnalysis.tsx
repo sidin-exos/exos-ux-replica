@@ -7,7 +7,7 @@ export default function TCOAnalysis() {
       metaDescription="Calculate the true lifecycle cost of any procurement decision. EXOS TCO analysis covers acquisition, operation, risk, and exit costs — GDPR-native, built for EU mid-market teams."
       canonicalPath="/scenarios/tco-analysis"
       category="Analysis"
-      h1="Total Cost of Ownership Analysis"
+      h1="Total Cost of Ownership Analysis Software"
       subtitle="Go beyond unit price. Uncover the full lifecycle cost of every procurement decision before you commit."
       heroMetric="18%"
       heroMetricLabel="Average cost reduction identified by EXOS TCO analysis"
