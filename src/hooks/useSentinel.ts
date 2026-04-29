@@ -80,6 +80,7 @@ export function useSentinel(options: UseSentinelOptions = {}) {
         tokenUsage: null,
         processingTimeMs: null,
         structuredEnvelope: null,
+        fallbackMeta: null,
       });
 
       try {
