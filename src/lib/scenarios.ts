@@ -272,6 +272,7 @@ export const scenarios: Scenario[] = [
       "Scenario 1: Base Case (Expected Spend)",
       "Scenario 2: Stress Test (Worst Case & Triggers)",
       "Actionable Budget Optimization Steps",
+      "Scenario 3: Upside Case (Best-case projections and triggering conditions)",
     ],
     scenario_id: "S6",
     group: "A",
