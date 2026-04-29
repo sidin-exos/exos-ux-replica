@@ -775,9 +775,10 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
 
   if (parsed.recommendations?.length > 0) {
     parts.push('### Recommendations');
-    // Replace Unicode comparators that some PDF fonts cannot render.
+    // Replace Unicode comparators that some PDF fonts cannot render reliably.
+    // Em/en dashes and × are intentionally NOT touched — they are part of the brand voice.
     const sanitiseAscii = (s: string): string =>
-      s.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=').replace(/×/g, 'x').replace(/–/g, '-').replace(/—/g, '-');
+      s.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=');
     const normalisePriority = (raw: unknown): string => {
       if (typeof raw !== 'string') return '';
       const v = raw.trim().toLowerCase();
