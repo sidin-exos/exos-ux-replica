@@ -2,14 +2,19 @@ import { AlertCircle, CheckCircle2, AlertTriangle, XCircle } from "lucide-react"
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DataQualityData } from "@/lib/dashboard-data-parser";
+import {
+  normalizeDataQuality,
+  formatScore,
+  FIELD_STATUS_ORDER,
+  DQ_MAX_SCORE,
+  type FieldStatus,
+} from "@/lib/dashboard-contracts";
 
 interface DataQualityDashboardProps {
   parsedData?: DataQualityData;
 }
 
-type FieldStatus = "complete" | "partial" | "missing";
-
-const MAX_SCORE = 5;
+const MAX_SCORE = DQ_MAX_SCORE;
 
 // Muted EXOS palette — matched to License Distribution / Timeline Roadmap
 const STATUS_META: Record<
@@ -21,7 +26,7 @@ const STATUS_META: Record<
   missing: { label: "Missing", color: "hsl(220, 22%, 48%)", icon: XCircle, opacity: 0.55 },
 };
 
-const STATUS_ORDER: FieldStatus[] = ["complete", "partial", "missing"];
+const STATUS_ORDER: FieldStatus[] = FIELD_STATUS_ORDER;
 
 const defaultDataFields = [
   { field: "Supplier Spend Data", status: "complete", coverage: 5 },
@@ -37,51 +42,30 @@ const defaultLimitations = [
   { title: "Incomplete Contract Terms", impact: "Exit cost analysis partially affected" },
 ];
 
-const toFiveScale = (v: number): number => {
-  const scaled = v > MAX_SCORE ? (v / 100) * MAX_SCORE : v;
-  const rounded = Math.round(scaled * 2) / 2;
-  return Math.max(0, Math.min(MAX_SCORE, rounded));
-};
-
-const formatScore = (v: number): string => v.toFixed(1).replace(/\.0$/, "");
-
 const DataQualityDashboard = ({ parsedData }: DataQualityDashboardProps) => {
-  const dataFields = parsedData?.fields || defaultDataFields;
   const limitations = parsedData?.limitations || defaultLimitations;
 
-  const normalizedFields = useMemo(
-    () =>
-      dataFields.map((f) => ({
-        ...f,
-        coverage: toFiveScale(f.coverage),
-        status: (STATUS_ORDER.includes(f.status as FieldStatus)
-          ? f.status
-          : "partial") as FieldStatus,
-      })),
-    [dataFields]
+  // Use shared contract; if no parsedData, normalize defaults
+  const fallbackData: DataQualityData = {
+    fields: defaultDataFields.map((f) => ({
+      field: f.field,
+      status: f.status as FieldStatus,
+      coverage: f.coverage,
+    })),
+    limitations,
+  };
+  const norm = useMemo(
+    () => normalizeDataQuality(parsedData ?? fallbackData),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [parsedData]
   );
 
-  const grouped = useMemo(() => {
-    const map: Record<FieldStatus, typeof normalizedFields> = {
-      complete: [],
-      partial: [],
-      missing: [],
-    };
-    normalizedFields.forEach((f) => map[f.status].push(f));
-    return map;
-  }, [normalizedFields]);
-
-  const counts = {
-    complete: grouped.complete.length,
-    partial: grouped.partial.length,
-    missing: grouped.missing.length,
-  };
-
-  const totalFields = normalizedFields.length;
-  const avgScore = totalFields
-    ? normalizedFields.reduce((acc, f) => acc + f.coverage, 0) / totalFields
-    : 0;
-  const confidencePct = Math.round((avgScore / MAX_SCORE) * 100);
+  const normalizedFields = norm.fields;
+  const grouped = norm.grouped;
+  const counts = norm.counts;
+  const totalFields = norm.totalFields;
+  const avgScore = norm.avgScore;
+  const confidencePct = norm.confidencePct;
 
   const groupAvg = (status: FieldStatus): number => {
     const arr = grouped[status];
