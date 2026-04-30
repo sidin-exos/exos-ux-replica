@@ -236,6 +236,38 @@ function selectPersona(requestedPersona?: string) {
   return BUYER_PERSONAS[Math.floor(Math.random() * BUYER_PERSONAS.length)];
 }
 
+function secureRandom(): number {
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return values[0] / 0x100000000;
+}
+
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(secureRandom() * items.length)];
+}
+
+function pickWeighted<T>(options: Array<{ value: T; weight: number }>): T {
+  const total = options.reduce((sum, option) => sum + option.weight, 0);
+  let roll = secureRandom() * total;
+
+  for (const option of options) {
+    roll -= option.weight;
+    if (roll <= 0) return option.value;
+  }
+
+  return options[options.length - 1].value;
+}
+
+function selectRandomIndustryCategoryPair(): { industry: string; category: string } {
+  const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX).filter(
+    (industry) => (INDUSTRY_CATEGORY_MATRIX[industry] || []).length > 0
+  );
+  const industry = pickRandom(industries);
+  const category = pickRandom(INDUSTRY_CATEGORY_MATRIX[industry]);
+
+  return { industry, category };
+}
+
 
 interface GenerateRequest {
   mode?: "draft" | "generate" | "full" | "messy";
