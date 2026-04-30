@@ -477,9 +477,24 @@ async function handleDraftMode(
   const trickResult = selectRandomTrick(scenarioType);
   const persona = selectPersona();
   const trick = trickResult?.trick || null;
-  
-  console.log(`[TestDataGen] Draft mode - Selected trick: ${trick?.category || 'none'}`);
-  
+
+  // Weighted dataQuality distribution — bias the engine toward good-quality
+  // inputs so most tests exercise the happy path. Poor/partial cases still
+  // appear so we keep coverage of degraded-input handling, just at a much
+  // lower frequency.
+  //   excellent: 40%  (OPTIMAL)
+  //   good:      40%  (OPTIMAL)   → 80% OPTIMAL total
+  //   partial:   15%  (MINIMUM)
+  //   poor:       5%  (DEGRADED)
+  const qualityRoll = Math.random();
+  const presetDataQuality: DataQuality =
+    qualityRoll < 0.40 ? "excellent"
+    : qualityRoll < 0.80 ? "good"
+    : qualityRoll < 0.95 ? "partial"
+    : "poor";
+
+  console.log(`[TestDataGen] Draft mode - Selected trick: ${trick?.category || 'none'}, presetDataQuality: ${presetDataQuality}`);
+
   const system = `You are a procurement test case designer. Generate a random but internally-consistent set of parameters for a test case.
 
 AVAILABLE OPTIONS:
@@ -489,12 +504,13 @@ AVAILABLE OPTIONS:
 - Financial Pressure: comfortable, moderate, tight, crisis
 - Strategic Priority: cost, risk, speed, quality, innovation, sustainability
 - Market Conditions: stable, growing, volatile, disrupted
-- Data Quality: excellent, good, partial, poor
+- Data Quality: MUST be exactly "${presetDataQuality}" (pre-selected — do not change)
 
 RULES:
 1. Pick a RANDOM industry and a COMPATIBLE category from that industry
 2. All parameters should form a COHERENT business scenario
 3. Write a 1-2 sentence "reasoning" explaining the case
+4. The "dataQuality" field MUST equal "${presetDataQuality}" exactly
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with these exact keys:
