@@ -8,7 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
-import { extractDashboardData, stripDashboardData, isStructuredOutput } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, extractRiskRegisterItems, stripDashboardData, isStructuredOutput } from "@/lib/dashboard-data-parser";
 import { DashboardType } from "@/lib/dashboard-mappings";
 import type { PdfThemeMode, PdfColorSet } from "./dashboardVisuals/theme";
 import { getPdfColors } from "./dashboardVisuals/theme";
@@ -1217,35 +1217,62 @@ const PDFReportDocument = ({
           });
         })()}
 
-        {/* Risk Register */}
-        <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}>
-          <Text style={s.sectionTitleText}>Risk Register</Text>
-          <View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} />
-        </View>
-
+        {/* Risk Register — heading and body render together; both hide when there's no content */}
         {(() => {
+          const structuredRisks = extractRiskRegisterItems(analysisResult);
           const sections = categorizeAnalysisSections(analysisLines);
-          const riskSections = sections.filter(s => s.type === "risks");
-          const riskLines = riskSections.flatMap(s => s.lines);
-          if (riskLines.length === 0) return null;
+          const riskLines = sections.filter(s => s.type === "risks").flatMap(s => s.lines);
+          const useStructured = structuredRisks.length > 0;
+          if (!useStructured && riskLines.length === 0) return null;
 
-          return riskLines.slice(0, 5).map((line, i) => {
-            const { severity, cleanText } = parseRiskSeverity(line);
-            const colonIdx = cleanText.indexOf(":");
-            const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
-            const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
-            const sevColor = riskSeverityColor(severity, c);
+          const heading = (
+            <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}>
+              <Text style={s.sectionTitleText}>Risk Register</Text>
+              <View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} />
+            </View>
+          );
 
+          if (useStructured) {
             return (
-              <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
-                <View style={{ ...s.riskBadge, backgroundColor: sevColor }}>
-                  <Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text>
-                </View>
-                {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
-                <Text style={s.riskDescription}>{riskDesc}</Text>
-              </View>
+              <>
+                {heading}
+                {structuredRisks.slice(0, 5).map((item, i) => {
+                  const sevColor = riskSeverityColor(item.severity, c);
+                  return (
+                    <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                      <View style={{ ...s.riskBadge, backgroundColor: sevColor }}>
+                        <Text style={s.riskBadgeText}>{item.severity.toUpperCase()}</Text>
+                      </View>
+                      {item.name ? <Text style={s.riskTitle}>{item.name}</Text> : null}
+                      <Text style={s.riskDescription}>{item.description}</Text>
+                    </View>
+                  );
+                })}
+              </>
             );
-          });
+          }
+
+          return (
+            <>
+              {heading}
+              {riskLines.slice(0, 5).map((line, i) => {
+                const { severity, cleanText } = parseRiskSeverity(line);
+                const colonIdx = cleanText.indexOf(":");
+                const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
+                const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
+                const sevColor = riskSeverityColor(severity, c);
+                return (
+                  <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                    <View style={{ ...s.riskBadge, backgroundColor: sevColor }}>
+                      <Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text>
+                    </View>
+                    {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
+                    <Text style={s.riskDescription}>{riskDesc}</Text>
+                  </View>
+                );
+              })}
+            </>
+          );
         })()}
 
         <BrandedFooter dateStr={formattedDate} orgName={orgName} c={c} />

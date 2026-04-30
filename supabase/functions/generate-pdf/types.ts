@@ -3,12 +3,12 @@
  * Mirrors the frontend types from dashboard-data-parser.ts and dashboard-mappings.ts.
  */
 
-import { extractFromEnvelope } from '../_shared/dashboard-extractor.ts';
-import type { DashboardData } from '../_shared/dashboard-extractor.ts';
+import { extractFromEnvelope, extractRiskRegisterItems } from '../_shared/dashboard-extractor.ts';
+import type { DashboardData, RiskRegisterItem } from '../_shared/dashboard-extractor.ts';
 
 // Re-export for consumers
-export { extractFromEnvelope };
-export type { DashboardData };
+export { extractFromEnvelope, extractRiskRegisterItems };
+export type { DashboardData, RiskRegisterItem };
 
 // ── Dashboard type ──
 

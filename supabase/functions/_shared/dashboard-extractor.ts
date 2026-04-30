@@ -983,3 +983,63 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
 
   return Object.keys(result).length === 0 ? null : result;
 }
+
+export interface RiskRegisterItem {
+  name?: string;
+  description: string;
+  severity: 'Critical' | 'High' | 'Medium' | 'Low';
+  category?: string;
+}
+
+function normaliseSeverityLabel(raw: unknown): 'Critical' | 'High' | 'Medium' | 'Low' {
+  const v = String(raw ?? '').trim().toLowerCase();
+  if (v.includes('critical')) return 'Critical';
+  if (v.includes('high')) return 'High';
+  if (v.includes('low')) return 'Low';
+  return 'Medium';
+}
+
+/**
+ * Extracts the structured risk register from an EXOS envelope (schema_version 1.0/2.0).
+ * Tries scenario_specific.risk_register, then risk_items, then payload.risk_summary.risks.
+ * Returns [] if the input isn't a recognised envelope or no risk items are present.
+ */
+export function extractRiskRegisterItems(text: string): RiskRegisterItem[] {
+  if (!text) return [];
+  let envelope: Record<string, any> | null = null;
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && ['1.0', '2.0'].includes(parsed.schema_version)) {
+      envelope = parsed;
+    }
+  } catch { /* not JSON envelope */ }
+  if (!envelope) return [];
+
+  const payload: Record<string, any> = envelope.payload ?? {};
+  const ss: Record<string, any> = payload.scenario_specific ?? {};
+  const raw: any[] =
+    Array.isArray(ss.risk_register) && ss.risk_register.length > 0 ? ss.risk_register :
+    Array.isArray(ss.risk_items) && ss.risk_items.length > 0 ? ss.risk_items :
+    Array.isArray(payload.risk_summary?.risks) ? payload.risk_summary.risks : [];
+
+  return raw
+    .filter((r: any) => r && typeof r === 'object')
+    .map((r: any): RiskRegisterItem | null => {
+      const description = String(
+        r.risk_description ?? r.description ?? r.label ?? r.risk ?? ''
+      ).trim();
+      const category = r.category ? String(r.category).trim() : undefined;
+      const severity = normaliseSeverityLabel(
+        r.severity ?? r.impact ?? r.likelihood ?? r.probability
+      );
+      const finalDescription = description || category || '';
+      if (!finalDescription) return null;
+      return {
+        name: category,
+        description: finalDescription,
+        severity,
+        category,
+      };
+    })
+    .filter((r): r is RiskRegisterItem => r !== null);
+}

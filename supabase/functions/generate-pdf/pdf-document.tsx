@@ -19,6 +19,7 @@ import type { PdfColorSet } from "./theme.ts";
 import {
   extractDashboardData,
   extractFromEnvelope,
+  extractRiskRegisterItems,
   stripDashboardData,
   dashboardConfigs,
   type DashboardType,
@@ -545,25 +546,54 @@ const PDFReportDocument = ({
             );
           });
         })()}
-        <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}><Text style={s.sectionTitleText}>Risk Register</Text><View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} /></View>
         {(() => {
+          const structuredRisks = extractRiskRegisterItems(analysisResult);
           const sections = categorizeAnalysisSections(analysisLines);
           const riskLines = sections.filter(s => s.type === "risks").flatMap(s => s.lines);
-          if (riskLines.length === 0) return null;
-          return riskLines.slice(0, 5).map((line, i) => {
-            const { severity, cleanText } = parseRiskSeverity(line);
-            const colonIdx = cleanText.indexOf(":");
-            const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
-            const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
-            const sevColor = riskSeverityColor(severity, c);
+          const useStructured = structuredRisks.length > 0;
+          if (!useStructured && riskLines.length === 0) return null;
+
+          const heading = (
+            <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}><Text style={s.sectionTitleText}>Risk Register</Text><View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} /></View>
+          );
+
+          if (useStructured) {
             return (
-              <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
-                <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text></View>
-                {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
-                <Text style={s.riskDescription}>{riskDesc}</Text>
-              </View>
+              <>
+                {heading}
+                {structuredRisks.slice(0, 5).map((item, i) => {
+                  const sevColor = riskSeverityColor(item.severity, c);
+                  return (
+                    <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                      <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{item.severity.toUpperCase()}</Text></View>
+                      {item.name ? <Text style={s.riskTitle}>{item.name}</Text> : null}
+                      <Text style={s.riskDescription}>{item.description}</Text>
+                    </View>
+                  );
+                })}
+              </>
             );
-          });
+          }
+
+          return (
+            <>
+              {heading}
+              {riskLines.slice(0, 5).map((line, i) => {
+                const { severity, cleanText } = parseRiskSeverity(line);
+                const colonIdx = cleanText.indexOf(":");
+                const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
+                const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
+                const sevColor = riskSeverityColor(severity, c);
+                return (
+                  <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                    <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text></View>
+                    {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
+                    <Text style={s.riskDescription}>{riskDesc}</Text>
+                  </View>
+                );
+              })}
+            </>
+          );
         })()}
         <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
       </Page>
