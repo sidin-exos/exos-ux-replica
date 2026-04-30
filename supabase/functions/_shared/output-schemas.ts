@@ -245,6 +245,72 @@ Then ALSO populate scenario_specific with the per-scenario structure below — t
     }
   }
   Recommendations array MUST follow {priority: HIGH|MEDIUM|LOW, action, financial_impact, next_scenario} contract — DO NOT pad with filler MEDIUM/LOW recommendations to reach a count. Emit only recommendations supported by user-provided data. Never write phrases like "from CAPEX" or "from OPEX" as if they were vendor names — these are option labels, not entities.
+- saas-optimization (S7): scenario_specific MUST contain ALL of the following structures. This is the ONLY way the SaaS dashboards (license-tier, kill list, duplicate matrix, tier mismatch) can render — narrative text alone will be discarded.
+  {
+    "scenario_specific": {
+      "tools_inventory": [
+        {
+          "tool_name": "string (tokenised vendor label, e.g. SAAS_TOOL_A)",
+          "tier_label": "Enterprise | Business | Pro | Standard | Basic | string",
+          "licences_purchased": number,
+          "licences_active": number,
+          "annual_cost_eur": number,
+          "cost_per_user_eur": number,
+          "renewal_date": "YYYY-MM-DD or null",
+          "primary_use_case": "string (short)",
+          "utilisation_pct": number | null,
+          "recommended_licences": number,
+          "confidence": "HIGH | MEDIUM | LOW"
+        }
+      ],
+      "kill_list": [
+        {
+          "tool_name": "string (matches tools_inventory.tool_name)",
+          "reason": "UNUSED | DUPLICATE | LOW_UTILISATION | AUTO_RENEWAL_TRAP | OUT_OF_SCOPE",
+          "annual_savings_eur": number,
+          "cancellation_deadline": "YYYY-MM-DD or null",
+          "evidence": "string — one sentence citing the user's data"
+        }
+      ],
+      "duplicate_matrix": [
+        {
+          "feature_area": "e.g. Project Management | File Storage | Video Conferencing",
+          "tools": ["tool_name_a", "tool_name_b"],
+          "overlap_pct": number,
+          "consolidation_recommendation": "KEEP_A | KEEP_B | KEEP_BOTH | EVALUATE_THIRD",
+          "annual_savings_eur": number
+        }
+      ],
+      "tier_mismatch": [
+        {
+          "tool_name": "string",
+          "current_tier": "string",
+          "recommended_tier": "string",
+          "reason": "string — feature usage gap",
+          "monthly_savings_per_user_eur": number,
+          "users_to_downgrade": number,
+          "annual_savings_eur": number
+        }
+      ],
+      "savings_summary": {
+        "identified_annual_savings_eur": number,   // sum of kill_list + duplicate_matrix + tier_mismatch
+        "target_annual_savings_eur": number,        // user-stated target if provided, else 25% of total spend (Gartner benchmark)
+        "current_total_annual_spend_eur": number,
+        "savings_pct_of_spend": number,
+        "confidence": "HIGH | MEDIUM | LOW"
+      }
+    }
+  }
+  S7 AI guidance:
+  • tools_inventory[] MUST contain one entry per SaaS tool the user listed in subscriptionDetails — do not collapse, summarise or drop tools.
+  • For each tool, set licences_active from the user's data; if only utilisation % is given, derive licences_active = round(licences_purchased * utilisation_pct/100).
+  • cost_per_user_eur = annual_cost_eur / licences_purchased.
+  • recommended_licences = max(licences_active, ceil(licences_purchased * 0.85)) when utilisation is unknown; otherwise = licences_active rounded up to nearest 5.
+  • kill_list[] MUST include every tool with utilisation_pct < 30% OR flagged as duplicate by the user. Set reason precisely.
+  • duplicate_matrix[] is REQUIRED whenever the user mentions overlap or two tools share a primary_use_case — if no overlaps exist, emit an empty array, never omit the key.
+  • tier_mismatch[] MUST flag every tool where users on Enterprise/Business tiers don't use tier-exclusive features. If the user did not provide feature data, emit an empty array — do not invent.
+  • savings_summary.identified_annual_savings_eur MUST equal the sum of all kill_list[].annual_savings_eur + duplicate_matrix[].annual_savings_eur + tier_mismatch[].annual_savings_eur. Reconcile or the dashboard will flag inconsistency.
+  • financial_model.cost_breakdown for S7 MUST list TOOL CATEGORIES (e.g. "CRM", "Collaboration", "Security", "Analytics", "DevOps") with the summed annual_cost_eur per category — NOT individual tool names and NEVER recommendation strings.
 - For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
 
 WORKING CAPITAL (financial_model.working_capital) — OPTIONAL:
