@@ -390,14 +390,17 @@ serve(async (req) => {
     const fields = fieldGroups.all;
     const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
     
+    const randomPair = selectRandomIndustryCategoryPair();
     const selectedIndustry = industry && industries.includes(industry) 
       ? industry 
-      : industries[Math.floor(Math.random() * industries.length)];
+      : randomPair.industry;
     
     const validCategories = INDUSTRY_CATEGORY_MATRIX[selectedIndustry] || [];
     const selectedCategory = category && validCategories.includes(category)
       ? category
-      : validCategories[Math.floor(Math.random() * validCategories.length)];
+      : industry && industries.includes(industry)
+        ? pickRandom(validCategories)
+        : randomPair.category;
 
     console.log(`[TestDataGen] Full mode - Industry: ${selectedIndustry}, Category: ${selectedCategory}`);
     console.log(`[TestDataGen] MCTS iterations: ${mctsIterations}`);
@@ -504,6 +507,7 @@ async function handleDraftMode(
   temperature: number
 ): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
   const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
+  const randomPair = selectRandomIndustryCategoryPair();
   
   // Select a random trick and persona for this scenario type
   const trickResult = selectRandomTrick(scenarioType);
@@ -518,12 +522,12 @@ async function handleDraftMode(
   //   good:      40%  (OPTIMAL)   → 80% OPTIMAL total
   //   partial:   15%  (MINIMUM)
   //   poor:       5%  (DEGRADED)
-  const qualityRoll = Math.random();
-  const presetDataQuality: DataQuality =
-    qualityRoll < 0.40 ? "excellent"
-    : qualityRoll < 0.80 ? "good"
-    : qualityRoll < 0.95 ? "partial"
-    : "poor";
+  const presetDataQuality = pickWeighted<DataQuality>([
+    { value: "excellent", weight: 40 },
+    { value: "good", weight: 40 },
+    { value: "partial", weight: 15 },
+    { value: "poor", weight: 5 },
+  ]);
 
   console.log(`[TestDataGen] Draft mode - Selected trick: ${trick?.category || 'none'}, presetDataQuality: ${presetDataQuality}`);
 
@@ -531,6 +535,8 @@ async function handleDraftMode(
 
 AVAILABLE OPTIONS:
 - Industries: ${industries.join(", ")}
+- Pre-selected Industry: ${randomPair.industry}
+- Compatible Pre-selected Category: ${randomPair.category}
 - Company Sizes: startup, smb, mid-market, enterprise, large-enterprise
 - Complexity: simple, standard, complex, edge-case
 - Financial Pressure: comfortable, moderate, tight, crisis
@@ -539,7 +545,7 @@ AVAILABLE OPTIONS:
 - Data Quality: MUST be exactly "${presetDataQuality}" (pre-selected — do not change)
 
 RULES:
-1. Pick a RANDOM industry and a COMPATIBLE category from that industry
+1. Use the pre-selected industry and compatible category exactly as provided
 2. All parameters should form a COHERENT business scenario
 3. Write a 1-2 sentence "reasoning" explaining the case
 4. The "dataQuality" field MUST equal "${presetDataQuality}" exactly
