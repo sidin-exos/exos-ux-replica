@@ -863,9 +863,68 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
     if (riskSource.length > 0) {
       const mapped = riskSource.map(mapRiskItem).filter((r): r is NonNullable<typeof r> => r !== null);
       if (mapped.length > 0) {
-        result.riskMatrix = { risks: mapped };
+        // S18 RC-3: Reconcile traffic_light_status with actual item RAGs.
+        // Server-side derived RAG from worst-case score wins over AI's claim.
+        const ragRank = { GREEN: 0, AMBER: 1, RED: 2 } as const;
+        let worstRag: 'RED' | 'AMBER' | 'GREEN' | undefined;
+        for (const r of mapped) {
+          if (r.rag && (!worstRag || ragRank[r.rag] > ragRank[worstRag])) {
+            worstRag = r.rag;
+          }
+        }
+        const declared = ss.traffic_light_status ?? {};
+        const trafficLight = worstRag
+          ? {
+              rag: worstRag,
+              rationale: declared.rationale ?? undefined,
+              boardNotificationRequired:
+                declared.board_notification_required ?? (worstRag === 'RED'),
+            }
+          : undefined;
+        result.riskMatrix = { risks: mapped, ...(trafficLight && { trafficLight }) };
+
+        // S18: hydrate action-checklist from mitigation_plan + per-risk mitigation
+        // when the AI did not separately emit immediate_actions/recommendations.
+        if (!result.actionChecklist) {
+          const mitigationPlan: any[] = Array.isArray(ss.mitigation_plan) ? ss.mitigation_plan : [];
+          const actions = mitigationPlan
+            .map((m: any): ActionChecklistData['actions'][number] | null => {
+              const text = m?.action ?? m?.task ?? m?.description ?? null;
+              if (!text) return null;
+              const pri = String(m?.priority ?? '').toLowerCase();
+              const priority: 'critical' | 'high' | 'medium' | 'low' =
+                pri === 'critical' ? 'critical' :
+                pri === 'high' ? 'high' :
+                pri === 'low' ? 'low' : 'medium';
+              return {
+                action: String(text),
+                priority,
+                status: 'pending',
+                owner: m?.owner_role ?? m?.owner ?? undefined,
+                dueDate: m?.target_date ?? undefined,
+              };
+            })
+            .filter((a): a is ActionChecklistData['actions'][number] => a !== null);
+          // Fallback: derive from per-risk mitigations when no plan was emitted.
+          if (actions.length === 0) {
+            for (const r of mapped) {
+              if (!r.mitigation) continue;
+              const sev = r.rag === 'RED' ? 'critical' : r.rag === 'AMBER' ? 'high' : 'medium';
+              actions.push({
+                action: r.mitigation,
+                priority: sev as 'critical' | 'high' | 'medium' | 'low',
+                status: 'pending',
+                owner: r.owner,
+              });
+            }
+          }
+          if (actions.length > 0) {
+            result.actionChecklist = { actions };
+          }
+        }
       }
     }
+
 
     const issues: any[] = ss.issues ?? ss.sow_issues ?? [];
     const missingClauses: any[] = ss.missing_clauses ?? ss.gaps ?? [];
