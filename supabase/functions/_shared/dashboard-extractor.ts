@@ -255,7 +255,60 @@ function parseAmount(raw: any): number | null {
 }
 
 /**
- * Extract savings/reduction components for the Cost Breakdown dashboard.
+ * Cost-breakdown label hygiene.
+ * Reject labels that look like recommendations / sentences instead of cost
+ * categories. Schema mandates short noun phrases (e.g. "Licences", "Support").
+ * Drops the entry rather than letting recommendation strings pollute charts.
+ */
+const COST_LABEL_VERB_PREFIX_RE = /^\s*(issue|renegotiate|consolidate|reduce|implement|launch|conduct|review|migrate|cancel|terminate|deploy|evaluate|assess|optimi[sz]e|negotiate|investigate|explore|analyse|analyze|consider|engage|adopt|standardi[sz]e|monitor|enforce|develop|create|establish|build|introduce|switch|replace|upgrade|downgrade|right[- ]?size|eliminate|require|enable|update)\b/i;
+
+function isValidCostLabel(raw: any): boolean {
+  if (raw === null || raw === undefined) return false;
+  const s = String(raw).trim();
+  if (!s) return false;
+  if (s.length > 40) return false;
+  // Reject sentences (multiple words ending in punctuation, or contains period inside)
+  if (/[.!?]/.test(s.replace(/\.$/, ''))) return false;
+  if (COST_LABEL_VERB_PREFIX_RE.test(s)) return false;
+  // Reject anything with more than 5 words (cost categories are short noun phrases)
+  if (s.split(/\s+/).length > 5) return false;
+  return true;
+}
+
+/**
+ * Build licenseTier dashboard data from S7 scenario_specific.tools_inventory[].
+ * Returns null if no usable inventory present.
+ */
+const LICENSE_TIER_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+function extractLicenseTier(ss: Record<string, any>, currency: string): {
+  tiers: Array<{ name: string; users: number; costPerUser: number; totalCost: number; color: string; recommended?: number }>;
+  currency?: string;
+} | null {
+  const inv: any[] = Array.isArray(ss?.tools_inventory) ? ss.tools_inventory : [];
+  const valid = inv
+    .map((t: any, i: number) => {
+      const name = t?.tool_name ?? t?.name ?? t?.tier_label;
+      const purchased = parseAmount(t?.licences_purchased ?? t?.licenses_purchased);
+      const active = parseAmount(t?.licences_active ?? t?.licenses_active);
+      const annual = parseAmount(t?.annual_cost_eur ?? t?.annual_cost);
+      const cpu = parseAmount(t?.cost_per_user_eur ?? t?.cost_per_user);
+      const recommended = parseAmount(t?.recommended_licences ?? t?.recommended_licenses);
+      if (!name || purchased === null || annual === null) return null;
+      const costPerUser = cpu !== null ? cpu : (purchased > 0 ? annual / purchased : 0);
+      return {
+        name: String(name),
+        users: Number(purchased),
+        costPerUser: Number(costPerUser),
+        totalCost: Number(annual),
+        color: LICENSE_TIER_COLORS[i % LICENSE_TIER_COLORS.length],
+        recommended: recommended !== null ? Number(recommended) : (active !== null ? Number(active) : undefined),
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+  if (valid.length === 0) return null;
+  return { tiers: valid, currency };
+}
+
  * Sources: (1) ss.savings_breakdown[] (S4); (2) quantified recommendations[].
  * Kept in sync with src/lib/dashboard-data-parser.ts::extractReductionComponents.
  */
