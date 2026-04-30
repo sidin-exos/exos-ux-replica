@@ -580,11 +580,13 @@ Return ONLY a valid JSON object with these exact keys:
     if (jsonStr.endsWith("```")) jsonStr = jsonStr.slice(0, -3);
     
     const parsed = JSON.parse(jsonStr.trim()) as DraftedParameters;
+    parsed.industry = randomPair.industry;
+    parsed.category = randomPair.category;
     
     // Validate the category is compatible with industry
     const validCategories = INDUSTRY_CATEGORY_MATRIX[parsed.industry] || [];
     if (!validCategories.includes(parsed.category)) {
-      parsed.category = validCategories[0] || "professional-services";
+      parsed.category = pickRandom(validCategories) || "professional-services";
     }
     
     // Attach the selected trick
