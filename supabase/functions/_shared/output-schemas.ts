@@ -282,6 +282,47 @@ Mark incomplete sections with [DATA NEEDED: description] in the content. Never f
 Populate scenario_specific based on the scenario (e.g. issues/missing_clauses for SOW Critic, risk_register for Risk Assessment, risk items with rag_status for Risk Matrix, entitlements/compliance_gaps for Licensing Audit, risk_dimensions for Category Risk).
 Every risk must reference a regulatory standard or contractual clause. Use RAG status consistently.
 
+S18 Risk Matrix — scenario_specific MUST contain the following structure (the three promised deliverables: Risk Heatmap, Mitigation Plan, Traffic Light Status):
+{
+  "risk_register": [
+    {
+      "id": "R1",
+      "risk": "string — concise risk description",
+      "category": "Operational | Financial | Compliance | Strategic | Reputational | Cyber | Supply | Commercial",
+      "probability": 1-5,                          // 1 = rare, 5 = almost certain
+      "impact": 1-5,                               // 1 = negligible, 5 = catastrophic
+      "score": null,                               // = probability * impact (server reconciles)
+      "current_control": "string",
+      "owner_role": "string — role/function (never a person name)",
+      "mitigation": "string — concrete next action",
+      "target_residual_rag": "RED | AMBER | GREEN",
+      "financial_impact_eur": null,                // single-loss exposure estimate
+      "rag_status": "RED | AMBER | GREEN",
+      "regulatory_reference": "string — e.g. GDPR Art. 32, NIS2 Art. 21, SOC2 CC6.1",
+      "confidence": "HIGH | MEDIUM | LOW"
+    }
+  ],
+  "mitigation_plan": [
+    { "risk_id": "R1", "action": "string", "priority": "CRITICAL | HIGH | MEDIUM | LOW", "owner_role": "string", "target_date": "string | null", "expected_residual_rag": "RED | AMBER | GREEN" }
+  ],
+  "traffic_light_status": {
+    "rag": "RED | AMBER | GREEN",
+    "rationale": "string — 1–2 sentences citing the worst-scoring risks",
+    "board_notification_required": true
+  }
+}
+S18 AI guidance — MANDATORY rules:
+- risk_register[] MUST contain AT LEAST 5 items. If the user supplied fewer than 5 explicit risks, infer additional plausible risks from the industry/category context (cyber, supply continuity, commercial stability, regulatory, reputational, geopolitical) and flag each inferred item with confidence: "LOW".
+- probability and impact MUST be numeric 1–5 integers, NEVER all identical across the register. A degenerate matrix (every item scored the same) is a failure mode — spread the distribution to reflect real differentiation. If the user did not provide H/M/L ratings, infer them from the risk descriptions and benchmark prevalence, marking confidence: "LOW".
+- score = probability * impact. The server will recompute and overwrite this field; emit your best estimate.
+- rag_status MUST be derived from score: GREEN ≤ 6, AMBER 7–14, RED ≥ 15. Do not contradict the score with the label.
+- traffic_light_status.rag MUST equal the highest rag_status in the register. Do not emit "RED" overall when no individual item is RED.
+- owner_role MUST be a role/function ("Head of IT Security", "Procurement Director"), NEVER a personal name (GDPR Art. 5(1)(c) data minimisation).
+- financial_impact_eur is OPTIONAL but strongly preferred — use industry benchmarks (e.g. GDPR fines up to 4% global turnover, average data breach cost €4.5M per IBM Cost of a Data Breach Report) when the user did not quantify exposure, and flag confidence: "LOW".
+- mitigation_plan[] MUST contain at least one action per CRITICAL or HIGH risk; LOW/MEDIUM may be grouped.
+
+
+
 S20 Category Risk Evaluator — scenario_specific MUST contain ALL of the following structures (eight promised deliverables):
 {
   "category_risk_score": {
