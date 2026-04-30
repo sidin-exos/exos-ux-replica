@@ -485,6 +485,140 @@ function extractReductionComponents(
   return out.slice(0, 6);
 }
 
+/**
+ * Build spendAnalysis dashboard data from S5 scenario_specific.
+ * Returns null if no usable taxonomy / tail / consolidation / quick wins data.
+ * Kept in sync with src/lib/dashboard-data-parser.ts::extractSpendAnalysis.
+ */
+function extractSpendAnalysis(
+  ss: Record<string, any>,
+  currency: string,
+): NonNullable<DashboardData['spendAnalysis']> | null {
+  const taxRaw: any[] = Array.isArray(ss?.taxonomy_breakdown) ? ss.taxonomy_breakdown : [];
+  const taxonomy = taxRaw
+    .map((t: any) => {
+      const annual = parseAmount(t?.annual_spend_eur ?? t?.annual_spend);
+      const share = parseAmount(t?.spend_share_pct ?? t?.share_pct);
+      const supplierCount = parseAmount(t?.supplier_count);
+      if (!t?.level1 || annual === null) return null;
+      return {
+        level1: String(t.level1),
+        level2: t?.level2 ? String(t.level2) : null,
+        taxonomyCode: t?.taxonomy_code ? String(t.taxonomy_code) : null,
+        annualSpend: Number(annual),
+        sharePct: Number(share ?? 0),
+        supplierCount: Number(supplierCount ?? 0),
+        sampleSkus: Array.isArray(t?.sample_skus) ? t.sample_skus.map(String).slice(0, 5) : [],
+        confidence: (['HIGH', 'MEDIUM', 'LOW'].includes(String(t?.confidence ?? '').toUpperCase())
+          ? String(t.confidence).toUpperCase()
+          : undefined) as 'HIGH' | 'MEDIUM' | 'LOW' | undefined,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+
+  const tailRaw = ss?.tail_spend && typeof ss.tail_spend === 'object' ? ss.tail_spend : null;
+  let tailSpend: NonNullable<DashboardData['spendAnalysis']>['tailSpend'] = null;
+  if (tailRaw) {
+    const candidates = Array.isArray(tailRaw.candidates)
+      ? tailRaw.candidates
+          .map((c: any) => {
+            const annual = parseAmount(c?.annual_spend_eur ?? c?.annual_spend);
+            if (!c?.category || annual === null) return null;
+            return {
+              category: String(c.category),
+              supplierCount: Number(parseAmount(c?.supplier_count) ?? 0),
+              annualSpend: Number(annual),
+              consolidationAction: String(c?.consolidation_action ?? 'AGGREGATE'),
+            };
+          })
+          .filter((x: any) => x !== null)
+      : [];
+    tailSpend = {
+      thresholdPctOfTotal: Number(parseAmount(tailRaw?.threshold_pct_of_total) ?? 80),
+      spendInTail: Number(parseAmount(tailRaw?.spend_in_tail_eur ?? tailRaw?.spend_in_tail) ?? 0),
+      spendInTailPct: Number(parseAmount(tailRaw?.spend_in_tail_pct) ?? 0),
+      suppliersInTail: Number(parseAmount(tailRaw?.suppliers_in_tail) ?? 0),
+      transactionsInTail: Number(parseAmount(tailRaw?.transactions_in_tail) ?? 0),
+      addressableSavings: Number(parseAmount(tailRaw?.addressable_savings_eur ?? tailRaw?.addressable_savings) ?? 0),
+      candidates,
+    };
+  }
+
+  const vcRaw: any[] = Array.isArray(ss?.vendor_consolidation) ? ss.vendor_consolidation : [];
+  const vendorConsolidation = vcRaw
+    .map((v: any) => {
+      const currentSpend = parseAmount(v?.current_spend_eur ?? v?.current_spend);
+      const estSavings = parseAmount(v?.estimated_savings_eur ?? v?.estimated_savings);
+      if (!v?.category || currentSpend === null) return null;
+      const savingsPct = parseAmount(v?.savings_pct);
+      const computedPct =
+        savingsPct ?? (estSavings && currentSpend > 0 ? (estSavings / currentSpend) * 100 : 0);
+      return {
+        category: String(v.category),
+        currentSuppliers: Number(parseAmount(v?.current_suppliers) ?? 0),
+        targetSuppliers: Number(parseAmount(v?.target_suppliers) ?? 1),
+        currentSpend: Number(currentSpend),
+        estimatedSavings: Number(estSavings ?? 0),
+        savingsPct: Number(computedPct),
+        rationale: String(v?.rationale ?? ''),
+        preferredSupplier: v?.preferred_supplier ? String(v.preferred_supplier) : null,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+
+  const qwRaw: any[] = Array.isArray(ss?.quick_wins) ? ss.quick_wins : [];
+  const quickWins = qwRaw
+    .map((q: any) => {
+      if (!q?.action) return null;
+      const sav = parseAmount(q?.estimated_savings_eur ?? q?.estimated_savings);
+      return {
+        action: String(q.action).trim().slice(0, 140),
+        ownerRole: String(q?.owner_role ?? 'Procurement'),
+        weeksToValue: Number(parseAmount(q?.weeks_to_value) ?? 0),
+        estimatedSavings: Number(sav ?? 0),
+        effort: (['LOW', 'MEDIUM', 'HIGH'].includes(String(q?.effort ?? '').toUpperCase())
+          ? String(q.effort).toUpperCase()
+          : undefined) as 'LOW' | 'MEDIUM' | 'HIGH' | undefined,
+        priority: (['HIGH', 'MEDIUM', 'LOW'].includes(String(q?.priority ?? '').toUpperCase())
+          ? String(q.priority).toUpperCase()
+          : undefined) as 'HIGH' | 'MEDIUM' | 'LOW' | undefined,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+
+  const sumRaw = ss?.savings_summary && typeof ss.savings_summary === 'object' ? ss.savings_summary : null;
+  const savingsSummary = sumRaw
+    ? {
+        totalAddressableSpend: Number(parseAmount(sumRaw?.total_addressable_spend_eur) ?? 0),
+        identifiedSavings: Number(parseAmount(sumRaw?.identified_savings_eur) ?? 0),
+        savingsPctOfAddressable: Number(parseAmount(sumRaw?.savings_pct_of_addressable) ?? 0),
+        confidence: (['HIGH', 'MEDIUM', 'LOW'].includes(String(sumRaw?.confidence ?? '').toUpperCase())
+          ? String(sumRaw.confidence).toUpperCase()
+          : undefined) as 'HIGH' | 'MEDIUM' | 'LOW' | undefined,
+      }
+    : null;
+
+  // No usable data anywhere → skip
+  if (
+    taxonomy.length === 0 &&
+    !tailSpend &&
+    vendorConsolidation.length === 0 &&
+    quickWins.length === 0 &&
+    !savingsSummary
+  ) {
+    return null;
+  }
+
+  return {
+    taxonomy,
+    tailSpend,
+    vendorConsolidation,
+    quickWins,
+    savingsSummary,
+    currency,
+  };
+}
+
 // ── Main export ──────────────────────────────────────────────────────────────
 
 export function extractFromEnvelope(rawString: string): DashboardData | null {
