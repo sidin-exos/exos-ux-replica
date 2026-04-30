@@ -174,7 +174,23 @@ FINANCIAL_MODEL IS ALWAYS REQUIRED (independent of scenario_specific):
 Then ALSO populate scenario_specific with the per-scenario structure below — this is in ADDITION to financial_model, never instead of it:
 
 - tco-analysis (S1): scenario_specific.vendor_options MUST be an array of AT LEAST 2 objects, each with vendor_label (string), total_tco (number), year_breakdown (array of { year: number, cost: number }). If the user provided only one option to analyse, generate the comparison against a clearly-labelled status-quo / do-nothing / industry-benchmark alternative. Never return fewer than 2 vendor_options for tco-analysis. The financial_model.cost_breakdown for tco-analysis represents the categorical decomposition of the PRIMARY (recommended) option's total_tco.
-- cost-breakdown (S2): use financial_model.cost_breakdown as the primary source. scenario_specific can stay empty {} or hold optional commentary.
+- cost-breakdown (S2): use financial_model.cost_breakdown as the primary source AND populate scenario_specific with the should-cost decomposition described below — both are mandatory deliverables for this scenario.
+  {
+    "scenario_specific": {
+      "cost_decomposition": [
+        { "component": "Material | Labour | Tooling/Setup | Overhead | Logistics | Margin | …", "estimated_pct": null, "benchmark_pct": null, "gap_pct": null, "confidence": "HIGH | MEDIUM | LOW", "rationale": "string" }
+      ],
+      "negotiation_anchor": {
+        "current_price": null,
+        "should_cost_target": null,
+        "headroom_pct": null,
+        "rationale": "string"
+      },
+      "estimated_supplier_margin_pct": null,
+      "top_cost_drivers_commentary": "string (optional)"
+    }
+  }
+  S2 AI guidance: cost_decomposition[] MUST contain at least 4 components summing to ~100%. When the user supplies only a unit price, target price and/or annual spend WITHOUT a cost-structure breakdown, you MUST still emit cost_decomposition[] using a defensible industry-typical split for the named product/process (e.g. injection moulding ≈ 45% material / 20% labour+machine / 15% tooling+setup / 10% overhead / 10% margin; machined parts ≈ 35/30/15/10/10; electronics assembly ≈ 55/15/10/10/10) and flag every estimated component with confidence: "LOW" plus a rationale citing the assumed benchmark. NEVER skip cost_decomposition[] for S2 — an estimated low-confidence decomposition is more useful to the user than a hidden dashboard. Same rule applies to financial_model.cost_breakdown: when only a unit price + annual spend are known, derive amounts by applying the estimated_pct splits to total_cost and mark each entry confidence: "LOW". negotiation_anchor.headroom_pct = (current_price - should_cost_target) / current_price * 100. Always include a benchmark_pct on each component when you can cite an industry norm; leave null only when no defensible benchmark exists.
 - savings-calculation (S4): scenario_specific.savings_breakdown — array of { lever (string), annual_savings (number), one_off_savings (number), confidence (HIGH|MEDIUM|LOW) }.
   ADDITIONALLY for S4, you MUST populate scenario_specific.savings_classification with the following structure (every field initialised to null when unknown):
   {
