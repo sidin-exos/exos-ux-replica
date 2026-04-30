@@ -309,6 +309,8 @@ function extractLicenseTier(ss: Record<string, any>, currency: string): {
   return { tiers: valid, currency };
 }
 
+/**
+ * Extract savings/reduction components for the Cost Breakdown dashboard.
  * Sources: (1) ss.savings_breakdown[] (S4); (2) quantified recommendations[].
  * Kept in sync with src/lib/dashboard-data-parser.ts::extractReductionComponents.
  */
