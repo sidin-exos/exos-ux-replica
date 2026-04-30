@@ -311,7 +311,77 @@ Then ALSO populate scenario_specific with the per-scenario structure below — t
   • tier_mismatch[] MUST flag every tool where users on Enterprise/Business tiers don't use tier-exclusive features. If the user did not provide feature data, emit an empty array — do not invent.
   • savings_summary.identified_annual_savings_eur MUST equal the sum of all kill_list[].annual_savings_eur + duplicate_matrix[].annual_savings_eur + tier_mismatch[].annual_savings_eur. Reconcile or the dashboard will flag inconsistency.
   • financial_model.cost_breakdown for S7 MUST list TOOL CATEGORIES (e.g. "CRM", "Collaboration", "Security", "Analytics", "DevOps") with the summed annual_cost_eur per category — NOT individual tool names and NEVER recommendation strings.
+- spend-analysis-categorization (S5): scenario_specific MUST contain ALL of the following structures. This is the ONLY way the Spend Analysis dashboard (taxonomy, tail spend, vendor consolidation, quick wins) can render — narrative text alone will be discarded.
+  {
+    "scenario_specific": {
+      "taxonomy_breakdown": [
+        {
+          "level1": "string (top-level category, e.g. 'Direct Materials', 'IT Services', 'Professional Services')",
+          "level2": "string or null (sub-category, e.g. 'APIs', 'Cloud Hosting', 'Legal Counsel')",
+          "taxonomy_code": "string or null (e.g. UNSPSC '51171500' or eCl@ss code if user-provided taxonomy used)",
+          "annual_spend_eur": number,
+          "spend_share_pct": number,
+          "supplier_count": number,
+          "sample_skus": ["string"],
+          "confidence": "HIGH | MEDIUM | LOW"
+        }
+      ],
+      "tail_spend": {
+        "threshold_pct_of_total": number,
+        "spend_in_tail_eur": number,
+        "spend_in_tail_pct": number,
+        "suppliers_in_tail": number,
+        "transactions_in_tail": number,
+        "addressable_savings_eur": number,
+        "candidates": [
+          {
+            "category": "string",
+            "supplier_count": number,
+            "annual_spend_eur": number,
+            "consolidation_action": "AGGREGATE | CATALOGUE | P_CARD | ELIMINATE | string"
+          }
+        ]
+      },
+      "vendor_consolidation": [
+        {
+          "category": "string",
+          "current_suppliers": number,
+          "target_suppliers": number,
+          "current_spend_eur": number,
+          "estimated_savings_eur": number,
+          "savings_pct": number,
+          "rationale": "string — why these suppliers are consolidation candidates",
+          "preferred_supplier": "string or null (tokenised label)"
+        }
+      ],
+      "quick_wins": [
+        {
+          "action": "string — short imperative (e.g. 'Move office supplies to P-card')",
+          "owner_role": "Procurement | Finance | IT | Legal | Operations | string",
+          "weeks_to_value": number,
+          "estimated_savings_eur": number,
+          "effort": "LOW | MEDIUM | HIGH",
+          "priority": "HIGH | MEDIUM | LOW"
+        }
+      ],
+      "savings_summary": {
+        "total_addressable_spend_eur": number,
+        "identified_savings_eur": number,
+        "savings_pct_of_addressable": number,
+        "confidence": "HIGH | MEDIUM | LOW"
+      }
+    }
+  }
+  S5 AI guidance:
+  • taxonomy_breakdown[] MUST contain at least 3 level1 categories whose annual_spend_eur sums to ~100% of the user's total addressable spend. Use UNSPSC if the user nominated it; otherwise use clear English category names.
+  • tail_spend.threshold_pct_of_total defaults to 80 (Pareto rule — bottom 20% of spend across the long tail of suppliers/transactions).
+  • tail_spend.candidates[] MUST list at least 3 entries when total spend > 0; if the dataset has no clear tail (e.g. <10 suppliers), set suppliers_in_tail=0 and emit candidates: [].
+  • vendor_consolidation[] MUST flag every category where the user has 3+ suppliers spending on the same level1/level2 category. estimated_savings_eur should be 5–12% of current_spend_eur depending on category leverage; never invent figures above 15% without explicit user evidence.
+  • quick_wins[] MUST contain 3–6 actions, each with a quantified estimated_savings_eur and weeks_to_value <= 12. Quick wins are tactical (P-card moves, catalogue uploads, supplier consolidations), NOT strategic re-sourcing.
+  • savings_summary.identified_savings_eur MUST equal sum(vendor_consolidation[].estimated_savings_eur) + sum(quick_wins[].estimated_savings_eur) + tail_spend.addressable_savings_eur. Reconcile or the dashboard will flag inconsistency.
+  • financial_model.cost_breakdown for S5 MUST mirror taxonomy_breakdown[] — one entry per level1 category with the summed annual_spend_eur. Do NOT emit supplier names or recommendation strings as cost categories.
 - For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
+
 
 WORKING CAPITAL (financial_model.working_capital) — OPTIONAL:
 Populate working_capital ONLY if the user has provided payment terms data (e.g. NET 30, supplier payment schedules, DPO figures, or equivalent). Do not invent payment terms. If no terms data is present in the input, leave working_capital = null and do NOT add to data_gaps[] (this is optional, not mandatory).
