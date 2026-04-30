@@ -93,8 +93,26 @@ export interface RiskMatrixData {
     impact: "high" | "medium" | "low";
     probability: "high" | "medium" | "low";
     category: string;
+    // Wave 3 enrichment (S18 + Group C scenarios) — optional, kept for backward compat.
+    id?: string;
+    score?: number;                                  // probability * impact (1–25)
+    rag?: "RED" | "AMBER" | "GREEN";
+    owner?: string;                                  // role/function only — never PII
+    mitigation?: string;
+    currentControl?: string;
+    targetResidualRag?: "RED" | "AMBER" | "GREEN";
+    financialImpactEur?: number | null;
+    regulatoryReference?: string;
+    confidence?: "HIGH" | "MEDIUM" | "LOW";
   }[];
+  // Optional matrix-level summary (S18). Renderer can fall back to derivation.
+  trafficLight?: {
+    rag: "RED" | "AMBER" | "GREEN";
+    rationale?: string;
+    boardNotificationRequired?: boolean;
+  };
 }
+
 
 export interface ScenarioComparisonData {
   scenarios: { id: string; name: string; color: string }[];
