@@ -154,6 +154,58 @@ export interface DataQualityData {
   limitations?: { title: string; impact: string }[];
 }
 
+export interface SpendAnalysisData {
+  taxonomy: {
+    level1: string;
+    level2?: string | null;
+    taxonomyCode?: string | null;
+    annualSpend: number;
+    sharePct: number;
+    supplierCount: number;
+    sampleSkus?: string[];
+    confidence?: "HIGH" | "MEDIUM" | "LOW";
+  }[];
+  tailSpend: {
+    thresholdPctOfTotal: number;
+    spendInTail: number;
+    spendInTailPct: number;
+    suppliersInTail: number;
+    transactionsInTail: number;
+    addressableSavings: number;
+    candidates: {
+      category: string;
+      supplierCount: number;
+      annualSpend: number;
+      consolidationAction: string;
+    }[];
+  } | null;
+  vendorConsolidation: {
+    category: string;
+    currentSuppliers: number;
+    targetSuppliers: number;
+    currentSpend: number;
+    estimatedSavings: number;
+    savingsPct: number;
+    rationale: string;
+    preferredSupplier?: string | null;
+  }[];
+  quickWins: {
+    action: string;
+    ownerRole: string;
+    weeksToValue: number;
+    estimatedSavings: number;
+    effort?: "LOW" | "MEDIUM" | "HIGH";
+    priority?: "HIGH" | "MEDIUM" | "LOW";
+  }[];
+  savingsSummary: {
+    totalAddressableSpend: number;
+    identifiedSavings: number;
+    savingsPctOfAddressable: number;
+    confidence?: "HIGH" | "MEDIUM" | "LOW";
+  } | null;
+  currency?: string;
+}
+
 // Wave 1+2 — re-exported from sentinel/types so dashboards have a single import surface.
 export type {
   ShouldCostGapData,
@@ -197,6 +249,7 @@ export interface DashboardData {
   savingsRealizationFunnel?: _SavingsRealizationFunnelData;
   workingCapitalDpo?: _WorkingCapitalData;
   supplierConcentrationMap?: _ConcentrationData;
+  spendAnalysis?: SpendAnalysisData;
 }
 
 // ============================================
