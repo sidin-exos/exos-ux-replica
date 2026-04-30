@@ -2,6 +2,7 @@ import { TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { CostWaterfallData } from "@/lib/dashboard-data-parser";
+import { splitCostComponents, formatAmount } from "@/lib/dashboard-contracts";
 
 interface CostComponent {
   name: string;
@@ -27,12 +28,7 @@ const defaultComponents: CostComponent[] = [
   { name: "Supplier Margin", value: 73000, type: "cost" },
 ];
 
-const formatCurrency = (value: number, currency: string = "$"): string => {
-  const absValue = Math.abs(value);
-  if (absValue >= 1000000) return `${currency}${(value / 1000000).toFixed(1)}M`;
-  if (absValue >= 1000) return `${currency}${(value / 1000).toFixed(0)}K`;
-  return `${currency}${value}`;
-};
+const formatCurrency = formatAmount;
 
 // Muted EXOS palette
 const COLOR_TEAL = "hsl(174, 35%, 38%)";
@@ -149,23 +145,21 @@ const CostWaterfallDashboard = ({
   currency = "$",
   parsedData,
 }: CostWaterfallDashboardProps) => {
-  const effectiveComponents = parsedData?.components || components;
-  const effectiveCurrency = parsedData?.currency || currency;
-
-  const costItems: PieDatum[] = effectiveComponents
-    .filter((c) => c.type === "cost")
-    .map((c) => ({ name: c.name, value: c.value }))
-    .sort((a, b) => b.value - a.value);
-
-  const reductionItems: PieDatum[] = effectiveComponents
-    .filter((c) => c.type === "reduction")
-    .map((c) => ({ name: c.name, value: Math.abs(c.value) }))
-    .sort((a, b) => b.value - a.value);
-
-  const grossCost = costItems.reduce((s, c) => s + c.value, 0);
-  const totalReductions = reductionItems.reduce((s, c) => s + c.value, 0);
-  const netCost = grossCost - totalReductions;
-  const reductionPercent = grossCost > 0 ? Math.round((totalReductions / grossCost) * 100) : 0;
+  // Use shared contract — keeps PDF and web in lock-step
+  const effective: CostWaterfallData = parsedData ?? {
+    components: components
+      .filter((c) => c.type !== "total")
+      .map((c) => ({ name: c.name, value: c.value, type: c.type as "cost" | "reduction" })),
+    currency,
+  };
+  const split = splitCostComponents(effective, currency);
+  const effectiveCurrency = split.currency;
+  const costItems: PieDatum[] = split.costs;
+  const reductionItems: PieDatum[] = split.reductions;
+  const grossCost = split.gross;
+  const totalReductions = split.totalReductions;
+  const netCost = split.net;
+  const reductionPercent = split.reductionPercent;
 
   return (
     <Card className="card-elevated h-full">
