@@ -454,9 +454,10 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   const validCostComponents = costBreakdown
     .map((c: any) => {
       const amount = parseAmount(c?.amount);
-      return c?.category && amount !== null
-        ? { name: String(c.category), value: amount, type: 'cost' as const }
-        : null;
+      // Sanitiser: drop entries whose category looks like a recommendation
+      // sentence rather than a short cost-category noun phrase.
+      if (!isValidCostLabel(c?.category) || amount === null) return null;
+      return { name: String(c.category).trim(), value: amount, type: 'cost' as const };
     })
     .filter((c): c is { name: string; value: number; type: 'cost' } => c !== null);
 
@@ -468,6 +469,13 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
       currency: payload.financial_model?.currency ?? 'EUR',
     };
   }
+
+  // ── S7 saas-optimization: licenseTier from tools_inventory[]
+  const licenseTier = extractLicenseTier(ss, payload.financial_model?.currency ?? 'EUR');
+  if (licenseTier) {
+    result.licenseTier = licenseTier;
+  }
+
 
   // ── Universal: kraljicQuadrant ─────────────────────────────────────────────
   // Reads scenario_specific.kraljic_position (S20, S1 and any scenario emitting it).
