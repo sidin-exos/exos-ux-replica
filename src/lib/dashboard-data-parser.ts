@@ -278,6 +278,7 @@ const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
   savings_realization_funnel: 'savingsRealizationFunnel',
   working_capital_dpo: 'workingCapitalDpo',
   supplier_concentration_map: 'supplierConcentrationMap',
+  spend_analysis: 'spendAnalysis',
 };
 
 const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
@@ -694,6 +695,12 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   const licenseTier = extractLicenseTier(ss, payload.financial_model?.currency ?? 'EUR');
   if (licenseTier) {
     result.licenseTier = licenseTier;
+  }
+
+  // ── S5 spend-analysis-categorization: spendAnalysis
+  const spendAnalysis = extractSpendAnalysis(ss, payload.financial_model?.currency ?? 'EUR');
+  if (spendAnalysis) {
+    result.spendAnalysis = spendAnalysis;
   }
 
 
