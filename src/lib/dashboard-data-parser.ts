@@ -583,55 +583,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
         }],
       };
     }
-}
-
-/**
- * Cost-breakdown label hygiene — mirrors supabase/functions/_shared/dashboard-extractor.ts.
- * Reject labels that look like recommendations / sentences instead of cost categories.
- */
-const COST_LABEL_VERB_PREFIX_RE = /^\s*(issue|renegotiate|consolidate|reduce|implement|launch|conduct|review|migrate|cancel|terminate|deploy|evaluate|assess|optimi[sz]e|negotiate|investigate|explore|analyse|analyze|consider|engage|adopt|standardi[sz]e|monitor|enforce|develop|create|establish|build|introduce|switch|replace|upgrade|downgrade|right[- ]?size|eliminate|require|enable|update)\b/i;
-
-function isValidCostLabel(raw: any): boolean {
-  if (raw === null || raw === undefined) return false;
-  const s = String(raw).trim();
-  if (!s) return false;
-  if (s.length > 40) return false;
-  if (/[.!?]/.test(s.replace(/\.$/, ''))) return false;
-  if (COST_LABEL_VERB_PREFIX_RE.test(s)) return false;
-  if (s.split(/\s+/).length > 5) return false;
-  return true;
-}
-
-/**
- * Build licenseTier dashboard data from S7 scenario_specific.tools_inventory[].
- * Mirrors supabase/functions/_shared/dashboard-extractor.ts::extractLicenseTier.
- */
-const LICENSE_TIER_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-function extractLicenseTier(ss: Record<string, any>, currency: string): LicenseTierData | null {
-  const inv: any[] = Array.isArray(ss?.tools_inventory) ? ss.tools_inventory : [];
-  const valid = inv
-    .map((t: any, i: number) => {
-      const name = t?.tool_name ?? t?.name ?? t?.tier_label;
-      const purchased = parseAmount(t?.licences_purchased ?? t?.licenses_purchased);
-      const active = parseAmount(t?.licences_active ?? t?.licenses_active);
-      const annual = parseAmount(t?.annual_cost_eur ?? t?.annual_cost);
-      const cpu = parseAmount(t?.cost_per_user_eur ?? t?.cost_per_user);
-      const recommended = parseAmount(t?.recommended_licences ?? t?.recommended_licenses);
-      if (!name || purchased === null || annual === null) return null;
-      const costPerUser = cpu !== null ? cpu : (purchased > 0 ? annual / purchased : 0);
-      return {
-        name: String(name),
-        users: Number(purchased),
-        costPerUser: Number(costPerUser),
-        totalCost: Number(annual),
-        color: LICENSE_TIER_COLORS[i % LICENSE_TIER_COLORS.length],
-        recommended: recommended !== null ? Number(recommended) : (active !== null ? Number(active) : undefined),
-      };
-    })
-    .filter((x): x is NonNullable<typeof x> => x !== null);
-  if (valid.length === 0) return null;
-  return { tiers: valid, currency };
-}
+  }
 
   // ── Group A: tcoComparison
   // Render with >= 1 vendor. Single-vendor TCO renders as a one-bar chart;
@@ -1177,6 +1129,54 @@ function extractLicenseTier(ss: Record<string, any>, currency: string): LicenseT
   if (concResult) result.supplierConcentrationMap = concResult;
 
   return Object.keys(result).length === 0 ? null : result;
+}
+
+/**
+ * Cost-breakdown label hygiene — mirrors supabase/functions/_shared/dashboard-extractor.ts.
+ * Reject labels that look like recommendations / sentences instead of cost categories.
+ */
+const COST_LABEL_VERB_PREFIX_RE = /^\s*(issue|renegotiate|consolidate|reduce|implement|launch|conduct|review|migrate|cancel|terminate|deploy|evaluate|assess|optimi[sz]e|negotiate|investigate|explore|analyse|analyze|consider|engage|adopt|standardi[sz]e|monitor|enforce|develop|create|establish|build|introduce|switch|replace|upgrade|downgrade|right[- ]?size|eliminate|require|enable|update)\b/i;
+
+function isValidCostLabel(raw: any): boolean {
+  if (raw === null || raw === undefined) return false;
+  const s = String(raw).trim();
+  if (!s) return false;
+  if (s.length > 40) return false;
+  if (/[.!?]/.test(s.replace(/\.$/, ''))) return false;
+  if (COST_LABEL_VERB_PREFIX_RE.test(s)) return false;
+  if (s.split(/\s+/).length > 5) return false;
+  return true;
+}
+
+/**
+ * Build licenseTier dashboard data from S7 scenario_specific.tools_inventory[].
+ * Mirrors supabase/functions/_shared/dashboard-extractor.ts::extractLicenseTier.
+ */
+const LICENSE_TIER_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+function extractLicenseTier(ss: Record<string, any>, currency: string): LicenseTierData | null {
+  const inv: any[] = Array.isArray(ss?.tools_inventory) ? ss.tools_inventory : [];
+  const valid = inv
+    .map((t: any, i: number) => {
+      const name = t?.tool_name ?? t?.name ?? t?.tier_label;
+      const purchased = parseAmount(t?.licences_purchased ?? t?.licenses_purchased);
+      const active = parseAmount(t?.licences_active ?? t?.licenses_active);
+      const annual = parseAmount(t?.annual_cost_eur ?? t?.annual_cost);
+      const cpu = parseAmount(t?.cost_per_user_eur ?? t?.cost_per_user);
+      const recommended = parseAmount(t?.recommended_licences ?? t?.recommended_licenses);
+      if (!name || purchased === null || annual === null) return null;
+      const costPerUser = cpu !== null ? cpu : (purchased > 0 ? annual / purchased : 0);
+      return {
+        name: String(name),
+        users: Number(purchased),
+        costPerUser: Number(costPerUser),
+        totalCost: Number(annual),
+        color: LICENSE_TIER_COLORS[i % LICENSE_TIER_COLORS.length],
+        recommended: recommended !== null ? Number(recommended) : (active !== null ? Number(active) : undefined),
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+  if (valid.length === 0) return null;
+  return { tiers: valid, currency };
 }
 
 // ============================================
