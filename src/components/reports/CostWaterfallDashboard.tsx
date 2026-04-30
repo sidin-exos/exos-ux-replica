@@ -147,7 +147,9 @@ const CostWaterfallDashboard = ({
 }: CostWaterfallDashboardProps) => {
   // Use shared contract — keeps PDF and web in lock-step
   const effective: CostWaterfallData = parsedData ?? {
-    components,
+    components: components
+      .filter((c) => c.type !== "total")
+      .map((c) => ({ name: c.name, value: c.value, type: c.type as "cost" | "reduction" })),
     currency,
   };
   const split = splitCostComponents(effective, currency);
