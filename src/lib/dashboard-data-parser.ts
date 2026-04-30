@@ -307,7 +307,42 @@ function collectRiskSource(payload: Record<string, any>, ss: Record<string, any>
 
 const SEVERITY_PREFIX_RE = /^\s*\[?(critical|high|medium|low)\b\]?\s*[:\-—]?\s*/i;
 
-function mapRiskItem(r: any): { supplier: string; impact: 'high' | 'medium' | 'low'; probability: 'high' | 'medium' | 'low'; category: string } | null {
+const RAG_VALUES = new Set(['RED', 'AMBER', 'GREEN']);
+const CONFIDENCE_VALUES = new Set(['HIGH', 'MEDIUM', 'LOW']);
+
+function normaliseRagValue(v: unknown): 'RED' | 'AMBER' | 'GREEN' | undefined {
+  const s = String(v ?? '').toUpperCase().trim();
+  return RAG_VALUES.has(s) ? (s as 'RED' | 'AMBER' | 'GREEN') : undefined;
+}
+
+function normaliseConfidenceValue(v: unknown): 'HIGH' | 'MEDIUM' | 'LOW' | undefined {
+  const s = String(v ?? '').toUpperCase().trim();
+  return CONFIDENCE_VALUES.has(s) ? (s as 'HIGH' | 'MEDIUM' | 'LOW') : undefined;
+}
+
+function toFiniteNumber(v: unknown): number | undefined {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string') {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return undefined;
+}
+
+/** Map an HML or 1–5 score to a 1–5 numeric for matrix-score reconciliation. */
+function toScoreNum(v: unknown): number | undefined {
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    if (v >= 1 && v <= 5) return Math.round(v);
+    if (v >= 0 && v <= 100) return Math.max(1, Math.min(5, Math.round(v / 20)));
+  }
+  const s = String(v ?? '').toLowerCase().trim();
+  if (s === 'h' || s === 'high' || s.includes('high') || s === 'critical' || s.includes('critical')) return 4;
+  if (s === 'l' || s === 'low' || s.includes('low')) return 2;
+  if (s === 'm' || s === 'medium' || s.includes('medium')) return 3;
+  return undefined;
+}
+
+function mapRiskItem(r: any): RiskMatrixData['risks'][number] | null {
   if (!r) return null;
   // Plain string entries — surface them with default medium/medium scoring,
   // unless prefixed with a severity word (Critical/High/Medium/Low).
@@ -339,13 +374,36 @@ function mapRiskItem(r: any): { supplier: string; impact: 'high' | 'medium' | 'l
   const probRaw =
     r.likelihood ?? r.probability ?? r.dependency_risk_score ??
     r.supply_risk_level ?? r.frequency ?? r.rag_status;
+
+  // Wave 3 enrichment: capture full risk-register payload for S18.
+  const probNum = toScoreNum(r.probability ?? r.likelihood);
+  const impactNum = toScoreNum(r.impact ?? r.severity ?? r.business_impact);
+  const rawScore = toFiniteNumber(r.score);
+  const score = (probNum && impactNum) ? probNum * impactNum : rawScore;
+  // Reconcile RAG with score (RC-3): GREEN ≤6, AMBER 7–14, RED ≥15.
+  const declaredRag = normaliseRagValue(r.rag_status ?? r.rag);
+  const derivedRag: 'RED' | 'AMBER' | 'GREEN' | undefined =
+    score == null ? undefined : score >= 15 ? 'RED' : score >= 7 ? 'AMBER' : 'GREEN';
+  const rag = derivedRag ?? declaredRag;
+
   return {
     supplier: String(title).trim(),
     impact: normaliseRisk(impactRaw),
     probability: normaliseRisk(probRaw),
     category: r.category ?? r.risk_category ?? r.type ?? 'Operational',
+    id: r.id ?? r.risk_id ?? undefined,
+    score,
+    rag,
+    owner: r.owner_role ?? r.owner ?? r.responsible_role ?? undefined,
+    mitigation: r.mitigation ?? r.mitigation_action ?? r.recommended_action ?? undefined,
+    currentControl: r.current_control ?? r.existing_control ?? undefined,
+    targetResidualRag: normaliseRagValue(r.target_residual_rag ?? r.residual_rag),
+    financialImpactEur: toFiniteNumber(r.financial_impact_eur ?? r.financial_impact ?? r.exposure_eur) ?? null,
+    regulatoryReference: r.regulatory_reference ?? r.regulation ?? r.standard ?? undefined,
+    confidence: normaliseConfidenceValue(r.confidence),
   };
 }
+
 
 const GENERIC_PHRASES = [
   'unknown', 'not specified', 'provide missing', 'n/a', 'impact not specified',
