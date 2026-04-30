@@ -166,7 +166,7 @@ export const GROUP_SCHEMAS: Record<string, string> = {
   }
 }
 FINANCIAL_MODEL IS ALWAYS REQUIRED (independent of scenario_specific):
-- payload.financial_model.cost_breakdown MUST always contain at least 3 cost categories with non-null numeric "amount" values derived from the user's inputs. Do NOT leave amount as null when the user provided enough information to compute it. Do NOT skip this section — it powers the Cost Breakdown dashboard for every Group A scenario.
+- payload.financial_model.cost_breakdown MUST always contain at least 3 cost categories with non-null numeric "amount" values. When the user provided exact figures, derive amounts from them. When the user provided only partial figures (e.g. unit price + annual spend, or total spend only), you MUST still emit numeric amounts by applying defensible industry-typical percentage splits for the named product/category and flag each estimated entry with confidence: "LOW" plus a "notes" field explaining the assumption. NEVER emit cost_breakdown items with amount: null — an estimated low-confidence breakdown is more useful than a hidden dashboard. Do NOT skip this section — it powers the Cost Breakdown dashboard for every Group A scenario.
 - payload.financial_model.totals.total_cost MUST be the sum of cost_breakdown amounts.
 - payload.financial_model.currency MUST be set (default "EUR").
 - payload.financial_model.analysis_period_years MUST be set when the scenario involves a time horizon (TCO, Capex/Opex, Forecasting).
