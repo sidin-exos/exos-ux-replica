@@ -76,8 +76,25 @@ export interface DashboardData {
       impact: 'high' | 'medium' | 'low';
       probability: 'high' | 'medium' | 'low';
       category: string;
+      // Wave 3 enrichment for S18 — optional fields kept backward-compatible.
+      id?: string;
+      score?: number;
+      rag?: 'RED' | 'AMBER' | 'GREEN';
+      owner?: string;
+      mitigation?: string;
+      currentControl?: string;
+      targetResidualRag?: 'RED' | 'AMBER' | 'GREEN';
+      financialImpactEur?: number | null;
+      regulatoryReference?: string;
+      confidence?: 'HIGH' | 'MEDIUM' | 'LOW';
     }[];
+    trafficLight?: {
+      rag: 'RED' | 'AMBER' | 'GREEN';
+      rationale?: string;
+      boardNotificationRequired?: boolean;
+    };
   };
+
   scenarioComparison?: {
     scenarios: { id: string; name: string; color: string }[];
     radarData: { metric: string; [key: string]: number | string }[];
