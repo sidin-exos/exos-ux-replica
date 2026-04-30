@@ -734,6 +734,12 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
     result.licenseTier = licenseTier;
   }
 
+  // ── S5 spend-analysis-categorization: spendAnalysis from taxonomy_breakdown / tail_spend / vendor_consolidation / quick_wins
+  const spendAnalysis = extractSpendAnalysis(ss, payload.financial_model?.currency ?? 'EUR');
+  if (spendAnalysis) {
+    result.spendAnalysis = spendAnalysis;
+  }
+
 
   // ── Universal: kraljicQuadrant ─────────────────────────────────────────────
   // Reads scenario_specific.kraljic_position (S20, S1 and any scenario emitting it).
