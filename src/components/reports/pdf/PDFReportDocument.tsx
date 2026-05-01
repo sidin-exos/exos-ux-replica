@@ -1138,7 +1138,7 @@ const PDFReportDocument = ({
         {/* KPI footer */}
         <View style={s.kpiRow}>
           <View style={s.kpiCell}>
-            <Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text>
+            <Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT RIGOUR"}</Text>
             <Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? batnaScore : coveragePct} / 100</Text>
           </View>
           <View style={s.kpiCell}>
