@@ -44,7 +44,7 @@ const pageStyle = {
   paddingLeft: 48,
   paddingRight: 48,
   paddingBottom: 64,
-  fontFamily: "Helvetica" as const,
+  fontFamily: "Inter" as const,
   color: C.text,
 };
 
@@ -226,13 +226,13 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, re
         <Page key={`dash-page-${pairIdx}`} size="A4" style={pageStyle}>
           {/* Running header */}
           <View style={runningHeaderStyle} fixed>
-            <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: C.heading }}>EXOS</Text>
+            <Text style={{ fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: C.heading }}>EXOS</Text>
             <Text style={{ fontSize: 8, color: C.muted }}>PROCUREMENT ANALYSIS REPORT</Text>
           </View>
 
           {pairIdx === 0 && (
             <View style={sectionTitleWrapperStyle} id="section-visualizations">
-              <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: C.heading }}>
+              <Text style={{ fontSize: 16, fontFamily: "Inter", fontWeight: 700, color: C.heading }}>
                 Analysis Visualizations
               </Text>
             </View>
@@ -251,7 +251,7 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, re
 
           {pairIdx === pairs.length - 1 && skipped.length > 0 && (
             <View style={{ marginTop: 16, padding: 12, borderWidth: 1, borderColor: C.border, backgroundColor: "#F9FAFB" }} wrap={false}>
-              <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: C.heading, marginBottom: 4 }}>
+              <Text style={{ fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: C.heading, marginBottom: 4 }}>
                 {skipped.length} dashboard{skipped.length > 1 ? "s" : ""} skipped — insufficient AI data
               </Text>
               {skipped.map((d) => {
@@ -276,18 +276,18 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, re
       {available.length === 0 && skipped.length > 0 && (
         <Page size="A4" style={pageStyle}>
           <View style={runningHeaderStyle} fixed>
-            <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: C.heading }}>EXOS</Text>
+            <Text style={{ fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: C.heading }}>EXOS</Text>
             <Text style={{ fontSize: 8, color: C.muted }}>PROCUREMENT ANALYSIS REPORT</Text>
           </View>
 
           <View style={sectionTitleWrapperStyle}>
-            <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: C.heading }}>
+            <Text style={{ fontSize: 16, fontFamily: "Inter", fontWeight: 700, color: C.heading }}>
               Analysis Visualizations
             </Text>
           </View>
 
           <View style={{ padding: 12, borderWidth: 1, borderColor: C.border, backgroundColor: "#F9FAFB" }}>
-            <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: C.heading, marginBottom: 4 }}>
+            <Text style={{ fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: C.heading, marginBottom: 4 }}>
               {skipped.length} dashboard{skipped.length > 1 ? "s" : ""} skipped — insufficient AI data
             </Text>
             {skipped.map((d) => {

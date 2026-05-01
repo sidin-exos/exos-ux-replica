@@ -98,7 +98,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
           <Text style={styles.dashboardSubtitle}>Supplier risk assessment</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 18, fontFamily: "Helvetica-Bold", color: heroColor }}>
+          <Text style={{ fontSize: 18, fontFamily: "Inter", fontWeight: 700, color: heroColor }}>
             {criticalPct}%
           </Text>
           <Text style={{ fontSize: 7, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.6 }}>
@@ -138,7 +138,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
           {/* Y-axis label */}
           <View style={{ width: 12, justifyContent: "center", alignItems: "center" }}>
             <Text style={{
-              fontSize: 7, color: colors.textMuted, fontFamily: "Helvetica-Bold",
+              fontSize: 7, color: colors.textMuted, fontFamily: "Inter", fontWeight: 700,
               textTransform: "uppercase", letterSpacing: 0.8, transform: "rotate(-90deg)",
             }}>
               Impact
@@ -184,7 +184,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
                             justifyContent: "center",
                           }}
                         >
-                          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: "#FFFFFF" }}>
+                          <Text style={{ fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: "#FFFFFF" }}>
                             R{r.id}
                           </Text>
                         </View>
@@ -206,7 +206,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
               ))}
             </View>
             <Text style={{
-              fontSize: 7, color: colors.textMuted, fontFamily: "Helvetica-Bold",
+              fontSize: 7, color: colors.textMuted, fontFamily: "Inter", fontWeight: 700,
               textTransform: "uppercase", letterSpacing: 0.8, textAlign: "center", marginTop: 2,
             }}>
               Probability
@@ -237,10 +237,10 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
                 <View style={{ width: 2, backgroundColor: meta.color, borderRadius: 1, marginRight: 5 }} />
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: meta.color }}>
+                    <Text style={{ fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: meta.color }}>
                       {meta.label}
                     </Text>
-                    <Text style={{ fontSize: 7, color: meta.color, fontFamily: "Helvetica-Bold" }}>
+                    <Text style={{ fontSize: 7, color: meta.color, fontFamily: "Inter", fontWeight: 700 }}>
                       {items.length} - {sharePct}%
                     </Text>
                   </View>
@@ -267,7 +267,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
           paddingHorizontal: 6, paddingVertical: 3,
           backgroundColor: colors.surfaceLight, borderBottomWidth: 0.5, borderBottomColor: colors.border,
         }}>
-          <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.6 }}>
+          <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.6 }}>
             Priority register
           </Text>
           <Text style={{ fontSize: 7, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.6 }}>
@@ -295,7 +295,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
                 backgroundColor: tint(meta.color),
                 alignItems: "center", justifyContent: "center", marginRight: 5,
               }}>
-                <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: meta.color }}>{r.id}</Text>
+                <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: meta.color }}>{r.id}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 9, color: colors.text }}>{r.supplier}</Text>
@@ -304,7 +304,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
                 </Text>
               </View>
               <View style={{ alignItems: "flex-end" }}>
-                <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: meta.color }}>{r.score}</Text>
+                <Text style={{ fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: meta.color }}>{r.score}</Text>
                 <Text style={{ fontSize: 6, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>
                   {meta.label}
                 </Text>
