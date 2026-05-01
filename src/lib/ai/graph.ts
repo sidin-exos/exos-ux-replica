@@ -81,6 +81,7 @@ interface PipelineState {
   validationStatus: 'pending' | 'approved' | 'rejected';
   retryCount: number;
   serverValidation: ServerValidation | null;
+  failureReason: string | null;
 }
 
 /**
