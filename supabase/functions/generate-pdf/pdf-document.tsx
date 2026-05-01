@@ -606,6 +606,18 @@ const PDFReportDocument = ({
   const showScore = hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
   const coverageDisplay = showScore ? `${coveragePct}/100` : "—";
   const coverageDisplaySpaced = showScore ? `${coveragePct} / 100` : "—";
+  const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
+  const batnaRawScore = parsedData?.negotiationPrep?.batna?.strength;
+  // Normalise legacy 0–100 values to the canonical 0–5 scale.
+  const batnaScore = batnaRawScore == null
+    ? null
+    : Number(batnaRawScore) > 5
+      ? Number((Number(batnaRawScore) / 20).toFixed(1))
+      : Number(Number(batnaRawScore).toFixed(1));
+  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
+  const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
+  const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
+
   // Confidence is now derived from OUTPUT COHERENCE (presence of structured
   // analytical signals), not from the input rigour score. A well-reasoned
   // report on thin input still earns Medium/High confidence; a sparse output
@@ -631,17 +643,7 @@ const PDFReportDocument = ({
     : evaluationConfidence === "LOW"
       ? "Low"
       : outputConfidence;
-  const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
-  const batnaRawScore = parsedData?.negotiationPrep?.batna?.strength;
-  // Normalise legacy 0–100 values to the canonical 0–5 scale.
-  const batnaScore = batnaRawScore == null
-    ? null
-    : Number(batnaRawScore) > 5
-      ? Number((Number(batnaRawScore) / 20).toFixed(1))
-      : Number(Number(batnaRawScore).toFixed(1));
-  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
-  const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
-  const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
+
 
   const parseFindingTitle = (text: string): { title: string; body: string } => {
     const stripped = stripMarkdown(text).trim();
