@@ -93,7 +93,13 @@ function stripMarkdown(text: string): string {
 }
 
 function renderBodyText(text: string, baseStyle: Record<string, unknown>): ReactElement {
-  const stripped = stripMarkdown(text);
+  // Strip raw numeric tails (e.g. "[High] Execute purchase — 52700") that surface
+  // when expected_value is a bare number with no unit. Applies to recommendation
+  // lines surfaced inside the Detailed Analysis section.
+  const preStripped = /^\s*\[(?:high|medium|low|critical)\]/i.test(text)
+    ? text.replace(/\s+[—–-]\s+\d[\d,. ]*\s*$/, "")
+    : text;
+  const stripped = stripMarkdown(preStripped);
   const valueRe = /([€$£][\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[€$£]?[\d,.]+(?:\.\d+)?)?%?|[\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[\d,.]+(?:\.\d+)?)?%)/g;
   const parts = stripped.split(valueRe);
   if (parts.length === 1) return <Text style={baseStyle}>{stripped}</Text>;
@@ -791,15 +797,26 @@ const PDFReportDocument = ({
       </Page>
 
       {/* Dashboard pages */}
-      {hasDashboards && (() => {
+      {(() => {
         // Filter dashboards down to those that actually have data, so empty placeholder
         // pages and cards no longer appear in the PDF.
         const available = selectedDashboards.filter((d) => {
           const key = dashboardDataKey[d as string];
           return key && parsedData && parsedData[key];
         });
-        if (available.length === 0) return null;
-        const pairs = chunkPairs(available);
+        // Always promote scenario-specific widgets when their payloads are present,
+        // even if the user's draft predates them being in the dashboard mapping.
+        // Prevents the S3 case where NPV Waterfall + IFRS 16 silently disappeared.
+        const promoted: DashboardType[] = [];
+        if (parsedData?.npvWaterfall && !available.includes("npv-waterfall" as DashboardType)) {
+          promoted.push("npv-waterfall" as DashboardType);
+        }
+        if (parsedData?.ifrs16Impact && !available.includes("ifrs16-impact" as DashboardType)) {
+          promoted.push("ifrs16-impact" as DashboardType);
+        }
+        const finalList = [...promoted, ...available];
+        if (finalList.length === 0) return null;
+        const pairs = chunkPairs(finalList);
         return pairs.map((pair, pairIdx) => (
           <Page key={`dash-page-${pairIdx}`} size="A4" style={s.pageWithHeader}>
             <View style={s.headerBar} fixed>
