@@ -258,35 +258,52 @@ const SensitivitySpiderDashboard = ({
           </div>
         </div>
 
-        {/* Range Summary */}
-        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/30">
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Best Case</p>
-            <p className="text-sm font-semibold" style={{ color: COLOR_FAVORABLE }}>
-              {formatCurrency(
-                effectiveBaseCaseTotal -
-                  sortedImpacts.reduce((sum, v) => sum + Math.abs(v.lowImpact < 0 ? v.lowImpact : 0), 0),
-                effectiveCurrency,
-              )}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Base Case</p>
-            <p className="text-sm font-semibold text-foreground">
-              {formatCurrency(effectiveBaseCaseTotal, effectiveCurrency)}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Worst Case</p>
-            <p className="text-sm font-semibold" style={{ color: COLOR_UNFAVORABLE }}>
-              {formatCurrency(
-                effectiveBaseCaseTotal +
-                  sortedImpacts.reduce((sum, v) => sum + Math.abs(v.highImpact > 0 ? v.highImpact : 0), 0),
-                effectiveCurrency,
-              )}
-            </p>
-          </div>
-        </div>
+        {/* Range Summary — applies % deviations to the monetary base */}
+        {(() => {
+          // For each variable, treat the negative-direction % as savings and the
+          // positive-direction % as a cost increase, regardless of whether it
+          // came from the "low" or "high" leg. This avoids unit-mixing (the
+          // raw lowImpact/highImpact may be in non-EUR units).
+          const favorablePctSum = sortedImpacts.reduce((sum, v) => {
+            const best = Math.min(v.lowPct, v.highPct, 0); // most negative → cost down
+            return sum + Math.abs(best);
+          }, 0);
+          const unfavorablePctSum = sortedImpacts.reduce((sum, v) => {
+            const worst = Math.max(v.lowPct, v.highPct, 0); // most positive → cost up
+            return sum + worst;
+          }, 0);
+          const bestCase = effectiveBaseCaseTotal * (1 - favorablePctSum / 100);
+          const worstCase = effectiveBaseCaseTotal * (1 + unfavorablePctSum / 100);
+          return (
+            <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/30">
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Best Case</p>
+                <p className="text-sm font-semibold" style={{ color: COLOR_FAVORABLE }}>
+                  {formatCurrency(Math.max(0, bestCase), effectiveCurrency)}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-0.5 tabular-nums">
+                  −{favorablePctSum.toFixed(1)}%
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Base Case</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {formatCurrency(effectiveBaseCaseTotal, effectiveCurrency)}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">reference</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Worst Case</p>
+                <p className="text-sm font-semibold" style={{ color: COLOR_UNFAVORABLE }}>
+                  {formatCurrency(worstCase, effectiveCurrency)}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-0.5 tabular-nums">
+                  +{unfavorablePctSum.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );
