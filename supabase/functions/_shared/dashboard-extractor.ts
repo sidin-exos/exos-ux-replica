@@ -456,6 +456,13 @@ function isValidCostLabel(raw: any): boolean {
   return true;
 }
 
+/** Collapse accidental duplicated leading word ("Compute Compute & Memory" → "Compute & Memory"). */
+function dedupeLeadingWord(s: string): string {
+  const cleaned = String(s ?? '').replace(/\s+/g, ' ').trim();
+  const m = cleaned.match(/^(\w+)\s+\1\b(.*)$/i);
+  return m ? `${m[1]}${m[2]}`.trim() : cleaned;
+}
+
 /**
  * Build licenseTier dashboard data from S7 scenario_specific.tools_inventory[].
  * Returns null if no usable inventory present.
