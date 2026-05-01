@@ -1184,16 +1184,21 @@ serve(async (req) => {
       const parsedEnvelope = parseAIResponse(finalContent);
       let responseContent = multiDeanon.restoredText;
       let deanonEnvelopeObj = parsedEnvelope;
-      // Defensive guard (mirrors single-cycle path): never leak raw/truncated
-      // JSON to the UI when parsing failed (e.g. Flash fallback truncation).
+      let mcFailureReason: string | null = null;
+      // Bulletproof raw-JSON detector (mirrors single-pass): never let raw or
+      // truncated JSON reach the UI when parsing failed.
       const looksLikeRawJsonMc = (s: string): boolean => {
         const trimmed = s.trim();
-        return (trimmed.startsWith('{') && (trimmed.endsWith('}') || trimmed.length > 200))
-          || (trimmed.startsWith('```') && /```\s*json/i.test(trimmed));
+        if (!trimmed) return false;
+        if (trimmed.startsWith('```') && /```\s*json/i.test(trimmed)) return true;
+        if (trimmed.startsWith('{')) return true;
+        if (/"schema_version"\s*:/.test(trimmed.slice(0, 500))) return true;
+        return false;
       };
-      if (!parsedEnvelope && looksLikeRawJsonMc(responseContent)) {
+      if (!parsedEnvelope && (looksLikeRawJsonMc(responseContent) || looksLikeRawJsonMc(finalContent))) {
         console.warn('[Sentinel] Multi-cycle returned unparseable JSON-like content — surfacing friendly fallback to UI');
         responseContent = 'The analysis completed but the model returned an incomplete response (likely truncated by a fallback model). Please retry to regenerate.';
+        mcFailureReason = 'json_parse_failed';
       }
       if (['1.0','2.0'].includes(parsedEnvelope?.schema_version)) {
         // Deanonymize the envelope itself so structured data has real names.
@@ -1208,6 +1213,8 @@ serve(async (req) => {
           new SentryReporter("sentinel-analysis").captureException(e, { userId, tags: { stage: "envelope-deanon" } });
           deanonEnvelopeObj = parsedEnvelope;
         }
+        // Server-side null/empty pruning
+        deanonEnvelopeObj = pruneEmptyBranches(deanonEnvelopeObj);
         responseContent = buildMarkdownFromEnvelope(deanonEnvelopeObj);
         // GDPR flag logging
         if (deanonEnvelopeObj.gdpr_flags?.length > 0) {
@@ -1243,6 +1250,7 @@ serve(async (req) => {
             modelUsed: fallbackUsed ? "nvidia/nemotron-3-super-120b-a12b" : googleModel,
             // Number of cycles (out of 3) that fell back to Nebius
             nebiusCycleCount: nebiusCycles.length,
+            failureReason: mcFailureReason,
           },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
