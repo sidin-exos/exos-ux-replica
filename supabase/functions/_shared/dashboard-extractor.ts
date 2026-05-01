@@ -228,6 +228,41 @@ export interface DashboardData {
       missing: string[];
     };
   };
+
+  // ── S3 capex-vs-opex specific dashboards ──
+  npvWaterfall?: {
+    options: {
+      id: string;
+      name: string;
+      color: string;
+      capexNominal: number;
+      opexNominal: number;
+      residualValue: number;
+      npv: number;
+      waccPct?: number;
+      breakEvenYear?: number | null;
+      ifrsOnBalanceSheet?: boolean | null;
+    }[];
+    preferredOptionId?: string;
+    verdict?: string;
+    cashFlowRationale?: string;
+    currency?: string;
+  };
+  ifrs16Impact?: {
+    options: {
+      id: string;
+      name: string;
+      color: string;
+      onBalanceSheet: boolean | null;
+      rightOfUseAsset?: number | null;
+      leaseLiability?: number | null;
+      taxShieldValue?: number | null;
+      plTreatment?: string | null;
+      balanceSheetImpact?: string | null;
+    }[];
+    ifrs16Note?: string;
+    currency?: string;
+  };
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -1172,6 +1207,95 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
         if (radarData.length > 0) {
           result.scenarioComparison = { scenarios, radarData, summary };
         }
+      }
+
+      // ── S3 NPV Waterfall + IFRS 16 Impact (scenario-specific widgets) ──
+      const cfo = (ss.cfo_recommendation ?? {}) as Record<string, any>;
+      const verdict = typeof cfo.verdict === 'string' ? String(cfo.verdict).toUpperCase() : undefined;
+      const waccAssumed = Number(cfo.wacc_assumed_pct);
+      const ifrs16Note = typeof cfo.ifrs16_note === 'string' ? cfo.ifrs16_note : undefined;
+      const cashFlowRationale = typeof cfo.cash_flow_rationale === 'string' ? cfo.cash_flow_rationale : undefined;
+
+      const breakEvenYearFor = (o: any): number | null => {
+        const yb: any[] = Array.isArray(o?.year_by_year) ? o.year_by_year : [];
+        if (yb.length === 0) return null;
+        const sorted = yb
+          .map((r: any) => ({ year: Number(r?.year), cf: Number(r?.capex_cf ?? 0) + Number(r?.opex_cf ?? 0) }))
+          .filter((r) => Number.isFinite(r.year))
+          .sort((a, b) => a.year - b.year);
+        let cum = 0;
+        for (const r of sorted) {
+          cum += r.cf;
+          if (cum >= 0) return r.year;
+        }
+        return null;
+      };
+
+      const preferredIndex = (() => {
+        if (verdict === 'BUY') {
+          const idx = validCapexOptions.findIndex((o: any) => /capex|buy|purchase/i.test(String(o.option_label)));
+          if (idx >= 0) return idx;
+        }
+        if (verdict === 'LEASE') {
+          const idx = validCapexOptions.findIndex((o: any) => /opex|lease|subscription|rent/i.test(String(o.option_label)));
+          if (idx >= 0) return idx;
+        }
+        let best = 0;
+        let bestNpv = Number(validCapexOptions[0]?.npv ?? -Infinity);
+        validCapexOptions.forEach((o: any, i: number) => {
+          const n = Number(o?.npv);
+          if (Number.isFinite(n) && n > bestNpv) { best = i; bestNpv = n; }
+        });
+        return best;
+      })();
+
+      const npvOptions = validCapexOptions.map((o: any, i: number) => ({
+        id: String(i),
+        name: String(o.option_label),
+        color: TCO_COLORS[i % TCO_COLORS.length],
+        capexNominal: Math.abs(Number(o.total_capex_nominal ?? 0)),
+        opexNominal: Math.abs(Number(o.total_opex_nominal ?? 0)),
+        residualValue: Math.abs(Number(o.residual_value ?? 0)),
+        npv: Number(o.npv ?? 0),
+        waccPct: Number.isFinite(Number(o.discount_rate_used_pct)) ? Number(o.discount_rate_used_pct) : (Number.isFinite(waccAssumed) ? waccAssumed : undefined),
+        breakEvenYear: breakEvenYearFor(o),
+        ifrsOnBalanceSheet: typeof o.ifrs16_on_balance_sheet === 'boolean' ? o.ifrs16_on_balance_sheet : null,
+      }));
+
+      const hasNpvSignal = npvOptions.some((o) => Number.isFinite(o.npv) && o.npv !== 0)
+        || npvOptions.some((o) => o.capexNominal > 0 || o.opexNominal > 0);
+      if (hasNpvSignal && npvOptions.length >= 1) {
+        result.npvWaterfall = {
+          options: npvOptions,
+          preferredOptionId: String(preferredIndex),
+          verdict,
+          cashFlowRationale,
+          currency: payload.financial_model?.currency ?? 'EUR',
+        };
+      }
+
+      const ifrsOptions = validCapexOptions.map((o: any, i: number) => {
+        const isOpex = /opex|lease|subscription|rent/i.test(String(o.option_label));
+        const onBS = typeof o.ifrs16_on_balance_sheet === 'boolean' ? o.ifrs16_on_balance_sheet : null;
+        return {
+          id: String(i),
+          name: String(o.option_label),
+          color: TCO_COLORS[i % TCO_COLORS.length],
+          onBalanceSheet: onBS,
+          rightOfUseAsset: Number.isFinite(Number(o.right_of_use_asset)) ? Number(o.right_of_use_asset) : (isOpex && onBS ? Math.abs(Number(o.total_opex_nominal ?? 0)) || null : null),
+          leaseLiability: Number.isFinite(Number(o.lease_liability)) ? Number(o.lease_liability) : null,
+          taxShieldValue: Number.isFinite(Number(o.tax_shield_value)) ? Number(o.tax_shield_value) : null,
+          plTreatment: typeof o.pl_treatment === 'string' ? o.pl_treatment : (isOpex ? (onBS ? 'Depreciation of right-of-use asset + interest on lease liability' : 'Operating lease expense (off balance sheet)') : 'Depreciation of owned asset + maintenance opex'),
+          balanceSheetImpact: typeof o.balance_sheet_impact === 'string' ? o.balance_sheet_impact : (onBS === true ? 'On balance sheet — recognise right-of-use asset and lease liability' : onBS === false ? 'Off balance sheet — no asset or liability recognised' : null),
+        };
+      });
+      const hasIfrsSignal = ifrsOptions.some((o) => o.onBalanceSheet !== null) || !!ifrs16Note;
+      if (hasIfrsSignal && ifrsOptions.length >= 1) {
+        result.ifrs16Impact = {
+          options: ifrsOptions,
+          ifrs16Note,
+          currency: payload.financial_model?.currency ?? 'EUR',
+        };
       }
     }
   }
