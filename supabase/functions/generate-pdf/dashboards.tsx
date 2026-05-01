@@ -1111,11 +1111,25 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
     );
   }
 
+  // Detect cost-comparison mode: when all NPVs are negative (or zero) we are
+  // comparing present value of costs, so "preferred" = least-negative (max),
+  // and the alternative we contrast against is the most-negative (min).
+  // When NPVs are positive, higher is better as usual.
+  const allNonPositive = options.every(o => (o.npv ?? 0) <= 0);
   const preferred = data.preferredOptionId
     ? options.find(o => o.id === data.preferredOptionId) || options[0]
     : options.reduce((best, o) => (o.npv > best.npv ? o : best), options[0]);
-  const worst = options.reduce((w, o) => (o.npv < w.npv ? o : w), options[0]);
-  const npvSpread = preferred.npv - worst.npv;
+  // Alternative = the option furthest from preferred (largest absolute gap),
+  // excluding preferred itself. This avoids the collision where preferred
+  // also has the min NPV in cost-mode.
+  const alternatives = options.filter(o => o.id !== preferred.id);
+  const worst = alternatives.length > 0
+    ? alternatives.reduce((w, o) => (Math.abs(o.npv - preferred.npv) > Math.abs(w.npv - preferred.npv) ? o : w), alternatives[0])
+    : preferred;
+  // In cost-mode, "advantage" = how much less negative preferred is vs alternative.
+  const npvSpread = allNonPositive
+    ? Math.abs(worst.npv) - Math.abs(preferred.npv)
+    : preferred.npv - worst.npv;
   const maxAbs = Math.max(1, ...options.map(o => Math.abs(o.npv)));
 
   return (
@@ -1248,8 +1262,16 @@ export const PDFIfrs16Impact = ({ data, themeMode }: { data: Ifrs16ImpactData; t
           <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Tax Shield</Text>
         </View>
         {options.map((opt, i) => {
-          const treatment = opt.onBalanceSheet === true ? "On B/S" : opt.onBalanceSheet === false ? "Off B/S" : "—";
-          const treatmentColor = opt.onBalanceSheet === true ? colors.warning : opt.onBalanceSheet === false ? colors.success : colors.textMuted;
+          // Distinguish owned/capitalised assets from true IFRS 16 leases.
+          // Owned (capex) = no lease liability and no right-of-use asset.
+          const hasLeaseFootprint = (opt.leaseLiability ?? 0) > 0 || (opt.rightOfUseAsset ?? 0) > 0;
+          const isOwned = opt.onBalanceSheet === true && !hasLeaseFootprint;
+          const treatment = isOwned
+            ? "Owned (cap.)"
+            : opt.onBalanceSheet === true ? "Lease (On B/S)" : opt.onBalanceSheet === false ? "Off B/S" : "—";
+          const treatmentColor = isOwned
+            ? colors.primary
+            : opt.onBalanceSheet === true ? colors.warning : opt.onBalanceSheet === false ? colors.success : colors.textMuted;
           return (
             <View key={i} style={[styles.matrixRow, i % 2 === 1 ? { backgroundColor: colors.surface } : {}]}>
               <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.3, flexDirection: "row", alignItems: "center" }]}>
@@ -1261,8 +1283,8 @@ export const PDFIfrs16Impact = ({ data, themeMode }: { data: Ifrs16ImpactData; t
                   <Text style={{ fontSize: 8, color: treatmentColor, fontFamily: "Inter", fontWeight: 700 }}>{treatment}</Text>
                 </View>
               </View>
-              <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.rightOfUseAsset != null ? formatCurrency(opt.rightOfUseAsset, currency) : "—"}</Text>
-              <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.leaseLiability != null ? formatCurrency(opt.leaseLiability, currency) : "—"}</Text>
+              <Text style={[styles.matrixCell, { fontSize: 9, color: isOwned ? colors.textMuted : colors.text }]}>{isOwned ? "n/a" : opt.rightOfUseAsset != null ? formatCurrency(opt.rightOfUseAsset, currency) : "—"}</Text>
+              <Text style={[styles.matrixCell, { fontSize: 9, color: isOwned ? colors.textMuted : colors.text }]}>{isOwned ? "n/a" : opt.leaseLiability != null ? formatCurrency(opt.leaseLiability, currency) : "—"}</Text>
               <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.taxShieldValue != null ? formatCurrency(opt.taxShieldValue, currency) : "—"}</Text>
             </View>
           );
