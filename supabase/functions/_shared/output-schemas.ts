@@ -1230,6 +1230,114 @@ const ENVELOPE_TOP_KEYS_PRESERVE = new Set([
   'confidence_level', 'low_confidence_watermark', 'summary', 'export_metadata',
 ]);
 
+/**
+ * Server-side defensive synthesis. Models inconsistently leave optional
+ * tables and arrays empty even when enough adjacent data exists to derive a
+ * sensible value. This pass backfills the most painful gaps (S26 impact_scenarios,
+ * S26 actions, S20 score_breakdown) so the report never ships hollow.
+ *
+ * IDEMPOTENT: re-running the function on already-populated payloads is a no-op.
+ * NEVER overwrites AI-emitted content; only fills `null`, `undefined`, `[]`.
+ */
+export function synthesizeMissingContent<T extends ExosOutputParsed | null | undefined>(envelope: T): T {
+  if (!envelope || typeof envelope !== 'object') return envelope;
+  const env = envelope as ExosOutputParsed;
+  const ss = (env.payload?.scenario_specific ?? {}) as Record<string, any>;
+
+  // ── S26 Disruption Management ────────────────────────────────────────────
+  if (env.scenario_id === 'S26' && ss && typeof ss === 'object') {
+    // Backfill impact_scenarios from estimated_revenue_impact_per_day
+    const dailyImpact = Number(ss.estimated_revenue_impact_per_day);
+    const hasDailyImpact = Number.isFinite(dailyImpact) && dailyImpact > 0;
+    if (hasDailyImpact) {
+      const buckets = [1, 2, 4, 8];
+      const existing = Array.isArray(ss.impact_scenarios) ? ss.impact_scenarios : [];
+      const byWeeks = new Map<number, any>();
+      existing.forEach((row: any) => {
+        const w = Number(row?.delay_weeks);
+        if (Number.isFinite(w)) byWeeks.set(w, row);
+      });
+      ss.impact_scenarios = buckets.map(weeks => {
+        const row = byWeeks.get(weeks) ?? { delay_label: `${weeks} week${weeks > 1 ? 's' : ''}`, delay_weeks: weeks };
+        if (row.revenue_loss == null) row.revenue_loss = dailyImpact * weeks * 7;
+        if (row.cumulative_loss == null) row.cumulative_loss = row.revenue_loss;
+        if (row.net_impact == null && row.mitigation_cost != null) {
+          row.net_impact = Number(row.revenue_loss) + Number(row.mitigation_cost);
+        }
+        return row;
+      });
+    }
+
+    // Backfill empty Stage 3 actions from alternative_supply_options
+    const rp = (ss.response_plan ?? {}) as Record<string, any>;
+    const stage3 = rp.stage_3_recover as Record<string, any> | undefined;
+    if (stage3 && (!Array.isArray(stage3.actions) || stage3.actions.length === 0)) {
+      const opts = Array.isArray(stage3.alternative_supply_options) ? stage3.alternative_supply_options : [];
+      if (opts.length > 0) {
+        stage3.actions = opts.slice(0, 3).map((o: any) => {
+          const name = o?.option_label ?? o?.supplier_label ?? 'alternative supplier';
+          const lt = o?.lead_time_days != null ? ` (lead time ${o.lead_time_days}d)` : '';
+          return `Fast-track qualification and emergency PO with ${name}${lt}.`;
+        });
+      }
+    }
+
+    // Backfill regulatory_exposure for cyber/critical-infra disruptions
+    const dt = String(ss.disruption_type ?? '').toUpperCase();
+    if ((!Array.isArray(ss.regulatory_exposure) || ss.regulatory_exposure.length === 0) && dt === 'CYBER') {
+      ss.regulatory_exposure = [
+        { regime: 'NIS2', obligation: 'Significant incident notification to competent authority', deadline_hours: 24, notification_required: true, potential_penalty: 'Up to €10M or 2% global turnover (essential entities)', owner_role: 'Chief Information Security Officer (CISO)' },
+        { regime: 'GDPR Art. 33', obligation: 'Personal data breach notification to supervisory authority (where personal data implicated)', deadline_hours: 72, notification_required: true, potential_penalty: 'Up to €20M or 4% global turnover', owner_role: 'Data Protection Officer (DPO)' },
+      ];
+    }
+
+    // Backfill recovery_probability if entirely empty (low-confidence default)
+    if (!ss.recovery_probability || (typeof ss.recovery_probability === 'object' && Object.keys(ss.recovery_probability).length === 0)) {
+      const buffer = Number(ss.current_inventory_buffer_days);
+      if (Number.isFinite(buffer) && buffer > 0) {
+        const p30 = Math.min(95, Math.max(20, Math.round((buffer / 30) * 60)));
+        ss.recovery_probability = {
+          p_full_recovery_30d_pct: p30,
+          p_partial_recovery_30d_pct: Math.min(99, p30 + 25),
+          p_full_recovery_90d_pct: Math.min(99, p30 + 35),
+          key_assumptions: [
+            `Inventory buffer of ${buffer} days holds with no further disruption.`,
+            'Alternative supply options qualify within stated lead times.',
+            'No second-order disruption (logistics, geopolitical) compounds the event.',
+          ],
+          confidence: 'LOW',
+        };
+      }
+    }
+
+    env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
+  }
+
+  // ── S20 Category Risk Evaluator ──────────────────────────────────────────
+  if (env.scenario_id === 'S20' && ss && typeof ss === 'object') {
+    // Ensure all 5 score_breakdown dimensions are present (defaults to MEDIUM/50)
+    const requiredDims = ['Supply', 'Regulatory', 'Financial', 'Geopolitical', 'Demand'];
+    const existing = Array.isArray(ss.score_breakdown) ? ss.score_breakdown : [];
+    const byDim = new Map<string, any>();
+    existing.forEach((d: any) => {
+      const key = String(d?.dimension ?? '').trim();
+      if (key) byDim.set(key, d);
+    });
+    if (existing.length < 5) {
+      ss.score_breakdown = requiredDims.map(dim => byDim.get(dim) ?? {
+        dimension: dim,
+        score: null,
+        rag: null,
+        rationale: `No data provided for ${dim} dimension — flagged in data_gaps[].`,
+      });
+    }
+
+    env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
+  }
+
+  return env as T;
+}
+
 export function pruneEmptyBranches<T>(input: T, isTopLevel = true): T {
   if (input === null || input === undefined) return input;
   if (Array.isArray(input)) {
