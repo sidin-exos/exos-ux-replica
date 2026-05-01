@@ -221,7 +221,11 @@ const TOKEN_PREFIXES: Record<EntityType, string> = {
   custom: "ENTITY",
 };
 
-// Common business terms that should never be masked (false positive protection)
+// Common business terms that should never be masked (false positive protection).
+// Includes regulatory/compliance standards, currencies, and common acronyms that
+// the all-caps regex (line ~156) would otherwise treat as supplier names — e.g.
+// "ISO 27001" rendering as "[SUPPLIER_C] 27001" in the output. The deanonymizer
+// has no way to recover these because they were never real PII to begin with.
 const COMMON_BUSINESS_TERMS = new Set([
   "invoice", "contract", "agreement", "total", "subtotal",
   "date", "vendor", "supplier", "client", "manager",
@@ -234,6 +238,24 @@ const COMMON_BUSINESS_TERMS = new Set([
   "july", "august", "september", "october", "november", "december",
   "monday", "tuesday", "wednesday", "thursday", "friday",
   "saturday", "sunday",
+  // Regulatory standards & compliance frameworks (NEVER tokenise)
+  "iso", "gdpr", "soc2", "soc", "hipaa", "pci", "pci-dss", "dss",
+  "nis2", "nis", "tupe", "ccpa", "fcpa", "sox", "ferpa", "glba",
+  "iec", "ansi", "nist", "fedramp", "itar", "ear", "rohs", "reach",
+  "cmmc", "fips", "csa", "owasp", "cis", "cobit", "itil", "togaf",
+  "asme", "din", "bs", "en", "ul", "ce", "fcc", "etsi", "ieee",
+  // Common business acronyms
+  "rfp", "rfi", "rfq", "sow", "sla", "kpi", "mou", "nda", "lol",
+  "tco", "roi", "npv", "irr", "ebitda", "capex", "opex", "p&l",
+  "msp", "mssp", "saas", "paas", "iaas", "iot", "ai", "ml", "api",
+  "ceo", "cto", "cfo", "coo", "cio", "ciso", "vp", "svp", "evp",
+  // Currencies & units (caught by all-caps regex)
+  "eur", "usd", "gbp", "chf", "jpy", "cny", "cad", "aud", "nok", "sek",
+  "ltd", "llc", "inc", "gmbh", "ag", "plc", "sa", "bv", "nv", "spa",
+  // EXOS/internal placeholders & dimensions
+  "kg", "mt", "tco", "tb", "gb", "mb", "ghz", "mhz", "dpo", "dso", "dio",
+  // Geographic regions/blocs commonly all-caps
+  "eu", "us", "uk", "uae", "apac", "emea", "latam", "asean", "mena",
 ]);
 
 /** Generate a unique masked token for an entity */
