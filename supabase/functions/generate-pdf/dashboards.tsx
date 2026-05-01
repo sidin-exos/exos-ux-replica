@@ -1111,11 +1111,25 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
     );
   }
 
+  // Detect cost-comparison mode: when all NPVs are negative (or zero) we are
+  // comparing present value of costs, so "preferred" = least-negative (max),
+  // and the alternative we contrast against is the most-negative (min).
+  // When NPVs are positive, higher is better as usual.
+  const allNonPositive = options.every(o => (o.npv ?? 0) <= 0);
   const preferred = data.preferredOptionId
     ? options.find(o => o.id === data.preferredOptionId) || options[0]
     : options.reduce((best, o) => (o.npv > best.npv ? o : best), options[0]);
-  const worst = options.reduce((w, o) => (o.npv < w.npv ? o : w), options[0]);
-  const npvSpread = preferred.npv - worst.npv;
+  // Alternative = the option furthest from preferred (largest absolute gap),
+  // excluding preferred itself. This avoids the collision where preferred
+  // also has the min NPV in cost-mode.
+  const alternatives = options.filter(o => o.id !== preferred.id);
+  const worst = alternatives.length > 0
+    ? alternatives.reduce((w, o) => (Math.abs(o.npv - preferred.npv) > Math.abs(w.npv - preferred.npv) ? o : w), alternatives[0])
+    : preferred;
+  // In cost-mode, "advantage" = how much less negative preferred is vs alternative.
+  const npvSpread = allNonPositive
+    ? Math.abs(worst.npv) - Math.abs(preferred.npv)
+    : preferred.npv - worst.npv;
   const maxAbs = Math.max(1, ...options.map(o => Math.abs(o.npv)));
 
   return (
