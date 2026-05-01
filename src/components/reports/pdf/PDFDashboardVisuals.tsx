@@ -24,6 +24,7 @@ import { PDFSupplierScorecard } from "./dashboardVisuals/PDFSupplierScorecard";
 import { PDFSOWAnalysis } from "./dashboardVisuals/PDFSOWAnalysis";
 import { PDFNegotiationPrep } from "./dashboardVisuals/PDFNegotiationPrep";
 import { PDFDataQuality } from "./dashboardVisuals/PDFDataQuality";
+import { PDFRfpPackage } from "./dashboardVisuals/PDFRfpPackage";
 
 // ── Enterprise print colors ──
 
@@ -101,6 +102,7 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "sow-analysis": "sowAnalysis",
   "negotiation-prep": "negotiationPrep",
   "data-quality": "dataQuality",
+  "rfp-package": "rfpPackage",
 };
 
 /** Render a single dashboard by type */
@@ -166,6 +168,10 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
     case "data-quality": {
       const data = parsedData?.dataQuality;
       return data ? <PDFDataQuality data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "rfp-package": {
+      const data = parsedData?.rfpPackage;
+      return data ? <PDFRfpPackage data={data} themeMode={themeMode} /> : placeholder();
     }
     default: {
       const config = dashboardConfigs[dashboardType as DashboardType];
