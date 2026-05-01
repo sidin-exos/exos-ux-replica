@@ -687,7 +687,9 @@ const PDFReportDocument = ({
             // they hold the Black Swan Risk Map, Vulnerability Assessment, and
             // Cascading Failure tables that are part of the promised deliverables.
             if (section.type === "recommendations") return null;
-            if (!isS27 && section.type === "risks") return null;
+            if (!isS27 && !isS26 && section.type === "risks") return null;
+            // For S26 keep the risks-classified section in Detailed Analysis so
+            // Stage 4 Prevent items stay attached to the Emergency Map.
             const blockColor = blockColors[si % blockColors.length];
             return (
               <View key={`section-${si}`} style={{ ...s.analysisBlock, borderLeftColor: blockColor }}>
