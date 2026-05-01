@@ -869,6 +869,12 @@ S26 AI guidance: this scenario has THREE headline deliverables that the UI promi
 Supporting tables — emit AT LEAST 3 rows in stage_3_recover.alternative_supply_options[] (mix of internal redeploy / partner / emergency-spot / new-qualification options where plausible) and AT LEAST 4 rows in stakeholder_comms[] covering Customers, Board, Operations and one of Finance/Regulator. Single-row supporting tables defeat the deliverable promise.
 Owners (response_plan.stage_*.owner) MUST be the FULL role title — e.g. "Chief Information Security Officer (CISO)" not "CISO Chief Information"; "VP Procurement & Supply Chain" not "Procurement Director" alone. Never truncate role names mid-word.
 Speed of output is the value — prioritise completeness of all three deliverables over depth of any single stage. Mask exact inventory depletion dates (commercially sensitive with customers) and specific emergency cash reserves (financially sensitive with lenders). If the user has not provided an inventory buffer, flag current_inventory_buffer_days = null and add to data_gaps[] — the response plan urgency cannot be calibrated without it. DO NOT emit kraljic_position for S26 — portfolio positioning is not relevant during a live crisis.
+Analytical depth — in addition to the 3 headline deliverables, emit ALL FIVE analytical dimensions (root_cause_analysis, blast_radius, recovery_probability, regulatory_exposure[], lessons_learned_for_playbook[]). These dimensions transform the report from an operational checklist into a board-grade incident analysis. Specifically:
+  - root_cause_analysis.five_whys MUST contain exactly 5 progressively deeper "Why" questions/answers — never fewer.
+  - blast_radius MUST distinguish first / second / third-order impacts (operational → financial → strategic). Never collapse into a single list.
+  - recovery_probability percentages MUST sum coherently (p_full_recovery_30d_pct ≤ p_partial_recovery_30d_pct ≤ 100). If insufficient data, emit confidence: "LOW" rather than null arrays.
+  - regulatory_exposure[] MUST contain AT LEAST 1 entry when disruption_type ∈ {CYBER, SUPPLIER_FAILURE for critical infrastructure, FORCE_MAJEURE affecting EU operations}. Reference NIS2 (24h notification), DORA (4h for financial entities), GDPR Art. 33 (72h personal data breach) where applicable.
+  - lessons_learned_for_playbook[] MUST contain AT LEAST 2 entries with concrete playbook_change strings — vague "improve monitoring" lessons are unacceptable.
 
 — S27 Black Swan Scenario Simulation (§6.7) — includes concentration:
 {
