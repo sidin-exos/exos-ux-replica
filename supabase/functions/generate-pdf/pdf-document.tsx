@@ -144,7 +144,13 @@ function parseNextStep(text: string): { title: string; description: string } {
 function summarizeParameter(value: string, maxWords = 30): string {
   const words = value.trim().split(/\s+/);
   if (words.length <= maxWords) return value.trim();
-  const fragments = value.split(/[.•\n]+/).map(s => s.trim()).filter(Boolean);
+  // Split on sentence/bullet boundaries but NEVER between digits (preserve
+  // values like "99.99%", "1.5 weeks", "€2.5M") — previous regex /[.•\n]+/
+  // was breaking decimals mid-number leaving fragments like "(99" stranded.
+  const fragments = value
+    .split(/(?<!\d)\.(?!\d)|[•\n]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
   const scored = fragments.map(f => {
     let score = 0;
     if (/[\d€$£¥%]/.test(f)) score += 3;
@@ -161,7 +167,7 @@ function summarizeParameter(value: string, maxWords = 30): string {
     result.push(text);
     wordCount += tw;
   }
-  return result.join(", ");
+  return result.join(". ") + ".";
 }
 
 // ── Build branded styles ──
