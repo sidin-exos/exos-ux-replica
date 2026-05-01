@@ -390,6 +390,8 @@ const RISK_ARRAY_KEYS = [
   'risk_dimensions', 'risk_factors', 'risk_list', 'key_risks', 'top_risks',
   'dependency_risks', 'prioritised_vulnerabilities', 'prioritized_vulnerabilities',
   'vulnerabilities', 'threats', 'hazards',
+  // S27 Black Swan — supply-chain nodes act as the risk register.
+  'supply_chain_nodes',
 ] as const;
 
 function collectRiskSource(payload: Record<string, any>, ss: Record<string, any>): any[] {
@@ -475,14 +477,18 @@ function mapRiskItem(r: any): RiskMatrixData['risks'][number] | null {
   const title =
     r.risk_description ?? r.label ?? r.risk ?? r.vulnerability ?? r.dimension ??
     r.name ?? r.title ?? r.description ?? r.factor ?? r.threat ?? r.hazard ??
-    r.issue ?? null;
+    r.issue ?? r.node_name ?? r.node ?? null;
   if (!title || !String(title).trim()) return null;
+  // S27 node shape: criticality (CRITICAL|HIGH|MEDIUM|LOW) + single_point_of_failure flag.
+  const isS27Node = r.node_type !== undefined || r.single_point_of_failure !== undefined || r.criticality !== undefined;
   const impactRaw =
     r.impact ?? r.severity ?? r.severity_if_triggered ?? r.consequence ??
-    r.business_impact ?? r.financial_impact_score ?? r.rag_status;
+    r.business_impact ?? r.financial_impact_score ?? r.rag_status ??
+    (isS27Node ? r.criticality : undefined);
   const probRaw =
     r.likelihood ?? r.probability ?? r.dependency_risk_score ??
-    r.supply_risk_level ?? r.frequency ?? r.rag_status;
+    r.supply_risk_level ?? r.frequency ?? r.rag_status ??
+    (isS27Node ? (r.single_point_of_failure ? 'high' : (r.alternative_available ? 'low' : 'medium')) : undefined);
 
   // Wave 3 enrichment: capture full risk-register payload for S18.
   const probNum = toScoreNum(r.probability ?? r.likelihood);
@@ -499,7 +505,7 @@ function mapRiskItem(r: any): RiskMatrixData['risks'][number] | null {
     supplier: String(title).trim(),
     impact: normaliseRisk(impactRaw),
     probability: normaliseRisk(probRaw),
-    category: r.category ?? r.risk_category ?? r.type ?? 'Operational',
+    category: r.category ?? r.risk_category ?? r.type ?? r.node_type ?? r.geography ?? 'Operational',
     id: r.id ?? r.risk_id ?? undefined,
     score,
     rag,
@@ -1391,6 +1397,58 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   // ── Wave 2: supplier-concentration-map (Group D scenario_specific.concentration)
   const concResult = extractSupplierConcentrationMap(payload, ss);
   if (concResult) result.supplierConcentrationMap = concResult;
+
+  // ── S27 Black Swan: sensitivitySpider from resilience_investments / cascade_effects.
+  if (envelope.scenario_id === 'S27' && !result.sensitivitySpider) {
+    const investments: any[] = Array.isArray(ss.resilience_investments) ? ss.resilience_investments : [];
+    const invVars = investments
+      .map((inv: any) => {
+        const name = String(inv?.investment ?? inv?.name ?? inv?.title ?? '').trim();
+        const reduction = Number(inv?.risk_reduction_pct ?? inv?.risk_reduction);
+        const cost = Number(inv?.estimated_cost ?? inv?.cost ?? 0);
+        if (!name || !Number.isFinite(reduction) || reduction <= 0) return null;
+        // Express each investment as the residual-risk swing it produces.
+        // baseCase = current risk index 100; lowCase = post-mitigation; highCase = no-action drift +20%.
+        return {
+          name,
+          baseCase: 100,
+          lowCase: Math.max(0, 100 - reduction),
+          highCase: Math.min(200, 100 + Math.round(reduction * 0.4)),
+          unit: cost > 0 ? `€${Math.round(cost / 1000)}k` : '%',
+        };
+      })
+      .filter((v: any) => v !== null) as SensitivityData['variables'];
+
+    let cascadeVars: SensitivityData['variables'] = [];
+    const cascades: any[] = Array.isArray(payload?.impact_model?.cascade_effects)
+      ? payload.impact_model.cascade_effects
+      : [];
+    if (cascades.length > 0) {
+      cascadeVars = cascades
+        .map((c: any) => {
+          const name = String(c?.affected_node ?? c?.node ?? c?.name ?? '').trim();
+          const rev = Number(c?.revenue_at_risk ?? c?.financial_impact ?? 0);
+          const delay = Number(c?.delay_days ?? 0);
+          if (!name || !Number.isFinite(rev) || rev <= 0) return null;
+          return {
+            name,
+            baseCase: rev,
+            lowCase: Math.round(rev * 0.6),
+            highCase: Math.round(rev * 1.5),
+            unit: delay > 0 ? `${delay}d delay` : undefined,
+          };
+        })
+        .filter((v: any) => v !== null) as SensitivityData['variables'];
+    }
+
+    const merged = [...invVars, ...cascadeVars].slice(0, 8);
+    if (merged.length > 0) {
+      result.sensitivitySpider = {
+        variables: merged,
+        currency: payload?.financial_model?.currency ?? 'EUR',
+      };
+    }
+  }
 
   return Object.keys(result).length === 0 ? null : result;
 }
