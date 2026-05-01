@@ -355,16 +355,10 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
 };
 
 const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardData | null, themeMode?: PdfThemeMode): ReactNode => {
-  const c = getPdfColors(themeMode);
   const dataKey = dashboardDataKey[dashboardType];
   if (dataKey && (!parsedData || !parsedData[dataKey])) {
-    const config = dashboardConfigs[dashboardType as DashboardType];
-    return (
-      <View style={{ backgroundColor: c.surfaceLight, padding: 24, alignItems: "center", justifyContent: "center", minHeight: 150, borderWidth: 1.5, borderStyle: "dashed", borderColor: c.border }}>
-        <Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 600, color: c.text, marginBottom: 8 }}>{config?.name || String(dashboardType)}</Text>
-        <Text style={{ fontSize: 10, fontFamily: "Inter", color: c.textMuted, textAlign: "center", lineHeight: 1.5 }}>Visualization data could not be extracted automatically.{"\n"}Please refer to the detailed analysis section.</Text>
-      </View>
-    );
+    // Skip dashboards without data instead of rendering an empty placeholder card
+    return null;
   }
   switch (dashboardType) {
     case "action-checklist": return <PDFActionChecklist data={parsedData!.actionChecklist!} themeMode={themeMode} />;
