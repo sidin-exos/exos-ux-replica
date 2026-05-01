@@ -43,16 +43,16 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-2xl font-bold mt-6 mb-4 text-foreground font-display">{children}</h1>
+            <h1 className="text-2xl font-bold mt-8 mb-4 text-foreground font-display tracking-tight">{children}</h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-bold mt-6 mb-4 text-foreground font-display">{children}</h2>
+            <h2 className="text-xl font-semibold mt-8 mb-3 text-foreground font-display tracking-tight flex items-center gap-2 before:content-[''] before:w-1 before:h-5 before:bg-primary before:rounded-full">{children}</h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-lg font-bold mt-5 mb-3 text-foreground font-display">{children}</h3>
+            <h3 className="text-[13px] font-semibold mt-6 mb-2 text-muted-foreground font-display uppercase tracking-[0.08em]">{children}</h3>
           ),
           p: ({ children }) => (
-            <p className="mb-4 leading-relaxed">{children}</p>
+            <p className="mb-4 leading-relaxed text-foreground/90">{children}</p>
           ),
           strong: ({ children }) => {
             const text = String(children).toLowerCase().trim();
@@ -117,22 +117,28 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             <li className="leading-relaxed">{children}</li>
           ),
           table: ({ children }) => (
-            <div className="overflow-x-auto my-6">
-              <table className="w-full border-collapse text-sm">{children}</table>
+            <div className="my-6 overflow-x-auto rounded-lg border border-border/60 bg-card/40">
+              <table className="w-full border-collapse text-[13px]">{children}</table>
             </div>
           ),
-          thead: ({ children }) => <thead>{children}</thead>,
-          tbody: ({ children }) => <tbody>{children}</tbody>,
-          tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
+          thead: ({ children }) => (
+            <thead className="border-b border-border/80">{children}</thead>
+          ),
+          tbody: ({ children }) => (
+            <tbody className="[&>tr:nth-child(even)]:bg-muted/20">{children}</tbody>
+          ),
+          tr: ({ children }) => (
+            <tr className="border-b border-border/40 last:border-0 transition-colors hover:bg-muted/30">{children}</tr>
+          ),
           th: ({ children }) => (
-            <th className="bg-muted/50 border border-border p-3 text-left font-semibold text-foreground">
+            <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border border-border p-3">{children}</td>
+            <td className="px-4 py-2.5 align-top text-foreground/90 leading-relaxed">{children}</td>
           ),
-          hr: () => <hr className="my-6 border-border" />,
+          hr: () => <hr className="my-8 border-border/50" />,
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-primary/30 pl-4 my-4 italic text-muted-foreground">
               {children}
