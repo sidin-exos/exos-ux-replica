@@ -29,6 +29,9 @@ import { trackEvent } from "../_shared/track.ts";
 import type { GeneratePdfPayload } from "./types.ts";
 
 serve(async (req) => {
+  // Hoisted so it is reachable inside the catch block for Sentry reporting
+  let authResult: Awaited<ReturnType<typeof authenticateRequest>> | undefined;
+
   // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -44,7 +47,7 @@ serve(async (req) => {
 
   try {
     // 1. Authenticate
-    const authResult = await authenticateRequest(req);
+    authResult = await authenticateRequest(req);
     if ("error" in authResult) {
       return new Response(
         JSON.stringify({ error: authResult.error.message }),
