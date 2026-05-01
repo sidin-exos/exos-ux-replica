@@ -163,9 +163,8 @@ const OutputFeedback = ({
             </span>
           </div>
 
-          {/* Feedback Form Toggle */}
-          {rating && (
-            <div className="space-y-3">
+          {/* Feedback Form Toggle - always visible */}
+          <div className="space-y-3">
               <button
                 onClick={() => setShowFeedbackForm(!showFeedbackForm)}
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full justify-center"
