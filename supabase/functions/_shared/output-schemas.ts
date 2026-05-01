@@ -1913,6 +1913,167 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     }
   }
 
+  // ── S21 Preparing for Negotiation — render the eight promised deliverables.
+  if (parsed.scenario_id === 'S21') {
+    const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, any>;
+    const fmtMoney = (v: unknown): string => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+      if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+      return `€${n.toFixed(0)}`;
+    };
+    const fmtCell = (v: unknown): string => {
+      if (v == null || v === '') return '—';
+      return sanitiseAscii(coerceToString(v)).replace(/\|/g, '\\|');
+    };
+
+    // 1. Power Balance Analysis
+    const lev = (ss.leverage_analysis ?? {}) as Record<string, any>;
+    const pb = String(lev.power_balance ?? '').toUpperCase();
+    if (pb && !pb.includes('|')) {
+      parts.push('### Power Balance Analysis');
+      parts.push(`- **Verdict:** ${pb.replace(/_/g, ' ')}`);
+      const buyerFactors: any[] = Array.isArray(lev.buyer_leverage_factors) ? lev.buyer_leverage_factors : [];
+      const supplierFactors: any[] = Array.isArray(lev.supplier_leverage_factors) ? lev.supplier_leverage_factors : [];
+      if (buyerFactors.length > 0 || supplierFactors.length > 0) {
+        const rows = Math.max(buyerFactors.length, supplierFactors.length);
+        parts.push('');
+        parts.push('| Buyer leverage | Supplier leverage |');
+        parts.push('|---|---|');
+        for (let i = 0; i < rows; i++) {
+          parts.push(`| ${fmtCell(buyerFactors[i] ?? '')} | ${fmtCell(supplierFactors[i] ?? '')} |`);
+        }
+      }
+      parts.push('');
+    }
+
+    // 2. BATNA & ZOPA
+    const batna = (ss.batna ?? {}) as Record<string, any>;
+    const zopa = (ss.zopa ?? {}) as Record<string, any>;
+    const hasBatna = batna.buyer_batna || batna.batna_strength_pct != null || batna.supplier_batna_estimated;
+    const hasZopa = zopa.buyer_target != null || zopa.supplier_likely_floor != null || zopa.zopa_exists != null;
+    if (hasBatna || hasZopa) {
+      parts.push('### BATNA & ZOPA');
+      if (batna.buyer_batna) parts.push(`- **Buyer BATNA:** ${fmtCell(batna.buyer_batna)}`);
+      if (batna.buyer_batna_value != null) parts.push(`- **Buyer BATNA value:** ${fmtMoney(batna.buyer_batna_value)}`);
+      if (batna.batna_strength_pct != null) parts.push(`- **BATNA strength:** ${batna.batna_strength_pct}%`);
+      if (batna.supplier_batna_estimated) parts.push(`- **Supplier BATNA (estimated):** ${fmtCell(batna.supplier_batna_estimated)}`);
+      if (zopa.buyer_target != null) parts.push(`- **Buyer target:** ${fmtMoney(zopa.buyer_target)}`);
+      if (zopa.supplier_likely_floor != null) parts.push(`- **Supplier likely floor:** ${fmtMoney(zopa.supplier_likely_floor)}`);
+      if (typeof zopa.buyer_walk_away === 'number') {
+        parts.push(`- **Buyer walk-away:** ${fmtMoney(zopa.buyer_walk_away)} _(confidential — masked in shared exports)_`);
+      }
+      if (zopa.zopa_exists != null) parts.push(`- **Positive ZOPA exists:** ${zopa.zopa_exists ? 'Yes' : 'No'}`);
+      const actions: any[] = Array.isArray(batna.batna_improvement_actions) ? batna.batna_improvement_actions : [];
+      if (actions.length > 0) {
+        parts.push('');
+        parts.push('**BATNA improvement actions:**');
+        actions.slice(0, 6).forEach((a: unknown) => {
+          const t = sanitiseAscii(coerceToString(a).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 3. Counter-Argument Preparation
+    const counters: any[] = Array.isArray(ss.counter_arguments) ? ss.counter_arguments : [];
+    const validCounters = counters.filter(c => c && (c.supplier_position || c.buyer_response));
+    if (validCounters.length > 0) {
+      parts.push('### Counter-Argument Preparation');
+      parts.push('| Supplier position | Buyer response | Evidence |');
+      parts.push('|---|---|---|');
+      validCounters.slice(0, 6).forEach(c => {
+        parts.push(`| ${fmtCell(c.supplier_position)} | ${fmtCell(c.buyer_response)} | ${fmtCell(c.evidence)} |`);
+      });
+      parts.push('');
+    }
+
+    // 4. Walk-Away Plan
+    const wap = (ss.walk_away_plan ?? null) as Record<string, any> | null;
+    if (wap && (wap.trigger_conditions || wap.exit_steps || wap.communication_script)) {
+      parts.push('### Walk-Away Plan');
+      const triggers: any[] = Array.isArray(wap.trigger_conditions) ? wap.trigger_conditions : [];
+      if (triggers.length > 0) {
+        parts.push('**Trigger conditions:**');
+        triggers.slice(0, 6).forEach((t: unknown) => {
+          const txt = sanitiseAscii(coerceToString(t).trim());
+          if (txt) parts.push(`- ${txt}`);
+        });
+        parts.push('');
+      }
+      const exitSteps: any[] = Array.isArray(wap.exit_steps) ? wap.exit_steps : [];
+      if (exitSteps.length > 0) {
+        parts.push('**Exit steps:**');
+        exitSteps.slice(0, 6).forEach((s: unknown, i: number) => {
+          const txt = sanitiseAscii(coerceToString(s).trim());
+          if (txt) parts.push(`${i + 1}. ${txt}`);
+        });
+        parts.push('');
+      }
+      if (wap.communication_script) {
+        parts.push('**Walk-away script:**');
+        parts.push('');
+        parts.push(`> ${sanitiseAscii(coerceToString(wap.communication_script))}`);
+        parts.push('');
+      }
+    }
+
+    // 5. Value Creation Opportunities
+    const vc: any[] = Array.isArray(ss.value_creation) ? ss.value_creation : [];
+    const validVc = vc.filter(v => v && (v.opportunity || v.buyer_benefit));
+    if (validVc.length > 0) {
+      parts.push('### Value Creation Opportunities');
+      parts.push('| Opportunity | Buyer benefit | Supplier benefit |');
+      parts.push('|---|---|---|');
+      validVc.slice(0, 6).forEach(v => {
+        parts.push(`| ${fmtCell(v.opportunity)} | ${fmtCell(v.buyer_benefit)} | ${fmtCell(v.supplier_benefit)} |`);
+      });
+      parts.push('');
+    }
+
+    // 6. Financial Outcome Range
+    const fr = (ss.financial_outcome_range ?? null) as Record<string, any> | null;
+    if (fr && (fr.optimistic != null || fr.realistic != null || fr.pessimistic != null)) {
+      parts.push('### Financial Outcome Range');
+      parts.push('| Scenario | Outcome |');
+      parts.push('|---|---|');
+      parts.push(`| Optimistic | ${fmtMoney(fr.optimistic)} |`);
+      parts.push(`| Realistic | ${fmtMoney(fr.realistic)} |`);
+      parts.push(`| Pessimistic | ${fmtMoney(fr.pessimistic)} |`);
+      parts.push('');
+    }
+
+    // 7. Negotiation Risk Register
+    const rr: any[] = Array.isArray(ss.risk_register) ? ss.risk_register : [];
+    const validRr = rr.filter(r => r && r.risk);
+    if (validRr.length > 0) {
+      parts.push('### Negotiation Risk Register');
+      parts.push('| Risk | Likelihood | Impact | Mitigation |');
+      parts.push('|---|---|---|---|');
+      validRr.slice(0, 8).forEach(r => {
+        parts.push(`| ${fmtCell(r.risk)} | ${fmtCell(r.likelihood)} | ${fmtCell(r.impact)} | ${fmtCell(r.mitigation)} |`);
+      });
+      parts.push('');
+    }
+
+    // 8. Negotiation Scenario Comparison
+    const negSc: any[] = Array.isArray(ss.negotiation_scenarios) ? ss.negotiation_scenarios : [];
+    const validNegSc = negSc.filter(n => n && n.name && n.expected_savings_pct != null);
+    if (validNegSc.length > 0) {
+      parts.push('### Negotiation Scenario Comparison');
+      parts.push('| Strategy | Expected savings | Timeline | Risk |');
+      parts.push('|---|---|---|---|');
+      validNegSc.slice(0, 6).forEach(n => {
+        const sav = n.expected_savings_pct != null ? `${n.expected_savings_pct}%` : '—';
+        const tl = n.estimated_timeline_months != null ? `${n.estimated_timeline_months} months` : '—';
+        parts.push(`| ${fmtCell(n.name)} | ${sav} | ${tl} | ${fmtCell(n.risk_level)} |`);
+      });
+      parts.push('');
+    }
+  }
+
   // ── S20 Category Risk Evaluator — render the eight promised deliverables.
   if (parsed.scenario_id === 'S20') {
     const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, any>;
