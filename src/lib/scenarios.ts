@@ -1078,24 +1078,24 @@ export const scenarios: Scenario[] = [
     group: "E",
   },
 
-  // ===== 29. PRE-FLIGHT AUDIT — TYPE 1H =====
+  // ===== 29. SUPPLIER SNAPSHOT (formerly Pre-flight Audit) — TYPE 1H =====
   {
     id: "pre-flight-audit",
-    title: "Pre-flight Audit",
+    title: "Supplier Snapshot",
     description: "Supplier intelligence gathering before negotiations. Get a comprehensive dossier on any supplier using just their website URL.",
     tags: ["Due Diligence", "Sanctions", "Supplier Intel"],
-    previewDescription: "Build a comprehensive supplier dossier in minutes. Provide the exact legal entity name and the AI scans financial health signals, litigation history, sanctions lists, ESG violations, M&A activity, and cybersecurity incidents — then produces a negotiation brief with leverage points and a due diligence checklist. A 10-minute pre-flight audit is the lowest-cost risk mitigation tool available, preventing onboarding risks that carry up to €5M in regulatory fines.",
+    previewDescription: "Build a comprehensive supplier dossier in minutes. Provide the exact legal entity name and the AI scans financial health signals, litigation history, sanctions lists, ESG violations, M&A activity, and cybersecurity incidents — then produces a negotiation brief with leverage points and a due diligence checklist. A 10-minute supplier snapshot is the lowest-cost risk mitigation tool available, preventing onboarding risks that carry up to €5M in regulatory fines.",
     icon: Radar,
     status: "available",
     category: "planning",
     strategySelector: "skepticism",
     deviationType: '1H',
     dataRequirements: {
-      title: "What data prevents Value Leakage in Pre-Flight Supplier Audits?",
+      title: "What data prevents Value Leakage in a Supplier Snapshot?",
       sections: [
         { heading: "Exact Legal Entity Name & Jurisdiction", description: "Provide the exact registered legal entity name (e.g. 'ACME Logistics GmbH', not just 'ACME'), primary jurisdiction (country of incorporation), and category of supply. Brand name vs. legal entity confusion pulls intelligence for the wrong company." },
         { heading: "Specific Risk Areas to Prioritise", description: "Include company registration number (for unambiguous matching), known subsidiary/trading name differences, and specific risk areas to prioritise (financial, ESG, cybersecurity, sanctions)." },
-        { heading: "Financial Impact", description: "Onboarding a sanctioned supplier carries up to €5M in regulatory fines (EU Sanctions Regulation). A 10-minute pre-flight audit is the lowest-cost risk mitigation tool available." },
+        { heading: "Financial Impact", description: "Onboarding a sanctioned supplier carries up to €5M in regulatory fines (EU Sanctions Regulation). A 10-minute supplier snapshot is the lowest-cost risk mitigation tool available." },
       ],
     },
     requiredFields: [
