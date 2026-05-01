@@ -1197,37 +1197,46 @@ const PDFReportDocument = ({
         <BrandedFooter dateStr={formattedDate} orgName={orgName} c={c} />
       </Page>
 
-      {/* ── Recommendations & Risks ── */}
-      <Page size="A4" style={s.pageWithHeader} id="section-recs-risks">
-        <BrandedHeaderBar scenarioLabel={scenarioLabel} dateStr={formattedDate} c={c} />
+      {/* ── Recommendations & Risks ──
+          Only render this page when there's content NOT already shown on page 1
+          (Recommended Actions shows the first 4) OR when a Risk Register exists. */}
+      {(() => {
+        const sections = categorizeAnalysisSections(analysisLines);
+        const recoSections = sections.filter(sec => sec.type === "recommendations");
+        const recoLines = recoSections.flatMap(sec => sec.lines);
+        const overflowRecos = (recoLines.length > 0 ? recoLines : recommendations).slice(4);
+        const structuredRisks = extractRiskRegisterItems(analysisResult);
+        const riskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
+        const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
+        if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
-        <View style={s.sectionBadge}>
-          <Text style={s.sectionBadgeText}>RECOMMENDATIONS & RISKS</Text>
-        </View>
+        const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
 
-        {/* Recommendations */}
-        <View style={s.sectionTitleWrapper}>
-          <Text style={s.sectionTitleText}>Recommendations</Text>
-          <View style={s.sectionTitleLine} />
-        </View>
+        return (
+          <Page size="A4" style={s.pageWithHeader} id="section-recs-risks">
+            <BrandedHeaderBar scenarioLabel={scenarioLabel} dateStr={formattedDate} c={c} />
 
-        {(() => {
-          const sections = categorizeAnalysisSections(analysisLines);
-          const recoSections = sections.filter(s => s.type === "recommendations");
-          const recoLines = recoSections.flatMap(s => s.lines);
-          const displayLines = recoLines.length > 0 ? recoLines : recommendations;
-          const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
+            <View style={s.sectionBadge}>
+              <Text style={s.sectionBadgeText}>{hasRiskRegister ? "RECOMMENDATIONS & RISKS" : "ADDITIONAL RECOMMENDATIONS"}</Text>
+            </View>
 
-          return displayLines.slice(0, 6).map((line, i) => {
-            const { title, body } = parseFindingTitle(line);
-            return (
-              <View key={`reco-${i}`} style={{ ...s.recoCard, borderLeftColor: recoAccents[i % recoAccents.length] }} wrap={false}>
-                <Text style={s.recoTitle}>{title}</Text>
-                {body ? <Text style={s.recoBody}>{body}</Text> : null}
-              </View>
-            );
-          });
-        })()}
+            {overflowRecos.length > 0 && (
+              <>
+                <View style={s.sectionTitleWrapper}>
+                  <Text style={s.sectionTitleText}>Additional Recommendations</Text>
+                  <View style={s.sectionTitleLine} />
+                </View>
+                {overflowRecos.slice(0, 6).map((line, i) => {
+                  const { title, body } = parseFindingTitle(line);
+                  return (
+                    <View key={`reco-${i}`} style={{ ...s.recoCard, borderLeftColor: recoAccents[i % recoAccents.length] }} wrap={false}>
+                      <Text style={s.recoTitle}>{title}</Text>
+                      {body ? <Text style={s.recoBody}>{body}</Text> : null}
+                    </View>
+                  );
+                })}
+              </>
+            )}
 
         {/* Risk Register — heading and body render together; both hide when there's no content */}
         {(() => {
