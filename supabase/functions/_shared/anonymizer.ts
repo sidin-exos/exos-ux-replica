@@ -457,6 +457,29 @@ export function deanonymizeText(
     }
   }
 
+  // Friendly fallback for the AI-generated [ALT_*] namespace and any other
+  // unmapped tokens. Without this, alternative-sourcing sections would render
+  // raw brackets like "[ALT_SUPPLIER_1]" which look like a leaked placeholder.
+  // We convert them to readable labels: "[ALT_SUPPLIER_1]" → "Alternative Supplier 1".
+  for (const token of unmappedTokens) {
+    const inner = token.slice(1, -1); // strip [ ]
+    // Match patterns like ALT_SUPPLIER_1, ALT_PARTNER_2, ALT_VENDOR_3 …
+    const altMatch = inner.match(/^ALT_([A-Z]+)_(\d+)$/);
+    if (altMatch) {
+      const noun = altMatch[1].charAt(0) + altMatch[1].slice(1).toLowerCase();
+      const friendly = `Alternative ${noun} ${altMatch[2]}`;
+      restoredText = restoredText.split(token).join(friendly);
+      continue;
+    }
+    // Generic single-letter unmapped token (e.g. [SUPPLIER_Z] the AI invented)
+    // Convert "[SUPPLIER_Z]" → "Supplier Z" so the report stays readable.
+    const generic = inner.match(/^([A-Z]+)_([A-Z]\d*)$/);
+    if (generic) {
+      const noun = generic[1].charAt(0) + generic[1].slice(1).toLowerCase().replace(/_/g, " ");
+      restoredText = restoredText.split(token).join(`${noun} ${generic[2]}`);
+    }
+  }
+
   return {
     restoredText,
     metadata: { entitiesRestored, unmappedTokens },
