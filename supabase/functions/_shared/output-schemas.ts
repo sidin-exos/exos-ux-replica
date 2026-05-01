@@ -832,6 +832,33 @@ S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switchi
       "body": "Full ready-to-send claim or partner-assistance letter (>= 120 words) referencing the contractual basis, the disruption event, the financial exposure, the requested remedy and the response deadline",
       "cc": []
     },
+    "root_cause_analysis": {
+      "primary_cause": "string — single-sentence root cause hypothesis",
+      "contributing_factors": ["3-5 contributing factors (process, supplier, external, internal control)"],
+      "five_whys": ["Why 1: ...", "Why 2: ...", "Why 3: ...", "Why 4: ...", "Why 5: ..."],
+      "evidence_quality": "STRONG | MODERATE | WEAK"
+    },
+    "blast_radius": {
+      "directly_affected": ["operational areas, product lines or customers hit immediately"],
+      "second_order_impacts": ["downstream P&L, working-capital, brand or compliance impacts within 30 days"],
+      "third_order_impacts": ["strategic / multi-quarter consequences such as customer churn, covenant breach, audit findings"],
+      "estimated_customers_affected": null,
+      "estimated_revenue_at_risk": null,
+      "geographic_spread": ["country / region codes"]
+    },
+    "recovery_probability": {
+      "p_full_recovery_30d_pct": null,
+      "p_full_recovery_90d_pct": null,
+      "p_partial_recovery_30d_pct": null,
+      "key_assumptions": ["3-4 assumptions the probabilities are conditioned on"],
+      "confidence": "HIGH | MEDIUM | LOW"
+    },
+    "regulatory_exposure": [
+      { "regime": "NIS2 | DORA | GDPR | CSRD | Sector-specific", "obligation": "specific clause or duty triggered", "deadline_hours": null, "notification_required": true, "potential_penalty": "string — fine band or sanction", "owner_role": "string" }
+    ],
+    "lessons_learned_for_playbook": [
+      { "lesson": "string — observation we want institutional memory to capture", "playbook_change": "string — concrete update to standard operating procedure", "owner_role": "string", "due_in_days": null }
+    ],
     "bridge_to_scenario": "S27"
   }
 }
