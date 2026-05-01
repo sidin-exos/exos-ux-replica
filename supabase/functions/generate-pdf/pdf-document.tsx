@@ -10,8 +10,34 @@ import {
   View,
   StyleSheet,
   Link,
+  Font,
   renderToBuffer,
 } from "npm:@react-pdf/renderer@4";
+
+// ── Register Inter font ──
+// Built-in Helvetica-Bold has a kerning regression in @react-pdf/renderer 4
+// that causes ghosted/double-stamped glyphs on large headings. Inter renders cleanly.
+let __interRegistered = false;
+function ensureInterRegistered() {
+  if (__interRegistered) return;
+  try {
+    Font.register({
+      family: "Inter",
+      fonts: [
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf", fontWeight: 400 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.ttf", fontWeight: 500 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.ttf", fontWeight: 600 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf", fontWeight: 700 },
+      ],
+    });
+    Font.registerHyphenationCallback((word: string) => [word]);
+    __interRegistered = true;
+  } catch (e) {
+    console.warn("[generate-pdf] Inter font registration failed", e);
+  }
+}
+ensureInterRegistered();
+
 import React from "npm:react@18";
 import type { ReactElement, ReactNode } from "npm:react@18";
 import { getPdfColors, getPdfStyles } from "./theme.ts";
