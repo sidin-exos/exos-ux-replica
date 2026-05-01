@@ -117,7 +117,7 @@ export const SCENARIO_META: Record<string, {
     description: 'AI-powered regional competitive landscape analysis with market share data and recent market moves.',
   },
   'pre-flight-audit': {
-    title: 'Pre-Flight Supplier Audit | EXOS',
+    title: 'Supplier Snapshot | EXOS',
     description: 'Comprehensive supplier intelligence dossier using just their website URL — before any negotiation.',
   },
 };
