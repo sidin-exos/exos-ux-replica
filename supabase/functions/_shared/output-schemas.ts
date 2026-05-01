@@ -571,6 +571,15 @@ S20 Category Risk Evaluator — scenario_specific MUST contain ALL of the follow
     "business_impact": 1-5,                             // 1 = low spend/criticality, 5 = critical
     "quadrant": "Strategic | Leverage | Bottleneck | Routine"
   },
+  "decision_readiness": {
+    "score": 0-100,                                     // overall tender-readiness score
+    "verdict": "GO | GO_WITH_CONDITIONS | HOLD | NO_GO",
+    "rationale": "string — 1-2 sentences",
+    "checklist": [
+      // 4-6 yes/no readiness items, e.g. tooling ownership clarified, alt source qualified, budget contingency set
+      { "item": "string", "status": "READY | PARTIAL | NOT_READY", "owner_role": "string" }
+    ]
+  },
   // Concentration — see fragment below; populate even when only relative shares are known.
   ${CONCENTRATION_SCHEMA_FRAGMENT}
 }
