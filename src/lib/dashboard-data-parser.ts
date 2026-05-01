@@ -258,6 +258,8 @@ export interface RfpPackageData {
     missing: string[];
   };
 }
+
+// Wave 1+2 — re-exported from sentinel/types so dashboards have a single import surface.
 export type {
   ShouldCostGapData,
   SavingsRealizationFunnelData,
@@ -301,6 +303,7 @@ export interface DashboardData {
   workingCapitalDpo?: _WorkingCapitalData;
   supplierConcentrationMap?: _ConcentrationData;
   spendAnalysis?: SpendAnalysisData;
+  rfpPackage?: RfpPackageData;
 }
 
 // ============================================
@@ -330,6 +333,7 @@ const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
   working_capital_dpo: 'workingCapitalDpo',
   supplier_concentration_map: 'supplierConcentrationMap',
   spend_analysis: 'spendAnalysis',
+  rfp_package: 'rfpPackage',
 };
 
 const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
