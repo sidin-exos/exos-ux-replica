@@ -1250,7 +1250,27 @@ export function parseAIResponse(raw: string): ExosOutputParsed | null {
     } catch (_) { /* fall through */ }
   }
 
-  // Attempt 3: brace-balance salvage for truncated/malformed envelopes
+  // Attempt 3: bracket-TYPE repair for envelopes where the model closed an
+  // object with `]` or vice versa. Common in deeply nested S21/S26 schemas.
+  const bracketFixed = repairBracketTypes(raw);
+  if (bracketFixed) {
+    try {
+      const parsed = JSON.parse(bracketFixed);
+      console.warn('[EXOS] AI response salvaged via bracket-type repair');
+      return parsed;
+    } catch (_) { /* fall through */ }
+    // Try the regex-extracted slice of the fixed string too
+    const fixedMatch = bracketFixed.match(/\{[\s\S]*\}/);
+    if (fixedMatch) {
+      try {
+        const parsed = JSON.parse(fixedMatch[0]);
+        console.warn('[EXOS] AI response salvaged via bracket-type repair + slice');
+        return parsed;
+      } catch (_) { /* fall through */ }
+    }
+  }
+
+  // Attempt 4: brace-balance salvage for truncated/malformed envelopes
   const salvaged = salvageTruncatedJson(raw);
   if (salvaged) {
     try {
@@ -1260,7 +1280,7 @@ export function parseAIResponse(raw: string): ExosOutputParsed | null {
     } catch (_) { /* fall through */ }
   }
 
-  // Attempt 4: log and return null for retry
+  // Attempt 5: log and return null for retry
   console.error('[EXOS] AI response failed JSON parsing — triggering retry');
   return null;
 }
