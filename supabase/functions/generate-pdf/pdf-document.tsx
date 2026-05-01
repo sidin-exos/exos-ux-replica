@@ -763,36 +763,26 @@ const PDFReportDocument = ({
             const blockColor = blockColors[si % blockColors.length];
             return (
               <View key={`section-${si}`} style={{ ...s.analysisBlock, borderLeftColor: blockColor }}>
-                <View style={{ ...s.analysisBlockBadge, backgroundColor: blockColor }}><Text style={s.analysisBlockBadgeText}>{stripMarkdown(section.title).toUpperCase()}</Text></View>
                 {(() => {
-                  // Group consecutive markdown-table lines into a real table.
+                  // Build the body elements (tables + paragraphs).
                   const out: ReactElement[] = [];
                   let i = 0;
                   const lines = section.lines;
                   while (i < lines.length) {
                     if (isTableLine(lines[i])) {
-                      // Collect run of table lines
                       const run: string[] = [];
                       while (i < lines.length && isTableLine(lines[i])) { run.push(lines[i]); i++; }
                       const rows = run.map(parseTableRow).filter((r): r is string[] => r !== null);
                       if (rows.length === 0) continue;
                       const [header, ...body] = rows;
-                      // Normalise empty / placeholder / "€0" cells to "Not provided"
-                      // so impact tables no longer render as a wall of "€0" when
-                      // the user didn't supply a monetary anchor.
                       const isEmptyCell = (v: string): boolean => {
                         const t = (v ?? "").trim();
                         if (!t || t === "-" || t === "—" || /^n\/?a$/i.test(t) || /^null$/i.test(t)) return true;
-                        // Pure-zero monetary or numeric: €0, $0, 0, 0.00, 0%, €0.00
                         if (/^[€$£]?\s*0+(?:[.,]0+)?\s*%?$/.test(t)) return true;
                         return false;
                       };
                       const displayCell = (v: string): string => isEmptyCell(v) ? "Not provided" : v;
-                      // If every body row has every non-label cell empty, skip the
-                      // table entirely — it has no information to convey.
-                      const hasAnyData = body.some(row =>
-                        row.slice(1).some(c => !isEmptyCell(c))
-                      );
+                      const hasAnyData = body.some(row => row.slice(1).some(c => !isEmptyCell(c)));
                       if (!hasAnyData) continue;
                       out.push(
                         <View key={`tbl-${si}-${i}`} style={s.mdTable} wrap={false}>
@@ -807,8 +797,6 @@ const PDFReportDocument = ({
                             <View key={`r-${ri}`} style={ri % 2 === 1 ? s.mdTableRowAlt : s.mdTableRow}>
                               {Array.from({ length: header.length }).map((_, ci) => {
                                 const raw = row[ci] ?? "";
-                                // First column is the row label — leave as-is;
-                                // only normalise data columns.
                                 const text = ci === 0 ? raw : displayCell(raw);
                                 const muted = ci !== 0 && isEmptyCell(raw);
                                 return (
@@ -826,7 +814,18 @@ const PDFReportDocument = ({
                     out.push(renderBodyText(lines[i], s.analysisText));
                     i++;
                   }
-                  return out;
+                  // Keep the section pill glued to its first content element so
+                  // headers like "RECOMMENDED CONTRACT TERMS" never get orphaned
+                  // at the bottom of a page with the table on the next.
+                  const head = (
+                    <View key="head" wrap={false}>
+                      <View style={{ ...s.analysisBlockBadge, backgroundColor: blockColor }}>
+                        <Text style={s.analysisBlockBadgeText}>{stripMarkdown(section.title).toUpperCase()}</Text>
+                      </View>
+                      {out[0] ?? null}
+                    </View>
+                  );
+                  return [head, ...out.slice(1)];
                 })()}
               </View>
             );
