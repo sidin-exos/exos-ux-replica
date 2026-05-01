@@ -1197,6 +1197,50 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
             };
           })
           .filter((r): r is NonNullable<typeof r> => r !== null);
+
+        // Detect a "flat tie" payload (every dimension scored equally) and
+        // override with financial-signal-derived scores. Without this every
+        // S3 capex-vs-opex run rendered a uniform 50/50 radar that gave the
+        // CFO no signal — defeating the purpose of the comparison.
+        const isFlatTie = radarData.length > 0 && radarData.every((r) =>
+          r[scenarios[0].name] === r[scenarios[1].name]
+        );
+        if (isFlatTie && validCapexOptions.length >= 2) {
+          const capexOpt = validCapexOptions.find((o: any) => /capex|buy|purchase/i.test(String(o.option_label))) ?? validCapexOptions[0];
+          const opexOpt = validCapexOptions.find((o: any) => /opex|lease|subscription|rent/i.test(String(o.option_label))) ?? validCapexOptions[1];
+          const capexNpv = Number(capexOpt?.npv ?? 0);
+          const opexNpv = Number(opexOpt?.npv ?? 0);
+          const capexUpfront = Math.abs(Number(capexOpt?.total_capex_nominal ?? 0));
+          const opexUpfront = Math.abs(Number(opexOpt?.total_capex_nominal ?? 0));
+          const capexTax = Number(capexOpt?.tax_shield_value ?? 0);
+          const opexTax = Number(opexOpt?.tax_shield_value ?? 0);
+          for (const r of radarData) {
+            const m = String(r.metric).toLowerCase();
+            if (/npv|present.*value|total.*cost|economic/.test(m)) {
+              r[scenarios[0].name] = capexNpv >= opexNpv ? 80 : 40;
+              r[scenarios[1].name] = capexNpv >= opexNpv ? 40 : 80;
+            } else if (/cash|liquidity|preservation|working.*capital/.test(m)) {
+              r[scenarios[0].name] = capexUpfront <= opexUpfront ? 70 : 35;
+              r[scenarios[1].name] = capexUpfront <= opexUpfront ? 35 : 70;
+            } else if (/tax|shield|depreciat/.test(m)) {
+              r[scenarios[0].name] = capexTax >= opexTax ? 75 : 40;
+              r[scenarios[1].name] = capexTax >= opexTax ? 40 : 75;
+            } else if (/flex|upgrade|refresh|agil/.test(m)) {
+              // Lease/OPEX wins flexibility by default
+              r[scenarios[0].name] = 45;
+              r[scenarios[1].name] = 70;
+            } else if (/risk|obsolesc/.test(m)) {
+              // Lease/OPEX typically lower obsolescence risk
+              r[scenarios[0].name] = 50;
+              r[scenarios[1].name] = 65;
+            } else {
+              // Generic tilt toward whichever option has the better NPV.
+              r[scenarios[0].name] = capexNpv >= opexNpv ? 65 : 45;
+              r[scenarios[1].name] = capexNpv >= opexNpv ? 45 : 65;
+            }
+          }
+        }
+
         const summary = flex
           .filter((f: any) => f?.dimension && f?.rationale)
           .map((f: any) => ({
