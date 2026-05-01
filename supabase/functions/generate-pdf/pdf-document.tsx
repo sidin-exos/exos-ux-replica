@@ -606,7 +606,31 @@ const PDFReportDocument = ({
   const showScore = hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
   const coverageDisplay = showScore ? `${coveragePct}/100` : "—";
   const coverageDisplaySpaced = showScore ? `${coveragePct} / 100` : "—";
-  const confidenceLevel = evaluationConfidence ? (evaluationConfidence === "HIGH" ? "High" : "Low") : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
+  // Confidence is now derived from OUTPUT COHERENCE (presence of structured
+  // analytical signals), not from the input rigour score. A well-reasoned
+  // report on thin input still earns Medium/High confidence; a sparse output
+  // on rich input is rightly flagged Low.
+  const outputSignals: boolean[] = [
+    Array.isArray(findings) && findings.length >= 3,
+    Array.isArray(recommendations) && recommendations.length >= 3,
+    isS21
+      ? (s21ZopaExists != null || s21PowerBalance != null)
+      : isS20
+        ? (s20Score != null || s20Rag != null)
+        : isS27
+          ? (s27ResiliencePosture != null || s27RtoGap != null)
+          : true,
+    isNegotiationPrep ? batnaScore != null : true,
+    Array.isArray(envelope?.payload?.actions ?? envelope?.payload?.recommendations) ? true : strippedAnalysis.length > 800,
+  ];
+  const coherenceCount = outputSignals.filter(Boolean).length;
+  const outputConfidence = coherenceCount >= 4 ? "High" : coherenceCount >= 2 ? "Medium" : "Low";
+  // Allow an explicit upstream override (HIGH/LOW), otherwise use coherence.
+  const confidenceLevel = evaluationConfidence === "HIGH"
+    ? "High"
+    : evaluationConfidence === "LOW"
+      ? "Low"
+      : outputConfidence;
   const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
   const batnaRawScore = parsedData?.negotiationPrep?.batna?.strength;
   // Normalise legacy 0–100 values to the canonical 0–5 scale.
