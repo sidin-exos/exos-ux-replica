@@ -252,8 +252,81 @@ function buildStyles(c: PdfColorSet) {
 
 const cleanMarkdown = (text: string): string => text.replace(/\*\*\*/g, "").replace(/\*\*/g, "").replace(/^\s*\*\s+/gm, "").replace(/^#{1,4}\s*/gm, "").replace(/^- \[[ x]\]\s*/gm, "").trim();
 
+// Lines that are clearly markdown-table fragments — used to suppress
+// false "header" detection in categorizeAnalysisSections and to keep table
+// rows out of the Risk Register fallback renderer.
+const isTableLine = (raw: string): boolean => {
+  const t = raw.trim();
+  if (!t) return false;
+  if (/^\|.*\|$/.test(t)) return true;
+  if (/^\|?[-:\s|]+\|?$/.test(t) && t.includes("-")) return true;
+  return false;
+};
+
+// Drop AI guidance prompts ("Supply…", "Provide…", "(e.g., …)") that should
+// never surface as Key Findings or Recommended Actions.
+const INSTRUCTION_PREFIX_RE = /^\s*[-•*]?\s*(supply|provide|specify|enter|input|complete|fill in|add|please|to enable|to allow|to support|to strengthen)\b/i;
+const isInstructionLine = (line: string): boolean =>
+  INSTRUCTION_PREFIX_RE.test(line) || /\(e\.g\.,/i.test(line);
+
+// Drop Response-Playbook phase headers leaking into Recommended Actions.
+const isPlaybookPhase = (line: string): boolean =>
+  /^\s*phase\s+\d+\s*[—\-:]\s*(detect|activate|contain|recover|learn)/i.test(line);
+
+const looksLikeFinding = (line: string): boolean => {
+  if (line.length < 15) return false;
+  if (isInstructionLine(line) || isPlaybookPhase(line) || isTableLine(line)) return false;
+  return true;
+};
+
+// Pull executive-summary content from the EXOS envelope first; fall back to
+// the prose-line heuristic only when no structured summary exists.
+const extractEnvelopeSummary = (raw?: string): { findings: string[]; recommendations: string[] } => {
+  if (!raw) return { findings: [], recommendations: [] };
+  let env: any;
+  try { env = JSON.parse(raw); } catch { return { findings: [], recommendations: [] }; }
+  if (!env || typeof env !== "object") return { findings: [], recommendations: [] };
+
+  const findings: string[] = [];
+  const recommendations: string[] = [];
+
+  const exec = env.executive_summary ?? env.payload?.executive_summary ?? {};
+  const headline = exec.headline ?? exec.summary ?? env.headline;
+  if (typeof headline === "string" && headline.trim() && looksLikeFinding(headline)) {
+    findings.push(headline.trim());
+  }
+  const findingsArr = exec.key_findings ?? env.key_findings ?? exec.findings ?? [];
+  if (Array.isArray(findingsArr)) {
+    for (const f of findingsArr) {
+      const t = typeof f === "string" ? f : (f?.finding ?? f?.text ?? f?.title ?? "");
+      const s = String(t).trim();
+      if (s && looksLikeFinding(s)) findings.push(s);
+      if (findings.length >= 3) break;
+    }
+  }
+
+  const recsArr = env.recommendations ?? env.payload?.recommendations ?? exec.recommendations ?? [];
+  if (Array.isArray(recsArr)) {
+    for (const r of recsArr) {
+      let t: string;
+      if (typeof r === "string") t = r;
+      else {
+        const action = r?.action ?? r?.recommendation ?? r?.text ?? r?.title ?? "";
+        const priority = r?.priority ? `[${String(r.priority)}] ` : "";
+        const rationale = r?.rationale ?? r?.benefit ?? r?.expected_value ?? "";
+        t = `${priority}${action}${rationale ? ` — ${rationale}` : ""}`;
+      }
+      const s = String(t).trim();
+      if (s && looksLikeFinding(s)) recommendations.push(s);
+      if (recommendations.length >= 4) break;
+    }
+  }
+
+  return { findings, recommendations };
+};
+
 const extractExecutiveSummary = (text: string): { findings: string[]; recommendations: string[] } => {
-  const lines = text.split("\n").map(cleanMarkdown).filter((l) => l.length > 15);
+  const lines = text.split("\n").map(cleanMarkdown).filter((l) => looksLikeFinding(l));
   const findingPattern = /(\$|€|%|found|indicates?|presents?|analysis|current(ly)?|total|average|estimated|reveals?|shows?)/i;
   const recommendPattern = /\b(target|aim to|recommend|should|negotiate|consider|implement|prioritize|pursue|establish|ensure|leverage|explore)\b/i;
   const findings: string[] = [], recommendations: string[] = [];
@@ -287,9 +360,17 @@ const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
   const sections: AnalysisSection[] = [];
   let current: AnalysisSection = { type: "general", title: "Analysis Overview", lines: [] };
   for (const rawLine of lines) {
+    // Never let markdown-table fragments masquerade as section headers — that
+    // bug caused every "MEDIUM" cell in S27's Black Swan Risk Map to spawn a
+    // bogus Risk Register card on page 8.
+    if (isTableLine(rawLine)) {
+      current.lines.push(rawLine);
+      continue;
+    }
     const hashMatch = rawLine.match(/^(#{1,4})\s*(.*)$/);
     const cleanLine = cleanMarkdown(rawLine);
     if (!cleanLine) continue;
+    if (isTableLine(cleanLine)) { current.lines.push(cleanLine); continue; }
     const isHeader = !!hashMatch || (cleanLine.endsWith(":") && cleanLine.length < 80) || (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."));
     if (isHeader) {
       if (current.lines.length > 0) sections.push(current);
@@ -401,8 +482,25 @@ const PDFReportDocument = ({
   // Prefer structured envelope, fall back to legacy XML parsing
   const parsedData = (structuredData ? extractFromEnvelope(structuredData) : null) ?? extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
-  const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
+  // D3: prefer envelope-driven Executive Summary; fall back to prose heuristic.
+  const envelopeSummary = extractEnvelopeSummary(structuredData);
+  const proseSummary = extractExecutiveSummary(strippedAnalysis);
+  const findings = envelopeSummary.findings.length > 0 ? envelopeSummary.findings : proseSummary.findings;
+  const recommendations = envelopeSummary.recommendations.length > 0 ? envelopeSummary.recommendations : proseSummary.recommendations;
   const analysisLines = strippedAnalysis.split("\n").filter((line) => line.trim());
+
+  // Detect S27 envelope to drive scenario-specific footer KPIs and suppress
+  // the legacy generic Risk Register page (Black Swan Risk Map covers it).
+  let envelope: any = null;
+  try { envelope = structuredData ? JSON.parse(structuredData) : null; } catch { envelope = null; }
+  const isS27 = envelope?.scenario_id === "S27" || /black\s*swan/i.test(scenarioTitle);
+  const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
+  const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
+  const s27SingleSourceFlows = Array.isArray(s27Specific?.concentration?.flows)
+    ? s27Specific.concentration.flows.filter((f: any) => f?.single_source_flag).length
+    : null;
+
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
   const formattedDate = formatDate(timestamp);
@@ -494,10 +592,21 @@ const PDFReportDocument = ({
         })}
 
         <View style={s.kpiRow}>
-          <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : `${coveragePct} / 100`}</Text></View>
-          <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{leverageLabel}</Text></View>
-          <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>{supplierPowerLabel || (extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A")}</Text></View>
-          <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>CONFIDENCE</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
+          {isS27 ? (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coveragePct} / 100</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>RESILIENCE POSTURE</Text><Text style={{ ...s.kpiValue, color: kpiColor(s27ResiliencePosture === "RED" ? "High" : s27ResiliencePosture === "AMBER" ? "Medium" : s27ResiliencePosture === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s27ResiliencePosture ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>RTO GAP</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s27RtoGap != null ? `${s27RtoGap}h` : "—"}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>SINGLE-SOURCE FLOWS</Text><Text style={{ ...s.kpiValue, color: s27SingleSourceFlows && s27SingleSourceFlows > 0 ? c.destructive : c.success }}>{s27SingleSourceFlows != null ? String(s27SingleSourceFlows) : "—"}</Text></View>
+            </>
+          ) : (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : `${coveragePct} / 100`}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{leverageLabel}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>{supplierPowerLabel || (extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A")}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>CONFIDENCE</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
+            </>
+          )}
         </View>
 
         <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
@@ -550,7 +659,11 @@ const PDFReportDocument = ({
           const sections = categorizeAnalysisSections(analysisLines);
           const blockColors = [c.destructive, c.accent3, c.accent2, c.primary, c.accent4];
           return sections.map((section, si) => {
-            if (section.type === "recommendations" || section.type === "risks") return null;
+            // For S27, retain risks-classified sections in Detailed Analysis —
+            // they hold the Black Swan Risk Map, Vulnerability Assessment, and
+            // Cascading Failure tables that are part of the promised deliverables.
+            if (section.type === "recommendations") return null;
+            if (!isS27 && section.type === "risks") return null;
             const blockColor = blockColors[si % blockColors.length];
             return (
               <View key={`section-${si}`} style={{ ...s.analysisBlock, borderLeftColor: blockColor }} wrap={false}>
@@ -569,8 +682,14 @@ const PDFReportDocument = ({
         const recoSections = sections.filter(sec => sec.type === "recommendations");
         const recoLines = recoSections.flatMap(sec => sec.lines);
         const overflowRecos = (recoLines.length > 0 ? recoLines : recommendations).slice(4);
-        const structuredRisks = extractRiskRegisterItems(analysisResult);
-        const riskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
+        // D4: For S27 the Black Swan Risk Map (rendered inline in Detailed
+        // Analysis) is the canonical risk view — suppress the legacy generic
+        // Risk Register entirely to avoid duplication and table corruption.
+        const structuredRisks = isS27 ? [] : extractRiskRegisterItems(analysisResult);
+        const rawRiskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
+        // Drop markdown-table fragments and instructional lines so each
+        // remaining line is a real risk sentence, not a leaked table cell.
+        const riskLines = isS27 ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
         const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
         if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
