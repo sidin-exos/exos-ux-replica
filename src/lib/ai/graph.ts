@@ -242,6 +242,7 @@ export async function runExosGraph(
   confidenceScore: number;
   validationStatus: 'pending' | 'approved' | 'rejected';
   retryCount: number;
+  failureReason: string | null;
 }> {
   const isMultiCycle = scenarioId ? isDeepAnalyticsScenario(scenarioId) : false;
   // Log tracing config on first run
