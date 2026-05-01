@@ -280,6 +280,45 @@ import type {
 } from "./sentinel/types";
 
 // ============================================
+// S3 capex-vs-opex specific dashboards
+// ============================================
+
+export interface NpvWaterfallData {
+  options: {
+    id: string;
+    name: string;
+    color: string;
+    capexNominal: number;        // total CAPEX nominal (positive number)
+    opexNominal: number;         // total OPEX nominal (positive number)
+    residualValue: number;       // residual recovered (positive number; reduces total cost)
+    npv: number;                 // signed NPV at WACC; convention: negative = net cost
+    waccPct?: number;            // discount rate used
+    breakEvenYear?: number | null;
+    ifrsOnBalanceSheet?: boolean | null;
+  }[];
+  preferredOptionId?: string;    // id of CFO-recommended option
+  verdict?: "BUY" | "LEASE" | "HYBRID" | string;
+  cashFlowRationale?: string;
+  currency?: string;
+}
+
+export interface Ifrs16ImpactData {
+  options: {
+    id: string;
+    name: string;
+    color: string;
+    onBalanceSheet: boolean | null;
+    rightOfUseAsset?: number | null;
+    leaseLiability?: number | null;
+    taxShieldValue?: number | null;
+    plTreatment?: string | null;          // e.g. "Depreciation + interest" vs "Operating lease expense"
+    balanceSheetImpact?: string | null;
+  }[];
+  ifrs16Note?: string;
+  currency?: string;
+}
+
+// ============================================
 // Top-level union type
 // ============================================
 
@@ -304,6 +343,8 @@ export interface DashboardData {
   supplierConcentrationMap?: _ConcentrationData;
   spendAnalysis?: SpendAnalysisData;
   rfpPackage?: RfpPackageData;
+  npvWaterfall?: NpvWaterfallData;
+  ifrs16Impact?: Ifrs16ImpactData;
 }
 
 // ============================================
