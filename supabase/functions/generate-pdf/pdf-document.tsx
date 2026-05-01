@@ -348,10 +348,14 @@ const extractEnvelopeSummary = (raw?: string): { findings: string[]; recommendat
       else {
         const action = r?.action ?? r?.recommendation ?? r?.text ?? r?.title ?? "";
         const priority = r?.priority ? `[${String(r.priority)}] ` : "";
-        const rationale = r?.rationale ?? r?.benefit ?? r?.expected_value ?? "";
+        const rationaleRaw = r?.rationale ?? r?.benefit ?? r?.expected_value ?? "";
+        // Strip raw numeric tails (e.g. "Reduce cost — 52700") that surface
+        // when expected_value is a bare number or numeric string with no unit.
+        const rationaleStr = String(rationaleRaw ?? "").trim();
+        const rationale = /^\d[\d,. ]*$/.test(rationaleStr) ? "" : rationaleStr;
         t = `${priority}${action}${rationale ? ` — ${rationale}` : ""}`;
       }
-      const s = String(t).trim();
+      const s = String(t).trim().replace(/\s+—\s+\d[\d,. ]*\s*$/, "");
       if (s && looksLikeFinding(s)) recommendations.push(s);
       if (recommendations.length >= 4) break;
     }
