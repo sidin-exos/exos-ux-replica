@@ -884,11 +884,56 @@ Speed of output is the value — prioritise completeness of all three deliverabl
       }
     ],
     "overall_resilience_rag": "RED | AMBER | GREEN",
+    "early_warning_indicators": [
+      {
+        "indicator": null,
+        "data_source": null,
+        "threshold": null,
+        "lead_time_days": null,
+        "monitored_node": "NODE-001",
+        "owner_role": null
+      }
+    ],
+    "response_playbook": {
+      "phase_1_detect":   { "owner_role": null, "trigger_signal": null, "actions": [], "target_duration_hours": null },
+      "phase_2_activate": { "owner_role": null, "decision_authority": null, "actions": [], "target_duration_hours": null },
+      "phase_3_contain":  { "owner_role": null, "actions": [], "alternative_supply_options": [], "target_duration_hours": null },
+      "phase_4_recover":  { "owner_role": null, "actions": [], "rto_target_hours": null, "target_duration_hours": null },
+      "phase_5_learn":    { "owner_role": null, "post_mortem_checklist": [], "process_changes": [] }
+    },
+    "diversification_strategy": {
+      "current_concentration_summary": null,
+      "target_state": null,
+      "actions": [
+        { "action": null, "category_id": "CAT-001", "horizon_months": null, "estimated_cost": null, "concentration_reduction_pct": null }
+      ]
+    },
+    "monitoring_dashboard": {
+      "kris": [
+        { "kri_name": null, "current_value": null, "amber_threshold": null, "red_threshold": null, "owner_role": null, "review_frequency": "DAILY | WEEKLY | MONTHLY" }
+      ],
+      "trigger_points": [
+        { "trigger": null, "automated_response": null, "escalation_path": null }
+      ]
+    },
     "bridge_to_scenario": "S26",
     ${CONCENTRATION_SCHEMA_FRAGMENT}
   }
 }
 S27 AI guidance: financial impact modelling accuracy depends on the user providing RTO/RPO targets and recovery cost estimates — if absent, leave rto_rpo_analysis fields as null and flag in data_gaps[]. Never emit exact critical cash reserve amounts or specific banking / credit facility details — use liquidity tier references ("Tier 1 reserve: 3 months OPEX") instead.
+
+S27 DELIVERABLE COVERAGE — populate ALL of the following structures (these are the ten promised deliverables surfaced in the user-facing report):
+1. Black Swan Risk Map → supply_chain_nodes[] (5–10 entries with criticality + alternative_available).
+2. Scenario Simulation Results → impact_model.direct_impact_estimate + total_impact_estimate.
+3. Vulnerability Assessment → prioritised_vulnerabilities[] (3–6 ranked items, each tied to a node).
+4. Cascading Failure Analysis → impact_model.cascade_effects[] (3–6 entries with delay_days + revenue_at_risk).
+5. Early Warning Indicators → early_warning_indicators[] (4–8 measurable signals with thresholds).
+6. Response Playbook → response_playbook (all five phases populated, 2–5 actions each).
+7. Mitigation Roadmap → resilience_investments[] (4–8 prioritised investments).
+8. Diversification Strategy → diversification_strategy.actions[] + concentration block.
+9. Investment Recommendation → resilience_investments[] (each with estimated_cost + risk_reduction_pct + roi_rationale).
+10. Monitoring Dashboard → monitoring_dashboard.kris[] (4–8 KRIs) + trigger_points[] (3–5 triggers).
+Emit null + a data_gaps[] entry for any field genuinely missing from user input — never omit the structural keys.
 
 CONCENTRATION RULES (S20, S24, S25, S27):
 Populate concentration when supplier and category spend data is available. Calculate HHI per category as sum of (supplier_spend_share_pct)^2.
