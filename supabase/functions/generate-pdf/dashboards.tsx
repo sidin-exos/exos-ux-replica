@@ -642,7 +642,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
                 <Text style={{ fontSize: 9, color: colors.text }}>{opt.name}</Text>
               </View>
               <Text style={[styles.matrixCell, { fontFamily: "Inter", fontWeight: 700 }]}>{formatCurrency(opt.totalTCO, currency)}</Text>
-              <Text style={[styles.matrixCell, { color: diff === 0 ? colors.success : colors.textMuted, fontFamily: diff === 0 ? "Helvetica-Bold" : "Helvetica" }]}>{diff === 0 ? "★ Best" : `+${formatCurrency(diff, currency)}`}</Text>
+              <Text style={[styles.matrixCell, { color: diff === 0 ? colors.success : colors.textMuted, fontFamily: "Inter", fontWeight: diff === 0 ? 700 : 400 }]}>{diff === 0 ? "★ Best" : `+${formatCurrency(diff, currency)}`}</Text>
             </View>
           );
         })}
@@ -799,7 +799,7 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
               {allScenarios.map((sc) => {
                 const val = c.scores[sc.id] ?? 50;
                 const isMax = val === maxScore && maxScore > 0;
-                return <Text key={sc.id} style={[styles.matrixCell, { color: isMax ? colors.primary : colors.text, fontFamily: isMax ? "Helvetica-Bold" : "Helvetica" }]}>{val}</Text>;
+                return <Text key={sc.id} style={[styles.matrixCell, { color: isMax ? colors.primary : colors.text, fontFamily: "Inter", fontWeight: isMax ? 700 : 400 }]}>{val}</Text>;
               })}
             </View>
           );
