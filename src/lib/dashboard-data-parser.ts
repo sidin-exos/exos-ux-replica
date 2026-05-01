@@ -505,7 +505,7 @@ function mapRiskItem(r: any): RiskMatrixData['risks'][number] | null {
     supplier: String(title).trim(),
     impact: normaliseRisk(impactRaw),
     probability: normaliseRisk(probRaw),
-    category: r.category ?? r.risk_category ?? r.type ?? 'Operational',
+    category: r.category ?? r.risk_category ?? r.type ?? r.node_type ?? r.geography ?? 'Operational',
     id: r.id ?? r.risk_id ?? undefined,
     score,
     rag,
