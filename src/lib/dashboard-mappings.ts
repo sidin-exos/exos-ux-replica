@@ -20,7 +20,9 @@ export type DashboardType =
   | "savings-realization-funnel"
   | "working-capital-dpo"
   | "supplier-concentration-map"
-  | "rfp-package";
+  | "rfp-package"
+  | "npv-waterfall"
+  | "ifrs16-impact";
 
 /**
  * Backwards-compatibility alias map for renamed dashboard IDs.
@@ -250,6 +252,26 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
     questionsAnswered: ["Is the RFP package complete and ready to issue?", "Are evaluation criteria balanced and defensible?", "What clarifications must be resolved before issue?"],
     showSampleDataFallback: false,
   },
+  "npv-waterfall": {
+    id: "npv-waterfall",
+    name: "NPV Waterfall",
+    description: "CAPEX vs OPEX present-value comparison with break-even and residual value",
+    icon: "BarChartBig",
+    keyMetrics: ["NPV per option (€)", "NPV delta vs preferred option", "Break-even year", "Residual value contribution", "Discount rate (WACC) used"],
+    whenToUse: "Use whenever a Buy vs Lease (or any CAPEX vs OPEX) decision needs a CFO-grade present-value comparison rather than a nominal-cost view.",
+    questionsAnswered: ["Which option has the strongest NPV at our WACC?", "When does the alternative break even?", "How much of the gap is driven by residual value?"],
+    showSampleDataFallback: false,
+  },
+  "ifrs16-impact": {
+    id: "ifrs16-impact",
+    name: "IFRS 16 Impact",
+    description: "Balance-sheet and P&L treatment for buy vs lease under IFRS 16",
+    icon: "Scale",
+    keyMetrics: ["On / off balance sheet flag per option", "Right-of-use asset vs lease liability", "Tax shield value", "P&L treatment (depreciation vs operating expense)", "CFO note"],
+    whenToUse: "Use when the lease vs buy decision has material accounting implications — IFRS 16 brings most leases on balance sheet, changing covenants, gearing, and EBITDA optics.",
+    questionsAnswered: ["Does the lease land on or off the balance sheet under IFRS 16?", "What is the right-of-use asset and lease liability we will recognise?", "How does the P&L profile differ between buy and lease?"],
+    showSampleDataFallback: false,
+  },
 };
 
 // Scenario to dashboard mapping
@@ -273,7 +295,7 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "cost-breakdown": ["should-cost-gap", "cost-waterfall", "data-quality"],
   // Audit cull: removed working-capital-dpo (strategy view too high-level for DPO detail).
   "category-strategy": ["kraljic-quadrant", "timeline-roadmap", "savings-realization-funnel"],
-  "capex-vs-opex": ["scenario-comparison", "sensitivity-spider"],
+  "capex-vs-opex": ["npv-waterfall", "ifrs16-impact", "scenario-comparison", "sensitivity-spider"],
   // Audit cull: removed should-cost-gap (savings reporting and component
   // should-cost answer different questions).
   "savings-calculation": ["savings-realization-funnel", "cost-waterfall", "working-capital-dpo", "action-checklist"],

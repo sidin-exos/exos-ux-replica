@@ -23,6 +23,8 @@ import SavingsRealizationFunnelDashboard from "./SavingsRealizationFunnelDashboa
 import WorkingCapitalDpoDashboard from "./WorkingCapitalDpoDashboard";
 import SupplierConcentrationMapDashboard from "./SupplierConcentrationMapDashboard";
 import RfpPackageDashboard from "./RfpPackageDashboard";
+import NPVWaterfallDashboard from "./NPVWaterfallDashboard";
+import IFRS16ImpactDashboard from "./IFRS16ImpactDashboard";
 
 /** Map dashboard type slug to the corresponding key in DashboardData */
 const dashboardDataKey: Record<string, keyof DashboardData> = {
@@ -45,6 +47,8 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "working-capital-dpo": "workingCapitalDpo",
   "supplier-concentration-map": "supplierConcentrationMap",
   "rfp-package": "rfpPackage",
+  "npv-waterfall": "npvWaterfall",
+  "ifrs16-impact": "ifrs16Impact",
 };
 
 /**
@@ -200,6 +204,12 @@ const DashboardRenderer = ({
     case "rfp-package":
       // No sample fallback — component renders its own empty state.
       return <RfpPackageDashboard parsedData={parsedData?.rfpPackage} />;
+
+    case "npv-waterfall":
+      return <NPVWaterfallDashboard parsedData={parsedData?.npvWaterfall} />;
+
+    case "ifrs16-impact":
+      return <IFRS16ImpactDashboard parsedData={parsedData?.ifrs16Impact} />;
 
     default:
       return (
