@@ -299,8 +299,10 @@ function CoverageResults({ result }: { result: CoverageResult }) {
         <p className="text-xs text-muted-foreground">
           Coverage measures whether topics are present. Rigour (scored after the
           run) measures numerical precision and evidence depth.
-          {gaps.length > 0
-            ? ` Closing the ${gaps.length} gap${gaps.length > 1 ? "s" : ""} below typically lifts the rigour score by 10–25 points each.`
+          {financialGap
+            ? " A financial section is partial or missing — the post-run rigour score will be capped until you add explicit € figures."
+            : gaps.length > 0
+            ? ` Closing the ${gaps.length} gap${gaps.length > 1 ? "s" : ""} below typically lifts the rigour score by 15–30 points each.`
             : " Your input looks complete — expect a high rigour score."}
         </p>
         {gaps.length > 0 && (
