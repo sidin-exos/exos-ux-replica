@@ -28,6 +28,12 @@ function ensureInterRegistered() {
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.ttf", fontWeight: 500 },
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.ttf", fontWeight: 600 },
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf", fontWeight: 700 },
+        // Italic variants — required because some table cells use fontStyle: "italic".
+        // @react-pdf does not synthesize italics; missing src throws "Could not resolve font".
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-italic.ttf", fontWeight: 400, fontStyle: "italic" },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-italic.ttf", fontWeight: 500, fontStyle: "italic" },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-italic.ttf", fontWeight: 600, fontStyle: "italic" },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-italic.ttf", fontWeight: 700, fontStyle: "italic" },
       ],
     });
     Font.registerHyphenationCallback((word: string) => [word]);
