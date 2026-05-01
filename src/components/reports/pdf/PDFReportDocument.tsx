@@ -993,11 +993,24 @@ const PDFReportDocument = ({
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
   const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  // Confidence is derived from OUTPUT COHERENCE — presence of structured
+  // analytical signals — not from input rigour. Keeps a well-reasoned report
+  // from being mislabelled "Low confidence" because the input was thin.
+  const outputSignals: boolean[] = [
+    Array.isArray(findings) && findings.length >= 3,
+    Array.isArray(recommendations) && recommendations.length >= 3,
+    isNegotiationPrep ? batnaScore != null : true,
+    strippedAnalysis.length > 800,
+  ];
+  const coherenceCount = outputSignals.filter(Boolean).length;
+  const outputConfidence = coherenceCount >= 3 ? "High" : coherenceCount >= 2 ? "Medium" : "Low";
   const confidenceLevel = structuredOutput
     ? (structuredOutput.confidence_level === "HIGH" ? "High" : structuredOutput.confidence_level === "MEDIUM" ? "Medium" : "Low")
-    : evaluationConfidence
-      ? (evaluationConfidence === "HIGH" ? "High" : "Low")
-      : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
+    : evaluationConfidence === "HIGH"
+      ? "High"
+      : evaluationConfidence === "LOW"
+        ? "Low"
+        : outputConfidence;
   const hasLowConfidenceWatermark = structuredOutput?.low_confidence_watermark === true;
   const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
   const batnaScore = parsedData?.negotiationPrep?.batna?.strength;
