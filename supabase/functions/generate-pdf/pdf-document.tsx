@@ -482,8 +482,25 @@ const PDFReportDocument = ({
   // Prefer structured envelope, fall back to legacy XML parsing
   const parsedData = (structuredData ? extractFromEnvelope(structuredData) : null) ?? extractDashboardData(analysisResult);
   const strippedAnalysis = stripDashboardData(analysisResult);
-  const { findings, recommendations } = extractExecutiveSummary(strippedAnalysis);
+  // D3: prefer envelope-driven Executive Summary; fall back to prose heuristic.
+  const envelopeSummary = extractEnvelopeSummary(structuredData);
+  const proseSummary = extractExecutiveSummary(strippedAnalysis);
+  const findings = envelopeSummary.findings.length > 0 ? envelopeSummary.findings : proseSummary.findings;
+  const recommendations = envelopeSummary.recommendations.length > 0 ? envelopeSummary.recommendations : proseSummary.recommendations;
   const analysisLines = strippedAnalysis.split("\n").filter((line) => line.trim());
+
+  // Detect S27 envelope to drive scenario-specific footer KPIs and suppress
+  // the legacy generic Risk Register page (Black Swan Risk Map covers it).
+  let envelope: any = null;
+  try { envelope = structuredData ? JSON.parse(structuredData) : null; } catch { envelope = null; }
+  const isS27 = envelope?.scenario_id === "S27" || /black\s*swan/i.test(scenarioTitle);
+  const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
+  const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
+  const s27SingleSourceFlows = Array.isArray(s27Specific?.concentration?.flows)
+    ? s27Specific.concentration.flows.filter((f: any) => f?.single_source_flag).length
+    : null;
+
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
   const formattedDate = formatDate(timestamp);
