@@ -251,6 +251,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     confidenceScore: number;
     validationStatus: 'pending' | 'approved' | 'rejected';
     retryCount: number;
+    failureReason: string | null;
   } | null>(null);
   const [deepAnalysisError, setDeepAnalysisError] = useState<string | null>(null);
 
