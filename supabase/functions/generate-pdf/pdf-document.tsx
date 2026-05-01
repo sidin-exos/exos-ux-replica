@@ -436,12 +436,24 @@ const PDFReportDocument = ({
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
   const parseFindingTitle = (text: string): { title: string; body: string } => {
-    const stripped = stripMarkdown(text);
-    const colonIdx = stripped.indexOf(":");
-    if (colonIdx > 0 && colonIdx < 60) return { title: stripped.slice(0, colonIdx).trim(), body: stripped.slice(colonIdx + 1).trim() };
-    const words = stripped.split(" ");
-    if (words.length > 6) return { title: words.slice(0, 4).join(" "), body: stripped };
-    return { title: stripped, body: "" };
+    const stripped = stripMarkdown(text).trim();
+    const tagMatch = stripped.match(/^(\[[^\]]+\])\s*(.*)$/);
+    const tag = tagMatch ? tagMatch[1] + " " : "";
+    const rest = tagMatch ? tagMatch[2] : stripped;
+
+    const colonIdx = rest.indexOf(":");
+    if (colonIdx > 0 && colonIdx < 60) {
+      return { title: tag + rest.slice(0, colonIdx).trim(), body: rest.slice(colonIdx + 1).trim() };
+    }
+    const words = rest.split(/\s+/);
+    if (words.length <= 14) {
+      return { title: tag + rest, body: "" };
+    }
+    const sentenceMatch = rest.match(/^(.{20,90}?[.?!])\s+(.+)$/);
+    if (sentenceMatch) {
+      return { title: tag + sentenceMatch[1].replace(/[.?!]$/, ""), body: sentenceMatch[2] };
+    }
+    return { title: tag + words.slice(0, 8).join(" "), body: words.slice(8).join(" ") };
   };
 
   const findingColors = [c.accent1, c.accent2, c.accent4];
