@@ -14,7 +14,7 @@ import {
   SCENARIO_GROUP_REGISTRY, SCENARIO_ID_REGISTRY, GROUP_LABELS,
   GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
   getScenarioSchema, getScenarioInstructions,
-  parseAIResponse, buildMarkdownFromEnvelope,
+  parseAIResponse, buildMarkdownFromEnvelope, pruneEmptyBranches,
   type ExosOutputParsed,
 } from "../_shared/output-schemas.ts";
 
