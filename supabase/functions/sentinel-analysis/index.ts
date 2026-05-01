@@ -728,17 +728,24 @@ serve(async (req) => {
 
     // Validate inputs
     const rawUserPrompt = requireString(body.userPrompt, "userPrompt", { minLength: 1, maxLength: 50000 })!;
+    // Per-scenario default model: rapid-response scenarios (S26 disruption,
+    // S17 risk-screen) use flash for ~50% cost cut and 2-3x faster latency
+    // — they don't benefit from pro's deeper reasoning.
+    const FLASH_DEFAULT_SCENARIOS = new Set(["disruption-management", "risk-screening"]);
+    const scenarioDefaultModel = (typeof body.scenarioType === "string" && FLASH_DEFAULT_SCENARIOS.has(body.scenarioType))
+      ? "gemini-3-flash-preview"
+      : "gemini-3.1-pro-preview";
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
     const rawGoogleModel = (requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-3.1-pro-preview").replace(/^google\//, "");
+      || scenarioDefaultModel).replace(/^google\//, "");
     // Server-side model whitelist — prevents cost amplification and model probing
     const ALLOWED_MODELS = [
       "gemini-3.1-pro-preview",
       "gemini-3-flash-preview",
       "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
     ];
-    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-3.1-pro-preview";
+    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : scenarioDefaultModel;
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     // Accept but ignore — always use Google AI Studio
