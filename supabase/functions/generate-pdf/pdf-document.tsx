@@ -863,11 +863,11 @@ const PDFReportDocument = ({
         // D4: For S27 the Black Swan Risk Map (rendered inline in Detailed
         // Analysis) is the canonical risk view — suppress the legacy generic
         // Risk Register entirely to avoid duplication and table corruption.
-        const structuredRisks = (isS27 || isS26 || isS20) ? [] : extractRiskRegisterItems(analysisResult);
+        const structuredRisks = (isS27 || isS26 || isS20 || isS21) ? [] : extractRiskRegisterItems(analysisResult);
         const rawRiskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
         // Drop markdown-table fragments and instructional lines so each
         // remaining line is a real risk sentence, not a leaked table cell.
-        const riskLines = (isS27 || isS26 || isS20) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
+        const riskLines = (isS27 || isS26 || isS20 || isS21) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
         const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
         if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
