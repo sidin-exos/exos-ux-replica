@@ -1283,8 +1283,8 @@ export const PDFIfrs16Impact = ({ data, themeMode }: { data: Ifrs16ImpactData; t
                   <Text style={{ fontSize: 8, color: treatmentColor, fontFamily: "Inter", fontWeight: 700 }}>{treatment}</Text>
                 </View>
               </View>
-              <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.rightOfUseAsset != null ? formatCurrency(opt.rightOfUseAsset, currency) : "—"}</Text>
-              <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.leaseLiability != null ? formatCurrency(opt.leaseLiability, currency) : "—"}</Text>
+              <Text style={[styles.matrixCell, { fontSize: 9, color: isOwned ? colors.textMuted : colors.text }]}>{isOwned ? "n/a" : opt.rightOfUseAsset != null ? formatCurrency(opt.rightOfUseAsset, currency) : "—"}</Text>
+              <Text style={[styles.matrixCell, { fontSize: 9, color: isOwned ? colors.textMuted : colors.text }]}>{isOwned ? "n/a" : opt.leaseLiability != null ? formatCurrency(opt.leaseLiability, currency) : "—"}</Text>
               <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.taxShieldValue != null ? formatCurrency(opt.taxShieldValue, currency) : "—"}</Text>
             </View>
           );
