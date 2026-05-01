@@ -1303,7 +1303,7 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
 
   if (validGaps.length > 0) {
     parts.push('');
-    parts.push('💡 **To strengthen this analysis:**');
+    parts.push('**To strengthen this analysis:**');
     validGaps.slice(0, 3).forEach(g => {
       // Strip redundant prefix that duplicates the heading
       const cleaned = sanitiseAscii(g.resolution.replace(/^To strengthen this analysis,?\s*/i, ''));
