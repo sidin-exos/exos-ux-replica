@@ -545,12 +545,25 @@ const PDFReportDocument = ({
   // fallback collects Stage 4 prevention/process-change items into the legacy
   // Risk Register page, duplicating content and confusing the deliverable.
   const isS26 = envelope?.scenario_id === "S26" || /disruption\s*manag/i.test(scenarioTitle);
+  const isS20 = envelope?.scenario_id === "S20" || /category\s*risk/i.test(scenarioTitle);
   const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
   const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
   const s27SingleSourceFlows = Array.isArray(s27Specific?.concentration?.flows)
     ? s27Specific.concentration.flows.filter((f: any) => f?.single_source_flag).length
     : null;
+  // S20 cover KPIs (Category Risk Score / RAG / Decision / Top dimension)
+  const s20Specific = isS20 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s20Score = s20Specific?.category_risk_score?.overall;
+  const s20Rag = String(s20Specific?.category_risk_score?.rag ?? "").toUpperCase() || null;
+  const s20Decision = String(s20Specific?.category_risk_score?.decision ?? "").replace(/_/g, " ") || null;
+  const s20TopRisk = (() => {
+    const arr = Array.isArray(s20Specific?.score_breakdown) ? s20Specific.score_breakdown : [];
+    const sorted = arr
+      .filter((d: any) => d && typeof d.score === "number")
+      .sort((a: any, b: any) => Number(b.score) - Number(a.score));
+    return sorted[0]?.dimension ?? null;
+  })();
 
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
