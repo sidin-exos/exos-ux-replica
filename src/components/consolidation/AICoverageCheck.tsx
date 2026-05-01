@@ -229,14 +229,22 @@ function CoverageResults({ result }: { result: CoverageResult }) {
   const partialCount = result.sections.filter((s) => s.status === "partial").length;
   const missingCount = result.sections.filter((s) => s.status === "missing").length;
   const FINANCIAL_RE = /(cost|financial|savings|spend|price|budget|tco|roi|margin)/i;
-  const financialGap = result.sections.some(
-    (s) => s.status !== "covered" && FINANCIAL_RE.test(s.heading),
-  );
+  const financialSections = result.sections.filter((s) => FINANCIAL_RE.test(s.heading));
+  const financialCovered = financialSections.filter((s) => s.status === "covered").length;
+  const financialGaps = financialSections.filter((s) => s.status !== "covered").length;
+  // Cap only when there is meaningful financial weakness:
+  // ALL financial sections gappy → hard cap 55 (no quantified spend/savings at all)
+  // SOME financial gaps but at least one fully covered → softer cap 70
+  // No financial gaps → no cap.
   let predictedRigour = Math.max(
     20,
     Math.min(95, 95 - partialCount * 15 - missingCount * 30),
   );
-  if (financialGap) predictedRigour = Math.min(predictedRigour, 55);
+  if (financialSections.length > 0 && financialCovered === 0) {
+    predictedRigour = Math.min(predictedRigour, 55);
+  } else if (financialGaps > 0) {
+    predictedRigour = Math.min(predictedRigour, 70);
+  }
   const predictedBand =
     predictedRigour >= 80
       ? { label: "High (80+)", color: "text-emerald-600" }
