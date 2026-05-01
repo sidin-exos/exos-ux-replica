@@ -659,7 +659,11 @@ const PDFReportDocument = ({
           const sections = categorizeAnalysisSections(analysisLines);
           const blockColors = [c.destructive, c.accent3, c.accent2, c.primary, c.accent4];
           return sections.map((section, si) => {
-            if (section.type === "recommendations" || section.type === "risks") return null;
+            // For S27, retain risks-classified sections in Detailed Analysis —
+            // they hold the Black Swan Risk Map, Vulnerability Assessment, and
+            // Cascading Failure tables that are part of the promised deliverables.
+            if (section.type === "recommendations") return null;
+            if (!isS27 && section.type === "risks") return null;
             const blockColor = blockColors[si % blockColors.length];
             return (
               <View key={`section-${si}`} style={{ ...s.analysisBlock, borderLeftColor: blockColor }} wrap={false}>
