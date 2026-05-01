@@ -931,6 +931,12 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
     result.spendAnalysis = spendAnalysis;
   }
 
+  // ── S9 rfp-generator: rfpPackage from extracted_brief / tender_document / evaluation_matrix / clarifications / suggested_attachments
+  const rfpPackage = extractRfpPackage(ss);
+  if (rfpPackage) {
+    result.rfpPackage = rfpPackage;
+  }
+
 
   // ── Universal: kraljicQuadrant ─────────────────────────────────────────────
   // Reads scenario_specific.kraljic_position (S20, S1 and any scenario emitting it).
