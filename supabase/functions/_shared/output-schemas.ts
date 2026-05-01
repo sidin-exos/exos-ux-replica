@@ -91,8 +91,14 @@ export const GROUP_AI_INSTRUCTIONS: Record<string, string> = {
   A: `You are a deterministic financial calculation engine. Every numerical output must be derived from the user's inputs, not estimated. Where inputs are missing, return null for the affected field and add an entry to confidence_flags. Never invent financial figures.`,
   B: `You are a procurement document generation engine. Output structured, ready-to-use documents. Every section must be explicitly labelled. Mark any section where insufficient input was provided with [DATA NEEDED: description] rather than fabricating content.`,
   C: `You are a procurement risk and compliance auditor. Every identified issue must be explicitly referenced to the relevant regulatory standard or contractual clause. Never omit a risk. Use RAG status consistently.`,
-  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces, TCO, Make vs. Buy, RTO/RPO) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions. Quantify financial impact wherever possible. Flag inside information risks (MAR) when strategy documents contain unannounced business plans. When supplier and category spend data are available, populate concentration using the HHI formula: sum of (supplier_spend_share_pct)² per category.
+  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces, TCO, Make vs. Buy, RTO/RPO) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions. Quantify financial impact wherever possible. Flag inside information risks (MAR) when strategy documents contain unannounced business plans. When supplier and category spend data are available, populate concentration using the HHI formula: sum of (supplier_spend_share_pct)² per category.`,
+  E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
+};
 
+// Scenario-specific instruction addenda (loaded ONLY for the active scenario
+// to keep token budget tight). Add new entries keyed by S## code.
+export const SCENARIO_INSTRUCTION_ADDENDA: Record<string, string> = {
+  S21: `
 S21 Negotiation Preparation — SPECIFIC RULES:
 1. Populate batna with buyer_batna (specific best alternative identified), buyer_batna_value (quantified value where possible), supplier_batna_estimated, batna_strength_pct (0–100 integer reflecting how credible/ready the buyer's BATNA is), and batna_improvement_actions[] (2–4 concrete steps to strengthen BATNA — e.g. "Pre-qualify second alternative supplier", "Run sample pilot to validate quality").
 2. Populate zopa with buyer_walk_away (kept confidential and masked in shared exports), buyer_target, supplier_likely_floor, and zopa_exists (boolean — true only if a positive zone exists).
@@ -105,8 +111,17 @@ S21 Negotiation Preparation — SPECIFIC RULES:
 9. risk_register[]: REQUIRED. 3–5 negotiation risks. Each item: { "risk": "...", "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": "..." }.
 10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data.
 11. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.`,
-  E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
 };
+
+/** Return group instruction + only the active scenario's addendum (token-efficient). */
+export function getScenarioInstructions(group: string | null | undefined, scenarioId: string | null | undefined): string {
+  const base = group ? GROUP_AI_INSTRUCTIONS[group] || '' : '';
+  if (!scenarioId) return base;
+  const code = SCENARIO_ID_TO_CODE[scenarioId] || scenarioId;
+  const addendum = SCENARIO_INSTRUCTION_ADDENDA[code];
+  return addendum ? `${base}\n${addendum}` : base;
+}
+
 
 // ── Group Schemas ───────────────────────────────────────────────────
 // Full JSON schema templates from EXOS_AI_Output_Schema_v2.md Sections 3-7.
@@ -1029,65 +1044,44 @@ export function getScenarioSchema(group: string | null | undefined, scenarioId: 
 
 export const AI_PROMPT_CONTRACT = `
 CRITICAL OUTPUT INSTRUCTION:
-Your response MUST be a single valid JSON object. No prose before or after it.
-Do not use markdown code fences. Return only the raw JSON.
+Return a single valid JSON object. No prose, no markdown fences.
 
-You MUST use the following schema structure:
-- Universal envelope fields: schema_version, scenario_id, scenario_name, group, group_label,
-  confidence_level, low_confidence_watermark, confidence_flags, summary, executive_bullets,
-  data_gaps, recommendations, gdpr_flags, export_metadata, payload.
-- payload must contain the group-specific structure defined below.
-- Every defined field must be present. Use null for missing values — never omit a field.
-- Set schema_version to "2.0".
-- Set low_confidence_watermark to true if confidence_level is LOW.
-- Add an entry to data_gaps for every null field that is null due to missing user input,
-  EXCEPT for these optional fields which do not require a data_gaps entry when absent:
-  financial_model.working_capital (optional, populated only when payment terms provided).
-- data_gaps RULES (strict):
-  1. Maximum 3 entries. Pick the ones with the highest analytical impact.
-  2. Each entry MUST name a specific field from the user's input form (e.g. "annual_spend", "contract_end_date"), not generic labels like "Unknown field".
-  3. "impact" MUST describe the concrete analytical consequence (e.g. "Cannot calculate NPV without discount rate"), never "Impact not specified".
-  4. "resolution" MUST be a specific, actionable coaching tip (e.g. "Add your annual spend figure to unlock cost-per-unit calculations"), never "Provide missing data".
-  5. FORBIDDEN placeholder values: "Unknown field", "Impact not specified", "Provide missing data", "Not available", "N/A". If you cannot write a specific entry, omit it entirely.
-  6. Tone: helpful coaching, not punitive. Frame as "Add [specific field] to unlock [specific benefit]" rather than "Missing: [field]". Do NOT start resolutions with "To strengthen this analysis" — the UI already provides that heading.
-- Add an entry to gdpr_flags if any field you are about to write appears to contain
-  unanonymised personal data (real names, email addresses, phone numbers, salary amounts).
-  Set that field to null and explain in gdpr_flags instead.
-- recommendations RULES (strict):
-  1. Every entry MUST be a JSON object: { "priority": "...", "action": "...", "financial_impact": "..." | null, "next_scenario": "S##" | null }. Never emit plain strings.
-  2. priority MUST be one of: CRITICAL, HIGH, MEDIUM, LOW. Calibrate honestly — do not default everything to MEDIUM.
-     - CRITICAL = must act this week; failure causes contract loss, compliance breach, supply outage, or >10% margin hit.
-     - HIGH = act within 30 days; material savings/risk-reduction (>5% spend impact) or hard deadline within the quarter.
-     - MEDIUM = act this quarter; meaningful improvement but no immediate cliff.
-     - LOW = nice-to-have, opportunistic, or dependent on other actions completing first.
-  3. Aim for a realistic mix. A 4-item list should typically span at least two priority levels; flagging every item MEDIUM is a calibration failure.
-  4. action MUST be a specific imperative ("Issue RFP to 3 shortlisted vendors by 15 May"), not a generic theme.
-  5. financial_impact MUST be a quantified delta when the user provided spend/budget data ("~€120k annual saving" or "Avoids €40k late-payment penalty"); use null only when no numeric basis exists.
+ENVELOPE (required top-level keys): schema_version="2.0", scenario_id, scenario_name, group, group_label, confidence_level, low_confidence_watermark, summary, executive_bullets, recommendations, payload.
+OPTIONAL top-level keys (include ONLY if non-empty): confidence_flags, data_gaps, gdpr_flags, export_metadata.
 
-DASHBOARD-SUPPORTING FIELD RULES:
-- For S4 (Savings Calculation): you MUST populate both savings_breakdown and
-  savings_classification. Classify every savings figure into exactly one of hard, soft,
-  or avoided. Set baseline_verified=true only if a documented historical baseline was
-  provided — never for estimates. If the user has not specified a category, default to
-  soft and add a data_gaps[] entry requesting classification confirmation.
-- For any Group A scenario: populate financial_model.working_capital ONLY when the user
-  provides payment-terms data (DPO figures, NET terms, supplier payment schedules).
-  Compute working_capital_delta_eur = annual_spend × (target_dpo - current_dpo) / 365.
-  Flag late_payment_directive_risk=true for any supplier with payment_terms_days > 60
-  (EU Late Payment Directive 2011/7 statutory B2B limit).
-- For S20, S24, S25, S27: populate scenario_specific.concentration when supplier-to-
-  category spend data is available. Compute HHI per category as sum of
-  (supplier_spend_share_pct)^2. Interpret HHI:
-    <1500 = LOW (competitive)
-    1500-2500 = MODERATE
-    2500-5000 = HIGH
-    >5000 = EXTREME (monopolistic or near-sole-source)
-  Set single_source_flag=true for any supplier holding >70% of a single category's
-  spend. Use tokenised supplier_label references only — never legal entity names.
-  Use ISO 3166-1 alpha-2 country codes.
+PAYLOAD OMISSION RULES (token-efficiency):
+- Within payload (and any nested object), OMIT any leaf field whose value would be null, empty string, empty array, or empty object. Do NOT emit "field": null placeholders.
+- KEEP a field whenever you have a real value (number, non-empty string, non-empty array/object, or boolean).
+- KEEP arrays only when they contain at least one populated row.
+- Exceptions (always emit, even if empty): currency, scenario_id, scenario_name, group, group_label, schema_version, confidence_level, summary.
+- low_confidence_watermark = true if confidence_level == "LOW".
+
+DATA_GAPS (omit array entirely when empty; otherwise max 3 entries):
+- Each entry: { "field": "<exact form-field name>", "impact": "<concrete analytical consequence>", "resolution": "<specific actionable tip>" }.
+- FORBIDDEN values: "Unknown field", "Impact not specified", "Provide missing data", "Not available", "N/A". Omit the entry instead.
+- Tone: coaching ("Add X to unlock Y"), never punitive. Do NOT prefix with "To strengthen this analysis".
+
+GDPR_FLAGS: include only when real PII slipped in; otherwise omit. Set the offending field to nothing (omit) and document in gdpr_flags.
+
+RECOMMENDATIONS (always required, ≥1 entry):
+- Each entry: { "priority": "CRITICAL|HIGH|MEDIUM|LOW", "action": "<specific imperative>", "financial_impact": "<quantified delta>"|null, "next_scenario": "S##"|null }.
+- Calibrate priorities honestly:
+  - CRITICAL = act this week; contract loss / compliance breach / supply outage / >10% margin hit.
+  - HIGH = act within 30 days; >5% spend impact or hard quarterly deadline.
+  - MEDIUM = act this quarter; meaningful improvement, no cliff.
+  - LOW = nice-to-have / opportunistic / dependent.
+- Mix priorities — flagging every item MEDIUM is a calibration failure.
+- action = specific imperative ("Issue RFP to 3 vendors by 15 May"), not generic theme.
+- financial_impact = quantified € delta when spend/budget data exists; null only when no numeric basis.
+
+DASHBOARD-SUPPORTING FIELDS:
+- S4: populate savings_breakdown + savings_classification (hard|soft|avoided). baseline_verified=true only with documented baseline; default unspecified categories to "soft" with a data_gaps entry.
+- Group A: populate financial_model.working_capital ONLY when payment-terms data given. Compute working_capital_delta_eur = annual_spend × (target_dpo - current_dpo) / 365. Flag late_payment_directive_risk=true for payment_terms_days > 60 (EU 2011/7).
+- S20/S24/S25/S27: populate scenario_specific.concentration when supplier-spend data given. HHI = Σ(supplier_spend_share_pct)². Bands: <1500 LOW, 1500–2500 MODERATE, 2500–5000 HIGH, >5000 EXTREME. single_source_flag=true when one supplier holds >70% of a category. Use tokenised supplier_label, ISO-3166-1 alpha-2 country codes.
 
 GROUP INSTRUCTION AND SCHEMA:
 `;
+
 
 // ── Defensive JSON Parser ───────────────────────────────────────────
 

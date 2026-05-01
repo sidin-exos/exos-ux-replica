@@ -13,7 +13,7 @@ import { trackEvent, trackOnceEvent, trackDailyEvent } from "../_shared/track.ts
 import {
   SCENARIO_GROUP_REGISTRY, SCENARIO_ID_REGISTRY, GROUP_LABELS,
   GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
-  getScenarioSchema,
+  getScenarioSchema, getScenarioInstructions,
   parseAIResponse, buildMarkdownFromEnvelope,
   type ExosOutputParsed,
 } from "../_shared/output-schemas.ts";
@@ -106,7 +106,7 @@ At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION
 function buildSynthesizerPrompt(scenarioGroup: string | null, scenarioId: string | null): string {
   // Synthesizer uses structured JSON output via schema injection
   const schemaInjection = scenarioGroup
-    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + getScenarioSchema(scenarioGroup, scenarioId)
+    ? AI_PROMPT_CONTRACT + getScenarioInstructions(scenarioGroup, scenarioId) + '\n\n' + getScenarioSchema(scenarioGroup, scenarioId)
     : '';
 
   const sid = scenarioId ? SCENARIO_ID_REGISTRY[scenarioId] || scenarioId : 'unknown';
@@ -523,7 +523,7 @@ function buildServerGroundedPrompts(
 
   // Build schema injection (replaces legacy <dashboard-data> XML instructions)
   const schemaInjection = scenarioGroup
-    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + getScenarioSchema(scenarioGroup, scenarioType)
+    ? AI_PROMPT_CONTRACT + getScenarioInstructions(scenarioGroup, scenarioType) + '\n\n' + getScenarioSchema(scenarioGroup, scenarioType)
     : '';
 
   const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
@@ -728,17 +728,24 @@ serve(async (req) => {
 
     // Validate inputs
     const rawUserPrompt = requireString(body.userPrompt, "userPrompt", { minLength: 1, maxLength: 50000 })!;
+    // Per-scenario default model: rapid-response scenarios (S26 disruption,
+    // S17 risk-screen) use flash for ~50% cost cut and 2-3x faster latency
+    // — they don't benefit from pro's deeper reasoning.
+    const FLASH_DEFAULT_SCENARIOS = new Set(["disruption-management", "risk-screening"]);
+    const scenarioDefaultModel = (typeof body.scenarioType === "string" && FLASH_DEFAULT_SCENARIOS.has(body.scenarioType))
+      ? "gemini-3-flash-preview"
+      : "gemini-3.1-pro-preview";
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
     const rawGoogleModel = (requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-3.1-pro-preview").replace(/^google\//, "");
+      || scenarioDefaultModel).replace(/^google\//, "");
     // Server-side model whitelist — prevents cost amplification and model probing
     const ALLOWED_MODELS = [
       "gemini-3.1-pro-preview",
       "gemini-3-flash-preview",
       "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
     ];
-    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-3.1-pro-preview";
+    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : scenarioDefaultModel;
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     // Accept but ignore — always use Google AI Studio
@@ -1016,7 +1023,7 @@ serve(async (req) => {
       // Inject schema for structured output if scenario type is known
       const legacyGroup = scenarioType ? SCENARIO_GROUP_REGISTRY[scenarioType] : null;
       if (legacyGroup) {
-        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[legacyGroup] + '\n\n' + getScenarioSchema(legacyGroup, scenarioType);
+        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + getScenarioInstructions(legacyGroup, scenarioType) + '\n\n' + getScenarioSchema(legacyGroup, scenarioType);
       }
       userPrompt = attachedDocumentsXml
         ? `${anonymizedUserPrompt}\n\n${attachedDocumentsXml}`
