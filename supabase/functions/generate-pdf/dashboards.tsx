@@ -88,12 +88,16 @@ export const PDFCostWaterfall = ({ data, themeMode }: { data: CostWaterfallData;
       </View>
       <View style={styles.statsRow}>
         <View style={styles.statItem}><Text style={styles.statLabel}>Total Cost</Text><Text style={styles.statValue}>{totalAmount}</Text></View>
-        <View style={styles.statItem}><Text style={styles.statLabel}>Savings Opportunity</Text><Text style={[styles.statValue, { color: colors.primary }]}>{savingsOpportunity}</Text></View>
+        {hasSavings && (
+          <View style={styles.statItem}><Text style={styles.statLabel}>Savings Opportunity</Text><Text style={[styles.statValue, { color: colors.primary }]}>{savingsOpportunity}</Text></View>
+        )}
         <View style={styles.statItem}><Text style={styles.statLabel}>Target Margin</Text><Text style={styles.statValue}>5-7%</Text></View>
       </View>
       <View style={styles.legend}>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.primary }]} /><Text style={styles.legendText}>Cost Component</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>Savings / Reduction</Text></View>
+        {hasSavings && (
+          <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>Savings / Reduction</Text></View>
+        )}
       </View>
     </View>
   );
