@@ -66,8 +66,8 @@ export function AICoverageCheck({
   fileNames = [],
   sections,
   draftableFields,
-  title = "AI coverage check",
-  subtitle = "Score your context against the recommended data sections.",
+  title = "Input coverage check",
+  subtitle = "Are the required topics present in your input? (separate from analytical rigour, scored after the run.)",
 }: AICoverageCheckProps) {
   const [coverage, setCoverage] = useState<CoverageResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -152,7 +152,7 @@ export function AICoverageCheck({
             ) : (
               <>
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Check data quality
+                Check coverage
               </>
             )}
           </Button>
@@ -220,6 +220,23 @@ function CoverageResults({ result }: { result: CoverageResult }) {
       ? "text-amber-600"
       : "text-destructive";
 
+  // Predicted post-run "rigour" band: each amber section drops ~10 pts,
+  // each missing section drops ~25 pts from a baseline of 90/100.
+  const partialCount = result.sections.filter((s) => s.status === "partial").length;
+  const missingCount = result.sections.filter((s) => s.status === "missing").length;
+  const predictedRigour = Math.max(
+    20,
+    Math.min(95, 90 - partialCount * 10 - missingCount * 25),
+  );
+  const predictedBand =
+    predictedRigour >= 80
+      ? { label: "High (80+)", color: "text-emerald-600" }
+      : predictedRigour >= 60
+      ? { label: "Medium (60–79)", color: "text-amber-600" }
+      : { label: "Low (<60)", color: "text-destructive" };
+
+  const gaps = result.sections.filter((s) => s.status !== "covered");
+
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">
       <div className="flex items-center justify-between">
@@ -259,6 +276,35 @@ function CoverageResults({ result }: { result: CoverageResult }) {
           );
         })}
       </ul>
+
+      {/* Predictive rigour band — links coverage to the post-run rigour score */}
+      <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Predicted analytical rigour
+          </span>
+          <span className={`text-sm font-semibold ${predictedBand.color}`}>
+            {predictedBand.label}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Coverage measures whether topics are present. Rigour (scored after the
+          run) measures numerical precision and evidence depth.
+          {gaps.length > 0
+            ? ` Closing the ${gaps.length} gap${gaps.length > 1 ? "s" : ""} below typically lifts the rigour score by 10–25 points each.`
+            : " Your input looks complete — expect a high rigour score."}
+        </p>
+        {gaps.length > 0 && (
+          <ul className="mt-1 space-y-0.5">
+            {gaps.slice(0, 4).map((g, i) => (
+              <li key={i} className="text-xs text-foreground">
+                <span className="font-medium">{g.heading}:</span>{" "}
+                <span className="text-muted-foreground">add explicit numbers, sources, or calculated totals.</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
