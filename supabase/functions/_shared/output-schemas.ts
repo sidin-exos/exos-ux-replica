@@ -1249,10 +1249,21 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
             ? ` _(Target: ${stage.target_duration_days}d)_`
             : '';
         parts.push(`**${s.label}**${owner}${dur}`);
-        const actions: unknown[] = Array.isArray(stage.actions) ? stage.actions
+        let actions: unknown[] = Array.isArray(stage.actions) ? stage.actions
           : Array.isArray(stage.immediate_actions) ? stage.immediate_actions
           : Array.isArray(stage.recurrence_prevention_checklist) ? stage.recurrence_prevention_checklist
           : [];
+        // Stage 3 fallback: if AI emitted no actions[], derive procurement
+        // actions from the alternative_supply_options shortlist so the stage
+        // never renders as a header with no body content.
+        if (s.key === 'stage_3_recover' && actions.length === 0 && Array.isArray(stage.alternative_supply_options)) {
+          const opts = stage.alternative_supply_options as any[];
+          actions = opts.slice(0, 3).map((o) => {
+            const name = o.option_label ?? o.supplier_label ?? 'alternative supplier';
+            const lt = o.lead_time_days != null ? ` (lead time ${o.lead_time_days}d)` : '';
+            return `Fast-track qualification and emergency PO with ${name}${lt}.`;
+          });
+        }
         actions.slice(0, 6).forEach(a => {
           const t = sanitiseAscii(coerceToString(a).trim());
           if (t) parts.push(`- ${t}`);
