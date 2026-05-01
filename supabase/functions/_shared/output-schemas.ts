@@ -920,20 +920,28 @@ Speed of output is the value — prioritise completeness of all three deliverabl
     ${CONCENTRATION_SCHEMA_FRAGMENT}
   }
 }
-S27 AI guidance: financial impact modelling accuracy depends on the user providing RTO/RPO targets and recovery cost estimates — if absent, leave rto_rpo_analysis fields as null and flag in data_gaps[]. Never emit exact critical cash reserve amounts or specific banking / credit facility details — use liquidity tier references ("Tier 1 reserve: 3 months OPEX") instead.
+S27 AI guidance: financial impact modelling accuracy depends on the user providing RTO/RPO targets and recovery cost estimates — if these are absent BUT a monetary anchor exists (annual_spend, category_spend, revenue_exposed, contract_value, or any € / $ / £ figure in user inputs), you MUST DERIVE quantitative estimates rather than emit null. Never emit exact critical cash reserve amounts or specific banking / credit facility details — use liquidity tier references ("Tier 1 reserve: 3 months OPEX") instead.
 
-S27 DELIVERABLE COVERAGE — populate ALL of the following structures (these are the ten promised deliverables surfaced in the user-facing report):
-1. Black Swan Risk Map → supply_chain_nodes[] (5–10 entries with criticality + alternative_available).
-2. Scenario Simulation Results → impact_model.direct_impact_estimate + total_impact_estimate.
-3. Vulnerability Assessment → prioritised_vulnerabilities[] (3–6 ranked items, each tied to a node).
-4. Cascading Failure Analysis → impact_model.cascade_effects[] (3–6 entries with delay_days + revenue_at_risk).
-5. Early Warning Indicators → early_warning_indicators[] (4–8 measurable signals with thresholds).
-6. Response Playbook → response_playbook (all five phases populated, 2–5 actions each).
-7. Mitigation Roadmap → resilience_investments[] (4–8 prioritised investments).
+S27 COST DERIVATION RULES (D1) — when the user provides ANY monetary anchor (call it SPEND), you MUST populate the following with derived figures and add a "derived_from: <anchor>" note in roi_rationale / gap_commentary:
+  • impact_model.direct_impact_estimate → SPEND × disruption_duration_share (e.g. 30-day outage on annual SPEND ≈ SPEND × 30/365). Express as a € / $ / £ range.
+  • impact_model.total_impact_estimate → direct_impact + Σ cascade_effects.revenue_at_risk. Never leave null when SPEND is known.
+  • impact_model.cascade_effects[].revenue_at_risk → derive per-node share of SPEND scaled by criticality (SINGLE_POINT_OF_FAILURE = 60–100%, HIGH = 30–60%, MEDIUM = 10–30%, LOW = <10%) × delay_days/30.
+  • resilience_investments[].estimated_cost → benchmark to 1–8% of SPEND for tactical mitigations, 8–20% for structural redesigns; never null when SPEND is known.
+  • diversification_strategy.actions[].estimated_cost → 0.5–5% of category SPEND per dual-sourcing / qualification action.
+Only fall back to null + data_gaps[] when NO monetary anchor of any kind appears in user inputs.
+
+S27 DELIVERABLE COVERAGE — populate ALL of the following structures (these are the ten promised deliverables surfaced in the user-facing report). Items marked [MANDATORY] must NEVER be empty arrays — derive from scenario_type, supply_chain_nodes, and industry norms if user input is sparse:
+1. Black Swan Risk Map → supply_chain_nodes[] (5–10 entries with criticality + alternative_available). [MANDATORY]
+2. Scenario Simulation Results → impact_model.direct_impact_estimate + total_impact_estimate (apply D1 derivation when SPEND known).
+3. Vulnerability Assessment → prioritised_vulnerabilities[] (3–6 ranked items, each tied to a node). [MANDATORY]
+4. Cascading Failure Analysis → impact_model.cascade_effects[] (3–6 entries with delay_days + revenue_at_risk; apply D1 derivation).
+5. Early Warning Indicators → early_warning_indicators[] (4–8 measurable signals with thresholds, lead_time_days, owner_role). [MANDATORY — derive from scenario_type if user did not specify: e.g. PANDEMIC → WHO outbreak alerts, supplier absenteeism %, port throughput; CYBER_ATTACK → CVE feeds, anomalous auth attempts, SOC tickets; GEOPOLITICAL → sanctions watchlist, FX volatility, shipping insurance premia].
+6. Response Playbook → response_playbook (all five phases populated, 2–5 actions each). [MANDATORY]
+7. Mitigation Roadmap → resilience_investments[] (4–8 prioritised investments with estimated_cost via D1). [MANDATORY]
 8. Diversification Strategy → diversification_strategy.actions[] + concentration block.
-9. Investment Recommendation → resilience_investments[] (each with estimated_cost + risk_reduction_pct + roi_rationale).
-10. Monitoring Dashboard → monitoring_dashboard.kris[] (4–8 KRIs) + trigger_points[] (3–5 triggers).
-Emit null + a data_gaps[] entry for any field genuinely missing from user input — never omit the structural keys.
+9. Investment Recommendation → resilience_investments[] (each with estimated_cost + risk_reduction_pct + roi_rationale referencing the anchor used).
+10. Monitoring Dashboard → monitoring_dashboard.kris[] (4–8 KRIs with current_value, amber_threshold, red_threshold, owner_role, review_frequency) + trigger_points[] (3–5 triggers with automated_response + escalation_path). [MANDATORY — derive industry-standard KRIs from scenario_type if user did not specify].
+Emit null + a data_gaps[] entry ONLY for individual field values genuinely unknowable — never omit structural keys, and never return an empty array for [MANDATORY] deliverables.
 
 CONCENTRATION RULES (S20, S24, S25, S27):
 Populate concentration when supplier and category spend data is available. Calculate HHI per category as sum of (supplier_spend_share_pct)^2.
