@@ -206,7 +206,58 @@ export interface SpendAnalysisData {
   currency?: string;
 }
 
-// Wave 1+2 — re-exported from sentinel/types so dashboards have a single import surface.
+// ── S9 RFP Generator data ────────────────────────────────────────────────────
+export interface RfpPackageData {
+  extractedBrief: {
+    summary: string;
+    scopeType?: "GOODS" | "SERVICES" | "MIXED" | "WORKS" | null;
+    packageType: "RFP" | "RFI" | "RFQ";
+    volume?: string | null;
+    locations: string[];
+    annualBudgetEur?: number | null;
+    incumbentStatus?: string | null;
+    mandatoryCompliance: string[];
+    deadlines: {
+      rfpIssue?: string | null;
+      questionsDue?: string | null;
+      submissionDue?: string | null;
+      awardTarget?: string | null;
+      goLiveTarget?: string | null;
+    };
+  };
+  tenderDocument: {
+    type: "RFP" | "RFI" | "RFQ";
+    title: string;
+    sections: { heading: string; content: string; mandatory: boolean }[];
+  } | null;
+  evaluationMatrix: {
+    scoringScale: string;
+    criteria: {
+      name: string;
+      weightPct: number;
+      subCriteria: { name: string; weightPct: number; scoringGuidance?: string }[];
+    }[];
+    totalWeightCheck: number;
+    weightsBalanced: boolean;
+    minimumQualifyingScore?: number | null;
+  } | null;
+  clarifications: {
+    question: string;
+    whyItMatters: string;
+    severity: "HIGH" | "MEDIUM" | "LOW";
+    field?: string;
+  }[];
+  suggestedAttachments: {
+    name: string;
+    purpose: string;
+    templateAvailable: boolean;
+  }[];
+  deliverablesCoverage: {
+    delivered: number;
+    total: number;
+    missing: string[];
+  };
+}
 export type {
   ShouldCostGapData,
   SavingsRealizationFunnelData,
