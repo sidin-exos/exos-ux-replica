@@ -1262,8 +1262,16 @@ export const PDFIfrs16Impact = ({ data, themeMode }: { data: Ifrs16ImpactData; t
           <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Tax Shield</Text>
         </View>
         {options.map((opt, i) => {
-          const treatment = opt.onBalanceSheet === true ? "On B/S" : opt.onBalanceSheet === false ? "Off B/S" : "—";
-          const treatmentColor = opt.onBalanceSheet === true ? colors.warning : opt.onBalanceSheet === false ? colors.success : colors.textMuted;
+          // Distinguish owned/capitalised assets from true IFRS 16 leases.
+          // Owned (capex) = no lease liability and no right-of-use asset.
+          const hasLeaseFootprint = (opt.leaseLiability ?? 0) > 0 || (opt.rightOfUseAsset ?? 0) > 0;
+          const isOwned = opt.onBalanceSheet === true && !hasLeaseFootprint;
+          const treatment = isOwned
+            ? "Owned (cap.)"
+            : opt.onBalanceSheet === true ? "Lease (On B/S)" : opt.onBalanceSheet === false ? "Off B/S" : "—";
+          const treatmentColor = isOwned
+            ? colors.primary
+            : opt.onBalanceSheet === true ? colors.warning : opt.onBalanceSheet === false ? colors.success : colors.textMuted;
           return (
             <View key={i} style={[styles.matrixRow, i % 2 === 1 ? { backgroundColor: colors.surface } : {}]}>
               <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.3, flexDirection: "row", alignItems: "center" }]}>
