@@ -413,18 +413,37 @@ Client shall review each deliverable within 10 business days. Silence constitute
   }),
 
   // ===== 19. RISK MATRIX =====
-  // Fields: industryContext, riskRegister, matrixParameters
+  // Fields: industryContext, riskRegister (pipe-delimited 5+ rows), matrixParameters
   "risk-matrix": () => ({
     industryContext: getRandomIndustryContext(),
     riskRegister: randomChoice([
-      "Supplier: Supplier_Tech_01\n\nOperational risks:\n• They process sensitive patient data under HIPAA BAA. Cybersecurity posture: SOC2 Type 1 but no pen test in 18 months. Last site audit: 2 years ago.\n• They access our production network for remote equipment monitoring.\n\nCommercial risks:\n• Publicly traded, $2B revenue — financially stable. We represent 40% of their revenue in our region (mutual dependency). No active lawsuits. Insurance: comprehensive.",
-      "Supplier: Supplier_Data_01\n\nOperational risks:\n• No formal cybersecurity certification. Recent Glassdoor report about data handling concerns. Limited data access (PO and shipping only).\n• They subcontract 30% of work to unknown third party.\n\nCommercial risks:\n• Private company, limited financial visibility (~$50M revenue). We are small customer (~2% revenue). One minor employment lawsuit pending. Basic insurance only.",
-      "Supplier: Supplier_Cloud_01\n\nOperational risks:\n• They have admin access to our cloud infrastructure. SOC2 Type 2 certified, annual pen tests.\n• 30% of work subcontracted — third party's security posture unknown.\n\nCommercial risks:\n• Recently acquired by PE firm — financial restructuring ongoing. Cash flow concerns in industry press. We are 3rd largest client. Two active patent lawsuits. Insurance status unclear post-acquisition.",
+      "Risk Name | Category | Probability (H/M/L) | Impact (H/M/L) | Current Control | Risk Owner Role\n" +
+      "Cyber breach via supplier remote access | Operational | M | H | SOC2 Type 1 review, MFA enforced, quarterly access audit | CISO\n" +
+      "Single-source dependency on Supplier_Tech_01 | Strategic | M | H | Dual-source RFP underway, 60-day safety stock | Category Lead\n" +
+      "GDPR processor non-compliance | Compliance | L | H | Signed DPA, annual processor audit, BCR in place | DPO\n" +
+      "Supplier financial distress (covenant breach) | Financial | L | H | Quarterly D&B credit monitoring, parent guarantee | CFO Office\n" +
+      "Subcontractor quality drift (30% subcontracted) | Operational | M | M | Flow-down clauses, joint QBR, sample audits | Quality Manager\n" +
+      "Reputational exposure from supplier ESG incident | Reputational | L | M | EcoVadis annual rating, code of conduct sign-off | Sustainability Lead",
+
+      "Risk Name | Category | Probability (H/M/L) | Impact (H/M/L) | Current Control | Risk Owner Role\n" +
+      "Raw material price volatility (>15% swing) | Financial | H | M | Index-linked clause capped at CPI+2%, 6-month forward cover | Procurement Director\n" +
+      "Tier-2 logistics disruption (Red Sea exposure) | Operational | M | H | Dual-route contingency, 4-week buffer stock | Supply Chain Lead\n" +
+      "REACH/RoHS substance non-conformity | Compliance | L | H | Annual material declaration, third-party lab testing | Regulatory Affairs\n" +
+      "Key supplier acquired by competitor | Strategic | L | H | Change-of-control clause, 12-month exit assistance | Category Lead\n" +
+      "IP leakage during co-development | Strategic | M | M | NDA + IP assignment, segmented data rooms | Legal Counsel\n" +
+      "Labour dispute at primary plant | Operational | L | M | Approved alternate site qualified, monthly capacity check | Operations Manager",
+
+      "Risk Name | Category | Probability (H/M/L) | Impact (H/M/L) | Current Control | Risk Owner Role\n" +
+      "Cloud vendor lock-in (proprietary APIs) | Strategic | H | M | Abstraction layer in roadmap, exit plan documented | CTO\n" +
+      "Data residency breach (EU data leaving EEA) | Compliance | L | H | SCCs in place, EU-only region pinning, quarterly audit | DPO\n" +
+      "Service outage exceeding 99.9% SLA | Operational | M | H | Multi-AZ deployment, credits clause, runbook tested | SRE Lead\n" +
+      "PE-driven price escalation post-acquisition | Financial | M | M | 3-year price hold negotiated, benchmark clause | CFO Office\n" +
+      "Open-source licence contamination | Compliance | L | M | SBOM scan in CI, legal review on new components | Engineering Manager",
     ]),
     matrixParameters: randomChoice([
-      "• Risk categories to assess: cybersecurity, financial stability, operational dependency, legal/compliance, environmental\n• Scoring methodology: 5x5 matrix (likelihood x impact)\n• Appetite: conservative — flag anything above medium risk\n• Review frequency: quarterly",
-      "• Risk categories: data security, supply continuity, commercial stability, regulatory compliance\n• Scoring: 3x3 matrix (high/medium/low)\n• Appetite: moderate — accept medium risks with mitigation plan\n• Review frequency: bi-annually",
-      "",
+      "• Risk appetite: conservative — treat or transfer anything scoring ≥ Medium impact AND Medium probability\n• Target residual risk level: Low only for Compliance and Financial; Medium acceptable for Operational with documented mitigation\n• Review frequency: quarterly review by category, monthly for High-rated risks\n• Board escalation threshold: any risk reaching High impact × High probability, or any cumulative residual exposure > €2M",
+      "• Risk appetite: moderate — accept Medium risks with named owner and dated mitigation plan\n• Target residual risk: Medium acceptable across all categories except GDPR (Low only)\n• Review frequency: bi-annual full register, quarterly for top-10\n• Escalation threshold: any new High×High risk or any residual rating that increases two consecutive quarters",
+      "• Risk appetite: aggressive — only High×High requires active treatment\n• Target residual: Medium acceptable everywhere; High tolerated short-term with sunset clause\n• Review frequency: annual\n• Escalation threshold: residual financial impact > €5M or regulatory enforcement notice received",
     ]),
   }),
 
