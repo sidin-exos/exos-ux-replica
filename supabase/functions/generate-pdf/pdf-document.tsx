@@ -360,9 +360,17 @@ const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
   const sections: AnalysisSection[] = [];
   let current: AnalysisSection = { type: "general", title: "Analysis Overview", lines: [] };
   for (const rawLine of lines) {
+    // Never let markdown-table fragments masquerade as section headers — that
+    // bug caused every "MEDIUM" cell in S27's Black Swan Risk Map to spawn a
+    // bogus Risk Register card on page 8.
+    if (isTableLine(rawLine)) {
+      current.lines.push(rawLine);
+      continue;
+    }
     const hashMatch = rawLine.match(/^(#{1,4})\s*(.*)$/);
     const cleanLine = cleanMarkdown(rawLine);
     if (!cleanLine) continue;
+    if (isTableLine(cleanLine)) { current.lines.push(cleanLine); continue; }
     const isHeader = !!hashMatch || (cleanLine.endsWith(":") && cleanLine.length < 80) || (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."));
     if (isHeader) {
       if (current.lines.length > 0) sections.push(current);
