@@ -477,14 +477,18 @@ function mapRiskItem(r: any): RiskMatrixData['risks'][number] | null {
   const title =
     r.risk_description ?? r.label ?? r.risk ?? r.vulnerability ?? r.dimension ??
     r.name ?? r.title ?? r.description ?? r.factor ?? r.threat ?? r.hazard ??
-    r.issue ?? null;
+    r.issue ?? r.node_name ?? r.node ?? null;
   if (!title || !String(title).trim()) return null;
+  // S27 node shape: criticality (CRITICAL|HIGH|MEDIUM|LOW) + single_point_of_failure flag.
+  const isS27Node = r.node_type !== undefined || r.single_point_of_failure !== undefined || r.criticality !== undefined;
   const impactRaw =
     r.impact ?? r.severity ?? r.severity_if_triggered ?? r.consequence ??
-    r.business_impact ?? r.financial_impact_score ?? r.rag_status;
+    r.business_impact ?? r.financial_impact_score ?? r.rag_status ??
+    (isS27Node ? r.criticality : undefined);
   const probRaw =
     r.likelihood ?? r.probability ?? r.dependency_risk_score ??
-    r.supply_risk_level ?? r.frequency ?? r.rag_status;
+    r.supply_risk_level ?? r.frequency ?? r.rag_status ??
+    (isS27Node ? (r.single_point_of_failure ? 'high' : (r.alternative_available ? 'low' : 'medium')) : undefined);
 
   // Wave 3 enrichment: capture full risk-register payload for S18.
   const probNum = toScoreNum(r.probability ?? r.likelihood);
