@@ -810,7 +810,7 @@ const PDFReportDocument = ({
         }
         const finalList = [...promoted, ...available];
         if (finalList.length === 0) return null;
-        const pairs = chunkPairs(available);
+        const pairs = chunkPairs(finalList);
         return pairs.map((pair, pairIdx) => (
           <Page key={`dash-page-${pairIdx}`} size="A4" style={s.pageWithHeader}>
             <View style={s.headerBar} fixed>
