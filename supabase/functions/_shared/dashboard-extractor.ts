@@ -1293,6 +1293,25 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
         return best;
       })();
 
+      const waccRate = Number.isFinite(waccAssumed) ? waccAssumed / 100 : 0.085;
+      const deriveNpv = (o: any): number => {
+        const declared = Number(o?.npv);
+        if (Number.isFinite(declared) && declared !== 0) return declared;
+        // Fallback: present value of nominal costs over a 4-year default lifecycle
+        // minus residual value, treating costs as positive outflows. We return the
+        // signed NPV (negative because costs).
+        const capex = Math.abs(Number(o.total_capex_nominal ?? 0));
+        const opex = Math.abs(Number(o.total_opex_nominal ?? 0));
+        const residual = Math.abs(Number(o.residual_value ?? 0));
+        const years = 4;
+        // Treat capex as Year-0 outflow; spread opex evenly across years 1..N.
+        let pv = -capex;
+        const annualOpex = opex / years;
+        for (let y = 1; y <= years; y++) pv -= annualOpex / Math.pow(1 + waccRate, y);
+        if (residual > 0) pv += residual / Math.pow(1 + waccRate, years);
+        return pv;
+      };
+
       const npvOptions = validCapexOptions.map((o: any, i: number) => ({
         id: String(i),
         name: String(o.option_label),
@@ -1300,7 +1319,7 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
         capexNominal: Math.abs(Number(o.total_capex_nominal ?? 0)),
         opexNominal: Math.abs(Number(o.total_opex_nominal ?? 0)),
         residualValue: Math.abs(Number(o.residual_value ?? 0)),
-        npv: Number(o.npv ?? 0),
+        npv: deriveNpv(o),
         waccPct: Number.isFinite(Number(o.discount_rate_used_pct)) ? Number(o.discount_rate_used_pct) : (Number.isFinite(waccAssumed) ? waccAssumed : undefined),
         breakEvenYear: breakEvenYearFor(o),
         ifrsOnBalanceSheet: typeof o.ifrs16_on_balance_sheet === 'boolean' ? o.ifrs16_on_balance_sheet : null,
