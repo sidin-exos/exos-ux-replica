@@ -515,6 +515,8 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
     case "sow-analysis": return <PDFSOWAnalysis data={parsedData!.sowAnalysis!} themeMode={themeMode} />;
     case "negotiation-prep": return <PDFNegotiationPrep data={parsedData!.negotiationPrep!} themeMode={themeMode} />;
     case "data-quality": return <PDFDataQuality data={parsedData!.dataQuality!} themeMode={themeMode} />;
+    case "npv-waterfall": return <PDFNpvWaterfall data={parsedData!.npvWaterfall! as any} themeMode={themeMode} />;
+    case "ifrs16-impact": return <PDFIfrs16Impact data={parsedData!.ifrs16Impact! as any} themeMode={themeMode} />;
     default: return null;
   }
 };
