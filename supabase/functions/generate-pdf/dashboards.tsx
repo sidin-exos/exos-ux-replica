@@ -236,12 +236,24 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
         <View style={{ width: 20 }} />
         <Text style={{ fontSize: 8, color: colors.textMuted }}>Increases Cost →</Text>
       </View>
-      <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}>
-          <Text style={{ color: colors.primary, fontFamily: "Inter", fontWeight: 700 }}>Key Driver: </Text>
-          Volume and Price changes have the highest impact on total cost. Focus negotiation efforts on volume commitments and unit pricing.
-        </Text>
-      </View>
+      {(() => {
+        const ranked = variables
+          .map(v => ({ name: v.name, swing: Math.abs(v.low) + Math.abs(v.high) }))
+          .sort((a, b) => b.swing - a.swing);
+        const top = ranked.slice(0, 2).map(v => v.name).filter(Boolean);
+        if (top.length === 0) return null;
+        const driverText = top.length === 1
+          ? `${top[0]} has the largest impact on total cost.`
+          : `${top[0]} and ${top[1]} have the largest impact on total cost.`;
+        return (
+          <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
+            <Text style={{ fontSize: 9, color: colors.textMuted }}>
+              <Text style={{ color: colors.primary, fontFamily: "Inter", fontWeight: 700 }}>Key Driver: </Text>
+              {driverText} Focus mitigation and negotiation effort on these variables.
+            </Text>
+          </View>
+        );
+      })()}
       <View style={styles.legend}>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>Cost Reduction</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>Cost Increase</Text></View>
@@ -738,15 +750,16 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
   const styles = getPdfStyles(themeMode);
 
   const allScenarios = data.scenarios || [];
-  if (allScenarios.length === 0) {
-    return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Scenario Comparison: insufficient data</Text></View>;
-  }
-
   const criteria = data.radarData ? data.radarData.map(r => {
     const scores: Record<string, number> = {};
     for (const sc of allScenarios) { scores[sc.id] = typeof r[sc.id] === "number" ? (r[sc.id] as number) : 50; }
     return { name: r.metric as string, scores };
   }) : [];
+  // Hide entire card when there's nothing meaningful to show — avoids
+  // rendering an empty "Scenario Comparison" header with no rows.
+  if (allScenarios.length === 0 || criteria.length === 0) {
+    return null;
+  }
 
   const equalWeight = criteria.length > 0 ? Math.round(100 / criteria.length) : 20;
   const weightedScores: Record<string, number> = {};
