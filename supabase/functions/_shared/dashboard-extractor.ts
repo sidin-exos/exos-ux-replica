@@ -266,6 +266,8 @@ const RISK_ARRAY_KEYS = [
   'risk_dimensions', 'risk_factors', 'risk_list', 'key_risks', 'top_risks',
   'dependency_risks', 'prioritised_vulnerabilities', 'prioritized_vulnerabilities',
   'vulnerabilities', 'threats', 'hazards',
+  // S27 Black Swan — supply-chain nodes act as the risk register.
+  'supply_chain_nodes',
 ] as const;
 
 function collectRiskSource(payload: Record<string, any>, ss: Record<string, any>): any[] {
