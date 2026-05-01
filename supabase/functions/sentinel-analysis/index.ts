@@ -1177,6 +1177,17 @@ serve(async (req) => {
       const parsedEnvelope = parseAIResponse(finalContent);
       let responseContent = multiDeanon.restoredText;
       let deanonEnvelopeObj = parsedEnvelope;
+      // Defensive guard (mirrors single-cycle path): never leak raw/truncated
+      // JSON to the UI when parsing failed (e.g. Flash fallback truncation).
+      const looksLikeRawJsonMc = (s: string): boolean => {
+        const trimmed = s.trim();
+        return (trimmed.startsWith('{') && (trimmed.endsWith('}') || trimmed.length > 200))
+          || (trimmed.startsWith('```') && /```\s*json/i.test(trimmed));
+      };
+      if (!parsedEnvelope && looksLikeRawJsonMc(responseContent)) {
+        console.warn('[Sentinel] Multi-cycle returned unparseable JSON-like content — surfacing friendly fallback to UI');
+        responseContent = 'The analysis completed but the model returned an incomplete response (likely truncated by a fallback model). Please retry to regenerate.';
+      }
       if (['1.0','2.0'].includes(parsedEnvelope?.schema_version)) {
         // Deanonymize the envelope itself so structured data has real names.
         // Wrapped in try/catch because deanonymizeText does plain text replacement
