@@ -14,7 +14,7 @@ import {
   SCENARIO_GROUP_REGISTRY, SCENARIO_ID_REGISTRY, GROUP_LABELS,
   GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
   getScenarioSchema, getScenarioInstructions,
-  parseAIResponse, buildMarkdownFromEnvelope, pruneEmptyBranches,
+  parseAIResponse, buildMarkdownFromEnvelope, pruneEmptyBranches, synthesizeMissingContent,
   type ExosOutputParsed,
 } from "../_shared/output-schemas.ts";
 
@@ -1213,7 +1213,8 @@ serve(async (req) => {
           new SentryReporter("sentinel-analysis").captureException(e, { userId, tags: { stage: "envelope-deanon" } });
           deanonEnvelopeObj = parsedEnvelope;
         }
-        // Server-side null/empty pruning
+        // Server-side defensive synthesis (backfill empty tables) THEN prune.
+        deanonEnvelopeObj = synthesizeMissingContent(deanonEnvelopeObj);
         deanonEnvelopeObj = pruneEmptyBranches(deanonEnvelopeObj);
         responseContent = buildMarkdownFromEnvelope(deanonEnvelopeObj);
         // GDPR flag logging
@@ -1383,8 +1384,10 @@ serve(async (req) => {
             new SentryReporter("sentinel-analysis").captureException(e, { userId, tags: { stage: "envelope-deanon" } });
             deanonSingleEnvelope = singleParsedEnvelope;
           }
-          // Server-side null/empty pruning — models inconsistently emit `null`
+          // Server-side defensive synthesis THEN null/empty pruning — models
+          // inconsistently leave optional tables empty AND emit `null`
           // placeholders despite prompt instructions. Deterministic enforcement.
+          deanonSingleEnvelope = synthesizeMissingContent(deanonSingleEnvelope);
           deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
           responseContent = buildMarkdownFromEnvelope(deanonSingleEnvelope);
           if (deanonSingleEnvelope.gdpr_flags?.length > 0) {

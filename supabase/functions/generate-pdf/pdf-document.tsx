@@ -545,12 +545,25 @@ const PDFReportDocument = ({
   // fallback collects Stage 4 prevention/process-change items into the legacy
   // Risk Register page, duplicating content and confusing the deliverable.
   const isS26 = envelope?.scenario_id === "S26" || /disruption\s*manag/i.test(scenarioTitle);
+  const isS20 = envelope?.scenario_id === "S20" || /category\s*risk/i.test(scenarioTitle);
   const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
   const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
   const s27SingleSourceFlows = Array.isArray(s27Specific?.concentration?.flows)
     ? s27Specific.concentration.flows.filter((f: any) => f?.single_source_flag).length
     : null;
+  // S20 cover KPIs (Category Risk Score / RAG / Decision / Top dimension)
+  const s20Specific = isS20 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s20Score = s20Specific?.category_risk_score?.overall;
+  const s20Rag = String(s20Specific?.category_risk_score?.rag ?? "").toUpperCase() || null;
+  const s20Decision = String(s20Specific?.category_risk_score?.decision ?? "").replace(/_/g, " ") || null;
+  const s20TopRisk = (() => {
+    const arr = Array.isArray(s20Specific?.score_breakdown) ? s20Specific.score_breakdown : [];
+    const sorted = arr
+      .filter((d: any) => d && typeof d.score === "number")
+      .sort((a: any, b: any) => Number(b.score) - Number(a.score));
+    return sorted[0]?.dimension ?? null;
+  })();
 
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
@@ -658,6 +671,13 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RESILIENCE POSTURE</Text><Text style={{ ...s.kpiValue, color: kpiColor(s27ResiliencePosture === "RED" ? "High" : s27ResiliencePosture === "AMBER" ? "Medium" : s27ResiliencePosture === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s27ResiliencePosture ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RTO GAP</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s27RtoGap != null ? `${s27RtoGap}h` : "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>SINGLE-SOURCE FLOWS</Text><Text style={{ ...s.kpiValue, color: s27SingleSourceFlows && s27SingleSourceFlows > 0 ? c.destructive : c.success }}>{s27SingleSourceFlows != null ? String(s27SingleSourceFlows) : "—"}</Text></View>
+            </>
+          ) : isS20 ? (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>RISK SCORE</Text><Text style={{ ...s.kpiValue, color: kpiColor(s20Rag === "RED" ? "High" : s20Rag === "AMBER" ? "Medium" : s20Rag === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s20Score != null ? `${s20Score} / 100` : "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>RAG STATUS</Text><Text style={{ ...s.kpiValue, color: kpiColor(s20Rag === "RED" ? "High" : s20Rag === "AMBER" ? "Medium" : s20Rag === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s20Rag ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>DECISION</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s20Decision ?? "—"}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>TOP RISK DIMENSION</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s20TopRisk ?? "—"}</Text></View>
             </>
           ) : (
             <>
@@ -810,11 +830,11 @@ const PDFReportDocument = ({
         // D4: For S27 the Black Swan Risk Map (rendered inline in Detailed
         // Analysis) is the canonical risk view — suppress the legacy generic
         // Risk Register entirely to avoid duplication and table corruption.
-        const structuredRisks = (isS27 || isS26) ? [] : extractRiskRegisterItems(analysisResult);
+        const structuredRisks = (isS27 || isS26 || isS20) ? [] : extractRiskRegisterItems(analysisResult);
         const rawRiskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
         // Drop markdown-table fragments and instructional lines so each
         // remaining line is a real risk sentence, not a leaked table cell.
-        const riskLines = (isS27 || isS26) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
+        const riskLines = (isS27 || isS26 || isS20) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
         const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
         if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
