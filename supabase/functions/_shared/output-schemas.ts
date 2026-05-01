@@ -110,7 +110,8 @@ S21 Negotiation Preparation — SPECIFIC RULES:
 8. value_creation[]: REQUIRED. 2–4 win-win opportunities to expand the pie. Each item: { "opportunity": "...", "buyer_benefit": "...", "supplier_benefit": "..." }.
 9. risk_register[]: REQUIRED. 3–5 negotiation risks. Each item: { "risk": "...", "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": "..." }.
 10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data.
-11. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.`,
+11. ALL EIGHT WIZARD DELIVERABLES ARE MANDATORY: (1) leverage_analysis with non-empty buyer_leverage_factors[], supplier_leverage_factors[] and a non-template power_balance value; (2) batna with batna_strength_pct AND batna_improvement_actions[] (>=2); (3) risk_register[] (>=3); (4) opening_position + negotiation_sequence[] (>=4 steps); (5) counter_arguments[] (>=3); (6) walk_away_plan with all three sub-fields populated; (7) value_creation[] (>=2); (8) financial_outcome_range with numeric optimistic / realistic / pessimistic. An empty array or a literal "Conservative | Aggressive | Hybrid" placeholder is treated as a report failure.
+12. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.`,
 };
 
 /** Return group instruction + only the active scenario's addendum (token-efficient). */
