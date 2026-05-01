@@ -115,7 +115,11 @@ function getScenarioTypeLabel(scenarioName: string): string {
 
 const SP = {
   sectionGap: 28, subSectionGap: 20, afterHeadingLine: 14, afterSubHeading: 8,
-  betweenItems: 14, betweenParagraphs: 10, pageTopMargin: 52, pageSideMargin: 44, pageBottomMargin: 60,
+  // pageBottomMargin bumped from 60→72 so flowing prose never tucks under the
+  // fixed footer (bottom:16, ~14px tall, +6 padding-top, +1 border = ~37px),
+  // which previously caused the last paragraph to overprint the footer text
+  // and made the footer appear as a "cascading" repeated stripe in print preview.
+  betweenItems: 14, betweenParagraphs: 10, pageTopMargin: 52, pageSideMargin: 44, pageBottomMargin: 72,
 };
 
 function parseRiskSeverity(text: string): { severity: string; cleanText: string } {
