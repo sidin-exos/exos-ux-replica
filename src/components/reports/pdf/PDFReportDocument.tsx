@@ -1298,6 +1298,8 @@ const PDFReportDocument = ({
 
         <BrandedFooter dateStr={formattedDate} orgName={orgName} c={c} />
       </Page>
+        );
+      })()}
 
       {/* ── Analysis Parameters ── */}
       {hasParams && (
