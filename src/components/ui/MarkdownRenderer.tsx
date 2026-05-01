@@ -43,13 +43,13 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-2xl font-bold mt-8 mb-4 text-foreground font-display tracking-tight">{children}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mt-8 mb-4 text-foreground font-display tracking-tight">{children}</h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-semibold mt-8 mb-3 text-foreground font-display tracking-tight flex items-center gap-2 before:content-[''] before:w-1 before:h-5 before:bg-primary before:rounded-full">{children}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mt-10 mb-4 text-foreground font-display tracking-tight flex items-center gap-3 before:content-[''] before:w-1.5 before:h-7 before:bg-gradient-to-b before:from-primary before:to-accent before:rounded-full">{children}</h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-[13px] font-semibold mt-6 mb-2 text-muted-foreground font-display uppercase tracking-[0.08em]">{children}</h3>
+            <h3 className="text-xs font-semibold mt-6 mb-2 text-primary/80 font-display uppercase tracking-[0.12em]">{children}</h3>
           ),
           p: ({ children }) => (
             <p className="mb-4 leading-relaxed text-foreground/90">{children}</p>
@@ -117,12 +117,12 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             <li className="leading-relaxed">{children}</li>
           ),
           table: ({ children }) => (
-            <div className="my-6 overflow-x-auto rounded-lg border border-border/60 bg-card/40">
+            <div className="my-6 overflow-x-auto rounded-lg border border-border/60 bg-card/40 border-l-2 border-l-primary/40">
               <table className="w-full border-collapse text-[13px]">{children}</table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="border-b border-border/80">{children}</thead>
+            <thead className="border-b border-border/80 bg-primary/[0.04]">{children}</thead>
           ),
           tbody: ({ children }) => (
             <tbody className="[&>tr:nth-child(even)]:bg-muted/20">{children}</tbody>
@@ -131,7 +131,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             <tr className="border-b border-border/40 last:border-0 transition-colors hover:bg-muted/30">{children}</tr>
           ),
           th: ({ children }) => (
-            <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-[0.08em] text-primary/80">
               {children}
             </th>
           ),

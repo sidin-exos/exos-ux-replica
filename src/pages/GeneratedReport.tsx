@@ -289,14 +289,14 @@ const GeneratedReport = () => {
             className="lg:col-span-2 space-y-6"
           >
             {/* Executive Summary */}
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle className="font-display flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
+            <Card className="card-elevated border-t-2 border-t-primary/60">
+              <CardHeader className="bg-primary/[0.03] rounded-t-lg">
+                <CardTitle className="font-display text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+                  <Target className="w-6 h-6 text-primary" />
                   Executive Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <ul className="space-y-3">
                   {keyPoints.map((point, i) => (
                     <li key={i} className="flex items-start gap-3">
@@ -361,11 +361,14 @@ const GeneratedReport = () => {
             })()}
 
             {/* Full Analysis */}
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle className="font-display">Detailed Analysis</CardTitle>
+            <Card className="card-elevated border-t-2 border-t-accent/60">
+              <CardHeader className="bg-accent/[0.04] rounded-t-lg">
+                <CardTitle className="font-display text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+                  <BarChart3 className="w-6 h-6 text-accent" />
+                  Detailed Analysis
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="prose prose-sm max-w-none dark:prose-invert">
                   <MarkdownRenderer content={displayAnalysis} />
                 </div>
