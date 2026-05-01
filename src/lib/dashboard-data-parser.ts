@@ -206,6 +206,59 @@ export interface SpendAnalysisData {
   currency?: string;
 }
 
+// ── S9 RFP Generator data ────────────────────────────────────────────────────
+export interface RfpPackageData {
+  extractedBrief: {
+    summary: string;
+    scopeType?: "GOODS" | "SERVICES" | "MIXED" | "WORKS" | null;
+    packageType: "RFP" | "RFI" | "RFQ";
+    volume?: string | null;
+    locations: string[];
+    annualBudgetEur?: number | null;
+    incumbentStatus?: string | null;
+    mandatoryCompliance: string[];
+    deadlines: {
+      rfpIssue?: string | null;
+      questionsDue?: string | null;
+      submissionDue?: string | null;
+      awardTarget?: string | null;
+      goLiveTarget?: string | null;
+    };
+  };
+  tenderDocument: {
+    type: "RFP" | "RFI" | "RFQ";
+    title: string;
+    sections: { heading: string; content: string; mandatory: boolean }[];
+  } | null;
+  evaluationMatrix: {
+    scoringScale: string;
+    criteria: {
+      name: string;
+      weightPct: number;
+      subCriteria: { name: string; weightPct: number; scoringGuidance?: string }[];
+    }[];
+    totalWeightCheck: number;
+    weightsBalanced: boolean;
+    minimumQualifyingScore?: number | null;
+  } | null;
+  clarifications: {
+    question: string;
+    whyItMatters: string;
+    severity: "HIGH" | "MEDIUM" | "LOW";
+    field?: string;
+  }[];
+  suggestedAttachments: {
+    name: string;
+    purpose: string;
+    templateAvailable: boolean;
+  }[];
+  deliverablesCoverage: {
+    delivered: number;
+    total: number;
+    missing: string[];
+  };
+}
+
 // Wave 1+2 — re-exported from sentinel/types so dashboards have a single import surface.
 export type {
   ShouldCostGapData,
@@ -250,6 +303,7 @@ export interface DashboardData {
   workingCapitalDpo?: _WorkingCapitalData;
   supplierConcentrationMap?: _ConcentrationData;
   spendAnalysis?: SpendAnalysisData;
+  rfpPackage?: RfpPackageData;
 }
 
 // ============================================
@@ -279,6 +333,7 @@ const SNAKE_TO_CAMEL: Record<string, keyof DashboardData> = {
   working_capital_dpo: 'workingCapitalDpo',
   supplier_concentration_map: 'supplierConcentrationMap',
   spend_analysis: 'spendAnalysis',
+  rfp_package: 'rfpPackage',
 };
 
 const VALID_KEYS = new Set<string>(Object.values(SNAKE_TO_CAMEL));
@@ -701,6 +756,12 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   const spendAnalysis = extractSpendAnalysis(ss, payload.financial_model?.currency ?? 'EUR');
   if (spendAnalysis) {
     result.spendAnalysis = spendAnalysis;
+  }
+
+  // ── S9 rfp-generator: rfpPackage
+  const rfpPackage = extractRfpPackage(ss);
+  if (rfpPackage) {
+    result.rfpPackage = rfpPackage;
   }
 
 
@@ -1500,6 +1561,137 @@ function extractSpendAnalysis(ss: Record<string, any>, currency: string): SpendA
   }
 
   return { taxonomy, tailSpend, vendorConsolidation, quickWins, savingsSummary, currency };
+}
+
+/**
+ * Build rfpPackage dashboard data from S9 scenario_specific.
+ * Mirrors supabase/functions/_shared/dashboard-extractor.ts::extractRfpPackage.
+ */
+function extractRfpPackage(ss: Record<string, any>): RfpPackageData | null {
+  const eb = ss?.extracted_brief && typeof ss.extracted_brief === 'object' ? ss.extracted_brief : null;
+  const td = ss?.tender_document && typeof ss.tender_document === 'object' ? ss.tender_document : null;
+  const em = ss?.evaluation_matrix && typeof ss.evaluation_matrix === 'object' ? ss.evaluation_matrix : null;
+  const clarRaw: any[] = Array.isArray(ss?.clarifications) ? ss.clarifications : [];
+  const attRaw: any[] = Array.isArray(ss?.suggested_attachments) ? ss.suggested_attachments : [];
+
+  if (!eb && !td && !em && clarRaw.length === 0 && attRaw.length === 0) return null;
+
+  const PKG_TYPES = ['RFP', 'RFI', 'RFQ'] as const;
+  const SCOPE_TYPES = ['GOODS', 'SERVICES', 'MIXED', 'WORKS'] as const;
+  const SEV = ['HIGH', 'MEDIUM', 'LOW'] as const;
+  const pickEnum = <T extends readonly string[]>(v: any, allowed: T, fallback: T[number]): T[number] => {
+    const u = String(v ?? '').toUpperCase();
+    return (allowed as readonly string[]).includes(u) ? (u as T[number]) : fallback;
+  };
+
+  const extractedBrief: RfpPackageData['extractedBrief'] = {
+    summary: String(eb?.summary ?? '').trim(),
+    scopeType: eb?.scope_type ? pickEnum(eb.scope_type, SCOPE_TYPES, 'SERVICES') : null,
+    packageType: pickEnum(eb?.package_type ?? td?.type, PKG_TYPES, 'RFP'),
+    volume: eb?.volume ? String(eb.volume) : null,
+    locations: Array.isArray(eb?.locations) ? eb.locations.map((x: any) => String(x)).filter(Boolean) : [],
+    annualBudgetEur: eb?.annual_budget_eur != null ? Number(parseAmount(eb.annual_budget_eur) ?? 0) || null : null,
+    incumbentStatus: eb?.incumbent_status ? String(eb.incumbent_status) : null,
+    mandatoryCompliance: Array.isArray(eb?.mandatory_compliance)
+      ? eb.mandatory_compliance.map((x: any) => String(x)).filter(Boolean)
+      : [],
+    deadlines: {
+      rfpIssue: eb?.deadlines?.rfp_issue ? String(eb.deadlines.rfp_issue) : null,
+      questionsDue: eb?.deadlines?.questions_due ? String(eb.deadlines.questions_due) : null,
+      submissionDue: eb?.deadlines?.submission_due ? String(eb.deadlines.submission_due) : null,
+      awardTarget: eb?.deadlines?.award_target ? String(eb.deadlines.award_target) : null,
+      goLiveTarget: eb?.deadlines?.go_live_target ? String(eb.deadlines.go_live_target) : null,
+    },
+  };
+
+  const tenderDocument: RfpPackageData['tenderDocument'] = td && Array.isArray(td.sections) && td.sections.length > 0
+    ? {
+        type: pickEnum(td.type, PKG_TYPES, extractedBrief.packageType),
+        title: String(td.title ?? `${extractedBrief.packageType} — Tender Package`),
+        sections: td.sections
+          .map((s: any) => ({
+            heading: String(s?.heading ?? '').trim(),
+            content: String(s?.content ?? '').trim(),
+            mandatory: Boolean(s?.mandatory),
+          }))
+          .filter((s: any) => s.heading && s.content),
+      }
+    : null;
+
+  let evaluationMatrix: RfpPackageData['evaluationMatrix'] = null;
+  if (em && Array.isArray(em.criteria) && em.criteria.length > 0) {
+    const criteria = em.criteria
+      .map((c: any) => {
+        const w = Number(parseAmount(c?.weight_pct) ?? 0);
+        if (!c?.name || w <= 0) return null;
+        return {
+          name: String(c.name),
+          weightPct: w,
+          subCriteria: Array.isArray(c?.sub_criteria)
+            ? c.sub_criteria
+                .map((sc: any) => ({
+                  name: String(sc?.name ?? '').trim(),
+                  weightPct: Number(parseAmount(sc?.weight_pct) ?? 0),
+                  scoringGuidance: sc?.scoring_guidance ? String(sc.scoring_guidance) : undefined,
+                }))
+                .filter((sc: any) => sc.name)
+            : [],
+        };
+      })
+      .filter((c: any): c is NonNullable<typeof c> => c !== null);
+    const totalWeight = criteria.reduce((sum: number, c: any) => sum + c.weightPct, 0);
+    evaluationMatrix = {
+      scoringScale: String(em?.scoring_scale ?? '1-5'),
+      criteria,
+      totalWeightCheck: totalWeight,
+      weightsBalanced: Math.abs(totalWeight - 100) <= 1,
+      minimumQualifyingScore: em?.minimum_qualifying_score != null
+        ? Number(parseAmount(em.minimum_qualifying_score) ?? 0)
+        : null,
+    };
+  }
+
+  const clarifications: RfpPackageData['clarifications'] = clarRaw
+    .map((c: any) => {
+      if (!c?.question) return null;
+      return {
+        question: String(c.question).trim(),
+        whyItMatters: String(c?.why_it_matters ?? '').trim(),
+        severity: pickEnum(c?.severity, SEV, 'MEDIUM'),
+        field: c?.field ? String(c.field) : undefined,
+      };
+    })
+    .filter((x: any): x is NonNullable<typeof x> => x !== null);
+
+  const suggestedAttachments: RfpPackageData['suggestedAttachments'] = attRaw
+    .map((a: any) => {
+      if (!a?.name) return null;
+      return {
+        name: String(a.name).trim(),
+        purpose: String(a?.purpose ?? '').trim(),
+        templateAvailable: Boolean(a?.template_available),
+      };
+    })
+    .filter((x: any): x is NonNullable<typeof x> => x !== null);
+
+  const deliveredFlags: Record<string, boolean> = {
+    'Extracted Brief Summary': Boolean(extractedBrief.summary),
+    'Tender Document(s)': Boolean(tenderDocument && tenderDocument.sections.length >= 3),
+    'Evaluation Matrix': Boolean(evaluationMatrix && evaluationMatrix.criteria.length > 0),
+    'Clarifications & Recommendations': clarifications.length > 0,
+    'Suggested Attachments & Templates': suggestedAttachments.length > 0,
+  };
+  const missing = Object.entries(deliveredFlags).filter(([, ok]) => !ok).map(([k]) => k);
+  const delivered = Object.values(deliveredFlags).filter(Boolean).length;
+
+  return {
+    extractedBrief,
+    tenderDocument,
+    evaluationMatrix,
+    clarifications,
+    suggestedAttachments,
+    deliverablesCoverage: { delivered, total: Object.keys(deliveredFlags).length, missing },
+  };
 }
 
 import type {

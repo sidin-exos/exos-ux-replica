@@ -403,7 +403,64 @@ Every numeric field must be derived from user inputs. Use null + confidence_flag
   }
 }
 Populate scenario_specific based on the scenario (e.g. evaluation_criteria for RFP, metrics for SLA, requirements for BRD, scorecard for Supplier Performance, phases for Project Planning, etc.).
-Mark incomplete sections with [DATA NEEDED: description] in the content. Never fabricate document sections.`,
+Mark incomplete sections with [DATA NEEDED: description] in the content. Never fabricate document sections.
+
+S9 RFP Generator — scenario_specific MUST contain ALL of the following structures (the five promised deliverables: Extracted Brief, Tender Document, Evaluation Matrix, Clarifications, Suggested Attachments):
+{
+  "extracted_brief": {
+    "summary": "string — 2–3 sentences capturing the essence of the requirement",
+    "scope_type": "GOODS | SERVICES | MIXED | WORKS",
+    "package_type": "RFP | RFI | RFQ",
+    "volume": "string | null — e.g. '450 users across 3 offices', '12,000 units/year'",
+    "locations": ["string"],
+    "annual_budget_eur": null,
+    "incumbent_status": "string | null — e.g. 'In-house team of 6', 'Currently with [SUPPLIER_A]', 'No incumbent'",
+    "mandatory_compliance": ["string — e.g. 'ISO 27001', 'GDPR', 'SOC2 Type 2'"],
+    "deadlines": {
+      "rfp_issue": "string | null",
+      "questions_due": "string | null",
+      "submission_due": "string | null",
+      "award_target": "string | null",
+      "go_live_target": "string | null"
+    }
+  },
+  "tender_document": {
+    "type": "RFP | RFI | RFQ",
+    "title": "string",
+    "sections": [
+      { "heading": "string — e.g. 'Scope of Services', 'SLA Requirements', 'Pricing Schedule', 'Terms & Conditions'", "content": "string — full body text, not bullets", "mandatory": true | false }
+    ]
+  },
+  "evaluation_matrix": {
+    "scoring_scale": "1-5 | 1-10 | 0-100",
+    "criteria": [
+      {
+        "name": "string — e.g. 'Quality', 'Price', 'Sustainability', 'References'",
+        "weight_pct": 0-100,
+        "sub_criteria": [
+          { "name": "string", "weight_pct": 0-100, "scoring_guidance": "string — what earns max score" }
+        ]
+      }
+    ],
+    "total_weight_check": 100,
+    "minimum_qualifying_score": null
+  },
+  "clarifications": [
+    { "question": "string — what the buyer must clarify before issuing", "why_it_matters": "string — risk if unresolved", "severity": "HIGH | MEDIUM | LOW", "field": "string — which input field is incomplete" }
+  ],
+  "suggested_attachments": [
+    { "name": "string — e.g. 'Pricing Schedule Template', 'Supplier Questionnaire', 'NDA Template', 'Reference Form'", "purpose": "string", "template_available": true | false }
+  ]
+}
+S9 AI guidance — MANDATORY rules:
+- extracted_brief MUST be populated by parsing the user's raw_brief verbatim. Do NOT invent volume/locations/budget — if absent, use null and add to clarifications[] with severity HIGH.
+- tender_document.sections MUST contain at least 6 sections covering: Background & Context, Scope, Mandatory Requirements (compliance), Service Levels / Deliverables, Pricing Structure, Evaluation Process, Timeline, Terms & Conditions. Do not output single-line bullets — each section.content is a buyer-ready paragraph (3–8 sentences).
+- evaluation_matrix.criteria[].weight_pct MUST sum to exactly 100. If the user supplied weighting in compliance_evaluation, use it verbatim. Otherwise propose a defensible split based on package_type (RFI = quality-heavy, RFQ = price-heavy, RFP = balanced) and flag confidence: "LOW" in a clarification.
+- evaluation_matrix.total_weight_check MUST equal sum(criteria[].weight_pct). Server reconciles.
+- clarifications[] MUST contain at least one entry per missing/null field in extracted_brief.
+- suggested_attachments[] MUST contain 3–6 entries appropriate to package_type.
+- Use tokenised supplier labels ([SUPPLIER_A], etc.) — never emit legal entity names. NEVER tokenise compliance standards (ISO, GDPR, SOC2, NIS2, TUPE, HIPAA, PCI-DSS) — these are framework names, not PII.
+- Recommendations[] in the envelope MUST use a separate concise title (≤8 words) and body — do NOT prefix titles with "[High]" / "[Medium]"; severity belongs in the structured priority field.`,
 
   C: `GROUP C PAYLOAD SCHEMA (Reliability & Compliance — S16–S20):
 {
