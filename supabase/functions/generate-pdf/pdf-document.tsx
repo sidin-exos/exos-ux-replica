@@ -743,6 +743,23 @@ const PDFReportDocument = ({
                       const rows = run.map(parseTableRow).filter((r): r is string[] => r !== null);
                       if (rows.length === 0) continue;
                       const [header, ...body] = rows;
+                      // Normalise empty / placeholder / "€0" cells to "Not provided"
+                      // so impact tables no longer render as a wall of "€0" when
+                      // the user didn't supply a monetary anchor.
+                      const isEmptyCell = (v: string): boolean => {
+                        const t = (v ?? "").trim();
+                        if (!t || t === "-" || t === "—" || /^n\/?a$/i.test(t) || /^null$/i.test(t)) return true;
+                        // Pure-zero monetary or numeric: €0, $0, 0, 0.00, 0%, €0.00
+                        if (/^[€$£]?\s*0+(?:[.,]0+)?\s*%?$/.test(t)) return true;
+                        return false;
+                      };
+                      const displayCell = (v: string): string => isEmptyCell(v) ? "Not provided" : v;
+                      // If every body row has every non-label cell empty, skip the
+                      // table entirely — it has no information to convey.
+                      const hasAnyData = body.some(row =>
+                        row.slice(1).some(c => !isEmptyCell(c))
+                      );
+                      if (!hasAnyData) continue;
                       out.push(
                         <View key={`tbl-${si}-${i}`} style={s.mdTable} wrap={false}>
                           <View style={s.mdTableHeaderRow}>
@@ -754,11 +771,18 @@ const PDFReportDocument = ({
                           </View>
                           {body.map((row, ri) => (
                             <View key={`r-${ri}`} style={ri % 2 === 1 ? s.mdTableRowAlt : s.mdTableRow}>
-                              {Array.from({ length: header.length }).map((_, ci) => (
-                                <View key={`c-${ri}-${ci}`} style={ci === header.length - 1 ? s.mdTableCellLast : s.mdTableCell}>
-                                  <Text style={s.mdTableCellText}>{row[ci] ?? ""}</Text>
-                                </View>
-                              ))}
+                              {Array.from({ length: header.length }).map((_, ci) => {
+                                const raw = row[ci] ?? "";
+                                // First column is the row label — leave as-is;
+                                // only normalise data columns.
+                                const text = ci === 0 ? raw : displayCell(raw);
+                                const muted = ci !== 0 && isEmptyCell(raw);
+                                return (
+                                  <View key={`c-${ri}-${ci}`} style={ci === header.length - 1 ? s.mdTableCellLast : s.mdTableCell}>
+                                    <Text style={muted ? { ...s.mdTableCellText, color: c.textMuted, fontStyle: "italic" } : s.mdTableCellText}>{text}</Text>
+                                  </View>
+                                );
+                              })}
                             </View>
                           ))}
                         </View>
