@@ -1194,6 +1194,31 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                     </h3>
                   </div>
 
+                  {deepAnalysisResult?.failureReason && (
+                    <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-4 flex items-start gap-3">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm text-destructive mb-1">
+                          {deepAnalysisResult.failureReason === 'json_parse_failed'
+                            ? 'AI response was incomplete'
+                            : deepAnalysisResult.failureReason === 'incomplete_response'
+                              ? 'Response missing key sections'
+                              : 'Partial response received'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          The fallback model returned a truncated or unparseable response. Regenerating usually resolves this.
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={handleDeepAnalysis}
+                        disabled={isDeepAnalysisRunning}
+                      >
+                        Regenerate
+                      </Button>
+                    </div>
+                  )}
+
                   {analysisResult ? (
                     <div className="bg-card rounded-lg p-4 border border-border max-h-[500px] overflow-y-auto">
                       <MarkdownRenderer content={analysisResult} />
