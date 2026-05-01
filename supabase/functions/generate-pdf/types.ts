@@ -26,7 +26,9 @@ export type DashboardType =
   | "supplier-scorecard"
   | "sow-analysis"
   | "negotiation-prep"
-  | "data-quality";
+  | "data-quality"
+  | "npv-waterfall"
+  | "ifrs16-impact";
 
 export interface DashboardConfig {
   id: DashboardType;
@@ -48,6 +50,8 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
   "sow-analysis": { id: "sow-analysis", name: "SOW Analysis" },
   "negotiation-prep": { id: "negotiation-prep", name: "Negotiation Prep" },
   "data-quality": { id: "data-quality", name: "Data Quality" },
+  "npv-waterfall": { id: "npv-waterfall", name: "NPV Waterfall" },
+  "ifrs16-impact": { id: "ifrs16-impact", name: "IFRS 16 Impact" },
 };
 
 // ── Per-dashboard data interfaces ──
