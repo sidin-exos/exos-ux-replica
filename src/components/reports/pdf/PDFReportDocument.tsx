@@ -980,16 +980,28 @@ const PDFReportDocument = ({
 
   // Finding titles extracted from first sentence
   const parseFindingTitle = (text: string): { title: string; body: string } => {
-    const stripped = stripMarkdown(text);
-    const colonIdx = stripped.indexOf(":");
+    const stripped = stripMarkdown(text).trim();
+    // Strip leading severity tag like "[High]", "[Critical]" — keep it on the title only
+    const tagMatch = stripped.match(/^(\[[^\]]+\])\s*(.*)$/);
+    const tag = tagMatch ? tagMatch[1] + " " : "";
+    const rest = tagMatch ? tagMatch[2] : stripped;
+
+    const colonIdx = rest.indexOf(":");
     if (colonIdx > 0 && colonIdx < 60) {
-      return { title: stripped.slice(0, colonIdx).trim(), body: stripped.slice(colonIdx + 1).trim() };
+      return { title: tag + rest.slice(0, colonIdx).trim(), body: rest.slice(colonIdx + 1).trim() };
     }
-    const words = stripped.split(" ");
-    if (words.length > 6) {
-      return { title: words.slice(0, 4).join(" "), body: stripped };
+    // Short line — render as title only, no body (prevents duplicate stuttered output)
+    const words = rest.split(/\s+/);
+    if (words.length <= 14) {
+      return { title: tag + rest, body: "" };
     }
-    return { title: stripped, body: "" };
+    // Long line — split at first sentence end (. or ?) within the first ~80 chars
+    const sentenceMatch = rest.match(/^(.{20,90}?[.?!])\s+(.+)$/);
+    if (sentenceMatch) {
+      return { title: tag + sentenceMatch[1].replace(/[.?!]$/, ""), body: sentenceMatch[2] };
+    }
+    // Fallback: first 8 words as title, remainder as body
+    return { title: tag + words.slice(0, 8).join(" "), body: words.slice(8).join(" ") };
   };
 
   const findingColors = [c.accent1, c.accent2, c.accent4];
