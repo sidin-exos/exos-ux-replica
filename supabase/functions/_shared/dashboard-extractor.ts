@@ -1337,17 +1337,43 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
         };
       }
 
+      // Try to extract corporate tax rate from any narrative the AI captured
+      // (e.g. "Corporate tax rate: 19%"). Falls back to a 25% OECD-average
+      // default so leases get a defensible non-zero shield instead of "—".
+      const taxRateFromNarrative = (() => {
+        const haystack = JSON.stringify(payload?.financial_model ?? {}) + ' ' + JSON.stringify(ss?.cfo_recommendation ?? {});
+        const m = haystack.match(/(?:corporate\s+)?tax(?:\s+rate)?\s*[:=]?\s*(\d{1,2}(?:\.\d+)?)\s*%/i);
+        return m ? Math.min(45, Math.max(5, Number(m[1]))) / 100 : null;
+      })();
+      const defaultTaxRate = taxRateFromNarrative ?? 0.25;
+
       const ifrsOptions = validCapexOptions.map((o: any, i: number) => {
         const isOpex = /opex|lease|subscription|rent/i.test(String(o.option_label));
         const onBS = typeof o.ifrs16_on_balance_sheet === 'boolean' ? o.ifrs16_on_balance_sheet : null;
+        const opexNominal = Math.abs(Number(o.total_opex_nominal ?? 0));
+        const capexNominal = Math.abs(Number(o.total_capex_nominal ?? 0));
+        // Tax shield derivation when AI omitted a value:
+        //  • Lease (OPEX): payments are fully deductible → opexNominal × taxRate
+        //  • Owned (CAPEX): depreciation tax shield → capexNominal × taxRate
+        //    (residual value is not depreciated, so subtract it when present)
+        const declaredShield = Number(o.tax_shield_value);
+        let derivedShield: number | null = null;
+        if (Number.isFinite(declaredShield) && declaredShield > 0) {
+          derivedShield = declaredShield;
+        } else if (isOpex && opexNominal > 0) {
+          derivedShield = Math.round(opexNominal * defaultTaxRate);
+        } else if (!isOpex && capexNominal > 0) {
+          const depreciable = Math.max(0, capexNominal - Math.abs(Number(o.residual_value ?? 0)));
+          derivedShield = Math.round(depreciable * defaultTaxRate);
+        }
         return {
           id: String(i),
           name: String(o.option_label),
           color: TCO_COLORS[i % TCO_COLORS.length],
           onBalanceSheet: onBS,
-          rightOfUseAsset: Number.isFinite(Number(o.right_of_use_asset)) ? Number(o.right_of_use_asset) : (isOpex && onBS ? Math.abs(Number(o.total_opex_nominal ?? 0)) || null : null),
+          rightOfUseAsset: Number.isFinite(Number(o.right_of_use_asset)) ? Number(o.right_of_use_asset) : (isOpex && onBS ? opexNominal || null : null),
           leaseLiability: Number.isFinite(Number(o.lease_liability)) ? Number(o.lease_liability) : null,
-          taxShieldValue: Number.isFinite(Number(o.tax_shield_value)) ? Number(o.tax_shield_value) : null,
+          taxShieldValue: derivedShield,
           plTreatment: typeof o.pl_treatment === 'string' ? o.pl_treatment : (isOpex ? (onBS ? 'Depreciation of right-of-use asset + interest on lease liability' : 'Operating lease expense (off balance sheet)') : 'Depreciation of owned asset + maintenance opex'),
           balanceSheetImpact: typeof o.balance_sheet_impact === 'string' ? o.balance_sheet_impact : (onBS === true ? 'On balance sheet — recognise right-of-use asset and lease liability' : onBS === false ? 'Off balance sheet — no asset or liability recognised' : null),
         };
