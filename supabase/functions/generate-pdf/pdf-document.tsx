@@ -791,14 +791,25 @@ const PDFReportDocument = ({
       </Page>
 
       {/* Dashboard pages */}
-      {hasDashboards && (() => {
+      {(() => {
         // Filter dashboards down to those that actually have data, so empty placeholder
         // pages and cards no longer appear in the PDF.
         const available = selectedDashboards.filter((d) => {
           const key = dashboardDataKey[d as string];
           return key && parsedData && parsedData[key];
         });
-        if (available.length === 0) return null;
+        // Always promote scenario-specific widgets when their payloads are present,
+        // even if the user's draft predates them being in the dashboard mapping.
+        // Prevents the S3 case where NPV Waterfall + IFRS 16 silently disappeared.
+        const promoted: DashboardType[] = [];
+        if (parsedData?.npvWaterfall && !available.includes("npv-waterfall" as DashboardType)) {
+          promoted.push("npv-waterfall" as DashboardType);
+        }
+        if (parsedData?.ifrs16Impact && !available.includes("ifrs16-impact" as DashboardType)) {
+          promoted.push("ifrs16-impact" as DashboardType);
+        }
+        const finalList = [...promoted, ...available];
+        if (finalList.length === 0) return null;
         const pairs = chunkPairs(available);
         return pairs.map((pair, pairIdx) => (
           <Page key={`dash-page-${pairIdx}`} size="A4" style={s.pageWithHeader}>
