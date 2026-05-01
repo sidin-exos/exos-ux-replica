@@ -1367,7 +1367,7 @@ const PDFReportDocument = ({
           {/* Stats footer */}
           <View style={s.statsTable}>
             <View style={s.statsCell}>
-              <Text style={s.statsLabel}>Input Quality Score</Text>
+              <Text style={s.statsLabel}>Input Rigour Score</Text>
               <Text style={{ ...s.statsValue, color: kpiColor(String(coveragePct), "confidence", c) }}>{coveragePct}/100</Text>
             </View>
             <View style={s.statsCell}>
