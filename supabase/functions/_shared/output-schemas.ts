@@ -1324,7 +1324,18 @@ export function synthesizeMissingContent<T extends ExosOutputParsed | null | und
 
   // ── S20 Category Risk Evaluator ──────────────────────────────────────────
   if (env.scenario_id === 'S20' && ss && typeof ss === 'object') {
-    // Ensure all 5 score_breakdown dimensions are present (defaults to MEDIUM/50)
+    // Derive helpers from existing structures so backfills are data-aware
+    const crs = (ss.category_risk_score ?? null) as Record<string, any> | null;
+    const overall = Number(crs?.overall);
+    const overallScore = Number.isFinite(overall) ? overall : null;
+    const ragFromScore = (n: number | null): string =>
+      n == null ? 'AMBER' : n >= 70 ? 'RED' : n >= 40 ? 'AMBER' : 'GREEN';
+
+    const concCats: any[] = Array.isArray(ss?.concentration?.categories) ? ss.concentration!.categories : [];
+    const topHHI = concCats.reduce((m, c) => Math.max(m, Number(c?.hhi) || 0), 0);
+    const supplyRiskFromHHI = topHHI >= 5000 ? 85 : topHHI >= 2500 ? 65 : topHHI >= 1500 ? 45 : 25;
+
+    // 1) score_breakdown — ensure all 5 dimensions, with data-aware defaults
     const requiredDims = ['Supply', 'Regulatory', 'Financial', 'Geopolitical', 'Demand'];
     const existing = Array.isArray(ss.score_breakdown) ? ss.score_breakdown : [];
     const byDim = new Map<string, any>();
@@ -1333,12 +1344,74 @@ export function synthesizeMissingContent<T extends ExosOutputParsed | null | und
       if (key) byDim.set(key, d);
     });
     if (existing.length < 5) {
-      ss.score_breakdown = requiredDims.map(dim => byDim.get(dim) ?? {
-        dimension: dim,
-        score: null,
-        rag: null,
-        rationale: `No data provided for ${dim} dimension — flagged in data_gaps[].`,
+      const baseScore = overallScore ?? 50;
+      const dimDefault = (dim: string): number => {
+        if (dim === 'Supply') return Math.max(supplyRiskFromHHI, baseScore);
+        return baseScore;
+      };
+      ss.score_breakdown = requiredDims.map(dim => {
+        const found = byDim.get(dim);
+        if (found && (found.score != null || found.rationale)) return found;
+        const score = dimDefault(dim);
+        return {
+          dimension: dim,
+          score,
+          rag: ragFromScore(score),
+          rationale: dim === 'Supply' && topHHI > 0
+            ? `Derived from supplier concentration (HHI ${topHHI}). Validate with category specialists.`
+            : `Default rating — no explicit ${dim.toLowerCase()} signal in input. Treat as provisional.`,
+        };
       });
+    }
+
+    // 2) budget_risk_forecast — backfill P10/P50/P90 from overall risk if absent
+    const brf = (ss.budget_risk_forecast ?? null) as Record<string, any> | null;
+    const hasForecast = brf && (brf.p10_pct != null || brf.p50_pct != null || brf.p90_pct != null);
+    if (!hasForecast) {
+      const sev = overallScore ?? 50;
+      // Higher overall risk → wider variance band
+      const p50 = Math.round(sev / 10);              // e.g. score 80 → +8% median
+      const p90 = Math.round(sev / 4);               // e.g. score 80 → +20% worst case
+      const p10 = -Math.max(2, Math.round(sev / 20)); // mild best-case savings
+      ss.budget_risk_forecast = {
+        p10_pct: p10,
+        p50_pct: p50,
+        p90_pct: p90,
+        drivers: Array.isArray(brf?.drivers) && brf.drivers.length > 0
+          ? brf.drivers
+          : ['Commodity / energy price volatility', 'Single-source supplier pricing power', 'FX & logistics exposure'],
+        confidence: 'LOW',
+      };
+    }
+
+    // 3) decision_readiness — backfill if absent so the 8th deliverable always renders
+    const dr = (ss.decision_readiness ?? null) as Record<string, any> | null;
+    const hasReadiness = dr && (dr.score != null || dr.verdict || (Array.isArray(dr.checklist) && dr.checklist.length > 0));
+    if (!hasReadiness) {
+      const sev = overallScore ?? 50;
+      // Inverse of risk — high risk = low readiness
+      const readinessScore = Math.max(0, 100 - sev);
+      const verdict = readinessScore >= 70 ? 'GO'
+        : readinessScore >= 50 ? 'GO_WITH_CONDITIONS'
+        : readinessScore >= 30 ? 'HOLD'
+        : 'NO_GO';
+      ss.decision_readiness = {
+        score: readinessScore,
+        verdict,
+        rationale: `Readiness derived from overall risk score (${sev}/100). ${
+          verdict === 'GO' ? 'Tender may proceed with standard controls.'
+          : verdict === 'GO_WITH_CONDITIONS' ? 'Proceed only after listed mitigations are in place.'
+          : verdict === 'HOLD' ? 'Defer tender until critical risks are addressed.'
+          : 'Do not proceed until structural risks are resolved.'
+        }`,
+        checklist: [
+          { item: 'Tooling & IP ownership clarified in SOW', status: 'NOT_READY', owner_role: 'Legal / Category Lead' },
+          { item: 'At least one alternative supplier qualified', status: topHHI >= 2500 ? 'NOT_READY' : 'PARTIAL', owner_role: 'Sourcing Manager' },
+          { item: 'Budget contingency reserved (≥ P50 variance)', status: 'PARTIAL', owner_role: 'Finance Business Partner' },
+          { item: 'Regulatory compliance evidence on file (REACH / CSDDD / NIS2 as applicable)', status: 'PARTIAL', owner_role: 'Compliance Officer' },
+          { item: 'Exit / step-in clauses drafted', status: 'NOT_READY', owner_role: 'Legal' },
+        ],
+      };
     }
 
     env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
