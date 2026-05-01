@@ -1461,6 +1461,7 @@ serve(async (req) => {
               fallbackUsed: provider === "nebius",
               fallbackReason: aiResponse.fallbackReason,
               modelUsed: provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : modelForAttempt,
+              failureReason,
             },
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
