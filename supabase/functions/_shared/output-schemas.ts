@@ -1198,6 +1198,44 @@ function salvageTruncatedJson(raw: string): string | null {
   return null;
 }
 
+/**
+ * Repair bracket-TYPE mismatches in malformed JSON envelopes. Gemini occasionally
+ * closes an object with `]` or an array with `}` — particularly in deeply nested
+ * S21 / S26 schemas. We walk the bracket stack and rewrite each mismatched
+ * closer to the type that the matching opener expects. Strings are skipped.
+ */
+function repairBracketTypes(raw: string): string | null {
+  const start = raw.indexOf('{');
+  if (start < 0) return null;
+  const chars = raw.split('');
+  const stack: Array<'{' | '['> = [];
+  let inString = false;
+  let escape = false;
+  let mutated = false;
+  for (let i = start; i < chars.length; i++) {
+    const ch = chars[i];
+    if (escape) { escape = false; continue; }
+    if (inString) {
+      if (ch === '\\') { escape = true; continue; }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === '{' || ch === '[') { stack.push(ch); continue; }
+    if (ch === '}' || ch === ']') {
+      const opener = stack.pop();
+      if (!opener) continue;
+      const expected = opener === '{' ? '}' : ']';
+      if (ch !== expected) {
+        chars[i] = expected;
+        mutated = true;
+      }
+    }
+  }
+  if (!mutated) return null;
+  return chars.join('');
+}
+
 export function parseAIResponse(raw: string): ExosOutputParsed | null {
   // Attempt 1: direct JSON parse
   try {
