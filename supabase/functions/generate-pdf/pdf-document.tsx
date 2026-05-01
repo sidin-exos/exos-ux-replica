@@ -685,9 +685,48 @@ const PDFReportDocument = ({
             if (!isS27 && section.type === "risks") return null;
             const blockColor = blockColors[si % blockColors.length];
             return (
-              <View key={`section-${si}`} style={{ ...s.analysisBlock, borderLeftColor: blockColor }} wrap={false}>
+              <View key={`section-${si}`} style={{ ...s.analysisBlock, borderLeftColor: blockColor }}>
                 <View style={{ ...s.analysisBlockBadge, backgroundColor: blockColor }}><Text style={s.analysisBlockBadgeText}>{stripMarkdown(section.title).toUpperCase()}</Text></View>
-                {section.lines.map((line, li) => renderBodyText(line, s.analysisText))}
+                {(() => {
+                  // Group consecutive markdown-table lines into a real table.
+                  const out: ReactElement[] = [];
+                  let i = 0;
+                  const lines = section.lines;
+                  while (i < lines.length) {
+                    if (isTableLine(lines[i])) {
+                      // Collect run of table lines
+                      const run: string[] = [];
+                      while (i < lines.length && isTableLine(lines[i])) { run.push(lines[i]); i++; }
+                      const rows = run.map(parseTableRow).filter((r): r is string[] => r !== null);
+                      if (rows.length === 0) continue;
+                      const [header, ...body] = rows;
+                      out.push(
+                        <View key={`tbl-${si}-${i}`} style={s.mdTable} wrap={false}>
+                          <View style={s.mdTableHeaderRow}>
+                            {header.map((cell, ci) => (
+                              <View key={`h-${ci}`} style={ci === header.length - 1 ? s.mdTableCellLast : s.mdTableCell}>
+                                <Text style={s.mdTableHeaderText}>{cell}</Text>
+                              </View>
+                            ))}
+                          </View>
+                          {body.map((row, ri) => (
+                            <View key={`r-${ri}`} style={ri % 2 === 1 ? s.mdTableRowAlt : s.mdTableRow}>
+                              {Array.from({ length: header.length }).map((_, ci) => (
+                                <View key={`c-${ri}-${ci}`} style={ci === header.length - 1 ? s.mdTableCellLast : s.mdTableCell}>
+                                  <Text style={s.mdTableCellText}>{row[ci] ?? ""}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          ))}
+                        </View>
+                      );
+                      continue;
+                    }
+                    out.push(renderBodyText(lines[i], s.analysisText));
+                    i++;
+                  }
+                  return out;
+                })()}
               </View>
             );
           });
