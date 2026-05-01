@@ -110,7 +110,7 @@ function buildStyles(c: PdfColorSet) {
     },
     sectionTitle: {
       fontSize: 16,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
       marginBottom: 8,
       marginTop: 24,
@@ -162,7 +162,7 @@ function buildStyles(c: PdfColorSet) {
     },
     dashboardTitle: {
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 1.5,
@@ -192,7 +192,7 @@ function buildStyles(c: PdfColorSet) {
     barValue: {
       width: 56,
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       textAlign: "right",
     },
@@ -225,7 +225,7 @@ function buildStyles(c: PdfColorSet) {
     },
     scoreCellText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.badgeText,
     },
 
@@ -276,7 +276,7 @@ function buildStyles(c: PdfColorSet) {
     },
     statValue: {
       fontSize: 15,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
     },
 
@@ -307,7 +307,7 @@ function buildStyles(c: PdfColorSet) {
     quadrantCellLastRow: { borderBottomWidth: 0 },
     quadrantLabel: {
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
       marginBottom: 3,
     },
