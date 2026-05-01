@@ -1339,7 +1339,249 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     }
   }
 
-  const GENERIC_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
+  // ── S27 Black Swan Scenario Simulation — render the ten promised deliverables.
+  if (parsed.scenario_id === 'S27') {
+    const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, any>;
+    const fmtMoney = (v: unknown): string => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+      if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+      return `€${n.toFixed(0)}`;
+    };
+    const fmtCell = (v: unknown, suffix = ''): string => {
+      if (v == null || v === '') return '—';
+      const s = sanitiseAscii(coerceToString(v)).replace(/\|/g, '\\|');
+      return s + suffix;
+    };
+
+    // 1. Black Swan Risk Map — supply chain nodes & criticality
+    const nodes: any[] = Array.isArray(ss.supply_chain_nodes) ? ss.supply_chain_nodes : [];
+    const validNodes = nodes.filter(n => n && (n.node_label || n.node_id));
+    if (validNodes.length > 0) {
+      parts.push('### Black Swan Risk Map');
+      parts.push('| Node | Type | Criticality | Geography | Alternative |');
+      parts.push('|---|---|---|---|---|');
+      validNodes.slice(0, 12).forEach(n => {
+        parts.push(`| ${fmtCell(n.node_label ?? n.node_id)} | ${fmtCell(String(n.node_type ?? '').replace(/_/g, ' '))} | ${fmtCell(String(n.criticality ?? '').replace(/_/g, ' '))} | ${fmtCell(n.geography)} | ${n.alternative_available ? 'Yes' : 'No'} |`);
+      });
+      parts.push('');
+    }
+
+    // 2. Scenario Simulation Results — impact model
+    const im = (ss.impact_model ?? {}) as Record<string, any>;
+    if (im.direct_impact_estimate != null || im.total_impact_estimate != null) {
+      parts.push('### Scenario Simulation Results');
+      if (im.direct_impact_estimate != null) parts.push(`- **Direct impact estimate:** ${fmtMoney(im.direct_impact_estimate)}`);
+      if (im.total_impact_estimate != null)  parts.push(`- **Total impact estimate (incl. cascades):** ${fmtMoney(im.total_impact_estimate)}`);
+      if (ss.scenario_description) parts.push(`- **Scenario:** ${sanitiseAscii(coerceToString(ss.scenario_description))}`);
+      if (ss.overall_resilience_rag) parts.push(`- **Overall resilience posture:** ${sanitiseAscii(coerceToString(ss.overall_resilience_rag))}`);
+      parts.push('');
+    }
+
+    // 3. Vulnerability Assessment — single points of failure
+    const vulns: any[] = Array.isArray(ss.prioritised_vulnerabilities) ? ss.prioritised_vulnerabilities : [];
+    const validVulns = vulns.filter(v => v && v.vulnerability);
+    if (validVulns.length > 0) {
+      parts.push('### Vulnerability Assessment');
+      parts.push('| Vulnerability | Node | Severity if triggered | Mitigation available |');
+      parts.push('|---|---|---|---|');
+      validVulns.slice(0, 10).forEach(v => {
+        parts.push(`| ${fmtCell(v.vulnerability)} | ${fmtCell(v.associated_node)} | ${fmtCell(String(v.severity_if_triggered ?? '').replace(/_/g, ' '))} | ${fmtCell(v.mitigation_available)} |`);
+      });
+      parts.push('');
+    }
+
+    // 4. Cascading Failure Analysis
+    const cascades: any[] = Array.isArray(im.cascade_effects) ? im.cascade_effects : [];
+    const validCascades = cascades.filter(c => c && (c.triggered_node || c.delay_days != null));
+    if (validCascades.length > 0) {
+      parts.push('### Cascading Failure Analysis');
+      parts.push('| Triggered node | Delay | Revenue at risk | Confidence |');
+      parts.push('|---|---|---|---|');
+      validCascades.slice(0, 10).forEach(c => {
+        const delay = c.delay_days != null ? `${c.delay_days}d` : '—';
+        parts.push(`| ${fmtCell(c.triggered_node)} | ${delay} | ${fmtMoney(c.revenue_at_risk)} | ${fmtCell(c.cascade_confidence)} |`);
+      });
+      parts.push('');
+    }
+
+    // 5. Early Warning Indicators
+    const ewis: any[] = Array.isArray(ss.early_warning_indicators) ? ss.early_warning_indicators : [];
+    const validEwis = ewis.filter(e => e && e.indicator);
+    if (validEwis.length > 0) {
+      parts.push('### Early Warning Indicators');
+      parts.push('| Indicator | Data source | Threshold | Lead time | Owner |');
+      parts.push('|---|---|---|---|---|');
+      validEwis.slice(0, 10).forEach(e => {
+        const lt = e.lead_time_days != null ? `${e.lead_time_days}d` : '—';
+        parts.push(`| ${fmtCell(e.indicator)} | ${fmtCell(e.data_source)} | ${fmtCell(e.threshold)} | ${lt} | ${fmtCell(e.owner_role)} |`);
+      });
+      parts.push('');
+    }
+
+    // 6. Response Playbook — 5 phases
+    const rp = (ss.response_playbook ?? {}) as Record<string, any>;
+    const phases: Array<{ key: string; label: string }> = [
+      { key: 'phase_1_detect',   label: 'Phase 1 — Detect' },
+      { key: 'phase_2_activate', label: 'Phase 2 — Activate' },
+      { key: 'phase_3_contain',  label: 'Phase 3 — Contain' },
+      { key: 'phase_4_recover',  label: 'Phase 4 — Recover' },
+      { key: 'phase_5_learn',    label: 'Phase 5 — Learn' },
+    ];
+    const phasesPresent = phases.some(p => rp[p.key]);
+    if (phasesPresent) {
+      parts.push('### Response Playbook');
+      phases.forEach(ph => {
+        const phase = rp[ph.key] as Record<string, any> | undefined;
+        if (!phase) return;
+        const owner = phase.owner_role ? ` _(Owner: ${sanitiseAscii(coerceToString(phase.owner_role))})_` : '';
+        const dur = phase.target_duration_hours
+          ? ` _(Target: ${phase.target_duration_hours}h)_`
+          : phase.rto_target_hours
+            ? ` _(RTO target: ${phase.rto_target_hours}h)_`
+            : '';
+        parts.push(`**${ph.label}**${owner}${dur}`);
+        if (phase.trigger_signal) parts.push(`- _Trigger:_ ${sanitiseAscii(coerceToString(phase.trigger_signal))}`);
+        if (phase.decision_authority) parts.push(`- _Decision authority:_ ${sanitiseAscii(coerceToString(phase.decision_authority))}`);
+        const acts: unknown[] = Array.isArray(phase.actions) ? phase.actions : [];
+        acts.slice(0, 6).forEach(a => {
+          const t = sanitiseAscii(coerceToString(a).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+        if (Array.isArray(phase.post_mortem_checklist)) {
+          phase.post_mortem_checklist.slice(0, 4).forEach((p: unknown) => {
+            const t = sanitiseAscii(coerceToString(p).trim());
+            if (t) parts.push(`- _Post-mortem:_ ${t}`);
+          });
+        }
+        if (Array.isArray(phase.process_changes)) {
+          phase.process_changes.slice(0, 4).forEach((p: unknown) => {
+            const t = sanitiseAscii(coerceToString(p).trim());
+            if (t) parts.push(`- _Process change:_ ${t}`);
+          });
+        }
+        if (Array.isArray(phase.alternative_supply_options) && phase.alternative_supply_options.length > 0) {
+          parts.push(`- _Alternative supply options:_ ${phase.alternative_supply_options.length} identified (see Mitigation Roadmap)`);
+        }
+        parts.push('');
+      });
+    }
+
+    // 7 + 9. Mitigation Roadmap (prioritised) AND Investment Recommendation (cost-benefit)
+    const inv: any[] = Array.isArray(ss.resilience_investments) ? ss.resilience_investments : [];
+    const validInv = inv.filter(i => i && i.investment);
+    if (validInv.length > 0) {
+      const priorityOrder: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+      const sorted = [...validInv].sort((a, b) =>
+        (priorityOrder[String(a.priority ?? '').toUpperCase()] ?? 3) -
+        (priorityOrder[String(b.priority ?? '').toUpperCase()] ?? 3)
+      );
+      parts.push('### Mitigation Roadmap');
+      parts.push('| Priority | Investment | Est. cost | RTO improvement | Risk reduction |');
+      parts.push('|---|---|---|---|---|');
+      sorted.slice(0, 12).forEach(i => {
+        const rto = i.rto_improvement_hours != null ? `${i.rto_improvement_hours}h` : '—';
+        const rr  = i.risk_reduction_pct != null ? `${i.risk_reduction_pct}%` : '—';
+        parts.push(`| ${fmtCell(i.priority)} | ${fmtCell(i.investment)} | ${fmtMoney(i.estimated_cost)} | ${rto} | ${rr} |`);
+      });
+      parts.push('');
+
+      parts.push('### Investment Recommendation — Cost-Benefit');
+      parts.push('| Investment | Cost | Risk reduction | ROI rationale |');
+      parts.push('|---|---|---|---|');
+      sorted.slice(0, 10).forEach(i => {
+        const rr = i.risk_reduction_pct != null ? `${i.risk_reduction_pct}%` : '—';
+        parts.push(`| ${fmtCell(i.investment)} | ${fmtMoney(i.estimated_cost)} | ${rr} | ${fmtCell(i.roi_rationale)} |`);
+      });
+      parts.push('');
+    }
+
+    // 8. Diversification Strategy
+    const ds = (ss.diversification_strategy ?? {}) as Record<string, any>;
+    const dsActions: any[] = Array.isArray(ds.actions) ? ds.actions : [];
+    const conc = (ss.concentration ?? {}) as Record<string, any>;
+    const concCats: any[] = Array.isArray(conc.categories) ? conc.categories : [];
+    const concSuppliers: any[] = Array.isArray(conc.suppliers) ? conc.suppliers : [];
+    if (dsActions.length > 0 || concCats.length > 0 || ds.current_concentration_summary || ds.target_state) {
+      parts.push('### Diversification Strategy');
+      if (ds.current_concentration_summary) parts.push(`- **Current state:** ${sanitiseAscii(coerceToString(ds.current_concentration_summary))}`);
+      if (ds.target_state)                  parts.push(`- **Target state:** ${sanitiseAscii(coerceToString(ds.target_state))}`);
+      if (concCats.length > 0) {
+        parts.push('');
+        parts.push('| Category | HHI | Concentration | Annual spend |');
+        parts.push('|---|---|---|---|');
+        concCats.slice(0, 8).forEach(c => {
+          parts.push(`| ${fmtCell(c.category_name ?? c.category_id)} | ${fmtCell(c.hhi)} | ${fmtCell(c.hhi_interpretation)} | ${fmtMoney(c.annual_spend)} |`);
+        });
+      }
+      const flows: any[] = Array.isArray(conc.flows) ? conc.flows : [];
+      const singleSource = flows.filter(f => f?.single_source_flag);
+      if (singleSource.length > 0) {
+        parts.push('');
+        parts.push(`**⚠ Single-source dependencies:** ${singleSource.length} flow(s) flagged. Suppliers: ${singleSource.slice(0, 5).map(f => sanitiseAscii(coerceToString(f.target))).join(', ')}.`);
+      }
+      if (dsActions.length > 0) {
+        parts.push('');
+        parts.push('**Diversification actions:**');
+        dsActions.slice(0, 8).forEach(a => {
+          const horizon = a.horizon_months != null ? ` _(${a.horizon_months}mo)_` : '';
+          const reduction = a.concentration_reduction_pct != null ? ` — reduces concentration by ${a.concentration_reduction_pct}%` : '';
+          const cost = a.estimated_cost != null ? ` (cost: ${fmtMoney(a.estimated_cost)})` : '';
+          parts.push(`- ${sanitiseAscii(coerceToString(a.action))}${horizon}${reduction}${cost}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 10. Monitoring Dashboard — KRIs and trigger points
+    const md = (ss.monitoring_dashboard ?? {}) as Record<string, any>;
+    const kris: any[] = Array.isArray(md.kris) ? md.kris : [];
+    const triggers: any[] = Array.isArray(md.trigger_points) ? md.trigger_points : [];
+    const validKris = kris.filter(k => k && k.kri_name);
+    const validTriggers = triggers.filter(t => t && t.trigger);
+    if (validKris.length > 0 || validTriggers.length > 0) {
+      parts.push('### Monitoring Dashboard');
+      if (validKris.length > 0) {
+        parts.push('**Key Risk Indicators**');
+        parts.push('');
+        parts.push('| KRI | Current | Amber | Red | Owner | Frequency |');
+        parts.push('|---|---|---|---|---|---|');
+        validKris.slice(0, 10).forEach(k => {
+          parts.push(`| ${fmtCell(k.kri_name)} | ${fmtCell(k.current_value)} | ${fmtCell(k.amber_threshold)} | ${fmtCell(k.red_threshold)} | ${fmtCell(k.owner_role)} | ${fmtCell(k.review_frequency)} |`);
+        });
+        parts.push('');
+      }
+      if (validTriggers.length > 0) {
+        parts.push('**Trigger Points & Escalation**');
+        parts.push('');
+        parts.push('| Trigger | Automated response | Escalation path |');
+        parts.push('|---|---|---|');
+        validTriggers.slice(0, 8).forEach(t => {
+          parts.push(`| ${fmtCell(t.trigger)} | ${fmtCell(t.automated_response)} | ${fmtCell(t.escalation_path)} |`);
+        });
+        parts.push('');
+      }
+    }
+
+    // RTO/RPO gap callout (supports Scenario Simulation Results)
+    const rr = (ss.rto_rpo_analysis ?? {}) as Record<string, any>;
+    if (rr.target_rto_hours != null || rr.target_rpo_hours != null || rr.gap_commentary) {
+      parts.push('### RTO / RPO Gap Analysis');
+      parts.push('| Metric | Target | Current | Gap |');
+      parts.push('|---|---|---|---|');
+      const fmtH = (v: unknown) => v == null ? '—' : `${v}h`;
+      parts.push(`| RTO | ${fmtH(rr.target_rto_hours)} | ${fmtH(rr.current_rto_estimate_hours)} | ${fmtH(rr.rto_gap_hours)} |`);
+      parts.push(`| RPO | ${fmtH(rr.target_rpo_hours)} | ${fmtH(rr.current_rpo_estimate_hours)} | ${fmtH(rr.rpo_gap_hours)} |`);
+      if (rr.gap_commentary) {
+        parts.push('');
+        parts.push(sanitiseAscii(coerceToString(rr.gap_commentary)));
+      }
+      parts.push('');
+    }
+  }
+
+
   const validGaps = (parsed.data_gaps ?? []).filter(g => {
     if (!g?.field || !g?.impact || !g?.resolution) return false;
     const combined = `${g.field} ${g.impact} ${g.resolution}`.toLowerCase();
