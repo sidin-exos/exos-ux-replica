@@ -293,6 +293,11 @@ export function AnalysisPipelineAnimation({
           transition={{ duration: 0.5, ease: "easeOut" }}
         />
       </div>
+
+      {/* Helper note */}
+      <p className="mt-3 text-xs text-muted-foreground text-center">
+        Expected time 1–3 minutes for most scenarios. Please don't close this window.
+      </p>
     </div>
   );
 }
