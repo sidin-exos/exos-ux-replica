@@ -19,7 +19,8 @@ export type DashboardType =
   | "should-cost-gap"
   | "savings-realization-funnel"
   | "working-capital-dpo"
-  | "supplier-concentration-map";
+  | "supplier-concentration-map"
+  | "rfp-package";
 
 /**
  * Backwards-compatibility alias map for renamed dashboard IDs.
@@ -239,6 +240,16 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
     whenToUse: "Use to expose concentration risk at category, supplier, and geography level — and to surface tier-2 dependencies hidden behind tier-1 suppliers.",
     questionsAnswered: ["Where are we dangerously concentrated on a single supplier?", "Which categories have monopolistic supply structures?", "Where do tier-2 dependencies create hidden risk?"],
   },
+  "rfp-package": {
+    id: "rfp-package",
+    name: "RFP Package",
+    description: "Brief, tender document, evaluation matrix, clarifications and attachments",
+    icon: "FileSignature",
+    keyMetrics: ["Deliverables coverage (X / 5)", "Evaluation criteria weight balance", "Tender section count", "Mandatory compliance items", "Open clarification questions"],
+    whenToUse: "Use to package an RFP brief into an issue-ready tender document with a transparent, weight-balanced evaluation matrix.",
+    questionsAnswered: ["Is the RFP package complete and ready to issue?", "Are evaluation criteria balanced and defensible?", "What clarifications must be resolved before issue?"],
+    showSampleDataFallback: false,
+  },
 };
 
 // Scenario to dashboard mapping
@@ -300,7 +311,7 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   // Documentation and Contracts
   "sow-critic": ["sow-analysis", "data-quality"],
   "sla-definition": ["action-checklist", "negotiation-prep"],
-  "rfp-generator": ["action-checklist", "data-quality"],
+  "rfp-generator": ["rfp-package", "action-checklist", "data-quality"],
   "contract-template": ["action-checklist", "data-quality"],
 
   // Spend Analysis
