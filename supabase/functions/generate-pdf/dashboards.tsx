@@ -16,6 +16,8 @@ import type {
   SOWAnalysisData,
   NegotiationPrepData,
   DataQualityData,
+  NpvWaterfallData,
+  Ifrs16ImpactData,
 } from "./types.ts";
 
 // ── Helpers ──

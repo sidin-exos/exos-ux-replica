@@ -176,6 +176,41 @@ export interface DataQualityData {
   limitations?: { title: string; impact: string }[];
 }
 
+export interface NpvWaterfallData {
+  options: {
+    id: string;
+    name: string;
+    color: string;
+    capexNominal: number;
+    opexNominal: number;
+    residualValue: number;
+    npv: number;
+    waccPct?: number;
+    breakEvenYear?: number | null;
+    ifrsOnBalanceSheet?: boolean | null;
+  }[];
+  preferredOptionId?: string;
+  verdict?: string;
+  cashFlowRationale?: string;
+  currency?: string;
+}
+
+export interface Ifrs16ImpactData {
+  options: {
+    id: string;
+    name: string;
+    color: string;
+    onBalanceSheet: boolean | null;
+    rightOfUseAsset?: number | null;
+    leaseLiability?: number | null;
+    taxShieldValue?: number | null;
+    plTreatment?: string | null;
+    balanceSheetImpact?: string | null;
+  }[];
+  ifrs16Note?: string;
+  currency?: string;
+}
+
 // ── Extraction utilities (legacy XML fallback) ──
 
 const DASHBOARD_DATA_REGEX = /<dashboard-data>([\s\S]*?)<\/dashboard-data>/;
