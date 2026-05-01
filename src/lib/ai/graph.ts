@@ -349,6 +349,7 @@ export async function runExosGraph(
       confidenceScore: state.confidenceScore,
       validationStatus: state.validationStatus,
       retryCount: state.retryCount,
+      failureReason: state.failureReason,
     };
   } catch (error) {
     // End parent trace with error
