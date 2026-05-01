@@ -1346,15 +1346,20 @@ serve(async (req) => {
         const singleParsedEnvelope = parseAIResponse(content);
         let responseContent = singleDeanon.restoredText;
         let deanonSingleEnvelope = singleParsedEnvelope;
+        let failureReason: string | null = null;
 
-        // Defensive guard: detect when the deanonymized content is raw JSON
-        // (e.g. flash fallback returned envelope-only without prose). We must
-        // never leak raw JSON or any internal metadata (shadow_log, validation
-        // traces, payload internals) into the user-facing `content` string.
+        // Bulletproof raw-JSON detector: anything that looks even partially
+        // like a JSON envelope (starts with `{`, contains `schema_version`,
+        // wrapped in code fences, OR has the JSON-ish shape) must NOT reach
+        // the UI as raw text. Truncated envelopes that don't end with `}`
+        // are the most common leak source.
         const looksLikeRawJson = (s: string): boolean => {
           const trimmed = s.trim();
-          return (trimmed.startsWith('{') && trimmed.endsWith('}'))
-            || (trimmed.startsWith('```') && /```\s*json/i.test(trimmed));
+          if (!trimmed) return false;
+          if (trimmed.startsWith('```') && /```\s*json/i.test(trimmed)) return true;
+          if (trimmed.startsWith('{')) return true;
+          if (/"schema_version"\s*:/.test(trimmed.slice(0, 500))) return true;
+          return false;
         };
 
         if (['1.0','2.0'].includes(singleParsedEnvelope?.schema_version)) {
@@ -1370,14 +1375,17 @@ serve(async (req) => {
             new SentryReporter("sentinel-analysis").captureException(e, { userId, tags: { stage: "envelope-deanon" } });
             deanonSingleEnvelope = singleParsedEnvelope;
           }
+          // Server-side null/empty pruning — models inconsistently emit `null`
+          // placeholders despite prompt instructions. Deterministic enforcement.
+          deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
           responseContent = buildMarkdownFromEnvelope(deanonSingleEnvelope);
           if (deanonSingleEnvelope.gdpr_flags?.length > 0) {
             console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonSingleEnvelope.scenario_id, flag_count: deanonSingleEnvelope.gdpr_flags.length });
           }
         } else if (singleParsedEnvelope && typeof singleParsedEnvelope === 'object') {
           // AI returned a JSON object but without a recognised schema_version
-          // (e.g. flash fallback emitted a partial envelope). Render it through
-          // the defensive markdown builder rather than leaking raw JSON to the UI.
+          // (e.g. flash fallback emitted a partial/salvaged envelope). Render
+          // it through the defensive markdown builder rather than leaking JSON.
           try {
             const envelopeStr = JSON.stringify(singleParsedEnvelope);
             const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
@@ -1385,6 +1393,7 @@ serve(async (req) => {
           } catch (_e) {
             deanonSingleEnvelope = singleParsedEnvelope;
           }
+          deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
           // Coerce to the shape buildMarkdownFromEnvelope expects, with safe defaults.
           const safe = {
             scenario_name: (deanonSingleEnvelope as Record<string, unknown>).scenario_name as string ?? 'Analysis',
@@ -1394,15 +1403,23 @@ serve(async (req) => {
             data_gaps: (deanonSingleEnvelope as Record<string, unknown>).data_gaps as unknown[] ?? [],
           } as unknown as Parameters<typeof buildMarkdownFromEnvelope>[0];
           const rendered = buildMarkdownFromEnvelope(safe);
-          // If the rendered markdown is essentially empty, surface a friendly fallback
-          // instead of the raw JSON string the user previously saw.
-          responseContent = rendered.replace(/\s+/g, '').length > 20
-            ? rendered
-            : 'The analysis completed but the model returned an incomplete response. Please retry — if the issue persists, regenerate the report.';
-        } else if (looksLikeRawJson(responseContent)) {
-          // Last-resort guard: never let raw JSON reach the UI.
-          responseContent = 'The analysis completed but the model returned an unparseable response. Please retry to regenerate.';
+          if (rendered.replace(/\s+/g, '').length > 20) {
+            responseContent = rendered;
+            failureReason = 'partial_envelope';
+          } else {
+            responseContent = 'The analysis completed but the model returned an incomplete response. Please retry — if the issue persists, regenerate the report.';
+            failureReason = 'incomplete_response';
+          }
+        } else if (looksLikeRawJson(responseContent) || looksLikeRawJson(content)) {
+          // Last-resort guard: never let raw/truncated JSON reach the UI.
+          console.error('[Sentinel] Raw JSON leak prevented — surfacing friendly fallback', {
+            previewStart: responseContent.slice(0, 80),
+            previewEnd: responseContent.slice(-80),
+          });
+          responseContent = 'The analysis completed but the model returned an unparseable response (likely truncated). Please regenerate to retry.';
+          failureReason = 'json_parse_failed';
         }
+
 
         const inferencePromptTokens = aiResponse.usageMetadata?.promptTokenCount;
         const inferenceCompletionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
