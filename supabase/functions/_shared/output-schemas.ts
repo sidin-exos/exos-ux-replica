@@ -1581,7 +1581,7 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     }
   }
 
-
+  const GENERIC_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
   const validGaps = (parsed.data_gaps ?? []).filter(g => {
     if (!g?.field || !g?.impact || !g?.resolution) return false;
     const combined = `${g.field} ${g.impact} ${g.resolution}`.toLowerCase();
