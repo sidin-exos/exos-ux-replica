@@ -993,6 +993,12 @@ const PDFReportDocument = ({
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
   const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  const hasLowConfidenceWatermark = structuredOutput?.low_confidence_watermark === true;
+  const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
+  const batnaScore = parsedData?.negotiationPrep?.batna?.strength;
+  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
+  const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
+
   // Confidence is derived from OUTPUT COHERENCE — presence of structured
   // analytical signals — not from input rigour. Keeps a well-reasoned report
   // from being mislabelled "Low confidence" because the input was thin.
@@ -1011,11 +1017,6 @@ const PDFReportDocument = ({
       : evaluationConfidence === "LOW"
         ? "Low"
         : outputConfidence;
-  const hasLowConfidenceWatermark = structuredOutput?.low_confidence_watermark === true;
-  const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
-  const batnaScore = parsedData?.negotiationPrep?.batna?.strength;
-  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
-  const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
 
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
