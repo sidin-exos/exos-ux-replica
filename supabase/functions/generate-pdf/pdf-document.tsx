@@ -513,7 +513,14 @@ const PDFReportDocument = ({
 
       {/* Dashboard pages */}
       {hasDashboards && (() => {
-        const pairs = chunkPairs(selectedDashboards);
+        // Filter dashboards down to those that actually have data, so empty placeholder
+        // pages and cards no longer appear in the PDF.
+        const available = selectedDashboards.filter((d) => {
+          const key = dashboardDataKey[d as string];
+          return key && parsedData && parsedData[key];
+        });
+        if (available.length === 0) return null;
+        const pairs = chunkPairs(available);
         return pairs.map((pair, pairIdx) => (
           <Page key={`dash-page-${pairIdx}`} size="A4" style={s.pageWithHeader}>
             <View style={s.headerBar} fixed>
