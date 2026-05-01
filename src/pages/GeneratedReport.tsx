@@ -367,9 +367,7 @@ const GeneratedReport = () => {
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <div className="text-foreground bg-secondary/30 rounded-lg p-5 border border-border">
-                    <MarkdownRenderer content={displayAnalysis} />
-                  </div>
+                  <MarkdownRenderer content={displayAnalysis} />
                 </div>
               </CardContent>
             </Card>
