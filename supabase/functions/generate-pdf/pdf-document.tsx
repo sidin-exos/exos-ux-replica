@@ -546,6 +546,7 @@ const PDFReportDocument = ({
   // Risk Register page, duplicating content and confusing the deliverable.
   const isS26 = envelope?.scenario_id === "S26" || /disruption\s*manag/i.test(scenarioTitle);
   const isS20 = envelope?.scenario_id === "S20" || /category\s*risk/i.test(scenarioTitle);
+  const isS21 = envelope?.scenario_id === "S21" || /preparing.*for.*negotiat/i.test(scenarioTitle);
   const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
   const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
@@ -564,6 +565,18 @@ const PDFReportDocument = ({
       .sort((a: any, b: any) => Number(b.score) - Number(a.score));
     return sorted[0]?.dimension ?? null;
   })();
+  // S21 cover KPIs (BATNA / Power Balance / ZOPA / Input Quality)
+  const s21Specific = isS21 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s21PowerBalance = (() => {
+    const v = String(s21Specific?.leverage_analysis?.power_balance ?? "").toUpperCase();
+    if (!v || v.includes("|")) return null;
+    if (v === "BUYER_ADVANTAGE") return "BUYER ADV.";
+    if (v === "SUPPLIER_ADVANTAGE") return "SUPPLIER ADV.";
+    return v.replace(/_/g, " ");
+  })();
+  const s21ZopaExists = typeof s21Specific?.zopa?.zopa_exists === "boolean" ? s21Specific.zopa.zopa_exists : null;
+  const s21BuyerTarget = Number(s21Specific?.zopa?.buyer_target);
+  const s21ZopaLabel = s21ZopaExists == null ? null : (s21ZopaExists ? (Number.isFinite(s21BuyerTarget) ? `YES (target €${s21BuyerTarget >= 1_000_000 ? (s21BuyerTarget/1_000_000).toFixed(1)+"M" : Math.round(s21BuyerTarget/1000)+"K"})` : "YES") : "NO");
 
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
