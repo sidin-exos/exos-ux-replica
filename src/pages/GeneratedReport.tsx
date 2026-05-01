@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import DashboardRenderer, { dashboardHasRealData } from "@/components/reports/DashboardRenderer";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
 import { useShareableReport } from "@/hooks/useShareableReport";
 import { stripDashboardData } from "@/lib/dashboard-data-parser";
