@@ -1266,6 +1266,16 @@ serve(async (req) => {
     const MAX_RETRIES = 2;
     const RETRY_DELAYS = [500];
 
+    // Heavy-grounding fast path: when the prompt is large (>5K tokens-ish),
+    // gemini-2.5-pro frequently 504s after the full 45s timeout. Skip directly
+    // to flash to keep total latency under ~30s on the first try.
+    const HEAVY_INPUT_CHAR_THRESHOLD = 20_000; // ~5K tokens of system+user prompt
+    const totalPromptChars = systemPrompt.length + userPrompt.length;
+    const useFastPath = totalPromptChars > HEAVY_INPUT_CHAR_THRESHOLD && googleModel === "gemini-2.5-pro";
+    if (useFastPath) {
+      console.warn(`[Sentinel] Heavy input (${totalPromptChars} chars) — bypassing 2.5-pro, starting on flash`);
+    }
+
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         if (attempt > 0) {
@@ -1273,8 +1283,8 @@ serve(async (req) => {
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
         }
 
-        // On retry, downshift to faster model to fit inside 150s edge timeout
-        const modelForAttempt = attempt === 0 ? googleModel : "gemini-3-flash-preview";
+        // On retry OR fast-path, downshift to faster model to fit inside 150s edge timeout
+        const modelForAttempt = (attempt === 0 && !useFastPath) ? googleModel : "gemini-3-flash-preview";
 
         const aiResponse = await callGoogleAI({
           systemPrompt,
@@ -1282,7 +1292,7 @@ serve(async (req) => {
           temperature: 0.4,
           maxOutputTokens: 8192,
           model: modelForAttempt,
-          timeoutMs: 45_000,
+          timeoutMs: 30_000,
           skipNebiusFallback: attempt > 0,
         });
 
