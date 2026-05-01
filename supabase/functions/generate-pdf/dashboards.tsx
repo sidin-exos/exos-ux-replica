@@ -49,6 +49,7 @@ export const PDFCostWaterfall = ({ data, themeMode }: { data: CostWaterfallData;
   }));
   const totalRaw = data.components.filter(c => c.type === "cost").reduce((s, c) => s + c.value, 0);
   const savingsRaw = data.components.filter(c => c.type === "reduction").reduce((s, c) => s + Math.abs(c.value), 0);
+  const hasSavings = savingsRaw > 0;
   const totalAmount = formatAmount(totalRaw, currency);
   const savingsOpportunity = formatAmount(savingsRaw, currency);
 
