@@ -442,8 +442,10 @@ export function deanonymizeText(
   const unmappedTokens: string[] = [];
   let entitiesRestored = 0;
 
-  // Find all tokens in the text
-  const tokenPattern = /\[[A-Z_]+_[A-Z]\d*\]/g;
+  // Find all tokens in the text. Two suffix shapes are valid:
+  //   - Original anonymiser: [SUPPLIER_A], [COMPANY_B2]    → _<LETTER><digits?>
+  //   - AI-introduced [ALT_*] namespace: [ALT_SUPPLIER_1]  → _<digits>
+  const tokenPattern = /\[[A-Z][A-Z_]*_(?:[A-Z]\d*|\d+)\]/g;
   const foundTokens = anonymizedText.match(tokenPattern) || [];
   const uniqueTokens = [...new Set(foundTokens)];
 
