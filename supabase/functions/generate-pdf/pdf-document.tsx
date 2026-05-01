@@ -390,7 +390,17 @@ const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
     const cleanLine = cleanMarkdown(rawLine);
     if (!cleanLine) continue;
     if (isTableLine(cleanLine)) { current.lines.push(cleanLine); continue; }
-    const isHeader = !!hashMatch || (cleanLine.endsWith(":") && cleanLine.length < 80) || (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."));
+    // S26 fix: never let "Stage N — ..." sub-labels (inside Emergency Map)
+    // get promoted to top-level section cards by the heuristic header detector.
+    // Same for "Addressee:" / "Subject:" lines inside Draft Letters which
+    // end with ":" but are letter metadata, not section titles.
+    const isStageSubLabel = /^stage\s*\d+\s*[—\-–:]/i.test(cleanLine);
+    const isLetterMeta = /^(addressee|subject|to|from|date)\s*:/i.test(cleanLine);
+    const isHeader = !isStageSubLabel && !isLetterMeta && (
+      !!hashMatch
+      || (cleanLine.endsWith(":") && cleanLine.length < 80)
+      || (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."))
+    );
     if (isHeader) {
       if (current.lines.length > 0) sections.push(current);
       let detectedType: SectionType = "general";
