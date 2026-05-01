@@ -76,14 +76,16 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
     generationConfig: {
       temperature: request.temperature ?? 0.4,
       maxOutputTokens: request.maxOutputTokens ?? 4096,
-      // CRITICAL: Disable Gemini "thinking" budget for structured-JSON envelope
-      // generation. Without this, Gemini 2.5/3 Pro consumes most of the output
-      // window on hidden reasoning tokens (visible only via usageMetadata.
-      // thoughtsTokenCount), returning a tiny truncated envelope (~300 tokens)
-      // even with maxOutputTokens=12k. For our schema-driven output, accuracy
-      // comes from the prompt + schema, not from reasoning. Setting to 0
-      // forces the model to spend the full budget on visible output.
-      thinkingConfig: { thinkingBudget: 0 },
+      // CRITICAL: Cap Gemini "thinking" budget to a small value for structured-
+      // JSON envelope generation. Without a cap, Gemini 2.5/3 Pro consumes most
+      // of the output window on hidden reasoning tokens (visible only via
+      // usageMetadata.thoughtsTokenCount), returning a tiny truncated envelope.
+      // Note: Gemini 2.5 Pro does NOT allow thinkingBudget=0 (returns 400
+      // "Budget 0 is invalid. This model only works in thinking mode"). The
+      // minimum allowed is 128. We use 512 to leave a small reasoning headroom
+      // while reserving the bulk of maxOutputTokens for the visible JSON.
+      // Flash variants do allow 0, but 512 is safe across all models.
+      thinkingConfig: { thinkingBudget: 512 },
     },
   };
 
