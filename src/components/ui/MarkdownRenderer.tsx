@@ -117,22 +117,28 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             <li className="leading-relaxed">{children}</li>
           ),
           table: ({ children }) => (
-            <div className="overflow-x-auto my-6">
-              <table className="w-full border-collapse text-sm">{children}</table>
+            <div className="my-6 overflow-x-auto rounded-lg border border-border/60 bg-card/40">
+              <table className="w-full border-collapse text-[13px]">{children}</table>
             </div>
           ),
-          thead: ({ children }) => <thead>{children}</thead>,
-          tbody: ({ children }) => <tbody>{children}</tbody>,
-          tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
+          thead: ({ children }) => (
+            <thead className="border-b border-border/80">{children}</thead>
+          ),
+          tbody: ({ children }) => (
+            <tbody className="[&>tr:nth-child(even)]:bg-muted/20">{children}</tbody>
+          ),
+          tr: ({ children }) => (
+            <tr className="border-b border-border/40 last:border-0 transition-colors hover:bg-muted/30">{children}</tr>
+          ),
           th: ({ children }) => (
-            <th className="bg-muted/50 border border-border p-3 text-left font-semibold text-foreground">
+            <th className="px-4 py-2.5 text-left font-semibold text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border border-border p-3">{children}</td>
+            <td className="px-4 py-2.5 align-top text-foreground/90 leading-relaxed">{children}</td>
           ),
-          hr: () => <hr className="my-6 border-border" />,
+          hr: () => <hr className="my-8 border-border/50" />,
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-primary/30 pl-4 my-4 italic text-muted-foreground">
               {children}
