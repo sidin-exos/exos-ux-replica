@@ -672,6 +672,13 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RTO GAP</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s27RtoGap != null ? `${s27RtoGap}h` : "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>SINGLE-SOURCE FLOWS</Text><Text style={{ ...s.kpiValue, color: s27SingleSourceFlows && s27SingleSourceFlows > 0 ? c.destructive : c.success }}>{s27SingleSourceFlows != null ? String(s27SingleSourceFlows) : "—"}</Text></View>
             </>
+          ) : isS20 ? (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>RISK SCORE</Text><Text style={{ ...s.kpiValue, color: kpiColor(s20Rag === "RED" ? "High" : s20Rag === "AMBER" ? "Medium" : s20Rag === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s20Score != null ? `${s20Score} / 100` : "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>RAG STATUS</Text><Text style={{ ...s.kpiValue, color: kpiColor(s20Rag === "RED" ? "High" : s20Rag === "AMBER" ? "Medium" : s20Rag === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s20Rag ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>DECISION</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s20Decision ?? "—"}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>TOP RISK DIMENSION</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s20TopRisk ?? "—"}</Text></View>
+            </>
           ) : (
             <>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : coverageDisplaySpaced}</Text></View>
