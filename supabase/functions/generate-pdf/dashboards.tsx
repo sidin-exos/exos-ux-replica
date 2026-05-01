@@ -1093,3 +1093,193 @@ export const PDFDataQuality = ({ data, themeMode }: { data: DataQualityData; the
     </View>
   );
 };
+
+// ══════════════════════════════════════════
+// 15. NPV Waterfall (S3 Capex vs Opex)
+// ══════════════════════════════════════════
+
+export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; themeMode?: PdfThemeMode }) => {
+  const colors = getPdfColors(themeMode);
+  const styles = getPdfStyles(themeMode);
+  const currency = data.currency || "$";
+  const options = data.options || [];
+  if (options.length === 0) {
+    return (
+      <View style={styles.dashboardCard}>
+        <Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>NPV Waterfall: insufficient data</Text>
+      </View>
+    );
+  }
+
+  const preferred = data.preferredOptionId
+    ? options.find(o => o.id === data.preferredOptionId) || options[0]
+    : options.reduce((best, o) => (o.npv > best.npv ? o : best), options[0]);
+  const worst = options.reduce((w, o) => (o.npv < w.npv ? o : w), options[0]);
+  const npvSpread = preferred.npv - worst.npv;
+  const maxAbs = Math.max(1, ...options.map(o => Math.abs(o.npv)));
+
+  return (
+    <View style={styles.dashboardCard}>
+      <View style={styles.dashboardHeader}>
+        <View style={styles.dashboardIcon} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.dashboardTitle}>NPV Waterfall</Text>
+          <Text style={styles.dashboardSubtitle}>Discounted cash-flow comparison{preferred.waccPct ? ` · WACC ${preferred.waccPct}%` : ""}</Text>
+        </View>
+        <View style={{ alignItems: "flex-end" }}>
+          <Text style={{ fontSize: 15, fontFamily: "Inter", fontWeight: 700, color: colors.primary }}>{formatCurrency(npvSpread, currency)}</Text>
+          <Text style={{ fontSize: 8, color: colors.textMuted }}>NPV advantage</Text>
+        </View>
+      </View>
+
+      <View style={{ marginTop: 8, marginBottom: 8 }}>
+        {options.map((opt, i) => {
+          const isPreferred = opt.id === preferred.id;
+          const widthPct = (Math.abs(opt.npv) / maxAbs) * 100;
+          const barColor = opt.npv >= 0 ? (opt.color || colors.primary) : colors.destructive;
+          return (
+            <View key={i} style={{ marginBottom: 6 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <View style={{ width: 9, height: 9, backgroundColor: opt.color || colors.primary, marginRight: 6 }} />
+                  <Text style={{ fontSize: 10, color: colors.text, fontFamily: "Inter", fontWeight: isPreferred ? 700 : 400 }}>{opt.name}</Text>
+                  {isPreferred && (
+                    <View style={{ marginLeft: 6, paddingHorizontal: 4, paddingVertical: 1, backgroundColor: colors.primary }}>
+                      <Text style={{ fontSize: 7, color: colors.textOnPrimary, fontFamily: "Inter", fontWeight: 700 }}>CFO PICK</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={{ fontSize: 10, color: barColor, fontFamily: "Inter", fontWeight: 700 }}>{formatCurrency(opt.npv, currency)}</Text>
+              </View>
+              <View style={{ height: 12, backgroundColor: colors.surfaceLight, overflow: "hidden" }}>
+                <View style={{ height: 12, backgroundColor: barColor, width: `${widthPct}%` }} />
+              </View>
+            </View>
+          );
+        })}
+      </View>
+
+      <View style={styles.matrixContainer}>
+        <View style={[styles.matrixRow, styles.matrixHeader]}>
+          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Option</Text>
+          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Capex</Text>
+          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Opex</Text>
+          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Residual</Text>
+          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Break-even</Text>
+        </View>
+        {options.map((opt, i) => (
+          <View key={i} style={[styles.matrixRow, opt.id === preferred.id ? { borderLeftWidth: 4, borderLeftColor: colors.success } : (i % 2 === 1 ? { backgroundColor: colors.surface } : {})]}>
+            <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, flexDirection: "row", alignItems: "center" }]}>
+              <View style={{ width: 7, height: 7, backgroundColor: opt.color || colors.primary, marginRight: 4 }} />
+              <Text style={{ fontSize: 9, color: colors.text }}>{opt.name}</Text>
+            </View>
+            <Text style={[styles.matrixCell, { fontSize: 9 }]}>{formatCurrency(opt.capexNominal || 0, currency)}</Text>
+            <Text style={[styles.matrixCell, { fontSize: 9 }]}>{formatCurrency(opt.opexNominal || 0, currency)}</Text>
+            <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.residualValue ? formatCurrency(opt.residualValue, currency) : "—"}</Text>
+            <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.breakEvenYear != null ? `Year ${opt.breakEvenYear}` : "—"}</Text>
+          </View>
+        ))}
+      </View>
+
+      {(data.verdict || data.cashFlowRationale) && (
+        <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <Text style={{ fontSize: 9, color: colors.textMuted }}>
+            <Text style={{ color: colors.primary, fontFamily: "Inter", fontWeight: 700 }}>CFO recommendation: </Text>
+            {data.verdict || `${preferred.name} delivers the strongest NPV. ${data.cashFlowRationale || ""}`}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+// ══════════════════════════════════════════
+// 16. IFRS 16 Impact (S3 Capex vs Opex)
+// ══════════════════════════════════════════
+
+export const PDFIfrs16Impact = ({ data, themeMode }: { data: Ifrs16ImpactData; themeMode?: PdfThemeMode }) => {
+  const colors = getPdfColors(themeMode);
+  const styles = getPdfStyles(themeMode);
+  const currency = data.currency || "$";
+  const options = data.options || [];
+  if (options.length === 0) {
+    return (
+      <View style={styles.dashboardCard}>
+        <Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>IFRS 16 Impact: insufficient data</Text>
+      </View>
+    );
+  }
+
+  const onBalCount = options.filter(o => o.onBalanceSheet === true).length;
+  const offBalCount = options.filter(o => o.onBalanceSheet === false).length;
+
+  return (
+    <View style={styles.dashboardCard}>
+      <View style={styles.dashboardHeader}>
+        <View style={styles.dashboardIcon} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.dashboardTitle}>IFRS 16 Impact</Text>
+          <Text style={styles.dashboardSubtitle}>Accounting treatment & balance-sheet effect</Text>
+        </View>
+        <View style={{ alignItems: "flex-end" }}>
+          <Text style={{ fontSize: 13, fontFamily: "Inter", fontWeight: 700, color: colors.text }}>{onBalCount} / {options.length}</Text>
+          <Text style={{ fontSize: 8, color: colors.textMuted }}>on balance sheet</Text>
+        </View>
+      </View>
+
+      <View style={styles.statsRow}>
+        <View style={styles.statItem}><Text style={styles.statLabel}>On B/S</Text><Text style={[styles.statValue, { color: colors.warning }]}>{onBalCount}</Text></View>
+        <View style={styles.statItem}><Text style={styles.statLabel}>Off B/S</Text><Text style={[styles.statValue, { color: colors.success }]}>{offBalCount}</Text></View>
+        <View style={styles.statItem}><Text style={styles.statLabel}>Options</Text><Text style={styles.statValue}>{options.length}</Text></View>
+      </View>
+
+      <View style={styles.matrixContainer}>
+        <View style={[styles.matrixRow, styles.matrixHeader]}>
+          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.3, color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Option</Text>
+          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Treatment</Text>
+          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>RoU Asset</Text>
+          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Lease Liab.</Text>
+          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Tax Shield</Text>
+        </View>
+        {options.map((opt, i) => {
+          const treatment = opt.onBalanceSheet === true ? "On B/S" : opt.onBalanceSheet === false ? "Off B/S" : "—";
+          const treatmentColor = opt.onBalanceSheet === true ? colors.warning : opt.onBalanceSheet === false ? colors.success : colors.textMuted;
+          return (
+            <View key={i} style={[styles.matrixRow, i % 2 === 1 ? { backgroundColor: colors.surface } : {}]}>
+              <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.3, flexDirection: "row", alignItems: "center" }]}>
+                <View style={{ width: 7, height: 7, backgroundColor: opt.color || colors.primary, marginRight: 4 }} />
+                <Text style={{ fontSize: 9, color: colors.text }}>{opt.name}</Text>
+              </View>
+              <View style={[styles.matrixCell, { alignItems: "center" }]}>
+                <View style={{ paddingHorizontal: 4, paddingVertical: 1, backgroundColor: treatmentColor + "20" }}>
+                  <Text style={{ fontSize: 8, color: treatmentColor, fontFamily: "Inter", fontWeight: 700 }}>{treatment}</Text>
+                </View>
+              </View>
+              <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.rightOfUseAsset != null ? formatCurrency(opt.rightOfUseAsset, currency) : "—"}</Text>
+              <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.leaseLiability != null ? formatCurrency(opt.leaseLiability, currency) : "—"}</Text>
+              <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.taxShieldValue != null ? formatCurrency(opt.taxShieldValue, currency) : "—"}</Text>
+            </View>
+          );
+        })}
+      </View>
+
+      {options.some(o => o.plTreatment) && (
+        <View style={{ marginTop: 6 }}>
+          {options.filter(o => o.plTreatment).map((o, i) => (
+            <Text key={i} style={{ fontSize: 8, color: colors.textMuted, marginBottom: 1 }}>
+              <Text style={{ fontFamily: "Inter", fontWeight: 700, color: colors.text }}>{o.name}: </Text>{o.plTreatment}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {data.ifrs16Note && (
+        <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <Text style={{ fontSize: 9, color: colors.textMuted }}>
+            <Text style={{ color: colors.primary, fontFamily: "Inter", fontWeight: 700 }}>IFRS 16 note: </Text>{data.ifrs16Note}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+};
