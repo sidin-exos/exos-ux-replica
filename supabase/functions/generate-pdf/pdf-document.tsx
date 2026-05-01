@@ -542,6 +542,18 @@ const PDFReportDocument = ({
   const s = buildStyles(c);
   // Prefer structured envelope, fall back to legacy XML parsing
   const parsedData = (structuredData ? extractFromEnvelope(structuredData) : null) ?? extractDashboardData(analysisResult);
+  // Debug: surface scenario-specific dashboard payloads in edge logs so we can
+  // diagnose why widgets render empty (S3 NPV / IFRS 16).
+  try {
+    console.log("[generate-pdf] dashboards", {
+      scenarioTitle,
+      selectedDashboards,
+      hasNpvWaterfall: !!parsedData?.npvWaterfall,
+      npvOptionsCount: (parsedData?.npvWaterfall as any)?.options?.length ?? 0,
+      hasIfrs16: !!parsedData?.ifrs16Impact,
+      ifrs16OptionsCount: (parsedData?.ifrs16Impact as any)?.options?.length ?? 0,
+    });
+  } catch { /* logging only */ }
   const strippedAnalysis = stripDashboardData(analysisResult);
   // D3: prefer envelope-driven Executive Summary; fall back to prose heuristic.
   const envelopeSummary = extractEnvelopeSummary(structuredData);
@@ -655,7 +667,10 @@ const PDFReportDocument = ({
 
 
   const parseFindingTitle = (text: string): { title: string; body: string } => {
-    const stripped = stripMarkdown(text).trim();
+    // Strip raw numeric tails (e.g. "Reduce cost — 52700") that surface
+    // when expected_value is a bare number with no unit, before parsing.
+    const preStripped = String(text ?? "").replace(/\s+[—–-]\s+\d[\d,. ]*\s*$/, "");
+    const stripped = stripMarkdown(preStripped).trim();
     const tagMatch = stripped.match(/^(\[[^\]]+\])\s*(.*)$/);
     const tag = tagMatch ? tagMatch[1] + " " : "";
     const rest = tagMatch ? tagMatch[2] : stripped;
@@ -881,7 +896,7 @@ const PDFReportDocument = ({
                   const head = (
                     <View key="head" wrap={false}>
                       <View style={{ ...s.analysisBlockBadge, backgroundColor: blockColor }}>
-                        <Text style={s.analysisBlockBadgeText}>{stripMarkdown(section.title).toUpperCase()}</Text>
+                        <Text style={s.analysisBlockBadgeText}>{stripMarkdown(section.title).replace(/^(\w+)(\s+\1\b)+/i, "$1").toUpperCase()}</Text>
                       </View>
                       {out[0] ?? null}
                     </View>
