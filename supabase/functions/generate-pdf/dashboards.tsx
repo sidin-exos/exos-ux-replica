@@ -548,8 +548,8 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
         </View>
       </View>
       <View style={{ marginTop: 8, flexDirection: "row" }}>
-        <View style={{ width: 14, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ fontSize: 8, color: colors.textMuted, transform: "rotate(-90deg)" }}>Profit Impact ↑</Text>
+        <View style={{ width: 28, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ fontSize: 8, color: colors.textMuted, transform: "rotate(-90deg)", width: 90, textAlign: "center" }}>Business impact (high)</Text>
         </View>
         <View style={{ flex: 1 }}>
           <View style={styles.quadrantGrid}>
@@ -562,7 +562,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
               {renderQuadrant("noncritical", true, true)}
             </View>
           </View>
-          <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "center", marginTop: 4 }}>Supply Risk →</Text>
+          <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "center", marginTop: 4 }}>Supply risk (high) -&gt;</Text>
         </View>
       </View>
       <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
