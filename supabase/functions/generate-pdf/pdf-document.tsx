@@ -562,79 +562,88 @@ const PDFReportDocument = ({
         <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
       </Page>
 
-      {/* Recommendations & Risks */}
-      <Page size="A4" style={s.pageWithHeader} id="section-recs-risks">
-        <View style={s.headerBar} fixed>
-          <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
-          <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
-        </View>
-        <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>RECOMMENDATIONS & RISKS</Text></View>
-        <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Recommendations</Text><View style={s.sectionTitleLine} /></View>
-        {(() => {
-          const sections = categorizeAnalysisSections(analysisLines);
-          const recoLines = sections.filter(s => s.type === "recommendations").flatMap(s => s.lines);
-          const displayLines = recoLines.length > 0 ? recoLines : recommendations;
-          const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
-          return displayLines.slice(0, 6).map((line, i) => {
-            const { title, body } = parseFindingTitle(line);
-            return (
-              <View key={`reco-${i}`} style={{ ...s.recoCard, borderLeftColor: recoAccents[i % recoAccents.length] }} wrap={false}>
-                <Text style={s.recoTitle}>{title}</Text>{body ? <Text style={s.recoBody}>{body}</Text> : null}
-              </View>
-            );
-          });
-        })()}
-        {(() => {
-          const structuredRisks = extractRiskRegisterItems(analysisResult);
-          const sections = categorizeAnalysisSections(analysisLines);
-          const riskLines = sections.filter(s => s.type === "risks").flatMap(s => s.lines);
-          const useStructured = structuredRisks.length > 0;
-          if (!useStructured && riskLines.length === 0) return null;
+      {/* Recommendations & Risks — only render when overflow recommendations exist OR a Risk Register has content */}
+      {(() => {
+        const sections = categorizeAnalysisSections(analysisLines);
+        const recoSections = sections.filter(sec => sec.type === "recommendations");
+        const recoLines = recoSections.flatMap(sec => sec.lines);
+        const overflowRecos = (recoLines.length > 0 ? recoLines : recommendations).slice(4);
+        const structuredRisks = extractRiskRegisterItems(analysisResult);
+        const riskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
+        const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
+        if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
-          const heading = (
-            <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}><Text style={s.sectionTitleText}>Risk Register</Text><View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} /></View>
-          );
+        const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
 
-          if (useStructured) {
-            return (
+        return (
+          <Page size="A4" style={s.pageWithHeader} id="section-recs-risks">
+            <View style={s.headerBar} fixed>
+              <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
+              <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
+            </View>
+            <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>{hasRiskRegister ? "RECOMMENDATIONS & RISKS" : "ADDITIONAL RECOMMENDATIONS"}</Text></View>
+
+            {overflowRecos.length > 0 && (
               <>
-                {heading}
-                {structuredRisks.slice(0, 5).map((item, i) => {
-                  const sevColor = riskSeverityColor(item.severity, c);
+                <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Additional Recommendations</Text><View style={s.sectionTitleLine} /></View>
+                {overflowRecos.slice(0, 6).map((line, i) => {
+                  const { title, body } = parseFindingTitle(line);
                   return (
-                    <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
-                      <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{item.severity.toUpperCase()}</Text></View>
-                      {item.name ? <Text style={s.riskTitle}>{item.name}</Text> : null}
-                      <Text style={s.riskDescription}>{item.description}</Text>
+                    <View key={`reco-${i}`} style={{ ...s.recoCard, borderLeftColor: recoAccents[i % recoAccents.length] }} wrap={false}>
+                      <Text style={s.recoTitle}>{title}</Text>{body ? <Text style={s.recoBody}>{body}</Text> : null}
                     </View>
                   );
                 })}
               </>
-            );
-          }
+            )}
 
-          return (
-            <>
-              {heading}
-              {riskLines.slice(0, 5).map((line, i) => {
-                const { severity, cleanText } = parseRiskSeverity(line);
-                const colonIdx = cleanText.indexOf(":");
-                const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
-                const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
-                const sevColor = riskSeverityColor(severity, c);
+            {hasRiskRegister && (() => {
+              const useStructured = structuredRisks.length > 0;
+              const heading = (
+                <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}><Text style={s.sectionTitleText}>Risk Register</Text><View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} /></View>
+              );
+              if (useStructured) {
                 return (
-                  <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
-                    <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text></View>
-                    {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
-                    <Text style={s.riskDescription}>{riskDesc}</Text>
-                  </View>
+                  <>
+                    {heading}
+                    {structuredRisks.slice(0, 5).map((item, i) => {
+                      const sevColor = riskSeverityColor(item.severity, c);
+                      return (
+                        <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                          <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{item.severity.toUpperCase()}</Text></View>
+                          {item.name ? <Text style={s.riskTitle}>{item.name}</Text> : null}
+                          <Text style={s.riskDescription}>{item.description}</Text>
+                        </View>
+                      );
+                    })}
+                  </>
                 );
-              })}
-            </>
-          );
-        })()}
-        <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
-      </Page>
+              }
+              return (
+                <>
+                  {heading}
+                  {riskLines.slice(0, 5).map((line, i) => {
+                    const { severity, cleanText } = parseRiskSeverity(line);
+                    const colonIdx = cleanText.indexOf(":");
+                    const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
+                    const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
+                    const sevColor = riskSeverityColor(severity, c);
+                    return (
+                      <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                        <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text></View>
+                        {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
+                        <Text style={s.riskDescription}>{riskDesc}</Text>
+                      </View>
+                    );
+                  })}
+                </>
+              );
+            })()}
+
+            <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+          </Page>
+        );
+      })()}
 
       {/* Analysis Parameters */}
       {hasParams && (
