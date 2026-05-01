@@ -526,7 +526,17 @@ function extractReductionComponents(
       const text = `${r.financial_impact ?? ''} ${r.action}`;
       const amountMatch = text.match(/(?:€|\$|£|EUR|USD|GBP)\s?([\d.,]+\s?[KMB]?)/i);
       let value: number | null = null;
-      let label = String(r.action).slice(0, 60).trim();
+      // Build a clean noun-phrase label: prefer text BEFORE first colon,
+      // strip [PRIORITY] tags, strip leading verbs, dedupe word repeats,
+      // and cap to 32 chars so the chart legend never shows a sentence.
+      let raw = String(r.action).trim();
+      raw = raw.replace(/^\[(?:critical|high|medium|low)\]\s*/i, '');
+      raw = raw.replace(/^[-•\d.\s]+/, '');
+      const colonIdx = raw.indexOf(':');
+      if (colonIdx > 0 && colonIdx < 60) raw = raw.slice(0, colonIdx);
+      raw = raw.replace(COST_LABEL_VERB_PREFIX_RE, '').trim();
+      raw = dedupeLeadingWord(raw);
+      let label = (raw.split(/\s+/).slice(0, 4).join(' ') || String(r.action)).slice(0, 32);
       if (amountMatch) {
         value = parseAmount(amountMatch[1]);
       } else {
@@ -540,8 +550,7 @@ function extractReductionComponents(
         }
       }
       if (value !== null && value > 0) {
-        label = label.replace(/^[-•\d.\s\[\]]+/, '').replace(/^\[(?:high|medium|low|critical)\]\s*/i, '');
-        out.push({ name: label.slice(0, 50), value, type: 'reduction' });
+        out.push({ name: label, value, type: 'reduction' });
       }
     }
   }
