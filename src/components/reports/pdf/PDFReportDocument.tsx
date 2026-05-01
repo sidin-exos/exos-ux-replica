@@ -5,6 +5,7 @@ import {
   View,
   StyleSheet,
   Link,
+  Font,
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
@@ -13,6 +14,33 @@ import { DashboardType } from "@/lib/dashboard-mappings";
 import type { PdfThemeMode, PdfColorSet } from "./dashboardVisuals/theme";
 import { getPdfColors } from "./dashboardVisuals/theme";
 import type { ExosOutput } from "@/lib/sentinel/types";
+
+// ── Register Inter font for PDF rendering ──
+// The built-in Helvetica-Bold has a kerning regression that causes ghosted/double-stamped
+// characters on large headings (e.g. "Analysis Overview" rendered with wide gaps and offset glyphs).
+// Inter is the project's brand body font and renders cleanly at all sizes.
+let interFontRegistered = false;
+function ensureInterRegistered() {
+  if (interFontRegistered) return;
+  try {
+    Font.register({
+      family: "Inter",
+      fonts: [
+        { src: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.ttf", fontWeight: 400 },
+        { src: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.ttf", fontWeight: 500 },
+        { src: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.ttf", fontWeight: 600 },
+        { src: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.ttf", fontWeight: 700 },
+      ],
+    });
+    // Disable hyphenation which can also produce odd word-break artefacts
+    Font.registerHyphenationCallback((word) => [word]);
+    interFontRegistered = true;
+  } catch (e) {
+    console.warn("[PDF] Inter font registration failed, falling back to Helvetica", e);
+  }
+}
+ensureInterRegistered();
+
 
 // ── FIX 1: Strip ALL markdown from AI text ──
 
