@@ -1079,6 +1079,13 @@ DASHBOARD-SUPPORTING FIELDS:
 - Group A: populate financial_model.working_capital ONLY when payment-terms data given. Compute working_capital_delta_eur = annual_spend × (target_dpo - current_dpo) / 365. Flag late_payment_directive_risk=true for payment_terms_days > 60 (EU 2011/7).
 - S20/S24/S25/S27: populate scenario_specific.concentration when supplier-spend data given. HHI = Σ(supplier_spend_share_pct)². Bands: <1500 LOW, 1500–2500 MODERATE, 2500–5000 HIGH, >5000 EXTREME. single_source_flag=true when one supplier holds >70% of a category. Use tokenised supplier_label, ISO-3166-1 alpha-2 country codes.
 
+ENTITY TOKEN INTEGRITY (anonymisation contract — applies to ALL scenarios):
+- The user input may contain bracketed tokens like [SUPPLIER_A], [COMPANY_B], [EMAIL], [SUPPLIER_C2], etc. These are placeholders for real entities; a downstream layer restores them.
+- PRESERVE every token EXACTLY as received — same brackets, same suffix letter/number. Never rename [SUPPLIER_A] to "Supplier A", "Vendor 1", "the incumbent", or any free-text label, and never swap one token for another.
+- When you need to reference a NEW hypothetical entity the user did NOT provide (e.g. an alternative supplier proposed in stage_3_recover.alternative_supply_options, a candidate vendor in an RFP shortlist, a fallback partner), use the dedicated namespace [ALT_SUPPLIER_1], [ALT_SUPPLIER_2], … (or [ALT_PARTNER_1], [ALT_VENDOR_1] when semantically clearer). Never reuse a token already present in the input for a different entity.
+- Be consistent within a single response: the same alternative entity must keep the same [ALT_*] token across every section, table row, draft letter and recommendation it appears in. Inconsistent labelling breaks the deliverable.
+- In draft letters, addressee fields, and supporting tables, refer to entities by their token only (e.g. "Dear [SUPPLIER_A] team,") — never substitute a generic noun.
+
 GROUP INSTRUCTION AND SCHEMA:
 `;
 
