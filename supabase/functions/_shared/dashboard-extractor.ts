@@ -919,7 +919,7 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
       // Sanitiser: drop entries whose category looks like a recommendation
       // sentence rather than a short cost-category noun phrase.
       if (!isValidCostLabel(c?.category) || amount === null) return null;
-      return { name: String(c.category).trim(), value: amount, type: 'cost' as const };
+      return { name: dedupeLeadingWord(String(c.category)), value: amount, type: 'cost' as const };
     })
     .filter((c): c is { name: string; value: number; type: 'cost' } => c !== null);
 
