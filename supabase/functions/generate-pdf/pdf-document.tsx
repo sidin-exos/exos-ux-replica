@@ -546,6 +546,7 @@ const PDFReportDocument = ({
   // Risk Register page, duplicating content and confusing the deliverable.
   const isS26 = envelope?.scenario_id === "S26" || /disruption\s*manag/i.test(scenarioTitle);
   const isS20 = envelope?.scenario_id === "S20" || /category\s*risk/i.test(scenarioTitle);
+  const isS21 = envelope?.scenario_id === "S21" || /preparing.*for.*negotiat/i.test(scenarioTitle);
   const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
   const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
@@ -564,6 +565,18 @@ const PDFReportDocument = ({
       .sort((a: any, b: any) => Number(b.score) - Number(a.score));
     return sorted[0]?.dimension ?? null;
   })();
+  // S21 cover KPIs (BATNA / Power Balance / ZOPA / Input Quality)
+  const s21Specific = isS21 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s21PowerBalance = (() => {
+    const v = String(s21Specific?.leverage_analysis?.power_balance ?? "").toUpperCase();
+    if (!v || v.includes("|")) return null;
+    if (v === "BUYER_ADVANTAGE") return "BUYER ADV.";
+    if (v === "SUPPLIER_ADVANTAGE") return "SUPPLIER ADV.";
+    return v.replace(/_/g, " ");
+  })();
+  const s21ZopaExists = typeof s21Specific?.zopa?.zopa_exists === "boolean" ? s21Specific.zopa.zopa_exists : null;
+  const s21BuyerTarget = Number(s21Specific?.zopa?.buyer_target);
+  const s21ZopaLabel = s21ZopaExists == null ? null : (s21ZopaExists ? (Number.isFinite(s21BuyerTarget) ? `YES (target €${s21BuyerTarget >= 1_000_000 ? (s21BuyerTarget/1_000_000).toFixed(1)+"M" : Math.round(s21BuyerTarget/1000)+"K"})` : "YES") : "NO");
 
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
@@ -692,6 +705,13 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RAG STATUS</Text><Text style={{ ...s.kpiValue, color: kpiColor(s20Rag === "RED" ? "High" : s20Rag === "AMBER" ? "Medium" : s20Rag === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s20Rag ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>DECISION</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s20Decision ?? "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>TOP RISK DIMENSION</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s20TopRisk ?? "—"}</Text></View>
+            </>
+          ) : isS21 ? (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>BATNA SCORE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{batnaScore != null ? `${batnaScore} / 5` : "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>POWER BALANCE</Text><Text style={{ ...s.kpiValue, color: s21PowerBalance === "BUYER ADV." ? c.success : s21PowerBalance === "SUPPLIER ADV." ? c.destructive : c.primary }}>{s21PowerBalance ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>ZOPA</Text><Text style={{ ...s.kpiValue, color: s21ZopaExists === false ? c.destructive : s21ZopaExists ? c.success : c.primary }}>{s21ZopaLabel ?? "—"}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{coverageDisplaySpaced}</Text></View>
             </>
           ) : (
             <>
@@ -843,11 +863,11 @@ const PDFReportDocument = ({
         // D4: For S27 the Black Swan Risk Map (rendered inline in Detailed
         // Analysis) is the canonical risk view — suppress the legacy generic
         // Risk Register entirely to avoid duplication and table corruption.
-        const structuredRisks = (isS27 || isS26 || isS20) ? [] : extractRiskRegisterItems(analysisResult);
+        const structuredRisks = (isS27 || isS26 || isS20 || isS21) ? [] : extractRiskRegisterItems(analysisResult);
         const rawRiskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
         // Drop markdown-table fragments and instructional lines so each
         // remaining line is a real risk sentence, not a leaked table cell.
-        const riskLines = (isS27 || isS26 || isS20) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
+        const riskLines = (isS27 || isS26 || isS20 || isS21) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
         const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
         if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
