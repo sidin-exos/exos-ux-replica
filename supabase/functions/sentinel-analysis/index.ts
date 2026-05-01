@@ -614,7 +614,7 @@ async function callLLM(
         systemPrompt: sysPrompt,
         contents: [{ role: "user", parts: [{ text: usrPrompt }] }],
         temperature: 0.4,
-        maxOutputTokens: 8192,
+        maxOutputTokens: 12288,
         model: googleModel,
         // Outer retries here re-enter callGoogleAI; on attempt > 0 we suppress
         // the Nebius branch so we do not stack a 90s Nebius timeout on top of
@@ -1299,7 +1299,7 @@ serve(async (req) => {
           systemPrompt,
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           temperature: 0.4,
-          maxOutputTokens: 8192,
+          maxOutputTokens: 12288,
           model: modelForAttempt,
           timeoutMs: 30_000,
           skipNebiusFallback: attempt > 0,

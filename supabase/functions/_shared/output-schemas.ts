@@ -111,7 +111,8 @@ S21 Negotiation Preparation — SPECIFIC RULES:
 9. risk_register[]: REQUIRED. 3–5 negotiation risks. Each item: { "risk": "...", "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": "..." }.
 10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data.
 11. ALL EIGHT WIZARD DELIVERABLES ARE MANDATORY: (1) leverage_analysis with non-empty buyer_leverage_factors[], supplier_leverage_factors[] and a non-template power_balance value; (2) batna with batna_strength_pct AND batna_improvement_actions[] (>=2); (3) risk_register[] (>=3); (4) opening_position + negotiation_sequence[] (>=4 steps); (5) counter_arguments[] (>=3); (6) walk_away_plan with all three sub-fields populated; (7) value_creation[] (>=2); (8) financial_outcome_range with numeric optimistic / realistic / pessimistic. An empty array or a literal "Conservative | Aggressive | Hybrid" placeholder is treated as a report failure.
-12. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.`,
+12. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.
+13. JSON STRUCTURE — CRITICAL: scenario_specific MUST be a single JSON OBJECT (open with { and close with }), never an array. Each sub-key (batna, zopa, leverage_analysis, walk_away_plan, financial_outcome_range) is a single OBJECT closed with }. Only counter_arguments, value_creation, risk_register, negotiation_tactics, negotiation_sequence, batna_improvement_actions, buyer_leverage_factors, supplier_leverage_factors, trigger_conditions and exit_steps are ARRAYS closed with ]. Match every opening { with } and every opening [ with ] — mismatched closers (e.g. closing scenario_specific or payload with ]) will fail validation.`,
 };
 
 /** Return group instruction + only the active scenario's addendum (token-efficient). */
@@ -1198,6 +1199,44 @@ function salvageTruncatedJson(raw: string): string | null {
   return null;
 }
 
+/**
+ * Repair bracket-TYPE mismatches in malformed JSON envelopes. Gemini occasionally
+ * closes an object with `]` or an array with `}` — particularly in deeply nested
+ * S21 / S26 schemas. We walk the bracket stack and rewrite each mismatched
+ * closer to the type that the matching opener expects. Strings are skipped.
+ */
+function repairBracketTypes(raw: string): string | null {
+  const start = raw.indexOf('{');
+  if (start < 0) return null;
+  const chars = raw.split('');
+  const stack: Array<'{' | '['> = [];
+  let inString = false;
+  let escape = false;
+  let mutated = false;
+  for (let i = start; i < chars.length; i++) {
+    const ch = chars[i];
+    if (escape) { escape = false; continue; }
+    if (inString) {
+      if (ch === '\\') { escape = true; continue; }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === '{' || ch === '[') { stack.push(ch); continue; }
+    if (ch === '}' || ch === ']') {
+      const opener = stack.pop();
+      if (!opener) continue;
+      const expected = opener === '{' ? '}' : ']';
+      if (ch !== expected) {
+        chars[i] = expected;
+        mutated = true;
+      }
+    }
+  }
+  if (!mutated) return null;
+  return chars.join('');
+}
+
 export function parseAIResponse(raw: string): ExosOutputParsed | null {
   // Attempt 1: direct JSON parse
   try {
@@ -1212,7 +1251,27 @@ export function parseAIResponse(raw: string): ExosOutputParsed | null {
     } catch (_) { /* fall through */ }
   }
 
-  // Attempt 3: brace-balance salvage for truncated/malformed envelopes
+  // Attempt 3: bracket-TYPE repair for envelopes where the model closed an
+  // object with `]` or vice versa. Common in deeply nested S21/S26 schemas.
+  const bracketFixed = repairBracketTypes(raw);
+  if (bracketFixed) {
+    try {
+      const parsed = JSON.parse(bracketFixed);
+      console.warn('[EXOS] AI response salvaged via bracket-type repair');
+      return parsed;
+    } catch (_) { /* fall through */ }
+    // Try the regex-extracted slice of the fixed string too
+    const fixedMatch = bracketFixed.match(/\{[\s\S]*\}/);
+    if (fixedMatch) {
+      try {
+        const parsed = JSON.parse(fixedMatch[0]);
+        console.warn('[EXOS] AI response salvaged via bracket-type repair + slice');
+        return parsed;
+      } catch (_) { /* fall through */ }
+    }
+  }
+
+  // Attempt 4: brace-balance salvage for truncated/malformed envelopes
   const salvaged = salvageTruncatedJson(raw);
   if (salvaged) {
     try {
@@ -1222,7 +1281,7 @@ export function parseAIResponse(raw: string): ExosOutputParsed | null {
     } catch (_) { /* fall through */ }
   }
 
-  // Attempt 4: log and return null for retry
+  // Attempt 5: log and return null for retry
   console.error('[EXOS] AI response failed JSON parsing — triggering retry');
   return null;
 }
