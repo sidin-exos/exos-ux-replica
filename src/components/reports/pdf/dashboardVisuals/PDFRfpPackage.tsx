@@ -52,7 +52,7 @@ export const PDFRfpPackage = ({
           </Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: heroColor }}>
+          <Text style={{ fontSize: 16, fontFamily: "Inter", fontWeight: 700, color: heroColor }}>
             {deliverablesCoverage.delivered}/{deliverablesCoverage.total}
           </Text>
           <Text style={{ fontSize: 7, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 1 }}>
@@ -81,7 +81,7 @@ export const PDFRfpPackage = ({
 
       {/* Brief */}
       <View style={{ borderWidth: 1, borderColor: colors.border, padding: 7, marginBottom: 8 }}>
-        <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: colors.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+        <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
           Extracted brief
         </Text>
         <Text style={{ fontSize: 9, color: colors.text, marginBottom: 4 }}>{extractedBrief.summary}</Text>
@@ -89,7 +89,7 @@ export const PDFRfpPackage = ({
           {extractedBrief.annualBudgetEur != null && (
             <View style={{ width: "50%", flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
               <Text style={{ fontSize: 8, color: colors.textMuted }}>Budget</Text>
-              <Text style={{ fontSize: 8, color: colors.text, fontFamily: "Helvetica-Bold" }}>
+              <Text style={{ fontSize: 8, color: colors.text, fontFamily: "Inter", fontWeight: 700 }}>
                 €{extractedBrief.annualBudgetEur.toLocaleString()}
               </Text>
             </View>
@@ -97,7 +97,7 @@ export const PDFRfpPackage = ({
           {extractedBrief.deadlines.submissionDue && (
             <View style={{ width: "50%", flexDirection: "row", justifyContent: "space-between", marginBottom: 2, paddingLeft: 8 }}>
               <Text style={{ fontSize: 8, color: colors.textMuted }}>Submission</Text>
-              <Text style={{ fontSize: 8, color: colors.text, fontFamily: "Helvetica-Bold" }}>
+              <Text style={{ fontSize: 8, color: colors.text, fontFamily: "Inter", fontWeight: 700 }}>
                 {extractedBrief.deadlines.submissionDue}
               </Text>
             </View>
@@ -111,7 +111,7 @@ export const PDFRfpPackage = ({
           {extractedBrief.deadlines.awardTarget && (
             <View style={{ width: "50%", flexDirection: "row", justifyContent: "space-between", marginBottom: 2, paddingLeft: 8 }}>
               <Text style={{ fontSize: 8, color: colors.textMuted }}>Award target</Text>
-              <Text style={{ fontSize: 8, color: colors.text, fontFamily: "Helvetica-Bold" }}>
+              <Text style={{ fontSize: 8, color: colors.text, fontFamily: "Inter", fontWeight: 700 }}>
                 {extractedBrief.deadlines.awardTarget}
               </Text>
             </View>
@@ -127,7 +127,7 @@ export const PDFRfpPackage = ({
       {/* Tender document */}
       <View style={{ borderWidth: 1, borderColor: colors.border, marginBottom: 8 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", padding: 5, backgroundColor: colors.surfaceLight }}>
-          <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: colors.text, textTransform: "uppercase", letterSpacing: 1 }}>
+          <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: colors.text, textTransform: "uppercase", letterSpacing: 1 }}>
             Tender document
           </Text>
           <Text style={{ fontSize: 7, color: colors.textMuted }}>
@@ -162,7 +162,7 @@ export const PDFRfpPackage = ({
       {/* Evaluation matrix */}
       <View style={{ borderWidth: 1, borderColor: colors.border, marginBottom: 8 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", padding: 5, backgroundColor: colors.surfaceLight }}>
-          <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: colors.text, textTransform: "uppercase", letterSpacing: 1 }}>
+          <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: colors.text, textTransform: "uppercase", letterSpacing: 1 }}>
             Evaluation matrix
           </Text>
           <Text style={{ fontSize: 7, color: weightsBalanced ? colors.success : colors.destructive }}>
@@ -180,7 +180,7 @@ export const PDFRfpPackage = ({
               }}
             >
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: colors.text }}>{c.name}</Text>
+                <Text style={{ fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: colors.text }}>{c.name}</Text>
                 <Text style={{ fontSize: 8, color: colors.textMuted }}>{c.weightPct}%</Text>
               </View>
               <View style={{ height: 3, marginTop: 2, backgroundColor: colors.surfaceLight, borderRadius: 1.5, overflow: "hidden" }}>
@@ -197,7 +197,7 @@ export const PDFRfpPackage = ({
       <View style={{ flexDirection: "row" }}>
         <View style={{ flex: 1, borderWidth: 1, borderColor: colors.border, marginRight: 4 }}>
           <View style={{ padding: 5, backgroundColor: colors.surfaceLight }}>
-            <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: colors.text, textTransform: "uppercase", letterSpacing: 1 }}>
+            <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: colors.text, textTransform: "uppercase", letterSpacing: 1 }}>
               Clarifications ({clarifications.length})
             </Text>
           </View>
@@ -223,7 +223,7 @@ export const PDFRfpPackage = ({
 
         <View style={{ flex: 1, borderWidth: 1, borderColor: colors.border, marginLeft: 4 }}>
           <View style={{ padding: 5, backgroundColor: colors.surfaceLight }}>
-            <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: colors.text, textTransform: "uppercase", letterSpacing: 1 }}>
+            <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: colors.text, textTransform: "uppercase", letterSpacing: 1 }}>
               Suggested attachments ({suggestedAttachments.length})
             </Text>
           </View>

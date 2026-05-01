@@ -10,8 +10,34 @@ import {
   View,
   StyleSheet,
   Link,
+  Font,
   renderToBuffer,
 } from "npm:@react-pdf/renderer@4";
+
+// ── Register Inter font ──
+// Built-in Helvetica-Bold has a kerning regression in @react-pdf/renderer 4
+// that causes ghosted/double-stamped glyphs on large headings. Inter renders cleanly.
+let __interRegistered = false;
+function ensureInterRegistered() {
+  if (__interRegistered) return;
+  try {
+    Font.register({
+      family: "Inter",
+      fonts: [
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf", fontWeight: 400 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.ttf", fontWeight: 500 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.ttf", fontWeight: 600 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf", fontWeight: 700 },
+      ],
+    });
+    Font.registerHyphenationCallback((word: string) => [word]);
+    __interRegistered = true;
+  } catch (e) {
+    console.warn("[generate-pdf] Inter font registration failed", e);
+  }
+}
+ensureInterRegistered();
+
 import React from "npm:react@18";
 import type { ReactElement, ReactNode } from "npm:react@18";
 import { getPdfColors, getPdfStyles } from "./theme.ts";
@@ -70,7 +96,7 @@ function renderBodyText(text: string, baseStyle: Record<string, unknown>): React
         const isValue = testRe.test(part);
         if (!isValue) return <Text key={i}>{part}</Text>;
         const spaced = part.replace(/([€$£])([\d])/g, "$1\u2009$2");
-        return <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>{spaced}</Text>;
+        return <Text key={i} style={{ fontFamily: "Inter", fontWeight: 700 }}>{spaced}</Text>;
       })}
     </Text>
   );
@@ -142,83 +168,83 @@ function summarizeParameter(value: string, maxWords = 30): string {
 
 function buildStyles(c: PdfColorSet) {
   return StyleSheet.create({
-    page: { backgroundColor: c.background, paddingTop: SP.pageTopMargin, paddingLeft: SP.pageSideMargin, paddingRight: SP.pageSideMargin, paddingBottom: SP.pageBottomMargin, fontFamily: "Helvetica", color: c.text },
-    pageWithHeader: { backgroundColor: c.background, paddingTop: SP.pageTopMargin, paddingLeft: SP.pageSideMargin, paddingRight: SP.pageSideMargin, paddingBottom: SP.pageBottomMargin, fontFamily: "Helvetica", color: c.text },
+    page: { backgroundColor: c.background, paddingTop: SP.pageTopMargin, paddingLeft: SP.pageSideMargin, paddingRight: SP.pageSideMargin, paddingBottom: SP.pageBottomMargin, fontFamily: "Inter", color: c.text },
+    pageWithHeader: { backgroundColor: c.background, paddingTop: SP.pageTopMargin, paddingLeft: SP.pageSideMargin, paddingRight: SP.pageSideMargin, paddingBottom: SP.pageBottomMargin, fontFamily: "Inter", color: c.text },
     headerBar: { position: "absolute", top: 0, left: 0, right: 0, height: 36, backgroundColor: c.primary, flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: SP.pageSideMargin },
     coverLeftStripe: { position: "absolute", top: 36, left: 0, width: 5, bottom: 50, backgroundColor: c.primary },
     coverScenarioBadge: { backgroundColor: c.primary, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, alignSelf: "flex-start", marginBottom: 16 },
-    coverScenarioBadgeText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 1 },
-    coverTitle: { fontSize: 22, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 12, lineHeight: 1.2 },
+    coverScenarioBadgeText: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 1 },
+    coverTitle: { fontSize: 22, fontFamily: "Inter", fontWeight: 700, color: c.text, marginBottom: 12, lineHeight: 1.2 },
     coverDivider: { height: 1, backgroundColor: c.border, marginBottom: 10 },
     coverMetaRow: { flexDirection: "row", marginBottom: 24 },
     coverMetaCol: { flex: 1 },
-    coverMetaLabel: { fontSize: 8, fontFamily: "Helvetica-Bold", color: c.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
-    coverMetaValue: { fontSize: 11, fontFamily: "Helvetica-Bold", color: c.text },
+    coverMetaLabel: { fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
+    coverMetaValue: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.text },
     tocBox: { borderWidth: 1, borderColor: c.border, borderRadius: 4, padding: 14, marginBottom: 24 },
-    tocTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.primary, marginBottom: 8 },
+    tocTitle: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: c.primary, marginBottom: 8 },
     tocRow: { flexDirection: "row", alignItems: "center", paddingVertical: 3 },
-    tocNumber: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.primary, width: 20 },
+    tocNumber: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: c.primary, width: 20 },
     tocLabel: { fontSize: 9, color: c.text, flex: 1, textDecoration: "none" },
     tocPageHint: { fontSize: 8, color: c.textMuted },
     coverBadgeRow: { position: "absolute", bottom: 50, left: SP.pageSideMargin },
     coverBadge: { marginBottom: 4 },
-    coverBadgeLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: c.textMuted, textTransform: "uppercase", letterSpacing: 0.5 },
-    coverBadgeValue: { fontSize: 10, fontFamily: "Helvetica-Bold" },
+    coverBadgeLabel: { fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 0.5 },
+    coverBadgeValue: { fontSize: 10, fontFamily: "Inter", fontWeight: 700 },
     bottomStripe: { position: "absolute", bottom: 0, left: 0, right: 0, height: 10, flexDirection: "row" },
     stripeSegment: { flex: 1, height: 10 },
     sectionBadge: { backgroundColor: c.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, alignSelf: "flex-start", marginBottom: 10 },
-    sectionBadgeText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 0.8 },
+    sectionBadgeText: { fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 0.8 },
     sectionTitleWrapperCompact: { marginBottom: 8, paddingBottom: 4 },
     sectionTitleWrapper: { marginBottom: SP.afterHeadingLine, paddingBottom: 6 },
-    sectionTitleText: { fontSize: 18, fontFamily: "Helvetica-Bold", color: c.text },
+    sectionTitleText: { fontSize: 18, fontFamily: "Inter", fontWeight: 700, color: c.text },
     sectionTitleLine: { height: 2, backgroundColor: c.primary, marginTop: 6 },
     findingCardsRow: { flexDirection: "row", marginBottom: 8 },
     findingCard: { flex: 1, backgroundColor: c.surface, borderLeftWidth: 3, padding: 8, marginRight: 5 },
     findingCardLast: { marginRight: 0 },
     findingCardNumber: { width: 20, height: 20, borderRadius: 10, justifyContent: "center", alignItems: "center", marginBottom: 6 },
-    findingCardNumberText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.textOnPrimary },
-    findingCardTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 4 },
+    findingCardNumberText: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary },
+    findingCardTitle: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: c.text, marginBottom: 4 },
     findingCardBody: { fontSize: 8, color: c.textMuted, lineHeight: 1.4 },
     actionItem: { flexDirection: "row", alignItems: "flex-start", backgroundColor: c.surface, borderLeftWidth: 3, borderLeftColor: c.primary, padding: 7, marginBottom: 5 },
     actionNumber: { width: 18, height: 18, borderRadius: 9, backgroundColor: c.primary, justifyContent: "center", alignItems: "center", marginRight: 8 },
-    actionNumberText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.textOnPrimary },
+    actionNumberText: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary },
     actionContent: { flex: 1 },
-    actionTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 3 },
+    actionTitle: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: c.text, marginBottom: 3 },
     actionBody: { fontSize: 9, color: c.textMuted, lineHeight: 1.5 },
     kpiRow: { flexDirection: "row", borderWidth: 1, borderColor: c.border, borderRadius: 4, marginTop: 8 },
     kpiCell: { flex: 1, paddingVertical: 6, paddingHorizontal: 6, alignItems: "center", borderRightWidth: 1, borderRightColor: c.border },
     kpiCellLast: { borderRightWidth: 0 },
-    kpiLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: c.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
-    kpiValue: { fontSize: 11, fontFamily: "Helvetica-Bold", color: c.primary },
+    kpiLabel: { fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
+    kpiValue: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.primary },
     analysisBlock: { backgroundColor: c.surface, borderLeftWidth: 4, padding: 14, marginBottom: 12 },
     analysisBlockBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, alignSelf: "flex-start", marginBottom: 8 },
-    analysisBlockBadgeText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 0.5 },
+    analysisBlockBadgeText: { fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 0.5 },
     analysisText: { fontSize: 9, color: c.text, lineHeight: 1.6, marginBottom: SP.betweenParagraphs },
     confidenceBar: { backgroundColor: c.surface, borderLeftWidth: 3, borderLeftColor: c.primary, padding: 10, marginTop: 16 },
     recoCard: { backgroundColor: c.surface, borderLeftWidth: 4, padding: 12, marginBottom: 10 },
-    recoTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 4 },
+    recoTitle: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: c.text, marginBottom: 4 },
     recoBody: { fontSize: 9, color: c.textMuted, lineHeight: 1.5 },
     riskItem: { backgroundColor: c.surface, borderLeftWidth: 4, padding: 12, marginBottom: 10 },
     riskBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, alignSelf: "flex-start", marginBottom: 6 },
-    riskBadgeText: { fontSize: 7, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 0.5 },
-    riskTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 4 },
+    riskBadgeText: { fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, textTransform: "uppercase", letterSpacing: 0.5 },
+    riskTitle: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: c.text, marginBottom: 4 },
     riskDescription: { fontSize: 9, color: c.textMuted, lineHeight: 1.5 },
     paramCard: { flexDirection: "row", backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 4, marginBottom: 10, overflow: "hidden" },
     paramLabel: { width: "30%", backgroundColor: c.surfaceLight, padding: 12, justifyContent: "center" },
-    paramLabelText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.primary, textTransform: "uppercase", letterSpacing: 0.5 },
+    paramLabelText: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: c.primary, textTransform: "uppercase", letterSpacing: 0.5 },
     paramValue: { flex: 1, padding: 12 },
     paramValueText: { fontSize: 9, color: c.text, lineHeight: 1.5 },
     methodologyBox: { backgroundColor: c.surfaceLight, borderLeftWidth: 3, borderLeftColor: c.primary, padding: 14, marginTop: 16 },
-    methodologyTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.text, marginBottom: 6 },
+    methodologyTitle: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: c.text, marginBottom: 6 },
     methodologyText: { fontSize: 9, color: c.textMuted, lineHeight: 1.5 },
     statsTable: { flexDirection: "row", borderWidth: 1, borderColor: c.border, borderRadius: 4, marginTop: 16 },
     statsCell: { flex: 1, paddingVertical: 8, paddingHorizontal: 8, alignItems: "center", borderRightWidth: 1, borderRightColor: c.border },
     statsCellLast: { borderRightWidth: 0 },
-    statsLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: c.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 },
-    statsValue: { fontSize: 9, fontFamily: "Helvetica-Bold", color: c.primary },
+    statsLabel: { fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 },
+    statsValue: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: c.primary },
     footer: { position: "absolute", bottom: 16, left: SP.pageSideMargin, right: SP.pageSideMargin, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderTopColor: c.border, paddingTop: 6 },
     footerText: { fontSize: 8, color: c.textMuted },
-    verticalLabel: { position: "absolute", top: "45%", left: 10, transform: "rotate(-90deg)", fontSize: 8, fontFamily: "Helvetica-Bold", color: c.textMuted, textTransform: "uppercase", letterSpacing: 2 },
+    verticalLabel: { position: "absolute", top: "45%", left: 10, transform: "rotate(-90deg)", fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 2 },
   });
 }
 
@@ -329,16 +355,10 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
 };
 
 const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardData | null, themeMode?: PdfThemeMode): ReactNode => {
-  const c = getPdfColors(themeMode);
   const dataKey = dashboardDataKey[dashboardType];
   if (dataKey && (!parsedData || !parsedData[dataKey])) {
-    const config = dashboardConfigs[dashboardType as DashboardType];
-    return (
-      <View style={{ backgroundColor: c.surfaceLight, padding: 24, alignItems: "center", justifyContent: "center", minHeight: 150, borderWidth: 1.5, borderStyle: "dashed", borderColor: c.border }}>
-        <Text style={{ fontSize: 12, fontFamily: "Helvetica", fontWeight: 600, color: c.text, marginBottom: 8 }}>{config?.name || String(dashboardType)}</Text>
-        <Text style={{ fontSize: 10, fontFamily: "Helvetica", color: c.textMuted, textAlign: "center", lineHeight: 1.5 }}>Visualization data could not be extracted automatically.{"\n"}Please refer to the detailed analysis section.</Text>
-      </View>
-    );
+    // Skip dashboards without data instead of rendering an empty placeholder card
+    return null;
   }
   switch (dashboardType) {
     case "action-checklist": return <PDFActionChecklist data={parsedData!.actionChecklist!} themeMode={themeMode} />;
@@ -410,12 +430,24 @@ const PDFReportDocument = ({
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
   const parseFindingTitle = (text: string): { title: string; body: string } => {
-    const stripped = stripMarkdown(text);
-    const colonIdx = stripped.indexOf(":");
-    if (colonIdx > 0 && colonIdx < 60) return { title: stripped.slice(0, colonIdx).trim(), body: stripped.slice(colonIdx + 1).trim() };
-    const words = stripped.split(" ");
-    if (words.length > 6) return { title: words.slice(0, 4).join(" "), body: stripped };
-    return { title: stripped, body: "" };
+    const stripped = stripMarkdown(text).trim();
+    const tagMatch = stripped.match(/^(\[[^\]]+\])\s*(.*)$/);
+    const tag = tagMatch ? tagMatch[1] + " " : "";
+    const rest = tagMatch ? tagMatch[2] : stripped;
+
+    const colonIdx = rest.indexOf(":");
+    if (colonIdx > 0 && colonIdx < 60) {
+      return { title: tag + rest.slice(0, colonIdx).trim(), body: rest.slice(colonIdx + 1).trim() };
+    }
+    const words = rest.split(/\s+/);
+    if (words.length <= 14) {
+      return { title: tag + rest, body: "" };
+    }
+    const sentenceMatch = rest.match(/^(.{20,90}?[.?!])\s+(.+)$/);
+    if (sentenceMatch) {
+      return { title: tag + sentenceMatch[1].replace(/[.?!]$/, ""), body: sentenceMatch[2] };
+    }
+    return { title: tag + words.slice(0, 8).join(" "), body: words.slice(8).join(" ") };
   };
 
   const findingColors = [c.accent1, c.accent2, c.accent4];
@@ -425,7 +457,7 @@ const PDFReportDocument = ({
       {/* Page 1: Cover + Executive Summary (merged) */}
       <Page size="A4" style={s.page} id="section-executive-summary">
         <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
-          <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: c.textOnPrimary }}>EXOS · Confidential</Text>
+          <Text style={{ fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary }}>EXOS · Confidential</Text>
           <View style={{ alignItems: "flex-end" }}>
             <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Prepared for EXOS · {formattedDate}</Text>
           </View>
@@ -435,7 +467,7 @@ const PDFReportDocument = ({
         <Text style={s.coverTitle}>{reportTitle}</Text>
         <View style={s.coverDivider} />
 
-        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Key Findings</Text><View style={s.sectionTitleLine} /></View>
+        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Key Findings</Text><View style={s.sectionTitleLine} /></View>
         <View style={s.findingCardsRow}>
           {findings.slice(0, 3).map((point, i) => {
             const { title, body } = parseFindingTitle(point);
@@ -450,7 +482,7 @@ const PDFReportDocument = ({
           })}
         </View>
 
-        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Recommended Actions</Text><View style={s.sectionTitleLine} /></View>
+        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Recommended Actions</Text><View style={s.sectionTitleLine} /></View>
         {recommendations.slice(0, 4).map((point, i) => {
           const { title, body } = parseFindingTitle(point);
           return (
@@ -481,11 +513,18 @@ const PDFReportDocument = ({
 
       {/* Dashboard pages */}
       {hasDashboards && (() => {
-        const pairs = chunkPairs(selectedDashboards);
+        // Filter dashboards down to those that actually have data, so empty placeholder
+        // pages and cards no longer appear in the PDF.
+        const available = selectedDashboards.filter((d) => {
+          const key = dashboardDataKey[d as string];
+          return key && parsedData && parsedData[key];
+        });
+        if (available.length === 0) return null;
+        const pairs = chunkPairs(available);
         return pairs.map((pair, pairIdx) => (
           <Page key={`dash-page-${pairIdx}`} size="A4" style={s.pageWithHeader}>
             <View style={s.headerBar} fixed>
-              <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
+              <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
               <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
             </View>
             {pairIdx === 0 && <View style={s.sectionBadge} id="section-visualizations"><Text style={s.sectionBadgeText}>ANALYSIS VISUALIZATIONS</Text></View>}
@@ -502,7 +541,7 @@ const PDFReportDocument = ({
       {/* Detailed Analysis */}
       <Page size="A4" style={s.pageWithHeader} id="section-detailed-analysis">
         <View style={s.headerBar} fixed>
-          <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
+          <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
           <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
         </View>
         <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>DETAILED ANALYSIS</Text></View>
@@ -524,85 +563,94 @@ const PDFReportDocument = ({
         <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
       </Page>
 
-      {/* Recommendations & Risks */}
-      <Page size="A4" style={s.pageWithHeader} id="section-recs-risks">
-        <View style={s.headerBar} fixed>
-          <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
-          <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
-        </View>
-        <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>RECOMMENDATIONS & RISKS</Text></View>
-        <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Recommendations</Text><View style={s.sectionTitleLine} /></View>
-        {(() => {
-          const sections = categorizeAnalysisSections(analysisLines);
-          const recoLines = sections.filter(s => s.type === "recommendations").flatMap(s => s.lines);
-          const displayLines = recoLines.length > 0 ? recoLines : recommendations;
-          const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
-          return displayLines.slice(0, 6).map((line, i) => {
-            const { title, body } = parseFindingTitle(line);
-            return (
-              <View key={`reco-${i}`} style={{ ...s.recoCard, borderLeftColor: recoAccents[i % recoAccents.length] }} wrap={false}>
-                <Text style={s.recoTitle}>{title}</Text>{body ? <Text style={s.recoBody}>{body}</Text> : null}
-              </View>
-            );
-          });
-        })()}
-        {(() => {
-          const structuredRisks = extractRiskRegisterItems(analysisResult);
-          const sections = categorizeAnalysisSections(analysisLines);
-          const riskLines = sections.filter(s => s.type === "risks").flatMap(s => s.lines);
-          const useStructured = structuredRisks.length > 0;
-          if (!useStructured && riskLines.length === 0) return null;
+      {/* Recommendations & Risks — only render when overflow recommendations exist OR a Risk Register has content */}
+      {(() => {
+        const sections = categorizeAnalysisSections(analysisLines);
+        const recoSections = sections.filter(sec => sec.type === "recommendations");
+        const recoLines = recoSections.flatMap(sec => sec.lines);
+        const overflowRecos = (recoLines.length > 0 ? recoLines : recommendations).slice(4);
+        const structuredRisks = extractRiskRegisterItems(analysisResult);
+        const riskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
+        const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
+        if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
-          const heading = (
-            <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}><Text style={s.sectionTitleText}>Risk Register</Text><View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} /></View>
-          );
+        const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
 
-          if (useStructured) {
-            return (
+        return (
+          <Page size="A4" style={s.pageWithHeader} id="section-recs-risks">
+            <View style={s.headerBar} fixed>
+              <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
+              <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
+            </View>
+            <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>{hasRiskRegister ? "RECOMMENDATIONS & RISKS" : "ADDITIONAL RECOMMENDATIONS"}</Text></View>
+
+            {overflowRecos.length > 0 && (
               <>
-                {heading}
-                {structuredRisks.slice(0, 5).map((item, i) => {
-                  const sevColor = riskSeverityColor(item.severity, c);
+                <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Additional Recommendations</Text><View style={s.sectionTitleLine} /></View>
+                {overflowRecos.slice(0, 6).map((line, i) => {
+                  const { title, body } = parseFindingTitle(line);
                   return (
-                    <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
-                      <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{item.severity.toUpperCase()}</Text></View>
-                      {item.name ? <Text style={s.riskTitle}>{item.name}</Text> : null}
-                      <Text style={s.riskDescription}>{item.description}</Text>
+                    <View key={`reco-${i}`} style={{ ...s.recoCard, borderLeftColor: recoAccents[i % recoAccents.length] }} wrap={false}>
+                      <Text style={s.recoTitle}>{title}</Text>{body ? <Text style={s.recoBody}>{body}</Text> : null}
                     </View>
                   );
                 })}
               </>
-            );
-          }
+            )}
 
-          return (
-            <>
-              {heading}
-              {riskLines.slice(0, 5).map((line, i) => {
-                const { severity, cleanText } = parseRiskSeverity(line);
-                const colonIdx = cleanText.indexOf(":");
-                const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
-                const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
-                const sevColor = riskSeverityColor(severity, c);
+            {hasRiskRegister && (() => {
+              const useStructured = structuredRisks.length > 0;
+              const heading = (
+                <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}><Text style={s.sectionTitleText}>Risk Register</Text><View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} /></View>
+              );
+              if (useStructured) {
                 return (
-                  <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
-                    <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text></View>
-                    {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
-                    <Text style={s.riskDescription}>{riskDesc}</Text>
-                  </View>
+                  <>
+                    {heading}
+                    {structuredRisks.slice(0, 5).map((item, i) => {
+                      const sevColor = riskSeverityColor(item.severity, c);
+                      return (
+                        <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                          <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{item.severity.toUpperCase()}</Text></View>
+                          {item.name ? <Text style={s.riskTitle}>{item.name}</Text> : null}
+                          <Text style={s.riskDescription}>{item.description}</Text>
+                        </View>
+                      );
+                    })}
+                  </>
                 );
-              })}
-            </>
-          );
-        })()}
-        <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
-      </Page>
+              }
+              return (
+                <>
+                  {heading}
+                  {riskLines.slice(0, 5).map((line, i) => {
+                    const { severity, cleanText } = parseRiskSeverity(line);
+                    const colonIdx = cleanText.indexOf(":");
+                    const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
+                    const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
+                    const sevColor = riskSeverityColor(severity, c);
+                    return (
+                      <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                        <View style={{ ...s.riskBadge, backgroundColor: sevColor }}><Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text></View>
+                        {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
+                        <Text style={s.riskDescription}>{riskDesc}</Text>
+                      </View>
+                    );
+                  })}
+                </>
+              );
+            })()}
+
+            <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+          </Page>
+        );
+      })()}
 
       {/* Analysis Parameters */}
       {hasParams && (
         <Page size="A4" style={s.pageWithHeader} id="section-parameters">
           <View style={s.headerBar} fixed>
-            <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
+            <View style={{ flexDirection: "row", alignItems: "center" }}><Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text><Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text></View>
             <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
           </View>
           <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>ANALYSIS PARAMETERS</Text></View>
