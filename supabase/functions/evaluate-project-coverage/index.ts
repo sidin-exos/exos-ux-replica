@@ -54,12 +54,14 @@ ${projectContext}
 For each section, decide coverage: "covered", "partial", or "missing". Provide a one-sentence reason.
 
 Then assign an overall score from 0 to 5, in 0.5-point increments only (allowed values: 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5). Maximum is 5. Use this rubric:
-- 5 = all sections fully covered with strong evidence
-- 4 = most sections covered, minor gaps
+- 5 = all sections fully covered, with explicit numbers, sources and calculated totals
+- 4 = all sections present but at least one lacks explicit quantification (e.g. "implied rather than calculated")
 - 3 = roughly half covered, analysis possible but limited
 - 2 = significant gaps, results will be weak
 - 1 = mostly missing, analysis not viable
-- 0 = no usable context`;
+- 0 = no usable context
+
+IMPORTANT — predictive calibration: this score must correlate with the post-run analytical rigour score (0–100). A 4.5★ coverage must imply a likely rigour ≥ 80/100. If any section is "partial" because a key number is implied or missing, cap the score at 4.0★. If two or more sections are "partial" or any are "missing", cap at 3.5★.`;
 
     const tracer = new LangSmithTracer({
       env: "production",
