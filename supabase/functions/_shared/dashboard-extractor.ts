@@ -456,9 +456,23 @@ function isValidCostLabel(raw: any): boolean {
   return true;
 }
 
-/** Collapse accidental duplicated leading word ("Compute Compute & Memory" → "Compute & Memory"). */
+/**
+ * Collapse accidental duplicated leading word OR full-line repetition.
+ * Handles: "Compute Compute & Memory" → "Compute & Memory"
+ *          "Methodology Methodology" → "Methodology"
+ *          "### Methodology ### Methodology" → "### Methodology"
+ */
 function dedupeLeadingWord(s: string): string {
-  const cleaned = String(s ?? '').replace(/\s+/g, ' ').trim();
+  let cleaned = String(s ?? '').replace(/\s+/g, ' ').trim();
+  // Full-string duplicate (e.g. "Methodology Methodology" or "X Y Z X Y Z")
+  const half = cleaned.length / 2;
+  if (cleaned.length > 0 && cleaned.length % 2 === 1) {
+    const mid = Math.floor(half);
+    const a = cleaned.slice(0, mid).trim();
+    const b = cleaned.slice(mid + 1).trim();
+    if (a && a.toLowerCase() === b.toLowerCase()) return a;
+  }
+  // Leading-word duplicate
   const m = cleaned.match(/^(\w+)\s+\1\b(.*)$/i);
   return m ? `${m[1]}${m[2]}`.trim() : cleaned;
 }
