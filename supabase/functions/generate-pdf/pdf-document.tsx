@@ -242,6 +242,15 @@ function buildStyles(c: PdfColorSet) {
     statsCellLast: { borderRightWidth: 0 },
     statsLabel: { fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 },
     statsValue: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: c.primary },
+    // Markdown-table rendering inside Detailed Analysis blocks
+    mdTable: { borderWidth: 1, borderColor: c.border, borderRadius: 4, marginTop: 6, marginBottom: 8, overflow: "hidden" },
+    mdTableHeaderRow: { flexDirection: "row", backgroundColor: c.surfaceLight, borderBottomWidth: 1, borderBottomColor: c.border },
+    mdTableRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: c.border },
+    mdTableRowAlt: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: c.border, backgroundColor: c.surfaceLight },
+    mdTableCell: { flex: 1, paddingVertical: 5, paddingHorizontal: 6, borderRightWidth: 1, borderRightColor: c.border },
+    mdTableCellLast: { flex: 1, paddingVertical: 5, paddingHorizontal: 6 },
+    mdTableHeaderText: { fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: c.text, textTransform: "uppercase", letterSpacing: 0.4 },
+    mdTableCellText: { fontSize: 8.5, color: c.text, lineHeight: 1.4 },
     footer: { position: "absolute", bottom: 16, left: SP.pageSideMargin, right: SP.pageSideMargin, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderTopColor: c.border, paddingTop: 6 },
     footerText: { fontSize: 8, color: c.textMuted },
     verticalLabel: { position: "absolute", top: "45%", left: 10, transform: "rotate(-90deg)", fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 2 },
@@ -261,6 +270,16 @@ const isTableLine = (raw: string): boolean => {
   if (/^\|.*\|$/.test(t)) return true;
   if (/^\|?[-:\s|]+\|?$/.test(t) && t.includes("-")) return true;
   return false;
+};
+
+// Parse a pipe-delimited markdown row into trimmed cells. Returns null when
+// the line is a separator row (|---|---|) so callers can skip it.
+const parseTableRow = (raw: string): string[] | null => {
+  const t = raw.trim();
+  if (/^\|?[-:\s|]+\|?$/.test(t) && t.includes("-")) return null; // separator
+  // Strip leading/trailing pipes, then split on un-escaped pipes.
+  const inner = t.replace(/^\|/, "").replace(/\|$/, "");
+  return inner.split("|").map(c => stripMarkdown(c.trim()));
 };
 
 // Drop AI guidance prompts ("Supply…", "Provide…", "(e.g., …)") that should
@@ -494,6 +513,11 @@ const PDFReportDocument = ({
   let envelope: any = null;
   try { envelope = structuredData ? JSON.parse(structuredData) : null; } catch { envelope = null; }
   const isS27 = envelope?.scenario_id === "S27" || /black\s*swan/i.test(scenarioTitle);
+  // S26 (Disruption Management): the Emergency Map already contains the four
+  // recovery stages including Stage 4 Prevent. Without this flag the prose
+  // fallback collects Stage 4 prevention/process-change items into the legacy
+  // Risk Register page, duplicating content and confusing the deliverable.
+  const isS26 = envelope?.scenario_id === "S26" || /disruption\s*manag/i.test(scenarioTitle);
   const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
   const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
@@ -663,12 +687,53 @@ const PDFReportDocument = ({
             // they hold the Black Swan Risk Map, Vulnerability Assessment, and
             // Cascading Failure tables that are part of the promised deliverables.
             if (section.type === "recommendations") return null;
-            if (!isS27 && section.type === "risks") return null;
+            if (!isS27 && !isS26 && section.type === "risks") return null;
+            // For S26 keep the risks-classified section in Detailed Analysis so
+            // Stage 4 Prevent items stay attached to the Emergency Map.
             const blockColor = blockColors[si % blockColors.length];
             return (
-              <View key={`section-${si}`} style={{ ...s.analysisBlock, borderLeftColor: blockColor }} wrap={false}>
+              <View key={`section-${si}`} style={{ ...s.analysisBlock, borderLeftColor: blockColor }}>
                 <View style={{ ...s.analysisBlockBadge, backgroundColor: blockColor }}><Text style={s.analysisBlockBadgeText}>{stripMarkdown(section.title).toUpperCase()}</Text></View>
-                {section.lines.map((line, li) => renderBodyText(line, s.analysisText))}
+                {(() => {
+                  // Group consecutive markdown-table lines into a real table.
+                  const out: ReactElement[] = [];
+                  let i = 0;
+                  const lines = section.lines;
+                  while (i < lines.length) {
+                    if (isTableLine(lines[i])) {
+                      // Collect run of table lines
+                      const run: string[] = [];
+                      while (i < lines.length && isTableLine(lines[i])) { run.push(lines[i]); i++; }
+                      const rows = run.map(parseTableRow).filter((r): r is string[] => r !== null);
+                      if (rows.length === 0) continue;
+                      const [header, ...body] = rows;
+                      out.push(
+                        <View key={`tbl-${si}-${i}`} style={s.mdTable} wrap={false}>
+                          <View style={s.mdTableHeaderRow}>
+                            {header.map((cell, ci) => (
+                              <View key={`h-${ci}`} style={ci === header.length - 1 ? s.mdTableCellLast : s.mdTableCell}>
+                                <Text style={s.mdTableHeaderText}>{cell}</Text>
+                              </View>
+                            ))}
+                          </View>
+                          {body.map((row, ri) => (
+                            <View key={`r-${ri}`} style={ri % 2 === 1 ? s.mdTableRowAlt : s.mdTableRow}>
+                              {Array.from({ length: header.length }).map((_, ci) => (
+                                <View key={`c-${ri}-${ci}`} style={ci === header.length - 1 ? s.mdTableCellLast : s.mdTableCell}>
+                                  <Text style={s.mdTableCellText}>{row[ci] ?? ""}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          ))}
+                        </View>
+                      );
+                      continue;
+                    }
+                    out.push(renderBodyText(lines[i], s.analysisText));
+                    i++;
+                  }
+                  return out;
+                })()}
               </View>
             );
           });
@@ -685,11 +750,11 @@ const PDFReportDocument = ({
         // D4: For S27 the Black Swan Risk Map (rendered inline in Detailed
         // Analysis) is the canonical risk view — suppress the legacy generic
         // Risk Register entirely to avoid duplication and table corruption.
-        const structuredRisks = isS27 ? [] : extractRiskRegisterItems(analysisResult);
+        const structuredRisks = (isS27 || isS26) ? [] : extractRiskRegisterItems(analysisResult);
         const rawRiskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
         // Drop markdown-table fragments and instructional lines so each
         // remaining line is a real risk sentence, not a leaked table cell.
-        const riskLines = isS27 ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
+        const riskLines = (isS27 || isS26) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
         const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
         if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
