@@ -115,7 +115,11 @@ function getScenarioTypeLabel(scenarioName: string): string {
 
 const SP = {
   sectionGap: 28, subSectionGap: 20, afterHeadingLine: 14, afterSubHeading: 8,
-  betweenItems: 14, betweenParagraphs: 10, pageTopMargin: 52, pageSideMargin: 44, pageBottomMargin: 60,
+  // pageBottomMargin bumped from 60→72 so flowing prose never tucks under the
+  // fixed footer (bottom:16, ~14px tall, +6 padding-top, +1 border = ~37px),
+  // which previously caused the last paragraph to overprint the footer text
+  // and made the footer appear as a "cascading" repeated stripe in print preview.
+  betweenItems: 14, betweenParagraphs: 10, pageTopMargin: 52, pageSideMargin: 44, pageBottomMargin: 72,
 };
 
 function parseRiskSeverity(text: string): { severity: string; cleanText: string } {
@@ -408,12 +412,19 @@ const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
       || (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."))
     );
     if (isHeader) {
+      const newTitle = cleanLine.replace(/:$/, "");
+      // Dedupe: if this header is the same as the section we are currently
+      // building (and that section is still empty), skip it. This squashes the
+      // duplicated "Data Gaps" / "Data Gaps:" headers the AI sometimes emits
+      // back-to-back which previously rendered as two stacked section badges.
+      const sameAsCurrent = current.title.trim().toLowerCase() === newTitle.trim().toLowerCase();
+      if (sameAsCurrent && current.lines.length === 0) continue;
       if (current.lines.length > 0) sections.push(current);
       let detectedType: SectionType = "general";
       for (const [type, pattern] of Object.entries(sectionPatterns) as [Exclude<SectionType, "general">, RegExp][]) {
         if (pattern.test(cleanLine)) { detectedType = type; break; }
       }
-      current = { type: detectedType, title: cleanLine.replace(/:$/, ""), lines: [] };
+      current = { type: detectedType, title: newTitle, lines: [] };
     } else { current.lines.push(cleanLine); }
   }
   if (current.lines.length > 0) sections.push(current);
@@ -553,7 +564,16 @@ const PDFReportDocument = ({
 
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-  const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  // Only show a numeric score when the evaluator actually produced one. Falling
+  // back to filled-fraction was misleading (e.g. S26 with 0 quality-evaluator
+  // output displayed "0/100", suggesting a real failed evaluation).
+  const hasEvaluatorScore = typeof evaluationScore === "number" && evaluationScore > 0;
+  const coveragePct = hasEvaluatorScore
+    ? evaluationScore
+    : (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  const showScore = hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
+  const coverageDisplay = showScore ? `${coveragePct}/100` : "—";
+  const coverageDisplaySpaced = showScore ? `${coveragePct} / 100` : "—";
   const confidenceLevel = evaluationConfidence ? (evaluationConfidence === "HIGH" ? "High" : "Low") : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
   const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
   const batnaRawScore = parsedData?.negotiationPrep?.batna?.strength;
@@ -634,14 +654,14 @@ const PDFReportDocument = ({
         <View style={s.kpiRow}>
           {isS27 ? (
             <>
-              <View style={s.kpiCell}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coveragePct} / 100</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coverageDisplaySpaced}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RESILIENCE POSTURE</Text><Text style={{ ...s.kpiValue, color: kpiColor(s27ResiliencePosture === "RED" ? "High" : s27ResiliencePosture === "AMBER" ? "Medium" : s27ResiliencePosture === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s27ResiliencePosture ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RTO GAP</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s27RtoGap != null ? `${s27RtoGap}h` : "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>SINGLE-SOURCE FLOWS</Text><Text style={{ ...s.kpiValue, color: s27SingleSourceFlows && s27SingleSourceFlows > 0 ? c.destructive : c.success }}>{s27SingleSourceFlows != null ? String(s27SingleSourceFlows) : "—"}</Text></View>
             </>
           ) : (
             <>
-              <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : `${coveragePct} / 100`}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : coverageDisplaySpaced}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{leverageLabel}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>{supplierPowerLabel || (extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A")}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>CONFIDENCE</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
@@ -723,6 +743,23 @@ const PDFReportDocument = ({
                       const rows = run.map(parseTableRow).filter((r): r is string[] => r !== null);
                       if (rows.length === 0) continue;
                       const [header, ...body] = rows;
+                      // Normalise empty / placeholder / "€0" cells to "Not provided"
+                      // so impact tables no longer render as a wall of "€0" when
+                      // the user didn't supply a monetary anchor.
+                      const isEmptyCell = (v: string): boolean => {
+                        const t = (v ?? "").trim();
+                        if (!t || t === "-" || t === "—" || /^n\/?a$/i.test(t) || /^null$/i.test(t)) return true;
+                        // Pure-zero monetary or numeric: €0, $0, 0, 0.00, 0%, €0.00
+                        if (/^[€$£]?\s*0+(?:[.,]0+)?\s*%?$/.test(t)) return true;
+                        return false;
+                      };
+                      const displayCell = (v: string): string => isEmptyCell(v) ? "Not provided" : v;
+                      // If every body row has every non-label cell empty, skip the
+                      // table entirely — it has no information to convey.
+                      const hasAnyData = body.some(row =>
+                        row.slice(1).some(c => !isEmptyCell(c))
+                      );
+                      if (!hasAnyData) continue;
                       out.push(
                         <View key={`tbl-${si}-${i}`} style={s.mdTable} wrap={false}>
                           <View style={s.mdTableHeaderRow}>
@@ -734,11 +771,18 @@ const PDFReportDocument = ({
                           </View>
                           {body.map((row, ri) => (
                             <View key={`r-${ri}`} style={ri % 2 === 1 ? s.mdTableRowAlt : s.mdTableRow}>
-                              {Array.from({ length: header.length }).map((_, ci) => (
-                                <View key={`c-${ri}-${ci}`} style={ci === header.length - 1 ? s.mdTableCellLast : s.mdTableCell}>
-                                  <Text style={s.mdTableCellText}>{row[ci] ?? ""}</Text>
-                                </View>
-                              ))}
+                              {Array.from({ length: header.length }).map((_, ci) => {
+                                const raw = row[ci] ?? "";
+                                // First column is the row label — leave as-is;
+                                // only normalise data columns.
+                                const text = ci === 0 ? raw : displayCell(raw);
+                                const muted = ci !== 0 && isEmptyCell(raw);
+                                return (
+                                  <View key={`c-${ri}-${ci}`} style={ci === header.length - 1 ? s.mdTableCellLast : s.mdTableCell}>
+                                    <Text style={muted ? { ...s.mdTableCellText, color: c.textMuted, fontStyle: "italic" } : s.mdTableCellText}>{text}</Text>
+                                  </View>
+                                );
+                              })}
                             </View>
                           ))}
                         </View>
@@ -869,7 +913,7 @@ const PDFReportDocument = ({
             <Text style={s.methodologyText}>Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals.</Text>
           </View>
           <View style={s.statsTable}>
-            <View style={s.statsCell}><Text style={s.statsLabel}>Input Quality Score</Text><Text style={{ ...s.statsValue, color: kpiColor(String(coveragePct), "confidence", c) }}>{coveragePct}/100</Text></View>
+            <View style={s.statsCell}><Text style={s.statsLabel}>Input Quality Score</Text><Text style={{ ...s.statsValue, color: showScore ? kpiColor(String(coveragePct), "confidence", c) : c.textMuted }}>{coverageDisplay}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Confidence</Text><Text style={{ ...s.statsValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Analysis ID</Text><Text style={s.statsValue}>{reportHash}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Timestamp</Text><Text style={s.statsValue}>{new Date(timestamp).toISOString()}</Text></View>
