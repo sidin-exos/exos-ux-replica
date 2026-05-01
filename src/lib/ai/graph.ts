@@ -272,6 +272,7 @@ export async function runExosGraph(
     validationStatus: 'pending',
     retryCount: 0,
     serverValidation: null,
+    failureReason: null,
   };
 
   try {
