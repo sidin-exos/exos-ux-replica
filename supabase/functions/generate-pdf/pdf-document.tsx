@@ -606,19 +606,33 @@ const PDFReportDocument = ({
     const tag = tagMatch ? tagMatch[1] + " " : "";
     const rest = tagMatch ? tagMatch[2] : stripped;
 
+    // Prefer an explicit colon-separated header (e.g. "HHI Risk: extreme concentration…")
     const colonIdx = rest.indexOf(":");
     if (colonIdx > 0 && colonIdx < 60) {
       return { title: tag + rest.slice(0, colonIdx).trim(), body: rest.slice(colonIdx + 1).trim() };
     }
+
+    // Short finding (≤ 18 words OR ≤ 110 chars): render fully as the title only,
+    // with no body. Avoids chopping mid-sentence on "due", "and", a comma, etc.
     const words = rest.split(/\s+/);
-    if (words.length <= 14) {
+    if (words.length <= 18 || rest.length <= 110) {
       return { title: tag + rest, body: "" };
     }
+
+    // Long finding: split on the first sentence boundary if one exists in the
+    // first 90 chars, otherwise take a clean prefix (no trailing connector word).
     const sentenceMatch = rest.match(/^(.{20,90}?[.?!])\s+(.+)$/);
     if (sentenceMatch) {
       return { title: tag + sentenceMatch[1].replace(/[.?!]$/, ""), body: sentenceMatch[2] };
     }
-    return { title: tag + words.slice(0, 8).join(" "), body: words.slice(8).join(" ") };
+    // Take ~12 words but drop a trailing connector ("and", "due", "to", "of", "with", ",")
+    const headWords = words.slice(0, 12);
+    const trailingConnector = /^(and|due|to|of|with|in|on|for|at|by|as|from|the|a|an|or|but)$/i;
+    while (headWords.length > 0 && (trailingConnector.test(headWords[headWords.length - 1]) || /[,;:]$/.test(headWords[headWords.length - 1]))) {
+      headWords.pop();
+    }
+    const cleanHead = headWords.join(" ").replace(/[,;:]$/, "");
+    return { title: tag + (cleanHead || words.slice(0, 8).join(" ")), body: words.slice(headWords.length).join(" ") };
   };
 
   const findingColors = [c.accent1, c.accent2, c.accent4];
