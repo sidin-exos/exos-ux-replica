@@ -1188,7 +1188,7 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
             {(() => {
               const verdictWord = data.verdict ? `${data.verdict} — ` : "";
               const advText = npvSpread !== 0
-                ? `${preferred.name} delivers ${formatCurrency(Math.abs(npvSpread), currency)} better present value than ${worst.name} at ${preferred.waccPct ?? "WACC"}%${preferred.waccPct ? "% WACC" : ""}.`
+                ? `${preferred.name} delivers ${formatCurrency(Math.abs(npvSpread), currency)} better present value than ${worst.name}${preferred.waccPct ? ` at ${preferred.waccPct}% WACC` : ""}.`
                 : `${preferred.name} is the recommended option.`;
               return `${verdictWord}${advText}${data.cashFlowRationale ? ` ${data.cashFlowRationale}` : ""}`;
             })()}
