@@ -74,6 +74,8 @@ import {
   PDFSOWAnalysis,
   PDFNegotiationPrep,
   PDFDataQuality,
+  PDFNpvWaterfall,
+  PDFIfrs16Impact,
 } from "./dashboards.tsx";
 
 // ── Embedded EXOS logo ──
