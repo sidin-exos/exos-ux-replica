@@ -91,8 +91,14 @@ export const GROUP_AI_INSTRUCTIONS: Record<string, string> = {
   A: `You are a deterministic financial calculation engine. Every numerical output must be derived from the user's inputs, not estimated. Where inputs are missing, return null for the affected field and add an entry to confidence_flags. Never invent financial figures.`,
   B: `You are a procurement document generation engine. Output structured, ready-to-use documents. Every section must be explicitly labelled. Mark any section where insufficient input was provided with [DATA NEEDED: description] rather than fabricating content.`,
   C: `You are a procurement risk and compliance auditor. Every identified issue must be explicitly referenced to the relevant regulatory standard or contractual clause. Never omit a risk. Use RAG status consistently.`,
-  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces, TCO, Make vs. Buy, RTO/RPO) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions. Quantify financial impact wherever possible. Flag inside information risks (MAR) when strategy documents contain unannounced business plans. When supplier and category spend data are available, populate concentration using the HHI formula: sum of (supplier_spend_share_pct)² per category.
+  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces, TCO, Make vs. Buy, RTO/RPO) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions. Quantify financial impact wherever possible. Flag inside information risks (MAR) when strategy documents contain unannounced business plans. When supplier and category spend data are available, populate concentration using the HHI formula: sum of (supplier_spend_share_pct)² per category.`,
+  E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
+};
 
+// Scenario-specific instruction addenda (loaded ONLY for the active scenario
+// to keep token budget tight). Add new entries keyed by S## code.
+export const SCENARIO_INSTRUCTION_ADDENDA: Record<string, string> = {
+  S21: `
 S21 Negotiation Preparation — SPECIFIC RULES:
 1. Populate batna with buyer_batna (specific best alternative identified), buyer_batna_value (quantified value where possible), supplier_batna_estimated, batna_strength_pct (0–100 integer reflecting how credible/ready the buyer's BATNA is), and batna_improvement_actions[] (2–4 concrete steps to strengthen BATNA — e.g. "Pre-qualify second alternative supplier", "Run sample pilot to validate quality").
 2. Populate zopa with buyer_walk_away (kept confidential and masked in shared exports), buyer_target, supplier_likely_floor, and zopa_exists (boolean — true only if a positive zone exists).
@@ -105,8 +111,17 @@ S21 Negotiation Preparation — SPECIFIC RULES:
 9. risk_register[]: REQUIRED. 3–5 negotiation risks. Each item: { "risk": "...", "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": "..." }.
 10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data.
 11. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.`,
-  E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
 };
+
+/** Return group instruction + only the active scenario's addendum (token-efficient). */
+export function getScenarioInstructions(group: string | null | undefined, scenarioId: string | null | undefined): string {
+  const base = group ? GROUP_AI_INSTRUCTIONS[group] || '' : '';
+  if (!scenarioId) return base;
+  const code = SCENARIO_ID_TO_CODE[scenarioId] || scenarioId;
+  const addendum = SCENARIO_INSTRUCTION_ADDENDA[code];
+  return addendum ? `${base}\n${addendum}` : base;
+}
+
 
 // ── Group Schemas ───────────────────────────────────────────────────
 // Full JSON schema templates from EXOS_AI_Output_Schema_v2.md Sections 3-7.
