@@ -1299,9 +1299,9 @@ serve(async (req) => {
           systemPrompt,
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           temperature: 0.4,
-          maxOutputTokens: 12288,
+          maxOutputTokens: 9216,
           model: modelForAttempt,
-          timeoutMs: 30_000,
+          timeoutMs: 50_000,
           skipNebiusFallback: attempt > 0,
         });
 
