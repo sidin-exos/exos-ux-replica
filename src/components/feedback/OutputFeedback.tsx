@@ -203,8 +203,8 @@ const OutputFeedback = ({
                 </motion.div>
               )}
 
-              {/* Generate Report Button - Show when satisfied (7+) */}
-              {rating >= 7 && !showFeedbackForm && (
+              {/* Generate Report Button - always visible */}
+              {!showFeedbackForm && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -222,7 +222,6 @@ const OutputFeedback = ({
                 </motion.div>
               )}
             </div>
-          )}
         </>
       ) : (
         <motion.div
