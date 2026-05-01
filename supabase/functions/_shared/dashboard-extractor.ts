@@ -1567,6 +1567,56 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
     }
   }
 
+  // ── S27 Black Swan: sensitivitySpider from resilience_investments / cascade_effects.
+  if (envelope.scenario_id === 'S27' && !result.sensitivitySpider) {
+    const investments: any[] = Array.isArray(ss.resilience_investments) ? ss.resilience_investments : [];
+    const invVars = investments
+      .map((inv: any) => {
+        const name = String(inv?.investment ?? inv?.name ?? inv?.title ?? '').trim();
+        const reduction = Number(inv?.risk_reduction_pct ?? inv?.risk_reduction);
+        const cost = Number(inv?.estimated_cost ?? inv?.cost ?? 0);
+        if (!name || !Number.isFinite(reduction) || reduction <= 0) return null;
+        return {
+          name,
+          baseCase: 100,
+          lowCase: Math.max(0, 100 - reduction),
+          highCase: Math.min(200, 100 + Math.round(reduction * 0.4)),
+          unit: cost > 0 ? `€${Math.round(cost / 1000)}k` : '%',
+        };
+      })
+      .filter((v: any) => v !== null);
+
+    let cascadeVars: any[] = [];
+    const cascades: any[] = Array.isArray(payload?.impact_model?.cascade_effects)
+      ? payload.impact_model.cascade_effects
+      : [];
+    if (cascades.length > 0) {
+      cascadeVars = cascades
+        .map((c: any) => {
+          const name = String(c?.affected_node ?? c?.node ?? c?.name ?? '').trim();
+          const rev = Number(c?.revenue_at_risk ?? c?.financial_impact ?? 0);
+          const delay = Number(c?.delay_days ?? 0);
+          if (!name || !Number.isFinite(rev) || rev <= 0) return null;
+          return {
+            name,
+            baseCase: rev,
+            lowCase: Math.round(rev * 0.6),
+            highCase: Math.round(rev * 1.5),
+            unit: delay > 0 ? `${delay}d delay` : undefined,
+          };
+        })
+        .filter((v: any) => v !== null);
+    }
+
+    const merged = [...invVars, ...cascadeVars].slice(0, 8);
+    if (merged.length > 0) {
+      result.sensitivitySpider = {
+        variables: merged,
+        currency: payload?.financial_model?.currency ?? 'EUR',
+      };
+    }
+  }
+
   return Object.keys(result).length === 0 ? null : result;
 }
 
