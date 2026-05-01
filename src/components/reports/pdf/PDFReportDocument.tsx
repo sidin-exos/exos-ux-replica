@@ -76,7 +76,7 @@ function renderBodyText(text: string, baseStyle: Record<string, unknown>): React
         const isValue = testRe.test(part);
         if (!isValue) return <Text key={i}>{part}</Text>;
         const spaced = part.replace(/([€$£])([\d])/g, "$1\u2009$2");
-        return <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>{spaced}</Text>;
+        return <Text key={i} style={{ fontFamily: "Inter", fontWeight: 700 }}>{spaced}</Text>;
       })}
     </Text>
   );
@@ -185,7 +185,7 @@ function buildStyles(c: PdfColorSet) {
       paddingLeft: SP.pageSideMargin,
       paddingRight: SP.pageSideMargin,
       paddingBottom: SP.pageBottomMargin,
-      fontFamily: "Helvetica",
+      fontFamily: "Inter",
       color: c.text,
     },
     pageWithHeader: {
@@ -194,7 +194,7 @@ function buildStyles(c: PdfColorSet) {
       paddingLeft: SP.pageSideMargin,
       paddingRight: SP.pageSideMargin,
       paddingBottom: SP.pageBottomMargin,
-      fontFamily: "Helvetica",
+      fontFamily: "Inter",
       color: c.text,
     },
 
@@ -217,13 +217,13 @@ function buildStyles(c: PdfColorSet) {
     },
     headerBarBrand: {
       fontSize: 12,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       marginRight: 12,
     },
     headerBarScenario: {
       fontSize: 8,
-      fontFamily: "Helvetica",
+      fontFamily: "Inter",
       color: c.textOnPrimary,
       opacity: 0.9,
       textTransform: "uppercase",
@@ -257,14 +257,14 @@ function buildStyles(c: PdfColorSet) {
     },
     coverScenarioBadgeText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       textTransform: "uppercase",
       letterSpacing: 1,
     },
     coverTitle: {
       fontSize: 22,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 12,
       lineHeight: 1.2,
@@ -283,7 +283,7 @@ function buildStyles(c: PdfColorSet) {
     },
     coverMetaLabel: {
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 1,
@@ -291,7 +291,7 @@ function buildStyles(c: PdfColorSet) {
     },
     coverMetaValue: {
       fontSize: 11,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
     },
 
@@ -305,7 +305,7 @@ function buildStyles(c: PdfColorSet) {
     },
     tocTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
       marginBottom: 8,
     },
@@ -316,7 +316,7 @@ function buildStyles(c: PdfColorSet) {
     },
     tocNumber: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
       width: 20,
     },
@@ -342,14 +342,14 @@ function buildStyles(c: PdfColorSet) {
     },
     coverBadgeLabel: {
       fontSize: 7,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 0.5,
     },
     coverBadgeValue: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
     },
 
     // Bottom color stripe
@@ -377,7 +377,7 @@ function buildStyles(c: PdfColorSet) {
     },
     sectionBadgeText: {
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       textTransform: "uppercase",
       letterSpacing: 0.8,
@@ -394,7 +394,7 @@ function buildStyles(c: PdfColorSet) {
     },
     sectionTitleText: {
       fontSize: 18,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
     },
     sectionTitleLine: {
@@ -428,12 +428,12 @@ function buildStyles(c: PdfColorSet) {
     },
     findingCardNumberText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
     },
     findingCardTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 4,
     },
@@ -464,7 +464,7 @@ function buildStyles(c: PdfColorSet) {
     },
     actionNumberText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
     },
     actionContent: {
@@ -472,7 +472,7 @@ function buildStyles(c: PdfColorSet) {
     },
     actionTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 3,
     },
@@ -503,7 +503,7 @@ function buildStyles(c: PdfColorSet) {
     },
     kpiLabel: {
       fontSize: 7,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 1,
@@ -511,7 +511,7 @@ function buildStyles(c: PdfColorSet) {
     },
     kpiValue: {
       fontSize: 11,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
     },
 
@@ -531,7 +531,7 @@ function buildStyles(c: PdfColorSet) {
     },
     analysisBlockBadgeText: {
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -561,7 +561,7 @@ function buildStyles(c: PdfColorSet) {
     },
     recoTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 4,
     },
@@ -587,14 +587,14 @@ function buildStyles(c: PdfColorSet) {
     },
     riskBadgeText: {
       fontSize: 7,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
     },
     riskTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 4,
     },
@@ -622,7 +622,7 @@ function buildStyles(c: PdfColorSet) {
     },
     paramLabelText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -647,7 +647,7 @@ function buildStyles(c: PdfColorSet) {
     },
     methodologyTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 6,
     },
@@ -678,7 +678,7 @@ function buildStyles(c: PdfColorSet) {
     },
     statsLabel: {
       fontSize: 7,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -686,7 +686,7 @@ function buildStyles(c: PdfColorSet) {
     },
     statsValue: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
     },
 
@@ -715,7 +715,7 @@ function buildStyles(c: PdfColorSet) {
       left: 10,
       transform: "rotate(-90deg)",
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 2,
@@ -724,7 +724,7 @@ function buildStyles(c: PdfColorSet) {
     // Sub heading
     subHeading: {
       fontSize: 11,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 8,
     },
@@ -1045,12 +1045,12 @@ const PDFReportDocument = ({
         {/* Teal header bar with confidence badge */}
         <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 10 }}>
+            <Text style={{ fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 10 }}>
               EXOS · Confidential
             </Text>
             {structuredOutput && (
               <View style={{ backgroundColor: confidenceBadgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: confidenceBadgeColor }}>
+                <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: confidenceBadgeColor }}>
                   {confidenceLevel.toUpperCase()} CONFIDENCE
                 </Text>
               </View>
@@ -1068,14 +1068,14 @@ const PDFReportDocument = ({
         {/* Confidence guidance note */}
         {hasLowConfidenceWatermark && (
           <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
-            <Text style={{ fontSize: 8, color: "#856404", fontFamily: "Helvetica-Bold" }}>
+            <Text style={{ fontSize: 8, color: "#856404", fontFamily: "Inter", fontWeight: 700 }}>
               This analysis is indicative — see improvement tips below
             </Text>
           </View>
         )}
         {!hasLowConfidenceWatermark && confidenceLevel === "Medium" && (
           <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
-            <Text style={{ fontSize: 8, color: "#1b4b47", fontFamily: "Helvetica-Bold" }}>
+            <Text style={{ fontSize: 8, color: "#1b4b47", fontFamily: "Inter", fontWeight: 700 }}>
               Good analysis — a few additions would sharpen the results
             </Text>
           </View>
@@ -1094,7 +1094,7 @@ const PDFReportDocument = ({
 
         {/* Key Findings */}
         <View style={s.sectionTitleWrapperCompact}>
-          <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Key Findings</Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Key Findings</Text>
           <View style={s.sectionTitleLine} />
         </View>
 
@@ -1116,7 +1116,7 @@ const PDFReportDocument = ({
 
         {/* Recommended Actions */}
         <View style={s.sectionTitleWrapperCompact}>
-          <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Recommended Actions</Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Recommended Actions</Text>
           <View style={s.sectionTitleLine} />
         </View>
 
@@ -1214,7 +1214,7 @@ const PDFReportDocument = ({
             <View style={s.confidenceBar} wrap={false}>
               {confidenceLines.map((line, i) => (
                 <Text key={i} style={{ fontSize: 9, color: c.text, lineHeight: 1.5 }}>
-                  <Text style={{ fontFamily: "Helvetica-Bold" }}>Confidence Level: </Text>
+                  <Text style={{ fontFamily: "Inter", fontWeight: 700 }}>Confidence Level: </Text>
                   {stripMarkdown(line.replace(/confidence\s*level[:\s]*/i, ""))}
                 </Text>
               ))}
