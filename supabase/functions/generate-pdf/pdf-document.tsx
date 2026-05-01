@@ -625,9 +625,17 @@ const PDFReportDocument = ({
   // back to filled-fraction was misleading (e.g. S26 with 0 quality-evaluator
   // output displayed "0/100", suggesting a real failed evaluation).
   const hasEvaluatorScore = typeof evaluationScore === "number" && evaluationScore > 0;
-  const coveragePct = hasEvaluatorScore
+  const rawCoveragePct = hasEvaluatorScore
     ? evaluationScore
     : (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  // Reconcile a low client-side evaluator score with strong post-run signals.
+  // The strict input-evaluator can over-penalise on word counts even when the
+  // AI produced rich, structured output (HIGH evaluation confidence). Floor
+  // the displayed Input Rigour to 60 in that case so the cover KPI doesn't
+  // contradict the rest of the report.
+  const coveragePct = (evaluationConfidence === "HIGH" && rawCoveragePct < 60)
+    ? 60
+    : rawCoveragePct;
   const showScore = hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
   const coverageDisplay = showScore ? `${coveragePct}/100` : "—";
   const coverageDisplaySpaced = showScore ? `${coveragePct} / 100` : "—";
