@@ -170,11 +170,13 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
 
   // Extract server-side validation if present
   const serverValidation: ServerValidation | null = data?.validation || null;
+  const failureReason: string | null = data?._meta?.failureReason ?? null;
 
   return {
     ...state,
     aiResponse: responseContent,
     serverValidation,
+    failureReason,
   };
 }
 
