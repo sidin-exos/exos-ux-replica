@@ -252,8 +252,81 @@ function buildStyles(c: PdfColorSet) {
 
 const cleanMarkdown = (text: string): string => text.replace(/\*\*\*/g, "").replace(/\*\*/g, "").replace(/^\s*\*\s+/gm, "").replace(/^#{1,4}\s*/gm, "").replace(/^- \[[ x]\]\s*/gm, "").trim();
 
+// Lines that are clearly markdown-table fragments — used to suppress
+// false "header" detection in categorizeAnalysisSections and to keep table
+// rows out of the Risk Register fallback renderer.
+const isTableLine = (raw: string): boolean => {
+  const t = raw.trim();
+  if (!t) return false;
+  if (/^\|.*\|$/.test(t)) return true;
+  if (/^\|?[-:\s|]+\|?$/.test(t) && t.includes("-")) return true;
+  return false;
+};
+
+// Drop AI guidance prompts ("Supply…", "Provide…", "(e.g., …)") that should
+// never surface as Key Findings or Recommended Actions.
+const INSTRUCTION_PREFIX_RE = /^\s*[-•*]?\s*(supply|provide|specify|enter|input|complete|fill in|add|please|to enable|to allow|to support|to strengthen)\b/i;
+const isInstructionLine = (line: string): boolean =>
+  INSTRUCTION_PREFIX_RE.test(line) || /\(e\.g\.,/i.test(line);
+
+// Drop Response-Playbook phase headers leaking into Recommended Actions.
+const isPlaybookPhase = (line: string): boolean =>
+  /^\s*phase\s+\d+\s*[—\-:]\s*(detect|activate|contain|recover|learn)/i.test(line);
+
+const looksLikeFinding = (line: string): boolean => {
+  if (line.length < 15) return false;
+  if (isInstructionLine(line) || isPlaybookPhase(line) || isTableLine(line)) return false;
+  return true;
+};
+
+// Pull executive-summary content from the EXOS envelope first; fall back to
+// the prose-line heuristic only when no structured summary exists.
+const extractEnvelopeSummary = (raw?: string): { findings: string[]; recommendations: string[] } => {
+  if (!raw) return { findings: [], recommendations: [] };
+  let env: any;
+  try { env = JSON.parse(raw); } catch { return { findings: [], recommendations: [] }; }
+  if (!env || typeof env !== "object") return { findings: [], recommendations: [] };
+
+  const findings: string[] = [];
+  const recommendations: string[] = [];
+
+  const exec = env.executive_summary ?? env.payload?.executive_summary ?? {};
+  const headline = exec.headline ?? exec.summary ?? env.headline;
+  if (typeof headline === "string" && headline.trim() && looksLikeFinding(headline)) {
+    findings.push(headline.trim());
+  }
+  const findingsArr = exec.key_findings ?? env.key_findings ?? exec.findings ?? [];
+  if (Array.isArray(findingsArr)) {
+    for (const f of findingsArr) {
+      const t = typeof f === "string" ? f : (f?.finding ?? f?.text ?? f?.title ?? "");
+      const s = String(t).trim();
+      if (s && looksLikeFinding(s)) findings.push(s);
+      if (findings.length >= 3) break;
+    }
+  }
+
+  const recsArr = env.recommendations ?? env.payload?.recommendations ?? exec.recommendations ?? [];
+  if (Array.isArray(recsArr)) {
+    for (const r of recsArr) {
+      let t: string;
+      if (typeof r === "string") t = r;
+      else {
+        const action = r?.action ?? r?.recommendation ?? r?.text ?? r?.title ?? "";
+        const priority = r?.priority ? `[${String(r.priority)}] ` : "";
+        const rationale = r?.rationale ?? r?.benefit ?? r?.expected_value ?? "";
+        t = `${priority}${action}${rationale ? ` — ${rationale}` : ""}`;
+      }
+      const s = String(t).trim();
+      if (s && looksLikeFinding(s)) recommendations.push(s);
+      if (recommendations.length >= 4) break;
+    }
+  }
+
+  return { findings, recommendations };
+};
+
 const extractExecutiveSummary = (text: string): { findings: string[]; recommendations: string[] } => {
-  const lines = text.split("\n").map(cleanMarkdown).filter((l) => l.length > 15);
+  const lines = text.split("\n").map(cleanMarkdown).filter((l) => looksLikeFinding(l));
   const findingPattern = /(\$|€|%|found|indicates?|presents?|analysis|current(ly)?|total|average|estimated|reveals?|shows?)/i;
   const recommendPattern = /\b(target|aim to|recommend|should|negotiate|consider|implement|prioritize|pursue|establish|ensure|leverage|explore)\b/i;
   const findings: string[] = [], recommendations: string[] = [];
