@@ -491,6 +491,7 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "license-tier": "licenseTier", "sensitivity-spider": "sensitivitySpider", "risk-matrix": "riskMatrix",
   "scenario-comparison": "scenarioComparison", "supplier-scorecard": "supplierScorecard", "sow-analysis": "sowAnalysis",
   "negotiation-prep": "negotiationPrep", "data-quality": "dataQuality",
+  "npv-waterfall": "npvWaterfall", "ifrs16-impact": "ifrs16Impact",
 };
 
 const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardData | null, themeMode?: PdfThemeMode): ReactNode => {
