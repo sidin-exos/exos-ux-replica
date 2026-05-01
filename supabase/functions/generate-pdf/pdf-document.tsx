@@ -93,7 +93,13 @@ function stripMarkdown(text: string): string {
 }
 
 function renderBodyText(text: string, baseStyle: Record<string, unknown>): ReactElement {
-  const stripped = stripMarkdown(text);
+  // Strip raw numeric tails (e.g. "[High] Execute purchase — 52700") that surface
+  // when expected_value is a bare number with no unit. Applies to recommendation
+  // lines surfaced inside the Detailed Analysis section.
+  const preStripped = /^\s*\[(?:high|medium|low|critical)\]/i.test(text)
+    ? text.replace(/\s+[—–-]\s+\d[\d,. ]*\s*$/, "")
+    : text;
+  const stripped = stripMarkdown(preStripped);
   const valueRe = /([€$£][\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[€$£]?[\d,.]+(?:\.\d+)?)?%?|[\d,.]+(?:\.\d+)?(?:\s*[-–]\s*[\d,.]+(?:\.\d+)?)?%)/g;
   const parts = stripped.split(valueRe);
   if (parts.length === 1) return <Text style={baseStyle}>{stripped}</Text>;
