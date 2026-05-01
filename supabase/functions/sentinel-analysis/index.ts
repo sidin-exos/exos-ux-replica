@@ -106,7 +106,7 @@ At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION
 function buildSynthesizerPrompt(scenarioGroup: string | null, scenarioId: string | null): string {
   // Synthesizer uses structured JSON output via schema injection
   const schemaInjection = scenarioGroup
-    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + getScenarioSchema(scenarioGroup, scenarioId)
+    ? AI_PROMPT_CONTRACT + getScenarioInstructions(scenarioGroup, scenarioId) + '\n\n' + getScenarioSchema(scenarioGroup, scenarioId)
     : '';
 
   const sid = scenarioId ? SCENARIO_ID_REGISTRY[scenarioId] || scenarioId : 'unknown';
@@ -523,7 +523,7 @@ function buildServerGroundedPrompts(
 
   // Build schema injection (replaces legacy <dashboard-data> XML instructions)
   const schemaInjection = scenarioGroup
-    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + getScenarioSchema(scenarioGroup, scenarioType)
+    ? AI_PROMPT_CONTRACT + getScenarioInstructions(scenarioGroup, scenarioType) + '\n\n' + getScenarioSchema(scenarioGroup, scenarioType)
     : '';
 
   const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
@@ -1016,7 +1016,7 @@ serve(async (req) => {
       // Inject schema for structured output if scenario type is known
       const legacyGroup = scenarioType ? SCENARIO_GROUP_REGISTRY[scenarioType] : null;
       if (legacyGroup) {
-        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[legacyGroup] + '\n\n' + getScenarioSchema(legacyGroup, scenarioType);
+        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + getScenarioInstructions(legacyGroup, scenarioType) + '\n\n' + getScenarioSchema(legacyGroup, scenarioType);
       }
       userPrompt = attachedDocumentsXml
         ? `${anonymizedUserPrompt}\n\n${attachedDocumentsXml}`
