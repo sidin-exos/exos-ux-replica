@@ -22,6 +22,7 @@ import ShouldCostGapDashboard from "./ShouldCostGapDashboard";
 import SavingsRealizationFunnelDashboard from "./SavingsRealizationFunnelDashboard";
 import WorkingCapitalDpoDashboard from "./WorkingCapitalDpoDashboard";
 import SupplierConcentrationMapDashboard from "./SupplierConcentrationMapDashboard";
+import RfpPackageDashboard from "./RfpPackageDashboard";
 
 /** Map dashboard type slug to the corresponding key in DashboardData */
 const dashboardDataKey: Record<string, keyof DashboardData> = {
@@ -43,6 +44,7 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "savings-realization-funnel": "savingsRealizationFunnel",
   "working-capital-dpo": "workingCapitalDpo",
   "supplier-concentration-map": "supplierConcentrationMap",
+  "rfp-package": "rfpPackage",
 };
 
 /**
@@ -176,6 +178,10 @@ const DashboardRenderer = ({
 
     case "supplier-concentration-map":
       return wrapWithFallbackBanner(<SupplierConcentrationMapDashboard parsedData={parsedData?.supplierConcentrationMap} />);
+
+    case "rfp-package":
+      // No sample fallback — component renders its own empty state.
+      return <RfpPackageDashboard parsedData={parsedData?.rfpPackage} />;
 
     default:
       return (
