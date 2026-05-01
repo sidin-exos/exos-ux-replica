@@ -513,6 +513,11 @@ const PDFReportDocument = ({
   let envelope: any = null;
   try { envelope = structuredData ? JSON.parse(structuredData) : null; } catch { envelope = null; }
   const isS27 = envelope?.scenario_id === "S27" || /black\s*swan/i.test(scenarioTitle);
+  // S26 (Disruption Management): the Emergency Map already contains the four
+  // recovery stages including Stage 4 Prevent. Without this flag the prose
+  // fallback collects Stage 4 prevention/process-change items into the legacy
+  // Risk Register page, duplicating content and confusing the deliverable.
+  const isS26 = envelope?.scenario_id === "S26" || /disruption\s*manag/i.test(scenarioTitle);
   const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
   const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
