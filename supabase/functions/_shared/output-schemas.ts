@@ -1594,6 +1594,270 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
         parts.push('');
       }
     }
+
+    // ── S26 analytical depth — 5 new dimensions ─────────────────────────────
+    const rca = (ss.root_cause_analysis ?? null) as Record<string, any> | null;
+    if (rca && (rca.primary_cause || (Array.isArray(rca.five_whys) && rca.five_whys.length > 0))) {
+      parts.push('### Root Cause Analysis');
+      if (rca.primary_cause) parts.push(`**Primary cause:** ${sanitiseAscii(coerceToString(rca.primary_cause))}`);
+      if (rca.evidence_quality) parts.push(`_Evidence quality: ${sanitiseAscii(coerceToString(rca.evidence_quality))}_`);
+      if (Array.isArray(rca.contributing_factors) && rca.contributing_factors.length > 0) {
+        parts.push('');
+        parts.push('**Contributing factors:**');
+        rca.contributing_factors.slice(0, 6).forEach((f: unknown) => {
+          const t = sanitiseAscii(coerceToString(f).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      if (Array.isArray(rca.five_whys) && rca.five_whys.length > 0) {
+        parts.push('');
+        parts.push('**Five Whys:**');
+        rca.five_whys.slice(0, 5).forEach((w: unknown, i: number) => {
+          const t = sanitiseAscii(coerceToString(w).trim());
+          if (t) parts.push(`${i + 1}. ${t.replace(/^why\s*\d+\s*:\s*/i, '')}`);
+        });
+      }
+      parts.push('');
+    }
+
+    const br = (ss.blast_radius ?? null) as Record<string, any> | null;
+    const hasBlast = br && (
+      (Array.isArray(br.directly_affected) && br.directly_affected.length > 0) ||
+      (Array.isArray(br.second_order_impacts) && br.second_order_impacts.length > 0) ||
+      (Array.isArray(br.third_order_impacts) && br.third_order_impacts.length > 0)
+    );
+    if (hasBlast) {
+      parts.push('### Blast Radius');
+      if (br!.estimated_revenue_at_risk != null) {
+        parts.push(`- **Revenue at risk:** ${fmtMoney(br!.estimated_revenue_at_risk)}`);
+      }
+      if (br!.estimated_customers_affected != null) {
+        parts.push(`- **Customers affected:** ${sanitiseAscii(coerceToString(br!.estimated_customers_affected))}`);
+      }
+      if (Array.isArray(br!.geographic_spread) && br!.geographic_spread.length > 0) {
+        parts.push(`- **Geographic spread:** ${br!.geographic_spread.map((g: unknown) => sanitiseAscii(coerceToString(g))).join(', ')}`);
+      }
+      const tiers: Array<[string, unknown]> = [
+        ['Directly affected (now)', br!.directly_affected],
+        ['Second-order impacts (<=30 days)', br!.second_order_impacts],
+        ['Third-order impacts (strategic)', br!.third_order_impacts],
+      ];
+      tiers.forEach(([label, arr]) => {
+        if (Array.isArray(arr) && arr.length > 0) {
+          parts.push('');
+          parts.push(`**${label}:**`);
+          arr.slice(0, 6).forEach((x: unknown) => {
+            const t = sanitiseAscii(coerceToString(x).trim());
+            if (t) parts.push(`- ${t}`);
+          });
+        }
+      });
+      parts.push('');
+    }
+
+    const rp2 = (ss.recovery_probability ?? null) as Record<string, any> | null;
+    if (rp2 && (rp2.p_full_recovery_30d_pct != null || rp2.p_full_recovery_90d_pct != null || rp2.p_partial_recovery_30d_pct != null)) {
+      parts.push('### Recovery Probability');
+      parts.push('| Outcome | Probability |');
+      parts.push('|---|---|');
+      const fmtPct = (v: unknown) => v == null ? '—' : `${v}%`;
+      parts.push(`| Full recovery within 30 days | ${fmtPct(rp2.p_full_recovery_30d_pct)} |`);
+      parts.push(`| Partial recovery within 30 days | ${fmtPct(rp2.p_partial_recovery_30d_pct)} |`);
+      parts.push(`| Full recovery within 90 days | ${fmtPct(rp2.p_full_recovery_90d_pct)} |`);
+      if (rp2.confidence) {
+        parts.push('');
+        parts.push(`_Confidence: ${sanitiseAscii(coerceToString(rp2.confidence))}_`);
+      }
+      if (Array.isArray(rp2.key_assumptions) && rp2.key_assumptions.length > 0) {
+        parts.push('');
+        parts.push('**Key assumptions:**');
+        rp2.key_assumptions.slice(0, 5).forEach((a: unknown) => {
+          const t = sanitiseAscii(coerceToString(a).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    const reg: any[] = Array.isArray(ss.regulatory_exposure) ? ss.regulatory_exposure : [];
+    const validReg = reg.filter(r => r && (r.regime || r.obligation));
+    if (validReg.length > 0) {
+      parts.push('### Regulatory Exposure');
+      parts.push('| Regime | Obligation | Deadline | Penalty | Owner |');
+      parts.push('|---|---|---|---|---|');
+      validReg.slice(0, 8).forEach(r => {
+        const dl = r.deadline_hours != null ? `${r.deadline_hours}h` : '—';
+        parts.push(`| ${sanitiseAscii(coerceToString(r.regime ?? '—'))} | ${sanitiseAscii(coerceToString(r.obligation ?? '—'))} | ${dl} | ${sanitiseAscii(coerceToString(r.potential_penalty ?? '—'))} | ${sanitiseAscii(coerceToString(r.owner_role ?? '—'))} |`);
+      });
+      parts.push('');
+    }
+
+    const lessons: any[] = Array.isArray(ss.lessons_learned_for_playbook) ? ss.lessons_learned_for_playbook : [];
+    const validLessons = lessons.filter(l => l && (l.lesson || l.playbook_change));
+    if (validLessons.length > 0) {
+      parts.push('### Lessons Learned for Playbook');
+      parts.push('| Lesson | Playbook change | Owner | Due |');
+      parts.push('|---|---|---|---|');
+      validLessons.slice(0, 8).forEach(l => {
+        const due = l.due_in_days != null ? `${l.due_in_days}d` : '—';
+        parts.push(`| ${sanitiseAscii(coerceToString(l.lesson ?? '—'))} | ${sanitiseAscii(coerceToString(l.playbook_change ?? '—'))} | ${sanitiseAscii(coerceToString(l.owner_role ?? '—'))} | ${due} |`);
+      });
+      parts.push('');
+    }
+  }
+
+  // ── S20 Category Risk Evaluator — render the eight promised deliverables.
+  if (parsed.scenario_id === 'S20') {
+    const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, any>;
+    const fmtMoney = (v: unknown): string => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+      if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+      return `€${n.toFixed(0)}`;
+    };
+    const fmtCell = (v: unknown): string => {
+      if (v == null || v === '') return '—';
+      return sanitiseAscii(coerceToString(v)).replace(/\|/g, '\\|');
+    };
+
+    // 1. Headline Category Risk Score
+    const crs = (ss.category_risk_score ?? null) as Record<string, any> | null;
+    if (crs && (crs.overall != null || crs.rag || crs.decision)) {
+      parts.push('### Category Risk Score');
+      if (crs.overall != null) parts.push(`- **Overall score:** ${crs.overall} / 100`);
+      if (crs.rag) parts.push(`- **RAG status:** ${sanitiseAscii(coerceToString(crs.rag))}`);
+      if (crs.decision) parts.push(`- **Decision recommendation:** ${sanitiseAscii(coerceToString(crs.decision)).replace(/_/g, ' ')}`);
+      parts.push('');
+    }
+
+    // 2. Score Breakdown — 5 dimensions
+    const breakdown: any[] = Array.isArray(ss.score_breakdown) ? ss.score_breakdown : [];
+    const validBreakdown = breakdown.filter(b => b && b.dimension);
+    if (validBreakdown.length > 0) {
+      parts.push('### Risk Dimensions');
+      parts.push('| Dimension | Score | RAG | Rationale |');
+      parts.push('|---|---|---|---|');
+      validBreakdown.slice(0, 5).forEach(b => {
+        const score = b.score != null ? `${b.score} / 100` : '—';
+        parts.push(`| ${fmtCell(b.dimension)} | ${score} | ${fmtCell(b.rag)} | ${fmtCell(b.rationale)} |`);
+      });
+      parts.push('');
+    }
+
+    // 3. Market Brief
+    const mb = (ss.market_brief ?? null) as Record<string, any> | null;
+    if (mb && (mb.dynamics || mb.price_outlook_pct != null || (Array.isArray(mb.key_trends) && mb.key_trends.length > 0))) {
+      parts.push('### Market Brief');
+      if (mb.dynamics) parts.push(sanitiseAscii(coerceToString(mb.dynamics)));
+      if (mb.price_outlook_pct != null) {
+        const sign = Number(mb.price_outlook_pct) >= 0 ? '+' : '';
+        parts.push('');
+        parts.push(`- **12-month price outlook:** ${sign}${mb.price_outlook_pct}%`);
+      }
+      if (Array.isArray(mb.key_trends) && mb.key_trends.length > 0) {
+        parts.push('');
+        parts.push('**Key trends:**');
+        mb.key_trends.slice(0, 5).forEach((t: unknown) => {
+          const txt = sanitiseAscii(coerceToString(t).trim());
+          if (txt) parts.push(`- ${txt}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 4. Supply Health
+    const sh = (ss.supply_health ?? null) as Record<string, any> | null;
+    if (sh && (sh.supplier_count != null || sh.top3_share_pct != null || sh.hhi != null || (Array.isArray(sh.single_point_failures) && sh.single_point_failures.length > 0))) {
+      parts.push('### Supply Health');
+      if (sh.supplier_count != null) parts.push(`- **Supplier count:** ${sh.supplier_count}`);
+      if (sh.top3_share_pct != null) parts.push(`- **Top-3 supplier share:** ${sh.top3_share_pct}%`);
+      if (sh.hhi != null) parts.push(`- **HHI:** ${sh.hhi}`);
+      if (Array.isArray(sh.single_point_failures) && sh.single_point_failures.length > 0) {
+        parts.push('');
+        parts.push('**Single points of failure:**');
+        sh.single_point_failures.slice(0, 6).forEach((f: unknown) => {
+          const t = sanitiseAscii(coerceToString(f).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 5. Budget Risk Forecast
+    const brf = (ss.budget_risk_forecast ?? null) as Record<string, any> | null;
+    if (brf && (brf.p10_pct != null || brf.p50_pct != null || brf.p90_pct != null)) {
+      parts.push('### Budget Risk Forecast');
+      parts.push('| Scenario | Variance vs budget |');
+      parts.push('|---|---|');
+      const fmtPct = (v: unknown) => v == null ? '—' : `${Number(v) >= 0 ? '+' : ''}${v}%`;
+      parts.push(`| P10 (best case) | ${fmtPct(brf.p10_pct)} |`);
+      parts.push(`| P50 (median) | ${fmtPct(brf.p50_pct)} |`);
+      parts.push(`| P90 (worst case) | ${fmtPct(brf.p90_pct)} |`);
+      if (Array.isArray(brf.drivers) && brf.drivers.length > 0) {
+        parts.push('');
+        parts.push('**Variance drivers:**');
+        brf.drivers.slice(0, 5).forEach((d: unknown) => {
+          const t = sanitiseAscii(coerceToString(d).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 6. SOW Ambiguity Findings
+    const sow: any[] = Array.isArray(ss.sow_ambiguity_findings) ? ss.sow_ambiguity_findings : [];
+    const validSow = sow.filter(s => s && (s.clause || s.recommended_fix));
+    if (validSow.length > 0) {
+      parts.push('### SOW Ambiguity Findings');
+      parts.push('| Clause | Severity | Recommended fix |');
+      parts.push('|---|---|---|');
+      validSow.slice(0, 8).forEach(s => {
+        parts.push(`| ${fmtCell(s.clause)} | ${fmtCell(s.severity)} | ${fmtCell(s.recommended_fix)} |`);
+      });
+      parts.push('');
+    }
+
+    // 7. Recommended Contract Terms
+    const terms: any[] = Array.isArray(ss.recommended_contract_terms) ? ss.recommended_contract_terms : [];
+    const validTerms = terms.filter(t => t && (t.clause_type || t.rationale));
+    if (validTerms.length > 0) {
+      parts.push('### Recommended Contract Terms');
+      parts.push('| Clause type | Priority | Rationale |');
+      parts.push('|---|---|---|');
+      const priorityOrder: Record<string, number> = { MUST: 0, SHOULD: 1, NICE_TO_HAVE: 2 };
+      const sortedTerms = [...validTerms].sort((a, b) =>
+        (priorityOrder[String(a.priority ?? '').toUpperCase()] ?? 3) -
+        (priorityOrder[String(b.priority ?? '').toUpperCase()] ?? 3)
+      );
+      sortedTerms.slice(0, 10).forEach(t => {
+        parts.push(`| ${fmtCell(t.clause_type)} | ${fmtCell(String(t.priority ?? '').replace(/_/g, ' '))} | ${fmtCell(t.rationale)} |`);
+      });
+      parts.push('');
+    }
+
+    // 8. Kraljic Position
+    const kp = (ss.kraljic_position ?? null) as Record<string, any> | null;
+    if (kp && (kp.quadrant || kp.supply_risk != null || kp.business_impact != null)) {
+      parts.push('### Kraljic Position');
+      if (kp.quadrant) parts.push(`- **Quadrant:** ${sanitiseAscii(coerceToString(kp.quadrant))}`);
+      if (kp.supply_risk != null) parts.push(`- **Supply risk:** ${kp.supply_risk} / 5`);
+      if (kp.business_impact != null) parts.push(`- **Business impact:** ${kp.business_impact} / 5`);
+      parts.push('');
+    }
+
+    // Concentration shared block
+    const conc = (ss.concentration ?? null) as Record<string, any> | null;
+    const concCats: any[] = Array.isArray(conc?.categories) ? conc!.categories : [];
+    if (concCats.length > 0) {
+      parts.push('### Supplier Concentration');
+      parts.push('| Category | HHI | Concentration | Annual spend |');
+      parts.push('|---|---|---|---|');
+      concCats.slice(0, 8).forEach(c => {
+        parts.push(`| ${fmtCell(c.category_name ?? c.category_id)} | ${fmtCell(c.hhi)} | ${fmtCell(c.hhi_interpretation)} | ${fmtMoney(c.annual_spend)} |`);
+      });
+      parts.push('');
+    }
   }
 
   // ── S27 Black Swan Scenario Simulation — render the ten promised deliverables.
