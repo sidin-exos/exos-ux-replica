@@ -328,49 +328,8 @@ const GeneratedReport = () => {
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <div className="text-foreground bg-secondary/30 rounded-lg p-5 border border-border space-y-4">
-                    {displayAnalysis.split('\n').map((line, i) => {
-                      // Check if line starts with hash headers (###, ####, etc.)
-                      const hashMatch = line.match(/^(#{1,4})\s*(.*)$/);
-                      const isHashHeader = !!hashMatch;
-                      
-                      // Clean all markdown formatting
-                      const cleanLine = cleanMarkdown(line);
-                      
-                      if (!cleanLine) {
-                        return <div key={i} className="h-2" />;
-                      }
-                      
-                      // Hash headers get largest styling
-                      if (isHashHeader) {
-                        const headerLevel = hashMatch[1].length;
-                        const fontSize = headerLevel <= 2 ? 'text-lg' : 'text-base';
-                        return (
-                          <h3 key={i} className={`${fontSize} font-bold text-foreground mt-4 first:mt-0`}>
-                            {cleanLine}
-                          </h3>
-                        );
-                      }
-                      
-                      // Check if line looks like a section header (ends with colon or is all caps/title case short line)
-                      const isSectionHeader = 
-                        (cleanLine.endsWith(':') && cleanLine.length < 80) ||
-                        (cleanLine.length > 0 && cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes('.'));
-                      
-                      if (isSectionHeader) {
-                        return (
-                          <p key={i} className="font-semibold text-foreground text-base mt-3">
-                            {cleanLine}
-                          </p>
-                        );
-                      }
-                      
-                      return (
-                        <p key={i} className="text-foreground/90">
-                          {cleanLine}
-                        </p>
-                      );
-                    })}
+                  <div className="text-foreground bg-secondary/30 rounded-lg p-5 border border-border">
+                    <MarkdownRenderer content={displayAnalysis} />
                   </div>
                 </div>
               </CardContent>
