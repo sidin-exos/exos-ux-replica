@@ -542,6 +542,18 @@ const PDFReportDocument = ({
   const s = buildStyles(c);
   // Prefer structured envelope, fall back to legacy XML parsing
   const parsedData = (structuredData ? extractFromEnvelope(structuredData) : null) ?? extractDashboardData(analysisResult);
+  // Debug: surface scenario-specific dashboard payloads in edge logs so we can
+  // diagnose why widgets render empty (S3 NPV / IFRS 16).
+  try {
+    console.log("[generate-pdf] dashboards", {
+      scenarioTitle,
+      selectedDashboards,
+      hasNpvWaterfall: !!parsedData?.npvWaterfall,
+      npvOptionsCount: (parsedData?.npvWaterfall as any)?.options?.length ?? 0,
+      hasIfrs16: !!parsedData?.ifrs16Impact,
+      ifrs16OptionsCount: (parsedData?.ifrs16Impact as any)?.options?.length ?? 0,
+    });
+  } catch { /* logging only */ }
   const strippedAnalysis = stripDashboardData(analysisResult);
   // D3: prefer envelope-driven Executive Summary; fall back to prose heuristic.
   const envelopeSummary = extractEnvelopeSummary(structuredData);
