@@ -1417,7 +1417,132 @@ export function synthesizeMissingContent<T extends ExosOutputParsed | null | und
     env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
   }
 
+  // ── S21 Preparing for Negotiation ────────────────────────────────────────
+  if (env.scenario_id === 'S21' && ss && typeof ss === 'object') {
+    const batna = (ss.batna ?? {}) as Record<string, any>;
+    const zopa = (ss.zopa ?? {}) as Record<string, any>;
+    const lev = (ss.leverage_analysis ?? {}) as Record<string, any>;
+    const buyerTarget = Number(zopa.buyer_target);
+    const supplierFloor = Number(zopa.supplier_likely_floor);
+    const buyerWalkAway = Number(zopa.buyer_walk_away);
+    const batnaStrength = Number(batna.batna_strength_pct);
+    const buyerFactors: any[] = Array.isArray(lev.buyer_leverage_factors) ? lev.buyer_leverage_factors : [];
+    const supplierFactors: any[] = Array.isArray(lev.supplier_leverage_factors) ? lev.supplier_leverage_factors : [];
+
+    // 1) batna_improvement_actions — guarantee 2 generic if empty
+    if (!Array.isArray(batna.batna_improvement_actions) || batna.batna_improvement_actions.length === 0) {
+      batna.batna_improvement_actions = [
+        'Pre-qualify a second alternative supplier so the BATNA is operationally ready, not just theoretical.',
+        'Run a small pilot or sample order with the alternative to validate quality, lead time, and total cost.',
+      ];
+    }
+    ss.batna = batna;
+
+    // 2) leverage_analysis.power_balance — derive from BATNA strength + factor counts
+    if (!lev.power_balance || lev.power_balance.includes('|')) {
+      const buyerScore = (Number.isFinite(batnaStrength) ? batnaStrength : 50) + buyerFactors.length * 5 - supplierFactors.length * 5;
+      lev.power_balance = buyerScore >= 60 ? 'BUYER_ADVANTAGE' : buyerScore <= 40 ? 'SUPPLIER_ADVANTAGE' : 'BALANCED';
+    }
+    ss.leverage_analysis = lev;
+
+    // 3) counter_arguments — backfill 3 standard objections if empty
+    const ca: any[] = Array.isArray(ss.counter_arguments) ? ss.counter_arguments : [];
+    if (ca.filter(c => c && (c.supplier_position || c.buyer_response)).length === 0) {
+      ss.counter_arguments = [
+        {
+          supplier_position: 'Our cost base does not allow a price reduction at your target level.',
+          buyer_response: 'Share our internal benchmark and at least one competing quote, then ask the supplier to open the cost structure on the 2–3 largest line items.',
+          evidence: 'Independent market benchmark and quoted alternative supplier prices.',
+        },
+        {
+          supplier_position: 'Volume is not large enough to justify a discount.',
+          buyer_response: 'Re-frame around multi-year committed volume and a pipeline of additional sites/SKUs that the alternative supplier would otherwise win.',
+          evidence: 'Forecast of committed volume over the contract term and BATNA value.',
+        },
+        {
+          supplier_position: 'Removing auto-renewal and adding penalties is non-standard.',
+          buyer_response: 'Offer to extend the contract length in exchange for explicit exit rights, KPI-linked pricing, and a capped escalation clause.',
+          evidence: 'Standard buyer-side clauses in comparable enterprise contracts.',
+        },
+      ];
+    }
+
+    // 4) walk_away_plan — backfill all three sub-fields when empty
+    const wap = (ss.walk_away_plan ?? {}) as Record<string, any>;
+    const triggers: any[] = Array.isArray(wap.trigger_conditions) ? wap.trigger_conditions : [];
+    const exitSteps: any[] = Array.isArray(wap.exit_steps) ? wap.exit_steps : [];
+    if (triggers.length === 0) {
+      wap.trigger_conditions = [
+        Number.isFinite(buyerWalkAway) ? `Total contract value exceeds ${formatCurrencyEUR(buyerWalkAway)} (the buyer walk-away threshold).` : 'Supplier refuses to move below the buyer walk-away threshold.',
+        'Supplier refuses to remove auto-renewal escalation or accept KPI-linked penalties.',
+        'Supplier cannot commit to the required compliance / SLA evidence within the negotiation window.',
+      ];
+    }
+    if (exitSteps.length === 0) {
+      wap.exit_steps = [
+        'Notify the supplier in writing that the proposal is outside the approved envelope and pause further sessions.',
+        'Activate the qualified BATNA: issue an emergency RFQ to the pre-qualified alternative supplier(s).',
+        'Brief internal stakeholders (Finance, Legal, Operations) on the switch plan and timeline.',
+        'Communicate transition risk and mitigation to affected business units before any operational impact.',
+      ];
+    }
+    if (!wap.communication_script) {
+      wap.communication_script = 'Thank you for the discussions to date. The latest proposal sits outside the parameters we are able to approve internally, and we are not in a position to close on these terms. We will be pausing the negotiation and progressing our alternative options. Please let us know in writing within 5 working days if there is a materially revised offer; otherwise, we will move to award elsewhere.';
+    }
+    ss.walk_away_plan = wap;
+
+    // 5) value_creation — backfill 2 standard win-wins if empty
+    const vc: any[] = Array.isArray(ss.value_creation) ? ss.value_creation : [];
+    if (vc.filter(v => v && (v.opportunity || v.buyer_benefit)).length === 0) {
+      ss.value_creation = [
+        {
+          opportunity: 'Extend contract length in exchange for a price lock and KPI-linked rebate.',
+          buyer_benefit: 'Predictable cost base and protection from market price increases.',
+          supplier_benefit: 'Longer guaranteed revenue stream supporting capacity planning and investment.',
+        },
+        {
+          opportunity: 'Joint operational improvement programme (e.g. demand forecasting, packaging, logistics).',
+          buyer_benefit: 'Lower total cost of ownership beyond unit price.',
+          supplier_benefit: 'Reduced cost-to-serve and a stronger reference case for similar accounts.',
+        },
+      ];
+    }
+
+    // 6) financial_outcome_range — derive from ZOPA when numbers are present
+    const fr = (ss.financial_outcome_range ?? {}) as Record<string, any>;
+    const hasFr = fr.optimistic != null || fr.realistic != null || fr.pessimistic != null;
+    if (!hasFr && Number.isFinite(buyerTarget) && (Number.isFinite(supplierFloor) || Number.isFinite(buyerWalkAway))) {
+      const realistic = Number.isFinite(supplierFloor)
+        ? (buyerTarget + supplierFloor) / 2
+        : buyerTarget;
+      ss.financial_outcome_range = {
+        optimistic: Number.isFinite(supplierFloor) ? supplierFloor : buyerTarget,
+        realistic,
+        pessimistic: Number.isFinite(buyerWalkAway) ? buyerWalkAway : buyerTarget * 1.1,
+      };
+    }
+
+    // 7) risk_register — guarantee 3 negotiation risks if empty
+    const rr: any[] = Array.isArray(ss.risk_register) ? ss.risk_register : [];
+    if (rr.filter(r => r && r.risk).length === 0) {
+      ss.risk_register = [
+        { risk: 'Supplier walks away after a hard anchor and forces an emergency switch.', likelihood: 'MEDIUM', impact: 'HIGH', mitigation: 'Pre-qualify the alternative supplier and validate lead time before opening price negotiation.' },
+        { risk: 'Internal stakeholders escalate to accept supplier terms under operational pressure.', likelihood: 'MEDIUM', impact: 'MEDIUM', mitigation: 'Pre-align the walk-away threshold and the BATNA with Finance, Legal and Operations before the first session.' },
+        { risk: 'Auto-renewal or volume-floor clauses survive the redline and erode the negotiated savings.', likelihood: 'MEDIUM', impact: 'MEDIUM', mitigation: 'Treat removal of auto-renewal and any volume floor as a MUST-HAVE redline; do not trade them for price.' },
+      ];
+    }
+
+    env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
+  }
+
   return env as T;
+}
+
+function formatCurrencyEUR(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+  if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+  return `€${n.toFixed(0)}`;
 }
 
 export function pruneEmptyBranches<T>(input: T, isTopLevel = true): T {
