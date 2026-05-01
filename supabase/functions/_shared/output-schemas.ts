@@ -1928,6 +1928,29 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       parts.push('');
     }
 
+    // 9. Decision Readiness — promised deliverable, always rendered when present
+    const dr = (ss.decision_readiness ?? null) as Record<string, any> | null;
+    if (dr && (dr.score != null || dr.verdict || (Array.isArray(dr.checklist) && dr.checklist.length > 0))) {
+      parts.push('### Decision Readiness');
+      if (dr.score != null) parts.push(`- **Readiness score:** ${dr.score} / 100`);
+      if (dr.verdict) parts.push(`- **Verdict:** ${sanitiseAscii(coerceToString(dr.verdict)).replace(/_/g, ' ')}`);
+      if (dr.rationale) {
+        parts.push('');
+        parts.push(sanitiseAscii(coerceToString(dr.rationale)));
+      }
+      const checklist: any[] = Array.isArray(dr.checklist) ? dr.checklist : [];
+      const validChecklist = checklist.filter(c => c && c.item);
+      if (validChecklist.length > 0) {
+        parts.push('');
+        parts.push('| Readiness item | Status | Owner |');
+        parts.push('|---|---|---|');
+        validChecklist.slice(0, 8).forEach(c => {
+          parts.push(`| ${fmtCell(c.item)} | ${fmtCell(String(c.status ?? '').replace(/_/g, ' '))} | ${fmtCell(c.owner_role)} |`);
+        });
+      }
+      parts.push('');
+    }
+
     // Concentration shared block
     const conc = (ss.concentration ?? null) as Record<string, any> | null;
     const concCats: any[] = Array.isArray(conc?.categories) ? conc!.categories : [];
