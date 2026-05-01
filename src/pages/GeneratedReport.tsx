@@ -141,17 +141,21 @@ const GeneratedReport = () => {
       .trim();
   };
 
-  // Parse key metrics from analysis (simple extraction)
+  // Heuristic: drop lines that look like AI guidance/instructions rather than findings
+  // (e.g. "Supply an estimate of …", "Provide …", "Specify …" — these are data-gap prompts).
+  const INSTRUCTION_PREFIX_RE = /^\s*[-•*]?\s*(supply|provide|specify|enter|input|complete|fill in|add|please|to enable|to allow|to support)\b/i;
+  const isInstructionLine = (line: string) => INSTRUCTION_PREFIX_RE.test(line) || /\(e\.g\.,/i.test(line);
+
+  // Pull a real Executive Summary from the envelope when available; fall back to
+  // the prose-line heuristic only when no structured summary exists.
   const extractKeyPoints = (text: string | null | undefined): string[] => {
     if (!text) return [];
-    
     const lines = text.split("\n").filter((line) => line.trim());
     const keyPoints: string[] = [];
-    
     for (const line of lines) {
       const cleanLine = cleanMarkdown(line);
       if (!cleanLine) continue;
-      
+      if (isInstructionLine(cleanLine)) continue;
       if (
         cleanLine.includes("recommend") ||
         cleanLine.includes("suggest") ||
@@ -163,11 +167,46 @@ const GeneratedReport = () => {
         if (keyPoints.length >= 5) break;
       }
     }
-    
-    return keyPoints.length > 0 ? keyPoints : lines.slice(0, 5).map(cleanMarkdown).filter(Boolean);
+    return keyPoints.length > 0
+      ? keyPoints
+      : lines.map(cleanMarkdown).filter(Boolean).filter((l) => !isInstructionLine(l)).slice(0, 5);
   };
 
-  const keyPoints = extractKeyPoints(safeAnalysisResult);
+  const extractEnvelopeSummary = (raw?: string): string[] => {
+    if (!raw) return [];
+    try {
+      const env = JSON.parse(raw);
+      if (!env || typeof env !== 'object') return [];
+      const points: string[] = [];
+      const exec = env.executive_summary ?? env.payload?.executive_summary;
+      const headline = exec?.headline ?? exec?.summary ?? env.headline;
+      if (typeof headline === 'string' && headline.trim()) points.push(headline.trim());
+      const findings = exec?.key_findings ?? env.key_findings ?? exec?.findings;
+      if (Array.isArray(findings)) {
+        for (const f of findings) {
+          const t = typeof f === 'string' ? f : f?.finding ?? f?.text ?? f?.title;
+          if (t && String(t).trim() && !isInstructionLine(String(t))) {
+            points.push(String(t).trim());
+          }
+          if (points.length >= 5) break;
+        }
+      }
+      const recs: any[] = env.recommendations ?? env.payload?.recommendations ?? [];
+      if (points.length < 5 && Array.isArray(recs)) {
+        for (const r of recs) {
+          const t = typeof r === 'string' ? r : r?.action ?? r?.recommendation ?? r?.text;
+          if (t && String(t).trim()) points.push(String(t).trim());
+          if (points.length >= 5) break;
+        }
+      }
+      return points;
+    } catch {
+      return [];
+    }
+  };
+
+  const envelopePoints = extractEnvelopeSummary(structuredData);
+  const keyPoints = envelopePoints.length > 0 ? envelopePoints : extractKeyPoints(displayAnalysis);
 
   return (
     <div className="min-h-screen gradient-hero">
