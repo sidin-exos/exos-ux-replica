@@ -557,7 +557,16 @@ const PDFReportDocument = ({
 
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-  const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  // Only show a numeric score when the evaluator actually produced one. Falling
+  // back to filled-fraction was misleading (e.g. S26 with 0 quality-evaluator
+  // output displayed "0/100", suggesting a real failed evaluation).
+  const hasEvaluatorScore = typeof evaluationScore === "number" && evaluationScore > 0;
+  const coveragePct = hasEvaluatorScore
+    ? evaluationScore
+    : (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
+  const showScore = hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
+  const coverageDisplay = showScore ? `${coveragePct}/100` : "—";
+  const coverageDisplaySpaced = showScore ? `${coveragePct} / 100` : "—";
   const confidenceLevel = evaluationConfidence ? (evaluationConfidence === "HIGH" ? "High" : "Low") : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
   const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
   const batnaRawScore = parsedData?.negotiationPrep?.batna?.strength;
