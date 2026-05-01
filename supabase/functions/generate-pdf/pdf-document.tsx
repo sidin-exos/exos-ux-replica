@@ -412,12 +412,19 @@ const categorizeAnalysisSections = (lines: string[]): AnalysisSection[] => {
       || (cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes("."))
     );
     if (isHeader) {
+      const newTitle = cleanLine.replace(/:$/, "");
+      // Dedupe: if this header is the same as the section we are currently
+      // building (and that section is still empty), skip it. This squashes the
+      // duplicated "Data Gaps" / "Data Gaps:" headers the AI sometimes emits
+      // back-to-back which previously rendered as two stacked section badges.
+      const sameAsCurrent = current.title.trim().toLowerCase() === newTitle.trim().toLowerCase();
+      if (sameAsCurrent && current.lines.length === 0) continue;
       if (current.lines.length > 0) sections.push(current);
       let detectedType: SectionType = "general";
       for (const [type, pattern] of Object.entries(sectionPatterns) as [Exclude<SectionType, "general">, RegExp][]) {
         if (pattern.test(cleanLine)) { detectedType = type; break; }
       }
-      current = { type: detectedType, title: cleanLine.replace(/:$/, ""), lines: [] };
+      current = { type: detectedType, title: newTitle, lines: [] };
     } else { current.lines.push(cleanLine); }
   }
   if (current.lines.length > 0) sections.push(current);
