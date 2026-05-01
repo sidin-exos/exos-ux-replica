@@ -81,6 +81,7 @@ interface PipelineState {
   validationStatus: 'pending' | 'approved' | 'rejected';
   retryCount: number;
   serverValidation: ServerValidation | null;
+  failureReason: string | null;
 }
 
 /**
@@ -170,11 +171,13 @@ async function stepReasoning(state: PipelineState): Promise<PipelineState> {
 
   // Extract server-side validation if present
   const serverValidation: ServerValidation | null = data?.validation || null;
+  const failureReason: string | null = data?._meta?.failureReason ?? null;
 
   return {
     ...state,
     aiResponse: responseContent,
     serverValidation,
+    failureReason,
   };
 }
 
@@ -239,6 +242,7 @@ export async function runExosGraph(
   confidenceScore: number;
   validationStatus: 'pending' | 'approved' | 'rejected';
   retryCount: number;
+  failureReason: string | null;
 }> {
   const isMultiCycle = scenarioId ? isDeepAnalyticsScenario(scenarioId) : false;
   // Log tracing config on first run
@@ -269,6 +273,7 @@ export async function runExosGraph(
     validationStatus: 'pending',
     retryCount: 0,
     serverValidation: null,
+    failureReason: null,
   };
 
   try {
@@ -344,6 +349,7 @@ export async function runExosGraph(
       confidenceScore: state.confidenceScore,
       validationStatus: state.validationStatus,
       retryCount: state.retryCount,
+      failureReason: state.failureReason,
     };
   } catch (error) {
     // End parent trace with error

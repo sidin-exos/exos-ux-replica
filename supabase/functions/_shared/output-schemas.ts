@@ -1115,6 +1115,46 @@ export interface ExosOutputParsed {
   payload: Record<string, unknown>;
 }
 
+/**
+ * Brace-balance scanner: walks the string tracking string-literal state and
+ * brace depth, returning the largest valid JSON object substring (closing braces
+ * appended if the source was truncated mid-object). Used to salvage partial
+ * envelopes when a fallback model truncated output mid-payload.
+ */
+function salvageTruncatedJson(raw: string): string | null {
+  const start = raw.indexOf('{');
+  if (start < 0) return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let lastValidEnd = -1;
+  for (let i = start; i < raw.length; i++) {
+    const ch = raw[i];
+    if (escape) { escape = false; continue; }
+    if (inString) {
+      if (ch === '\\') { escape = true; continue; }
+      if (ch === '"') { inString = false; }
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) lastValidEnd = i;
+    }
+  }
+  if (lastValidEnd > 0) return raw.slice(start, lastValidEnd + 1);
+  // Truncated mid-object: try padding closing braces (drop trailing partial token)
+  if (depth > 0 && !inString) {
+    // Trim trailing comma or partial token
+    let end = raw.length - 1;
+    while (end > start && /[,\s:"]/.test(raw[end])) end--;
+    const padded = raw.slice(start, end + 1).replace(/,\s*$/, '') + '}'.repeat(depth);
+    try { JSON.parse(padded); return padded; } catch { /* give up */ }
+  }
+  return null;
+}
+
 export function parseAIResponse(raw: string): ExosOutputParsed | null {
   // Attempt 1: direct JSON parse
   try {
@@ -1129,9 +1169,63 @@ export function parseAIResponse(raw: string): ExosOutputParsed | null {
     } catch (_) { /* fall through */ }
   }
 
-  // Attempt 3: log and return null for retry
+  // Attempt 3: brace-balance salvage for truncated/malformed envelopes
+  const salvaged = salvageTruncatedJson(raw);
+  if (salvaged) {
+    try {
+      const parsed = JSON.parse(salvaged);
+      console.warn('[EXOS] AI response salvaged via brace-balance scanner');
+      return parsed;
+    } catch (_) { /* fall through */ }
+  }
+
+  // Attempt 4: log and return null for retry
   console.error('[EXOS] AI response failed JSON parsing — triggering retry');
   return null;
+}
+
+/**
+ * Recursively strip null, undefined, empty string, empty array, and empty object
+ * leaves from an envelope payload. Models inconsistently emit `"field": null`
+ * placeholders despite prompt instructions; this is the deterministic enforcement.
+ *
+ * Preserves: false, 0, and structural top-level keys of the envelope itself
+ * (so the schema shape stays stable for downstream consumers).
+ */
+const ENVELOPE_TOP_KEYS_PRESERVE = new Set([
+  'schema_version', 'scenario_id', 'scenario_name', 'group', 'group_label',
+  'confidence_level', 'low_confidence_watermark', 'summary', 'export_metadata',
+]);
+
+export function pruneEmptyBranches<T>(input: T, isTopLevel = true): T {
+  if (input === null || input === undefined) return input;
+  if (Array.isArray(input)) {
+    const cleaned = input
+      .map((item) => pruneEmptyBranches(item, false))
+      .filter((item) => {
+        if (item === null || item === undefined || item === '') return false;
+        if (Array.isArray(item) && item.length === 0) return false;
+        if (typeof item === 'object' && item !== null && Object.keys(item).length === 0) return false;
+        return true;
+      });
+    return cleaned as unknown as T;
+  }
+  if (typeof input === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
+      const pruned = pruneEmptyBranches(v, false);
+      const isEmpty =
+        pruned === null ||
+        pruned === undefined ||
+        pruned === '' ||
+        (Array.isArray(pruned) && pruned.length === 0) ||
+        (typeof pruned === 'object' && pruned !== null && !Array.isArray(pruned) && Object.keys(pruned).length === 0);
+      if (isEmpty && !(isTopLevel && ENVELOPE_TOP_KEYS_PRESERVE.has(k))) continue;
+      out[k] = pruned;
+    }
+    return out as T;
+  }
+  return input;
 }
 
 /**
