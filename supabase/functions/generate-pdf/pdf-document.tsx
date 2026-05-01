@@ -272,6 +272,16 @@ const isTableLine = (raw: string): boolean => {
   return false;
 };
 
+// Parse a pipe-delimited markdown row into trimmed cells. Returns null when
+// the line is a separator row (|---|---|) so callers can skip it.
+const parseTableRow = (raw: string): string[] | null => {
+  const t = raw.trim();
+  if (/^\|?[-:\s|]+\|?$/.test(t) && t.includes("-")) return null; // separator
+  // Strip leading/trailing pipes, then split on un-escaped pipes.
+  const inner = t.replace(/^\|/, "").replace(/\|$/, "");
+  return inner.split("|").map(c => stripMarkdown(c.trim()));
+};
+
 // Drop AI guidance prompts ("Supply…", "Provide…", "(e.g., …)") that should
 // never surface as Key Findings or Recommended Actions.
 const INSTRUCTION_PREFIX_RE = /^\s*[-•*]?\s*(supply|provide|specify|enter|input|complete|fill in|add|please|to enable|to allow|to support|to strengthen)\b/i;
