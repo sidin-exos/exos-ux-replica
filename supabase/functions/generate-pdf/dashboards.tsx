@@ -1181,11 +1181,17 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
         ))}
       </View>
 
-      {(data.verdict || data.cashFlowRationale) && (
+      {(data.verdict || data.cashFlowRationale || preferred) && (
         <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
           <Text style={{ fontSize: 9, color: colors.textMuted }}>
             <Text style={{ color: colors.primary, fontFamily: "Inter", fontWeight: 700 }}>CFO recommendation: </Text>
-            {data.verdict || `${preferred.name} delivers the strongest NPV. ${data.cashFlowRationale || ""}`}
+            {(() => {
+              const verdictWord = data.verdict ? `${data.verdict} — ` : "";
+              const advText = npvSpread !== 0
+                ? `${preferred.name} delivers ${formatCurrency(Math.abs(npvSpread), currency)} better present value than ${worst.name} at ${preferred.waccPct ?? "WACC"}%${preferred.waccPct ? "% WACC" : ""}.`
+                : `${preferred.name} is the recommended option.`;
+              return `${verdictWord}${advText}${data.cashFlowRationale ? ` ${data.cashFlowRationale}` : ""}`;
+            })()}
           </Text>
         </View>
       )}
