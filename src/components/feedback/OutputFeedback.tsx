@@ -163,9 +163,8 @@ const OutputFeedback = ({
             </span>
           </div>
 
-          {/* Feedback Form Toggle */}
-          {rating && (
-            <div className="space-y-3">
+          {/* Feedback Form Toggle - always visible */}
+          <div className="space-y-3">
               <button
                 onClick={() => setShowFeedbackForm(!showFeedbackForm)}
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full justify-center"
@@ -204,8 +203,8 @@ const OutputFeedback = ({
                 </motion.div>
               )}
 
-              {/* Generate Report Button - Show when satisfied (7+) */}
-              {rating >= 7 && !showFeedbackForm && (
+              {/* Generate Report Button - always visible */}
+              {!showFeedbackForm && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -223,7 +222,6 @@ const OutputFeedback = ({
                 </motion.div>
               )}
             </div>
-          )}
         </>
       ) : (
         <motion.div
