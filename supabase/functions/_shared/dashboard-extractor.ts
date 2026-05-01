@@ -1192,8 +1192,8 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
             if (!dim || !Number.isFinite(cap) || !Number.isFinite(op)) return null;
             return {
               metric: String(dim),
-              [scenarios[0].name]: Math.max(0, Math.min(100, cap * 20)),
-              [scenarios[1].name]: Math.max(0, Math.min(100, op * 20)),
+              [scenarios[0].id]: Math.max(0, Math.min(100, cap * 20)),
+              [scenarios[1].id]: Math.max(0, Math.min(100, op * 20)),
             };
           })
           .filter((r): r is NonNullable<typeof r> => r !== null);
@@ -1203,7 +1203,7 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
         // S3 capex-vs-opex run rendered a uniform 50/50 radar that gave the
         // CFO no signal — defeating the purpose of the comparison.
         const isFlatTie = radarData.length > 0 && radarData.every((r) =>
-          r[scenarios[0].name] === r[scenarios[1].name]
+          r[scenarios[0].id] === r[scenarios[1].id]
         );
         if (isFlatTie && validCapexOptions.length >= 2) {
           const capexOpt = validCapexOptions.find((o: any) => /capex|buy|purchase/i.test(String(o.option_label))) ?? validCapexOptions[0];
@@ -1217,26 +1217,26 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
           for (const r of radarData) {
             const m = String(r.metric).toLowerCase();
             if (/npv|present.*value|total.*cost|economic/.test(m)) {
-              r[scenarios[0].name] = capexNpv >= opexNpv ? 80 : 40;
-              r[scenarios[1].name] = capexNpv >= opexNpv ? 40 : 80;
+              r[scenarios[0].id] = capexNpv >= opexNpv ? 80 : 40;
+              r[scenarios[1].id] = capexNpv >= opexNpv ? 40 : 80;
             } else if (/cash|liquidity|preservation|working.*capital/.test(m)) {
-              r[scenarios[0].name] = capexUpfront <= opexUpfront ? 70 : 35;
-              r[scenarios[1].name] = capexUpfront <= opexUpfront ? 35 : 70;
+              r[scenarios[0].id] = capexUpfront <= opexUpfront ? 70 : 35;
+              r[scenarios[1].id] = capexUpfront <= opexUpfront ? 35 : 70;
             } else if (/tax|shield|depreciat/.test(m)) {
-              r[scenarios[0].name] = capexTax >= opexTax ? 75 : 40;
-              r[scenarios[1].name] = capexTax >= opexTax ? 40 : 75;
+              r[scenarios[0].id] = capexTax >= opexTax ? 75 : 40;
+              r[scenarios[1].id] = capexTax >= opexTax ? 40 : 75;
             } else if (/flex|upgrade|refresh|agil/.test(m)) {
               // Lease/OPEX wins flexibility by default
-              r[scenarios[0].name] = 45;
-              r[scenarios[1].name] = 70;
+              r[scenarios[0].id] = 45;
+              r[scenarios[1].id] = 70;
             } else if (/risk|obsolesc/.test(m)) {
               // Lease/OPEX typically lower obsolescence risk
-              r[scenarios[0].name] = 50;
-              r[scenarios[1].name] = 65;
+              r[scenarios[0].id] = 50;
+              r[scenarios[1].id] = 65;
             } else {
               // Generic tilt toward whichever option has the better NPV.
-              r[scenarios[0].name] = capexNpv >= opexNpv ? 65 : 45;
-              r[scenarios[1].name] = capexNpv >= opexNpv ? 45 : 65;
+              r[scenarios[0].id] = capexNpv >= opexNpv ? 65 : 45;
+              r[scenarios[1].id] = capexNpv >= opexNpv ? 45 : 65;
             }
           }
         }
@@ -1245,8 +1245,8 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
           .filter((f: any) => f?.dimension && f?.rationale)
           .map((f: any) => ({
             criteria: String(f.dimension),
-            [scenarios[0].name]: String(f.rationale),
-            [scenarios[1].name]: String(f.rationale),
+            [scenarios[0].id]: String(f.rationale),
+            [scenarios[1].id]: String(f.rationale),
           }));
         if (radarData.length > 0) {
           result.scenarioComparison = { scenarios, radarData, summary };
