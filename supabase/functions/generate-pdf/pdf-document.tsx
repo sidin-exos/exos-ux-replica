@@ -637,11 +637,11 @@ const PDFReportDocument = ({
   ];
   const coherenceCount = outputSignals.filter(Boolean).length;
   const outputConfidence = coherenceCount >= 4 ? "High" : coherenceCount >= 2 ? "Medium" : "Low";
-  // Allow an explicit upstream override (HIGH/LOW), otherwise use coherence.
-  const confidenceLevel = evaluationConfidence === "HIGH"
-    ? "High"
-    : evaluationConfidence === "LOW"
-      ? "Low"
+  // Allow an upstream HIGH override only — never let an upstream LOW override
+  // a coherent output. Output coherence is the source of truth otherwise.
+  const confidenceLevel =
+    evaluationConfidence === "HIGH" && coherenceCount >= 3
+      ? "High"
       : outputConfidence;
 
 
