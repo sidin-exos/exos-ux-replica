@@ -220,14 +220,23 @@ function CoverageResults({ result }: { result: CoverageResult }) {
       ? "text-amber-600"
       : "text-destructive";
 
-  // Predicted post-run "rigour" band: each amber section drops ~10 pts,
-  // each missing section drops ~25 pts from a baseline of 90/100.
+  // Predicted post-run "rigour" band. Calibrated against observed runs:
+  //   - "partial" usually means a key number is implied not quantified → −15 pts
+  //   - "missing" means the section isn't covered at all → −30 pts
+  //   - any partial/missing on a financial/cost/savings section caps the
+  //     predicted rigour at 55, because the post-run scorer penalises
+  //     missing numerical evidence the hardest.
   const partialCount = result.sections.filter((s) => s.status === "partial").length;
   const missingCount = result.sections.filter((s) => s.status === "missing").length;
-  const predictedRigour = Math.max(
-    20,
-    Math.min(95, 90 - partialCount * 10 - missingCount * 25),
+  const FINANCIAL_RE = /(cost|financial|savings|spend|price|budget|tco|roi|margin)/i;
+  const financialGap = result.sections.some(
+    (s) => s.status !== "covered" && FINANCIAL_RE.test(s.heading),
   );
+  let predictedRigour = Math.max(
+    20,
+    Math.min(95, 95 - partialCount * 15 - missingCount * 30),
+  );
+  if (financialGap) predictedRigour = Math.min(predictedRigour, 55);
   const predictedBand =
     predictedRigour >= 80
       ? { label: "High (80+)", color: "text-emerald-600" }
