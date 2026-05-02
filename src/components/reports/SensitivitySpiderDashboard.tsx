@@ -35,9 +35,12 @@ const COLOR_TIER_MED = "hsl(35, 28%, 45%)";
 const COLOR_TIER_LOW = "hsl(174, 35%, 38%)";
 
 const formatCurrency = (value: number, currency: string = "$"): string => {
-  if (value >= 1000000) return `${currency}${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `${currency}${(value / 1000).toFixed(0)}K`;
-  return `${currency}${value}`;
+  if (!Number.isFinite(value)) return `${currency}0`;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${currency}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${currency}${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}${currency}${abs.toFixed(0)}`;
 };
 
 const formatValue = (value: number, unit?: string): string => {
