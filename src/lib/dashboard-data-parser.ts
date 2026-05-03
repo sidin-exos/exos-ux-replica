@@ -964,9 +964,21 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
         }))
         .filter((s) => s.name && Number.isFinite(s.baseCase) && Number.isFinite(s.lowCase) && Number.isFinite(s.highCase));
       if (validSens.length > 0) {
+        // Sensitivity base must be a POSITIVE cost magnitude. NPVs in cost-only
+        // scenarios are negative; using them directly inverts best/worst case
+        // (best collapses to 0 via Math.max, worst displays as negative).
+        const opt0: any = validCapexOptions[0] ?? {};
+        const rawBase = Number(
+          opt0.total_capex_nominal ??
+          opt0.total_opex_nominal ??
+          opt0.total_cost_nominal ??
+          opt0.npv ??
+          0,
+        );
+        const baseMagnitude = Math.abs(rawBase) || undefined;
         result.sensitivitySpider = {
           variables: validSens,
-          baseCaseTotal: Number(validCapexOptions[0]?.npv ?? validCapexOptions[0]?.total_capex_nominal ?? 0) || undefined,
+          baseCaseTotal: baseMagnitude,
           currency: payload.financial_model?.currency ?? 'EUR',
         };
       }
