@@ -108,17 +108,20 @@ S21 Negotiation Preparation — SPECIFIC RULES:
 6. counter_arguments[]: REQUIRED. 3–5 anticipated supplier objections with prepared responses. Each item: { "supplier_position": "what the supplier is likely to say", "buyer_response": "how to counter", "evidence": "fact / data point that supports the response" }.
 7. walk_away_plan: REQUIRED. { "trigger_conditions": ["specific thresholds, e.g. price increase >3%, refusal to remove volume floor"], "exit_steps": ["sequenced actions if BATNA activates"], "communication_script": "one short paragraph the buyer can use to walk away professionally" }.
 8. value_creation[]: REQUIRED. 2–4 win-win opportunities to expand the pie. Each item: { "opportunity": "...", "buyer_benefit": "...", "supplier_benefit": "..." }.
-9. risk_register[]: REQUIRED. 3–5 negotiation risks. Each item: { "risk": "...", "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": "..." }.
-10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data.
-11. ALL EIGHT WIZARD DELIVERABLES ARE MANDATORY: (1) leverage_analysis with non-empty buyer_leverage_factors[], supplier_leverage_factors[] and a non-template power_balance value; (2) batna with batna_strength_pct AND batna_improvement_actions[] (>=2); (3) risk_register[] (>=3); (4) opening_position + negotiation_sequence[] (>=4 steps); (5) counter_arguments[] (>=3); (6) walk_away_plan with all three sub-fields populated; (7) value_creation[] (>=2); (8) financial_outcome_range with numeric optimistic / realistic / pessimistic. An empty array or a literal "Conservative | Aggressive | Hybrid" placeholder is treated as a report failure.
-12. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.
-13. THIN-DATA FALLBACK (CRITICAL — applies when supplier financial information is partial, opaque, or one-sided, e.g. emergency negotiations or first-time engagements):
+9. strategy_playbook: REQUIRED. { "situation_read": "1–2 sentence diagnosis of the buyer-supplier dynamic from leverage_analysis + BATNA + ZOPA", "recommended_approach": "COLLABORATIVE | COMPETITIVE | ACCOMMODATIVE | COMPROMISING — pick the one that fits the situation_read", "approach_rationale": "why this approach beats the other three given the user's specific inputs", "key_moves": ["3–5 concrete moves the buyer should execute consistent with the chosen approach — must reference the user's actual numbers, suppliers, terms"] }. Never emit "Conservative | Aggressive | Hybrid" placeholders.
+10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data. Emit numeric values when at least buyer_target and one of (supplier_likely_floor | buyer_walk_away) are known; otherwise leave as null and add to data_gaps[].
+11. NUMERIC EXTRACTION (HARD RULE): when the user input contains explicit currency figures for buyer target, supplier proposal, supplier floor, BATNA value, or walk-away point — you MUST populate batna.buyer_batna_value, zopa.buyer_target, zopa.supplier_likely_floor and zopa.buyer_walk_away as JSON NUMBERS (not strings, not null). Do not silently drop a number the user provided. Currency goes in scenario_specific.currency (or batna_currency / zopa_currency if it differs).
+12. ALL SEVEN WIZARD DELIVERABLES ARE MANDATORY: (1) leverage_analysis with non-empty buyer_leverage_factors[], supplier_leverage_factors[] and a non-template power_balance value; (2) batna with batna_strength_pct AND batna_improvement_actions[] (>=2); (3) strategy_playbook with all four sub-fields populated; (4) opening_position + negotiation_sequence[] (>=4 steps); (5) counter_arguments[] (>=3); (6) walk_away_plan with all three sub-fields populated; (7) value_creation[] (>=2). financial_outcome_range is encouraged but optional when input lacks numeric anchors. An empty array or a literal "Conservative | Aggressive | Hybrid" placeholder is treated as a report failure.
+13. LEVERAGE FACTOR HYGIENE: never emit literal strings "Not provided", "N/A", "None", "TBD" or empty placeholders inside buyer_leverage_factors[] or supplier_leverage_factors[]. If a side has fewer real factors, just emit a shorter array. Asymmetric arrays (e.g. 3 buyer / 1 supplier) are EXPECTED and correct.
+14. KEY FINDINGS vs RECOMMENDATIONS: Findings = observations about the current situation (what the data shows). Recommendations = forward-looking actions (what to do). NEVER copy the same sentence into both arrays. If a recommendation belongs in findings, rewrite the finding as a passive observation.
+15. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.
+16. THIN-DATA FALLBACK (CRITICAL — applies when supplier financial information is partial, opaque, or one-sided, e.g. emergency negotiations or first-time engagements):
     a. DO NOT fabricate supplier_likely_floor, supplier BATNA, or financial_outcome_range numbers. Set the unknown numeric fields to null and explicitly flag the gap in data_gaps[] with what would unlock a sharper estimate (e.g. "Last 2 years of supplier audited financials", "Cost-breakdown per shift / per kg of input").
     b. PIVOT the strategy toward RELATIONSHIP-PRESERVING TRADE-OFFS: in negotiation_tactics[] and value_creation[], add at least 2 trade-off levers that do NOT require supplier financial transparency — e.g. payment-term extension in exchange for price hold, volume commitment in exchange for service-level uplift, multi-year lock-in in exchange for exception clauses, joint-forecasting in exchange for capacity priority, scope flexibility in exchange for fee structure changes.
     c. counter_arguments[] MUST include at least ONE entry framed as a non-financial concession the buyer can offer (e.g. faster payment, exclusivity window, joint marketing) when the supplier resists price discussion.
     d. walk_away_plan.trigger_conditions[] MUST be expressed as relationship and operational thresholds (delivery SLA, response time, single-sourcing risk) when price floors are unknown — not only price percentages.
     e. Set batna_strength_pct conservatively (default 30–50) and explain the reduction in batna_improvement_actions[] when the supplier landscape is unmapped.
-14. JSON STRUCTURE — CRITICAL: scenario_specific MUST be a single JSON OBJECT (open with { and close with }), never an array. Each sub-key (batna, zopa, leverage_analysis, walk_away_plan, financial_outcome_range) is a single OBJECT closed with }. Only counter_arguments, value_creation, risk_register, negotiation_tactics, negotiation_sequence, batna_improvement_actions, buyer_leverage_factors, supplier_leverage_factors, trigger_conditions and exit_steps are ARRAYS closed with ]. Match every opening { with } and every opening [ with ] — mismatched closers (e.g. closing scenario_specific or payload with ]) will fail validation.`,
+17. JSON STRUCTURE — CRITICAL: scenario_specific MUST be a single JSON OBJECT (open with { and close with }), never an array. Each sub-key (batna, zopa, leverage_analysis, walk_away_plan, strategy_playbook, financial_outcome_range) is a single OBJECT closed with }. Only counter_arguments, value_creation, negotiation_tactics, negotiation_sequence, batna_improvement_actions, buyer_leverage_factors, supplier_leverage_factors, key_moves, trigger_conditions and exit_steps are ARRAYS closed with ]. Match every opening { with } and every opening [ with ] — mismatched closers (e.g. closing scenario_specific or payload with ]) will fail validation.`,
 };
 
 /** Return group instruction + only the active scenario's addendum (token-efficient). */
@@ -643,9 +646,12 @@ Populate scenario_specific based on the scenario, using the structures below ver
     "value_creation": [
       { "opportunity": null, "buyer_benefit": null, "supplier_benefit": null }
     ],
-    "risk_register": [
-      { "risk": null, "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": null }
-    ],
+    "strategy_playbook": {
+      "situation_read": null,
+      "recommended_approach": "COLLABORATIVE | COMPETITIVE | ACCOMMODATIVE | COMPROMISING",
+      "approach_rationale": null,
+      "key_moves": []
+    },
     "leverage_analysis": {
       "buyer_leverage_factors": [],
       "supplier_leverage_factors": [],
@@ -1591,14 +1597,28 @@ export function synthesizeMissingContent<T extends ExosOutputParsed | null | und
       };
     }
 
-    // 7) risk_register — guarantee 3 negotiation risks if empty
-    const rr: any[] = Array.isArray(ss.risk_register) ? ss.risk_register : [];
-    if (rr.filter(r => r && r.risk).length === 0) {
-      ss.risk_register = [
-        { risk: 'Supplier walks away after a hard anchor and forces an emergency switch.', likelihood: 'MEDIUM', impact: 'HIGH', mitigation: 'Pre-qualify the alternative supplier and validate lead time before opening price negotiation.' },
-        { risk: 'Internal stakeholders escalate to accept supplier terms under operational pressure.', likelihood: 'MEDIUM', impact: 'MEDIUM', mitigation: 'Pre-align the walk-away threshold and the BATNA with Finance, Legal and Operations before the first session.' },
-        { risk: 'Auto-renewal or volume-floor clauses survive the redline and erode the negotiated savings.', likelihood: 'MEDIUM', impact: 'MEDIUM', mitigation: 'Treat removal of auto-renewal and any volume floor as a MUST-HAVE redline; do not trade them for price.' },
-      ];
+    // 7) strategy_playbook — backfill from leverage + tactics when missing
+    const sp = (ss.strategy_playbook ?? {}) as Record<string, any>;
+    const hasSp = sp.situation_read || sp.approach_rationale || (Array.isArray(sp.key_moves) && sp.key_moves.length > 0);
+    if (!hasSp) {
+      const pb = String(lev.power_balance ?? '').toUpperCase();
+      const approach = pb === 'BUYER_ADVANTAGE' ? 'COMPETITIVE' : pb === 'SUPPLIER_ADVANTAGE' ? 'ACCOMMODATIVE' : 'COLLABORATIVE';
+      const tactics: any[] = Array.isArray(ss.negotiation_tactics) ? ss.negotiation_tactics : [];
+      const moves = tactics.slice(0, 5).map((t: any) => t?.title ? `${t.title}: ${t.description ?? ''}`.trim().replace(/:\s*$/, '') : String(t?.description ?? '')).filter(Boolean);
+      ss.strategy_playbook = {
+        situation_read: `Power balance reads as ${pb.replace(/_/g, ' ') || 'BALANCED'} with BATNA strength ${Number.isFinite(batnaStrength) ? batnaStrength + '%' : 'unquantified'}; ${buyerFactors.length} buyer leverage factor(s) versus ${supplierFactors.length} supplier factor(s).`,
+        recommended_approach: approach,
+        approach_rationale: approach === 'COMPETITIVE'
+          ? 'Buyer holds the stronger hand; press for price and terms concessions while keeping the relationship professional.'
+          : approach === 'ACCOMMODATIVE'
+          ? 'Supplier leverage is high; protect operational continuity and trade non-price concessions to preserve the relationship.'
+          : 'Power is balanced; expand the pie via joint value creation rather than zero-sum price moves.',
+        key_moves: moves.length > 0 ? moves : [
+          'Open with the buyer target anchored on a credible BATNA reference.',
+          'Use multi-issue trade-offs (term length, payment terms, volume) before discounting on unit price.',
+          'Hold the walk-away threshold internally and rehearse the exit script with the cross-functional team.',
+        ],
+      };
     }
 
     env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
@@ -2022,22 +2042,51 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       return sanitiseAscii(coerceToString(v)).replace(/\|/g, '\\|');
     };
 
+    // Helper: drop placeholder leverage strings emitted by some models
+    const isPlaceholder = (v: unknown): boolean => {
+      const s = String(v ?? '').trim().toLowerCase();
+      return s === '' || s === '—' || s === '-' || s === 'n/a' || s === 'na' || s === 'none' || s === 'tbd' || s === 'not provided' || s === 'not applicable';
+    };
+
     // 1. Power Balance Analysis
     const lev = (ss.leverage_analysis ?? {}) as Record<string, any>;
     const pb = String(lev.power_balance ?? '').toUpperCase();
     if (pb && !pb.includes('|')) {
       parts.push('### Power Balance Analysis');
       parts.push(`- **Verdict:** ${pb.replace(/_/g, ' ')}`);
-      const buyerFactors: any[] = Array.isArray(lev.buyer_leverage_factors) ? lev.buyer_leverage_factors : [];
-      const supplierFactors: any[] = Array.isArray(lev.supplier_leverage_factors) ? lev.supplier_leverage_factors : [];
+      const buyerFactors: any[] = (Array.isArray(lev.buyer_leverage_factors) ? lev.buyer_leverage_factors : []).filter((x: unknown) => !isPlaceholder(x));
+      const supplierFactors: any[] = (Array.isArray(lev.supplier_leverage_factors) ? lev.supplier_leverage_factors : []).filter((x: unknown) => !isPlaceholder(x));
       if (buyerFactors.length > 0 || supplierFactors.length > 0) {
         const rows = Math.max(buyerFactors.length, supplierFactors.length);
         parts.push('');
         parts.push('| Buyer leverage | Supplier leverage |');
         parts.push('|---|---|');
         for (let i = 0; i < rows; i++) {
-          parts.push(`| ${fmtCell(buyerFactors[i] ?? '')} | ${fmtCell(supplierFactors[i] ?? '')} |`);
+          // When one column is exhausted, leave the cell blank instead of "—"
+          const b = buyerFactors[i] != null ? fmtCell(buyerFactors[i]) : '';
+          const sp = supplierFactors[i] != null ? fmtCell(supplierFactors[i]) : '';
+          parts.push(`| ${b || ' '} | ${sp || ' '} |`);
         }
+      }
+      parts.push('');
+    }
+
+    // 1b. Strategy Playbook (NEW deliverable)
+    const sp = (ss.strategy_playbook ?? {}) as Record<string, any>;
+    const spMoves: any[] = Array.isArray(sp.key_moves) ? sp.key_moves.filter(Boolean) : [];
+    if (sp.situation_read || sp.recommended_approach || sp.approach_rationale || spMoves.length > 0) {
+      parts.push('### Negotiation Strategy Playbook');
+      if (sp.situation_read) parts.push(`- **Situation read:** ${fmtCell(sp.situation_read)}`);
+      const ra = String(sp.recommended_approach ?? '').toUpperCase();
+      if (ra && !ra.includes('|')) parts.push(`- **Recommended approach:** ${ra}`);
+      if (sp.approach_rationale) parts.push(`- **Why this approach:** ${fmtCell(sp.approach_rationale)}`);
+      if (spMoves.length > 0) {
+        parts.push('');
+        parts.push('**Key moves:**');
+        spMoves.slice(0, 6).forEach((m: unknown) => {
+          const t = sanitiseAscii(coerceToString(m).trim());
+          if (t) parts.push(`- ${t}`);
+        });
       }
       parts.push('');
     }
@@ -2127,9 +2176,10 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       parts.push('');
     }
 
-    // 6. Financial Outcome Range
+    // 6. Financial Outcome Range — only render when at least one finite numeric is present
     const fr = (ss.financial_outcome_range ?? null) as Record<string, any> | null;
-    if (fr && (fr.optimistic != null || fr.realistic != null || fr.pessimistic != null)) {
+    const frNums = fr ? [fr.optimistic, fr.realistic, fr.pessimistic].map((v: unknown) => Number(v)).filter((n: number) => Number.isFinite(n)) : [];
+    if (fr && frNums.length > 0) {
       parts.push('### Financial Outcome Range');
       parts.push('| Scenario | Outcome |');
       parts.push('|---|---|');
@@ -2139,20 +2189,7 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       parts.push('');
     }
 
-    // 7. Negotiation Risk Register
-    const rr: any[] = Array.isArray(ss.risk_register) ? ss.risk_register : [];
-    const validRr = rr.filter(r => r && r.risk);
-    if (validRr.length > 0) {
-      parts.push('### Negotiation Risk Register');
-      parts.push('| Risk | Likelihood | Impact | Mitigation |');
-      parts.push('|---|---|---|---|');
-      validRr.slice(0, 8).forEach(r => {
-        parts.push(`| ${fmtCell(r.risk)} | ${fmtCell(r.likelihood)} | ${fmtCell(r.impact)} | ${fmtCell(r.mitigation)} |`);
-      });
-      parts.push('');
-    }
-
-    // 8. Negotiation Scenario Comparison
+    // 7. Negotiation Scenario Comparison
     const negSc: any[] = Array.isArray(ss.negotiation_scenarios) ? ss.negotiation_scenarios : [];
     const validNegSc = negSc.filter(n => n && n.name && n.expected_savings_pct != null);
     if (validNegSc.length > 0) {
