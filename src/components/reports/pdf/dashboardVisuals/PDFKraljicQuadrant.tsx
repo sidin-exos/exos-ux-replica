@@ -83,9 +83,9 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
         <View style={{ flex: 1, paddingRight: 8 }}>
           {/* Y-axis */}
           <View style={{ flexDirection: "row" }}>
-            <View style={{ width: 18, justifyContent: "space-between", paddingVertical: 4 }}>
+            <View style={{ width: 22, justifyContent: "space-between", alignItems: "center", paddingVertical: 4 }}>
               <Text style={{ fontSize: 7, color: colors.textMuted }}>High</Text>
-              <Text style={{ fontSize: 7, color: colors.textMuted, transform: "rotate(-90deg)" }}>Profit Impact</Text>
+              <Text style={{ fontSize: 6, color: colors.textMuted, textTransform: "uppercase" }}>Profit</Text>
               <Text style={{ fontSize: 7, color: colors.textMuted }}>Low</Text>
             </View>
 
