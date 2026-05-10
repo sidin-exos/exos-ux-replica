@@ -796,6 +796,7 @@ const PDFReportDocument = ({
           dateStr={formattedDate}
           reportHash={reportHash}
           c={c}
+          mode={pdfTheme}
         />
         {/* Push content below the 150pt band */}
         <View style={{ height: 110 }} />
