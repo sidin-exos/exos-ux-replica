@@ -25,6 +25,12 @@ import { PDFSOWAnalysis } from "./dashboardVisuals/PDFSOWAnalysis";
 import { PDFNegotiationPrep } from "./dashboardVisuals/PDFNegotiationPrep";
 import { PDFDataQuality } from "./dashboardVisuals/PDFDataQuality";
 import { PDFRfpPackage } from "./dashboardVisuals/PDFRfpPackage";
+import { PDFShouldCostGap } from "./dashboardVisuals/PDFShouldCostGap";
+import { PDFSavingsRealizationFunnel } from "./dashboardVisuals/PDFSavingsRealizationFunnel";
+import { PDFWorkingCapitalDpo } from "./dashboardVisuals/PDFWorkingCapitalDpo";
+import { PDFSupplierConcentrationMap } from "./dashboardVisuals/PDFSupplierConcentrationMap";
+import { PDFNPVWaterfall } from "./dashboardVisuals/PDFNPVWaterfall";
+import { PDFIFRS16Impact } from "./dashboardVisuals/PDFIFRS16Impact";
 
 // ── Enterprise print colors ──
 
