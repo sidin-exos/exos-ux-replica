@@ -1566,22 +1566,34 @@ export function synthesizeMissingContent<T extends ExosOutputParsed | null | und
     }
     ss.walk_away_plan = wap;
 
-    // 5) value_creation — backfill 2 standard win-wins if empty
-    const vc: any[] = Array.isArray(ss.value_creation) ? ss.value_creation : [];
-    if (vc.filter(v => v && (v.opportunity || v.buyer_benefit)).length === 0) {
-      ss.value_creation = [
-        {
-          opportunity: 'Extend contract length in exchange for a price lock and KPI-linked rebate.',
-          buyer_benefit: 'Predictable cost base and protection from market price increases.',
-          supplier_benefit: 'Longer guaranteed revenue stream supporting capacity planning and investment.',
-        },
-        {
-          opportunity: 'Joint operational improvement programme (e.g. demand forecasting, packaging, logistics).',
-          buyer_benefit: 'Lower total cost of ownership beyond unit price.',
-          supplier_benefit: 'Reduced cost-to-serve and a stronger reference case for similar accounts.',
-        },
-      ];
+    // 5) value_creation — ensure at least 3 win-wins (top up rather than replace)
+    const vcExisting: any[] = Array.isArray(ss.value_creation)
+      ? ss.value_creation.filter((v: any) => v && (v.opportunity || v.buyer_benefit))
+      : [];
+    const vcDefaults = [
+      {
+        opportunity: 'Extend contract length in exchange for a price lock and KPI-linked rebate.',
+        buyer_benefit: 'Predictable cost base and protection from market price increases.',
+        supplier_benefit: 'Longer guaranteed revenue stream supporting capacity planning and investment.',
+      },
+      {
+        opportunity: 'Joint operational improvement programme (e.g. demand forecasting, packaging, logistics).',
+        buyer_benefit: 'Lower total cost of ownership beyond unit price.',
+        supplier_benefit: 'Reduced cost-to-serve and a stronger reference case for similar accounts.',
+      },
+      {
+        opportunity: 'Accelerated payment terms in exchange for a price hold or volume rebate.',
+        buyer_benefit: 'Captures early-payment discount without compromising relationship.',
+        supplier_benefit: 'Improved working capital and reduced financing cost.',
+      },
+    ];
+    const merged = [...vcExisting];
+    for (const d of vcDefaults) {
+      if (merged.length >= 3) break;
+      const dupe = merged.some(m => String(m.opportunity ?? '').toLowerCase().slice(0, 30) === d.opportunity.toLowerCase().slice(0, 30));
+      if (!dupe) merged.push(d);
     }
+    ss.value_creation = merged;
 
     // 6) financial_outcome_range — derive from ZOPA when numbers are present
     const fr = (ss.financial_outcome_range ?? {}) as Record<string, any>;
