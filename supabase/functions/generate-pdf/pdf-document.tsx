@@ -844,7 +844,7 @@ const PDFReportDocument = ({
           )}
         </View>
 
-        <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+        <View style={s.footer} fixed><Text style={s.footerText} render={() => `Confidential — ${orgName}`} /><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} /></View>
         <View style={s.bottomStripe}>
           <View style={{ ...s.stripeSegment, backgroundColor: c.stripe1 }} />
           <View style={{ ...s.stripeSegment, backgroundColor: c.stripe2 }} />
@@ -888,7 +888,7 @@ const PDFReportDocument = ({
                 {renderDashboard(dashboardType, parsedData, pdfTheme)}
               </View>
             ))}
-            <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+            <View style={s.footer} fixed><Text style={s.footerText} render={() => `Confidential — ${orgName}`} /><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} /></View>
           </Page>
         ));
       })()}
@@ -983,7 +983,7 @@ const PDFReportDocument = ({
             );
           });
         })()}
-        <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+        <View style={s.footer} fixed><Text style={s.footerText} render={() => `Confidential — ${orgName}`} /><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} /></View>
       </Page>
 
       {/* Recommendations & Risks — only render when overflow recommendations exist OR a Risk Register has content */}
@@ -1070,7 +1070,7 @@ const PDFReportDocument = ({
               );
             })()}
 
-            <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+            <View style={s.footer} fixed><Text style={s.footerText} render={() => `Confidential — ${orgName}`} /><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} /></View>
           </Page>
         );
       })()}
@@ -1104,7 +1104,7 @@ const PDFReportDocument = ({
             <View style={s.statsCell}><Text style={s.statsLabel}>Timestamp</Text><Text style={s.statsValue}>{new Date(timestamp).toISOString()}</Text></View>
             <View style={{ ...s.statsCell, ...s.statsCellLast }}><Text style={s.statsLabel}>Pipeline</Text><Text style={s.statsValue}>EXOS-SENTINEL</Text></View>
           </View>
-          <View style={s.footer} fixed><Text style={s.footerText}>Confidential — {orgName}</Text><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text></View>
+          <View style={s.footer} fixed><Text style={s.footerText} render={() => `Confidential — ${orgName}`} /><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} /></View>
         </Page>
       )}
     </Document>
