@@ -899,12 +899,16 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
       <View style={styles.statsRow}>
         <View style={styles.statItem}><Text style={styles.statLabel}>Avg Score</Text><Text style={[styles.statValue, { color: colors.success }]}>{avgScore}</Text></View>
         <View style={styles.statItem}><Text style={styles.statLabel}>Above Target</Text><Text style={[styles.statValue, { color: colors.primary }]}>{suppliers.filter(s => s.score >= 75).length}/{suppliers.length}</Text></View>
-        <View style={styles.statItem}><Text style={styles.statLabel}>Total Spend</Text><Text style={styles.statValue}>{suppliers.length > 0 ? suppliers[0].spend.replace(/[\d.]+/, "") : "$"}—</Text></View>
+        {(() => {
+          const sym = suppliers.length > 0 ? (String(suppliers[0].spend).match(/^[^\d.\s,]+/)?.[0] || "$") : "$";
+          const total = suppliers.reduce((sum, s) => sum + parseSpend(String(s.spend)), 0);
+          return <View style={styles.statItem}><Text style={styles.statLabel}>Total Spend</Text><Text style={styles.statValue}>{formatSpend(total, sym)}</Text></View>;
+        })()}
       </View>
       <View style={styles.legend}>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>≥85 Excellent</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.warning }]} /><Text style={styles.legendText}>≥70 Good</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>&lt;70 At Risk</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>85+ Excellent</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.warning }]} /><Text style={styles.legendText}>70-84 Good</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>Below 70 At Risk</Text></View>
       </View>
     </View>
   );
