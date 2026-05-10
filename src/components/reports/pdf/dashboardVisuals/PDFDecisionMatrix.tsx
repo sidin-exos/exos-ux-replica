@@ -78,6 +78,21 @@ export const PDFDecisionMatrix = ({ data, themeMode }: { data: DecisionMatrixDat
         </View>
       </View>
 
+      {/* Standings */}
+      <View style={{ marginTop: 8, borderWidth: 1, borderColor: colors.border }}>
+        <View style={{ paddingHorizontal: 6, paddingVertical: 3, backgroundColor: colors.surfaceLight, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <Text style={{ fontSize: 8, fontWeight: 700, color: colors.textMuted, textTransform: "uppercase" }}>Standings</Text>
+        </View>
+        {[...matrixOptions].sort((a, b) => b.weighted - a.weighted).map((opt, i) => (
+          <View key={i} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 6, paddingVertical: 4, borderBottomWidth: i < matrixOptions.length - 1 ? 1 : 0, borderBottomColor: colors.border }}>
+            <Text style={{ width: 18, fontSize: 10, fontWeight: 700, color: i === 0 ? colors.primary : colors.textMuted }}>#{i + 1}</Text>
+            <View style={{ width: 7, height: 7, backgroundColor: opt.color, marginRight: 6 }} />
+            <Text style={{ flex: 1, fontSize: 10, color: colors.text, fontWeight: i === 0 ? 600 : 400 }}>{opt.name}</Text>
+            <Text style={{ fontSize: 10, fontWeight: 700, color: i === 0 ? colors.primary : colors.text }}>{opt.weighted}</Text>
+          </View>
+        ))}
+      </View>
+
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
