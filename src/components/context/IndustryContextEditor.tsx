@@ -75,6 +75,9 @@ function TierBadge({ tier }: { tier?: string }) {
     T1: "bg-destructive/15 text-destructive",
     T2: "bg-warning/15 text-warning",
     T3: "bg-info/15 text-info",
+    HIGH: "bg-destructive/15 text-destructive",
+    MODERATE: "bg-warning/15 text-warning",
+    LOW: "bg-info/15 text-info",
   };
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${colors[tier] || colors.T3}`}>
