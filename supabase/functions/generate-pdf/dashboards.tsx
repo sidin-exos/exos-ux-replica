@@ -860,7 +860,7 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const getScColor = (score: number): string => { if (score >= 85) return colors.success; if (score >= 70) return colors.warning; return colors.destructive; };
-  const getTrendSymbol = (trend: string): string => { switch (trend) { case "up": return "↑"; case "down": return "↓"; default: return "→"; } };
+  const getTrendSymbol = (trend: string): string => { switch (trend) { case "up": return "▲"; case "down": return "▼"; default: return "—"; } };
   const getTrendColor = (trend: string): string => { switch (trend) { case "up": return colors.success; case "down": return colors.destructive; default: return colors.textMuted; } };
   const parseSpend = (s: string): number => {
     if (!s) return 0;
@@ -991,7 +991,7 @@ export const PDFSOWAnalysis = ({ data, themeMode }: { data: SOWAnalysisData; the
         <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.destructive, fontFamily: "Inter", fontWeight: 700 }}>Action Required: </Text>{recommendations[0]}</Text>
       </View>
       <View style={styles.legend}>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>≥70 Strong</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>70+ Strong</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.warning }]} /><Text style={styles.legendText}>60-69 Adequate</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>&lt;60 Weak</Text></View>
       </View>
