@@ -725,7 +725,7 @@ const PDFReportDocument = ({
         <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
           <Text style={{ fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary }}>EXOS · Confidential</Text>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Prepared for EXOS · {formattedDate}</Text>
+            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>{formattedDate}</Text>
           </View>
         </View>
         <View style={s.coverLeftStripe} />
@@ -733,7 +733,7 @@ const PDFReportDocument = ({
         <Text style={s.coverTitle}>{reportTitle}</Text>
         <View style={s.coverDivider} />
 
-        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Key Findings</Text><View style={s.sectionTitleLine} /></View>
+        <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text><View style={s.sectionTitleLine} /></View>
         <View style={s.findingCardsRow}>
           {findings.slice(0, 3).map((point, i) => {
             const { title, body } = parseFindingTitle(point);
