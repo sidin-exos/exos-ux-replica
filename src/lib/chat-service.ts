@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { scenarios } from '@/lib/scenarios';
+import { scenarios, filterVisibleScenarios } from '@/lib/scenarios';
 
 export type ChatRole = 'user' | 'assistant' | 'system';
 
