@@ -275,6 +275,46 @@ function applySummaryStyles(ws: Worksheet, range: SheetRange) {
   }
 }
 
+// ─── Cost Breakdown helpers (mirrors splitCostComponents) ───────────
+
+function formatMoney(value: number, currency = "$"): string {
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${currency}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${currency}${(abs / 1_000).toFixed(0)}K`;
+  const r = Math.round(abs * 100) / 100;
+  return `${sign}${currency}${Number.isInteger(r) ? String(r) : r.toFixed(2)}`;
+}
+
+interface SplitCost {
+  costs: { name: string; value: number }[];
+  reductions: { name: string; value: number }[];
+  gross: number;
+  totalReductions: number;
+  net: number;
+  reductionPercent: number;
+  currency: string;
+}
+
+function splitCostBreakdown(
+  data: { components: { name: string; value: number; type: "cost" | "reduction" }[]; currency?: string },
+): SplitCost {
+  const currency = data.currency || "$";
+  const costs = data.components
+    .filter((c) => c.type === "cost")
+    .map((c) => ({ name: c.name, value: c.value }))
+    .sort((a, b) => b.value - a.value);
+  const reductions = data.components
+    .filter((c) => c.type === "reduction")
+    .map((c) => ({ name: c.name, value: Math.abs(c.value) }))
+    .sort((a, b) => b.value - a.value);
+  const gross = costs.reduce((s, c) => s + c.value, 0);
+  const totalReductions = reductions.reduce((s, c) => s + c.value, 0);
+  const net = gross - totalReductions;
+  const reductionPercent = gross > 0 ? Math.round((totalReductions / gross) * 100) : 0;
+  return { costs, reductions, gross, totalReductions, net, reductionPercent, currency };
+}
+
 // ─── dashboard → rows converters ──────────────────────────────────────
 
 function dashboardToSheets(data: DashboardData): { name: string; rows: Record<string, unknown>[] }[] {
