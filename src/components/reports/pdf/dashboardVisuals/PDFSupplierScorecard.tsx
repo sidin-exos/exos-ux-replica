@@ -94,33 +94,40 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
         ))}
       </View>
 
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Avg Score</Text>
-          <Text style={[styles.statValue, { color: colors.success }]}>{avgScore}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Above Target</Text>
-          <Text style={[styles.statValue, { color: colors.primary }]}>{suppliers.filter(s => s.score >= 75).length}/{suppliers.length}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Total Spend</Text>
-          <Text style={styles.statValue}>{suppliers.length > 0 ? suppliers[0].spend.replace(/[\d.]+/, '') : "$"}—</Text>
-        </View>
-      </View>
+      {(() => {
+        const parsed = suppliers.map(s => parseSpend(s.spend));
+        const totalValue = parsed.reduce((sum, p) => sum + p.value, 0);
+        const currency = parsed.find(p => p.currency)?.currency || "$";
+        return (
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Avg Score</Text>
+              <Text style={[styles.statValue, { color: colors.success }]}>{avgScore}</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Above Target</Text>
+              <Text style={[styles.statValue, { color: colors.primary }]}>{suppliers.filter(s => s.score >= 75).length}/{suppliers.length}</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Total Spend</Text>
+              <Text style={styles.statValue}>{totalValue > 0 ? formatSpend(totalValue, currency) : "—"}</Text>
+            </View>
+          </View>
+        );
+      })()}
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-          <Text style={styles.legendText}>≥85 Excellent</Text>
+          <Text style={styles.legendText}>85+ Excellent</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
-          <Text style={styles.legendText}>≥70 Good</Text>
+          <Text style={styles.legendText}>70-84 Good</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.destructive }]} />
-          <Text style={styles.legendText}>&lt;70 At Risk</Text>
+          <Text style={styles.legendText}>Below 70 At Risk</Text>
         </View>
       </View>
     </View>
