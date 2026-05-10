@@ -82,7 +82,7 @@ const DecisionMatrixDashboard = ({
 
   return (
     <Card className="card-elevated h-full">
-      <CardHeader className="pb-4 border-b border-border/40">
+      <CardHeader className="pb-4 border-b border-border/40 bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div
