@@ -70,7 +70,7 @@ serve(async (req) => {
     const formData = (optionalRecord(body.formData, "formData", 100) ?? {}) as Record<string, string>;
     const structuredData = typeof body.structuredData === "string" ? body.structuredData.slice(0, 500000) : undefined;
     const selectedDashboards = body.selectedDashboards !== undefined
-      ? requireArray(body.selectedDashboards, "selectedDashboards", { maxLength: 20 }) as string[]
+      ? requireArray(body.selectedDashboards, "selectedDashboards", { maxLength: 25 }) as string[]
       : undefined;
     const pdfTheme = body.pdfTheme !== undefined
       ? requireStringEnum(body.pdfTheme, "pdfTheme", ["light", "dark"] as const)
