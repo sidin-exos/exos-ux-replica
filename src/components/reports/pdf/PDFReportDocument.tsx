@@ -162,28 +162,13 @@ function parseNextStep(text: string): { title: string; description: string } {
   return { title: stripMarkdown(text), description: "" };
 }
 
-function summarizeParameter(value: string, maxWords = 30): string {
-  const words = value.trim().split(/\s+/);
-  if (words.length <= maxWords) return value.trim();
-  const fragments = value.split(/[.•\n]+/).map(s => s.trim()).filter(Boolean);
-  const scored = fragments.map(f => {
-    let score = 0;
-    if (/[\d€$£¥%]/.test(f)) score += 3;
-    if (/[A-Z]{2,}/.test(f)) score += 2;
-    if (/±|mm|kg|g\b|alloy|CNC|SOC|GDPR|ISO|SaaS|B2B/.test(f)) score += 2;
-    score += (f.match(/[A-Z][a-z]+/g) || []).length;
-    return { text: f, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  const result: string[] = [];
-  let wordCount = 0;
-  for (const { text } of scored) {
-    const tw = text.split(/\s+/).length;
-    if (wordCount + tw > maxWords && result.length > 0) break;
-    result.push(text);
-    wordCount += tw;
-  }
-  return result.join(", ");
+function summarizeParameter(value: string, maxWords = 60): string {
+  // B5 fix: preserve original phrasing/order; only truncate when over budget.
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const words = trimmed.split(/\s+/);
+  if (words.length <= maxWords) return trimmed;
+  return words.slice(0, maxWords).join(" ") + "…";
 }
 
 // ── Build branded styles ──
@@ -1076,9 +1061,9 @@ const BrandedFooter = ({ dateStr, orgName, c }: { dateStr: string; orgName: stri
   const s = buildStyles(c);
   return (
     <View style={s.footer} fixed>
-      <Text style={s.footerText}>Confidential — {orgName}</Text>
+      <Text style={s.footerText} render={() => `Confidential — ${orgName}`} />
       <Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
-      <Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text>
+      <Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} />
     </View>
   );
 };

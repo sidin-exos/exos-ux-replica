@@ -107,11 +107,11 @@ S21 Negotiation Preparation — SPECIFIC RULES:
 5. negotiation_sequence[]: REQUIRED. Provide exactly 3–5 ordered tactical moves covering opening / anchoring / value exchange / concession / closing. Each item: { "step": "Opening | Anchor | Value Exchange | Concession | Walk-away Trigger | Close", "detail": "specific action tied to the user's case" }.
 6. counter_arguments[]: REQUIRED. 3–5 anticipated supplier objections with prepared responses. Each item: { "supplier_position": "what the supplier is likely to say", "buyer_response": "how to counter", "evidence": "fact / data point that supports the response" }.
 7. walk_away_plan: REQUIRED. { "trigger_conditions": ["specific thresholds, e.g. price increase >3%, refusal to remove volume floor"], "exit_steps": ["sequenced actions if BATNA activates"], "communication_script": "one short paragraph the buyer can use to walk away professionally" }.
-8. value_creation[]: REQUIRED. 2–4 win-win opportunities to expand the pie. Each item: { "opportunity": "...", "buyer_benefit": "...", "supplier_benefit": "..." }.
+8. value_creation[]: REQUIRED. 3–4 win-win opportunities to expand the pie. Each item: { "opportunity": "...", "buyer_benefit": "...", "supplier_benefit": "..." }. At least one entry MUST be a non-financial trade-off (payment terms, exclusivity, joint forecasting, scope flexibility, multi-year lock-in, capacity priority).
 9. strategy_playbook: REQUIRED. { "situation_read": "1–2 sentence diagnosis of the buyer-supplier dynamic from leverage_analysis + BATNA + ZOPA", "recommended_approach": "COLLABORATIVE | COMPETITIVE | ACCOMMODATIVE | COMPROMISING — pick the one that fits the situation_read", "approach_rationale": "why this approach beats the other three given the user's specific inputs", "key_moves": ["3–5 concrete moves the buyer should execute consistent with the chosen approach — must reference the user's actual numbers, suppliers, terms"] }. Never emit "Conservative | Aggressive | Hybrid" placeholders.
 10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data. Emit numeric values when at least buyer_target and one of (supplier_likely_floor | buyer_walk_away) are known; otherwise leave as null and add to data_gaps[].
 11. NUMERIC EXTRACTION (HARD RULE): when the user input contains explicit currency figures for buyer target, supplier proposal, supplier floor, BATNA value, or walk-away point — you MUST populate batna.buyer_batna_value, zopa.buyer_target, zopa.supplier_likely_floor and zopa.buyer_walk_away as JSON NUMBERS (not strings, not null). Do not silently drop a number the user provided. Currency goes in scenario_specific.currency (or batna_currency / zopa_currency if it differs).
-12. ALL SEVEN WIZARD DELIVERABLES ARE MANDATORY: (1) leverage_analysis with non-empty buyer_leverage_factors[], supplier_leverage_factors[] and a non-template power_balance value; (2) batna with batna_strength_pct AND batna_improvement_actions[] (>=2); (3) strategy_playbook with all four sub-fields populated; (4) opening_position + negotiation_sequence[] (>=4 steps); (5) counter_arguments[] (>=3); (6) walk_away_plan with all three sub-fields populated; (7) value_creation[] (>=2). financial_outcome_range is encouraged but optional when input lacks numeric anchors. An empty array or a literal "Conservative | Aggressive | Hybrid" placeholder is treated as a report failure.
+12. ALL SEVEN WIZARD DELIVERABLES ARE MANDATORY: (1) leverage_analysis with non-empty buyer_leverage_factors[], supplier_leverage_factors[] and a non-template power_balance value; (2) batna with batna_strength_pct AND batna_improvement_actions[] (>=2); (3) strategy_playbook with all four sub-fields populated; (4) opening_position + negotiation_sequence[] (>=4 steps); (5) counter_arguments[] (>=3); (6) walk_away_plan with all three sub-fields populated; (7) value_creation[] (>=3). financial_outcome_range is encouraged but optional when input lacks numeric anchors. An empty array or a literal "Conservative | Aggressive | Hybrid" placeholder is treated as a report failure.
 13. LEVERAGE FACTOR HYGIENE: never emit literal strings "Not provided", "N/A", "None", "TBD" or empty placeholders inside buyer_leverage_factors[] or supplier_leverage_factors[]. If a side has fewer real factors, just emit a shorter array. Asymmetric arrays (e.g. 3 buyer / 1 supplier) are EXPECTED and correct.
 14. KEY FINDINGS vs RECOMMENDATIONS: Findings = observations about the current situation (what the data shows). Recommendations = forward-looking actions (what to do). NEVER copy the same sentence into both arrays. If a recommendation belongs in findings, rewrite the finding as a passive observation.
 15. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.
@@ -1566,22 +1566,34 @@ export function synthesizeMissingContent<T extends ExosOutputParsed | null | und
     }
     ss.walk_away_plan = wap;
 
-    // 5) value_creation — backfill 2 standard win-wins if empty
-    const vc: any[] = Array.isArray(ss.value_creation) ? ss.value_creation : [];
-    if (vc.filter(v => v && (v.opportunity || v.buyer_benefit)).length === 0) {
-      ss.value_creation = [
-        {
-          opportunity: 'Extend contract length in exchange for a price lock and KPI-linked rebate.',
-          buyer_benefit: 'Predictable cost base and protection from market price increases.',
-          supplier_benefit: 'Longer guaranteed revenue stream supporting capacity planning and investment.',
-        },
-        {
-          opportunity: 'Joint operational improvement programme (e.g. demand forecasting, packaging, logistics).',
-          buyer_benefit: 'Lower total cost of ownership beyond unit price.',
-          supplier_benefit: 'Reduced cost-to-serve and a stronger reference case for similar accounts.',
-        },
-      ];
+    // 5) value_creation — ensure at least 3 win-wins (top up rather than replace)
+    const vcExisting: any[] = Array.isArray(ss.value_creation)
+      ? ss.value_creation.filter((v: any) => v && (v.opportunity || v.buyer_benefit))
+      : [];
+    const vcDefaults = [
+      {
+        opportunity: 'Extend contract length in exchange for a price lock and KPI-linked rebate.',
+        buyer_benefit: 'Predictable cost base and protection from market price increases.',
+        supplier_benefit: 'Longer guaranteed revenue stream supporting capacity planning and investment.',
+      },
+      {
+        opportunity: 'Joint operational improvement programme (e.g. demand forecasting, packaging, logistics).',
+        buyer_benefit: 'Lower total cost of ownership beyond unit price.',
+        supplier_benefit: 'Reduced cost-to-serve and a stronger reference case for similar accounts.',
+      },
+      {
+        opportunity: 'Accelerated payment terms in exchange for a price hold or volume rebate.',
+        buyer_benefit: 'Captures early-payment discount without compromising relationship.',
+        supplier_benefit: 'Improved working capital and reduced financing cost.',
+      },
+    ];
+    const merged = [...vcExisting];
+    for (const d of vcDefaults) {
+      if (merged.length >= 3) break;
+      const dupe = merged.some(m => String(m.opportunity ?? '').toLowerCase().slice(0, 30) === d.opportunity.toLowerCase().slice(0, 30));
+      if (!dupe) merged.push(d);
     }
+    ss.value_creation = merged;
 
     // 6) financial_outcome_range — derive from ZOPA when numbers are present
     const fr = (ss.financial_outcome_range ?? {}) as Record<string, any>;
@@ -1722,12 +1734,38 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     s.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=');
 
   if (parsed.executive_bullets?.length > 0) {
-    parts.push('### Key Findings');
+    // B1 fix: drop bullets that duplicate any recommendation. We tokenise both
+    // sides, strip stop-words/punctuation, and treat ≥70% Jaccard overlap as a
+    // duplicate. Prevents Key Finding #N from echoing Recommendation #N.
+    const STOP = new Set(['the','a','an','and','or','of','to','for','in','on','with','by','at','from','is','are','be','as','that','this','it','will','should','must','their','our','your']);
+    const tokenise = (s: string): Set<string> => new Set(
+      s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length > 2 && !STOP.has(w))
+    );
+    const recTokens = (parsed.recommendations ?? []).map(r => {
+      const action = r && typeof r === 'object' ? coerceToString((r as any).action ?? r) : coerceToString(r);
+      return tokenise(action);
+    }).filter(t => t.size > 0);
+    const isDuplicate = (bulletTokens: Set<string>): boolean => {
+      if (bulletTokens.size === 0) return false;
+      for (const rt of recTokens) {
+        const inter = [...bulletTokens].filter(t => rt.has(t)).length;
+        const union = new Set([...bulletTokens, ...rt]).size;
+        if (union > 0 && inter / union >= 0.7) return true;
+      }
+      return false;
+    };
+    const findingLines: string[] = [];
     parsed.executive_bullets.forEach(b => {
       const text = sanitiseAscii(coerceToString(b).trim());
-      if (text && text !== '[object Object]') parts.push(`- ${text}`);
+      if (!text || text === '[object Object]') return;
+      if (isDuplicate(tokenise(text))) return;
+      findingLines.push(`- ${text}`);
     });
-    parts.push('');
+    if (findingLines.length > 0) {
+      parts.push('### Key Findings');
+      findingLines.forEach(l => parts.push(l));
+      parts.push('');
+    }
   }
 
   if (parsed.recommendations?.length > 0) {
