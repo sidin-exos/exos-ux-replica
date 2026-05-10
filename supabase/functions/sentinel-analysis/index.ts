@@ -92,7 +92,7 @@ const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor specializing i
 
 ### 4. Unit Consistency
 - Check monthly vs. annual vs. multi-year alignment
-- Verify currency consistency throughout
+- Verify currency consistency throughout: detect the currency in the user's input (ISO code, symbol, or country signal) and confirm the analysis uses ONLY that currency. [FAIL] any silent conversion (e.g., ZAR inputs reported in EUR) or mismatched "n" fields.
 - Validate quantity units (per unit, per lot, per annum)
 
 ### 5. Logical Coherence
