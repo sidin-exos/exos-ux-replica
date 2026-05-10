@@ -169,33 +169,18 @@ function parseNextStep(text: string): { title: string; description: string } {
   return { title: stripMarkdown(text), description: "" };
 }
 
-function summarizeParameter(value: string, maxWords = 30): string {
-  const words = value.trim().split(/\s+/);
-  if (words.length <= maxWords) return value.trim();
-  // Split on sentence/bullet boundaries but NEVER between digits (preserve
-  // values like "99.99%", "1.5 weeks", "€2.5M") — previous regex /[.•\n]+/
-  // was breaking decimals mid-number leaving fragments like "(99" stranded.
-  const fragments = value
-    .split(/(?<!\d)\.(?!\d)|[•\n]+/)
-    .map(s => s.trim())
-    .filter(Boolean);
-  const scored = fragments.map(f => {
-    let score = 0;
-    if (/[\d€$£¥%]/.test(f)) score += 3;
-    if (/[A-Z]{2,}/.test(f)) score += 2;
-    score += (f.match(/[A-Z][a-z]+/g) || []).length;
-    return { text: f, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  const result: string[] = [];
-  let wordCount = 0;
-  for (const { text } of scored) {
-    const tw = text.split(/\s+/).length;
-    if (wordCount + tw > maxWords && result.length > 0) break;
-    result.push(text);
-    wordCount += tw;
-  }
-  return result.join(". ") + ".";
+function summarizeParameter(value: string, maxWords = 60): string {
+  // B5 fix: preserve the user's original phrasing and order. Previous
+  // implementation re-sorted sentence fragments by an ad-hoc "score" and
+  // re-joined with ". ", which produced garbled out-of-order echoes
+  // (e.g. parent label stripped + child bullets reshuffled). We now keep
+  // the original text intact, only truncating with an ellipsis when it
+  // exceeds the word budget.
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const words = trimmed.split(/\s+/);
+  if (words.length <= maxWords) return trimmed;
+  return words.slice(0, maxWords).join(" ") + "…";
 }
 
 // ── Build branded styles ──
