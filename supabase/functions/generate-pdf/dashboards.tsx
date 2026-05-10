@@ -253,9 +253,9 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
         ))}
       </View>
       <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 8 }}>
-        <Text style={{ fontSize: 8, color: colors.textMuted }}>← Decreases Cost</Text>
+        <Text style={{ fontSize: 8, color: colors.success }}>◀ Decreases Cost</Text>
         <View style={{ width: 20 }} />
-        <Text style={{ fontSize: 8, color: colors.textMuted }}>Increases Cost →</Text>
+        <Text style={{ fontSize: 8, color: colors.destructive }}>Increases Cost ▶</Text>
       </View>
       {(() => {
         const ranked = variables
@@ -523,7 +523,7 @@ export const PDFRiskMatrix = ({ data, themeMode }: { data: RiskMatrixData; theme
         <View style={styles.statItem}><Text style={styles.statLabel}>Max Score</Text><Text style={[styles.statValue, { color: colors.destructive }]}>{sortedRisks.length > 0 ? Math.max(...sortedRisks.map(r => getRiskScore(r.impact, r.probability))) : 0}</Text></View>
       </View>
       <View style={styles.legend}>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>Critical (≥16)</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>Critical (16+)</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.warning }]} /><Text style={styles.legendText}>High (10-15)</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.surfaceLight }]} /><Text style={styles.legendText}>Medium/Low (&lt;10)</Text></View>
       </View>
@@ -822,7 +822,7 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
           <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Metric</Text>
           {allScenarios.map((sc) => (
             <View key={sc.id} style={[styles.matrixCell, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]}>
-              <View style={{ width: 7, height: 7, backgroundColor: colors.badgeText, opacity: 0.7, marginRight: 3 }} />
+              <View style={{ width: 7, height: 7, backgroundColor: sc.color, marginRight: 3 }} />
               <Text style={{ fontSize: 9, color: colors.badgeText }}>{sc.name}</Text>
             </View>
           ))}
@@ -1043,7 +1043,7 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
             <View key={i} style={{ flexDirection: "row", marginBottom: 8 }}>
               <View style={{ width: 26, alignItems: "center" }}>
                 <View style={{ width: 20, height: 20, backgroundColor: s.status === "complete" ? colors.success : s.status === "active" ? colors.warning : colors.primary, justifyContent: "center", alignItems: "center" }}>
-                  <Text style={{ fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: colors.badgeText }}>{s.status === "complete" ? "✓" : i + 1}</Text>
+                  <Text style={{ fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: colors.badgeText }}>{i + 1}</Text>
                 </View>
                 {i < steps.length - 1 && <View style={{ width: 2, flex: 1, backgroundColor: s.status === "complete" ? colors.success : colors.border, marginTop: 2 }} />}
               </View>
