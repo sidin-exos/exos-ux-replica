@@ -138,7 +138,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
             </View>
           </View>
           {/* X-axis */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginLeft: 18, marginTop: 3 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginLeft: 22, marginTop: 3 }}>
             <Text style={{ fontSize: 7, color: colors.textMuted }}>Low</Text>
             <Text style={{ fontSize: 7, color: colors.textMuted, textTransform: "uppercase" }}>Supply Risk</Text>
             <Text style={{ fontSize: 7, color: colors.textMuted }}>High</Text>
