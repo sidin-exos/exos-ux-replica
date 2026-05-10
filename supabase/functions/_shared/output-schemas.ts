@@ -2042,22 +2042,51 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       return sanitiseAscii(coerceToString(v)).replace(/\|/g, '\\|');
     };
 
+    // Helper: drop placeholder leverage strings emitted by some models
+    const isPlaceholder = (v: unknown): boolean => {
+      const s = String(v ?? '').trim().toLowerCase();
+      return s === '' || s === '—' || s === '-' || s === 'n/a' || s === 'na' || s === 'none' || s === 'tbd' || s === 'not provided' || s === 'not applicable';
+    };
+
     // 1. Power Balance Analysis
     const lev = (ss.leverage_analysis ?? {}) as Record<string, any>;
     const pb = String(lev.power_balance ?? '').toUpperCase();
     if (pb && !pb.includes('|')) {
       parts.push('### Power Balance Analysis');
       parts.push(`- **Verdict:** ${pb.replace(/_/g, ' ')}`);
-      const buyerFactors: any[] = Array.isArray(lev.buyer_leverage_factors) ? lev.buyer_leverage_factors : [];
-      const supplierFactors: any[] = Array.isArray(lev.supplier_leverage_factors) ? lev.supplier_leverage_factors : [];
+      const buyerFactors: any[] = (Array.isArray(lev.buyer_leverage_factors) ? lev.buyer_leverage_factors : []).filter((x: unknown) => !isPlaceholder(x));
+      const supplierFactors: any[] = (Array.isArray(lev.supplier_leverage_factors) ? lev.supplier_leverage_factors : []).filter((x: unknown) => !isPlaceholder(x));
       if (buyerFactors.length > 0 || supplierFactors.length > 0) {
         const rows = Math.max(buyerFactors.length, supplierFactors.length);
         parts.push('');
         parts.push('| Buyer leverage | Supplier leverage |');
         parts.push('|---|---|');
         for (let i = 0; i < rows; i++) {
-          parts.push(`| ${fmtCell(buyerFactors[i] ?? '')} | ${fmtCell(supplierFactors[i] ?? '')} |`);
+          // When one column is exhausted, leave the cell blank instead of "—"
+          const b = buyerFactors[i] != null ? fmtCell(buyerFactors[i]) : '';
+          const sp = supplierFactors[i] != null ? fmtCell(supplierFactors[i]) : '';
+          parts.push(`| ${b || ' '} | ${sp || ' '} |`);
         }
+      }
+      parts.push('');
+    }
+
+    // 1b. Strategy Playbook (NEW deliverable)
+    const sp = (ss.strategy_playbook ?? {}) as Record<string, any>;
+    const spMoves: any[] = Array.isArray(sp.key_moves) ? sp.key_moves.filter(Boolean) : [];
+    if (sp.situation_read || sp.recommended_approach || sp.approach_rationale || spMoves.length > 0) {
+      parts.push('### Negotiation Strategy Playbook');
+      if (sp.situation_read) parts.push(`- **Situation read:** ${fmtCell(sp.situation_read)}`);
+      const ra = String(sp.recommended_approach ?? '').toUpperCase();
+      if (ra && !ra.includes('|')) parts.push(`- **Recommended approach:** ${ra}`);
+      if (sp.approach_rationale) parts.push(`- **Why this approach:** ${fmtCell(sp.approach_rationale)}`);
+      if (spMoves.length > 0) {
+        parts.push('');
+        parts.push('**Key moves:**');
+        spMoves.slice(0, 6).forEach((m: unknown) => {
+          const t = sanitiseAscii(coerceToString(m).trim());
+          if (t) parts.push(`- ${t}`);
+        });
       }
       parts.push('');
     }
