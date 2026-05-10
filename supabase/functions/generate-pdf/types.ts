@@ -260,11 +260,28 @@ export function extractDashboardData(text: string): DashboardData | null {
   }
 }
 
+const SCENARIO_ACRONYMS = new Set([
+  "capex", "opex", "npv", "tco", "rfp", "rfi", "rfq", "sla", "kpi",
+  "saas", "ifrs", "esg", "eu", "us", "uk", "roi", "wacc", "batna",
+  "ai", "b2b", "b2c", "sku", "po", "ppe", "qbr",
+]);
+const HEADING_LOWER_WORDS = new Set(["vs", "and", "or", "the", "a", "of", "for", "to", "in"]);
+function formatSlugHeading(slug: string): string {
+  return slug.split(/[-_]+/).filter(Boolean).map((w, i) => {
+    const lw = w.toLowerCase();
+    if (SCENARIO_ACRONYMS.has(lw)) return lw.toUpperCase();
+    if (i > 0 && HEADING_LOWER_WORDS.has(lw)) return lw;
+    return lw.charAt(0).toUpperCase() + lw.slice(1);
+  }).join(" ");
+}
+const SLUG_HEADING_REGEX = /^(#{1,4}\s+)([a-z0-9]+(?:[-_][a-z0-9]+)+)\s*$/gm;
+
 export function stripDashboardData(text: string): string {
   if (!text) return text;
   return text
     .replace(DASHBOARD_DATA_REGEX, "")
     .replace(/```dashboard:\w+[\s\S]*?```/g, "") // strip ```dashboard:xxx...``` code blocks
+    .replace(SLUG_HEADING_REGEX, (_m, prefix, slug) => `${prefix}${formatSlugHeading(slug)}`)
     .trim();
 }
 

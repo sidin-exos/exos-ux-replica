@@ -1640,10 +1640,35 @@ export function pruneEmptyBranches<T>(input: T, isTopLevel = true): T {
  * Build a backward-compatible markdown summary from the structured output.
  * Used to populate the `content` field for existing UI rendering.
  */
+// Convert slug-style scenario names ("capex-vs-opex") into a readable title
+// ("CAPEX vs OPEX"), preserving common procurement acronyms.
+function formatScenarioHeading(name: string): string {
+  if (!name) return '';
+  // Already contains spaces or capitals beyond the first char — assume the
+  // upstream label is human-readable and leave it alone.
+  if (/\s/.test(name) || /[A-Z]/.test(name.slice(1))) return name;
+  const ACRONYMS = new Set([
+    'capex', 'opex', 'npv', 'tco', 'rfp', 'rfi', 'rfq', 'sla', 'kpi',
+    'saas', 'ifrs', 'esg', 'eu', 'us', 'uk', 'roi', 'wacc', 'batna',
+    'ai', 'b2b', 'b2c', 'sku', 'po', 'ppe', 'qbr',
+  ]);
+  const LOWER_WORDS = new Set(['vs', 'and', 'or', 'the', 'a', 'of', 'for', 'to', 'in']);
+  return name
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((w, i) => {
+      const lw = w.toLowerCase();
+      if (ACRONYMS.has(lw)) return lw.toUpperCase();
+      if (i > 0 && LOWER_WORDS.has(lw)) return lw;
+      return lw.charAt(0).toUpperCase() + lw.slice(1);
+    })
+    .join(' ');
+}
+
 export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
   const parts: string[] = [];
 
-  parts.push(`## ${parsed.scenario_name}\n`);
+  parts.push(`## ${formatScenarioHeading(parsed.scenario_name)}\n`);
   parts.push(parsed.summary);
   parts.push('');
 
