@@ -11,6 +11,11 @@ import {
   StyleSheet,
   Link,
   Font,
+  Svg,
+  Defs,
+  LinearGradient,
+  Stop,
+  Polygon,
   renderToBuffer,
 } from "npm:@react-pdf/renderer@4";
 
@@ -34,6 +39,13 @@ function ensureInterRegistered() {
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-italic.ttf", fontWeight: 500, fontStyle: "italic" },
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-italic.ttf", fontWeight: 600, fontStyle: "italic" },
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-italic.ttf", fontWeight: 700, fontStyle: "italic" },
+      ],
+    });
+    Font.register({
+      family: "Space Grotesk",
+      fonts: [
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-500-normal.ttf", fontWeight: 500 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-700-normal.ttf", fontWeight: 700 },
       ],
     });
     Font.registerHyphenationCallback((word: string) => [word]);
@@ -276,8 +288,59 @@ function buildStyles(c: PdfColorSet) {
     footer: { position: "absolute", bottom: 16, left: SP.pageSideMargin, right: SP.pageSideMargin, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderTopColor: c.border, paddingTop: 6 },
     footerText: { fontSize: 8, color: c.textMuted },
     verticalLabel: { position: "absolute", top: "45%", left: 10, transform: "rotate(-90deg)", fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 2 },
+    // Branded cover band (Option B v3)
+    coverBand: { position: "absolute", top: 0, left: 0, right: 0, height: 150, backgroundColor: "#0C1D2E", paddingHorizontal: SP.pageSideMargin, paddingTop: 18, paddingBottom: 14 },
+    coverBandAccent: { position: "absolute", left: 0, right: 0, bottom: 0, height: 3, backgroundColor: "#19A49C" },
+    coverBandWordmark: { fontFamily: "Space Grotesk", fontWeight: 700, fontSize: 20, color: "#FFFFFF", letterSpacing: 1 },
+    coverBandDivider: { width: 1, height: 18, backgroundColor: "#FFFFFF", opacity: 0.35, marginHorizontal: 10 },
+    coverBandSubtitle: { fontFamily: "Inter", fontWeight: 600, fontSize: 9, color: "#DCEBF0", letterSpacing: 0.3 },
+    coverBandEyebrow: { fontFamily: "Inter", fontWeight: 700, fontSize: 7.5, color: "#47DDD4", textTransform: "uppercase", letterSpacing: 1.2, marginTop: 12 },
+    coverBandTitle: { fontFamily: "Space Grotesk", fontWeight: 700, fontSize: 20, color: "#FFFFFF", marginTop: 6, lineHeight: 1.15 },
+    coverBandMeta: { fontFamily: "Inter", fontWeight: 400, fontSize: 8, color: "#BED2DA", marginTop: 10 },
   });
 }
+
+// ── EXOS Mark (vector) ──
+const ExosMark = ({ size = 38 }: { size?: number }) => {
+  const w = size;
+  const h = (size * 110) / 100;
+  return (
+    <Svg width={w} height={h} viewBox="0 0 100 110">
+      <Defs>
+        <LinearGradient id="exosTeal" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0%" stopColor="#2BB8AF" />
+          <Stop offset="100%" stopColor="#178A83" />
+        </LinearGradient>
+      </Defs>
+      <Polygon points="50,53 76,79 50,105 24,79" fill="#0A5550" />
+      <Polygon points="50,29 76,55 50,81 24,55" fill="url(#exosTeal)" />
+      <Polygon points="50,5 76,31 50,57 24,31" fill="none" stroke="#6DD5CC" strokeWidth={6} strokeLinejoin="round" />
+    </Svg>
+  );
+};
+
+// ── Branded Cover Band (Option B v3) ──
+const CoverBand = ({ scenarioLabel, reportTitle, dateStr, reportHash, c }: { scenarioLabel: string; reportTitle: string; dateStr: string; reportHash: string; c: PdfColorSet }) => {
+  const s = buildStyles(c);
+  return (
+    <View style={s.coverBand}>
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <ExosMark size={42} />
+        <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}>
+          <Text style={s.coverBandWordmark}>EXOS</Text>
+          <View style={s.coverBandDivider} />
+          <Text style={s.coverBandSubtitle}>Procurement Analytical Platform</Text>
+        </View>
+      </View>
+      <View style={{ marginLeft: 54 }}>
+        <Text style={s.coverBandEyebrow}>{scenarioLabel}</Text>
+        <Text style={s.coverBandTitle}>{reportTitle}</Text>
+        <Text style={s.coverBandMeta}>Confidential  ·  {dateStr}  ·  Report {reportHash}</Text>
+      </View>
+      <View style={s.coverBandAccent} />
+    </View>
+  );
+};
 
 // ── Extraction helpers ──
 
@@ -722,16 +785,16 @@ const PDFReportDocument = ({
     <Document>
       {/* Page 1: Cover + Executive Summary (merged) */}
       <Page size="A4" style={s.page} id="section-executive-summary">
-        <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
-          <Text style={{ fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary }}>EXOS · Confidential</Text>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>{formattedDate}</Text>
-          </View>
-        </View>
-        <View style={s.coverLeftStripe} />
-        <View style={{ height: "4%" }} />
-        <Text style={s.coverTitle}>{reportTitle}</Text>
-        <View style={s.coverDivider} />
+        <CoverBand
+          scenarioLabel={scenarioLabel}
+          reportTitle={reportTitle}
+          dateStr={formattedDate}
+          reportHash={reportHash}
+          c={c}
+        />
+        {/* Push content below the 150pt band */}
+        <View style={{ height: 110 }} />
+
 
         <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text><View style={s.sectionTitleLine} /></View>
         <View style={s.findingCardsRow}>
