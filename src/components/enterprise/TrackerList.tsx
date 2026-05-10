@@ -186,7 +186,7 @@ const TrackerList = ({ trackers, isLoading, onSelectTracker }: TrackerListProps)
         return (
           <div
             key={t.id}
-            className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
+            className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderClass} bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm hover:dark:to-primary/15`}
             onClick={() => onSelectTracker?.(t)}
           >
             {/* Name + sub-factor chips */}
