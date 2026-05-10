@@ -25,6 +25,12 @@ import { PDFSOWAnalysis } from "./dashboardVisuals/PDFSOWAnalysis";
 import { PDFNegotiationPrep } from "./dashboardVisuals/PDFNegotiationPrep";
 import { PDFDataQuality } from "./dashboardVisuals/PDFDataQuality";
 import { PDFRfpPackage } from "./dashboardVisuals/PDFRfpPackage";
+import { PDFShouldCostGap } from "./dashboardVisuals/PDFShouldCostGap";
+import { PDFSavingsRealizationFunnel } from "./dashboardVisuals/PDFSavingsRealizationFunnel";
+import { PDFWorkingCapitalDpo } from "./dashboardVisuals/PDFWorkingCapitalDpo";
+import { PDFSupplierConcentrationMap } from "./dashboardVisuals/PDFSupplierConcentrationMap";
+import { PDFNPVWaterfall } from "./dashboardVisuals/PDFNPVWaterfall";
+import { PDFIFRS16Impact } from "./dashboardVisuals/PDFIFRS16Impact";
 
 // ── Enterprise print colors ──
 
@@ -103,6 +109,12 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "negotiation-prep": "negotiationPrep",
   "data-quality": "dataQuality",
   "rfp-package": "rfpPackage",
+  "should-cost-gap": "shouldCostGap",
+  "savings-realization-funnel": "savingsRealizationFunnel",
+  "working-capital-dpo": "workingCapitalDpo",
+  "supplier-concentration-map": "supplierConcentrationMap",
+  "npv-waterfall": "npvWaterfall",
+  "ifrs16-impact": "ifrs16Impact",
 };
 
 /** Render a single dashboard by type */
@@ -172,6 +184,30 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
     case "rfp-package": {
       const data = parsedData?.rfpPackage;
       return data ? <PDFRfpPackage data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "should-cost-gap": {
+      const data = parsedData?.shouldCostGap;
+      return data ? <PDFShouldCostGap data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "savings-realization-funnel": {
+      const data = parsedData?.savingsRealizationFunnel;
+      return data ? <PDFSavingsRealizationFunnel data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "working-capital-dpo": {
+      const data = parsedData?.workingCapitalDpo;
+      return data ? <PDFWorkingCapitalDpo data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "supplier-concentration-map": {
+      const data = parsedData?.supplierConcentrationMap;
+      return data ? <PDFSupplierConcentrationMap data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "npv-waterfall": {
+      const data = parsedData?.npvWaterfall;
+      return data ? <PDFNPVWaterfall data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "ifrs16-impact": {
+      const data = parsedData?.ifrs16Impact;
+      return data ? <PDFIFRS16Impact data={data} themeMode={themeMode} /> : placeholder();
     }
     default: {
       const config = dashboardConfigs[dashboardType as DashboardType];
