@@ -141,7 +141,7 @@ export const scenarios: Scenario[] = [
       { id: "productSpecification", label: "Product or Service Specification", description: "Product description, material categories, manufacturing geography", type: "textarea", required: true, placeholder: "• Product / service name and description\n• Key material categories (e.g. stainless steel, injection-moulded polymer, SaaS software)\n• Estimated weight or volume per unit (if physical product)\n• Manufacturing geography and labour intensity (high / medium / low)" },
       { id: "supplierQuote", label: "Supplier Quote & Benchmark Reference", description: "Supplier pricing, your target, and known benchmarks", type: "textarea", required: true, placeholder: "• Supplier's quoted price per unit (€)\n• Your internal target price or budget (€)\n• Any known alternative quotes from other suppliers\n• Estimated margin the supplier is applying (if known)" },
     ],
-    outputs: ["Cost Waterfall: Visual breakdown of cost components", "Should-Cost Model: Bottom-up cost estimate with benchmarks", "Negotiation Leverage Points: Areas where supplier costs may be inflated", "Sensitivity Analysis: Impact of key cost driver changes"],
+    outputs: ["Cost Waterfall: Visual breakdown of cost components and identified savings levers", "Should-Cost Gap: Bottom-up estimate vs the supplier quote with negotiation headroom", "Data Quality Audit: Coverage and confidence of the inputs you provided", "Negotiation Leverage Points: Areas where supplier costs may be inflated"],
     scenario_id: "S2",
     group: "A",
   },

@@ -27,7 +27,9 @@ const formatAmount = (value: number, currency: string = "$"): string => {
   const abs = Math.abs(value);
   if (abs >= 1_000_000) return `${sign}${currency} ${(abs / 1_000_000).toFixed(1)}M`;
   if (abs >= 1000) return `${sign}${currency} ${(abs / 1000).toFixed(0)}K`;
-  return `${sign}${currency} ${abs}`;
+  const rounded = Math.round(abs * 100) / 100;
+  const display = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  return `${sign}${currency} ${display}`;
 };
 
 const formatCurrency = (value: number, currency: string = "$"): string => {
@@ -35,7 +37,9 @@ const formatCurrency = (value: number, currency: string = "$"): string => {
   const abs = Math.abs(value);
   if (abs >= 1_000_000) return `${sign}${currency} ${(abs / 1_000_000).toFixed(1)}M`;
   if (abs >= 1000) return `${sign}${currency} ${(abs / 1000).toFixed(0)}K`;
-  return `${sign}${currency} ${abs}`;
+  const rounded = Math.round(abs * 100) / 100;
+  const display = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  return `${sign}${currency} ${display}`;
 };
 
 // ══════════════════════════════════════════

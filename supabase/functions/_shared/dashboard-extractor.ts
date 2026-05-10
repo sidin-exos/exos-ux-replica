@@ -569,28 +569,33 @@ function extractReductionComponents(
     }
   }
 
+  // CRITICAL: only treat amounts/percentages as savings when the recommendation
+  // text or financial_impact field clearly references savings/reductions.
+  // Otherwise unit prices in the action text (e.g. "use the €39.80 alternative
+  // quote") get incorrectly counted as a savings lever and inflate KPIs.
+  const SAVINGS_CONTEXT_RE = /\b(sav(?:e|ed|es|ing|ings)|reduc(?:e|ed|es|tion)|cut|cuts|lower(?:ed|s)?|decrease|avoid(?:ed|s)?|negotiat\w*\s+down|discount|rebate|headroom)\b/i;
   if (out.length === 0 && Array.isArray(recommendations)) {
     for (const r of recommendations) {
       if (!r?.action) continue;
-      const text = `${r.financial_impact ?? ''} ${r.action}`;
-      const amountMatch = text.match(/(?:€|\$|£|EUR|USD|GBP)\s?([\d.,]+\s?[KMB]?)/i);
+      const impact = String(r.financial_impact ?? '').trim();
+      const action = String(r.action).trim();
+      const text = `${impact} ${action}`;
+      if (!SAVINGS_CONTEXT_RE.test(text)) continue;
+      const source = impact || text;
+      const amountMatch = source.match(/(?:€|\$|£|EUR|USD|GBP)\s?([\d.,]+\s?[KMB]?)/i);
       let value: number | null = null;
-      // Build a clean noun-phrase label: prefer text BEFORE first colon,
-      // strip [PRIORITY] tags, strip leading verbs, dedupe word repeats,
-      // and cap to 32 chars so the chart legend never shows a sentence.
-      let raw = String(r.action).trim();
-      raw = raw.replace(/^\[(?:critical|high|medium|low)\]\s*/i, '');
-      raw = raw.replace(/^[-•\d.\s]+/, '');
+      // Build a clean noun-phrase label from action.
+      let raw = action.replace(/^\[(?:critical|high|medium|low)\]\s*/i, '').replace(/^[-•\d.\s]+/, '');
       const colonIdx = raw.indexOf(':');
       if (colonIdx > 0 && colonIdx < 60) raw = raw.slice(0, colonIdx);
       raw = raw.replace(COST_LABEL_VERB_PREFIX_RE, '').trim();
       raw = dedupeLeadingWord(raw);
-      let label = (raw.split(/\s+/).slice(0, 4).join(' ') || String(r.action)).slice(0, 32);
+      let label = (raw.split(/\s+/).slice(0, 4).join(' ') || action).slice(0, 32);
       if (amountMatch) {
         value = parseAmount(amountMatch[1]);
       } else {
-        const pctRange = text.match(/(\d+(?:\.\d+)?)\s?[-–]\s?(\d+(?:\.\d+)?)\s?%/);
-        const pctSingle = !pctRange ? text.match(/(\d+(?:\.\d+)?)\s?%/) : null;
+        const pctRange = source.match(/(\d+(?:\.\d+)?)\s?[-–]\s?(\d+(?:\.\d+)?)\s?%/);
+        const pctSingle = !pctRange ? source.match(/(\d+(?:\.\d+)?)\s?%/) : null;
         if (pctRange && grossCost > 0) {
           const mid = (Number(pctRange[1]) + Number(pctRange[2])) / 2;
           value = (grossCost * mid) / 100;
@@ -598,7 +603,8 @@ function extractReductionComponents(
           value = (grossCost * Number(pctSingle[1])) / 100;
         }
       }
-      if (value !== null && value > 0) {
+      // Sanity guard: skip values larger than the gross cost (impossible savings)
+      if (value !== null && value > 0 && (grossCost === 0 || value <= grossCost)) {
         out.push({ name: label, value, type: 'reduction' });
       }
     }

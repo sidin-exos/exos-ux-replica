@@ -18,7 +18,11 @@ export const formatAmount = (value: number, currency: string = "$"): string => {
   const sign = value < 0 ? "-" : "";
   if (abs >= 1_000_000) return `${sign}${currency}${(abs / 1_000_000).toFixed(1)}M`;
   if (abs >= 1_000) return `${sign}${currency}${(abs / 1_000).toFixed(0)}K`;
-  return `${sign}${currency}${abs}`;
+  // Round small values to at most 2 decimals to avoid float-precision artefacts
+  // such as "EUR5.799999999999997" surfacing in summary KPIs.
+  const rounded = Math.round(abs * 100) / 100;
+  const display = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  return `${sign}${currency}${display}`;
 };
 
 // ─────────────────────────────────────────────────────────────────────
