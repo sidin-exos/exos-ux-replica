@@ -1053,7 +1053,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </div>
             )}
             {/* Expected Outputs */}
-            <div className="rounded-lg border border-border bg-card p-4">
+            <div className="rounded-lg border border-border bg-card bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 p-4">
               <h4 className="font-medium mb-3">Analysis Will Generate:</h4>
               <ul className="space-y-2">
                 {scenario.outputs.map((output, i) => (
