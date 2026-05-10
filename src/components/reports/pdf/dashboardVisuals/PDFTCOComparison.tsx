@@ -2,9 +2,10 @@ import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
 import type { TCOComparisonData } from "@/lib/dashboard-data-parser";
 
-const formatCurrency = (value: number): string => {
-  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
-  return `$${value}`;
+const formatCurrency = (value: number, currency = "$"): string => {
+  if (value >= 1_000_000) return `${currency}${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1000) return `${currency}${(value / 1000).toFixed(0)}K`;
+  return `${currency}${value}`;
 };
 
 export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData; themeMode?: PdfThemeMode }) => {
