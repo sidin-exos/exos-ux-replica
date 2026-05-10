@@ -1210,6 +1210,7 @@ const PDFReportDocument = ({
           dateStr={formattedDate}
           reportHash={reportHash}
           c={c}
+          mode={pdfTheme}
         />
 
         {/* Confidence badge — overlaid in top-right of band */}
