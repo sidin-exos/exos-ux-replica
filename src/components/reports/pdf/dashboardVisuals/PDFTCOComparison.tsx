@@ -2,9 +2,10 @@ import { View, Text } from "@react-pdf/renderer";
 import { getPdfColors, getPdfStyles, type PdfThemeMode } from "./theme";
 import type { TCOComparisonData } from "@/lib/dashboard-data-parser";
 
-const formatCurrency = (value: number): string => {
-  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
-  return `$${value}`;
+const formatCurrency = (value: number, currency = "$"): string => {
+  if (value >= 1_000_000) return `${currency}${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1000) return `${currency}${(value / 1000).toFixed(0)}K`;
+  return `${currency}${value}`;
 };
 
 export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData; themeMode?: PdfThemeMode }) => {
@@ -27,6 +28,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
   const highestTCO = options.reduce((max, opt) => opt.totalTCO > max.totalTCO ? opt : max, options[0]);
   const savings = highestTCO.totalTCO - lowestTCO.totalTCO;
   const maxValue = Math.max(1, ...chartData.flatMap(d => d.values));
+  const currency = (data as { currency?: string }).currency ?? "$";
 
   return (
     <View style={styles.dashboardCard}>
@@ -37,7 +39,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
           <Text style={styles.dashboardSubtitle}>Cumulative cost over time</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 15, fontWeight: 700, color: colors.primary }}>{formatCurrency(savings)}</Text>
+          <Text style={{ fontSize: 15, fontWeight: 700, color: colors.primary }}>{formatCurrency(savings, currency)}</Text>
           <Text style={{ fontSize: 8, color: colors.textMuted }}>potential savings</Text>
         </View>
       </View>
@@ -54,11 +56,16 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
       {chartData.length > 0 && (
         <View style={{ marginBottom: 10 }}>
           {chartData.map((point, i) => (
-            <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+            <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 5 }}>
               <Text style={{ width: 22, fontSize: 9, color: colors.textMuted }}>{point.year}</Text>
-              <View style={{ flex: 1, flexDirection: "row", height: 10, marginLeft: 6 }}>
+              <View style={{ flex: 1, marginLeft: 6 }}>
                 {point.values.map((val, j) => (
-                  <View key={j} style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted, marginTop: j * 2, position: "absolute", left: 0 }} />
+                  <View key={j} style={{ flexDirection: "row", alignItems: "center", marginBottom: 1 }}>
+                    <View style={{ flex: 1, height: 5, backgroundColor: colors.surfaceLight }}>
+                      <View style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted }} />
+                    </View>
+                    <Text style={{ width: 44, fontSize: 7, color: colors.textMuted, textAlign: "right" }}>{formatCurrency(val, currency)}</Text>
+                  </View>
                 ))}
               </View>
             </View>
@@ -80,9 +87,9 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
                 <View style={{ width: 7, height: 7, backgroundColor: opt.color, marginRight: 4 }} />
                 <Text style={{ fontSize: 10, color: colors.text }}>{opt.name}</Text>
               </View>
-              <Text style={[styles.matrixCell, { fontWeight: 600 }]}>{formatCurrency(opt.totalTCO)}</Text>
+              <Text style={[styles.matrixCell, { fontWeight: 600 }]}>{formatCurrency(opt.totalTCO, currency)}</Text>
               <Text style={[styles.matrixCell, { color: diff === 0 ? colors.primary : colors.textMuted }]}>
-                {diff === 0 ? "Best" : `+${formatCurrency(diff)}`}
+                {diff === 0 ? "Best" : `+${formatCurrency(diff, currency)}`}
               </Text>
             </View>
           );
