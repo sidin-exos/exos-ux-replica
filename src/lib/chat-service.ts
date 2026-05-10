@@ -14,7 +14,7 @@ export interface ChatResponse {
 }
 
 // Build a lightweight scenario catalog for the edge function
-const scenarioCatalog = scenarios
+const scenarioCatalog = filterVisibleScenarios(scenarios)
   .filter((s) => s.status === 'available')
   .map(({ id, title, description }) => ({ id, title, description }));
 
