@@ -1178,7 +1178,11 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
         {options.map((opt, i) => {
           const isPreferred = opt.id === preferred.id;
           const widthPct = (Math.abs(opt.npv) / maxAbs) * 100;
-          const barColor = opt.npv >= 0 ? (opt.color || colors.primary) : colors.destructive;
+          // In cost-mode (all negatives), preferred = least-bad → primary; others muted.
+          // Otherwise: positive = option color, negative non-preferred = destructive.
+          const barColor = isPreferred
+            ? (opt.color || colors.primary)
+            : (opt.npv >= 0 ? (opt.color || colors.primary) : colors.destructive);
           return (
             <View key={i} style={{ marginBottom: 6 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
