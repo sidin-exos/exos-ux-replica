@@ -785,16 +785,16 @@ const PDFReportDocument = ({
     <Document>
       {/* Page 1: Cover + Executive Summary (merged) */}
       <Page size="A4" style={s.page} id="section-executive-summary">
-        <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
-          <Text style={{ fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary }}>EXOS · Confidential</Text>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>{formattedDate}</Text>
-          </View>
-        </View>
-        <View style={s.coverLeftStripe} />
-        <View style={{ height: "4%" }} />
-        <Text style={s.coverTitle}>{reportTitle}</Text>
-        <View style={s.coverDivider} />
+        <CoverBand
+          scenarioLabel={scenarioLabel}
+          reportTitle={reportTitle}
+          dateStr={formattedDate}
+          reportHash={reportHash}
+          c={c}
+        />
+        {/* Push content below the 150pt band */}
+        <View style={{ height: 110 }} />
+
 
         <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text><View style={s.sectionTitleLine} /></View>
         <View style={s.findingCardsRow}>
