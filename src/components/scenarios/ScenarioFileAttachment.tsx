@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Paperclip, ChevronRight, FileSpreadsheet, FileText, File, Eye, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Paperclip, ChevronRight, FileSpreadsheet, FileText, File, Eye, Loader2, AlertTriangle, CheckCircle2, FolderOpen } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
