@@ -227,10 +227,10 @@ ${body}
 
   const constraintsXML = hasV2C
     ? industry.constraints_v2!.map((c, i) => {
-        const attrs = [`priority="${i + 1}"`, c.tier ? `tier="${escapeXML(c.tier)}"` : '', c.blocker ? `blocker="true"` : '', c.eu_ref ? `eu-ref="${escapeXML(c.eu_ref)}"` : ''].filter(Boolean).join(' ');
+        const tier = c.blocker ? 'HIGH' : c.tier;
+        const attrs = [`priority="${i + 1}"`, tier ? `tier="${escapeXML(tier)}"` : '', c.eu_ref ? `eu-ref="${escapeXML(c.eu_ref)}"` : ''].filter(Boolean).join(' ');
         const impact = c.procurement_impact ? `\n        <procurement-impact>${escapeXML(c.procurement_impact)}</procurement-impact>` : '';
-        const blockerComment = c.blocker ? ' <!-- HARD GATE -->' : '';
-        return `      <constraint ${attrs}>${escapeXML(c.label)}${impact}\n      </constraint>${blockerComment}`;
+        return `      <constraint ${attrs}>${escapeXML(c.label)}${impact}\n      </constraint>`;
       }).join('\n')
     : industry.constraints.map((c, i) => `      <constraint priority="${i + 1}">${escapeXML(c)}</constraint>`).join('\n');
 
@@ -245,7 +245,7 @@ ${body}
   <industry-name>${escapeXML(industry.name)}</industry-name>
   <industry-id>${escapeXML(industry.slug)}</industry-id>
   <regulatory-constraints>
-    <description>Critical regulatory and operational constraints. All recommendations must account for these. Items flagged as blockers are hard decision gates.</description>
+    <description>Critical regulatory and operational constraints. All recommendations must account for these requirements.</description>
     <constraints>
 ${constraintsXML}
     </constraints>
@@ -333,7 +333,7 @@ ${enriched.length > 0 ? enriched.join('\n') + '\n' : ''}  <category-kpis>
 ${kpisXML}
     </kpis>
   </category-kpis>
-  <system-instruction>If an item is flagged as a blocker or price volatility is high, treat it as a hard constraint requiring mitigation.</system-instruction>
+  <system-instruction>If price volatility is high, treat it as a hard constraint requiring mitigation.</system-instruction>
 </category-context>`;
 }
 
