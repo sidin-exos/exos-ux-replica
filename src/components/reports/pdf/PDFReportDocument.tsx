@@ -1001,6 +1001,67 @@ const BrandedHeaderBar = ({ scenarioLabel, dateStr, c }: { scenarioLabel: string
   );
 };
 
+// ── EXOS Mark (vector, mirrors src/assets/exos-mark-dark.svg) ──
+
+const ExosMark = ({ size = 38 }: { size?: number }) => {
+  const w = size;
+  const h = (size * 110) / 100;
+  return (
+    <Svg width={w} height={h} viewBox="0 0 100 110">
+      <Defs>
+        <LinearGradient id="exosTeal" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0%" stopColor="#2BB8AF" />
+          <Stop offset="100%" stopColor="#178A83" />
+        </LinearGradient>
+      </Defs>
+      <Polygon points="50,53 76,79 50,105 24,79" fill="#0A5550" />
+      <Polygon points="50,29 76,55 50,81 24,55" fill="url(#exosTeal)" />
+      <Polygon points="50,5 76,31 50,57 24,31" fill="none" stroke="#6DD5CC" strokeWidth={6} strokeLinejoin="round" />
+    </Svg>
+  );
+};
+
+// ── Branded Cover Band (Option B v3) ──
+
+const CoverBand = ({
+  scenarioLabel,
+  reportTitle,
+  dateStr,
+  reportHash,
+  c,
+}: {
+  scenarioLabel: string;
+  reportTitle: string;
+  dateStr: string;
+  reportHash: string;
+  c: PdfColorSet;
+}) => {
+  const s = buildStyles(c);
+  return (
+    <View style={s.coverBand}>
+      {/* Top row: mark + wordmark + subtitle */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <ExosMark size={42} />
+        <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}>
+          <Text style={s.coverBandWordmark}>EXOS</Text>
+          <View style={s.coverBandDivider} />
+          <Text style={s.coverBandSubtitle}>Procurement Analytical Platform</Text>
+        </View>
+      </View>
+
+      {/* Eyebrow + title + meta — offset to the right of the mark */}
+      <View style={{ marginLeft: 54 }}>
+        <Text style={s.coverBandEyebrow}>{scenarioLabel}</Text>
+        <Text style={s.coverBandTitle}>{reportTitle}</Text>
+        <Text style={s.coverBandMeta}>Confidential  ·  {dateStr}  ·  Report {reportHash}</Text>
+      </View>
+
+      {/* Bottom teal accent line */}
+      <View style={s.coverBandAccent} />
+    </View>
+  );
+};
+
 // ── Branded Footer ──
 
 const BrandedFooter = ({ dateStr, orgName, c }: { dateStr: string; orgName: string; c: PdfColorSet }) => {
