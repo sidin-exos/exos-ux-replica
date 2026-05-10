@@ -32,7 +32,7 @@ interface ProjectEvaluatorProps {
  */
 export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorProps) {
   const availableScenarios = useMemo(
-    () => scenarios.filter((s) => s.status === "available"),
+    () => filterVisibleScenarios(scenarios).filter((s) => s.status === "available"),
     [],
   );
 
