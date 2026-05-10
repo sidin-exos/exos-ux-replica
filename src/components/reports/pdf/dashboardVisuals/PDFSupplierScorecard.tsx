@@ -9,11 +9,27 @@ const getScoreColor = (score: number, c: ReturnType<typeof getPdfColors>): strin
 };
 
 const getTrendSymbol = (trend: string): string => {
-  switch (trend) { case "up": return "▲"; case "down": return "▼"; default: return "►"; }
+  switch (trend) { case "up": return "↑"; case "down": return "↓"; default: return "→"; }
 };
 
 const getTrendColor = (trend: string, c: ReturnType<typeof getPdfColors>): string => {
   switch (trend) { case "up": return c.success; case "down": return c.destructive; default: return c.textMuted; }
+};
+
+const parseSpend = (s: string): { value: number; currency: string } => {
+  const m = String(s || "").match(/([^\d.,\s-]+)?\s*([\d.,]+)\s*([kKmMbB])?/);
+  if (!m) return { value: 0, currency: "$" };
+  const currency = m[1] || "$";
+  const num = parseFloat(m[2].replace(/,/g, "")) || 0;
+  const mult = m[3]?.toLowerCase() === "k" ? 1_000 : m[3]?.toLowerCase() === "m" ? 1_000_000 : m[3]?.toLowerCase() === "b" ? 1_000_000_000 : 1;
+  return { value: num * mult, currency };
+};
+
+const formatSpend = (v: number, currency: string): string => {
+  if (v >= 1_000_000_000) return `${currency}${(v / 1_000_000_000).toFixed(1)}B`;
+  if (v >= 1_000_000) return `${currency}${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${currency}${(v / 1_000).toFixed(0)}k`;
+  return `${currency}${v.toFixed(0)}`;
 };
 
 function buildTableStyles(c: ReturnType<typeof getPdfColors>) {
