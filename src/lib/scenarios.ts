@@ -64,6 +64,8 @@ export interface Scenario {
   outputs: string[];
   strategySelector?: StrategyPresetType;
   deviationType?: 0 | 1 | '1H' | 2;
+  /** When true, scenario is only visible to admins (org admins or super admins). */
+  hiddenForNonAdmins?: boolean;
   dataRequirements?: {
     title: string;
     sections: { heading: string; description: string }[];
@@ -71,6 +73,13 @@ export interface Scenario {
   scenario_id: string;
   group: 'A' | 'B' | 'C' | 'D' | 'E';
 }
+
+/** Filter helper: hides scenarios marked hiddenForNonAdmins from non-admin users. */
+export const filterVisibleScenarios = <T extends { hiddenForNonAdmins?: boolean }>(
+  list: T[],
+  isAdmin: boolean,
+): T[] => (isAdmin ? list : list.filter((s) => !s.hiddenForNonAdmins));
+
 
 export const scenarios: Scenario[] = [
   // ═══════════════════════════════════════════════════════
@@ -423,7 +432,8 @@ export const scenarios: Scenario[] = [
     tags: ["Micro-Purchase", "Compliance", "Fast-Track"],
     previewDescription: "Fast-track low-value purchases without bypassing compliance. The AI assesses your micro-purchase against procurement policy thresholds, recommends the fastest compliant route (direct buy, mini-RFQ, or catalogue order), and generates the necessary documentation. Tail spend represents 20% of addressable spend with 80% of supplier relationships — poorly managed, it multiplies transaction costs disproportionately.",
     icon: ShoppingCart,
-    status: "coming-soon",
+    status: "available",
+    hiddenForNonAdmins: true,
     category: "planning",
     strategySelector: "speedVsQuality",
     deviationType: 0,
@@ -896,7 +906,8 @@ export const scenarios: Scenario[] = [
     tags: ["Supplier Ratio", "Volume Discount", "Dual-Source"],
     previewDescription: "Model optimal supplier ratios for maximum volume leverage with minimum supply risk. The AI analyses your current spend distribution, calculates consolidation savings at different split ratios (single-source, dual 70/30, triple 80/10/10), and factors in logistics costs, capacity constraints, and contract timelines. A dual-source 70/30 split achieves 90% of volume discount benefits while retaining full supply continuity.",
     icon: Layers,
-    status: "coming-soon",
+    status: "available",
+    hiddenForNonAdmins: true,
     category: "analysis",
     strategySelector: "riskAppetite",
     deviationType: 1,
