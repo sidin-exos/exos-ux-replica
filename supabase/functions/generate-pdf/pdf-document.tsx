@@ -11,6 +11,11 @@ import {
   StyleSheet,
   Link,
   Font,
+  Svg,
+  Defs,
+  LinearGradient,
+  Stop,
+  Polygon,
   renderToBuffer,
 } from "npm:@react-pdf/renderer@4";
 
@@ -34,6 +39,13 @@ function ensureInterRegistered() {
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-italic.ttf", fontWeight: 500, fontStyle: "italic" },
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-italic.ttf", fontWeight: 600, fontStyle: "italic" },
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-italic.ttf", fontWeight: 700, fontStyle: "italic" },
+      ],
+    });
+    Font.register({
+      family: "Space Grotesk",
+      fonts: [
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-500-normal.ttf", fontWeight: 500 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-700-normal.ttf", fontWeight: 700 },
       ],
     });
     Font.registerHyphenationCallback((word: string) => [word]);
