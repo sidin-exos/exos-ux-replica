@@ -17,7 +17,7 @@ interface ScenarioPreviewPanelProps {
 
 const ScenarioPreviewPanel = ({ scenario, activeCategory }: ScenarioPreviewPanelProps) => {
   const categoryScenarioCount = activeCategory
-    ? scenarios.filter((s) => s.category === activeCategory).length
+    ? filterVisibleScenarios(scenarios).filter((s) => s.category === activeCategory).length
     : 0;
 
   return (
