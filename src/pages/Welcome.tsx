@@ -424,15 +424,6 @@ const Welcome = () => {
             <blockquote className="text-lg md:text-xl text-foreground italic leading-relaxed">
               "EXOS didn't just give us another dashboard. They gave us a new way to see our supply chain architecture. The AI-driven insights have transformed our procurement team from a back-office function to a strategic powerhouse."
             </blockquote>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-primary" />
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-foreground">Elena Rodriguez</p>
-                <p className="text-xs text-muted-foreground">Chief Procurement Officer, Global Logistics Corp.</p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
