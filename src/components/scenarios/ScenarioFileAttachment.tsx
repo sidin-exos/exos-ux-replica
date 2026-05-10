@@ -63,8 +63,7 @@ const ScenarioFileAttachment = ({
     setPage(0);
   }, [debouncedSearch, fileType]);
 
-  if (isLoading && !hasActiveFilters) return null;
-  if (!isLoading && files.length === 0 && !hasActiveFilters) return null;
+  const hasNoFiles = !isLoading && files.length === 0 && !hasActiveFilters;
 
   const toggleFile = (fileId: string) => {
     if (selectedFileIds.includes(fileId)) {
