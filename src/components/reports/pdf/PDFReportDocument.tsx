@@ -37,6 +37,13 @@ function ensureInterRegistered() {
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf", fontWeight: 700 },
       ],
     });
+    Font.register({
+      family: "Space Grotesk",
+      fonts: [
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-500-normal.ttf", fontWeight: 500 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-700-normal.ttf", fontWeight: 700 },
+      ],
+    });
     // Disable hyphenation which can also produce odd word-break artefacts
     Font.registerHyphenationCallback((word) => [word]);
     interFontRegistered = true;
