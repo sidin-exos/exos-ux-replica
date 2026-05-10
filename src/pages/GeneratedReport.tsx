@@ -290,7 +290,7 @@ const GeneratedReport = () => {
           >
             {/* Executive Summary */}
             <Card className="card-elevated border-t-2 border-t-primary/60">
-              <CardHeader className="bg-primary/[0.03] rounded-t-lg">
+              <CardHeader className="bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
                 <CardTitle className="font-display text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                   <Target className="w-6 h-6 text-primary" />
                   Executive Summary
