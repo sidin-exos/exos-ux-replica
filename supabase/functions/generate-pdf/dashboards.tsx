@@ -1169,7 +1169,7 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
   const npvSpread = allNonPositive
     ? Math.abs(worst.npv) - Math.abs(preferred.npv)
     : preferred.npv - worst.npv;
-  const maxAbs = Math.max(1, ...options.map(o => Math.abs(o.npv)));
+  
 
   return (
     <View style={styles.dashboardCard}>
