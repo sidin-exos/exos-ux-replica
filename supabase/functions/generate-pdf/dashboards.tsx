@@ -1169,7 +1169,7 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
   const npvSpread = allNonPositive
     ? Math.abs(worst.npv) - Math.abs(preferred.npv)
     : preferred.npv - worst.npv;
-  const maxAbs = Math.max(1, ...options.map(o => Math.abs(o.npv)));
+  
 
   return (
     <View style={styles.dashboardCard}>
@@ -1185,58 +1185,85 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
         </View>
       </View>
 
-      <View style={{ marginTop: 8, marginBottom: 8 }}>
-        {options.map((opt, i) => {
-          const isPreferred = opt.id === preferred.id;
-          const widthPct = (Math.abs(opt.npv) / maxAbs) * 100;
-          // In cost-mode (all negatives), preferred = least-bad → primary; others muted.
-          // Otherwise: positive = option color, negative non-preferred = destructive.
-          const barColor = isPreferred
-            ? (opt.color || colors.primary)
-            : (opt.npv >= 0 ? (opt.color || colors.primary) : colors.destructive);
-          return (
-            <View key={i} style={{ marginBottom: 6 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <View style={{ width: 9, height: 9, backgroundColor: opt.color || colors.primary, marginRight: 6 }} />
-                  <Text style={{ fontSize: 10, color: colors.text, fontFamily: "Inter", fontWeight: isPreferred ? 700 : 400 }}>{opt.name}</Text>
-                  {isPreferred && (
-                    <View style={{ marginLeft: 6, paddingHorizontal: 4, paddingVertical: 1, backgroundColor: colors.primary }}>
-                      <Text style={{ fontSize: 7, color: colors.textOnPrimary, fontFamily: "Inter", fontWeight: 700 }}>CFO PICK</Text>
+      {/* Per-option component breakdown bars (mirrors web PDFNPVWaterfall) */}
+      {(() => {
+        const maxBar = Math.max(
+          1,
+          ...options.flatMap(o => [
+            o.capexNominal || 0,
+            o.opexNominal || 0,
+            o.residualValue || 0,
+            Math.abs(o.npv || 0),
+          ])
+        );
+        return (
+          <View style={{ marginTop: 6 }}>
+            {options.map((opt, i) => {
+              const isPreferred = opt.id === preferred.id;
+              const components: { label: string; value: number; type: "cost" | "credit" | "result" }[] = [
+                { label: "CAPEX (nominal)", value: opt.capexNominal || 0, type: "cost" },
+                { label: "OPEX (nominal)", value: opt.opexNominal || 0, type: "cost" },
+                ...((opt.residualValue || 0) > 0
+                  ? [{ label: "Residual value", value: opt.residualValue || 0, type: "credit" as const }]
+                  : []),
+                { label: "NPV (signed)", value: opt.npv || 0, type: "result" as const },
+              ];
+              return (
+                <View
+                  key={i}
+                  style={{ borderWidth: 1, borderColor: colors.border, padding: 6, marginBottom: 6 }}
+                  wrap={false}
+                >
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <View style={{ width: 8, height: 8, backgroundColor: opt.color || colors.primary, marginRight: 4 }} />
+                      <Text style={{ fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: colors.text }}>{opt.name}</Text>
+                      {isPreferred && (
+                        <View style={{ marginLeft: 6, paddingHorizontal: 4, paddingVertical: 1, backgroundColor: colors.primary }}>
+                          <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: colors.textOnPrimary }}>CFO PICK</Text>
+                        </View>
+                      )}
                     </View>
-                  )}
-                </View>
-                <Text style={{ fontSize: 10, color: barColor, fontFamily: "Inter", fontWeight: 700 }}>{formatCurrency(opt.npv, currency)}</Text>
-              </View>
-              <View style={{ height: 12, backgroundColor: colors.surfaceLight, overflow: "hidden" }}>
-                <View style={{ height: 12, backgroundColor: barColor, width: `${widthPct}%` }} />
-              </View>
-            </View>
-          );
-        })}
-      </View>
+                    <View style={{ flexDirection: "row" }}>
+                      {opt.breakEvenYear != null && (
+                        <Text style={{ fontSize: 8, color: colors.textMuted, marginLeft: 8 }}>Break-even Y{opt.breakEvenYear}</Text>
+                      )}
+                      {opt.ifrsOnBalanceSheet != null && (
+                        <Text style={{ fontSize: 8, color: colors.textMuted, marginLeft: 8 }}>
+                          {opt.ifrsOnBalanceSheet ? "On balance sheet" : "Off balance sheet"}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
 
-      <View style={styles.matrixContainer}>
-        <View style={[styles.matrixRow, styles.matrixHeader]}>
-          <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Option</Text>
-          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Capex</Text>
-          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Opex</Text>
-          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Residual</Text>
-          <Text style={[styles.matrixCell, { color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Break-even</Text>
-        </View>
-        {options.map((opt, i) => (
-          <View key={i} style={[styles.matrixRow, opt.id === preferred.id ? { borderLeftWidth: 4, borderLeftColor: colors.success } : (i % 2 === 1 ? { backgroundColor: colors.surface } : {})]}>
-            <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.4, flexDirection: "row", alignItems: "center" }]}>
-              <View style={{ width: 7, height: 7, backgroundColor: opt.color || colors.primary, marginRight: 4 }} />
-              <Text style={{ fontSize: 9, color: colors.text }}>{opt.name}</Text>
-            </View>
-            <Text style={[styles.matrixCell, { fontSize: 9 }]}>{formatCurrency(opt.capexNominal || 0, currency)}</Text>
-            <Text style={[styles.matrixCell, { fontSize: 9 }]}>{formatCurrency(opt.opexNominal || 0, currency)}</Text>
-            <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.residualValue ? formatCurrency(opt.residualValue, currency) : "—"}</Text>
-            <Text style={[styles.matrixCell, { fontSize: 9 }]}>{opt.breakEvenYear != null ? `Year ${opt.breakEvenYear}` : "—"}</Text>
+                  {components.map((c) => {
+                    const width = Math.max(2, (Math.abs(c.value) / maxBar) * 100);
+                    const fill =
+                      c.type === "credit"
+                        ? colors.success
+                        : c.type === "result"
+                          ? c.value < 0
+                            ? colors.destructive
+                            : (opt.color || colors.primary)
+                          : (opt.color || colors.primary);
+                    return (
+                      <View key={c.label} style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
+                        <Text style={{ width: 90, fontSize: 8, color: colors.textMuted }}>{c.label}</Text>
+                        <View style={{ flex: 1, height: 7, backgroundColor: colors.surfaceLight, overflow: "hidden" }}>
+                          <View style={{ width: `${width}%`, height: 7, backgroundColor: fill, opacity: c.type === "result" ? 1 : 0.75 }} />
+                        </View>
+                        <Text style={{ width: 64, textAlign: "right", fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: colors.text, marginLeft: 4 }}>
+                          {c.type === "credit" ? "−" : ""}{formatCurrency(Math.abs(c.value), currency)}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              );
+            })}
           </View>
-        ))}
-      </View>
+        );
+      })()}
 
       {(data.verdict || data.cashFlowRationale || preferred) && (
         <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
