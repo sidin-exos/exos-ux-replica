@@ -185,6 +185,30 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
       const data = parsedData?.rfpPackage;
       return data ? <PDFRfpPackage data={data} themeMode={themeMode} /> : placeholder();
     }
+    case "should-cost-gap": {
+      const data = parsedData?.shouldCostGap;
+      return data ? <PDFShouldCostGap data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "savings-realization-funnel": {
+      const data = parsedData?.savingsRealizationFunnel;
+      return data ? <PDFSavingsRealizationFunnel data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "working-capital-dpo": {
+      const data = parsedData?.workingCapitalDpo;
+      return data ? <PDFWorkingCapitalDpo data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "supplier-concentration-map": {
+      const data = parsedData?.supplierConcentrationMap;
+      return data ? <PDFSupplierConcentrationMap data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "npv-waterfall": {
+      const data = parsedData?.npvWaterfall;
+      return data ? <PDFNPVWaterfall data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "ifrs16-impact": {
+      const data = parsedData?.ifrs16Impact;
+      return data ? <PDFIFRS16Impact data={data} themeMode={themeMode} /> : placeholder();
+    }
     default: {
       const config = dashboardConfigs[dashboardType as DashboardType];
       return <PDFDashboardPlaceholder name={config?.name || String(dashboardType)} themeMode={themeMode} />;
