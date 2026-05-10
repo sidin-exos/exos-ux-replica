@@ -587,7 +587,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
         </View>
       </View>
       <View style={{ marginTop: 8 }}>
-        <Text style={{ fontSize: 8, color: colors.textMuted, marginBottom: 4, textAlign: "left" }}>Business impact (high) ↑</Text>
+        <Text style={{ fontSize: 8, color: colors.textMuted, marginBottom: 4, textAlign: "left" }}>Business impact (high) ▲</Text>
         <View style={styles.quadrantGrid}>
           <View style={styles.quadrantRow}>
             {renderQuadrant("strategic", false, false)}
