@@ -146,7 +146,7 @@ const RiskPlatform = () => {
           <Card className="lg:col-span-2 border-border/50 bg-card">
             <CardContent className="pt-5 pb-5">
               <Tabs defaultValue="DM-1" orientation="vertical" className="w-full flex flex-col sm:flex-row gap-5">
-                <TabsList className="flex sm:flex-col h-auto w-full sm:w-48 shrink-0 gap-1 bg-transparent p-0 justify-start">
+                <TabsList className="grid grid-cols-2 sm:flex sm:flex-col h-auto w-full sm:w-48 shrink-0 gap-1 bg-transparent p-0 sm:justify-start">
                   {(Object.entries(MONITOR_TYPE_META) as [MonitorType, typeof MONITOR_TYPE_META[MonitorType]][]).map(([key, meta]) => (
                     <TabsTrigger
                       key={key}
