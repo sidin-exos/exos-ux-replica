@@ -117,6 +117,24 @@ const ScenarioFileAttachment = ({
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="mt-3 border border-border rounded-lg p-4 bg-muted/30 space-y-2">
+          {hasNoFiles ? (
+            <div className="flex flex-col items-center text-center gap-3 py-4">
+              <FolderOpen className="w-8 h-8 text-muted-foreground" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">No files in your account yet</p>
+                <p className="text-xs text-muted-foreground max-w-xs">
+                  Upload spreadsheets, PDFs, or Word documents in the Files Manager, then return here to attach them as analysis context.
+                </p>
+              </div>
+              <Button asChild size="sm" variant="outline" className="gap-2">
+                <Link to="/account?tab=files" target="_blank" rel="noopener noreferrer">
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  Open Files Manager
+                </Link>
+              </Button>
+            </div>
+          ) : (
+          <>
           <p className="text-xs text-muted-foreground mb-3">
             Select files from your account to include as context for this analysis.
           </p>
