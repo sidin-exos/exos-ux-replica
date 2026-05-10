@@ -109,6 +109,12 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "negotiation-prep": "negotiationPrep",
   "data-quality": "dataQuality",
   "rfp-package": "rfpPackage",
+  "should-cost-gap": "shouldCostGap",
+  "savings-realization-funnel": "savingsRealizationFunnel",
+  "working-capital-dpo": "workingCapitalDpo",
+  "supplier-concentration-map": "supplierConcentrationMap",
+  "npv-waterfall": "npvWaterfall",
+  "ifrs16-impact": "ifrs16Impact",
 };
 
 /** Render a single dashboard by type */
