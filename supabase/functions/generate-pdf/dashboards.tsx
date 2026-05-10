@@ -731,10 +731,10 @@ export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; the
                 </View>
                 <Text style={{ fontSize: 10, color: colors.text, fontFamily: "Inter", fontWeight: 700 }}>{formatCurrency(tier.totalCost)}</Text>
               </View>
-              <View style={{ height: 16, backgroundColor: colors.surfaceLight, overflow: "hidden", position: "relative" }}>
-                <View style={{ height: 16, backgroundColor: tier.color, width: `${barWidth}%` }} />
-                <Text style={{ position: "absolute", left: 6, top: 3, fontSize: 9, color: colors.background, fontFamily: "Inter", fontWeight: 700 }}>{formatCurrency(tier.costPerUser, data.currency || "$")}/user</Text>
+              <View style={{ height: 10, backgroundColor: colors.surfaceLight, overflow: "hidden" }}>
+                <View style={{ height: 10, backgroundColor: tier.color, width: `${barWidth}%` }} />
               </View>
+              <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{formatCurrency(tier.costPerUser, data.currency || "$")}/user</Text>
               {userDiff !== 0 && (
                 <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
                   <View style={{ paddingHorizontal: 4, paddingVertical: 1, borderWidth: 1, borderColor: userDiff > 0 ? colors.primary : colors.warning, marginRight: 4 }}>
