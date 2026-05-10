@@ -646,9 +646,12 @@ Populate scenario_specific based on the scenario, using the structures below ver
     "value_creation": [
       { "opportunity": null, "buyer_benefit": null, "supplier_benefit": null }
     ],
-    "risk_register": [
-      { "risk": null, "likelihood": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": null }
-    ],
+    "strategy_playbook": {
+      "situation_read": null,
+      "recommended_approach": "COLLABORATIVE | COMPETITIVE | ACCOMMODATIVE | COMPROMISING",
+      "approach_rationale": null,
+      "key_moves": []
+    },
     "leverage_analysis": {
       "buyer_leverage_factors": [],
       "supplier_leverage_factors": [],
