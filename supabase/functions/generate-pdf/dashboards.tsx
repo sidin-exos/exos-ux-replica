@@ -562,7 +562,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
     return (
       <View style={cellStyles}>
         <Text style={[styles.quadrantLabel, { color: info.color, fontFamily: "Inter", fontWeight: 700 }]}>{info.label}</Text>
-        <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{quadrantItems.length} items</Text>
+        <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{quadrantItems.length} item{quadrantItems.length === 1 ? "" : "s"}</Text>
         {quadrantItems.slice(0, 2).map((item, idx) => (
           <View key={idx} style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
             <View style={{ width: 5, height: 5, backgroundColor: info.color, marginRight: 3 }} />
