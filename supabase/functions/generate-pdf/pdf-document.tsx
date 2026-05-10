@@ -289,14 +289,14 @@ function buildStyles(c: PdfColorSet) {
     footerText: { fontSize: 8, color: c.textMuted },
     verticalLabel: { position: "absolute", top: "45%", left: 10, transform: "rotate(-90deg)", fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: c.textMuted, textTransform: "uppercase", letterSpacing: 2 },
     // Branded cover band (Option B v3)
-    coverBand: { position: "absolute", top: 0, left: 0, right: 0, height: 150, backgroundColor: "#0C1D2E", paddingHorizontal: SP.pageSideMargin, paddingTop: 18, paddingBottom: 14 },
-    coverBandAccent: { position: "absolute", left: 0, right: 0, bottom: 0, height: 3, backgroundColor: "#19A49C" },
-    coverBandWordmark: { fontFamily: "Space Grotesk", fontWeight: 700, fontSize: 20, color: "#FFFFFF", letterSpacing: 1 },
-    coverBandDivider: { width: 1, height: 18, backgroundColor: "#FFFFFF", opacity: 0.35, marginHorizontal: 10 },
-    coverBandSubtitle: { fontFamily: "Inter", fontWeight: 600, fontSize: 9, color: "#DCEBF0", letterSpacing: 0.3 },
-    coverBandEyebrow: { fontFamily: "Inter", fontWeight: 700, fontSize: 7.5, color: "#47DDD4", textTransform: "uppercase", letterSpacing: 1.2, marginTop: 12 },
-    coverBandTitle: { fontFamily: "Space Grotesk", fontWeight: 700, fontSize: 20, color: "#FFFFFF", marginTop: 6, lineHeight: 1.15 },
-    coverBandMeta: { fontFamily: "Inter", fontWeight: 400, fontSize: 8, color: "#BED2DA", marginTop: 10 },
+    coverBand: { position: "absolute", top: 0, left: 0, right: 0, height: 150, backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border, paddingHorizontal: SP.pageSideMargin, paddingTop: 18, paddingBottom: 14 },
+    coverBandAccent: { position: "absolute", left: 0, right: 0, bottom: 0, height: 3, backgroundColor: c.primary },
+    coverBandWordmark: { fontFamily: "Space Grotesk", fontWeight: 700, fontSize: 20, color: c.text, letterSpacing: 1 },
+    coverBandDivider: { width: 1, height: 18, backgroundColor: c.border, marginHorizontal: 10 },
+    coverBandSubtitle: { fontFamily: "Inter", fontWeight: 600, fontSize: 9, color: c.textMuted, letterSpacing: 0.3 },
+    coverBandEyebrow: { fontFamily: "Inter", fontWeight: 700, fontSize: 7.5, color: c.primary, textTransform: "uppercase", letterSpacing: 1.2, marginTop: 12 },
+    coverBandTitle: { fontFamily: "Space Grotesk", fontWeight: 700, fontSize: 20, color: c.text, marginTop: 6, lineHeight: 1.15 },
+    coverBandMeta: { fontFamily: "Inter", fontWeight: 400, fontSize: 8, color: c.textMuted, marginTop: 10 },
   });
 }
 
