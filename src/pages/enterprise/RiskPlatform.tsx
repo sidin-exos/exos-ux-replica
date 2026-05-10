@@ -67,7 +67,7 @@ const RiskPlatform = () => {
     ? 200
     : planPriceId && STARTER_PRICE_IDS.has(planPriceId)
     ? 100
-    : 10; // Free tier
+    : 30; // Free tier
 
   // Count reports generated this month
   const { data: reportsThisMonth = 0 } = useQuery({
