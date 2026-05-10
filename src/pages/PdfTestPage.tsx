@@ -401,9 +401,15 @@ const ALL_DASHBOARDS: DashboardType[] = [
   "working-capital-dpo",
 ];
 
+const DASHBOARD_BATCHES: DashboardType[][] = [
+  ALL_DASHBOARDS.slice(0, 7),
+  ALL_DASHBOARDS.slice(7, 14),
+  ALL_DASHBOARDS.slice(14),
+];
+
 const PdfTestPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
-  const [selected, setSelected] = useState<DashboardType[]>(ALL_DASHBOARDS);
+  const [selected, setSelected] = useState<DashboardType[]>(DASHBOARD_BATCHES[0]);
 
   const openWith = (dashboards: DashboardType[]) => {
     setSelected(dashboards);
@@ -417,8 +423,8 @@ const PdfTestPage = () => {
         <div className="max-w-2xl mx-auto text-center space-y-6">
           <h1 className="text-3xl font-bold text-foreground">PDF Formatting Test</h1>
           <p className="text-muted-foreground">
-            Generate a PDF preview against synthetic data. Use the full-set option to
-            stress-test design fidelity across every dashboard renderer.
+            Generate actual PDF previews against synthetic data. The full suite is
+            split into CPU-safe batches so every dashboard renderer can be inspected.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
@@ -426,15 +432,24 @@ const PdfTestPage = () => {
               <FileText className="w-5 h-5" />
               Compact (2 dashboards)
             </Button>
-            <Button size="lg" className="gap-2" onClick={() => openWith(ALL_DASHBOARDS)}>
+            <Button size="lg" className="gap-2" onClick={() => openWith(DASHBOARD_BATCHES[0])}>
               <Layers className="w-5 h-5" />
-              Full set ({ALL_DASHBOARDS.length} dashboards)
+              Batch 1 ({DASHBOARD_BATCHES[0].length})
             </Button>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            {DASHBOARD_BATCHES.map((batch, index) => (
+              <Button key={index} variant="secondary" className="gap-2" onClick={() => openWith(batch)}>
+                <Layers className="w-4 h-4" />
+                Batch {index + 1} ({batch.length})
+              </Button>
+            ))}
+          </div>
+
           <p className="text-xs text-muted-foreground pt-2">
-            Synthetic scenario — not tied to any real engagement. Use to inspect cover band,
-            executive summary, dashboard pages, and footer behaviour.
+            Synthetic scenario — not tied to any real engagement. Open each batch to
+            inspect all {ALL_DASHBOARDS.length} dashboards without exhausting edge compute.
           </p>
         </div>
       </main>
