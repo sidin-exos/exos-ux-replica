@@ -6,6 +6,11 @@ import {
   StyleSheet,
   Link,
   Font,
+  Svg,
+  Polygon,
+  Defs,
+  LinearGradient,
+  Stop,
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
@@ -30,6 +35,13 @@ function ensureInterRegistered() {
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.ttf", fontWeight: 500 },
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.ttf", fontWeight: 600 },
         { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf", fontWeight: 700 },
+      ],
+    });
+    Font.register({
+      family: "Space Grotesk",
+      fonts: [
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-500-normal.ttf", fontWeight: 500 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-700-normal.ttf", fontWeight: 700 },
       ],
     });
     // Disable hyphenation which can also produce odd word-break artefacts
@@ -293,6 +305,72 @@ function buildStyles(c: PdfColorSet) {
       fontSize: 11,
       fontFamily: "Inter", fontWeight: 700,
       color: c.text,
+    },
+
+    // ── Branded cover band (Option B v3) ──
+    coverBand: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 150,
+      backgroundColor: "#0C1D2E",
+      paddingHorizontal: SP.pageSideMargin,
+      paddingTop: 18,
+      paddingBottom: 14,
+    },
+    coverBandAccent: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 3,
+      backgroundColor: "#19A49C",
+    },
+    coverBandWordmark: {
+      fontFamily: "Space Grotesk",
+      fontWeight: 700,
+      fontSize: 20,
+      color: "#FFFFFF",
+      letterSpacing: 1,
+    },
+    coverBandDivider: {
+      width: 1,
+      height: 18,
+      backgroundColor: "#FFFFFF",
+      opacity: 0.35,
+      marginHorizontal: 10,
+    },
+    coverBandSubtitle: {
+      fontFamily: "Inter",
+      fontWeight: 600,
+      fontSize: 9,
+      color: "#DCEBF0",
+      letterSpacing: 0.3,
+    },
+    coverBandEyebrow: {
+      fontFamily: "Inter",
+      fontWeight: 700,
+      fontSize: 7.5,
+      color: "#47DDD4",
+      textTransform: "uppercase",
+      letterSpacing: 1.2,
+      marginTop: 12,
+    },
+    coverBandTitle: {
+      fontFamily: "Space Grotesk",
+      fontWeight: 700,
+      fontSize: 20,
+      color: "#FFFFFF",
+      marginTop: 6,
+      lineHeight: 1.15,
+    },
+    coverBandMeta: {
+      fontFamily: "Inter",
+      fontWeight: 400,
+      fontSize: 8,
+      color: "#BED2DA",
+      marginTop: 10,
     },
 
     // TOC box
@@ -923,6 +1001,67 @@ const BrandedHeaderBar = ({ scenarioLabel, dateStr, c }: { scenarioLabel: string
   );
 };
 
+// ── EXOS Mark (vector, mirrors src/assets/exos-mark-dark.svg) ──
+
+const ExosMark = ({ size = 38 }: { size?: number }) => {
+  const w = size;
+  const h = (size * 110) / 100;
+  return (
+    <Svg width={w} height={h} viewBox="0 0 100 110">
+      <Defs>
+        <LinearGradient id="exosTeal" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0%" stopColor="#2BB8AF" />
+          <Stop offset="100%" stopColor="#178A83" />
+        </LinearGradient>
+      </Defs>
+      <Polygon points="50,53 76,79 50,105 24,79" fill="#0A5550" />
+      <Polygon points="50,29 76,55 50,81 24,55" fill="url(#exosTeal)" />
+      <Polygon points="50,5 76,31 50,57 24,31" fill="none" stroke="#6DD5CC" strokeWidth={6} strokeLinejoin="round" />
+    </Svg>
+  );
+};
+
+// ── Branded Cover Band (Option B v3) ──
+
+const CoverBand = ({
+  scenarioLabel,
+  reportTitle,
+  dateStr,
+  reportHash,
+  c,
+}: {
+  scenarioLabel: string;
+  reportTitle: string;
+  dateStr: string;
+  reportHash: string;
+  c: PdfColorSet;
+}) => {
+  const s = buildStyles(c);
+  return (
+    <View style={s.coverBand}>
+      {/* Top row: mark + wordmark + subtitle */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <ExosMark size={42} />
+        <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}>
+          <Text style={s.coverBandWordmark}>EXOS</Text>
+          <View style={s.coverBandDivider} />
+          <Text style={s.coverBandSubtitle}>Procurement Analytical Platform</Text>
+        </View>
+      </View>
+
+      {/* Eyebrow + title + meta — offset to the right of the mark */}
+      <View style={{ marginLeft: 54 }}>
+        <Text style={s.coverBandEyebrow}>{scenarioLabel}</Text>
+        <Text style={s.coverBandTitle}>{reportTitle}</Text>
+        <Text style={s.coverBandMeta}>Confidential  ·  {dateStr}  ·  Report {reportHash}</Text>
+      </View>
+
+      {/* Bottom teal accent line */}
+      <View style={s.coverBandAccent} />
+    </View>
+  );
+};
+
 // ── Branded Footer ──
 
 const BrandedFooter = ({ dateStr, orgName, c }: { dateStr: string; orgName: string; c: PdfColorSet }) => {
@@ -1056,59 +1195,46 @@ const PDFReportDocument = ({
     <Document>
       {/* ── Page 1: Cover + Executive Summary (merged) ── */}
       <Page size="A4" style={s.page} id="section-executive-summary">
-        {/* Teal header bar with confidence badge */}
-        <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 10 }}>
-              EXOS · Confidential
-            </Text>
-            {structuredOutput && (
-              <View style={{ backgroundColor: confidenceBadgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: confidenceBadgeColor }}>
-                  {confidenceLevel.toUpperCase()} CONFIDENCE
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>
-              {structuredOutput?.export_metadata?.generated_at
-                ? `Generated ${new Date(structuredOutput.export_metadata.generated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`
-                : `Prepared for EXOS · ${formattedDate}`}
-            </Text>
-          </View>
-        </View>
+        {/* Branded cover band (Option B v3) */}
+        <CoverBand
+          scenarioLabel={scenarioLabel}
+          reportTitle={reportTitle}
+          dateStr={formattedDate}
+          reportHash={reportHash}
+          c={c}
+        />
 
-        {/* Confidence guidance note */}
+        {/* Confidence badge — overlaid in top-right of band */}
+        {structuredOutput && (
+          <View style={{ position: "absolute", top: 22, right: SP.pageSideMargin, backgroundColor: confidenceBadgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+            <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: confidenceBadgeColor }}>
+              {confidenceLevel.toUpperCase()} CONFIDENCE
+            </Text>
+          </View>
+        )}
+
+        {/* Confidence guidance note — pushed below band */}
         {hasLowConfidenceWatermark && (
-          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+          <View style={{ position: "absolute", top: 158, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
             <Text style={{ fontSize: 8, color: "#856404", fontFamily: "Inter", fontWeight: 700 }}>
               This analysis is indicative — see improvement tips below
             </Text>
           </View>
         )}
         {!hasLowConfidenceWatermark && confidenceLevel === "Medium" && (
-          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+          <View style={{ position: "absolute", top: 158, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
             <Text style={{ fontSize: 8, color: "#1b4b47", fontFamily: "Inter", fontWeight: 700 }}>
               Good analysis — a few additions would sharpen the results
             </Text>
           </View>
         )}
 
-        {/* Left teal stripe */}
-        <View style={s.coverLeftStripe} />
+        {/* Push content below the 150pt band (page already has 52pt top padding) */}
+        <View style={{ height: 110 }} />
 
-        <View style={s.coverSpacer} />
-
-        {/* Title */}
-        <Text style={s.coverTitle}>{reportTitle}</Text>
-
-        {/* Divider */}
-        <View style={s.coverDivider} />
-
-        {/* Key Findings */}
+        {/* Executive Summary */}
         <View style={s.sectionTitleWrapperCompact}>
-          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Key Findings</Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text>
           <View style={s.sectionTitleLine} />
         </View>
 
