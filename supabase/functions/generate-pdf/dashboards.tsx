@@ -993,9 +993,14 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
   if (!data.sequence?.length && !data.leveragePoints?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Negotiation Prep: insufficient data</Text></View>;
   const steps = data.sequence ? data.sequence.map((s, i) => ({ label: s.step, meta: "", details: s.detail, status: i === 0 ? "complete" : i === 1 ? "active" : "upcoming" })) : [];
   const rawStrength = Number(data.batna?.strength ?? 0);
-  const strength05 = rawStrength > 5 ? Math.max(0, Math.min(5, rawStrength / 20)) : Math.max(0, Math.min(5, rawStrength));
+  // Normalize to 0–10 scale: accept inputs in 0–1, 0–5, or 0–10 ranges.
+  const strength10 = rawStrength <= 1
+    ? Math.round(rawStrength * 10 * 10) / 10
+    : rawStrength <= 5
+      ? Math.round(rawStrength * 2 * 10) / 10
+      : Math.max(0, Math.min(10, Math.round(rawStrength * 10) / 10));
   const keyMetrics = [
-    { label: "BATNA Score", value: `${strength05.toFixed(1).replace(/\.0$/, '')}/5` },
+    { label: "BATNA Score", value: `${strength10.toFixed(1).replace(/\.0$/, '')}/10` },
     { label: "Leverage", value: data.leveragePoints?.[0]?.point || "—" },
     { label: "Supplier Power", value: data.leveragePoints?.[1]?.point || "—" },
   ];
