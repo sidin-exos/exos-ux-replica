@@ -74,11 +74,15 @@ export interface Scenario {
   group: 'A' | 'B' | 'C' | 'D' | 'E';
 }
 
-/** Filter helper: hides scenarios marked hiddenForNonAdmins from non-admin users. */
+/**
+ * Filter helper: hides scenarios marked hiddenForNonAdmins from every user
+ * (including admins). The flag is kept for backward compatibility with the
+ * scenario definitions, but the filter no longer surfaces them anywhere.
+ */
 export const filterVisibleScenarios = <T extends { hiddenForNonAdmins?: boolean }>(
   list: T[],
-  isAdmin: boolean,
-): T[] => (isAdmin ? list : list.filter((s) => !s.hiddenForNonAdmins));
+  _isAdmin?: boolean,
+): T[] => list.filter((s) => !s.hiddenForNonAdmins);
 
 
 export const scenarios: Scenario[] = [
