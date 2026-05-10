@@ -219,14 +219,28 @@ const GeneratedReport = () => {
       <Header />
 
       <main className="container py-8 relative">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Analysis
-        </button>
+        {/* Back + Refine actions */}
+        <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Analysis
+          </button>
+          {!isSharedView && scenarioId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/analyse/${scenarioId}`)}
+              className="gap-2"
+              title="Open the wizard with your previous inputs preserved so you can refine them and re-run the analysis."
+            >
+              <Pencil className="w-4 h-4" />
+              Refine inputs &amp; re-run
+            </Button>
+          )}
+        </div>
 
         {/* Report Header */}
         <motion.div
