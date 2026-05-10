@@ -844,8 +844,22 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const getScColor = (score: number): string => { if (score >= 85) return colors.success; if (score >= 70) return colors.warning; return colors.destructive; };
-  const getTrendSymbol = (trend: string): string => { switch (trend) { case "up": return "▲"; case "down": return "▼"; default: return "►"; } };
+  const getTrendSymbol = (trend: string): string => { switch (trend) { case "up": return "↑"; case "down": return "↓"; default: return "→"; } };
   const getTrendColor = (trend: string): string => { switch (trend) { case "up": return colors.success; case "down": return colors.destructive; default: return colors.textMuted; } };
+  const parseSpend = (s: string): number => {
+    if (!s) return 0;
+    const m = String(s).replace(/[,\s]/g, "").match(/([\d.]+)\s*([kmbKMB]?)/);
+    if (!m) return 0;
+    const n = parseFloat(m[1]);
+    const mult = ({ k: 1e3, m: 1e6, b: 1e9 } as Record<string, number>)[m[2].toLowerCase()] || 1;
+    return n * mult;
+  };
+  const formatSpend = (n: number, sym: string): string => {
+    if (n >= 1e9) return `${sym}${(n / 1e9).toFixed(1)}B`;
+    if (n >= 1e6) return `${sym}${(n / 1e6).toFixed(1)}M`;
+    if (n >= 1e3) return `${sym}${(n / 1e3).toFixed(0)}k`;
+    return `${sym}${Math.round(n)}`;
+  };
   if (!data.suppliers?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Supplier Scorecard: insufficient data</Text></View>;
   const suppliers = data.suppliers.map(s => ({ name: s.name, score: s.score, trend: s.trend, spend: s.spend, category: "General" }));
   const avgScore = suppliers.length > 0 ? Math.round(suppliers.reduce((sum, s) => sum + s.score, 0) / suppliers.length) : 0;
