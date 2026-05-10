@@ -23,14 +23,19 @@ import type {
 // ── Helpers ──
 
 const formatAmount = (value: number, currency: string = "$"): string => {
-  if (value >= 1_000_000) return `${currency} ${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1000) return `${currency} ${(value / 1000).toFixed(0)}K`;
-  return `${currency} ${value}`;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${currency} ${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1000) return `${sign}${currency} ${(abs / 1000).toFixed(0)}K`;
+  return `${sign}${currency} ${abs}`;
 };
 
 const formatCurrency = (value: number, currency: string = "$"): string => {
-  if (value >= 1000) return `${currency} ${(value / 1000).toFixed(0)}K`;
-  return `${currency} ${value}`;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${currency} ${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1000) return `${sign}${currency} ${(abs / 1000).toFixed(0)}K`;
+  return `${sign}${currency} ${abs}`;
 };
 
 // ══════════════════════════════════════════
@@ -173,6 +178,20 @@ export const PDFDecisionMatrix = ({ data, themeMode }: { data: DecisionMatrixDat
             <Text key={i} style={[styles.matrixCell, { fontFamily: "Inter", fontWeight: 700, fontSize: 11, color: opt.weighted === winner.weighted ? colors.primary : colors.text }]}>{opt.weighted}</Text>
           ))}
         </View>
+      </View>
+      {/* Standings */}
+      <View style={{ marginTop: 8, borderWidth: 1, borderColor: colors.border }}>
+        <View style={{ paddingHorizontal: 6, paddingVertical: 3, backgroundColor: colors.surfaceLight, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <Text style={{ fontSize: 8, fontFamily: "Inter", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase" }}>Standings</Text>
+        </View>
+        {[...matrixOptions].sort((a, b) => b.weighted - a.weighted).map((opt, i) => (
+          <View key={i} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 6, paddingVertical: 4, borderBottomWidth: i < matrixOptions.length - 1 ? 1 : 0, borderBottomColor: colors.border }}>
+            <Text style={{ width: 20, fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: i === 0 ? colors.primary : colors.textMuted }}>#{i + 1}</Text>
+            <View style={{ width: 7, height: 7, backgroundColor: opt.color, marginRight: 6 }} />
+            <Text style={{ flex: 1, fontSize: 10, color: colors.text, fontFamily: "Inter", fontWeight: i === 0 ? 700 : 400 }}>{opt.name}</Text>
+            <Text style={{ fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: i === 0 ? colors.primary : colors.text }}>{opt.weighted}</Text>
+          </View>
+        ))}
       </View>
       <View style={styles.legend}>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.primary }]} /><Text style={styles.legendText}>5 = Best</Text></View>
@@ -322,9 +341,10 @@ export const PDFActionChecklist = ({ data, themeMode }: { data: ActionChecklistD
       <View style={{ marginTop: 4 }}>
         {tasks.map((t, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "flex-start", marginBottom: 5, paddingBottom: 5, borderBottomWidth: i < tasks.length - 1 ? 1 : 0, borderBottomColor: colors.border }}>
-            <View style={{ width: 16, height: 16, backgroundColor: t.statusColor + "30", borderWidth: 2, borderColor: t.statusColor, marginRight: 8, marginTop: 1, justifyContent: "center", alignItems: "center" }}>
-              {t.status === "Done" && <Text style={{ fontSize: 9, color: t.statusColor, fontFamily: "Inter", fontWeight: 700 }}>✓</Text>}
-              {t.status === "Blocked" && <Text style={{ fontSize: 9, color: t.statusColor, fontFamily: "Inter", fontWeight: 700 }}>✗</Text>}
+            <View style={{ width: 16, height: 16, backgroundColor: t.status === "Done" ? t.statusColor : (t.status === "In Progress" ? t.statusColor : "transparent"), borderWidth: 1.5, borderColor: t.statusColor, marginRight: 8, marginTop: 1, justifyContent: "center", alignItems: "center" }}>
+              {t.status === "Done" && <Text style={{ fontSize: 10, color: colors.background, fontFamily: "Inter", fontWeight: 700, lineHeight: 1 }}>✓</Text>}
+              {t.status === "In Progress" && <Text style={{ fontSize: 10, color: colors.background, fontFamily: "Inter", fontWeight: 700, lineHeight: 1 }}>•</Text>}
+              {t.status === "Blocked" && <Text style={{ fontSize: 10, color: t.statusColor, fontFamily: "Inter", fontWeight: 700, lineHeight: 1 }}>✗</Text>}
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 9, color: colors.text }}>{t.task}</Text>
@@ -542,7 +562,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
     return (
       <View style={cellStyles}>
         <Text style={[styles.quadrantLabel, { color: info.color, fontFamily: "Inter", fontWeight: 700 }]}>{info.label}</Text>
-        <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{quadrantItems.length} items</Text>
+        <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{quadrantItems.length} item{quadrantItems.length === 1 ? "" : "s"}</Text>
         {quadrantItems.slice(0, 2).map((item, idx) => (
           <View key={idx} style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
             <View style={{ width: 5, height: 5, backgroundColor: info.color, marginRight: 3 }} />
@@ -566,23 +586,19 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
           <Text style={{ fontSize: 8, color: colors.textMuted }}>strategic items</Text>
         </View>
       </View>
-      <View style={{ marginTop: 8, flexDirection: "row" }}>
-        <View style={{ width: 28, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ fontSize: 8, color: colors.textMuted, transform: "rotate(-90deg)", width: 90, textAlign: "center" }}>Business impact (high)</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <View style={styles.quadrantGrid}>
-            <View style={styles.quadrantRow}>
-              {renderQuadrant("strategic", false, false)}
-              {renderQuadrant("bottleneck", true, false)}
-            </View>
-            <View style={styles.quadrantRow}>
-              {renderQuadrant("leverage", false, true)}
-              {renderQuadrant("noncritical", true, true)}
-            </View>
+      <View style={{ marginTop: 8 }}>
+        <Text style={{ fontSize: 8, color: colors.textMuted, marginBottom: 4, textAlign: "left" }}>↑ Business impact (high)</Text>
+        <View style={styles.quadrantGrid}>
+          <View style={styles.quadrantRow}>
+            {renderQuadrant("strategic", false, false)}
+            {renderQuadrant("bottleneck", true, false)}
           </View>
-          <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "center", marginTop: 4 }}>Supply risk (high) -&gt;</Text>
+          <View style={styles.quadrantRow}>
+            {renderQuadrant("leverage", false, true)}
+            {renderQuadrant("noncritical", true, true)}
+          </View>
         </View>
+        <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "right", marginTop: 4 }}>Supply risk (high) →</Text>
       </View>
       <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
         <Text style={{ fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
@@ -715,10 +731,10 @@ export const PDFLicenseTier = ({ data, themeMode }: { data: LicenseTierData; the
                 </View>
                 <Text style={{ fontSize: 10, color: colors.text, fontFamily: "Inter", fontWeight: 700 }}>{formatCurrency(tier.totalCost)}</Text>
               </View>
-              <View style={{ height: 16, backgroundColor: colors.surfaceLight, overflow: "hidden", position: "relative" }}>
-                <View style={{ height: 16, backgroundColor: tier.color, width: `${barWidth}%` }} />
-                <Text style={{ position: "absolute", left: 6, top: 3, fontSize: 9, color: colors.background, fontFamily: "Inter", fontWeight: 700 }}>{formatCurrency(tier.costPerUser, data.currency || "$")}/user</Text>
+              <View style={{ height: 10, backgroundColor: colors.surfaceLight, overflow: "hidden" }}>
+                <View style={{ height: 10, backgroundColor: tier.color, width: `${barWidth}%` }} />
               </View>
+              <Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>{formatCurrency(tier.costPerUser, data.currency || "$")}/user</Text>
               {userDiff !== 0 && (
                 <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
                   <View style={{ paddingHorizontal: 4, paddingVertical: 1, borderWidth: 1, borderColor: userDiff > 0 ? colors.primary : colors.warning, marginRight: 4 }}>
@@ -1173,7 +1189,11 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
         {options.map((opt, i) => {
           const isPreferred = opt.id === preferred.id;
           const widthPct = (Math.abs(opt.npv) / maxAbs) * 100;
-          const barColor = opt.npv >= 0 ? (opt.color || colors.primary) : colors.destructive;
+          // In cost-mode (all negatives), preferred = least-bad → primary; others muted.
+          // Otherwise: positive = option color, negative non-preferred = destructive.
+          const barColor = isPreferred
+            ? (opt.color || colors.primary)
+            : (opt.npv >= 0 ? (opt.color || colors.primary) : colors.destructive);
           return (
             <View key={i} style={{ marginBottom: 6 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
