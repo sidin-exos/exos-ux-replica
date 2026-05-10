@@ -300,32 +300,37 @@ function buildStyles(c: PdfColorSet) {
   });
 }
 
-// ── EXOS Mark (vector) ──
-const ExosMark = ({ size = 38 }: { size?: number }) => {
+// ── EXOS Mark (vector, theme-aware) ──
+const ExosMark = ({ size = 38, mode = "light" }: { size?: number; mode?: PdfThemeMode }) => {
   const w = size;
   const h = (size * 110) / 100;
+  const isDark = mode === "dark";
+  const baseFill = isDark ? "#0A5550" : "#122F47";
+  const gradStart = isDark ? "#2BB8AF" : "#47DDD4";
+  const gradEnd = isDark ? "#178A83" : "#19A49C";
+  const strokeColor = isDark ? "#6DD5CC" : "#0C1D2E";
   return (
     <Svg width={w} height={h} viewBox="0 0 100 110">
       <Defs>
         <LinearGradient id="exosTeal" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0%" stopColor="#2BB8AF" />
-          <Stop offset="100%" stopColor="#178A83" />
+          <Stop offset="0%" stopColor={gradStart} />
+          <Stop offset="100%" stopColor={gradEnd} />
         </LinearGradient>
       </Defs>
-      <Polygon points="50,53 76,79 50,105 24,79" fill="#0A5550" />
+      <Polygon points="50,53 76,79 50,105 24,79" fill={baseFill} />
       <Polygon points="50,29 76,55 50,81 24,55" fill="url(#exosTeal)" />
-      <Polygon points="50,5 76,31 50,57 24,31" fill="none" stroke="#6DD5CC" strokeWidth={6} strokeLinejoin="round" />
+      <Polygon points="50,5 76,31 50,57 24,31" fill="none" stroke={strokeColor} strokeWidth={6} strokeLinejoin="round" />
     </Svg>
   );
 };
 
-// ── Branded Cover Band (Option B v3) ──
-const CoverBand = ({ scenarioLabel, reportTitle, dateStr, reportHash, c }: { scenarioLabel: string; reportTitle: string; dateStr: string; reportHash: string; c: PdfColorSet }) => {
+// ── Branded Cover Band (theme-aware) ──
+const CoverBand = ({ scenarioLabel, reportTitle, dateStr, reportHash, c, mode = "light" }: { scenarioLabel: string; reportTitle: string; dateStr: string; reportHash: string; c: PdfColorSet; mode?: PdfThemeMode }) => {
   const s = buildStyles(c);
   return (
     <View style={s.coverBand}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <ExosMark size={42} />
+        <ExosMark size={42} mode={mode} />
         <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}>
           <Text style={s.coverBandWordmark}>EXOS</Text>
           <View style={s.coverBandDivider} />
