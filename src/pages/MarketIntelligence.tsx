@@ -181,18 +181,18 @@ const MarketIntelligence = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3 bg-muted/70 p-1">
-            <TabsTrigger value="queries" className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
-              <Search className="h-4 w-4" />
-              Ad-hoc Queries
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 h-auto bg-muted/70 p-1">
+            <TabsTrigger value="queries" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm whitespace-normal leading-tight py-2 sm:gap-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md">
+              <Search className="h-4 w-4 shrink-0" />
+              <span>Ad-hoc Queries</span>
             </TabsTrigger>
-            <TabsTrigger value="scheduled" className="flex items-center gap-2 data-[state=active]:bg-warning data-[state=active]:text-warning-foreground data-[state=active]:shadow-md">
-              <CalendarClock className="h-4 w-4" />
-              Scheduled Reports
+            <TabsTrigger value="scheduled" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm whitespace-normal leading-tight py-2 sm:gap-2 data-[state=active]:bg-warning data-[state=active]:text-warning-foreground data-[state=active]:shadow-md">
+              <CalendarClock className="h-4 w-4 shrink-0" />
+              <span>Scheduled Reports</span>
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-iris data-[state=active]:text-iris-foreground data-[state=active]:shadow-md">
-              <Database className="h-4 w-4" />
-              Knowledge Base
+            <TabsTrigger value="insights" className="flex items-center justify-center gap-1.5 text-xs sm:text-sm whitespace-normal leading-tight py-2 sm:gap-2 data-[state=active]:bg-iris data-[state=active]:text-iris-foreground data-[state=active]:shadow-md">
+              <Database className="h-4 w-4 shrink-0" />
+              <span>Knowledge Base</span>
             </TabsTrigger>
           </TabsList>
 
