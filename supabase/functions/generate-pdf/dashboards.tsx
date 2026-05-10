@@ -327,9 +327,10 @@ export const PDFActionChecklist = ({ data, themeMode }: { data: ActionChecklistD
       <View style={{ marginTop: 4 }}>
         {tasks.map((t, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "flex-start", marginBottom: 5, paddingBottom: 5, borderBottomWidth: i < tasks.length - 1 ? 1 : 0, borderBottomColor: colors.border }}>
-            <View style={{ width: 16, height: 16, backgroundColor: t.statusColor + "30", borderWidth: 2, borderColor: t.statusColor, marginRight: 8, marginTop: 1, justifyContent: "center", alignItems: "center" }}>
-              {t.status === "Done" && <Text style={{ fontSize: 9, color: t.statusColor, fontFamily: "Inter", fontWeight: 700 }}>✓</Text>}
-              {t.status === "Blocked" && <Text style={{ fontSize: 9, color: t.statusColor, fontFamily: "Inter", fontWeight: 700 }}>✗</Text>}
+            <View style={{ width: 16, height: 16, backgroundColor: t.status === "Done" ? t.statusColor : (t.status === "In Progress" ? t.statusColor : "transparent"), borderWidth: 1.5, borderColor: t.statusColor, marginRight: 8, marginTop: 1, justifyContent: "center", alignItems: "center" }}>
+              {t.status === "Done" && <Text style={{ fontSize: 10, color: colors.background, fontFamily: "Inter", fontWeight: 700, lineHeight: 1 }}>✓</Text>}
+              {t.status === "In Progress" && <Text style={{ fontSize: 10, color: colors.background, fontFamily: "Inter", fontWeight: 700, lineHeight: 1 }}>•</Text>}
+              {t.status === "Blocked" && <Text style={{ fontSize: 10, color: t.statusColor, fontFamily: "Inter", fontWeight: 700, lineHeight: 1 }}>✗</Text>}
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 9, color: colors.text }}>{t.task}</Text>
