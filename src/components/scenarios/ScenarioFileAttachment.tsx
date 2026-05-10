@@ -220,6 +220,8 @@ const ScenarioFileAttachment = ({
             totalCount={totalCount}
             onPageChange={setPage}
           />
+          </>
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>
