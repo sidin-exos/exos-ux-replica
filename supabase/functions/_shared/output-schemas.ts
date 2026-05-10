@@ -1597,14 +1597,28 @@ export function synthesizeMissingContent<T extends ExosOutputParsed | null | und
       };
     }
 
-    // 7) risk_register — guarantee 3 negotiation risks if empty
-    const rr: any[] = Array.isArray(ss.risk_register) ? ss.risk_register : [];
-    if (rr.filter(r => r && r.risk).length === 0) {
-      ss.risk_register = [
-        { risk: 'Supplier walks away after a hard anchor and forces an emergency switch.', likelihood: 'MEDIUM', impact: 'HIGH', mitigation: 'Pre-qualify the alternative supplier and validate lead time before opening price negotiation.' },
-        { risk: 'Internal stakeholders escalate to accept supplier terms under operational pressure.', likelihood: 'MEDIUM', impact: 'MEDIUM', mitigation: 'Pre-align the walk-away threshold and the BATNA with Finance, Legal and Operations before the first session.' },
-        { risk: 'Auto-renewal or volume-floor clauses survive the redline and erode the negotiated savings.', likelihood: 'MEDIUM', impact: 'MEDIUM', mitigation: 'Treat removal of auto-renewal and any volume floor as a MUST-HAVE redline; do not trade them for price.' },
-      ];
+    // 7) strategy_playbook — backfill from leverage + tactics when missing
+    const sp = (ss.strategy_playbook ?? {}) as Record<string, any>;
+    const hasSp = sp.situation_read || sp.approach_rationale || (Array.isArray(sp.key_moves) && sp.key_moves.length > 0);
+    if (!hasSp) {
+      const pb = String(lev.power_balance ?? '').toUpperCase();
+      const approach = pb === 'BUYER_ADVANTAGE' ? 'COMPETITIVE' : pb === 'SUPPLIER_ADVANTAGE' ? 'ACCOMMODATIVE' : 'COLLABORATIVE';
+      const tactics: any[] = Array.isArray(ss.negotiation_tactics) ? ss.negotiation_tactics : [];
+      const moves = tactics.slice(0, 5).map((t: any) => t?.title ? `${t.title}: ${t.description ?? ''}`.trim().replace(/:\s*$/, '') : String(t?.description ?? '')).filter(Boolean);
+      ss.strategy_playbook = {
+        situation_read: `Power balance reads as ${pb.replace(/_/g, ' ') || 'BALANCED'} with BATNA strength ${Number.isFinite(batnaStrength) ? batnaStrength + '%' : 'unquantified'}; ${buyerFactors.length} buyer leverage factor(s) versus ${supplierFactors.length} supplier factor(s).`,
+        recommended_approach: approach,
+        approach_rationale: approach === 'COMPETITIVE'
+          ? 'Buyer holds the stronger hand; press for price and terms concessions while keeping the relationship professional.'
+          : approach === 'ACCOMMODATIVE'
+          ? 'Supplier leverage is high; protect operational continuity and trade non-price concessions to preserve the relationship.'
+          : 'Power is balanced; expand the pie via joint value creation rather than zero-sum price moves.',
+        key_moves: moves.length > 0 ? moves : [
+          'Open with the buyer target anchored on a credible BATNA reference.',
+          'Use multi-issue trade-offs (term length, payment terms, volume) before discounting on unit price.',
+          'Hold the walk-away threshold internally and rehearse the exit script with the cross-functional team.',
+        ],
+      };
     }
 
     env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
