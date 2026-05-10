@@ -416,18 +416,6 @@ const Welcome = () => {
         </div>
       </section>
 
-      {/* ───── Testimonial ───── */}
-      <section className="bg-muted/30 py-16 md:py-20">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <Quote className="w-10 h-10 text-primary/30 mx-auto mb-6" />
-            <blockquote className="text-lg md:text-xl text-foreground italic leading-relaxed">
-              "EXOS didn't just give us another dashboard. They gave us a new way to see our supply chain architecture. The AI-driven insights have transformed our procurement team from a back-office function to a strategic powerhouse."
-            </blockquote>
-          </div>
-        </div>
-      </section>
-
       {/* ───── Bottom CTA ───── */}
       <section className="py-0">
         <div className="w-full" style={{ background: "var(--gradient-primary)" }}>
