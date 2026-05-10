@@ -1061,9 +1061,9 @@ const BrandedFooter = ({ dateStr, orgName, c }: { dateStr: string; orgName: stri
   const s = buildStyles(c);
   return (
     <View style={s.footer} fixed>
-      <Text style={s.footerText}>Confidential — {orgName}</Text>
+      <Text style={s.footerText} render={() => `Confidential — ${orgName}`} />
       <Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
-      <Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text>
+      <Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} />
     </View>
   );
 };
