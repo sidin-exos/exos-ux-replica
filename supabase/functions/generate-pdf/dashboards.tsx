@@ -23,14 +23,19 @@ import type {
 // ── Helpers ──
 
 const formatAmount = (value: number, currency: string = "$"): string => {
-  if (value >= 1_000_000) return `${currency} ${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1000) return `${currency} ${(value / 1000).toFixed(0)}K`;
-  return `${currency} ${value}`;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${currency} ${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1000) return `${sign}${currency} ${(abs / 1000).toFixed(0)}K`;
+  return `${sign}${currency} ${abs}`;
 };
 
 const formatCurrency = (value: number, currency: string = "$"): string => {
-  if (value >= 1000) return `${currency} ${(value / 1000).toFixed(0)}K`;
-  return `${currency} ${value}`;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${currency} ${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1000) return `${sign}${currency} ${(abs / 1000).toFixed(0)}K`;
+  return `${sign}${currency} ${abs}`;
 };
 
 // ══════════════════════════════════════════
