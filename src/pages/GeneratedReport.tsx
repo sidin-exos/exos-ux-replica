@@ -385,7 +385,7 @@ const GeneratedReport = () => {
           >
             {/* Input Summary */}
             <Card className="card-elevated">
-              <CardHeader>
+              <CardHeader className="bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
                 <CardTitle className="font-display text-base">Analysis Inputs</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
