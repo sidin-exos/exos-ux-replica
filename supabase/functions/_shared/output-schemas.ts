@@ -1722,12 +1722,38 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     s.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=');
 
   if (parsed.executive_bullets?.length > 0) {
-    parts.push('### Key Findings');
+    // B1 fix: drop bullets that duplicate any recommendation. We tokenise both
+    // sides, strip stop-words/punctuation, and treat ≥70% Jaccard overlap as a
+    // duplicate. Prevents Key Finding #N from echoing Recommendation #N.
+    const STOP = new Set(['the','a','an','and','or','of','to','for','in','on','with','by','at','from','is','are','be','as','that','this','it','will','should','must','their','our','your']);
+    const tokenise = (s: string): Set<string> => new Set(
+      s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length > 2 && !STOP.has(w))
+    );
+    const recTokens = (parsed.recommendations ?? []).map(r => {
+      const action = r && typeof r === 'object' ? coerceToString((r as any).action ?? r) : coerceToString(r);
+      return tokenise(action);
+    }).filter(t => t.size > 0);
+    const isDuplicate = (bulletTokens: Set<string>): boolean => {
+      if (bulletTokens.size === 0) return false;
+      for (const rt of recTokens) {
+        const inter = [...bulletTokens].filter(t => rt.has(t)).length;
+        const union = new Set([...bulletTokens, ...rt]).size;
+        if (union > 0 && inter / union >= 0.7) return true;
+      }
+      return false;
+    };
+    const findingLines: string[] = [];
     parsed.executive_bullets.forEach(b => {
       const text = sanitiseAscii(coerceToString(b).trim());
-      if (text && text !== '[object Object]') parts.push(`- ${text}`);
+      if (!text || text === '[object Object]') return;
+      if (isDuplicate(tokenise(text))) return;
+      findingLines.push(`- ${text}`);
     });
-    parts.push('');
+    if (findingLines.length > 0) {
+      parts.push('### Key Findings');
+      findingLines.forEach(l => parts.push(l));
+      parts.push('');
+    }
   }
 
   if (parsed.recommendations?.length > 0) {
