@@ -307,7 +307,7 @@ const Pricing = () => {
 
         {/* Trial disclaimer */}
         <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
-          30-day free trial. Cancel anytime before the trial ends to avoid being charged.
+          30-day free trial, 30 AI reports maximum.
         </p>
 
 
