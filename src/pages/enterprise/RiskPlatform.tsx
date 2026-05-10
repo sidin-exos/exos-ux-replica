@@ -39,7 +39,35 @@ const RiskPlatform = () => {
   // After trackers have loaded, if an ID was requested but not found → redirect
   const trackerNotFound = id && !isLoading && !selectedTracker;
 
-  const MAX_REPORTS_PER_MONTH = 50;
+  // Resolve plan-based monthly report cap (1 report = 1 AI credit)
+  const { data: planPriceId = null } = useQuery({
+    queryKey: ["account-plan-price-id", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("subscription_price_id, subscription_status")
+        .eq("id", user!.id)
+        .maybeSingle();
+      const active = data?.subscription_status === "active" || data?.subscription_status === "trialing";
+      return active ? (data?.subscription_price_id ?? null) : null;
+    },
+  });
+
+  const PROFESSIONAL_PRICE_IDS = new Set([
+    "price_1TEPBt34h5FyPJ35YRdvRUc7",
+    "price_1TEPCj34h5FyPJ35fAYMOadX",
+  ]);
+  const STARTER_PRICE_IDS = new Set([
+    "price_1TEPHc34h5FyPJ356pnUXQNs",
+    "price_1TEPId34h5FyPJ35CAqDvL37",
+  ]);
+
+  const MAX_REPORTS_PER_MONTH = planPriceId && PROFESSIONAL_PRICE_IDS.has(planPriceId)
+    ? 200
+    : planPriceId && STARTER_PRICE_IDS.has(planPriceId)
+    ? 100
+    : 10; // Free tier
 
   // Count reports generated this month
   const { data: reportsThisMonth = 0 } = useQuery({
@@ -226,7 +254,7 @@ const RiskPlatform = () => {
                     </div>
                     <p className="text-2xl font-display font-bold text-foreground">
                       {trackers.filter((t) => t.status === "active").length}
-                      <span className="text-sm font-normal text-muted-foreground"> / {trackers.length}</span>
+                      <span className="text-sm font-normal text-muted-foreground"> active</span>
                     </p>
                   </div>
 
