@@ -92,7 +92,7 @@ const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor specializing i
 
 ### 4. Unit Consistency
 - Check monthly vs. annual vs. multi-year alignment
-- Verify currency consistency throughout
+- Verify currency consistency throughout: detect the currency in the user's input (ISO code, symbol, or country signal) and confirm the analysis uses ONLY that currency. [FAIL] any silent conversion (e.g., ZAR inputs reported in EUR) or mismatched "n" fields.
 - Validate quantity units (per unit, per lot, per annum)
 
 ### 5. Logical Coherence
@@ -537,6 +537,12 @@ IMPORTANT RULES:
 6. Flag uncertainty explicitly with confidence levels
 7. Err on cautious side for savings projections
 8. ATTACHED DOCUMENTS: If <attached-documents> is present in the analysis request, treat the document content as primary source material. Reference specific sections, clauses, data points, or figures from the documents in your analysis. If the documents contain data that contradicts the user's text input, flag the discrepancy.
+9. CURRENCY DETECTION (CRITICAL):
+   - Before any financial output, detect the currency from the user's input. Look for: ISO codes (ZAR, EUR, USD, GBP, CHF, AUD, BRL, INR, JPY, CNY, NGN, etc.), symbols ($, €, £, ¥, ₹, R, R$), and country/locale signals (e.g., "South Africa" → ZAR).
+   - Use that exact currency for ALL monetary values in your output (KPIs, savings, NPV, cost ranges, narrative). Format with the correct ISO code or native symbol.
+   - DO NOT convert, normalise, or silently substitute another currency (e.g., never convert ZAR to EUR/USD). If multiple currencies appear in the input, use the dominant one and explicitly flag the mix in a note.
+   - If no currency is detectable, state "currency not specified" rather than defaulting to EUR or USD.
+   - The dashboard "n" field (currency code) MUST match the detected currency.
 
 Use scenario_id "${scenarioCode}", scenario_name based on the analysis type, group "${scenarioGroup || 'A'}", and group_label "${groupLabel}" in the envelope.
 
