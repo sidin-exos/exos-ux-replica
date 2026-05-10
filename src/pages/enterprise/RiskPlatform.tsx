@@ -254,7 +254,7 @@ const RiskPlatform = () => {
                     </div>
                     <p className="text-2xl font-display font-bold text-foreground">
                       {trackers.filter((t) => t.status === "active").length}
-                      <span className="text-sm font-normal text-muted-foreground"> / {trackers.length}</span>
+                      <span className="text-sm font-normal text-muted-foreground"> active</span>
                     </p>
                   </div>
 
