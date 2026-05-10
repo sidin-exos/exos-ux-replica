@@ -1195,59 +1195,46 @@ const PDFReportDocument = ({
     <Document>
       {/* ── Page 1: Cover + Executive Summary (merged) ── */}
       <Page size="A4" style={s.page} id="section-executive-summary">
-        {/* Teal header bar with confidence badge */}
-        <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 10 }}>
-              EXOS · Confidential
-            </Text>
-            {structuredOutput && (
-              <View style={{ backgroundColor: confidenceBadgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: confidenceBadgeColor }}>
-                  {confidenceLevel.toUpperCase()} CONFIDENCE
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>
-              {structuredOutput?.export_metadata?.generated_at
-                ? `Generated ${new Date(structuredOutput.export_metadata.generated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`
-                : `Prepared for EXOS · ${formattedDate}`}
-            </Text>
-          </View>
-        </View>
+        {/* Branded cover band (Option B v3) */}
+        <CoverBand
+          scenarioLabel={scenarioLabel}
+          reportTitle={reportTitle}
+          dateStr={formattedDate}
+          reportHash={reportHash}
+          c={c}
+        />
 
-        {/* Confidence guidance note */}
+        {/* Confidence badge — overlaid in top-right of band */}
+        {structuredOutput && (
+          <View style={{ position: "absolute", top: 22, right: SP.pageSideMargin, backgroundColor: confidenceBadgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+            <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: confidenceBadgeColor }}>
+              {confidenceLevel.toUpperCase()} CONFIDENCE
+            </Text>
+          </View>
+        )}
+
+        {/* Confidence guidance note — pushed below band */}
         {hasLowConfidenceWatermark && (
-          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+          <View style={{ position: "absolute", top: 158, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
             <Text style={{ fontSize: 8, color: "#856404", fontFamily: "Inter", fontWeight: 700 }}>
               This analysis is indicative — see improvement tips below
             </Text>
           </View>
         )}
         {!hasLowConfidenceWatermark && confidenceLevel === "Medium" && (
-          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+          <View style={{ position: "absolute", top: 158, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
             <Text style={{ fontSize: 8, color: "#1b4b47", fontFamily: "Inter", fontWeight: 700 }}>
               Good analysis — a few additions would sharpen the results
             </Text>
           </View>
         )}
 
-        {/* Left teal stripe */}
-        <View style={s.coverLeftStripe} />
+        {/* Push content below the 150pt band (page already has 52pt top padding) */}
+        <View style={{ height: 110 }} />
 
-        <View style={s.coverSpacer} />
-
-        {/* Title */}
-        <Text style={s.coverTitle}>{reportTitle}</Text>
-
-        {/* Divider */}
-        <View style={s.coverDivider} />
-
-        {/* Key Findings */}
+        {/* Executive Summary */}
         <View style={s.sectionTitleWrapperCompact}>
-          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Key Findings</Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text>
           <View style={s.sectionTitleLine} />
         </View>
 
