@@ -586,23 +586,19 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
           <Text style={{ fontSize: 8, color: colors.textMuted }}>strategic items</Text>
         </View>
       </View>
-      <View style={{ marginTop: 8, flexDirection: "row" }}>
-        <View style={{ width: 28, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ fontSize: 8, color: colors.textMuted, transform: "rotate(-90deg)", width: 90, textAlign: "center" }}>Business impact (high)</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <View style={styles.quadrantGrid}>
-            <View style={styles.quadrantRow}>
-              {renderQuadrant("strategic", false, false)}
-              {renderQuadrant("bottleneck", true, false)}
-            </View>
-            <View style={styles.quadrantRow}>
-              {renderQuadrant("leverage", false, true)}
-              {renderQuadrant("noncritical", true, true)}
-            </View>
+      <View style={{ marginTop: 8 }}>
+        <Text style={{ fontSize: 8, color: colors.textMuted, marginBottom: 4, textAlign: "left" }}>↑ Business impact (high)</Text>
+        <View style={styles.quadrantGrid}>
+          <View style={styles.quadrantRow}>
+            {renderQuadrant("strategic", false, false)}
+            {renderQuadrant("bottleneck", true, false)}
           </View>
-          <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "center", marginTop: 4 }}>Supply risk (high) -&gt;</Text>
+          <View style={styles.quadrantRow}>
+            {renderQuadrant("leverage", false, true)}
+            {renderQuadrant("noncritical", true, true)}
+          </View>
         </View>
+        <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "right", marginTop: 4 }}>Supply risk (high) →</Text>
       </View>
       <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
         <Text style={{ fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
