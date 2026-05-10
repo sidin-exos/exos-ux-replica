@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
 import { ChevronRight, Sparkles } from "lucide-react";
-import { scenarios } from "@/lib/scenarios";
+import { scenarios, filterVisibleScenarios } from "@/lib/scenarios";
 import { AICoverageCheck } from "@/components/consolidation/AICoverageCheck";
 
 interface ProjectEvaluatorProps {
