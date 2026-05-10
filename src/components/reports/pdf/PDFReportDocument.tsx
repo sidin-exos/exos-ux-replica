@@ -1035,19 +1035,21 @@ const CoverBand = ({
   dateStr,
   reportHash,
   c,
+  mode = "light",
 }: {
   scenarioLabel: string;
   reportTitle: string;
   dateStr: string;
   reportHash: string;
   c: PdfColorSet;
+  mode?: PdfThemeMode;
 }) => {
   const s = buildStyles(c);
   return (
     <View style={s.coverBand}>
       {/* Top row: mark + wordmark + subtitle */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <ExosMark size={42} />
+        <ExosMark size={42} mode={mode} />
         <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}>
           <Text style={s.coverBandWordmark}>EXOS</Text>
           <View style={s.coverBandDivider} />
