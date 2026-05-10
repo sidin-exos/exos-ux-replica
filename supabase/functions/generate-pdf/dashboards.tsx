@@ -844,8 +844,22 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const getScColor = (score: number): string => { if (score >= 85) return colors.success; if (score >= 70) return colors.warning; return colors.destructive; };
-  const getTrendSymbol = (trend: string): string => { switch (trend) { case "up": return "▲"; case "down": return "▼"; default: return "►"; } };
+  const getTrendSymbol = (trend: string): string => { switch (trend) { case "up": return "↑"; case "down": return "↓"; default: return "→"; } };
   const getTrendColor = (trend: string): string => { switch (trend) { case "up": return colors.success; case "down": return colors.destructive; default: return colors.textMuted; } };
+  const parseSpend = (s: string): number => {
+    if (!s) return 0;
+    const m = String(s).replace(/[,\s]/g, "").match(/([\d.]+)\s*([kmbKMB]?)/);
+    if (!m) return 0;
+    const n = parseFloat(m[1]);
+    const mult = ({ k: 1e3, m: 1e6, b: 1e9 } as Record<string, number>)[m[2].toLowerCase()] || 1;
+    return n * mult;
+  };
+  const formatSpend = (n: number, sym: string): string => {
+    if (n >= 1e9) return `${sym}${(n / 1e9).toFixed(1)}B`;
+    if (n >= 1e6) return `${sym}${(n / 1e6).toFixed(1)}M`;
+    if (n >= 1e3) return `${sym}${(n / 1e3).toFixed(0)}k`;
+    return `${sym}${Math.round(n)}`;
+  };
   if (!data.suppliers?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Supplier Scorecard: insufficient data</Text></View>;
   const suppliers = data.suppliers.map(s => ({ name: s.name, score: s.score, trend: s.trend, spend: s.spend, category: "General" }));
   const avgScore = suppliers.length > 0 ? Math.round(suppliers.reduce((sum, s) => sum + s.score, 0) / suppliers.length) : 0;
@@ -885,12 +899,16 @@ export const PDFSupplierScorecard = ({ data, themeMode }: { data: SupplierScorec
       <View style={styles.statsRow}>
         <View style={styles.statItem}><Text style={styles.statLabel}>Avg Score</Text><Text style={[styles.statValue, { color: colors.success }]}>{avgScore}</Text></View>
         <View style={styles.statItem}><Text style={styles.statLabel}>Above Target</Text><Text style={[styles.statValue, { color: colors.primary }]}>{suppliers.filter(s => s.score >= 75).length}/{suppliers.length}</Text></View>
-        <View style={styles.statItem}><Text style={styles.statLabel}>Total Spend</Text><Text style={styles.statValue}>{suppliers.length > 0 ? suppliers[0].spend.replace(/[\d.]+/, "") : "$"}—</Text></View>
+        {(() => {
+          const sym = suppliers.length > 0 ? (String(suppliers[0].spend).match(/^[^\d.\s,]+/)?.[0] || "$") : "$";
+          const total = suppliers.reduce((sum, s) => sum + parseSpend(String(s.spend)), 0);
+          return <View style={styles.statItem}><Text style={styles.statLabel}>Total Spend</Text><Text style={styles.statValue}>{formatSpend(total, sym)}</Text></View>;
+        })()}
       </View>
       <View style={styles.legend}>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>≥85 Excellent</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.warning }]} /><Text style={styles.legendText}>≥70 Good</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>&lt;70 At Risk</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>85+ Excellent</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.warning }]} /><Text style={styles.legendText}>70-84 Good</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>Below 70 At Risk</Text></View>
       </View>
     </View>
   );
@@ -975,9 +993,14 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
   if (!data.sequence?.length && !data.leveragePoints?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Negotiation Prep: insufficient data</Text></View>;
   const steps = data.sequence ? data.sequence.map((s, i) => ({ label: s.step, meta: "", details: s.detail, status: i === 0 ? "complete" : i === 1 ? "active" : "upcoming" })) : [];
   const rawStrength = Number(data.batna?.strength ?? 0);
-  const strength05 = rawStrength > 5 ? Math.max(0, Math.min(5, rawStrength / 20)) : Math.max(0, Math.min(5, rawStrength));
+  // Normalize to 0–10 scale: accept inputs in 0–1, 0–5, or 0–10 ranges.
+  const strength10 = rawStrength <= 1
+    ? Math.round(rawStrength * 10 * 10) / 10
+    : rawStrength <= 5
+      ? Math.round(rawStrength * 2 * 10) / 10
+      : Math.max(0, Math.min(10, Math.round(rawStrength * 10) / 10));
   const keyMetrics = [
-    { label: "BATNA Score", value: `${strength05.toFixed(1).replace(/\.0$/, '')}/5` },
+    { label: "BATNA Score", value: `${strength10.toFixed(1).replace(/\.0$/, '')}/10` },
     { label: "Leverage", value: data.leveragePoints?.[0]?.point || "—" },
     { label: "Supplier Power", value: data.leveragePoints?.[1]?.point || "—" },
   ];

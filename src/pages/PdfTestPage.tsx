@@ -55,11 +55,11 @@ const DASHBOARD_MOCK = {
   },
   decisionMatrix: {
     criteria: [
-      { name: "Total Cost", weight: 0.35 },
-      { name: "Quality", weight: 0.25 },
-      { name: "Risk", weight: 0.20 },
-      { name: "Lead Time", weight: 0.10 },
-      { name: "Sustainability", weight: 0.10 },
+      { name: "Total Cost", weight: 35 },
+      { name: "Quality", weight: 25 },
+      { name: "Risk", weight: 20 },
+      { name: "Lead Time", weight: 10 },
+      { name: "Sustainability", weight: 10 },
     ],
     options: [
       { name: "Supplier A (Incumbent)", scores: [3, 4, 4, 5, 3] },
