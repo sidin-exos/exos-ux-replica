@@ -13,6 +13,7 @@ import {
   BarChart3,
   Loader2,
   AlertCircle,
+  Pencil,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
