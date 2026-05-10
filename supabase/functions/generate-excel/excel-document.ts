@@ -334,11 +334,8 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
       return row;
     }) });
   }
-  if (data.costWaterfall?.components?.length) {
-    sheets.push({ name: "Cost Waterfall", rows: data.costWaterfall.components.map((c) => ({
-      Component: c.name, Value: c.value, Type: c.type,
-    })) });
-  }
+  // Cost Breakdown is rendered with a custom layout in the main loop — skip generic mapping here.
+
   if (data.timelineRoadmap?.phases?.length) {
     sheets.push({ name: "Timeline Roadmap", rows: data.timelineRoadmap.phases.map((p) => ({
       Phase: p.name, "Start Week": p.startWeek, "End Week": p.endWeek, Status: p.status, Milestones: p.milestones?.join("; ") ?? "",
