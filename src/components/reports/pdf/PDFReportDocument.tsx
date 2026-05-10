@@ -307,14 +307,16 @@ function buildStyles(c: PdfColorSet) {
       color: c.text,
     },
 
-    // ── Branded cover band (Option B v3) ──
+    // ── Branded cover band (theme-aware) ──
     coverBand: {
       position: "absolute",
       top: 0,
       left: 0,
       right: 0,
       height: 150,
-      backgroundColor: "#0C1D2E",
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
       paddingHorizontal: SP.pageSideMargin,
       paddingTop: 18,
       paddingBottom: 14,
@@ -325,34 +327,33 @@ function buildStyles(c: PdfColorSet) {
       right: 0,
       bottom: 0,
       height: 3,
-      backgroundColor: "#19A49C",
+      backgroundColor: c.primary,
     },
     coverBandWordmark: {
       fontFamily: "Space Grotesk",
       fontWeight: 700,
       fontSize: 20,
-      color: "#FFFFFF",
+      color: c.text,
       letterSpacing: 1,
     },
     coverBandDivider: {
       width: 1,
       height: 18,
-      backgroundColor: "#FFFFFF",
-      opacity: 0.35,
+      backgroundColor: c.border,
       marginHorizontal: 10,
     },
     coverBandSubtitle: {
       fontFamily: "Inter",
       fontWeight: 600,
       fontSize: 9,
-      color: "#DCEBF0",
+      color: c.textMuted,
       letterSpacing: 0.3,
     },
     coverBandEyebrow: {
       fontFamily: "Inter",
       fontWeight: 700,
       fontSize: 7.5,
-      color: "#47DDD4",
+      color: c.primary,
       textTransform: "uppercase",
       letterSpacing: 1.2,
       marginTop: 12,
@@ -361,7 +362,7 @@ function buildStyles(c: PdfColorSet) {
       fontFamily: "Space Grotesk",
       fontWeight: 700,
       fontSize: 20,
-      color: "#FFFFFF",
+      color: c.text,
       marginTop: 6,
       lineHeight: 1.15,
     },
@@ -369,7 +370,7 @@ function buildStyles(c: PdfColorSet) {
       fontFamily: "Inter",
       fontWeight: 400,
       fontSize: 8,
-      color: "#BED2DA",
+      color: c.textMuted,
       marginTop: 10,
     },
 
@@ -1003,20 +1004,25 @@ const BrandedHeaderBar = ({ scenarioLabel, dateStr, c }: { scenarioLabel: string
 
 // ── EXOS Mark (vector, mirrors src/assets/exos-mark-dark.svg) ──
 
-const ExosMark = ({ size = 38 }: { size?: number }) => {
+const ExosMark = ({ size = 38, mode = "light" }: { size?: number; mode?: PdfThemeMode }) => {
   const w = size;
   const h = (size * 110) / 100;
+  const isDark = mode === "dark";
+  const baseFill = isDark ? "#0A5550" : "#122F47";
+  const gradStart = isDark ? "#2BB8AF" : "#47DDD4";
+  const gradEnd = isDark ? "#178A83" : "#19A49C";
+  const strokeColor = isDark ? "#6DD5CC" : "#0C1D2E";
   return (
     <Svg width={w} height={h} viewBox="0 0 100 110">
       <Defs>
         <LinearGradient id="exosTeal" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0%" stopColor="#2BB8AF" />
-          <Stop offset="100%" stopColor="#178A83" />
+          <Stop offset="0%" stopColor={gradStart} />
+          <Stop offset="100%" stopColor={gradEnd} />
         </LinearGradient>
       </Defs>
-      <Polygon points="50,53 76,79 50,105 24,79" fill="#0A5550" />
+      <Polygon points="50,53 76,79 50,105 24,79" fill={baseFill} />
       <Polygon points="50,29 76,55 50,81 24,55" fill="url(#exosTeal)" />
-      <Polygon points="50,5 76,31 50,57 24,31" fill="none" stroke="#6DD5CC" strokeWidth={6} strokeLinejoin="round" />
+      <Polygon points="50,5 76,31 50,57 24,31" fill="none" stroke={strokeColor} strokeWidth={6} strokeLinejoin="round" />
     </Svg>
   );
 };
@@ -1029,19 +1035,21 @@ const CoverBand = ({
   dateStr,
   reportHash,
   c,
+  mode = "light",
 }: {
   scenarioLabel: string;
   reportTitle: string;
   dateStr: string;
   reportHash: string;
   c: PdfColorSet;
+  mode?: PdfThemeMode;
 }) => {
   const s = buildStyles(c);
   return (
     <View style={s.coverBand}>
       {/* Top row: mark + wordmark + subtitle */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <ExosMark size={42} />
+        <ExosMark size={42} mode={mode} />
         <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}>
           <Text style={s.coverBandWordmark}>EXOS</Text>
           <View style={s.coverBandDivider} />
@@ -1202,6 +1210,7 @@ const PDFReportDocument = ({
           dateStr={formattedDate}
           reportHash={reportHash}
           c={c}
+          mode={pdfTheme}
         />
 
         {/* Confidence badge — overlaid in top-right of band */}
