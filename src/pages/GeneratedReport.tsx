@@ -362,7 +362,7 @@ const GeneratedReport = () => {
 
             {/* Full Analysis */}
             <Card className="card-elevated border-t-2 border-t-accent/60">
-              <CardHeader className="bg-accent/[0.04] rounded-t-lg">
+              <CardHeader className="bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
                 <CardTitle className="font-display text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                   <BarChart3 className="w-6 h-6 text-accent" />
                   Detailed Analysis
