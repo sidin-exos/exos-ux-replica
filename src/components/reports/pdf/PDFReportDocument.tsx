@@ -6,6 +6,11 @@ import {
   StyleSheet,
   Link,
   Font,
+  Svg,
+  Polygon,
+  Defs,
+  LinearGradient,
+  Stop,
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
