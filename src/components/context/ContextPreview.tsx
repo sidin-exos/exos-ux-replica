@@ -123,8 +123,9 @@ export function ContextPreview({
                           {hasV2Industry ? (
                             industry.constraints_v2!.slice(0, 5).map((c, i) => (
                               <li key={i} className="text-muted-foreground flex items-center gap-1">
-                                {c.blocker && <span className="text-destructive font-bold">⛔</span>}
-                                {c.tier && <span className="font-semibold text-[10px]">[{c.tier}]</span>}
+                                {(c.blocker || c.tier) && (
+                                  <span className="font-semibold text-[10px]">[{c.blocker ? "HIGH" : c.tier}]</span>
+                                )}
                                 <span>• {c.label}</span>
                               </li>
                             ))
