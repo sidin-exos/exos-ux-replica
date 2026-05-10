@@ -36,7 +36,7 @@ const InflationTrackerCard = ({ tracker, onSelect, onDelete }: Props) => {
 
   return (
     <div
-      className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderClass} hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm`}
+      className={`flex items-center gap-4 p-3 rounded-md border border-border/50 border-l-[3px] ${borderClass} bg-gradient-to-r from-transparent via-transparent to-copper/5 dark:to-copper/25 dark:via-copper/5 hover:border-primary/40 cursor-pointer transition-all group hover:shadow-sm hover:dark:to-copper/35`}
       onClick={() => onSelect?.(tracker)}
     >
       {/* Icon */}
