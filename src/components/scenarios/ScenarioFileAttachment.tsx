@@ -127,7 +127,7 @@ const ScenarioFileAttachment = ({
                 </p>
               </div>
               <Button asChild size="sm" variant="outline" className="gap-2">
-                <Link to="/account?tab=files" target="_blank" rel="noopener noreferrer">
+                <Link to="/account#section-files" target="_blank" rel="noopener noreferrer">
                   <FolderOpen className="w-3.5 h-3.5" />
                   Open Files Manager
                 </Link>
