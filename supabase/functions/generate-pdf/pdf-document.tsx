@@ -803,15 +803,14 @@ const PDFReportDocument = ({
 
 
         <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text><View style={s.sectionTitleLine} /></View>
-        <View style={s.findingCardsRow}>
-          {findings.slice(0, 3).map((point, i) => {
-            const { title, body } = parseFindingTitle(point);
-            const borderColor = findingColors[i % findingColors.length];
+        <View style={{ marginBottom: 10 }}>
+          {findings.slice(0, 5).map((point, i) => {
+            const clean = stripMarkdown(String(point ?? "")).trim();
+            if (!clean) return null;
             return (
-              <View key={`f-${i}`} style={{ ...s.findingCard, borderLeftColor: borderColor, ...(i === Math.min(findings.length, 3) - 1 ? s.findingCardLast : {}) }}>
-                <View style={{ ...s.findingCardNumber, backgroundColor: borderColor }}><Text style={s.findingCardNumberText}>{i + 1}</Text></View>
-                <Text style={s.findingCardTitle}>{title}</Text>
-                {body ? <Text style={s.findingCardBody}>{body}</Text> : null}
+              <View key={`f-${i}`} style={{ flexDirection: "row", marginBottom: 5, paddingRight: 4 }}>
+                <Text style={{ fontSize: 10, color: c.accent1, marginRight: 6, lineHeight: 1.5 }}>•</Text>
+                <Text style={{ flex: 1, fontSize: 10, color: c.text, lineHeight: 1.5 }}>{clean}</Text>
               </View>
             );
           })}
