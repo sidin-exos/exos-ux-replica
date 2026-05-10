@@ -2176,9 +2176,10 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       parts.push('');
     }
 
-    // 6. Financial Outcome Range
+    // 6. Financial Outcome Range — only render when at least one finite numeric is present
     const fr = (ss.financial_outcome_range ?? null) as Record<string, any> | null;
-    if (fr && (fr.optimistic != null || fr.realistic != null || fr.pessimistic != null)) {
+    const frNums = fr ? [fr.optimistic, fr.realistic, fr.pessimistic].map((v: unknown) => Number(v)).filter((n: number) => Number.isFinite(n)) : [];
+    if (fr && frNums.length > 0) {
       parts.push('### Financial Outcome Range');
       parts.push('| Scenario | Outcome |');
       parts.push('|---|---|');
@@ -2188,20 +2189,7 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
       parts.push('');
     }
 
-    // 7. Negotiation Risk Register
-    const rr: any[] = Array.isArray(ss.risk_register) ? ss.risk_register : [];
-    const validRr = rr.filter(r => r && r.risk);
-    if (validRr.length > 0) {
-      parts.push('### Negotiation Risk Register');
-      parts.push('| Risk | Likelihood | Impact | Mitigation |');
-      parts.push('|---|---|---|---|');
-      validRr.slice(0, 8).forEach(r => {
-        parts.push(`| ${fmtCell(r.risk)} | ${fmtCell(r.likelihood)} | ${fmtCell(r.impact)} | ${fmtCell(r.mitigation)} |`);
-      });
-      parts.push('');
-    }
-
-    // 8. Negotiation Scenario Comparison
+    // 7. Negotiation Scenario Comparison
     const negSc: any[] = Array.isArray(ss.negotiation_scenarios) ? ss.negotiation_scenarios : [];
     const validNegSc = negSc.filter(n => n && n.name && n.expected_savings_pct != null);
     if (validNegSc.length > 0) {
