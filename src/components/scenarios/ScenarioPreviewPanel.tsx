@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { getCategoryLabel, scenarios, type Scenario } from "@/lib/scenarios";
+import { getCategoryLabel, scenarios, filterVisibleScenarios, type Scenario } from "@/lib/scenarios";
 import { Layers, Eye } from "lucide-react";
 
 const CATEGORY_DESCRIPTIONS: Record<Scenario["category"], string> = {
