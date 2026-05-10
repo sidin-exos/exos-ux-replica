@@ -16,7 +16,7 @@ const RfpPackageDashboard = ({ parsedData }: RfpPackageDashboardProps) => {
   if (!parsedData) {
     return (
       <Card className="card-elevated h-full">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
               <FileSignature className="w-4 h-4 text-foreground" />
@@ -55,7 +55,7 @@ const RfpPackageDashboard = ({ parsedData }: RfpPackageDashboardProps) => {
 
   return (
     <Card className="card-elevated h-full">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">

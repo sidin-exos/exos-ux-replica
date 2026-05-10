@@ -44,7 +44,7 @@ const NPVWaterfallDashboard = ({ parsedData }: Props) => {
 
   return (
     <Card className="card-elevated">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-4 bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
