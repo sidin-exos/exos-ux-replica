@@ -1074,6 +1074,7 @@ Every factual claim must reference a source_id. Use null for any field where sea
 // shared financial_model contract.
 
 const SCENARIO_ID_TO_CODE: Record<string, string> = {
+  'forecasting-budgeting': 'S6',
   'negotiation-preparation': 'S21',
   'category-strategy': 'S22',
   'make-vs-buy': 'S23',
