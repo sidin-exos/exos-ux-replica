@@ -1416,6 +1416,12 @@ serve(async (req) => {
           // placeholders despite prompt instructions. Deterministic enforcement.
           deanonSingleEnvelope = synthesizeMissingContent(deanonSingleEnvelope);
           deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
+          // Output coverage gate (single-pass path).
+          const spCoverage = evaluateOutputCoverage(deanonSingleEnvelope);
+          if (spCoverage) {
+            deanonSingleEnvelope = applyCoverageToEnvelope(deanonSingleEnvelope, spCoverage);
+            console.log(`[Sentinel] coverage scenario=${deanonSingleEnvelope?.scenario_id} delivered=${spCoverage.delivered}/${spCoverage.promised} suggested=${spCoverage.suggestedConfidence} missing=${JSON.stringify(spCoverage.missing)}`);
+          }
           responseContent = buildMarkdownFromEnvelope(deanonSingleEnvelope);
           if (deanonSingleEnvelope.gdpr_flags?.length > 0) {
             console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonSingleEnvelope.scenario_id, flag_count: deanonSingleEnvelope.gdpr_flags.length });
