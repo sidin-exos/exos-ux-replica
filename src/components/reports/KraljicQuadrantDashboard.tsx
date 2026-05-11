@@ -312,53 +312,6 @@ const KraljicQuadrantDashboard = ({
           </div>
         </div>
 
-        {/* Item legend grouped by quadrant */}
-        <div className="rounded-md border border-border overflow-hidden">
-          <div className="px-2.5 py-1.5 bg-muted/40 border-b border-border">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Item legend
-            </span>
-          </div>
-          <div className="p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
-            {QUADRANT_ORDER.flatMap((q) =>
-              (groupedItems[q] || []).map((item) => {
-                const meta = QUADRANT_META[q];
-                return (
-                  <div key={item.id} className="flex items-center gap-2 text-xs">
-                    <div
-                      className="w-0.5 self-stretch rounded-full flex-shrink-0"
-                      style={{ backgroundColor: meta.color }}
-                      aria-hidden
-                    />
-                    <div
-                      className="inline-flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0"
-                      style={{
-                        backgroundColor: `${meta.color}1f`,
-                        border: `1.5px solid ${meta.color}`,
-                      }}
-                    >
-                      <Star
-                        className="w-3.5 h-3.5"
-                        style={{ color: meta.color, fill: meta.color }}
-                        strokeWidth={1.5}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-foreground truncate text-[11px] leading-tight">
-                        {item.name}
-                      </p>
-                      {item.spend && (
-                        <p className="text-muted-foreground text-[10px] leading-tight">
-                          {item.spend}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
