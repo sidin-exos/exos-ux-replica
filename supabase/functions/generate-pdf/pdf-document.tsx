@@ -704,6 +704,13 @@ const PDFReportDocument = ({
   const s21BuyerTarget = Number(s21Specific?.zopa?.buyer_target);
   const s21ZopaLabel = s21ZopaExists == null ? null : (s21ZopaExists ? (Number.isFinite(s21BuyerTarget) ? `YES (target €${s21BuyerTarget >= 1_000_000 ? (s21BuyerTarget/1_000_000).toFixed(1)+"M" : Math.round(s21BuyerTarget/1000)+"K"})` : "YES") : "NO");
 
+  // S4 cover KPIs (Hard € / Soft € / Avoided € / CFO Acceptance)
+  const isS4 = envelope?.scenario_id === "S4" || /savings\s*calculation/i.test(scenarioTitle);
+  const s4Funnel = ((): any => {
+    // parsedData may be populated later; lazily look up the structured payload here.
+    return null;
+  })();
+
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
   const formattedDate = formatDate(timestamp);
