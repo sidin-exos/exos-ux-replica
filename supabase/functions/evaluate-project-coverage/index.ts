@@ -4,6 +4,7 @@ import { authenticateRequest } from "../_shared/auth.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
 import { estimateCost } from "../_shared/ai-pricing.ts";
+import { SCENARIO_INSTRUCTION_ADDENDA, SCENARIO_ID_TO_CODE } from "../_shared/output-schemas.ts";
 
 interface Section {
   heading: string;
@@ -15,6 +16,9 @@ interface RequestBody {
   description: string;
   fileNames: string[];
   sections: Section[];
+  /** Optional S## or scenarioId — when provided, the rubric is anchored to
+   * SCENARIO_INSTRUCTION_ADDENDA so pre-eval matches what the analysis actually requires. */
+  scenarioId?: string;
 }
 
 serve(async (req) => {
@@ -32,7 +36,7 @@ serve(async (req) => {
     }
 
     const body = (await req.json()) as RequestBody;
-    const { scenarioTitle, description, fileNames, sections } = body;
+    const { scenarioTitle, description, fileNames, sections, scenarioId } = body;
 
     if (!Array.isArray(sections) || sections.length === 0) {
       return new Response(JSON.stringify({ error: "sections required" }), {
@@ -50,7 +54,16 @@ serve(async (req) => {
       .map((s, i) => `${i + 1}. ${s.heading} — ${s.description}`)
       .join("\n");
 
-    const systemPrompt = `You assess whether a procurement project's available context covers the recommended data sections for a specific analytical scenario. For each section, judge if the project content (description + attached file names) plausibly supplies that data. Be strict but fair — file names can imply coverage (e.g., "supplier_contracts.pdf" implies contract data). Return concise, actionable feedback.`;
+    // F4/F5: Anchor the rubric to the analysis engine's authoritative addendum
+    // (SCENARIO_INSTRUCTION_ADDENDA) when the scenario code is known. This
+    // eliminates "rubric drift" where pre-eval flags tutorial-only sections
+    // that the post-run schema never asks for.
+    const scenarioCode = scenarioId
+      ? (SCENARIO_ID_TO_CODE[scenarioId] || scenarioId)
+      : null;
+    const addendum = scenarioCode ? SCENARIO_INSTRUCTION_ADDENDA[scenarioCode] : null;
+
+    const systemPrompt = `You assess whether a procurement project's available context covers the recommended data sections for a specific analytical scenario. For each section, judge if the project content (description + attached file names) plausibly supplies that data. Be strict but fair — file names can imply coverage (e.g., "supplier_contracts.pdf" implies contract data). Return concise, actionable feedback.${addendum ? `\n\nAUTHORITATIVE SCHEMA REQUIREMENTS (the post-run analysis ONLY enforces these — treat any tutorial section that is NOT mentioned here as nice-to-have, never as a blocker):\n${addendum}` : ''}`;
 
     const userPrompt = `Scenario: ${scenarioTitle}
 
@@ -70,7 +83,7 @@ Then assign an overall score from 0 to 5, in 0.5-point increments only (allowed 
 - 1 = mostly missing, analysis not viable
 - 0 = no usable context
 
-IMPORTANT — predictive calibration: this score must correlate with the post-run analytical rigour score (0–100). A 4.5★ coverage must imply a likely rigour ≥ 80/100. If any section is "partial" because a key number is implied or missing, cap the score at 4.0★. If two or more sections are "partial" or any are "missing", cap at 3.5★.`;
+IMPORTANT — predictive calibration: this score must correlate with the post-run analytical rigour score (0–100). A 4.5★ coverage must imply a likely rigour ≥ 80/100. ${addendum ? 'Only cap the score when a SCHEMA-REQUIRED field would be unfillable — gaps in tutorial-only sections must NOT cap the score below 4.0★.' : 'If any section is "partial" because a key number is implied or missing, cap the score at 4.0★. If two or more sections are "partial" or any are "missing", cap at 3.5★.'}`;
 
     const tracer = new LangSmithTracer({
       env: "production",
