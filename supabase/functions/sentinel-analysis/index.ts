@@ -752,6 +752,9 @@ serve(async (req) => {
       "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
     ];
     const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : scenarioDefaultModel;
+    // Audit line: surface the resolved model per request so we can trace any
+    // 2.5-pro leakage from stale client preferences.
+    console.log(`[Sentinel] model_used=${googleModel} requested=${rawGoogleModel} scenario=${body.scenarioType ?? body.scenarioId ?? "n/a"}`);
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     // Accept but ignore — always use Google AI Studio

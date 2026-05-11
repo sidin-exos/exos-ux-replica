@@ -11,12 +11,10 @@ interface ModelConfigContextType extends ModelConfig {
 }
 
 const STORAGE_KEY = "exos_model_config";
-// One-shot migration flag: when gemini-3.1-pro-preview was promoted to default
-// (Nebius fallback now absorbs the Ghost 429 risk that originally caused the ban),
-// we sweep every existing user off gemini-2.5-pro onto the new default exactly once.
-// After this flag is set, users can freely re-pick gemini-2.5-pro in Settings without
-// it being migrated back on every load.
-const MIGRATION_31PRO_KEY = "exos_model_migration_31pro";
+// Always normalise legacy gemini-2.5-pro selections back to the current default
+// (gemini-3.1-pro-preview). Users can still pick 2.5-pro explicitly via the
+// Settings UI by setting this opt-in flag — once set, no further rebasing.
+const EXPLICIT_25PRO_OPT_IN_KEY = "exos_model_25pro_opt_in";
 
 const VALID_MODELS = [
   "gemini-3.1-pro-preview",
@@ -31,14 +29,11 @@ const DEFAULT_CONFIG: ModelConfig = {
 
 const ModelConfigContext = createContext<ModelConfigContextType | null>(null);
 
-function loadConfig(): ModelConfig {
-  let needs31ProMigration = false;
-  try {
-    needs31ProMigration = !localStorage.getItem(MIGRATION_31PRO_KEY);
-  } catch (_) {
-    // localStorage unavailable; skip migration logic
-  }
+function has25ProOptIn(): boolean {
+  try { return !!localStorage.getItem(EXPLICIT_25PRO_OPT_IN_KEY); } catch { return false; }
+}
 
+function loadConfig(): ModelConfig {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -50,25 +45,19 @@ function loadConfig(): ModelConfig {
       if (model === "gemini-3-pro-preview") {
         model = DEFAULT_CONFIG.model;
       }
-      // One-shot 3.1-pro promotion: flip any stored 2.5-pro to the new default.
-      if (needs31ProMigration && model === "gemini-2.5-pro") {
+      // Continuous guardrail: rebase 2.5-pro → 3.1-pro on every load unless the
+      // user has explicitly opted in via Settings (sets EXPLICIT_25PRO_OPT_IN_KEY).
+      if (model === "gemini-2.5-pro" && !has25ProOptIn()) {
         model = DEFAULT_CONFIG.model;
       }
       const isValid = VALID_MODELS.includes(model);
-      const finalConfig = {
+      return {
         model: isValid ? model : DEFAULT_CONFIG.model,
         lastTested: parsed.lastTested || null,
       };
-      if (needs31ProMigration) {
-        try { localStorage.setItem(MIGRATION_31PRO_KEY, "1"); } catch (_) { /* ignore */ }
-      }
-      return finalConfig;
     }
   } catch (e) {
     // silently fall back to defaults
-  }
-  if (needs31ProMigration) {
-    try { localStorage.setItem(MIGRATION_31PRO_KEY, "1"); } catch (_) { /* ignore */ }
   }
   return DEFAULT_CONFIG;
 }
@@ -90,6 +79,15 @@ export function ModelConfigProvider({ children }: { children: ReactNode }) {
   }, [config]);
 
   const setModel = (model: string) => {
+    // If the user explicitly opts in to 2.5-pro, record it so the load-time
+    // guardrail stops rebasing them. Any other selection clears the opt-in.
+    try {
+      if (model === "gemini-2.5-pro") {
+        localStorage.setItem(EXPLICIT_25PRO_OPT_IN_KEY, "1");
+      } else {
+        localStorage.removeItem(EXPLICIT_25PRO_OPT_IN_KEY);
+      }
+    } catch (_) { /* ignore */ }
     setConfig((prev) => ({ ...prev, model }));
   };
 
