@@ -1,4 +1,4 @@
-import { Grid3X3, Shield, Filter, ClipboardList, Zap } from "lucide-react";
+import { Grid3X3, Shield, Filter, ClipboardList, Zap, Star } from "lucide-react";
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { KraljicData } from "@/lib/dashboard-data-parser";
