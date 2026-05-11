@@ -848,7 +848,13 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
   const equalWeight = criteria.length > 0 ? Math.round(100 / criteria.length) : 20;
   const weightedScores: Record<string, number> = {};
   for (const sc of allScenarios) { weightedScores[sc.id] = criteria.reduce((sum, c) => sum + ((c.scores[sc.id] ?? 50) * equalWeight / 100), 0); }
-  const winnerId = allScenarios.reduce((best, sc) => (weightedScores[sc.id] ?? 0) > (weightedScores[best.id] ?? 0) ? sc : best, allScenarios[0]);
+  const scoreWinner = allScenarios.reduce((best, sc) => (weightedScores[sc.id] ?? 0) > (weightedScores[best.id] ?? 0) ? sc : best, allScenarios[0]);
+  // Allow upstream extractor to force the recommended scenario so the page-3
+  // badge stays in lockstep with the Executive-Summary CFO verdict.
+  const ovr = (data as { recommendedOverride?: { id?: string; name?: string } }).recommendedOverride;
+  const winnerId = (ovr?.id && allScenarios.find(s => s.id === ovr.id))
+    ?? (ovr?.name && allScenarios.find(s => s.name === ovr.name))
+    ?? scoreWinner;
 
   return (
     <View style={styles.dashboardCard}>
