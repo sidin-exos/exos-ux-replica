@@ -841,7 +841,9 @@ const PDFReportDocument = ({
 
         <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Recommended Actions</Text><View style={s.sectionTitleLine} /></View>
         {recommendations.slice(0, 4).map((point, i) => {
-          const { title, body } = parseFindingTitle(point);
+          const parsed = parseFindingTitle(point);
+          const title = dedupeParenAcronyms(parsed.title);
+          const body = parsed.body ? dedupeParenAcronyms(parsed.body) : "";
           return (
             <View key={`r-${i}`} style={{ ...s.actionItem, borderLeftColor: accentColor(i, c) }} wrap={false}>
               <View style={{ ...s.actionNumber, backgroundColor: accentColor(i, c) }}><Text style={s.actionNumberText}>{i + 1}</Text></View>
