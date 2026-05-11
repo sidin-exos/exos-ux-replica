@@ -640,6 +640,30 @@ const PDFReportDocument = ({
   const isS20 = envelope?.scenario_id === "S20" || /category\s*risk/i.test(scenarioTitle);
   const isS21 = envelope?.scenario_id === "S21" || /preparing.*for.*negotiat/i.test(scenarioTitle);
   const isS6 = envelope?.scenario_id === "S6" || /forecasting|predictive\s*budget/i.test(scenarioTitle);
+  // S22 (Category Strategy): cover KPIs derive from kraljic_position + porters + quick_wins.
+  const isS22 = envelope?.scenario_id === "S22" || /category\s*strategy/i.test(scenarioTitle);
+  const s22Specific: any = isS22 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s22Kraljic = s22Specific?.kraljic_position ?? null;
+  const s22KraljicPosition = (() => {
+    const rec = String(s22Kraljic?.recommended ?? "").toUpperCase().replace(/_/g, "-");
+    if (!rec || rec.includes("|")) return null;
+    return rec === "NON-CRITICAL" ? "NON-CRITICAL" : rec;
+  })();
+  const s22SupplierPower = (() => {
+    const v = String(s22Specific?.porters_five_forces?.supplier_power?.rating ?? "").toUpperCase();
+    return v && !v.includes("|") ? v : null;
+  })();
+  const s22Leverage = (() => {
+    const sr = Number(s22Kraljic?.supply_risk);
+    const bi = Number(s22Kraljic?.business_impact);
+    if (!Number.isFinite(sr) || !Number.isFinite(bi)) return null;
+    // Leverage band: high impact + low risk = HIGH leverage; high risk + any = LOW (supplier holds the cards).
+    if (sr >= 7) return "LOW";
+    if (bi >= 7 && sr < 4) return "HIGH";
+    if (bi >= 5) return "MEDIUM";
+    return "LOW";
+  })();
+  const s22QuickWinsCount = Array.isArray(s22Specific?.quick_wins) ? s22Specific.quick_wins.length : 0;
   // S6 cover KPIs (Base Case spend / Risk band / Top driver)
   const s6Specific = isS6 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s6Scenarios: any[] = Array.isArray(s6Specific?.scenarios) ? s6Specific.scenarios : [];
