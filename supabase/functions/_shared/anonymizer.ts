@@ -482,6 +482,15 @@ export function deanonymizeText(
     }
   }
 
+  // Final pass: collapse immediate duplicate phrase repetitions like
+  // "EU MDR EU MDR" or "GmbH GmbH" that the model occasionally emits when
+  // expanding aliases inside text that already contained the expansion.
+  // Conservative: 2–40 char phrase, word-boundary anchored, single repetition.
+  restoredText = restoredText.replace(
+    /\b([\w&./-]{2,40}(?:\s+[\w&./-]{2,40}){0,4})\s+\1\b/g,
+    "$1",
+  );
+
   return {
     restoredText,
     metadata: { entitiesRestored, unmappedTokens },

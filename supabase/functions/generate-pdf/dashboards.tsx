@@ -653,7 +653,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
         </View>
       </View>
       <View style={{ marginTop: 8 }}>
-        <Text style={{ fontSize: 8, color: colors.textMuted, marginBottom: 4, textAlign: "left" }}>Business impact (high) ▲</Text>
+        <Text style={{ fontSize: 8, color: colors.textMuted, marginBottom: 4, textAlign: "left" }}>Business impact (high)</Text>
         <View style={styles.quadrantGrid}>
           <View style={styles.quadrantRow}>
             {renderQuadrant("strategic", false, false)}
@@ -664,7 +664,7 @@ export const PDFKraljicQuadrant = ({ data, themeMode }: { data: KraljicData; the
             {renderQuadrant("noncritical", true, true)}
           </View>
         </View>
-        <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "right", marginTop: 4 }}>Supply risk (high) ▶</Text>
+        <Text style={{ fontSize: 8, color: colors.textMuted, textAlign: "right", marginTop: 4 }}>Supply risk (high)</Text>
       </View>
       <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
         <Text style={{ fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: colors.text, marginBottom: 4 }}>Recommended Strategies:</Text>
