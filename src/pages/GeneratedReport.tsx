@@ -291,6 +291,7 @@ const GeneratedReport = () => {
               selectedDashboards={selectedDashboards}
               evaluationScore={evaluationScore}
               evaluationConfidence={evaluationConfidence}
+              coverageStars={coverageStars}
             />
           </div>
         </motion.div>
