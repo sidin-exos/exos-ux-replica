@@ -306,7 +306,9 @@ export const scenarioDashboardMapping: Record<string, DashboardType[]> = {
   "tail-spend-sourcing": ["action-checklist", "data-quality"],
   "requirements-gathering": ["action-checklist", "data-quality"],
   // Audit cull: removed working-capital-dpo (S6 is P&L forecasting; DPO is balance-sheet/treasury).
-  "forecasting-budgeting": ["scenario-comparison", "sensitivity-spider"],
+  // Audit cull: removed scenario-comparison (Base/Down/Up are probability cases, not rival options to score).
+  // cost-waterfall surfaces financial_model.cost_breakdown for the Base case; sensitivity-spider shows driver impact.
+  "forecasting-budgeting": ["cost-waterfall", "sensitivity-spider"],
   "negotiation-preparation": ["negotiation-prep", "scenario-comparison", "should-cost-gap"],
   "procurement-project-planning": ["timeline-roadmap", "action-checklist", "risk-heatmap"],
 

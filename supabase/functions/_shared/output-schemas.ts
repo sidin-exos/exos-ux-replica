@@ -1088,35 +1088,79 @@ const SCENARIO_ID_TO_CODE: Record<string, string> = {
  * Returns a scenario-specific slice of GROUP_SCHEMAS for the active scenario.
  * Falls back to the full group schema if slicing is not supported for the
  * group/scenario or if the regex match fails (defensive — never strip blindly).
+ *
+ * Token impact:
+ *   • Group A full schema ~26 KB → sliced ~3–6 KB depending on scenario.
+ *   • Group D full schema ~22 KB → sliced ~4–7 KB.
  */
 export function getScenarioSchema(group: string | null | undefined, scenarioId: string | null | undefined): string {
   const full = group ? GROUP_SCHEMAS[group] : '';
   if (!full) return '';
 
-  // Only Group D benefits meaningfully from slicing today.
-  if (group !== 'D' || !scenarioId) return full;
+  const code = scenarioId ? SCENARIO_ID_TO_CODE[scenarioId] : null;
 
-  const code = SCENARIO_ID_TO_CODE[scenarioId];
-  if (!code) return full;
+  // ── Group A slicing (S1–S8) ────────────────────────────────────────
+  if (group === 'A') {
+    if (!code) return full;
+    // Group A layout:
+    //   <preamble + financial_model JSON template + FINANCIAL_MODEL rules>
+    //   "Then ALSO populate scenario_specific..." line
+    //   <per-scenario blocks: "- <slug> (S#): ...">
+    //   "- For other Group A scenarios, ..." catch-all
+    //   WORKING CAPITAL + closing rules
+    const preambleMatch = full.match(/^([\s\S]*?Then ALSO populate scenario_specific[^\n]*\n)/);
+    const footerMatch = full.match(/\n(- For other Group A scenarios[\s\S]*)$/);
+    if (!preambleMatch || !footerMatch) return full;
 
-  // Group D layout:
-  //   <preamble through "structures below verbatim.">
-  //   — S21 ... { ... }
-  //   — S22 ... { ... }
-  //   ...
-  //   — S27 ... { ... }
-  //   <CONCENTRATION RULES + closing line>
-  const preambleMatch = full.match(/^([\s\S]*?structures below verbatim\.\s*\n)/);
-  const footerMatch = full.match(/\n(CONCENTRATION RULES[\s\S]*)$/);
-  if (!preambleMatch || !footerMatch) return full;
+    const A_SLUGS: Record<string, string> = {
+      S1: 'tco-analysis',
+      S2: 'cost-breakdown',
+      S3: 'capex-vs-opex',
+      S4: 'savings-calculation',
+      S5: 'spend-analysis-categorization',
+      S7: 'saas-optimization',
+      // S6 (forecasting-budgeting) and S8 (specification-optimizer) have no
+      // dedicated block — they rely on the addendum + catch-all line.
+    };
 
-  // Match the target sub-scenario block: from "— S## …" up to (but not
-  // including) the next "— S##" or the CONCENTRATION RULES footer.
-  const blockRe = new RegExp(`(— ${code}\\b[\\s\\S]*?)(?=\\n— S\\d+\\b|\\nCONCENTRATION RULES)`, 'm');
-  const blockMatch = full.match(blockRe);
-  if (!blockMatch) return full;
+    const slug = A_SLUGS[code];
+    if (!slug) {
+      // Preamble + catch-all + working capital only.
+      return `${preambleMatch[1]}\n${footerMatch[1]}`;
+    }
 
-  return `${preambleMatch[1]}\n${blockMatch[1].trim()}\n\n${footerMatch[1]}`;
+    const escSlug = slug.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const blockRe = new RegExp(
+      `(- ${escSlug} \\(${code}\\):[\\s\\S]*?)(?=\\n- [a-z][\\w-]* \\(S\\d+\\):|\\n- For other Group A)`,
+      'm'
+    );
+    const blockMatch = full.match(blockRe);
+    if (!blockMatch) return `${preambleMatch[1]}\n${footerMatch[1]}`;
+
+    return `${preambleMatch[1]}\n${blockMatch[1].trim()}\n\n${footerMatch[1]}`;
+  }
+
+  // ── Group D slicing (S21–S27) ──────────────────────────────────────
+  if (group === 'D' && code) {
+    // Group D layout:
+    //   <preamble through "structures below verbatim.">
+    //   — S21 ... { ... }
+    //   — S22 ... { ... }
+    //   ...
+    //   — S27 ... { ... }
+    //   <CONCENTRATION RULES + closing line>
+    const preambleMatch = full.match(/^([\s\S]*?structures below verbatim\.\s*\n)/);
+    const footerMatch = full.match(/\n(CONCENTRATION RULES[\s\S]*)$/);
+    if (!preambleMatch || !footerMatch) return full;
+
+    const blockRe = new RegExp(`(— ${code}\\b[\\s\\S]*?)(?=\\n— S\\d+\\b|\\nCONCENTRATION RULES)`, 'm');
+    const blockMatch = full.match(blockRe);
+    if (!blockMatch) return full;
+
+    return `${preambleMatch[1]}\n${blockMatch[1].trim()}\n\n${footerMatch[1]}`;
+  }
+
+  return full;
 }
 
 // ── AI Prompt Contract ──────────────────────────────────────────────

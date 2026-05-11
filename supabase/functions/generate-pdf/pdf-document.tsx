@@ -654,10 +654,12 @@ const PDFReportDocument = ({
     const downT = Number(s6Down?.total_spend ?? s6Down?.total);
     const upT = Number(s6Up?.total_spend ?? s6Up?.total);
     if (!Number.isFinite(baseT) || baseT <= 0) return null;
+    const fmt = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
     const downPct = Number.isFinite(downT) ? Math.round(((downT - baseT) / baseT) * 1000) / 10 : null;
     const upPct = Number.isFinite(upT) ? Math.round(((upT - baseT) / baseT) * 1000) / 10 : null;
     if (downPct == null && upPct == null) return null;
-    return `${upPct != null ? (upPct >= 0 ? `+${upPct}` : upPct) : "—"}% / ${downPct != null ? (downPct >= 0 ? `+${downPct}` : downPct) : "—"}%`;
+    // Display as Downside / Upside (worst-to-best reading order).
+    return `${downPct != null ? fmt(downPct) : "—"} / ${upPct != null ? fmt(upPct) : "—"}`;
   })();
   const s6TopDriver = (() => {
     const sens: any[] = Array.isArray(s6Specific?.sensitivity) ? s6Specific.sensitivity : [];
