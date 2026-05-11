@@ -612,6 +612,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         selectedDashboards: selectedDashboards,
         evaluationScore: evaluation?.score ?? null,
         evaluationConfidence: evaluation?.confidenceFlag ?? null,
+        coverageStars: coverageStars,
       },
     });
   };
