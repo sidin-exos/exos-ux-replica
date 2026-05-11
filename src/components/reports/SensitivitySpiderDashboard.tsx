@@ -34,19 +34,31 @@ const COLOR_TIER_HIGH = "hsl(358, 38%, 48%)";
 const COLOR_TIER_MED = "hsl(35, 28%, 45%)";
 const COLOR_TIER_LOW = "hsl(174, 35%, 38%)";
 
-const formatCurrency = (value: number, currency: string = "$"): string => {
-  if (!Number.isFinite(value)) return `${currency}0`;
-  const sign = value < 0 ? "-" : "";
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${sign}${currency}${(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) return `${sign}${currency}${(abs / 1_000).toFixed(0)}K`;
-  return `${sign}${currency}${abs.toFixed(0)}`;
+const currencySymbol = (currency: string): string => {
+  if (!currency) return "$";
+  if (currency === "EUR" || currency === "€") return "€";
+  if (currency === "USD" || currency === "$") return "$";
+  if (currency === "GBP" || currency === "£") return "£";
+  // Already a symbol or unknown code → keep with trailing space for legibility
+  return currency.length <= 1 ? currency : `${currency} `;
 };
 
-const formatValue = (value: number, unit?: string): string => {
-  if (unit === "$") return formatCurrency(value);
+const formatCurrency = (value: number, currency: string = "$"): string => {
+  if (!Number.isFinite(value)) return `${currencySymbol(currency)}0`;
+  const sym = currencySymbol(currency);
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${sym}${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}${sym}${abs.toFixed(0)}`;
+};
+
+const formatValue = (value: number, unit?: string, currency?: string): string => {
+  if (unit === "$" || unit === "€" || unit === "£") return formatCurrency(value, unit);
   if (unit === "%") return `${value}%`;
   if (unit === "units") return `${(value / 1000).toFixed(0)}K`;
+  // Unit-less large number → treat as monetary base in the report's currency
+  if (!unit && Math.abs(value) >= 1000) return formatCurrency(value, currency ?? "$");
   return value.toFixed(2);
 };
 
