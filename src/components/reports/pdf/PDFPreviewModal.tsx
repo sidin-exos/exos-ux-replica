@@ -43,6 +43,7 @@ interface PDFPreviewModalProps {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  coverageStars?: number | null;
 }
 
 const PDFPreviewModal = ({
@@ -56,6 +57,7 @@ const PDFPreviewModal = ({
   selectedDashboards = [],
   evaluationScore,
   evaluationConfidence,
+  coverageStars,
 }: PDFPreviewModalProps) => {
   const [pdfData, setPdfData] = useState<{ data: Uint8Array } | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
@@ -80,6 +82,7 @@ const PDFPreviewModal = ({
       pdfTheme,
       evaluationScore: evaluationScore ?? null,
       evaluationConfidence: evaluationConfidence ?? null,
+      coverageStars: coverageStars ?? null,
       formData: Object.entries(formData).sort(([a], [b]) => a.localeCompare(b)),
       selectedDashboards,
     }),
@@ -91,6 +94,7 @@ const PDFPreviewModal = ({
       pdfTheme,
       evaluationScore,
       evaluationConfidence,
+      coverageStars,
       formData,
       selectedDashboards,
     ],
@@ -127,6 +131,7 @@ const PDFPreviewModal = ({
           pdfTheme,
           evaluationScore: evaluationScore ?? undefined,
           evaluationConfidence: evaluationConfidence ?? undefined,
+          coverageStars: coverageStars ?? undefined,
         },
       });
 
@@ -155,6 +160,7 @@ const PDFPreviewModal = ({
     structuredData,
     evaluationConfidence,
     evaluationScore,
+    coverageStars,
     formData,
     generationKey,
     pdfBlobUrl,

@@ -589,11 +589,11 @@ function chunkPairs<T>(arr: T[]): T[][] {
 const PDFReportDocument = ({
   scenarioTitle, analysisResult, structuredData, formData, timestamp,
   selectedDashboards = [], pdfTheme = "light",
-  evaluationScore, evaluationConfidence,
+  evaluationScore, evaluationConfidence, coverageStars,
 }: {
   scenarioTitle: string; analysisResult: string; structuredData?: string; formData: Record<string, string>;
   timestamp: string; selectedDashboards?: DashboardType[]; pdfTheme?: PdfThemeMode;
-  evaluationScore?: number; evaluationConfidence?: string;
+  evaluationScore?: number; evaluationConfidence?: string; coverageStars?: number;
 }) => {
   const c = getPdfColors(pdfTheme);
   const s = buildStyles(c);
@@ -674,22 +674,25 @@ const PDFReportDocument = ({
 
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-  // Only show a numeric score when the evaluator actually produced one. Falling
-  // back to filled-fraction was misleading (e.g. S26 with 0 quality-evaluator
-  // output displayed "0/100", suggesting a real failed evaluation).
+  // SOURCE OF TRUTH: prefer the LLM coverage stars from the pre-run check
+  // (0–5 → ×20). This is what the user saw on the Data Review screen, so
+  // the PDF KPI matches end-to-end. Fall back to the deterministic
+  // input-evaluator score, then to filled-fraction.
+  const hasCoverageStars = typeof coverageStars === "number" && coverageStars > 0;
   const hasEvaluatorScore = typeof evaluationScore === "number" && evaluationScore > 0;
-  const rawCoveragePct = hasEvaluatorScore
-    ? evaluationScore
+  const evaluatorPct = hasEvaluatorScore
+    ? evaluationScore!
     : (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
-  // Reconcile a low client-side evaluator score with strong post-run signals.
-  // The strict input-evaluator can over-penalise on word counts even when the
-  // AI produced rich, structured output (HIGH evaluation confidence). Floor
-  // the displayed Input Rigour to 60 in that case so the cover KPI doesn't
-  // contradict the rest of the report.
-  const coveragePct = (evaluationConfidence === "HIGH" && rawCoveragePct < 60)
-    ? 60
-    : rawCoveragePct;
-  const showScore = hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
+  const llmCoveragePct = hasCoverageStars ? Math.round(coverageStars! * 20) : 0;
+  // Floors to prevent input-evaluator catch-22:
+  //   ≥ 4.5★ → ≥ 75 ;  ≥ 4★ → ≥ 65 ; HIGH evaluator confidence → ≥ 60.
+  const llmFloor = hasCoverageStars
+    ? (coverageStars! >= 4.5 ? 75 : coverageStars! >= 4 ? 65 : 0)
+    : 0;
+  const confidenceFloor = (evaluationConfidence === "HIGH" && evaluatorPct < 60) ? 60 : 0;
+  const rawCoveragePct = hasCoverageStars ? llmCoveragePct : evaluatorPct;
+  const coveragePct = Math.max(rawCoveragePct, llmFloor, confidenceFloor);
+  const showScore = hasCoverageStars || hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
   const coverageDisplay = showScore ? `${coveragePct}/100` : "—";
   const coverageDisplaySpaced = showScore ? `${coveragePct} / 100` : "—";
   const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
@@ -815,7 +818,7 @@ const PDFReportDocument = ({
         <View style={s.kpiRow}>
           {isS27 ? (
             <>
-              <View style={s.kpiCell}><Text style={s.kpiLabel}>INPUT RIGOUR</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coverageDisplaySpaced}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coverageDisplaySpaced}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RESILIENCE POSTURE</Text><Text style={{ ...s.kpiValue, color: kpiColor(s27ResiliencePosture === "RED" ? "High" : s27ResiliencePosture === "AMBER" ? "Medium" : s27ResiliencePosture === "GREEN" ? "Low" : confidenceLevel, "risk", c) }}>{s27ResiliencePosture ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RTO GAP</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s27RtoGap != null ? `${s27RtoGap}h` : "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>SINGLE-SOURCE FLOWS</Text><Text style={{ ...s.kpiValue, color: s27SingleSourceFlows && s27SingleSourceFlows > 0 ? c.destructive : c.success }}>{s27SingleSourceFlows != null ? String(s27SingleSourceFlows) : "—"}</Text></View>
@@ -832,11 +835,11 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>BATNA SCORE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{batnaScore != null ? `${batnaScore} / 5` : "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>POWER BALANCE</Text><Text style={{ ...s.kpiValue, color: s21PowerBalance === "BUYER ADV." ? c.success : s21PowerBalance === "SUPPLIER ADV." ? c.destructive : c.primary }}>{s21PowerBalance ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>ZOPA</Text><Text style={{ ...s.kpiValue, color: s21ZopaExists === false ? c.destructive : s21ZopaExists ? c.success : c.primary }}>{s21ZopaLabel ?? "—"}</Text></View>
-              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>INPUT RIGOUR</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{coverageDisplaySpaced}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{coverageDisplaySpaced}</Text></View>
             </>
           ) : (
             <>
-              <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT RIGOUR"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : coverageDisplaySpaced}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : coverageDisplaySpaced}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{leverageLabel}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(extractRiskKpi(strippedAnalysis), "risk", c) }}>{supplierPowerLabel || (extractRiskKpi(strippedAnalysis) !== "—" ? extractRiskKpi(strippedAnalysis).toUpperCase() : "N/A")}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>CONFIDENCE</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
@@ -1098,7 +1101,7 @@ const PDFReportDocument = ({
             <Text style={s.methodologyText}>Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals.</Text>
           </View>
           <View style={s.statsTable}>
-            <View style={s.statsCell}><Text style={s.statsLabel}>Input Rigour Score</Text><Text style={{ ...s.statsValue, color: showScore ? kpiColor(String(coveragePct), "confidence", c) : c.textMuted }}>{coverageDisplay}</Text></View>
+            <View style={s.statsCell}><Text style={s.statsLabel}>Input Quality Score</Text><Text style={{ ...s.statsValue, color: showScore ? kpiColor(String(coveragePct), "confidence", c) : c.textMuted }}>{coverageDisplay}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Confidence</Text><Text style={{ ...s.statsValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Analysis ID</Text><Text style={s.statsValue}>{reportHash}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Timestamp</Text><Text style={s.statsValue}>{new Date(timestamp).toISOString()}</Text></View>
@@ -1114,9 +1117,9 @@ const PDFReportDocument = ({
 // ── Public API ──
 
 export async function generatePdfBuffer(payload: GeneratePdfPayload): Promise<Uint8Array> {
-  const { scenarioTitle, analysisResult, structuredData, formData, timestamp, selectedDashboards = [], pdfTheme = "light", evaluationScore, evaluationConfidence } = payload;
+  const { scenarioTitle, analysisResult, structuredData, formData, timestamp, selectedDashboards = [], pdfTheme = "light", evaluationScore, evaluationConfidence, coverageStars } = payload;
   const doc = (
-    <PDFReportDocument scenarioTitle={scenarioTitle} analysisResult={analysisResult} structuredData={structuredData} formData={formData} timestamp={timestamp} selectedDashboards={selectedDashboards} pdfTheme={pdfTheme} evaluationScore={evaluationScore} evaluationConfidence={evaluationConfidence} />
+    <PDFReportDocument scenarioTitle={scenarioTitle} analysisResult={analysisResult} structuredData={structuredData} formData={formData} timestamp={timestamp} selectedDashboards={selectedDashboards} pdfTheme={pdfTheme} evaluationScore={evaluationScore} evaluationConfidence={evaluationConfidence} coverageStars={coverageStars} />
   );
   const buffer = await renderToBuffer(doc as any);
   return new Uint8Array(buffer);

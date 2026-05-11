@@ -297,6 +297,8 @@ export interface GeneratePdfPayload {
   pdfTheme?: "light" | "dark";
   evaluationScore?: number;
   evaluationConfidence?: string;
+  /** LLM coverage 0–5 stars from the pre-run check. Drives "Input Quality". */
+  coverageStars?: number;
 }
 
 export type PdfThemeMode = "light" | "dark";

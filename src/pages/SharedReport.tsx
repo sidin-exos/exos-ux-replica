@@ -35,6 +35,7 @@ interface ReportData {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  coverageStars?: number | null;
 }
 
 type SharedReportState =
@@ -93,6 +94,7 @@ export default function SharedReport() {
             selectedDashboards: payload.selectedDashboards,
             evaluationScore: payload.evaluationScore,
             evaluationConfidence: payload.evaluationConfidence,
+            coverageStars: payload.coverageStars,
           },
         });
       } catch {
@@ -215,6 +217,7 @@ export default function SharedReport() {
     selectedDashboards = [],
     evaluationScore,
     evaluationConfidence,
+    coverageStars,
   } = state.data;
 
   const safeAnalysisResult = analysisResult ?? "";
@@ -355,6 +358,7 @@ export default function SharedReport() {
               selectedDashboards={selectedDashboards}
               evaluationScore={evaluationScore}
               evaluationConfidence={evaluationConfidence}
+              coverageStars={coverageStars}
             />
           </div>
         </motion.div>

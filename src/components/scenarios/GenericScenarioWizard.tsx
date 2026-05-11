@@ -195,6 +195,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // File attachment state
   const [attachedFileIds, setAttachedFileIds] = useState<string[]>([]);
+  // LLM coverage stars (0–5) from AICoverageCheck — single source of truth
+  // for the PDF "Input Quality" KPI. Set when the user runs the pre-check.
+  const [coverageStars, setCoverageStars] = useState<number | null>(null);
   const scenarioRunId = useRef(crypto.randomUUID()).current;
   const { attachFiles } = useScenarioFileAttachments();
 
@@ -609,6 +612,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         selectedDashboards: selectedDashboards,
         evaluationScore: evaluation?.score ?? null,
         evaluationConfidence: evaluation?.confidenceFlag ?? null,
+        coverageStars: coverageStars,
       },
     });
   };
@@ -1049,6 +1053,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                     .join("\n\n")}
                   sections={scenario.dataRequirements.sections}
                   subtitle='Score your input against "What data do I need to prepare?".'
+                  onResult={(r) => setCoverageStars(r?.overallScore ?? null)}
                 />
               </div>
             )}

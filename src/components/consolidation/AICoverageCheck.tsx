@@ -51,6 +51,10 @@ interface AICoverageCheckProps {
   /** Visual label/CTA copy. */
   title?: string;
   subtitle?: string;
+  /** Fired whenever the LLM coverage result changes. Lets parents
+   * persist the 0–5 star score so it can drive downstream KPIs (e.g. the
+   * PDF "Input Quality" score) — keeping a single source of truth. */
+  onResult?: (result: CoverageResult | null) => void;
 }
 
 /**
@@ -67,7 +71,8 @@ export function AICoverageCheck({
   sections,
   draftableFields,
   title = "Input coverage check",
-  subtitle = "Are the required topics present in your input? (separate from analytical rigour, scored after the run.)",
+  subtitle = "Are the required topics present in your input? (separate from output rigour, scored after the run.)",
+  onResult,
 }: AICoverageCheckProps) {
   const [coverage, setCoverage] = useState<CoverageResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,6 +84,7 @@ export function AICoverageCheck({
   const runCheck = async () => {
     setLoading(true);
     setCoverage(null);
+    onResult?.(null);
     try {
       const { data, error } = await supabase.functions.invoke(
         "evaluate-project-coverage",
@@ -88,7 +94,9 @@ export function AICoverageCheck({
       );
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      setCoverage(data as CoverageResult);
+      const result = data as CoverageResult;
+      setCoverage(result);
+      onResult?.(result);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "Failed to evaluate coverage",
@@ -298,15 +306,15 @@ function CoverageResults({ result }: { result: CoverageResult }) {
       <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Predicted analytical rigour
+            Predicted output rigour
           </span>
           <span className={`text-sm font-semibold ${predictedBand.color}`}>
             {predictedBand.label}
           </span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Coverage measures whether topics are present. Rigour (scored after the
-          run) measures numerical precision and evidence depth.
+          Coverage measures whether topics are present. Output rigour (scored
+          after the run) measures numerical precision and evidence depth.
           {financialSections.length > 0 && financialCovered === 0
             ? " No financial section is fully quantified — the post-run rigour score will be capped until you add explicit € figures."
             : financialGaps > 0

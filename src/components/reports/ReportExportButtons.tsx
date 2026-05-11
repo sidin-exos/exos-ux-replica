@@ -17,6 +17,7 @@ interface ReportExportButtonsProps {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  coverageStars?: number | null;
 }
 
 const ReportExportButtons = ({
@@ -28,6 +29,7 @@ const ReportExportButtons = ({
   selectedDashboards = [],
   evaluationScore,
   evaluationConfidence,
+  coverageStars,
 }: ReportExportButtonsProps) => {
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
 
@@ -120,6 +122,7 @@ const ReportExportButtons = ({
         selectedDashboards={selectedDashboards}
         evaluationScore={evaluationScore}
         evaluationConfidence={evaluationConfidence}
+        coverageStars={coverageStars}
       />
     </>
   );
