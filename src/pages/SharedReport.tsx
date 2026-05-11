@@ -217,6 +217,7 @@ export default function SharedReport() {
     selectedDashboards = [],
     evaluationScore,
     evaluationConfidence,
+    coverageStars,
   } = state.data;
 
   const safeAnalysisResult = analysisResult ?? "";
