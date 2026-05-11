@@ -580,6 +580,8 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
     case "data-quality": return <PDFDataQuality data={parsedData!.dataQuality!} themeMode={themeMode} />;
     case "npv-waterfall": return <PDFNpvWaterfall data={parsedData!.npvWaterfall! as any} themeMode={themeMode} />;
     case "ifrs16-impact": return <PDFIfrs16Impact data={parsedData!.ifrs16Impact! as any} themeMode={themeMode} />;
+    case "savings-realization-funnel": return <PDFSavingsRealizationFunnel data={parsedData!.savingsRealizationFunnel! as any} themeMode={themeMode} />;
+    case "working-capital-dpo": return <PDFWorkingCapitalDpo data={parsedData!.workingCapitalDpo! as any} themeMode={themeMode} />;
     default: return null;
   }
 };
