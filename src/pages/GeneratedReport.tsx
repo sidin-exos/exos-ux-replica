@@ -37,6 +37,7 @@ interface ReportState {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  coverageStars?: number | null;
 }
 
 const GeneratedReport = () => {
