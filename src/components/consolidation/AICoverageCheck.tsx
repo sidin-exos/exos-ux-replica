@@ -306,15 +306,15 @@ function CoverageResults({ result }: { result: CoverageResult }) {
       <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Predicted analytical rigour
+            Predicted output rigour
           </span>
           <span className={`text-sm font-semibold ${predictedBand.color}`}>
             {predictedBand.label}
           </span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Coverage measures whether topics are present. Rigour (scored after the
-          run) measures numerical precision and evidence depth.
+          Coverage measures whether topics are present. Output rigour (scored
+          after the run) measures numerical precision and evidence depth.
           {financialSections.length > 0 && financialCovered === 0
             ? " No financial section is fully quantified — the post-run rigour score will be capped until you add explicit € figures."
             : financialGaps > 0
