@@ -1006,6 +1006,227 @@ const PDFReportDocument = ({
         ));
       })()}
 
+      {/* S22 Category Strategy Pack — strategic options + quick wins */}
+      {isS22 && (() => {
+        const opts: any[] = Array.isArray(s22Specific?.strategic_options) ? s22Specific.strategic_options : [];
+        const qw: any[] = Array.isArray(s22Specific?.quick_wins) ? s22Specific.quick_wins : [];
+        if (opts.length === 0 && qw.length === 0) return null;
+        const fmtMoneyShort = (n: any) => {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return "—";
+          const abs = Math.abs(v);
+          if (abs >= 1_000_000) return `€${(v / 1_000_000).toFixed(1)}M`;
+          if (abs >= 1000) return `€${Math.round(v / 1000)}K`;
+          return `€${Math.round(v)}`;
+        };
+        const horizonColor = (h: string) => {
+          const k = String(h ?? "").toUpperCase();
+          if (k === "SHORT") return c.success;
+          if (k === "MEDIUM") return c.warning;
+          if (k === "LONG") return c.accent3;
+          return c.textMuted;
+        };
+        return (
+          <Page size="A4" style={s.pageWithHeader} id="section-strategy-pack">
+            <View style={s.headerBar} fixed>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text>
+                <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text>
+              </View>
+              <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
+            </View>
+            <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>CATEGORY STRATEGY PACK</Text></View>
+
+            {opts.length > 0 && (
+              <View style={{ marginBottom: 14 }}>
+                <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Strategic Options Matrix</Text><View style={s.sectionTitleLine} /></View>
+                {opts.slice(0, 5).map((o, i) => (
+                  <View key={`opt-${i}`} style={{ borderWidth: 1, borderColor: c.border, padding: 8, marginBottom: 6, backgroundColor: c.surface }} wrap={false}>
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+                      <View style={{ paddingHorizontal: 5, paddingVertical: 2, backgroundColor: horizonColor(o?.horizon), marginRight: 6 }}>
+                        <Text style={{ fontSize: 7, color: c.textOnPrimary, fontWeight: 700 }}>{String(o?.horizon ?? "").toUpperCase() || "—"}</Text>
+                      </View>
+                      <Text style={{ flex: 1, fontSize: 10, color: c.text, fontWeight: 700 }}>{stripMarkdown(String(o?.label ?? `Option ${i + 1}`))}</Text>
+                      <Text style={{ fontSize: 9, color: c.primary, fontWeight: 700 }}>
+                        {typeof o?.expected_value === "number" ? fmtMoneyShort(o.expected_value) : (o?.expected_value ? stripMarkdown(String(o.expected_value)).slice(0, 40) : "—")}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: "row" }}>
+                      <View style={{ flex: 1, paddingRight: 6 }}>
+                        <Text style={{ fontSize: 8, color: c.success, fontWeight: 700, marginBottom: 2 }}>PROS</Text>
+                        {(Array.isArray(o?.pros) ? o.pros : []).slice(0, 4).map((p: any, j: number) => (
+                          <Text key={j} style={{ fontSize: 8, color: c.text, marginBottom: 1 }}>• {stripMarkdown(String(p))}</Text>
+                        ))}
+                      </View>
+                      <View style={{ flex: 1, paddingLeft: 6, borderLeftWidth: 1, borderLeftColor: c.border }}>
+                        <Text style={{ fontSize: 8, color: c.destructive, fontWeight: 700, marginBottom: 2 }}>CONS</Text>
+                        {(Array.isArray(o?.cons) ? o.cons : []).slice(0, 3).map((p: any, j: number) => (
+                          <Text key={j} style={{ fontSize: 8, color: c.text, marginBottom: 1 }}>• {stripMarkdown(String(p))}</Text>
+                        ))}
+                      </View>
+                    </View>
+                    {o?.investment_required ? (
+                      <Text style={{ fontSize: 8, color: c.textMuted, marginTop: 3 }}>Investment: {stripMarkdown(String(o.investment_required))}</Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {qw.length > 0 && (
+              <View>
+                <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Quick Wins (≤ 12 weeks)</Text><View style={s.sectionTitleLine} /></View>
+                <View style={{ borderWidth: 1, borderColor: c.border }}>
+                  <View style={{ flexDirection: "row", backgroundColor: c.primary, padding: 5 }}>
+                    <Text style={{ flex: 3, fontSize: 8, color: c.textOnPrimary, fontWeight: 700, textTransform: "uppercase" }}>Action</Text>
+                    <Text style={{ flex: 1.2, fontSize: 8, color: c.textOnPrimary, fontWeight: 700, textTransform: "uppercase" }}>Owner</Text>
+                    <Text style={{ width: 50, fontSize: 8, color: c.textOnPrimary, fontWeight: 700, textTransform: "uppercase", textAlign: "center" }}>Weeks</Text>
+                    <Text style={{ width: 60, fontSize: 8, color: c.textOnPrimary, fontWeight: 700, textTransform: "uppercase", textAlign: "right" }}>Value</Text>
+                  </View>
+                  {qw.slice(0, 6).map((q, i) => (
+                    <View key={`qw-${i}`} style={{ flexDirection: "row", padding: 5, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.border, backgroundColor: i % 2 === 1 ? c.surfaceLight : c.surface }} wrap={false}>
+                      <Text style={{ flex: 3, fontSize: 9, color: c.text }}>{stripMarkdown(String(q?.action ?? "—"))}</Text>
+                      <Text style={{ flex: 1.2, fontSize: 9, color: c.textMuted }}>{stripMarkdown(String(q?.owner ?? "—"))}</Text>
+                      <Text style={{ width: 50, fontSize: 9, color: c.text, textAlign: "center" }}>{Number.isFinite(Number(q?.weeks_to_value)) ? String(q.weeks_to_value) : "—"}</Text>
+                      <Text style={{ width: 60, fontSize: 9, color: c.primary, textAlign: "right", fontWeight: 700 }}>{fmtMoneyShort(q?.value_eur)}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <View style={s.footer} fixed><Text style={s.footerText} render={() => `Confidential — ${orgName}`} /><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} /></View>
+          </Page>
+        );
+      })()}
+
+      {/* S22 Market Intelligence + Porter's + Cross-Category + Best Practices */}
+      {isS22 && (() => {
+        const xc: any[] = Array.isArray(s22Specific?.cross_category_analogies) ? s22Specific.cross_category_analogies : [];
+        const bp: any[] = Array.isArray(s22Specific?.best_practices) ? s22Specific.best_practices : [];
+        const mi: any = s22Specific?.market_intelligence ?? null;
+        const pf: any = s22Specific?.porters_five_forces ?? null;
+        const hasMi = mi && ((Array.isArray(mi.key_trends) && mi.key_trends.length > 0) || mi.supply_dynamics || mi.regulatory_outlook || (Array.isArray(mi.innovation_signals) && mi.innovation_signals.length > 0));
+        const hasPf = pf && Object.values(pf).some((v: any) => v?.rating || v?.key_driver);
+        if (!hasMi && !hasPf && xc.length === 0 && bp.length === 0) return null;
+        const ratingColor = (r: string) => {
+          const k = String(r ?? "").toUpperCase();
+          if (k === "HIGH") return c.destructive;
+          if (k === "MEDIUM") return c.warning;
+          if (k === "LOW") return c.success;
+          return c.textMuted;
+        };
+        const forces: Array<[string, string]> = [
+          ["Supplier power", "supplier_power"],
+          ["Buyer power", "buyer_power"],
+          ["Threat of substitutes", "threat_of_substitutes"],
+          ["Threat of new entrants", "threat_of_new_entrants"],
+          ["Competitive rivalry", "competitive_rivalry"],
+        ];
+        return (
+          <Page size="A4" style={s.pageWithHeader} id="section-market-context">
+            <View style={s.headerBar} fixed>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: c.textOnPrimary, marginRight: 12 }}>EXOS</Text>
+                <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.9, textTransform: "uppercase", letterSpacing: 1 }}>{scenarioLabel}</Text>
+              </View>
+              <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>Confidential · {formattedDate}</Text>
+            </View>
+            <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>MARKET CONTEXT & BENCHMARKS</Text></View>
+
+            {hasMi && (
+              <View style={{ marginBottom: 14 }}>
+                <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Market Intelligence Brief</Text><View style={s.sectionTitleLine} /></View>
+                {Array.isArray(mi.key_trends) && mi.key_trends.length > 0 && (
+                  <View style={{ marginBottom: 8 }}>
+                    <Text style={{ fontSize: 9, color: c.textMuted, textTransform: "uppercase", marginBottom: 3, fontWeight: 700 }}>Key trends</Text>
+                    {mi.key_trends.slice(0, 6).map((t: any, i: number) => (
+                      <Text key={`kt-${i}`} style={{ fontSize: 9, color: c.text, marginBottom: 2 }}>• {stripMarkdown(String(t))}</Text>
+                    ))}
+                  </View>
+                )}
+                {mi.supply_dynamics && (
+                  <View style={{ marginBottom: 8 }}>
+                    <Text style={{ fontSize: 9, color: c.textMuted, textTransform: "uppercase", marginBottom: 3, fontWeight: 700 }}>Supply dynamics</Text>
+                    <Text style={{ fontSize: 9, color: c.text }}>{stripMarkdown(String(mi.supply_dynamics))}</Text>
+                  </View>
+                )}
+                {mi.regulatory_outlook && (
+                  <View style={{ marginBottom: 8 }}>
+                    <Text style={{ fontSize: 9, color: c.textMuted, textTransform: "uppercase", marginBottom: 3, fontWeight: 700 }}>Regulatory outlook</Text>
+                    <Text style={{ fontSize: 9, color: c.text }}>{stripMarkdown(String(mi.regulatory_outlook))}</Text>
+                  </View>
+                )}
+                {Array.isArray(mi.innovation_signals) && mi.innovation_signals.length > 0 && (
+                  <View>
+                    <Text style={{ fontSize: 9, color: c.textMuted, textTransform: "uppercase", marginBottom: 3, fontWeight: 700 }}>Innovation signals</Text>
+                    {mi.innovation_signals.slice(0, 4).map((t: any, i: number) => (
+                      <Text key={`is-${i}`} style={{ fontSize: 9, color: c.text, marginBottom: 2 }}>• {stripMarkdown(String(t))}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {hasPf && (
+              <View style={{ marginBottom: 14 }}>
+                <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Porter's Five Forces</Text><View style={s.sectionTitleLine} /></View>
+                <View style={{ borderWidth: 1, borderColor: c.border }}>
+                  {forces.map(([label, key], i) => {
+                    const f = pf?.[key];
+                    const rating = String(f?.rating ?? "").toUpperCase();
+                    const driver = f?.key_driver ? stripMarkdown(String(f.key_driver)) : "—";
+                    return (
+                      <View key={key} style={{ flexDirection: "row", padding: 6, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.border, backgroundColor: i % 2 === 1 ? c.surfaceLight : c.surface }} wrap={false}>
+                        <Text style={{ flex: 1.2, fontSize: 9, color: c.text, fontWeight: 700 }}>{label}</Text>
+                        <View style={{ width: 60 }}>
+                          <View style={{ paddingHorizontal: 5, paddingVertical: 2, backgroundColor: ratingColor(rating), alignSelf: "flex-start" }}>
+                            <Text style={{ fontSize: 8, color: c.textOnPrimary, fontWeight: 700 }}>{rating || "—"}</Text>
+                          </View>
+                        </View>
+                        <Text style={{ flex: 3, fontSize: 9, color: c.textMuted }}>{driver}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {xc.length > 0 && (
+              <View style={{ marginBottom: 14 }}>
+                <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Cross-Category Analogies</Text><View style={s.sectionTitleLine} /></View>
+                {xc.slice(0, 4).map((a, i) => (
+                  <View key={`xc-${i}`} style={{ borderLeftWidth: 3, borderLeftColor: c.accent2, paddingLeft: 8, marginBottom: 6 }} wrap={false}>
+                    <Text style={{ fontSize: 9, color: c.text, fontWeight: 700 }}>{stripMarkdown(String(a?.industry ?? "—"))} · {stripMarkdown(String(a?.category ?? "—"))}</Text>
+                    <Text style={{ fontSize: 9, color: c.text, marginTop: 1 }}>{stripMarkdown(String(a?.lesson ?? ""))}</Text>
+                    {a?.applicability ? <Text style={{ fontSize: 8, color: c.textMuted, marginTop: 2, fontStyle: "italic" }}>Why it transfers: {stripMarkdown(String(a.applicability))}</Text> : null}
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {bp.length > 0 && (
+              <View>
+                <View style={s.sectionTitleWrapper}><Text style={s.sectionTitleText}>Best Practices</Text><View style={s.sectionTitleLine} /></View>
+                {bp.slice(0, 5).map((b, i) => (
+                  <View key={`bp-${i}`} style={{ flexDirection: "row", marginBottom: 5 }} wrap={false}>
+                    <Text style={{ fontSize: 10, color: c.primary, marginRight: 6 }}>•</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 9, color: c.text }}>{stripMarkdown(String(b?.practice ?? "—"))}</Text>
+                      <Text style={{ fontSize: 8, color: c.textMuted, marginTop: 1 }}>
+                        Source: {stripMarkdown(String(b?.source_category ?? "—"))}{b?.expected_benefit ? ` · Benefit: ${stripMarkdown(String(b.expected_benefit))}` : ""}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <View style={s.footer} fixed><Text style={s.footerText} render={() => `Confidential — ${orgName}`} /><Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} /><Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} /></View>
+          </Page>
+        );
+      })()}
+
       {/* Detailed Analysis */}
       <Page size="A4" style={s.pageWithHeader} id="section-detailed-analysis">
         <View style={s.headerBar} fixed>
