@@ -451,11 +451,33 @@ export const PDFTimelineRoadmap = ({ data, themeMode }: { data: TimelineRoadmapD
         </View>
       </View>
       <View style={{ marginTop: 10, marginBottom: 6 }}>
-        <View style={{ flexDirection: "row", marginBottom: 4, marginLeft: 80 }}>
-          {Array.from({ length: totalWeeks }).map((_, i) => (
-            <View key={i} style={{ flex: 1, alignItems: "center" }}><Text style={{ fontSize: 8, color: colors.textMuted }}>W{i + 1}</Text></View>
-          ))}
-        </View>
+        {(() => {
+          // Adaptive ticks: cap at ~12 labels regardless of horizon length so
+          // multi-year roadmaps (e.g. S22 156-week / 3-year plans) don't render
+          // hundreds of overlapping "W-" labels.
+          const MAX_TICKS = 12;
+          const tickCount = Math.min(MAX_TICKS, Math.max(1, totalWeeks));
+          const useYearLabels = totalWeeks >= 104; // 2+ years → year markers
+          const useQuarterLabels = !useYearLabels && totalWeeks > 13; // >1 quarter → quarter markers
+          const ticks = Array.from({ length: tickCount }, (_, i) => {
+            const weekNum = Math.round(((i + 1) / tickCount) * totalWeeks);
+            if (useYearLabels) return `Y${Math.max(1, Math.ceil(weekNum / 52))}`;
+            if (useQuarterLabels) return `Q${Math.max(1, Math.ceil(weekNum / 13))}`;
+            return `W${weekNum}`;
+          });
+          // Deduplicate consecutive identical labels (e.g. Y1,Y1,Y1 → Y1,'',''):
+          const seen = new Set<string>();
+          const labels = ticks.map(t => { if (seen.has(t)) return ""; seen.add(t); return t; });
+          return (
+            <View style={{ flexDirection: "row", marginBottom: 4, marginLeft: 80 }}>
+              {labels.map((label, i) => (
+                <View key={i} style={{ flex: 1, alignItems: "center" }}>
+                  <Text style={{ fontSize: 8, color: colors.textMuted }}>{label}</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })()}
         {phases.map((phase, i) => {
           const startWeek = phases.slice(0, i).reduce((sum, p) => sum + p.duration, 0);
           const startPct = totalWeeks > 0 ? (startWeek / totalWeeks) * 100 : 0;
