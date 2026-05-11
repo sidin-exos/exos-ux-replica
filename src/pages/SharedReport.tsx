@@ -358,6 +358,7 @@ export default function SharedReport() {
               selectedDashboards={selectedDashboards}
               evaluationScore={evaluationScore}
               evaluationConfidence={evaluationConfidence}
+              coverageStars={coverageStars}
             />
           </div>
         </motion.div>
