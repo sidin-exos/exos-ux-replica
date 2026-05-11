@@ -73,6 +73,7 @@ export function AICoverageCheck({
   description,
   fileNames = [],
   sections,
+  scenarioId,
   draftableFields,
   title = "Input coverage check",
   subtitle = "Are the required topics present in your input? (separate from output rigour, scored after the run.)",
