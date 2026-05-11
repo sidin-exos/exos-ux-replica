@@ -195,6 +195,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // File attachment state
   const [attachedFileIds, setAttachedFileIds] = useState<string[]>([]);
+  // LLM coverage stars (0–5) from AICoverageCheck — single source of truth
+  // for the PDF "Input Quality" KPI. Set when the user runs the pre-check.
+  const [coverageStars, setCoverageStars] = useState<number | null>(null);
   const scenarioRunId = useRef(crypto.randomUUID()).current;
   const { attachFiles } = useScenarioFileAttachments();
 
