@@ -1816,7 +1816,12 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
               startWeek,
               endWeek,
               status: i === 0 ? ('in-progress' as const) : ('upcoming' as const),
-              milestones: Array.isArray(y.objectives) ? y.objectives.slice(0, 3) : [],
+              milestones: (() => {
+                const ms: string[] = Array.isArray(y.milestones) ? y.milestones.map((m: any) => String(m)) : [];
+                const objs: string[] = Array.isArray(y.objectives) ? y.objectives.map((m: any) => String(m)) : [];
+                // Prefer real milestones; fall back to objectives so the table never shows blank.
+                return (ms.length > 0 ? ms : objs).slice(0, 3);
+              })(),
             };
           }),
         totalWeeks: roadmap.length * 52,
