@@ -155,6 +155,10 @@ export interface ScenarioComparisonData {
   scenarios: { id: string; name: string; color: string }[];
   radarData: { metric: string; [key: string]: number | string }[];
   summary: { criteria: string; [key: string]: string }[];
+  /** Forces the "recommended" badge to a specific scenario id, overriding the
+   *  weighted-score derived winner. Used to keep page-3 in sync with the
+   *  Executive-Summary verdict (e.g. CFO BUY/LEASE). */
+  recommendedOverride?: { id?: string; name?: string };
 }
 
 export interface SupplierScorecardData {

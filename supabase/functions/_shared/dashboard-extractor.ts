@@ -99,6 +99,7 @@ export interface DashboardData {
     scenarios: { id: string; name: string; color: string }[];
     radarData: { metric: string; [key: string]: number | string }[];
     summary: { criteria: string; [key: string]: string }[];
+    recommendedOverride?: { id?: string; name?: string };
   };
   supplierScorecard?: {
     suppliers: {
@@ -1332,7 +1333,26 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
             [scenarios[1].id]: String(f.rationale),
           }));
         if (radarData.length > 0) {
-          result.scenarioComparison = { scenarios, radarData, summary };
+          // D2 fix: keep the "recommended" badge aligned with the CFO verdict /
+          // NPV winner so page-3 doesn't contradict the Executive Summary.
+          const cfoEarly = (ss.cfo_recommendation ?? {}) as Record<string, any>;
+          const verdictEarly = typeof cfoEarly.verdict === 'string' ? String(cfoEarly.verdict).toUpperCase() : null;
+          let preferred = scenarios[0];
+          const buyScn = scenarios.find((s) => /capex|buy|purchase/i.test(s.name));
+          const leaseScn = scenarios.find((s) => /opex|lease|subscription|rent/i.test(s.name));
+          if (verdictEarly === 'BUY' && buyScn) preferred = buyScn;
+          else if (verdictEarly === 'LEASE' && leaseScn) preferred = leaseScn;
+          else {
+            const npv0 = Number(validCapexOptions[0]?.npv ?? -Infinity);
+            const npv1 = Number(validCapexOptions[1]?.npv ?? -Infinity);
+            preferred = npv0 >= npv1 ? scenarios[0] : scenarios[1];
+          }
+          result.scenarioComparison = {
+            scenarios,
+            radarData,
+            summary,
+            recommendedOverride: { id: preferred.id, name: preferred.name },
+          };
         }
       }
 

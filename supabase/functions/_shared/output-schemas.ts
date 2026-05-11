@@ -1852,6 +1852,51 @@ const COVERAGE_RULES: Record<string, CoverageRule[]> = {
       },
     },
   ],
+  S3: [
+    {
+      key: 'options',
+      label: 'CAPEX vs OPEX options with NPV',
+      check: (ss) => Array.isArray(ss?.options) && ss.options.length >= 2
+        && ss.options.filter((o: any) => Number.isFinite(Number(o?.npv))).length >= 2,
+    },
+    {
+      key: 'sensitivity',
+      label: 'Sensitivity Analysis (≥3 variables)',
+      check: (ss) => Array.isArray(ss?.sensitivity) && ss.sensitivity.length >= 3,
+    },
+    {
+      key: 'flexibility_matrix',
+      label: 'Flexibility Matrix (≥3 dimensions)',
+      check: (ss) => Array.isArray(ss?.flexibility_matrix) && ss.flexibility_matrix.length >= 3,
+    },
+    {
+      key: 'cfo_recommendation',
+      label: 'CFO Recommendation (verdict + rationale)',
+      check: (ss) => {
+        const c = ss?.cfo_recommendation;
+        return !!c && typeof c === 'object'
+          && typeof (c as any).verdict === 'string'
+          && (typeof (c as any).cash_flow_rationale === 'string' || typeof (c as any).ifrs16_note === 'string');
+      },
+    },
+    {
+      key: 'year_by_year_cashflow',
+      label: 'Year-by-year cash flow (per option)',
+      check: (ss) => {
+        const opts: any[] = Array.isArray(ss?.options) ? ss.options : [];
+        const withYbY = opts.filter((o: any) => Array.isArray(o?.year_by_year) && o.year_by_year.length >= 2).length;
+        return withYbY >= 1;
+      },
+    },
+    {
+      key: 'ifrs16_classification',
+      label: 'IFRS 16 on/off balance-sheet classification',
+      check: (ss) => {
+        const opts: any[] = Array.isArray(ss?.options) ? ss.options : [];
+        return opts.some((o: any) => typeof o?.ifrs16_on_balance_sheet === 'boolean');
+      },
+    },
+  ],
 };
 
 export function evaluateOutputCoverage(
