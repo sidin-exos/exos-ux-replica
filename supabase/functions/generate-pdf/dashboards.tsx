@@ -432,7 +432,8 @@ export const PDFTimelineRoadmap = ({ data, themeMode }: { data: TimelineRoadmapD
   const phases = data.phases.map(p => {
     const status = mapStatus(p.status);
     const duration = p.endWeek - p.startWeek + 1;
-    return { name: p.name, weeks: `Week ${p.startWeek}-${p.endWeek}`, duration, milestone: p.milestones?.[0] || "", color: statusColorMap[status] || colors.textMuted, status };
+    const milestoneText = (p.milestones ?? []).filter(Boolean).slice(0, 3).join(" · ");
+    return { name: p.name, weeks: `Week ${p.startWeek}-${p.endWeek}`, duration, milestone: milestoneText, color: statusColorMap[status] || colors.textMuted, status };
   });
   const totalWeeks = data.totalWeeks || phases.reduce((sum, p) => sum + p.duration, 0);
   const currentPhase = phases.find(p => p.status === "active") || phases[0];
