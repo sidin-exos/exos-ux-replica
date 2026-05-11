@@ -1922,6 +1922,62 @@ export function applyCoverageToEnvelope<T extends ExosOutputParsed | null | unde
   return envelope;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Kraljic single-source-of-truth reconciliation (P0).
+//
+// Three independent surfaces in the report read three different fields:
+//   1. Executive KPI cell  ← scenario_specific.kraljic_position.recommended (string)
+//   2. Matrix dashboard    ← supply_risk / business_impact (numeric coords)
+//   3. Narrative prose     ← model free text
+//
+// When the model emits coords at e.g. (8.5, 7.0) but writes "BOTTLENECK" in the
+// recommended string, the same report shows three different positions. We
+// derive the canonical quadrant from the coords (the dashboard's source of
+// truth) and overwrite the categorical strings so KPI + dashboard agree.
+//
+// Coords use the 0–10 model scale (matches S22 schema rules).
+// Quadrant rule: high = >= 5 on the 0–10 scale.
+// ─────────────────────────────────────────────────────────────────────────────
+function quadrantFromCoords(supplyRisk: number, businessImpact: number): 'STRATEGIC' | 'LEVERAGE' | 'BOTTLENECK' | 'NON_CRITICAL' {
+  // Normalise: accept 0–5, 0–10 or 0–100 just in case (matches dashboard-extractor scale()).
+  const norm = (v: number) => (v <= 5 ? v * 2 : v <= 10 ? v : v / 10); // → 0–10
+  const sr = norm(supplyRisk);
+  const bi = norm(businessImpact);
+  const HIGH = 5;
+  if (sr >= HIGH && bi >= HIGH) return 'STRATEGIC';
+  if (sr < HIGH && bi >= HIGH) return 'LEVERAGE';
+  if (sr >= HIGH && bi < HIGH) return 'BOTTLENECK';
+  return 'NON_CRITICAL';
+}
+
+export function reconcileKraljic<T extends ExosOutputParsed | null | undefined>(envelope: T): T {
+  if (!envelope || typeof envelope !== 'object') return envelope;
+  const env = envelope as ExosOutputParsed;
+  const sid = String(env.scenario_id ?? '').toUpperCase();
+  // Only S22 ships the categorical KPI cell that drives the mismatch.
+  if (sid !== 'S22') return envelope;
+  const ss = (env.payload?.scenario_specific ?? null) as Record<string, any> | null;
+  const kp = ss?.kraljic_position;
+  if (!kp || typeof kp !== 'object') return envelope;
+  const sr = Number((kp as any).supply_risk ?? (kp as any).supplyRisk);
+  const bi = Number((kp as any).business_impact ?? (kp as any).businessImpact);
+  if (!Number.isFinite(sr) || !Number.isFinite(bi) || (sr <= 0 && bi <= 0)) return envelope;
+  const canonical = quadrantFromCoords(sr, bi);
+  const recRaw = String((kp as any).recommended ?? '').toUpperCase().replace(/[-\s]/g, '_');
+  const curRaw = String((kp as any).current ?? '').toUpperCase().replace(/[-\s]/g, '_');
+  if (recRaw !== canonical) {
+    console.warn(`[Sentinel] Kraljic reconcile: model emitted recommended="${recRaw || 'null'}" but coords (sr=${sr}, bi=${bi}) → "${canonical}". Overwriting.`);
+    (kp as any).recommended = canonical;
+    (kp as any).reconciled_from = recRaw || null;
+  }
+  // Only overwrite "current" if it's also clearly inconsistent with coords AND
+  // matches the (now-overwritten) recommended — i.e. the model conflated the two.
+  if (curRaw && curRaw === recRaw && curRaw !== canonical) {
+    (kp as any).current = canonical;
+  }
+  return envelope;
+}
+
 /**
  * Build a backward-compatible markdown summary from the structured output.
  * Used to populate the `content` field for existing UI rendering.

@@ -15,7 +15,7 @@ import {
   GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
   getScenarioSchema, getScenarioInstructions,
   parseAIResponse, buildMarkdownFromEnvelope, pruneEmptyBranches, synthesizeMissingContent,
-  evaluateOutputCoverage, applyCoverageToEnvelope,
+  evaluateOutputCoverage, applyCoverageToEnvelope, reconcileKraljic,
   type ExosOutputParsed,
 } from "../_shared/output-schemas.ts";
 
@@ -1236,6 +1236,8 @@ serve(async (req) => {
         // Server-side defensive synthesis (backfill empty tables) THEN prune.
         deanonEnvelopeObj = synthesizeMissingContent(deanonEnvelopeObj);
         deanonEnvelopeObj = pruneEmptyBranches(deanonEnvelopeObj);
+        // P0: Kraljic single-source-of-truth — derive categorical position from coords.
+        deanonEnvelopeObj = reconcileKraljic(deanonEnvelopeObj);
         // Output coverage gate: downgrade confidence_level + log gaps when the
         // model under-delivered on promised scenario blocks (S22 etc.).
         const mcCoverage = evaluateOutputCoverage(deanonEnvelopeObj);
@@ -1416,6 +1418,8 @@ serve(async (req) => {
           // placeholders despite prompt instructions. Deterministic enforcement.
           deanonSingleEnvelope = synthesizeMissingContent(deanonSingleEnvelope);
           deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
+          // P0: Kraljic single-source-of-truth — derive categorical position from coords.
+          deanonSingleEnvelope = reconcileKraljic(deanonSingleEnvelope);
           // Output coverage gate (single-pass path).
           const spCoverage = evaluateOutputCoverage(deanonSingleEnvelope);
           if (spCoverage) {
