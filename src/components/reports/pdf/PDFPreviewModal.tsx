@@ -131,6 +131,7 @@ const PDFPreviewModal = ({
           pdfTheme,
           evaluationScore: evaluationScore ?? undefined,
           evaluationConfidence: evaluationConfidence ?? undefined,
+          coverageStars: coverageStars ?? undefined,
         },
       });
 
