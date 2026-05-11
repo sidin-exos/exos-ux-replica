@@ -160,6 +160,7 @@ const PDFPreviewModal = ({
     structuredData,
     evaluationConfidence,
     evaluationScore,
+    coverageStars,
     formData,
     generationKey,
     pdfBlobUrl,
