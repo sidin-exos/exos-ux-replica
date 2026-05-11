@@ -141,6 +141,20 @@ S6 Predictive Budgeting & Forecasting — SPECIFIC RULES:
    The values are % impact on base-case total_spend. Order from highest absolute high_impact_pct to lowest.
 4. scenario_specific.currency MUST mirror financial_model.currency.
 5. financial_model.analysis_period_years MUST be set (default 1 for annual budgets).`,
+  S22: `
+S22 Category Strategy — SPECIFIC RULES (all seven wizard deliverables are MANDATORY; an empty array or single-row placeholder is treated as a report failure):
+1. kraljic_position: emit BOTH categorical placement (current, recommended ∈ {STRATEGIC, LEVERAGE, BOTTLENECK, NON_CRITICAL}) AND numeric coordinates supply_risk (0-10) and business_impact (0-10) so the Kraljic Matrix dashboard can render. movement_rationale = 1-2 sentences anchored to the user's specific spend / supplier / risk inputs.
+2. porters_five_forces: populate ALL FIVE forces with rating + key_driver tied to the user's market structure (number of suppliers, switching cost, substitute availability, regulatory barriers, internal rivalry). Never leave key_driver null when a rating is set.
+3. market_intelligence: key_trends[] (3-5 short bullet phrases — demand, pricing, technology, regulation), supply_dynamics (1-2 sentences on consolidation / capacity / lead-time), regulatory_outlook (1 sentence referencing applicable rules — e.g. EU Data Act, NIS2, CSRD), innovation_signals[] (2-4 short phrases). This block IS the "Market Intelligence Brief" promised in the wizard.
+4. best_practices[]: 3-5 entries drawn from comparable categories or industries, each with practice (specific play), source_category (where it was proven), expected_benefit (quantified where possible).
+5. strategic_options[]: REQUIRED. Provide EXACTLY 3-5 ordered options spanning short/medium/long horizons. Each item: { "label": "concise name (e.g. 'Consolidate to 2-vendor frame agreement')", "horizon": "SHORT | MEDIUM | LONG", "pros": ["3-4 bullets"], "cons": ["2-3 bullets"], "investment_required": "<€ or relative size>", "expected_value": "<€ savings or strategic benefit>" }. This is the "Strategic Options Matrix".
+6. quick_wins[]: REQUIRED. 3-5 items executable within 12 weeks, each: { "action": "specific imperative", "value_eur": <number when quantifiable>, "weeks_to_value": <integer 1-12>, "owner": "role (e.g. 'Category Manager')" }.
+7. cross_category_analogies[]: REQUIRED. 2-4 cross-industry/category lessons, each: { "industry": "...", "category": "...", "lesson": "what was done", "applicability": "why it transfers to the user's situation" }.
+8. three_year_roadmap[]: REQUIRED. EXACTLY 3 entries (year 1, 2, 3). Each: { "year": 1|2|3, "objectives": ["2-4 objectives"], "kpis": ["2-4 measurable KPIs with target values"], "milestones": ["2-3 dated milestones"] }. The PDF roadmap dashboard reads from this array.
+9. KEY FINDINGS vs RECOMMENDATIONS: Findings = current-state observations; Recommendations = forward actions. Never duplicate the same sentence into both.
+10. NUMERIC HYGIENE: when the user supplies annual_spend, spend per supplier, waste %, or commitment-coverage %, those numbers MUST appear verbatim in the analysis text and in any derived savings figures. Never silently round or drop them.
+11. TEXT FORMATTING: ASCII-safe comparators only ("<=", ">=", "<", ">"); no Unicode glyphs ≤ ≥.
+12. JSON STRUCTURE: scenario_specific is a single OBJECT; only kraljic_position, porters_five_forces, market_intelligence are nested OBJECTS. best_practices, strategic_options, quick_wins, cross_category_analogies, three_year_roadmap are ARRAYS. Match every { with } and every [ with ].`,
 };
 
 /** Return group instruction + only the active scenario's addendum (token-efficient). */
@@ -700,6 +714,8 @@ Populate scenario_specific based on the scenario, using the structures below ver
     "kraljic_position": {
       "current": "STRATEGIC | LEVERAGE | BOTTLENECK | NON_CRITICAL",
       "recommended": "STRATEGIC | LEVERAGE | BOTTLENECK | NON_CRITICAL",
+      "supply_risk": null,
+      "business_impact": null,
       "movement_rationale": null
     },
     "porters_five_forces": {
@@ -709,8 +725,26 @@ Populate scenario_specific based on the scenario, using the structures below ver
       "threat_of_new_entrants": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null },
       "competitive_rivalry": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null }
     },
+    "market_intelligence": {
+      "key_trends": [],
+      "supply_dynamics": null,
+      "regulatory_outlook": null,
+      "innovation_signals": []
+    },
+    "best_practices": [
+      { "practice": null, "source_category": null, "expected_benefit": null }
+    ],
+    "strategic_options": [
+      { "label": null, "horizon": "SHORT | MEDIUM | LONG", "pros": [], "cons": [], "investment_required": null, "expected_value": null }
+    ],
+    "quick_wins": [
+      { "action": null, "value_eur": null, "weeks_to_value": null, "owner": null }
+    ],
+    "cross_category_analogies": [
+      { "industry": null, "category": null, "lesson": null, "applicability": null }
+    ],
     "three_year_roadmap": [
-      { "year": 1, "objectives": [], "kpis": [] }
+      { "year": 1, "objectives": [], "kpis": [], "milestones": [] }
     ],
     "esg_considerations": null,
     "mar_flag": false
