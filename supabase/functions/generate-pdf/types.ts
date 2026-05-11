@@ -28,7 +28,16 @@ export type DashboardType =
   | "negotiation-prep"
   | "data-quality"
   | "npv-waterfall"
-  | "ifrs16-impact";
+  | "ifrs16-impact"
+  // Wave 1/2 — additive S4/S5/S22 dashboards
+  | "savings-realization-funnel"
+  | "working-capital-dpo"
+  // Allowlisted but not yet rendered server-side (web-only); listing them
+  // prevents the F7 drift warning from firing for known-future ids.
+  | "should-cost-gap"
+  | "supplier-concentration-map"
+  | "risk-heatmap"
+  | "rfp-package";
 
 export interface DashboardConfig {
   id: DashboardType;
@@ -52,6 +61,12 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
   "data-quality": { id: "data-quality", name: "Data Quality" },
   "npv-waterfall": { id: "npv-waterfall", name: "NPV Waterfall" },
   "ifrs16-impact": { id: "ifrs16-impact", name: "IFRS 16 Impact" },
+  "savings-realization-funnel": { id: "savings-realization-funnel", name: "Savings Realization Funnel" },
+  "working-capital-dpo": { id: "working-capital-dpo", name: "Working Capital & DPO" },
+  "should-cost-gap": { id: "should-cost-gap", name: "Should-Cost Gap" },
+  "supplier-concentration-map": { id: "supplier-concentration-map", name: "Supplier Concentration" },
+  "risk-heatmap": { id: "risk-heatmap", name: "Risk Heatmap" },
+  "rfp-package": { id: "rfp-package", name: "RFP Package" },
 };
 
 // ── Per-dashboard data interfaces ──
