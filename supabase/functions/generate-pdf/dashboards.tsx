@@ -51,10 +51,12 @@ export const PDFCostWaterfall = ({ data, themeMode }: { data: CostWaterfallData;
   const styles = getPdfStyles(themeMode);
   const currency = data.currency || "$";
   if (!data.components?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Cost Breakdown: insufficient data</Text></View>;
-  const total = data.components.reduce((s, c) => s + Math.abs(c.value), 0) || 1;
+  // F9: percentages must be relative to total *cost* base only — including
+  // "reduction" rows in the denominator skews the cost share for every line.
+  const costBase = data.components.filter(c => c.type === "cost").reduce((s, c) => s + Math.abs(c.value), 0) || 1;
   const costBreakdownData = data.components.map(c => ({
     name: c.name,
-    value: Math.round((Math.abs(c.value) / total) * 100),
+    value: Math.round((Math.abs(c.value) / costBase) * 100),
     amount: formatAmount(Math.abs(c.value), currency),
     color: c.type === "reduction" ? colors.success : colors.primary,
   }));
