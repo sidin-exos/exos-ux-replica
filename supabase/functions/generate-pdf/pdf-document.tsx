@@ -554,6 +554,7 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "scenario-comparison": "scenarioComparison", "supplier-scorecard": "supplierScorecard", "sow-analysis": "sowAnalysis",
   "negotiation-prep": "negotiationPrep", "data-quality": "dataQuality",
   "npv-waterfall": "npvWaterfall", "ifrs16-impact": "ifrs16Impact",
+  "savings-realization-funnel": "savingsRealizationFunnel", "working-capital-dpo": "workingCapitalDpo",
 };
 
 const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardData | null, themeMode?: PdfThemeMode): ReactNode => {
