@@ -261,10 +261,10 @@ const SensitivitySpiderDashboard = ({
                       </span>
                     </div>
                     <p className="text-[10px] text-muted-foreground tabular-nums">
-                      Base {formatValue(v.baseCase, v.unit)}
+                      Base {formatValue(v.baseCase, v.unit, effectiveCurrency)}
                     </p>
                     <p className="text-[10px] text-muted-foreground tabular-nums">
-                      Range {formatValue(v.lowCase, v.unit)} – {formatValue(v.highCase, v.unit)}
+                      Range {formatValue(v.lowCase, v.unit, effectiveCurrency)} – {formatValue(v.highCase, v.unit, effectiveCurrency)}
                     </p>
                   </div>
                 </div>
