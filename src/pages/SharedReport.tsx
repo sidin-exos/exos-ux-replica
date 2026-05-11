@@ -94,6 +94,7 @@ export default function SharedReport() {
             selectedDashboards: payload.selectedDashboards,
             evaluationScore: payload.evaluationScore,
             evaluationConfidence: payload.evaluationConfidence,
+            coverageStars: payload.coverageStars,
           },
         });
       } catch {
