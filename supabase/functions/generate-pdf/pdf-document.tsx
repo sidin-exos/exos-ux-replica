@@ -1083,6 +1083,10 @@ const PDFReportDocument = ({
         // remaining line is a real risk sentence, not a leaked table cell.
         const riskLines = (isS27 || isS26 || isS20 || isS21) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
         const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
+        // F8/F10: A single overflow recommendation on its own page produces a
+        // near-empty Page 4. Suppress the entire Recommendations & Risks page
+        // when there is only one overflow item and no Risk Register content.
+        if (overflowRecos.length <= 1 && !hasRiskRegister) return null;
         if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
         const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
