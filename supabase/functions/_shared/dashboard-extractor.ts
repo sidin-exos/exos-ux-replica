@@ -99,6 +99,7 @@ export interface DashboardData {
     scenarios: { id: string; name: string; color: string }[];
     radarData: { metric: string; [key: string]: number | string }[];
     summary: { criteria: string; [key: string]: string }[];
+    recommendedOverride?: { id?: string; name?: string };
   };
   supplierScorecard?: {
     suppliers: {
