@@ -828,7 +828,7 @@ const PDFReportDocument = ({
         <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text><View style={s.sectionTitleLine} /></View>
         <View style={{ marginBottom: 10 }}>
           {findings.slice(0, 5).map((point, i) => {
-            const clean = stripMarkdown(String(point ?? "")).trim();
+            const clean = dedupeParenAcronyms(stripMarkdown(String(point ?? "")).trim());
             if (!clean) return null;
             return (
               <View key={`f-${i}`} style={{ flexDirection: "row", marginBottom: 5, paddingRight: 4 }}>
