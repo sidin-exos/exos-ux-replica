@@ -1236,6 +1236,8 @@ serve(async (req) => {
         // Server-side defensive synthesis (backfill empty tables) THEN prune.
         deanonEnvelopeObj = synthesizeMissingContent(deanonEnvelopeObj);
         deanonEnvelopeObj = pruneEmptyBranches(deanonEnvelopeObj);
+        // P0: Kraljic single-source-of-truth — derive categorical position from coords.
+        deanonEnvelopeObj = reconcileKraljic(deanonEnvelopeObj);
         // Output coverage gate: downgrade confidence_level + log gaps when the
         // model under-delivered on promised scenario blocks (S22 etc.).
         const mcCoverage = evaluateOutputCoverage(deanonEnvelopeObj);
