@@ -215,14 +215,32 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   if (!data.variables?.length) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>Sensitivity Analysis: insufficient data</Text></View>;
+  const baseCaseTotal = (data as { baseCaseTotal?: number }).baseCaseTotal ?? 0;
+  const currency = (data as { currency?: string }).currency ?? "EUR";
+  const sym = currency === "EUR" ? "€" : currency === "USD" ? "$" : currency === "GBP" ? "£" : `${currency} `;
+  const fmtMoney = (n: number) => {
+    const v = Math.abs(n);
+    return v >= 1_000_000 ? `${sym}${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `${sym}${Math.round(v / 1_000)}K` : `${sym}${Math.round(v)}`;
+  };
   const variables = data.variables.map(v => {
     const baseCase = v.baseCase || 1;
     const low = Math.round(((v.lowCase - baseCase) / baseCase) * 100);
     const high = Math.round(((v.highCase - baseCase) / baseCase) * 100);
-    return { name: v.name, low, high, baseValue: v.unit ? `${v.baseCase} ${v.unit}` : String(v.baseCase) };
+    // For percentage-unit drivers (e.g. wage index =100), show the impact on
+    // total spend in € rather than the meaningless "100 %" placeholder.
+    const baseValue = v.unit === "%" && baseCaseTotal > 0
+      ? `Base ${fmtMoney(baseCaseTotal)}`
+      : v.unit
+        ? `${v.baseCase} ${v.unit}`
+        : String(v.baseCase);
+    return { name: v.name, low, high, baseValue };
   });
   const maxImpact = Math.max(1, ...variables.map(v => Math.max(Math.abs(v.low), Math.abs(v.high))));
   const scale = 40 / maxImpact;
+  const favorablePctSum = variables.reduce((s, v) => s + Math.abs(Math.min(v.low, v.high, 0)), 0);
+  const unfavorablePctSum = variables.reduce((s, v) => s + Math.max(v.low, v.high, 0), 0);
+  const bestCase = baseCaseTotal > 0 ? baseCaseTotal * (1 - favorablePctSum / 100) : 0;
+  const worstCase = baseCaseTotal > 0 ? baseCaseTotal * (1 + unfavorablePctSum / 100) : 0;
 
   return (
     <View style={styles.dashboardCard}>
@@ -279,6 +297,25 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
           </View>
         );
       })()}
+      {baseCaseTotal > 0 && (
+        <View style={{ flexDirection: "row", marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text style={{ fontSize: 8, color: colors.textMuted, textTransform: "uppercase" }}>Best Case</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: colors.success, marginTop: 2 }}>{fmtMoney(Math.max(0, bestCase))}</Text>
+            <Text style={{ fontSize: 7, color: colors.textMuted }}>−{favorablePctSum.toFixed(1)}%</Text>
+          </View>
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text style={{ fontSize: 8, color: colors.textMuted, textTransform: "uppercase" }}>Base Case</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: colors.text, marginTop: 2 }}>{fmtMoney(baseCaseTotal)}</Text>
+            <Text style={{ fontSize: 7, color: colors.textMuted }}>reference</Text>
+          </View>
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text style={{ fontSize: 8, color: colors.textMuted, textTransform: "uppercase" }}>Worst Case</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: colors.destructive, marginTop: 2 }}>{fmtMoney(worstCase)}</Text>
+            <Text style={{ fontSize: 7, color: colors.textMuted }}>+{unfavorablePctSum.toFixed(1)}%</Text>
+          </View>
+        </View>
+      )}
       <View style={styles.legend}>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.success }]} /><Text style={styles.legendText}>Cost Reduction</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.destructive }]} /><Text style={styles.legendText}>Cost Increase</Text></View>
