@@ -1049,8 +1049,10 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
 
 
   // ── Universal: kraljicQuadrant ─────────────────────────────────────────────
-  // Reads scenario_specific.kraljic_position (S20, S1 and any scenario emitting it).
-  // supply_risk and business_impact are 1-5; map to 0-100 for the quadrant chart.
+  // CROSS-FILE INVARIANT: this block MUST stay logically identical to
+  // src/lib/dashboard-data-parser.ts (search "Universal: kraljicQuadrant").
+  // Both must accept items[] OR scalar coords, scale 0–5/0–10 → 0–100, and
+  // reject the (0,0) phantom. Diverging causes web-vs-PDF Kraljic mismatches.
   // Skip for S26 — Kraljic portfolio positioning is not relevant during a live crisis.
   const scenarioId = String(envelope.scenario_id ?? '').toUpperCase();
   const kraljicSrc = scenarioId === 'S26' ? null : (ss?.kraljic_position ?? ss?.kraljic ?? null);
