@@ -927,6 +927,12 @@ const PDFReportDocument = ({
         if (parsedData?.ifrs16Impact && !available.includes("ifrs16-impact" as DashboardType)) {
           promoted.push("ifrs16-impact" as DashboardType);
         }
+        if (parsedData?.savingsRealizationFunnel && !available.includes("savings-realization-funnel" as DashboardType)) {
+          promoted.push("savings-realization-funnel" as DashboardType);
+        }
+        if (parsedData?.workingCapitalDpo && !available.includes("working-capital-dpo" as DashboardType)) {
+          promoted.push("working-capital-dpo" as DashboardType);
+        }
         const finalList = [...promoted, ...available];
         if (finalList.length === 0) return null;
         const pairs = chunkPairs(finalList);
