@@ -71,7 +71,8 @@ export function AICoverageCheck({
   sections,
   draftableFields,
   title = "Input coverage check",
-  subtitle = "Are the required topics present in your input? (separate from analytical rigour, scored after the run.)",
+  subtitle = "Are the required topics present in your input? (separate from output rigour, scored after the run.)",
+  onResult,
 }: AICoverageCheckProps) {
   const [coverage, setCoverage] = useState<CoverageResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -83,6 +84,7 @@ export function AICoverageCheck({
   const runCheck = async () => {
     setLoading(true);
     setCoverage(null);
+    onResult?.(null);
     try {
       const { data, error } = await supabase.functions.invoke(
         "evaluate-project-coverage",
@@ -92,7 +94,9 @@ export function AICoverageCheck({
       );
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      setCoverage(data as CoverageResult);
+      const result = data as CoverageResult;
+      setCoverage(result);
+      onResult?.(result);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "Failed to evaluate coverage",
