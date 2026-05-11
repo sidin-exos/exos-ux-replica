@@ -185,10 +185,10 @@ export const scenarios: Scenario[] = [
       { id: "financialContext", label: "Financial Context & Tax Inputs", description: "WACC, tax rate, IFRS 16 applicability, and currency", type: "textarea", required: true, placeholder: "• WACC or internal hurdle rate (%)\n• Corporate tax rate for this entity (%)\n• IFRS 16 applicability: yes / no / unsure\n• Off-balance-sheet preference: yes / no\n• Currency" },
     ],
     outputs: [
-      "NPV Waterfall Graph: 5-year total cost comparison",
+      "NPV Waterfall: Discounted total-cost comparison over the asset lifespan",
       "Flexibility Matrix: Upgrade options vs ownership",
-      "CFO Recommendation: Cash flow preservation advice",
-      "Cash Flow Comparison: Annual side-by-side cash impact across buy vs. lease paths",
+      "CFO Recommendation: Verdict, cash-flow rationale, and IFRS 16 note",
+      "Sensitivity Tornado: WACC, residual value, and lease-rate impact",
       "IFRS 16 Impact Summary: Balance-sheet and P&L treatment under lease accounting standard",
     ],
     scenario_id: "S3",
