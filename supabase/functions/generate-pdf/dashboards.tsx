@@ -285,9 +285,9 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
         ))}
       </View>
       <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 8 }}>
-        <Text style={{ fontSize: 8, color: colors.success }}>◀ Decreases Cost</Text>
+        <Text style={{ fontSize: 8, color: colors.success }}>Decreases cost (favorable)</Text>
         <View style={{ width: 20 }} />
-        <Text style={{ fontSize: 8, color: colors.destructive }}>Increases Cost ▶</Text>
+        <Text style={{ fontSize: 8, color: colors.destructive }}>Increases cost (unfavorable)</Text>
       </View>
       {(() => {
         const ranked = variables
