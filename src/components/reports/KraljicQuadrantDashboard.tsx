@@ -330,16 +330,19 @@ const KraljicQuadrantDashboard = ({
                       style={{ backgroundColor: meta.color }}
                       aria-hidden
                     />
-                    <span
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold tabular-nums flex-shrink-0"
+                    <div
+                      className="inline-flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0"
                       style={{
-                        backgroundColor: `${meta.color}25`,
-                        color: meta.color,
-                        border: `1px solid ${meta.color}55`,
+                        backgroundColor: `${meta.color}1f`,
+                        border: `1.5px solid ${meta.color}`,
                       }}
                     >
-                      {item.id}
-                    </span>
+                      <Star
+                        className="w-3.5 h-3.5"
+                        style={{ color: meta.color, fill: meta.color }}
+                        strokeWidth={1.5}
+                      />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-foreground truncate text-[11px] leading-tight">
                         {item.name}
