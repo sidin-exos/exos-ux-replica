@@ -114,6 +114,7 @@ export function ProjectEvaluator({ description, fileNames }: ProjectEvaluatorPro
               description={description}
               fileNames={fileNames}
               sections={scenario.dataRequirements.sections}
+              scenarioId={scenario.id}
               draftableFields={scenario.requiredFields.map((f) => ({
                 id: f.id,
                 label: f.label,

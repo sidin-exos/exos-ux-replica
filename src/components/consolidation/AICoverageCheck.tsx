@@ -42,6 +42,10 @@ interface AICoverageCheckProps {
   fileNames?: string[];
   /** "What data do I need to prepare?" sections. */
   sections: { heading: string; description: string }[];
+  /** Optional scenarioId / S## code. When provided, the pre-evaluator anchors
+   * its rubric to SCENARIO_INSTRUCTION_ADDENDA so it stops penalising
+   * tutorial-only sections that the post-run analysis never enforces. */
+  scenarioId?: string;
   /**
    * Optional: scenario required-field specs. When provided, a second
    * "Draft fields with AI" button lets the user auto-generate the 3-field
@@ -69,6 +73,7 @@ export function AICoverageCheck({
   description,
   fileNames = [],
   sections,
+  scenarioId,
   draftableFields,
   title = "Input coverage check",
   subtitle = "Are the required topics present in your input? (separate from output rigour, scored after the run.)",
@@ -89,7 +94,7 @@ export function AICoverageCheck({
       const { data, error } = await supabase.functions.invoke(
         "evaluate-project-coverage",
         {
-          body: { scenarioTitle, description, fileNames, sections },
+          body: { scenarioTitle, description, fileNames, sections, scenarioId },
         },
       );
       if (error) throw error;
