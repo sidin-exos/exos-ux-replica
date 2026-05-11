@@ -81,6 +81,9 @@ serve(async (req) => {
     const evaluationConfidence = typeof body.evaluationConfidence === "string"
       ? body.evaluationConfidence.slice(0, 10)
       : undefined;
+    const coverageStars = typeof body.coverageStars === "number"
+      ? Math.max(0, Math.min(5, body.coverageStars))
+      : undefined;
 
     const payload: GeneratePdfPayload = {
       scenarioTitle,
@@ -92,6 +95,7 @@ serve(async (req) => {
       pdfTheme: pdfTheme as GeneratePdfPayload["pdfTheme"],
       evaluationScore,
       evaluationConfidence,
+      coverageStars,
     };
 
     // 4. Generate PDF
