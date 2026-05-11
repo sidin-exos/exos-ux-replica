@@ -1079,6 +1079,14 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   // extractSupplierConcentrationMap. PDF dashboard for concentration is opt-in
   // and not currently rendered server-side.
 
+  // ── Wave 1: savings-realization-funnel (S4) ───────────────────────────────
+  const srf = extractSavingsRealizationFunnel(payload, ss, !!envelope.low_confidence_watermark);
+  if (srf) result.savingsRealizationFunnel = srf;
+
+  // ── Wave 2: working-capital-dpo (Group A base) ────────────────────────────
+  const wcd = extractWorkingCapitalDpo(payload);
+  if (wcd) result.workingCapitalDpo = wcd;
+
 
 
   // ── Group A: tcoComparison ─────────────────────────────────────────────────
