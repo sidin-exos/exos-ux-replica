@@ -88,6 +88,8 @@ import {
   PDFDataQuality,
   PDFNpvWaterfall,
   PDFIfrs16Impact,
+  PDFSavingsRealizationFunnel,
+  PDFWorkingCapitalDpo,
 } from "./dashboards.tsx";
 
 // ── Embedded EXOS logo ──
