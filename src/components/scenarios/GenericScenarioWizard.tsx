@@ -1052,6 +1052,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                     .map(([k, v]) => `${k}: ${v}`)
                     .join("\n\n")}
                   sections={scenario.dataRequirements.sections}
+                  scenarioId={scenario.id}
                   subtitle='Score your input against "What data do I need to prepare?".'
                   onResult={(r) => setCoverageStars(r?.overallScore ?? null)}
                 />
