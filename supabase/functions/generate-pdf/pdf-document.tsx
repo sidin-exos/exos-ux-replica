@@ -674,22 +674,25 @@ const PDFReportDocument = ({
 
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
-  // Only show a numeric score when the evaluator actually produced one. Falling
-  // back to filled-fraction was misleading (e.g. S26 with 0 quality-evaluator
-  // output displayed "0/100", suggesting a real failed evaluation).
+  // SOURCE OF TRUTH: prefer the LLM coverage stars from the pre-run check
+  // (0–5 → ×20). This is what the user saw on the Data Review screen, so
+  // the PDF KPI matches end-to-end. Fall back to the deterministic
+  // input-evaluator score, then to filled-fraction.
+  const hasCoverageStars = typeof coverageStars === "number" && coverageStars > 0;
   const hasEvaluatorScore = typeof evaluationScore === "number" && evaluationScore > 0;
-  const rawCoveragePct = hasEvaluatorScore
-    ? evaluationScore
+  const evaluatorPct = hasEvaluatorScore
+    ? evaluationScore!
     : (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
-  // Reconcile a low client-side evaluator score with strong post-run signals.
-  // The strict input-evaluator can over-penalise on word counts even when the
-  // AI produced rich, structured output (HIGH evaluation confidence). Floor
-  // the displayed Input Rigour to 60 in that case so the cover KPI doesn't
-  // contradict the rest of the report.
-  const coveragePct = (evaluationConfidence === "HIGH" && rawCoveragePct < 60)
-    ? 60
-    : rawCoveragePct;
-  const showScore = hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
+  const llmCoveragePct = hasCoverageStars ? Math.round(coverageStars! * 20) : 0;
+  // Floors to prevent input-evaluator catch-22:
+  //   ≥ 4.5★ → ≥ 75 ;  ≥ 4★ → ≥ 65 ; HIGH evaluator confidence → ≥ 60.
+  const llmFloor = hasCoverageStars
+    ? (coverageStars! >= 4.5 ? 75 : coverageStars! >= 4 ? 65 : 0)
+    : 0;
+  const confidenceFloor = (evaluationConfidence === "HIGH" && evaluatorPct < 60) ? 60 : 0;
+  const rawCoveragePct = hasCoverageStars ? llmCoveragePct : evaluatorPct;
+  const coveragePct = Math.max(rawCoveragePct, llmFloor, confidenceFloor);
+  const showScore = hasCoverageStars || hasEvaluatorScore || (allKeys.length > 0 && filledKeys.length > 0);
   const coverageDisplay = showScore ? `${coveragePct}/100` : "—";
   const coverageDisplaySpaced = showScore ? `${coveragePct} / 100` : "—";
   const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
