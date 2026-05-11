@@ -706,10 +706,18 @@ const PDFReportDocument = ({
 
   // S4 cover KPIs (Hard € / Soft € / Avoided € / CFO Acceptance)
   const isS4 = envelope?.scenario_id === "S4" || /savings\s*calculation/i.test(scenarioTitle);
-  const s4Funnel = ((): any => {
-    // parsedData may be populated later; lazily look up the structured payload here.
-    return null;
-  })();
+  const s4Funnel = parsedData?.savingsRealizationFunnel;
+  const s4Currency = s4Funnel?.currency ?? "EUR";
+  const s4FmtMoney = (n: number | null | undefined) => {
+    if (n == null || !Number.isFinite(Number(n))) return "—";
+    const v = Math.abs(Number(n));
+    const sym = s4Currency === "EUR" ? "€" : s4Currency === "USD" ? "$" : s4Currency === "GBP" ? "£" : `${s4Currency} `;
+    return v >= 1_000_000 ? `${sym}${(v / 1_000_000).toFixed(2)}M` : v >= 1_000 ? `${sym}${Math.round(v / 1_000)}K` : `${sym}${Math.round(v)}`;
+  };
+  const s4HardLabel = s4FmtMoney(s4Funnel?.hardAnnualised);
+  const s4SoftLabel = s4FmtMoney(s4Funnel?.softAnnualised);
+  const s4AvoidedLabel = s4FmtMoney(s4Funnel?.avoidedProtected);
+  const s4CfoAcceptance = s4Funnel?.cfoAcceptance ?? null;
 
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
