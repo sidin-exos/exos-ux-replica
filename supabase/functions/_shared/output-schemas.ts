@@ -700,6 +700,8 @@ Populate scenario_specific based on the scenario, using the structures below ver
     "kraljic_position": {
       "current": "STRATEGIC | LEVERAGE | BOTTLENECK | NON_CRITICAL",
       "recommended": "STRATEGIC | LEVERAGE | BOTTLENECK | NON_CRITICAL",
+      "supply_risk": null,
+      "business_impact": null,
       "movement_rationale": null
     },
     "porters_five_forces": {
@@ -709,8 +711,26 @@ Populate scenario_specific based on the scenario, using the structures below ver
       "threat_of_new_entrants": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null },
       "competitive_rivalry": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null }
     },
+    "market_intelligence": {
+      "key_trends": [],
+      "supply_dynamics": null,
+      "regulatory_outlook": null,
+      "innovation_signals": []
+    },
+    "best_practices": [
+      { "practice": null, "source_category": null, "expected_benefit": null }
+    ],
+    "strategic_options": [
+      { "label": null, "horizon": "SHORT | MEDIUM | LONG", "pros": [], "cons": [], "investment_required": null, "expected_value": null }
+    ],
+    "quick_wins": [
+      { "action": null, "value_eur": null, "weeks_to_value": null, "owner": null }
+    ],
+    "cross_category_analogies": [
+      { "industry": null, "category": null, "lesson": null, "applicability": null }
+    ],
     "three_year_roadmap": [
-      { "year": 1, "objectives": [], "kpis": [] }
+      { "year": 1, "objectives": [], "kpis": [], "milestones": [] }
     ],
     "esg_considerations": null,
     "mar_flag": false
