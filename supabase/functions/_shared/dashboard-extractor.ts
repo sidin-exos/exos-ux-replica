@@ -1892,22 +1892,9 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
       })
       .filter((v): v is NonNullable<typeof v> => v !== null);
 
-    if (!result.scenarioComparison && valid.length >= 2) {
-      const scenarios = valid.slice(0, 3).map((sc, i) => ({
-        id: sc.label.toLowerCase().replace(/\s+/g, '-'),
-        name: sc.label,
-        color: TCO_COLORS[i % TCO_COLORS.length],
-      }));
-      const radarData = [{
-        metric: 'Total Spend',
-        ...Object.fromEntries(scenarios.map((s, i) => [s.id, valid[i].total])),
-      }];
-      const summary = valid.slice(0, 3).map((sc) => ({
-        criteria: sc.label,
-        ...Object.fromEntries(scenarios.map((s, i) => [s.id, i === valid.indexOf(sc) ? (sc.drivers.join(', ') || '—') : ''])),
-      }));
-      result.scenarioComparison = { scenarios, radarData, summary };
-    }
+    // scenarioComparison intentionally NOT built for S6: Base/Down/Up are
+    // probability cases of the same forecast, not rival options to score.
+    // The Cost Waterfall + Sensitivity Spider pair tells the story.
 
     if (!result.sensitivitySpider) {
       const sensRaw: any[] = Array.isArray(ss.sensitivity) ? ss.sensitivity : [];
