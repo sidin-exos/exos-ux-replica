@@ -169,18 +169,21 @@ function parseNextStep(text: string): { title: string; description: string } {
   return { title: stripMarkdown(text), description: "" };
 }
 
-function summarizeParameter(value: string, maxWords = 60): string {
-  // B5 fix: preserve the user's original phrasing and order. Previous
-  // implementation re-sorted sentence fragments by an ad-hoc "score" and
-  // re-joined with ". ", which produced garbled out-of-order echoes
-  // (e.g. parent label stripped + child bullets reshuffled). We now keep
-  // the original text intact, only truncating with an ellipsis when it
-  // exceeds the word budget.
+function summarizeParameter(value: string, maxWords = 120): string {
+  // Preserve the user's original phrasing and order. Truncate only when
+  // exceeding the word budget. Bumped from 60 → 120 words so input parameter
+  // cards on the final page no longer cut mid-sentence on richer inputs.
   const trimmed = value.trim();
   if (!trimmed) return "";
   const words = trimmed.split(/\s+/);
   if (words.length <= maxWords) return trimmed;
   return words.slice(0, maxWords).join(" ") + "…";
+}
+
+/** Strip duplicated parenthetical acronyms like "OTIF (OTIF)" → "(OTIF)". */
+function dedupeParenAcronyms(text: string): string {
+  if (!text) return text;
+  return text.replace(/\b([A-Z]{2,8})\s*\(\1\)/g, "($1)");
 }
 
 // ── Build branded styles ──
