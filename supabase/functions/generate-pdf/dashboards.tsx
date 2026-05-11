@@ -1422,3 +1422,181 @@ export const PDFIfrs16Impact = ({ data, themeMode }: { data: Ifrs16ImpactData; t
     </View>
   );
 };
+
+// ── Wave 1: Savings Realization Funnel (S4) ──
+type SavingsRealizationFunnelDataPdf = {
+  baselineVerified: boolean;
+  cfoAcceptance: 'GREEN' | 'AMBER' | 'RED';
+  funnel: Array<{ stage: string; hard: number; soft: number; avoided: number }>;
+  hardAnnualised: number | null;
+  softAnnualised: number | null;
+  avoidedProtected: number | null;
+  currency: string;
+  lowConfidenceWatermark: boolean;
+};
+
+const fmtCur = (v: number | null, cur: string) => {
+  if (v == null || !Number.isFinite(v)) return "—";
+  const abs = Math.abs(v);
+  const sign = v < 0 ? "-" : "";
+  if (abs >= 1_000_000) return `${sign}${cur}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1000) return `${sign}${cur}${(abs / 1000).toFixed(0)}K`;
+  return `${sign}${cur}${Math.round(abs)}`;
+};
+
+export const PDFSavingsRealizationFunnel = ({ data, themeMode }: { data: SavingsRealizationFunnelDataPdf; themeMode?: PdfThemeMode }) => {
+  const colors = getPdfColors(themeMode);
+  const styles = getPdfStyles(themeMode);
+  const COLOR_HARD = colors.primary;
+  const COLOR_SOFT = colors.accent3;
+  const COLOR_AVOIDED = colors.textMuted;
+  const tone: Record<string, { bg: string; fg: string; label: string }> = {
+    GREEN: { bg: `${colors.success}22`, fg: colors.success, label: "CFO-grade — verified baseline + hard P&L impact" },
+    AMBER: { bg: `${colors.warning}22`, fg: colors.warning, label: "Conditional — verified baseline but soft / avoided only" },
+    RED: { bg: `${colors.destructive}22`, fg: colors.destructive, label: "Not CFO-grade — baseline is estimated, not verified" },
+  };
+  const acc = tone[data.cfoAcceptance] ?? tone.AMBER;
+  const max = Math.max(1, ...data.funnel.map((f) => f.hard + f.soft + f.avoided));
+  const ClassCard = ({ title, value, color }: { title: string; value: number | null; color: string }) => (
+    <View style={{ flex: 1, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceLight, padding: 6 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
+        <View style={{ width: 6, height: 6, backgroundColor: color, marginRight: 4 }} />
+        <Text style={{ fontSize: 8, color: colors.text, fontWeight: 600 }}>{title}</Text>
+      </View>
+      <Text style={{ fontSize: 11, fontWeight: 700, color: colors.text }}>{fmtCur(value, data.currency)}</Text>
+      <Text style={{ fontSize: 7, color: colors.textMuted }}>annualised</Text>
+    </View>
+  );
+  return (
+    <View style={styles.dashboardCard}>
+      <View style={styles.dashboardHeader}>
+        <View style={styles.dashboardIcon} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.dashboardTitle}>Savings Realization Funnel</Text>
+          <Text style={styles.dashboardSubtitle}>CIPS classification across the savings funnel</Text>
+        </View>
+        <View style={{ backgroundColor: acc.bg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+          <Text style={{ fontSize: 7, fontWeight: 700, color: acc.fg }}>CFO {data.cfoAcceptance}</Text>
+        </View>
+      </View>
+      <Text style={{ fontSize: 8, color: colors.textMuted, marginBottom: 8 }}>{acc.label}</Text>
+      <View style={{ marginBottom: 10 }}>
+        {data.funnel.map((stage) => {
+          const total = stage.hard + stage.soft + stage.avoided;
+          const widthPct = (total / max) * 100;
+          const seg = (val: number, color: string) =>
+            val <= 0 || total <= 0 ? null : (
+              <View style={{ width: `${(val / total) * 100}%`, backgroundColor: color, height: 12 }} />
+            );
+          return (
+            <View key={stage.stage} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+              <Text style={{ width: 60, fontSize: 8, color: colors.text }}>{stage.stage}</Text>
+              <View style={{ flex: 1, height: 12, backgroundColor: colors.surfaceLight, flexDirection: "row", overflow: "hidden" }}>
+                <View style={{ width: `${widthPct}%`, height: 12, flexDirection: "row" }}>
+                  {seg(stage.hard, COLOR_HARD)}
+                  {seg(stage.soft, COLOR_SOFT)}
+                  {seg(stage.avoided, COLOR_AVOIDED)}
+                </View>
+              </View>
+              <Text style={{ width: 60, textAlign: "right", fontSize: 8, color: colors.text, fontWeight: 600, marginLeft: 6 }}>
+                {fmtCur(total, data.currency)}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+      <View style={{ flexDirection: "row", gap: 12, marginBottom: 8 }}>
+        {[{ color: COLOR_HARD, label: "Hard" }, { color: COLOR_SOFT, label: "Soft" }, { color: COLOR_AVOIDED, label: "Avoided" }].map((l) => (
+          <View key={l.label} style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={{ width: 7, height: 7, backgroundColor: l.color, marginRight: 4 }} />
+            <Text style={{ fontSize: 8, color: colors.textMuted }}>{l.label}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={{ flexDirection: "row", gap: 6 }}>
+        <ClassCard title="Hard" value={data.hardAnnualised} color={COLOR_HARD} />
+        <ClassCard title="Soft" value={data.softAnnualised} color={COLOR_SOFT} />
+        <ClassCard title="Avoided" value={data.avoidedProtected} color={COLOR_AVOIDED} />
+      </View>
+    </View>
+  );
+};
+
+// ── Wave 2: Working Capital & DPO ──
+type WorkingCapitalDataPdf = {
+  current_weighted_dpo: number | null;
+  target_weighted_dpo: number | null;
+  working_capital_delta_eur: number | null;
+  annual_spend_eur: number | null;
+  terms_distribution: Array<{ term_label: string; spend_share_pct: number; supplier_count: number | null }>;
+  by_supplier: Array<{ supplier_label: string; category: string | null; payment_terms_days: number; annual_spend: number | null; late_payment_directive_risk: boolean }>;
+  early_payment_discount_opportunities: Array<{ supplier_label: string; discount_structure: string; annualised_value: number | null }>;
+  currency: string;
+};
+
+export const PDFWorkingCapitalDpo = ({ data, themeMode }: { data: WorkingCapitalDataPdf; themeMode?: PdfThemeMode }) => {
+  const colors = getPdfColors(themeMode);
+  const styles = getPdfStyles(themeMode);
+  const TERM_COLOR: Record<string, string> = {
+    "NET 30": colors.primary, "NET 45": colors.accent2, "NET 60": colors.textMuted, "NET 90+": colors.destructive,
+  };
+  const dpoDelta =
+    data.target_weighted_dpo != null && data.current_weighted_dpo != null
+      ? data.target_weighted_dpo - data.current_weighted_dpo
+      : null;
+  const flagged = data.by_supplier.filter((s) => s.late_payment_directive_risk).slice(0, 6);
+  const Kpi = ({ label, value, positive }: { label: string; value: string; positive?: boolean }) => (
+    <View style={{ flex: 1, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceLight, padding: 6 }}>
+      <Text style={{ fontSize: 7, color: colors.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>{label}</Text>
+      <Text style={{ fontSize: 12, fontWeight: 700, color: positive ? colors.success : colors.text }}>{value}</Text>
+    </View>
+  );
+  return (
+    <View style={styles.dashboardCard}>
+      <View style={styles.dashboardHeader}>
+        <View style={styles.dashboardIcon} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.dashboardTitle}>Working Capital &amp; DPO</Text>
+          <Text style={styles.dashboardSubtitle}>Payment terms distribution and working-capital release potential</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}>
+        <Kpi label="Current DPO" value={data.current_weighted_dpo != null ? `${data.current_weighted_dpo.toFixed(0)}d` : "—"} />
+        <Kpi label="Target DPO" value={data.target_weighted_dpo != null ? `${data.target_weighted_dpo.toFixed(0)}d` : "—"} />
+        <Kpi label="Δ DPO" value={dpoDelta != null ? `${dpoDelta > 0 ? "+" : ""}${dpoDelta.toFixed(0)}d` : "—"} positive={dpoDelta != null && dpoDelta > 0} />
+        <Kpi label="WC impact" value={fmtCur(data.working_capital_delta_eur, data.currency)} positive={data.working_capital_delta_eur != null && data.working_capital_delta_eur > 0} />
+      </View>
+      {data.terms_distribution.length > 0 && (
+        <View style={{ marginBottom: 10 }}>
+          <Text style={{ fontSize: 7, color: colors.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>Spend share by payment terms</Text>
+          <View style={{ flexDirection: "row", height: 12, backgroundColor: colors.surfaceLight, overflow: "hidden", marginBottom: 4 }}>
+            {data.terms_distribution.map((t) => (
+              <View key={t.term_label} style={{ width: `${t.spend_share_pct}%`, height: 12, backgroundColor: TERM_COLOR[t.term_label] ?? colors.textMuted }} />
+            ))}
+          </View>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+            {data.terms_distribution.map((t) => (
+              <View key={t.term_label} style={{ flexDirection: "row", alignItems: "center" }}>
+                <View style={{ width: 7, height: 7, backgroundColor: TERM_COLOR[t.term_label] ?? colors.textMuted, marginRight: 4 }} />
+                <Text style={{ fontSize: 8, color: colors.textMuted }}>{t.term_label} · {t.spend_share_pct.toFixed(0)}%</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+      {flagged.length > 0 && (
+        <View style={{ borderWidth: 1, borderColor: colors.destructive, backgroundColor: `${colors.destructive}11`, padding: 6 }}>
+          <Text style={{ fontSize: 8, fontWeight: 700, color: colors.destructive, marginBottom: 4 }}>Suppliers above 60-day EU Late Payment Directive limit</Text>
+          {flagged.map((s) => (
+            <View key={s.supplier_label} style={{ flexDirection: "row", paddingVertical: 2 }}>
+              <Text style={{ flex: 2, fontSize: 8, color: colors.text }}>{s.supplier_label}</Text>
+              <Text style={{ flex: 1.5, fontSize: 8, color: colors.textMuted }}>{s.category ?? "—"}</Text>
+              <Text style={{ width: 40, fontSize: 8, color: colors.text, textAlign: "right" }}>{s.payment_terms_days}d</Text>
+              <Text style={{ width: 60, fontSize: 8, color: colors.text, textAlign: "right" }}>{fmtCur(s.annual_spend, data.currency)}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
