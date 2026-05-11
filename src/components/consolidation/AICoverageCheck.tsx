@@ -42,6 +42,10 @@ interface AICoverageCheckProps {
   fileNames?: string[];
   /** "What data do I need to prepare?" sections. */
   sections: { heading: string; description: string }[];
+  /** Optional scenarioId / S## code. When provided, the pre-evaluator anchors
+   * its rubric to SCENARIO_INSTRUCTION_ADDENDA so it stops penalising
+   * tutorial-only sections that the post-run analysis never enforces. */
+  scenarioId?: string;
   /**
    * Optional: scenario required-field specs. When provided, a second
    * "Draft fields with AI" button lets the user auto-generate the 3-field
