@@ -743,6 +743,39 @@ const PDFReportDocument = ({
   const s4AvoidedLabel = s4FmtMoney(s4Funnel?.avoidedProtected);
   const s4CfoAcceptance = s4Funnel?.cfoAcceptance ?? null;
 
+  // S3 (Capex vs Opex / Lease vs Buy) cover KPIs:
+  //   NPV ADVANTAGE (signed) · CFO PICK · WACC · OUTPUT RIGOUR
+  const isS3 = envelope?.scenario_id === "S3" || /capex\s*vs\s*opex|lease\s*\/\s*buy/i.test(scenarioTitle);
+  const s3Specific: any = isS3 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s3Options: any[] = Array.isArray(s3Specific?.options) ? s3Specific.options : [];
+  const s3Cfo: any = s3Specific?.cfo_recommendation ?? {};
+  const s3Verdict = (() => {
+    const v = String(s3Cfo?.verdict ?? "").toUpperCase();
+    return v && !v.includes("|") ? v : null;
+  })();
+  const s3Wacc = (() => {
+    const w = Number(s3Cfo?.wacc_assumed_pct);
+    if (Number.isFinite(w) && w > 0) return `${w.toFixed(1)}%`;
+    const w2 = Number(s3Options[0]?.discount_rate_used_pct);
+    return Number.isFinite(w2) && w2 > 0 ? `${w2.toFixed(1)}%` : null;
+  })();
+  const s3NpvAdvantage = (() => {
+    if (s3Options.length < 2) return null;
+    const buy = s3Options.find((o: any) => /capex|buy|purchase/i.test(String(o?.option_label))) ?? s3Options[0];
+    const lease = s3Options.find((o: any) => /opex|lease|subscription|rent/i.test(String(o?.option_label))) ?? s3Options[1];
+    const a = Number(buy?.npv);
+    const b = Number(lease?.npv);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    // NPV here is signed (negative = net cost). "Advantage" is the absolute
+    // delta favouring the better option; sign indicates which option wins.
+    const delta = a - b;
+    const sym = "$";
+    const abs = Math.abs(delta);
+    const fmt = abs >= 1_000_000 ? `${sym}${(abs / 1_000_000).toFixed(2)}M` : abs >= 1_000 ? `${sym}${Math.round(abs / 1_000)}K` : `${sym}${Math.round(abs)}`;
+    return { label: `+${fmt}`, winner: delta >= 0 ? "BUY" : "LEASE" };
+  })();
+  const s3CfoPickLabel = s3Verdict ?? (s3NpvAdvantage?.winner ?? null);
+
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
   const formattedDate = formatDate(timestamp);
