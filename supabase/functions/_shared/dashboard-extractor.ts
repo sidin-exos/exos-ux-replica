@@ -1878,6 +1878,68 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
     }
   }
 
+  // ── S6 Predictive Budgeting & Forecasting:
+  // scenarioComparison from scenario_specific.scenarios[] (Base/Down/Upside)
+  // sensitivitySpider from scenario_specific.sensitivity[] (driver impact %).
+  if (envelope.scenario_id === 'S6') {
+    const scenariosRaw: any[] = Array.isArray(ss.scenarios) ? ss.scenarios : [];
+    const valid = scenariosRaw
+      .map((sc: any) => {
+        const label = String(sc?.label ?? sc?.name ?? '').trim();
+        const total = Number(sc?.total_spend ?? sc?.total ?? sc?.amount);
+        if (!label || !Number.isFinite(total)) return null;
+        return { label, total, drivers: Array.isArray(sc?.drivers) ? sc.drivers.map((d: any) => String(d)) : [] };
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+
+    if (!result.scenarioComparison && valid.length >= 2) {
+      const scenarios = valid.slice(0, 3).map((sc, i) => ({
+        id: sc.label.toLowerCase().replace(/\s+/g, '-'),
+        name: sc.label,
+        color: TCO_COLORS[i % TCO_COLORS.length],
+      }));
+      const radarData = [{
+        metric: 'Total Spend',
+        ...Object.fromEntries(scenarios.map((s, i) => [s.id, valid[i].total])),
+      }];
+      const summary = valid.slice(0, 3).map((sc) => ({
+        criteria: sc.label,
+        ...Object.fromEntries(scenarios.map((s, i) => [s.id, i === valid.indexOf(sc) ? (sc.drivers.join(', ') || '—') : ''])),
+      }));
+      result.scenarioComparison = { scenarios, radarData, summary };
+    }
+
+    if (!result.sensitivitySpider) {
+      const sensRaw: any[] = Array.isArray(ss.sensitivity) ? ss.sensitivity : [];
+      const baseTotal = valid.find((v) => /base/i.test(v.label))?.total
+        ?? Number(payload?.financial_model?.totals?.total_cost)
+        ?? 0;
+      const variables = sensRaw
+        .map((sv: any) => {
+          const name = String(sv?.variable ?? sv?.name ?? '').trim();
+          const lo = Number(sv?.low_impact_pct);
+          const hi = Number(sv?.high_impact_pct);
+          if (!name || !Number.isFinite(lo) || !Number.isFinite(hi)) return null;
+          return {
+            name,
+            baseCase: 100,
+            lowCase: Math.max(0, 100 + lo),
+            highCase: Math.max(0, 100 + hi),
+            unit: '%',
+          };
+        })
+        .filter((v): v is NonNullable<typeof v> => v !== null)
+        .slice(0, 8);
+      if (variables.length > 0) {
+        result.sensitivitySpider = {
+          variables,
+          baseCaseTotal: baseTotal > 0 ? baseTotal : undefined,
+          currency: ss.currency ?? payload?.financial_model?.currency ?? 'EUR',
+        };
+      }
+    }
+  }
+
   return Object.keys(result).length === 0 ? null : result;
 }
 

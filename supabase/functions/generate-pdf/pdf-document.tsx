@@ -169,18 +169,21 @@ function parseNextStep(text: string): { title: string; description: string } {
   return { title: stripMarkdown(text), description: "" };
 }
 
-function summarizeParameter(value: string, maxWords = 60): string {
-  // B5 fix: preserve the user's original phrasing and order. Previous
-  // implementation re-sorted sentence fragments by an ad-hoc "score" and
-  // re-joined with ". ", which produced garbled out-of-order echoes
-  // (e.g. parent label stripped + child bullets reshuffled). We now keep
-  // the original text intact, only truncating with an ellipsis when it
-  // exceeds the word budget.
+function summarizeParameter(value: string, maxWords = 120): string {
+  // Preserve the user's original phrasing and order. Truncate only when
+  // exceeding the word budget. Bumped from 60 → 120 words so input parameter
+  // cards on the final page no longer cut mid-sentence on richer inputs.
   const trimmed = value.trim();
   if (!trimmed) return "";
   const words = trimmed.split(/\s+/);
   if (words.length <= maxWords) return trimmed;
   return words.slice(0, maxWords).join(" ") + "…";
+}
+
+/** Strip duplicated parenthetical acronyms like "OTIF (OTIF)" → "(OTIF)". */
+function dedupeParenAcronyms(text: string): string {
+  if (!text) return text;
+  return text.replace(/\b([A-Z]{2,8})\s*\(\1\)/g, "($1)");
 }
 
 // ── Build branded styles ──
@@ -631,6 +634,38 @@ const PDFReportDocument = ({
   const isS26 = envelope?.scenario_id === "S26" || /disruption\s*manag/i.test(scenarioTitle);
   const isS20 = envelope?.scenario_id === "S20" || /category\s*risk/i.test(scenarioTitle);
   const isS21 = envelope?.scenario_id === "S21" || /preparing.*for.*negotiat/i.test(scenarioTitle);
+  const isS6 = envelope?.scenario_id === "S6" || /forecasting|predictive\s*budget/i.test(scenarioTitle);
+  // S6 cover KPIs (Base Case spend / Risk band / Top driver)
+  const s6Specific = isS6 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s6Scenarios: any[] = Array.isArray(s6Specific?.scenarios) ? s6Specific.scenarios : [];
+  const s6Base = s6Scenarios.find((s: any) => /base/i.test(String(s?.label))) ?? s6Scenarios[0];
+  const s6Down = s6Scenarios.find((s: any) => /down|worst|stress/i.test(String(s?.label)));
+  const s6Up = s6Scenarios.find((s: any) => /up|best|opportun/i.test(String(s?.label)));
+  const s6Currency = String(s6Specific?.currency ?? envelope?.payload?.financial_model?.currency ?? "EUR");
+  const formatMoney = (n: number | undefined) => {
+    if (!Number.isFinite(Number(n))) return null;
+    const v = Math.abs(Number(n));
+    const sym = s6Currency === "EUR" ? "€" : s6Currency === "USD" ? "$" : s6Currency === "GBP" ? "£" : `${s6Currency} `;
+    return v >= 1_000_000 ? `${sym}${(v / 1_000_000).toFixed(2)}M` : v >= 1_000 ? `${sym}${Math.round(v / 1_000)}K` : `${sym}${Math.round(v)}`;
+  };
+  const s6BaseLabel = s6Base ? formatMoney(Number(s6Base.total_spend ?? s6Base.total)) : null;
+  const s6RiskBand = (() => {
+    const baseT = Number(s6Base?.total_spend ?? s6Base?.total);
+    const downT = Number(s6Down?.total_spend ?? s6Down?.total);
+    const upT = Number(s6Up?.total_spend ?? s6Up?.total);
+    if (!Number.isFinite(baseT) || baseT <= 0) return null;
+    const downPct = Number.isFinite(downT) ? Math.round(((downT - baseT) / baseT) * 1000) / 10 : null;
+    const upPct = Number.isFinite(upT) ? Math.round(((upT - baseT) / baseT) * 1000) / 10 : null;
+    if (downPct == null && upPct == null) return null;
+    return `${upPct != null ? (upPct >= 0 ? `+${upPct}` : upPct) : "—"}% / ${downPct != null ? (downPct >= 0 ? `+${downPct}` : downPct) : "—"}%`;
+  })();
+  const s6TopDriver = (() => {
+    const sens: any[] = Array.isArray(s6Specific?.sensitivity) ? s6Specific.sensitivity : [];
+    const sorted = sens
+      .filter((sv) => Number.isFinite(Number(sv?.high_impact_pct)))
+      .sort((a, b) => Math.abs(Number(b?.high_impact_pct)) - Math.abs(Number(a?.high_impact_pct)));
+    return sorted[0]?.variable ? String(sorted[0].variable).toUpperCase() : null;
+  })();
   const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
   const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
@@ -703,7 +738,7 @@ const PDFReportDocument = ({
     : Number(batnaRawScore) > 5
       ? Number((Number(batnaRawScore) / 20).toFixed(1))
       : Number(Number(batnaRawScore).toFixed(1));
-  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
+  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "—");
   const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
@@ -793,7 +828,7 @@ const PDFReportDocument = ({
         <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text><View style={s.sectionTitleLine} /></View>
         <View style={{ marginBottom: 10 }}>
           {findings.slice(0, 5).map((point, i) => {
-            const clean = stripMarkdown(String(point ?? "")).trim();
+            const clean = dedupeParenAcronyms(stripMarkdown(String(point ?? "")).trim());
             if (!clean) return null;
             return (
               <View key={`f-${i}`} style={{ flexDirection: "row", marginBottom: 5, paddingRight: 4 }}>
@@ -806,7 +841,9 @@ const PDFReportDocument = ({
 
         <View style={s.sectionTitleWrapperCompact}><Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Recommended Actions</Text><View style={s.sectionTitleLine} /></View>
         {recommendations.slice(0, 4).map((point, i) => {
-          const { title, body } = parseFindingTitle(point);
+          const parsed = parseFindingTitle(point);
+          const title = dedupeParenAcronyms(parsed.title);
+          const body = parsed.body ? dedupeParenAcronyms(parsed.body) : "";
           return (
             <View key={`r-${i}`} style={{ ...s.actionItem, borderLeftColor: accentColor(i, c) }} wrap={false}>
               <View style={{ ...s.actionNumber, backgroundColor: accentColor(i, c) }}><Text style={s.actionNumberText}>{i + 1}</Text></View>
@@ -836,6 +873,13 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>POWER BALANCE</Text><Text style={{ ...s.kpiValue, color: s21PowerBalance === "BUYER ADV." ? c.success : s21PowerBalance === "SUPPLIER ADV." ? c.destructive : c.primary }}>{s21PowerBalance ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>ZOPA</Text><Text style={{ ...s.kpiValue, color: s21ZopaExists === false ? c.destructive : s21ZopaExists ? c.success : c.primary }}>{s21ZopaLabel ?? "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{coverageDisplaySpaced}</Text></View>
+            </>
+          ) : isS6 ? (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coverageDisplaySpaced}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>BASE CASE</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s6BaseLabel ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>RISK BAND</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s6RiskBand ?? "—"}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>TOP DRIVER</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s6TopDriver ?? "—"}</Text></View>
             </>
           ) : (
             <>
@@ -1101,7 +1145,7 @@ const PDFReportDocument = ({
             <Text style={s.methodologyText}>Analysis performed by EXOS Sentinel Pipeline using advanced LLM orchestration with multi-stage validation and grounding. Sources include global industry benchmarks, real-time commodity pricing, and user-provided parameters. This analysis is AI-generated and should be validated by qualified procurement professionals.</Text>
           </View>
           <View style={s.statsTable}>
-            <View style={s.statsCell}><Text style={s.statsLabel}>Input Quality Score</Text><Text style={{ ...s.statsValue, color: showScore ? kpiColor(String(coveragePct), "confidence", c) : c.textMuted }}>{coverageDisplay}</Text></View>
+            <View style={s.statsCell}><Text style={s.statsLabel}>Input Quality</Text><Text style={{ ...s.statsValue, color: showScore ? kpiColor(String(coveragePct), "confidence", c) : c.textMuted }}>{coverageDisplay}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Confidence</Text><Text style={{ ...s.statsValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Analysis ID</Text><Text style={s.statsValue}>{reportHash}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Timestamp</Text><Text style={s.statsValue}>{new Date(timestamp).toISOString()}</Text></View>
