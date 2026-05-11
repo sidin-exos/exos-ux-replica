@@ -1449,6 +1449,7 @@ const PDFReportDocument = ({
           </View>
           <View style={s.statsTable}>
             <View style={s.statsCell}><Text style={s.statsLabel}>Input Quality</Text><Text style={{ ...s.statsValue, color: showScore ? kpiColor(String(coveragePct), "confidence", c) : c.textMuted }}>{coverageDisplay}</Text></View>
+            <View style={s.statsCell}><Text style={s.statsLabel}>Output Rigour</Text><Text style={{ ...s.statsValue, color: outputRigourPct == null ? c.textMuted : kpiColor(String(outputRigourPct), "confidence", c) }}>{outputRigourDisplay}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Confidence</Text><Text style={{ ...s.statsValue, color: kpiColor(confidenceLevel, "confidence", c) }}>{confidenceLevel.toUpperCase()}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Analysis ID</Text><Text style={s.statsValue}>{reportHash}</Text></View>
             <View style={s.statsCell}><Text style={s.statsLabel}>Timestamp</Text><Text style={s.statsValue}>{new Date(timestamp).toISOString()}</Text></View>
