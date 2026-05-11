@@ -1909,6 +1909,16 @@ export function applyCoverageToEnvelope<T extends ExosOutputParsed | null | unde
     }
     env.data_gaps = existing;
   }
+  // Persist the coverage report on the envelope so PDF/UI can surface a real
+  // "Output Rigour" score next to the static "Confidence" indicator.
+  // ratio: delivered / promised (0–1) — caller can scale to %.
+  (env as any).output_coverage = {
+    promised: coverage.promised,
+    delivered: coverage.delivered,
+    ratio: coverage.promised > 0 ? coverage.delivered / coverage.promised : 0,
+    missing: coverage.missing,
+    suggested_confidence: coverage.suggestedConfidence,
+  };
   return envelope;
 }
 
