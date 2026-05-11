@@ -167,8 +167,8 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
                   <Text style={{ fontSize: 9, fontWeight: 600, color: colors.text }}>{v.name}</Text>
                   <Text style={{ fontSize: 7, color: v.tier.color, fontWeight: 600 }}>±{v.maxPct.toFixed(1)}%</Text>
                 </View>
-                <Text style={{ fontSize: 7, color: colors.textMuted, marginTop: 1 }}>Base {formatValue(v.baseCase, v.unit)}</Text>
-                <Text style={{ fontSize: 7, color: colors.textMuted }}>Range {formatValue(v.lowCase, v.unit)}–{formatValue(v.highCase, v.unit)}</Text>
+                <Text style={{ fontSize: 7, color: colors.textMuted, marginTop: 1 }}>Base {formatValue(v.baseCase, v.unit, currency)}</Text>
+                <Text style={{ fontSize: 7, color: colors.textMuted }}>Range {formatValue(v.lowCase, v.unit, currency)}–{formatValue(v.highCase, v.unit, currency)}</Text>
               </View>
             </View>
           ))}
