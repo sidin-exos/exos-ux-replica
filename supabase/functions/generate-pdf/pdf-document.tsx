@@ -738,7 +738,7 @@ const PDFReportDocument = ({
     : Number(batnaRawScore) > 5
       ? Number((Number(batnaRawScore) / 20).toFixed(1))
       : Number(Number(batnaRawScore).toFixed(1));
-  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
+  const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "—");
   const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
