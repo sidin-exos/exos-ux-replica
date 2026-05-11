@@ -263,6 +263,39 @@ export interface DashboardData {
     ifrs16Note?: string;
     currency?: string;
   };
+
+  // ── Wave 1/2: S4 Group A additive dashboards ──
+  savingsRealizationFunnel?: {
+    baselineVerified: boolean;
+    cfoAcceptance: 'GREEN' | 'AMBER' | 'RED';
+    funnel: Array<{
+      stage: 'Baseline' | 'Identified' | 'Committed' | 'Realized';
+      hard: number;
+      soft: number;
+      avoided: number;
+    }>;
+    hardAnnualised: number | null;
+    softAnnualised: number | null;
+    avoidedProtected: number | null;
+    currency: string;
+    lowConfidenceWatermark: boolean;
+  };
+  workingCapitalDpo?: {
+    current_weighted_dpo: number | null;
+    target_weighted_dpo: number | null;
+    working_capital_delta_eur: number | null;
+    annual_spend_eur: number | null;
+    terms_distribution: Array<{ term_label: string; spend_share_pct: number; supplier_count: number | null }>;
+    by_supplier: Array<{
+      supplier_label: string;
+      category: string | null;
+      payment_terms_days: number;
+      annual_spend: number | null;
+      late_payment_directive_risk: boolean;
+    }>;
+    early_payment_discount_opportunities: Array<{ supplier_label: string; discount_structure: string; annualised_value: number | null }>;
+    currency: string;
+  };
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
