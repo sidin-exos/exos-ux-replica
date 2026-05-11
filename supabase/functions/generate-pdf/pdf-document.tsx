@@ -952,7 +952,8 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>KRALJIC POSITION</Text><Text style={{ ...s.kpiValue, color: s22KraljicPosition === "STRATEGIC" || s22KraljicPosition === "BOTTLENECK" ? c.destructive : c.primary }}>{s22KraljicPosition ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>SUPPLIER POWER</Text><Text style={{ ...s.kpiValue, color: kpiColor(s22SupplierPower === "HIGH" ? "High" : s22SupplierPower === "MEDIUM" ? "Medium" : s22SupplierPower === "LOW" ? "Low" : confidenceLevel, "risk", c) }}>{s22SupplierPower ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>LEVERAGE</Text><Text style={{ ...s.kpiValue, color: s22Leverage === "HIGH" ? c.success : s22Leverage === "LOW" ? c.destructive : c.primary }}>{s22Leverage ?? "—"}</Text></View>
-              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>QUICK WINS</Text><Text style={{ ...s.kpiValue, color: s22QuickWinsCount > 0 ? c.primary : c.textMuted }}>{s22QuickWinsCount > 0 ? String(s22QuickWinsCount) : "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>QUICK WINS</Text><Text style={{ ...s.kpiValue, color: s22QuickWinsCount > 0 ? c.primary : c.textMuted }}>{s22QuickWinsCount > 0 ? String(s22QuickWinsCount) : "—"}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>OUTPUT RIGOUR</Text><Text style={{ ...s.kpiValue, color: outputRigourPct == null ? c.textMuted : kpiColor(String(outputRigourPct), "confidence", c) }}>{outputRigourDisplay}</Text></View>
             </>
           ) : (
             <>
