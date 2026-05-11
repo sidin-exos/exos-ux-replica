@@ -35,6 +35,7 @@ interface ReportData {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  coverageStars?: number | null;
 }
 
 type SharedReportState =
