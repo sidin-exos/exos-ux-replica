@@ -634,6 +634,38 @@ const PDFReportDocument = ({
   const isS26 = envelope?.scenario_id === "S26" || /disruption\s*manag/i.test(scenarioTitle);
   const isS20 = envelope?.scenario_id === "S20" || /category\s*risk/i.test(scenarioTitle);
   const isS21 = envelope?.scenario_id === "S21" || /preparing.*for.*negotiat/i.test(scenarioTitle);
+  const isS6 = envelope?.scenario_id === "S6" || /forecasting|predictive\s*budget/i.test(scenarioTitle);
+  // S6 cover KPIs (Base Case spend / Risk band / Top driver)
+  const s6Specific = isS6 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s6Scenarios: any[] = Array.isArray(s6Specific?.scenarios) ? s6Specific.scenarios : [];
+  const s6Base = s6Scenarios.find((s: any) => /base/i.test(String(s?.label))) ?? s6Scenarios[0];
+  const s6Down = s6Scenarios.find((s: any) => /down|worst|stress/i.test(String(s?.label)));
+  const s6Up = s6Scenarios.find((s: any) => /up|best|opportun/i.test(String(s?.label)));
+  const s6Currency = String(s6Specific?.currency ?? envelope?.payload?.financial_model?.currency ?? "EUR");
+  const formatMoney = (n: number | undefined) => {
+    if (!Number.isFinite(Number(n))) return null;
+    const v = Math.abs(Number(n));
+    const sym = s6Currency === "EUR" ? "€" : s6Currency === "USD" ? "$" : s6Currency === "GBP" ? "£" : `${s6Currency} `;
+    return v >= 1_000_000 ? `${sym}${(v / 1_000_000).toFixed(2)}M` : v >= 1_000 ? `${sym}${Math.round(v / 1_000)}K` : `${sym}${Math.round(v)}`;
+  };
+  const s6BaseLabel = s6Base ? formatMoney(Number(s6Base.total_spend ?? s6Base.total)) : null;
+  const s6RiskBand = (() => {
+    const baseT = Number(s6Base?.total_spend ?? s6Base?.total);
+    const downT = Number(s6Down?.total_spend ?? s6Down?.total);
+    const upT = Number(s6Up?.total_spend ?? s6Up?.total);
+    if (!Number.isFinite(baseT) || baseT <= 0) return null;
+    const downPct = Number.isFinite(downT) ? Math.round(((downT - baseT) / baseT) * 1000) / 10 : null;
+    const upPct = Number.isFinite(upT) ? Math.round(((upT - baseT) / baseT) * 1000) / 10 : null;
+    if (downPct == null && upPct == null) return null;
+    return `${upPct != null ? (upPct >= 0 ? `+${upPct}` : upPct) : "—"}% / ${downPct != null ? (downPct >= 0 ? `+${downPct}` : downPct) : "—"}%`;
+  })();
+  const s6TopDriver = (() => {
+    const sens: any[] = Array.isArray(s6Specific?.sensitivity) ? s6Specific.sensitivity : [];
+    const sorted = sens
+      .filter((sv) => Number.isFinite(Number(sv?.high_impact_pct)))
+      .sort((a, b) => Math.abs(Number(b?.high_impact_pct)) - Math.abs(Number(a?.high_impact_pct)));
+    return sorted[0]?.variable ? String(sorted[0].variable).toUpperCase() : null;
+  })();
   const s27Specific = isS27 ? (envelope?.payload?.scenario_specific ?? {}) : {};
   const s27ResiliencePosture = String(s27Specific?.overall_resilience_rag ?? "").toUpperCase() || null;
   const s27RtoGap = s27Specific?.rto_rpo_analysis?.rto_gap_hours;
