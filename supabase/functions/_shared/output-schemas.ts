@@ -122,6 +122,25 @@ S21 Negotiation Preparation — SPECIFIC RULES:
     d. walk_away_plan.trigger_conditions[] MUST be expressed as relationship and operational thresholds (delivery SLA, response time, single-sourcing risk) when price floors are unknown — not only price percentages.
     e. Set batna_strength_pct conservatively (default 30–50) and explain the reduction in batna_improvement_actions[] when the supplier landscape is unmapped.
 17. JSON STRUCTURE — CRITICAL: scenario_specific MUST be a single JSON OBJECT (open with { and close with }), never an array. Each sub-key (batna, zopa, leverage_analysis, walk_away_plan, strategy_playbook, financial_outcome_range) is a single OBJECT closed with }. Only counter_arguments, value_creation, negotiation_tactics, negotiation_sequence, batna_improvement_actions, buyer_leverage_factors, supplier_leverage_factors, key_moves, trigger_conditions and exit_steps are ARRAYS closed with ]. Match every opening { with } and every opening [ with ] — mismatched closers (e.g. closing scenario_specific or payload with ]) will fail validation.`,
+  S6: `
+S6 Predictive Budgeting & Forecasting — SPECIFIC RULES:
+1. scenario_specific MUST contain a non-empty "scenarios" array AND a non-empty "sensitivity" array. Both feed dashboards (Scenario Comparison + Sensitivity Spider). Without them the report renders empty placeholders.
+2. scenarios[]: emit EXACTLY 3 entries with label values "Base", "Downside", "Upside" (in that order). Each item:
+   { "label": "Base | Downside | Upside",
+     "total_spend": <number — annual or full-period spend in scenario_specific.currency>,
+     "delta_pct_vs_base": <number — 0 for Base, negative for savings, positive for cost increase>,
+     "drivers": ["short driver phrases — e.g. 'Diesel +6.5%', 'Driver scarcity', 'Consolidation hub uplift'"],
+     "rationale": "1 sentence explaining the assumptions" }
+   total_spend for Base MUST equal financial_model.totals.total_cost when both are present.
+3. sensitivity[]: 3–6 entries, one per material driver (inflation index, FX, volume, labour, fuel, regulatory, etc.). Each item:
+   { "variable": "string — e.g. 'Diesel index'",
+     "low_impact_pct": <negative number, e.g. -3>,
+     "base_impact_pct": 0,
+     "high_impact_pct": <positive number, e.g. +6.5>,
+     "unit": "pct" }
+   The values are % impact on base-case total_spend. Order from highest absolute high_impact_pct to lowest.
+4. scenario_specific.currency MUST mirror financial_model.currency.
+5. financial_model.analysis_period_years MUST be set (default 1 for annual budgets).`,
 };
 
 /** Return group instruction + only the active scenario's addendum (token-efficient). */
