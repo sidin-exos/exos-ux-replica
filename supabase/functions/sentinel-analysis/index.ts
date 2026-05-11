@@ -1236,6 +1236,13 @@ serve(async (req) => {
         // Server-side defensive synthesis (backfill empty tables) THEN prune.
         deanonEnvelopeObj = synthesizeMissingContent(deanonEnvelopeObj);
         deanonEnvelopeObj = pruneEmptyBranches(deanonEnvelopeObj);
+        // Output coverage gate: downgrade confidence_level + log gaps when the
+        // model under-delivered on promised scenario blocks (S22 etc.).
+        const mcCoverage = evaluateOutputCoverage(deanonEnvelopeObj);
+        if (mcCoverage) {
+          deanonEnvelopeObj = applyCoverageToEnvelope(deanonEnvelopeObj, mcCoverage);
+          console.log(`[Sentinel] coverage scenario=${deanonEnvelopeObj?.scenario_id} delivered=${mcCoverage.delivered}/${mcCoverage.promised} suggested=${mcCoverage.suggestedConfidence} missing=${JSON.stringify(mcCoverage.missing)}`);
+        }
         responseContent = buildMarkdownFromEnvelope(deanonEnvelopeObj);
         // GDPR flag logging
         if (deanonEnvelopeObj.gdpr_flags?.length > 0) {
