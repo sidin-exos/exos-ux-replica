@@ -988,6 +988,14 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>QUICK WINS</Text><Text style={{ ...s.kpiValue, color: s22QuickWinsCount > 0 ? c.primary : c.textMuted }}>{s22QuickWinsCount > 0 ? String(s22QuickWinsCount) : "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>OUTPUT RIGOUR</Text><Text style={{ ...s.kpiValue, color: outputRigourPct == null ? c.textMuted : kpiColor(String(outputRigourPct), "confidence", c) }}>{outputRigourDisplay}</Text></View>
             </>
+          ) : isS3 ? (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coverageDisplaySpaced}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>NPV ADVANTAGE</Text><Text style={{ ...s.kpiValue, color: s3NpvAdvantage ? c.success : c.textMuted }}>{s3NpvAdvantage?.label ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>CFO PICK</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s3CfoPickLabel ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>WACC</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s3Wacc ?? "—"}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>OUTPUT RIGOUR</Text><Text style={{ ...s.kpiValue, color: outputRigourPct == null ? c.textMuted : kpiColor(String(outputRigourPct), "confidence", c) }}>{outputRigourDisplay}</Text></View>
+            </>
           ) : (
             <>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : coverageDisplaySpaced}</Text></View>
