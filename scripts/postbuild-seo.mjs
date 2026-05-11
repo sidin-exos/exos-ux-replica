@@ -90,6 +90,11 @@ for (const route of routes) {
       /<meta name="description" content="[^"]*"/,
       `<meta name="description" content="${route.description}"`
     )
+    // Canonical
+    .replace(
+      /<link rel="canonical" href="[^"]*"\s*\/?>/,
+      `<link rel="canonical" href="${ogUrl}" />`
+    )
     // OG tags
     .replace(
       /<meta property="og:title" content="[^"]*"/,
