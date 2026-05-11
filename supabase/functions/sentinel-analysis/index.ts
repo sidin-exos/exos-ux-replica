@@ -1416,6 +1416,8 @@ serve(async (req) => {
           // placeholders despite prompt instructions. Deterministic enforcement.
           deanonSingleEnvelope = synthesizeMissingContent(deanonSingleEnvelope);
           deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
+          // P0: Kraljic single-source-of-truth — derive categorical position from coords.
+          deanonSingleEnvelope = reconcileKraljic(deanonSingleEnvelope);
           // Output coverage gate (single-pass path).
           const spCoverage = evaluateOutputCoverage(deanonSingleEnvelope);
           if (spCoverage) {
