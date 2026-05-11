@@ -1775,6 +1775,143 @@ export function pruneEmptyBranches<T>(input: T, isTopLevel = true): T {
   return input;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Output coverage evaluator — closes the pre-eval ↔ output-promise gap.
+// For scenarios that promise N specific deliverables (currently S22), this
+// counts what the model actually delivered (respecting min item counts) and
+// returns: { promised, delivered, missing[], suggestedConfidence }.
+// Caller (sentinel-analysis) uses this to downgrade confidence_level and
+// surface missing blocks in data_gaps[] so the report header shows reality
+// instead of the static "HIGH" we used to ship.
+// ─────────────────────────────────────────────────────────────────────────────
+export interface OutputCoverageResult {
+  promised: number;
+  delivered: number;
+  missing: string[];
+  suggestedConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+interface CoverageRule {
+  key: string;
+  label: string;
+  /** Returns true if the block is satisfied. */
+  check: (ss: Record<string, any>) => boolean;
+}
+
+const COVERAGE_RULES: Record<string, CoverageRule[]> = {
+  S22: [
+    {
+      key: 'kraljic_position',
+      label: 'Kraljic Positioning (numeric coordinates)',
+      check: (ss) => {
+        const kp = ss?.kraljic_position;
+        if (!kp || typeof kp !== 'object') return false;
+        const sr = Number((kp as any).supply_risk);
+        const bi = Number((kp as any).business_impact);
+        return Number.isFinite(sr) && Number.isFinite(bi) && (sr > 0 || bi > 0);
+      },
+    },
+    {
+      key: 'market_intelligence',
+      label: 'Market Intelligence Brief',
+      check: (ss) => {
+        const mi = ss?.market_intelligence;
+        if (!mi || typeof mi !== 'object') return false;
+        const trends = Array.isArray((mi as any).key_trends) ? (mi as any).key_trends.length : 0;
+        return trends >= 2 || !!(mi as any).supply_dynamics || !!(mi as any).regulatory_outlook;
+      },
+    },
+    {
+      key: 'best_practices',
+      label: 'Best Practices (≥2 entries)',
+      check: (ss) => Array.isArray(ss?.best_practices) && ss.best_practices.length >= 2,
+    },
+    {
+      key: 'strategic_options',
+      label: 'Strategic Options Matrix (≥3 entries)',
+      check: (ss) => Array.isArray(ss?.strategic_options) && ss.strategic_options.length >= 3,
+    },
+    {
+      key: 'quick_wins',
+      label: 'Quick Wins (≥2 entries)',
+      check: (ss) => Array.isArray(ss?.quick_wins) && ss.quick_wins.length >= 2,
+    },
+    {
+      key: 'cross_category_analogies',
+      label: 'Cross-Category Analogies (≥2 entries)',
+      check: (ss) => Array.isArray(ss?.cross_category_analogies) && ss.cross_category_analogies.length >= 2,
+    },
+    {
+      key: 'three_year_roadmap',
+      label: '3-Year Roadmap with milestones',
+      check: (ss) => {
+        const r = ss?.three_year_roadmap;
+        if (!Array.isArray(r) || r.length < 3) return false;
+        const withMilestones = r.filter((y: any) => Array.isArray(y?.milestones) && y.milestones.length > 0).length;
+        return withMilestones >= 2;
+      },
+    },
+  ],
+};
+
+export function evaluateOutputCoverage(
+  envelope: ExosOutputParsed | null | undefined,
+): OutputCoverageResult | null {
+  if (!envelope || typeof envelope !== 'object') return null;
+  const sid = String(envelope.scenario_id ?? '').toUpperCase();
+  const rules = COVERAGE_RULES[sid];
+  if (!rules || rules.length === 0) return null;
+  const ss = (envelope.payload?.scenario_specific ?? {}) as Record<string, any>;
+  const missing: string[] = [];
+  let delivered = 0;
+  for (const r of rules) {
+    try {
+      if (r.check(ss)) delivered++;
+      else missing.push(r.label);
+    } catch {
+      missing.push(r.label);
+    }
+  }
+  const promised = rules.length;
+  const ratio = delivered / promised;
+  const suggestedConfidence: 'HIGH' | 'MEDIUM' | 'LOW' =
+    ratio >= 0.85 ? 'HIGH' : ratio >= 0.65 ? 'MEDIUM' : 'LOW';
+  return { promised, delivered, missing, suggestedConfidence };
+}
+
+/**
+ * Apply a coverage report onto an envelope: downgrade confidence_level if the
+ * coverage suggests so, and merge missing blocks into data_gaps[]. Idempotent.
+ */
+export function applyCoverageToEnvelope<T extends ExosOutputParsed | null | undefined>(
+  envelope: T,
+  coverage: OutputCoverageResult | null,
+): T {
+  if (!envelope || !coverage) return envelope;
+  const env = envelope as ExosOutputParsed;
+  const order = { HIGH: 3, MEDIUM: 2, LOW: 1 } as const;
+  const current = (env.confidence_level ?? 'HIGH').toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW';
+  const suggested = coverage.suggestedConfidence;
+  const next = (order[suggested] < order[current] ? suggested : current);
+  if (next !== current) env.confidence_level = next;
+  if (coverage.missing.length > 0) {
+    const existing: any[] = Array.isArray(env.data_gaps) ? env.data_gaps : [];
+    const seen = new Set(existing.map((g: any) => String(g?.gap ?? g ?? '').toLowerCase()));
+    for (const m of coverage.missing) {
+      const key = `output coverage: ${m}`.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      existing.push({
+        gap: `Output coverage: ${m}`,
+        impact: 'Promised deliverable was missing or under-specified — confidence downgraded.',
+        unlock_with: 'Re-run the analysis; if it persists, tighten scenario inputs or escalate the schema rule.',
+      });
+    }
+    env.data_gaps = existing;
+  }
+  return envelope;
+}
+
 /**
  * Build a backward-compatible markdown summary from the structured output.
  * Used to populate the `content` field for existing UI rendering.
