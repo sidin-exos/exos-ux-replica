@@ -822,28 +822,54 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
   }
 
 
-  // ── Universal: kraljicQuadrant
-  // Reads scenario_specific.kraljic_position (S20, S1 and any scenario emitting it).
+  // ── Universal: kraljicQuadrant ───────────────────────────────────────────
+  // CROSS-FILE INVARIANT: this block MUST stay logically identical to
+  // supabase/functions/_shared/dashboard-extractor.ts (search "Universal: kraljicQuadrant").
+  // Both parsers must:
+  //   • accept items[] arrays as well as single supply_risk/business_impact scalars
+  //   • scale 0–5 → ×20, 0–10 → ×10, otherwise pass through (target 0–100 chart)
+  //   • reject the (0,0) phantom that previously displayed as "Non-Critical · 1 item"
   // Skip for S26 — Kraljic portfolio positioning is not relevant during a live crisis.
   const scenarioId = String((envelope as any)?.scenario_id ?? '').toUpperCase();
   const kraljicSrc: any = scenarioId === 'S26' ? null : ((ss as any)?.kraljic_position ?? (ss as any)?.kraljic ?? null);
   if (kraljicSrc && typeof kraljicSrc === 'object') {
-    const sr = Number(kraljicSrc.supply_risk ?? kraljicSrc.supplyRisk);
-    const bi = Number(kraljicSrc.business_impact ?? kraljicSrc.businessImpact);
-    if (Number.isFinite(sr) && Number.isFinite(bi)) {
-      const name = String(
-        kraljicSrc.label ?? kraljicSrc.category ?? (ss as any)?.category_name ?? envelope.scenario_label ?? 'Category'
-      );
-      const scale = (v: number) => Math.max(0, Math.min(100, v <= 5 ? v * 20 : v));
-      result.kraljicQuadrant = {
-        items: [{
-          id: '1',
-          name,
-          supplyRisk: scale(sr),
-          businessImpact: scale(bi),
-          spend: kraljicSrc.quadrant ? String(kraljicSrc.quadrant) : undefined,
-        }],
-      };
+    const scale = (v: number) =>
+      Math.max(0, Math.min(100, v <= 5 ? v * 20 : v <= 10 ? v * 10 : v));
+    const itemsArr: any[] = Array.isArray(kraljicSrc.items) ? kraljicSrc.items : [];
+    if (itemsArr.length > 0) {
+      const items = itemsArr
+        .map((it: any, i: number) => {
+          const sr = Number(it?.supply_risk ?? it?.supplyRisk);
+          const bi = Number(it?.business_impact ?? it?.businessImpact);
+          if (!Number.isFinite(sr) || !Number.isFinite(bi)) return null;
+          if (sr <= 0 && bi <= 0) return null;
+          return {
+            id: String(i + 1),
+            name: String(it?.name ?? it?.label ?? it?.category ?? `Item ${i + 1}`),
+            supplyRisk: scale(sr),
+            businessImpact: scale(bi),
+            spend: it?.spend ? String(it.spend) : undefined,
+          };
+        })
+        .filter(Boolean) as any[];
+      if (items.length > 0) result.kraljicQuadrant = { items };
+    } else {
+      const sr = Number(kraljicSrc.supply_risk ?? kraljicSrc.supplyRisk);
+      const bi = Number(kraljicSrc.business_impact ?? kraljicSrc.businessImpact);
+      if (Number.isFinite(sr) && Number.isFinite(bi) && (sr > 0 || bi > 0)) {
+        const name = String(
+          kraljicSrc.label ?? kraljicSrc.category ?? (ss as any)?.category_name ?? envelope.scenario_label ?? 'Category'
+        );
+        result.kraljicQuadrant = {
+          items: [{
+            id: '1',
+            name,
+            supplyRisk: scale(sr),
+            businessImpact: scale(bi),
+            spend: kraljicSrc.quadrant ? String(kraljicSrc.quadrant) : undefined,
+          }],
+        };
+      }
     }
   }
 
