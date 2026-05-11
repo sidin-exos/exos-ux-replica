@@ -122,6 +122,7 @@ const ReportExportButtons = ({
         selectedDashboards={selectedDashboards}
         evaluationScore={evaluationScore}
         evaluationConfidence={evaluationConfidence}
+        coverageStars={coverageStars}
       />
     </>
   );
