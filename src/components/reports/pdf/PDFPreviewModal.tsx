@@ -43,6 +43,7 @@ interface PDFPreviewModalProps {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  coverageStars?: number | null;
 }
 
 const PDFPreviewModal = ({
@@ -56,6 +57,7 @@ const PDFPreviewModal = ({
   selectedDashboards = [],
   evaluationScore,
   evaluationConfidence,
+  coverageStars,
 }: PDFPreviewModalProps) => {
   const [pdfData, setPdfData] = useState<{ data: Uint8Array } | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
