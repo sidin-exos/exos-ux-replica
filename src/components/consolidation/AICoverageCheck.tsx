@@ -94,7 +94,7 @@ export function AICoverageCheck({
       const { data, error } = await supabase.functions.invoke(
         "evaluate-project-coverage",
         {
-          body: { scenarioTitle, description, fileNames, sections },
+          body: { scenarioTitle, description, fileNames, sections, scenarioId },
         },
       );
       if (error) throw error;
