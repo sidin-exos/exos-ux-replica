@@ -51,6 +51,10 @@ interface AICoverageCheckProps {
   /** Visual label/CTA copy. */
   title?: string;
   subtitle?: string;
+  /** Fired whenever the LLM coverage result changes. Lets parents
+   * persist the 0–5 star score so it can drive downstream KPIs (e.g. the
+   * PDF "Input Quality" score) — keeping a single source of truth. */
+  onResult?: (result: CoverageResult | null) => void;
 }
 
 /**
