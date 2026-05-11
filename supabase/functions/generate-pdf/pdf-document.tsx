@@ -589,11 +589,11 @@ function chunkPairs<T>(arr: T[]): T[][] {
 const PDFReportDocument = ({
   scenarioTitle, analysisResult, structuredData, formData, timestamp,
   selectedDashboards = [], pdfTheme = "light",
-  evaluationScore, evaluationConfidence,
+  evaluationScore, evaluationConfidence, coverageStars,
 }: {
   scenarioTitle: string; analysisResult: string; structuredData?: string; formData: Record<string, string>;
   timestamp: string; selectedDashboards?: DashboardType[]; pdfTheme?: PdfThemeMode;
-  evaluationScore?: number; evaluationConfidence?: string;
+  evaluationScore?: number; evaluationConfidence?: string; coverageStars?: number;
 }) => {
   const c = getPdfColors(pdfTheme);
   const s = buildStyles(c);
