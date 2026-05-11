@@ -88,6 +88,8 @@ import {
   PDFDataQuality,
   PDFNpvWaterfall,
   PDFIfrs16Impact,
+  PDFSavingsRealizationFunnel,
+  PDFWorkingCapitalDpo,
 } from "./dashboards.tsx";
 
 // ── Embedded EXOS logo ──
@@ -552,6 +554,7 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "scenario-comparison": "scenarioComparison", "supplier-scorecard": "supplierScorecard", "sow-analysis": "sowAnalysis",
   "negotiation-prep": "negotiationPrep", "data-quality": "dataQuality",
   "npv-waterfall": "npvWaterfall", "ifrs16-impact": "ifrs16Impact",
+  "savings-realization-funnel": "savingsRealizationFunnel", "working-capital-dpo": "workingCapitalDpo",
 };
 
 const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardData | null, themeMode?: PdfThemeMode): ReactNode => {
@@ -577,6 +580,8 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
     case "data-quality": return <PDFDataQuality data={parsedData!.dataQuality!} themeMode={themeMode} />;
     case "npv-waterfall": return <PDFNpvWaterfall data={parsedData!.npvWaterfall! as any} themeMode={themeMode} />;
     case "ifrs16-impact": return <PDFIfrs16Impact data={parsedData!.ifrs16Impact! as any} themeMode={themeMode} />;
+    case "savings-realization-funnel": return <PDFSavingsRealizationFunnel data={parsedData!.savingsRealizationFunnel! as any} themeMode={themeMode} />;
+    case "working-capital-dpo": return <PDFWorkingCapitalDpo data={parsedData!.workingCapitalDpo! as any} themeMode={themeMode} />;
     default: return null;
   }
 };
@@ -698,6 +703,21 @@ const PDFReportDocument = ({
   const s21ZopaExists = typeof s21Specific?.zopa?.zopa_exists === "boolean" ? s21Specific.zopa.zopa_exists : null;
   const s21BuyerTarget = Number(s21Specific?.zopa?.buyer_target);
   const s21ZopaLabel = s21ZopaExists == null ? null : (s21ZopaExists ? (Number.isFinite(s21BuyerTarget) ? `YES (target €${s21BuyerTarget >= 1_000_000 ? (s21BuyerTarget/1_000_000).toFixed(1)+"M" : Math.round(s21BuyerTarget/1000)+"K"})` : "YES") : "NO");
+
+  // S4 cover KPIs (Hard € / Soft € / Avoided € / CFO Acceptance)
+  const isS4 = envelope?.scenario_id === "S4" || /savings\s*calculation/i.test(scenarioTitle);
+  const s4Funnel = parsedData?.savingsRealizationFunnel;
+  const s4Currency = s4Funnel?.currency ?? "EUR";
+  const s4FmtMoney = (n: number | null | undefined) => {
+    if (n == null || !Number.isFinite(Number(n))) return "—";
+    const v = Math.abs(Number(n));
+    const sym = s4Currency === "EUR" ? "€" : s4Currency === "USD" ? "$" : s4Currency === "GBP" ? "£" : `${s4Currency} `;
+    return v >= 1_000_000 ? `${sym}${(v / 1_000_000).toFixed(2)}M` : v >= 1_000 ? `${sym}${Math.round(v / 1_000)}K` : `${sym}${Math.round(v)}`;
+  };
+  const s4HardLabel = s4FmtMoney(s4Funnel?.hardAnnualised);
+  const s4SoftLabel = s4FmtMoney(s4Funnel?.softAnnualised);
+  const s4AvoidedLabel = s4FmtMoney(s4Funnel?.avoidedProtected);
+  const s4CfoAcceptance = s4Funnel?.cfoAcceptance ?? null;
 
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
@@ -883,6 +903,13 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>RISK BAND</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s6RiskBand ?? "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>TOP DRIVER</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s6TopDriver ?? "—"}</Text></View>
             </>
+          ) : isS4 ? (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>HARD €</Text><Text style={{ ...s.kpiValue, color: c.success }}>{s4HardLabel}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>SOFT €</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s4SoftLabel}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>AVOIDED €</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s4AvoidedLabel}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>CFO ACCEPTANCE</Text><Text style={{ ...s.kpiValue, color: s4CfoAcceptance === "GREEN" ? c.success : s4CfoAcceptance === "RED" ? c.destructive : c.primary }}>{s4CfoAcceptance ?? "—"}</Text></View>
+            </>
           ) : (
             <>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>{isNegotiationPrep ? "BATNA SCORE" : "INPUT QUALITY"}</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{isNegotiationPrep && batnaScore != null ? `${batnaScore} / 5` : coverageDisplaySpaced}</Text></View>
@@ -921,6 +948,12 @@ const PDFReportDocument = ({
         }
         if (parsedData?.ifrs16Impact && !available.includes("ifrs16-impact" as DashboardType)) {
           promoted.push("ifrs16-impact" as DashboardType);
+        }
+        if (parsedData?.savingsRealizationFunnel && !available.includes("savings-realization-funnel" as DashboardType)) {
+          promoted.push("savings-realization-funnel" as DashboardType);
+        }
+        if (parsedData?.workingCapitalDpo && !available.includes("working-capital-dpo" as DashboardType)) {
+          promoted.push("working-capital-dpo" as DashboardType);
         }
         const finalList = [...promoted, ...available];
         if (finalList.length === 0) return null;
@@ -1050,6 +1083,10 @@ const PDFReportDocument = ({
         // remaining line is a real risk sentence, not a leaked table cell.
         const riskLines = (isS27 || isS26 || isS20 || isS21) ? [] : rawRiskLines.filter(l => !isTableLine(l) && !isInstructionLine(l) && l.length >= 15);
         const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
+        // F8/F10: A single overflow recommendation on its own page produces a
+        // near-empty Page 4. Suppress the entire Recommendations & Risks page
+        // when there is only one overflow item and no Risk Register content.
+        if (overflowRecos.length <= 1 && !hasRiskRegister) return null;
         if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
         const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
