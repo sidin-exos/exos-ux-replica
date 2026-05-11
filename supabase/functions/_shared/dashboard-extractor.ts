@@ -263,6 +263,39 @@ export interface DashboardData {
     ifrs16Note?: string;
     currency?: string;
   };
+
+  // ── Wave 1/2: S4 Group A additive dashboards ──
+  savingsRealizationFunnel?: {
+    baselineVerified: boolean;
+    cfoAcceptance: 'GREEN' | 'AMBER' | 'RED';
+    funnel: Array<{
+      stage: 'Baseline' | 'Identified' | 'Committed' | 'Realized';
+      hard: number;
+      soft: number;
+      avoided: number;
+    }>;
+    hardAnnualised: number | null;
+    softAnnualised: number | null;
+    avoidedProtected: number | null;
+    currency: string;
+    lowConfidenceWatermark: boolean;
+  };
+  workingCapitalDpo?: {
+    current_weighted_dpo: number | null;
+    target_weighted_dpo: number | null;
+    working_capital_delta_eur: number | null;
+    annual_spend_eur: number | null;
+    terms_distribution: Array<{ term_label: string; spend_share_pct: number; supplier_count: number | null }>;
+    by_supplier: Array<{
+      supplier_label: string;
+      category: string | null;
+      payment_terms_days: number;
+      annual_spend: number | null;
+      late_payment_directive_risk: boolean;
+    }>;
+    early_payment_discount_opportunities: Array<{ supplier_label: string; discount_structure: string; annualised_value: number | null }>;
+    currency: string;
+  };
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -1045,6 +1078,14 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   // (categories[]/suppliers[]/flows[]) — handled by the frontend parser via
   // extractSupplierConcentrationMap. PDF dashboard for concentration is opt-in
   // and not currently rendered server-side.
+
+  // ── Wave 1: savings-realization-funnel (S4) ───────────────────────────────
+  const srf = extractSavingsRealizationFunnel(payload, ss, !!envelope.low_confidence_watermark);
+  if (srf) result.savingsRealizationFunnel = srf;
+
+  // ── Wave 2: working-capital-dpo (Group A base) ────────────────────────────
+  const wcd = extractWorkingCapitalDpo(payload);
+  if (wcd) result.workingCapitalDpo = wcd;
 
 
 
@@ -1988,4 +2029,179 @@ export function extractRiskRegisterItems(text: string): RiskRegisterItem[] {
       };
     })
     .filter((r): r is RiskRegisterItem => r !== null);
+}
+
+// ============================================
+// Wave 1/2: S4 Group A additive extractors
+// ============================================
+
+function deriveCfoAcceptance(baselineVerified: boolean, hasHard: boolean): 'GREEN' | 'AMBER' | 'RED' {
+  if (!baselineVerified) return 'RED';
+  if (hasHard) return 'GREEN';
+  return 'AMBER';
+}
+
+export function extractSavingsRealizationFunnel(
+  payload: Record<string, any>,
+  ss: Record<string, any>,
+  lowConfidenceWatermark: boolean
+): NonNullable<DashboardData['savingsRealizationFunnel']> | null {
+  if (!ss || typeof ss !== 'object') return null;
+  const sc = ss.savings_classification;
+  if (!sc || typeof sc !== 'object') return null;
+
+  const funnelRaw = sc.funnel ?? {};
+  const identified = funnelRaw.identified;
+  const committed = funnelRaw.committed;
+  const realized = funnelRaw.realized;
+
+  const hard = sc.hard ?? null;
+  const soft = sc.soft ?? null;
+  const avoided = sc.avoided ?? null;
+
+  const funnelEmpty = identified == null && committed == null && realized == null;
+  const classesEmpty = !hard && !soft && !avoided;
+  if (funnelEmpty && classesEmpty) return null;
+  if (funnelEmpty) return null;
+
+  const anyClassData = !!(hard || soft || avoided);
+  const numOrZero = (n: unknown) =>
+    anyClassData && n != null && Number.isFinite(Number(n)) ? Number(n) : 0;
+
+  const baselineHard = anyClassData && hard ? numOrZero(hard.baseline_value) : 0;
+  const baselineSoft = anyClassData && soft ? numOrZero(soft.baseline_value) : 0;
+  const baselineAvoided = anyClassData && avoided ? numOrZero(avoided.baseline_adjusted_value) : 0;
+
+  const hardWeight = hard ? numOrZero(hard.annualised_savings) : 0;
+  const softWeight = soft ? numOrZero(soft.annualised_avoidance) : 0;
+  const avoidedWeight = avoided ? numOrZero(avoided.protected_value) : 0;
+  const totalWeight = hardWeight + softWeight + avoidedWeight;
+
+  const split = (total: number | null | undefined) => {
+    if (total == null || !Number.isFinite(Number(total))) {
+      return { hard: 0, soft: 0, avoided: 0 };
+    }
+    const t = Number(total);
+    if (totalWeight <= 0) {
+      if (hard) return { hard: t, soft: 0, avoided: 0 };
+      if (soft) return { hard: 0, soft: t, avoided: 0 };
+      if (avoided) return { hard: 0, soft: 0, avoided: t };
+      return { hard: t, soft: 0, avoided: 0 };
+    }
+    return {
+      hard: (t * hardWeight) / totalWeight,
+      soft: (t * softWeight) / totalWeight,
+      avoided: (t * avoidedWeight) / totalWeight,
+    };
+  };
+
+  const baselineVerified = Boolean(sc.baseline_verified);
+  const cfoAcceptance = deriveCfoAcceptance(baselineVerified, !!hard);
+
+  return {
+    baselineVerified,
+    cfoAcceptance,
+    funnel: [
+      { stage: 'Baseline', hard: baselineHard, soft: baselineSoft, avoided: baselineAvoided },
+      { stage: 'Identified', ...split(identified) },
+      { stage: 'Committed', ...split(committed) },
+      { stage: 'Realized', ...split(realized) },
+    ],
+    hardAnnualised: hard?.annualised_savings != null ? Number(hard.annualised_savings) : null,
+    softAnnualised: soft?.annualised_avoidance != null ? Number(soft.annualised_avoidance) : null,
+    avoidedProtected: avoided?.protected_value != null ? Number(avoided.protected_value) : null,
+    currency: payload.financial_model?.currency ?? 'EUR',
+    lowConfidenceWatermark,
+  };
+}
+
+export function extractWorkingCapitalDpo(
+  payload: Record<string, any>
+): NonNullable<DashboardData['workingCapitalDpo']> | null {
+  const wc = payload?.financial_model?.working_capital;
+  if (!wc || typeof wc !== 'object') return null;
+
+  const bySupplierRaw: any[] = Array.isArray(wc.by_supplier) ? wc.by_supplier : [];
+  const by_supplier = bySupplierRaw
+    .filter((s: any) => s && s.supplier_label && s.payment_terms_days != null)
+    .map((s: any) => {
+      const days = Number(s.payment_terms_days);
+      return {
+        supplier_label: String(s.supplier_label),
+        category: s.category ?? null,
+        payment_terms_days: days,
+        annual_spend: s.annual_spend != null ? Number(s.annual_spend) : null,
+        late_payment_directive_risk:
+          typeof s.late_payment_directive_risk === 'boolean'
+            ? s.late_payment_directive_risk
+            : days > 60,
+      };
+    });
+
+  let current_weighted_dpo: number | null =
+    wc.current_weighted_dpo != null ? Number(wc.current_weighted_dpo) : null;
+  if (current_weighted_dpo == null && by_supplier.length > 0) {
+    const withSpend = by_supplier.filter((s) => s.annual_spend != null && s.annual_spend > 0);
+    const totalSpend = withSpend.reduce((acc, s) => acc + (s.annual_spend ?? 0), 0);
+    if (totalSpend > 0) {
+      current_weighted_dpo =
+        withSpend.reduce((acc, s) => acc + s.payment_terms_days * (s.annual_spend ?? 0), 0) /
+        totalSpend;
+    }
+  }
+
+  const target_weighted_dpo: number | null =
+    wc.target_weighted_dpo != null ? Number(wc.target_weighted_dpo) : null;
+  const annual_spend_eur: number | null =
+    wc.annual_spend_eur != null ? Number(wc.annual_spend_eur) : null;
+
+  let working_capital_delta_eur: number | null =
+    wc.working_capital_delta_eur != null ? Number(wc.working_capital_delta_eur) : null;
+  if (
+    working_capital_delta_eur == null &&
+    annual_spend_eur != null &&
+    current_weighted_dpo != null &&
+    target_weighted_dpo != null
+  ) {
+    working_capital_delta_eur =
+      (annual_spend_eur * (target_weighted_dpo - current_weighted_dpo)) / 365;
+  }
+
+  const terms_distribution = (Array.isArray(wc.terms_distribution) ? wc.terms_distribution : [])
+    .filter((t: any) => t && t.term_label && t.spend_share_pct != null)
+    .map((t: any) => ({
+      term_label: String(t.term_label),
+      spend_share_pct: Number(t.spend_share_pct),
+      supplier_count: t.supplier_count != null ? Number(t.supplier_count) : null,
+    }));
+
+  const early_payment_discount_opportunities =
+    (Array.isArray(wc.early_payment_discount_opportunities) ? wc.early_payment_discount_opportunities : [])
+      .filter((o: any) => o && o.supplier_label && o.discount_structure)
+      .map((o: any) => ({
+        supplier_label: String(o.supplier_label),
+        discount_structure: String(o.discount_structure),
+        annualised_value: o.annualised_value != null ? Number(o.annualised_value) : null,
+      }));
+
+  // Bail if no usable signal at all (would render an empty card).
+  if (
+    current_weighted_dpo == null &&
+    target_weighted_dpo == null &&
+    by_supplier.length === 0 &&
+    terms_distribution.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    current_weighted_dpo,
+    target_weighted_dpo,
+    working_capital_delta_eur,
+    annual_spend_eur,
+    terms_distribution,
+    by_supplier,
+    early_payment_discount_opportunities,
+    currency: payload?.financial_model?.currency ?? 'EUR',
+  };
 }
