@@ -1116,8 +1116,18 @@ serve(async (req) => {
         ? userPrompt.replace(attachedDocumentsXml, "").replace(/\n\n\n+/g, "\n\n")
         : userPrompt;
 
+      // F2: Slim the Critic context further — the auditor only needs the
+      // anonymized query, not the full grounding-context block (which the
+      // analyst already consumed). This typically removes 2-4k tokens from
+      // the Stage-2 turn without changing analytical outcomes.
+      const userPromptForCritic = userPromptWithoutDocs
+        .replace(/<industry-context[\s\S]*?<\/industry-context>/g, "")
+        .replace(/<category-context[\s\S]*?<\/category-context>/g, "")
+        .replace(/<grounding-context[\s\S]*?<\/grounding-context>/g, "")
+        .replace(/\n\n\n+/g, "\n\n");
+
       // Cycle 2: Auditor Critique
-      const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPromptWithoutDocs}\n</original-request>`;
+      const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPromptForCritic}\n</original-request>`;
       const critiqueResult = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
       const critique = critiqueResult.content;
       console.log(`[Sentinel] Cycle 2 (Auditor Critique): ${critique.length} chars`);
