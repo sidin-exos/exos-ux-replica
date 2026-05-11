@@ -778,9 +778,10 @@ const PDFReportDocument = ({
   const coverageDisplaySpaced = showScore ? `${coveragePct} / 100` : "—";
   // Output Rigour: actual delivered/promised ratio computed by the coverage
   // gate (output-schemas.applyCoverageToEnvelope persists this on envelope).
-  // Falls back to "—" for scenarios without a coverage rule.
-  const outputCoverageRaw = (structuredData as any)?.envelope?.output_coverage
-    ?? (structuredData as any)?.output_coverage
+  // Read from the parsed envelope object (NOT the raw structuredData string,
+  // which used to silently coerce to null and ship "—" forever).
+  const outputCoverageRaw = (envelope as any)?.output_coverage
+    ?? (envelope as any)?.payload?.output_coverage
     ?? null;
   const outputRigourPct = outputCoverageRaw && typeof outputCoverageRaw.ratio === "number"
     ? Math.round(outputCoverageRaw.ratio * 100)
