@@ -13,6 +13,8 @@ interface ReportData {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  /** LLM coverage score (0–5). Drives the PDF "Input Quality" KPI. */
+  coverageStars?: number | null;
 }
 
 interface ShareableReportReturn {
