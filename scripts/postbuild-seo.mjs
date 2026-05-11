@@ -2,8 +2,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 
 const DIST = 'dist';
-const BASE_URL = 'https://exosproc.com';
-const OG_IMAGE = `${BASE_URL}/og-image.png`;
+const BASE_URL = 'https://www.exosproc.com';
+const OG_IMAGE = `${BASE_URL}/og-image-v2.png`;
 
 const routes = [
   {
@@ -89,6 +89,11 @@ for (const route of routes) {
     .replace(
       /<meta name="description" content="[^"]*"/,
       `<meta name="description" content="${route.description}"`
+    )
+    // Canonical
+    .replace(
+      /<link rel="canonical" href="[^"]*"\s*\/?>/,
+      `<link rel="canonical" href="${ogUrl}" />`
     )
     // OG tags
     .replace(
