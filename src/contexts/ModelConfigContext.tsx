@@ -79,6 +79,15 @@ export function ModelConfigProvider({ children }: { children: ReactNode }) {
   }, [config]);
 
   const setModel = (model: string) => {
+    // If the user explicitly opts in to 2.5-pro, record it so the load-time
+    // guardrail stops rebasing them. Any other selection clears the opt-in.
+    try {
+      if (model === "gemini-2.5-pro") {
+        localStorage.setItem(EXPLICIT_25PRO_OPT_IN_KEY, "1");
+      } else {
+        localStorage.removeItem(EXPLICIT_25PRO_OPT_IN_KEY);
+      }
+    } catch (_) { /* ignore */ }
     setConfig((prev) => ({ ...prev, model }));
   };
 
