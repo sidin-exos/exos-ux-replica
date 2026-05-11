@@ -112,6 +112,7 @@ export function useShareableReport(): ShareableReportReturn {
           selectedDashboards: payload.selectedDashboards,
           evaluationScore: payload.evaluationScore,
           evaluationConfidence: payload.evaluationConfidence,
+          coverageStars: payload.coverageStars,
         };
       } catch (error) {
         console.error("Failed to load shared report:", error);
