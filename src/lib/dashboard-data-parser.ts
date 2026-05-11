@@ -1623,22 +1623,8 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
       })
       .filter((v): v is NonNullable<typeof v> => v !== null);
 
-    if (!result.scenarioComparison && valid.length >= 2) {
-      const scenarios = valid.slice(0, 3).map((sc, i) => ({
-        id: sc.label.toLowerCase().replace(/\s+/g, '-'),
-        name: sc.label,
-        color: TCO_COLORS[i % TCO_COLORS.length],
-      }));
-      const radarData = [{
-        metric: 'Total Spend',
-        ...Object.fromEntries(scenarios.map((s, i) => [s.name, valid[i].total])),
-      }];
-      const summary = valid.slice(0, 3).map((sc, idx) => ({
-        criteria: sc.label,
-        ...Object.fromEntries(scenarios.map((s, i) => [s.name, i === idx ? (sc.drivers.join(', ') || '—') : ''])),
-      }));
-      result.scenarioComparison = { scenarios, radarData, summary };
-    }
+    // scenarioComparison intentionally NOT built for S6: Base/Down/Up are
+    // probability cases, not rival options to score. See dashboard-mappings.ts.
 
     if (!result.sensitivitySpider) {
       const sensRaw: any[] = Array.isArray(ss.sensitivity) ? ss.sensitivity : [];
