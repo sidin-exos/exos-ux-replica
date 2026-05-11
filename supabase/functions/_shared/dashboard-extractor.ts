@@ -1055,22 +1055,44 @@ export function extractFromEnvelope(rawString: string): DashboardData | null {
   const scenarioId = String(envelope.scenario_id ?? '').toUpperCase();
   const kraljicSrc = scenarioId === 'S26' ? null : (ss?.kraljic_position ?? ss?.kraljic ?? null);
   if (kraljicSrc && typeof kraljicSrc === 'object') {
-    const sr = Number((kraljicSrc as any).supply_risk ?? (kraljicSrc as any).supplyRisk);
-    const bi = Number((kraljicSrc as any).business_impact ?? (kraljicSrc as any).businessImpact);
-    if (Number.isFinite(sr) && Number.isFinite(bi)) {
-      const name = String(
-        (kraljicSrc as any).label ?? (kraljicSrc as any).category ?? ss?.category_name ?? envelope.scenario_label ?? 'Category'
-      );
-      const scale = (v: number) => Math.max(0, Math.min(100, v <= 5 ? v * 20 : v));
-      result.kraljicQuadrant = {
-        items: [{
-          id: '1',
-          name,
-          supplyRisk: scale(sr),
-          businessImpact: scale(bi),
-          spend: (kraljicSrc as any).quadrant ? String((kraljicSrc as any).quadrant) : undefined,
-        }],
-      };
+    const scale = (v: number) => Math.max(0, Math.min(100, v <= 5 ? v * 20 : v <= 10 ? v * 10 : v));
+    // Forward-compat: accept items[] array if the model emits one.
+    const itemsArr: any[] = Array.isArray((kraljicSrc as any).items) ? (kraljicSrc as any).items : [];
+    if (itemsArr.length > 0) {
+      const items = itemsArr
+        .map((it, i) => {
+          const sr = Number(it?.supply_risk ?? it?.supplyRisk);
+          const bi = Number(it?.business_impact ?? it?.businessImpact);
+          if (!Number.isFinite(sr) || !Number.isFinite(bi)) return null;
+          return {
+            id: String(i + 1),
+            name: String(it?.name ?? it?.label ?? it?.category ?? `Item ${i + 1}`),
+            supplyRisk: scale(sr),
+            businessImpact: scale(bi),
+            spend: it?.spend ? String(it.spend) : undefined,
+          };
+        })
+        .filter(Boolean) as any[];
+      if (items.length > 0) result.kraljicQuadrant = { items };
+    } else {
+      const sr = Number((kraljicSrc as any).supply_risk ?? (kraljicSrc as any).supplyRisk);
+      const bi = Number((kraljicSrc as any).business_impact ?? (kraljicSrc as any).businessImpact);
+      // Hardened: require BOTH finite AND at least one > 0 (rejects the 0/0 phantom
+      // that masked missing model output as "Non-Critical · 1 item").
+      if (Number.isFinite(sr) && Number.isFinite(bi) && (sr > 0 || bi > 0)) {
+        const name = String(
+          (kraljicSrc as any).label ?? (kraljicSrc as any).category ?? ss?.category_name ?? envelope.scenario_label ?? 'Category'
+        );
+        result.kraljicQuadrant = {
+          items: [{
+            id: '1',
+            name,
+            supplyRisk: scale(sr),
+            businessImpact: scale(bi),
+            spend: (kraljicSrc as any).quadrant ? String((kraljicSrc as any).quadrant) : undefined,
+          }],
+        };
+      }
     }
   }
 
