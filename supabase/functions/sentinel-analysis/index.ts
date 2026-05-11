@@ -15,7 +15,7 @@ import {
   GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
   getScenarioSchema, getScenarioInstructions,
   parseAIResponse, buildMarkdownFromEnvelope, pruneEmptyBranches, synthesizeMissingContent,
-  evaluateOutputCoverage, applyCoverageToEnvelope,
+  evaluateOutputCoverage, applyCoverageToEnvelope, reconcileKraljic,
   type ExosOutputParsed,
 } from "../_shared/output-schemas.ts";
 
