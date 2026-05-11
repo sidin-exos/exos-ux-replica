@@ -230,11 +230,19 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
     const high = Math.round(((v.highCase - baseCase) / baseCase) * 100);
     // For percentage-unit drivers (e.g. wage index =100), show the impact on
     // total spend in € rather than the meaningless "100 %" placeholder.
-    const baseValue = v.unit === "%" && baseCaseTotal > 0
-      ? `Base ${fmtMoney(baseCaseTotal)}`
-      : v.unit
-        ? `${v.baseCase} ${v.unit}`
-        : String(v.baseCase);
+    let baseValue: string;
+    if (v.unit === "%" && baseCaseTotal > 0) {
+      baseValue = `Base ${fmtMoney(baseCaseTotal)}`;
+    } else if (v.unit === "%") {
+      baseValue = `${v.baseCase}%`;
+    } else if (!v.unit && Math.abs(v.baseCase) >= 1000) {
+      // Unit-less large number → format as money (likely a monetary driver)
+      baseValue = `Base ${fmtMoney(v.baseCase)}`;
+    } else if (v.unit) {
+      baseValue = `${v.baseCase} ${v.unit}`;
+    } else {
+      baseValue = String(v.baseCase);
+    }
     return { name: v.name, low, high, baseValue };
   });
   const maxImpact = Math.max(1, ...variables.map(v => Math.max(Math.abs(v.low), Math.abs(v.high))));
@@ -277,9 +285,9 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
         ))}
       </View>
       <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 8 }}>
-        <Text style={{ fontSize: 8, color: colors.success }}>◀ Decreases Cost</Text>
+        <Text style={{ fontSize: 8, color: colors.success }}>Decreases cost (favorable)</Text>
         <View style={{ width: 20 }} />
-        <Text style={{ fontSize: 8, color: colors.destructive }}>Increases Cost ▶</Text>
+        <Text style={{ fontSize: 8, color: colors.destructive }}>Increases cost (unfavorable)</Text>
       </View>
       {(() => {
         const ranked = variables

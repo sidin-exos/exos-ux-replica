@@ -5,19 +5,29 @@ import type { SensitivityData } from "@/lib/dashboard-data-parser";
 const COLOR_FAVORABLE_KEY = "primary" as const;
 const COLOR_UNFAVORABLE_KEY = "destructive" as const;
 
-const formatCurrency = (value: number, currency = "$"): string => {
-  if (!Number.isFinite(value)) return `${currency}0`;
-  const sign = value < 0 ? "-" : "";
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${sign}${currency}${(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) return `${sign}${currency}${(abs / 1_000).toFixed(0)}K`;
-  return `${sign}${currency}${abs.toFixed(0)}`;
+const currencySymbol = (currency: string): string => {
+  if (!currency) return "$";
+  if (currency === "EUR" || currency === "€") return "€";
+  if (currency === "USD" || currency === "$") return "$";
+  if (currency === "GBP" || currency === "£") return "£";
+  return currency.length <= 1 ? currency : `${currency} `;
 };
 
-const formatValue = (value: number, unit?: string): string => {
-  if (unit === "$") return formatCurrency(value);
+const formatCurrency = (value: number, currency = "$"): string => {
+  if (!Number.isFinite(value)) return `${currencySymbol(currency)}0`;
+  const sym = currencySymbol(currency);
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${sym}${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}${sym}${abs.toFixed(0)}`;
+};
+
+const formatValue = (value: number, unit?: string, currency?: string): string => {
+  if (unit === "$" || unit === "€" || unit === "£") return formatCurrency(value, unit);
   if (unit === "%") return `${value}%`;
   if (unit === "units") return `${(value / 1000).toFixed(0)}K`;
+  if (!unit && Math.abs(value) >= 1000) return formatCurrency(value, currency ?? "$");
   return value.toFixed(2);
 };
 
@@ -157,8 +167,8 @@ export const PDFSensitivityAnalysis = ({ data, themeMode }: { data: SensitivityD
                   <Text style={{ fontSize: 9, fontWeight: 600, color: colors.text }}>{v.name}</Text>
                   <Text style={{ fontSize: 7, color: v.tier.color, fontWeight: 600 }}>±{v.maxPct.toFixed(1)}%</Text>
                 </View>
-                <Text style={{ fontSize: 7, color: colors.textMuted, marginTop: 1 }}>Base {formatValue(v.baseCase, v.unit)}</Text>
-                <Text style={{ fontSize: 7, color: colors.textMuted }}>Range {formatValue(v.lowCase, v.unit)}–{formatValue(v.highCase, v.unit)}</Text>
+                <Text style={{ fontSize: 7, color: colors.textMuted, marginTop: 1 }}>Base {formatValue(v.baseCase, v.unit, currency)}</Text>
+                <Text style={{ fontSize: 7, color: colors.textMuted }}>Range {formatValue(v.lowCase, v.unit, currency)}–{formatValue(v.highCase, v.unit, currency)}</Text>
               </View>
             </View>
           ))}
