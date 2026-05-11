@@ -15,6 +15,7 @@ import {
   GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
   getScenarioSchema, getScenarioInstructions,
   parseAIResponse, buildMarkdownFromEnvelope, pruneEmptyBranches, synthesizeMissingContent,
+  evaluateOutputCoverage, applyCoverageToEnvelope,
   type ExosOutputParsed,
 } from "../_shared/output-schemas.ts";
 
@@ -1235,6 +1236,13 @@ serve(async (req) => {
         // Server-side defensive synthesis (backfill empty tables) THEN prune.
         deanonEnvelopeObj = synthesizeMissingContent(deanonEnvelopeObj);
         deanonEnvelopeObj = pruneEmptyBranches(deanonEnvelopeObj);
+        // Output coverage gate: downgrade confidence_level + log gaps when the
+        // model under-delivered on promised scenario blocks (S22 etc.).
+        const mcCoverage = evaluateOutputCoverage(deanonEnvelopeObj);
+        if (mcCoverage) {
+          deanonEnvelopeObj = applyCoverageToEnvelope(deanonEnvelopeObj, mcCoverage);
+          console.log(`[Sentinel] coverage scenario=${deanonEnvelopeObj?.scenario_id} delivered=${mcCoverage.delivered}/${mcCoverage.promised} suggested=${mcCoverage.suggestedConfidence} missing=${JSON.stringify(mcCoverage.missing)}`);
+        }
         responseContent = buildMarkdownFromEnvelope(deanonEnvelopeObj);
         // GDPR flag logging
         if (deanonEnvelopeObj.gdpr_flags?.length > 0) {
@@ -1408,6 +1416,12 @@ serve(async (req) => {
           // placeholders despite prompt instructions. Deterministic enforcement.
           deanonSingleEnvelope = synthesizeMissingContent(deanonSingleEnvelope);
           deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
+          // Output coverage gate (single-pass path).
+          const spCoverage = evaluateOutputCoverage(deanonSingleEnvelope);
+          if (spCoverage) {
+            deanonSingleEnvelope = applyCoverageToEnvelope(deanonSingleEnvelope, spCoverage);
+            console.log(`[Sentinel] coverage scenario=${deanonSingleEnvelope?.scenario_id} delivered=${spCoverage.delivered}/${spCoverage.promised} suggested=${spCoverage.suggestedConfidence} missing=${JSON.stringify(spCoverage.missing)}`);
+          }
           responseContent = buildMarkdownFromEnvelope(deanonSingleEnvelope);
           if (deanonSingleEnvelope.gdpr_flags?.length > 0) {
             console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonSingleEnvelope.scenario_id, flag_count: deanonSingleEnvelope.gdpr_flags.length });
