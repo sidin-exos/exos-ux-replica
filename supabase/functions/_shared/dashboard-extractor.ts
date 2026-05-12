@@ -604,10 +604,13 @@ function extractReductionComponents(
   }
 
   // CRITICAL: only treat amounts/percentages as savings when the recommendation
-  // text or financial_impact field clearly references savings/reductions.
-  // Otherwise unit prices in the action text (e.g. "use the €39.80 alternative
-  // quote") get incorrectly counted as a savings lever and inflate KPIs.
-  const SAVINGS_CONTEXT_RE = /\b(sav(?:e|ed|es|ing|ings)|reduc(?:e|ed|es|tion)|cut|cuts|lower(?:ed|s)?|decrease|avoid(?:ed|s)?|negotiat\w*\s+down|discount|rebate|headroom)\b/i;
+  // text or financial_impact field clearly references a *delivered* saving.
+  // Verbs only — exclude noun matches like "discount/rebate" alone, which fire
+  // on price-discussion text (e.g. "verify the 30% discount can be applied").
+  // Also reject investigative actions (verify/check/investigate/confirm/etc.)
+  // since they describe an ASK, not a quantified lever.
+  const SAVINGS_CONTEXT_RE = /\b(sav(?:e|ed|es|ing|ings)|reduc(?:e|ed|es|tion)|cut|cuts|lower(?:ed|s)?|decreas(?:e|ed|es)|avoid(?:ed|s)?|negotiat\w*\s+down|headroom)\b/i;
+  const INVESTIGATIVE_ACTION_RE = /^\s*(verify|check|investigate|confirm|review|assess|evaluate|explore|consider|request|ask|clarify|validate)\b/i;
   if (out.length === 0 && Array.isArray(recommendations)) {
     for (const r of recommendations) {
       if (!r?.action) continue;
@@ -615,6 +618,9 @@ function extractReductionComponents(
       const action = String(r.action).trim();
       const text = `${impact} ${action}`;
       if (!SAVINGS_CONTEXT_RE.test(text)) continue;
+      // Strip severity prefix before checking for investigative verb.
+      const actionNoPrefix = action.replace(/^\[(?:critical|high|medium|low)\]\s*/i, '');
+      if (INVESTIGATIVE_ACTION_RE.test(actionNoPrefix)) continue;
       const source = impact || text;
       const amountMatch = source.match(/(?:€|\$|£|EUR|USD|GBP)\s?([\d.,]+\s?[KMB]?)/i);
       let value: number | null = null;

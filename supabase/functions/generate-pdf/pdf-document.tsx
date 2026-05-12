@@ -776,6 +776,34 @@ const PDFReportDocument = ({
   })();
   const s3CfoPickLabel = s3Verdict ?? (s3NpvAdvantage?.winner ?? null);
 
+  // S1 (TCO Analysis) cover KPIs: TCO SAVINGS · BEST OPTION · WACC · OUTPUT RIGOUR
+  const isS1 = envelope?.scenario_id === "S1" || /tco|total\s*cost\s*of\s*ownership/i.test(scenarioTitle);
+  const s1Specific: any = isS1 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s1FinModel: any = isS1 ? (envelope?.payload?.financial_model ?? {}) : {};
+  const s1CurrencySym = (() => {
+    const code = String(parsedData?.tcoComparison?.currency ?? s1FinModel?.currency ?? "EUR").toUpperCase();
+    if (code === "EUR") return "€";
+    if (code === "USD") return "$";
+    if (code === "GBP") return "£";
+    return code === "JPY" ? "¥" : `${code} `;
+  })();
+  const s1FmtMoney = (n: any) => {
+    const v = Number(n);
+    if (!Number.isFinite(v) || v === 0) return null;
+    const abs = Math.abs(v);
+    if (abs >= 1_000_000) return `${s1CurrencySym}${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1000) return `${s1CurrencySym}${Math.round(abs / 1000)}K`;
+    return `${s1CurrencySym}${Math.round(abs)}`;
+  };
+  const s1Tco = isS1 ? parsedData?.tcoComparison : undefined;
+  const s1Best = s1Tco?.options?.length ? s1Tco.options.reduce((m, o) => o.totalTCO < m.totalTCO ? o : m, s1Tco.options[0]) : null;
+  const s1Worst = s1Tco?.options?.length ? s1Tco.options.reduce((m, o) => o.totalTCO > m.totalTCO ? o : m, s1Tco.options[0]) : null;
+  const s1SavingsLabel = s1Best && s1Worst && s1Worst.totalTCO > s1Best.totalTCO ? s1FmtMoney(s1Worst.totalTCO - s1Best.totalTCO) : null;
+  const s1BestLabel = s1Best ? (s1Best.name.length > 22 ? `${s1Best.name.slice(0, 20)}…` : s1Best.name) : null;
+  const s1Wacc = (() => {
+    const w = Number(s1FinModel?.wacc_pct ?? s1FinModel?.discount_rate_pct ?? s1Specific?.wacc_pct);
+    return Number.isFinite(w) && w > 0 ? `${w.toFixed(1)}%` : null;
+  })();
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
   const formattedDate = formatDate(timestamp);
@@ -994,6 +1022,14 @@ const PDFReportDocument = ({
               <View style={s.kpiCell}><Text style={s.kpiLabel}>NPV ADVANTAGE</Text><Text style={{ ...s.kpiValue, color: s3NpvAdvantage ? c.success : c.textMuted }}>{s3NpvAdvantage?.label ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>CFO PICK</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s3CfoPickLabel ?? "—"}</Text></View>
               <View style={s.kpiCell}><Text style={s.kpiLabel}>WACC</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s3Wacc ?? "—"}</Text></View>
+              <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>OUTPUT RIGOUR</Text><Text style={{ ...s.kpiValue, color: outputRigourPct == null ? c.textMuted : kpiColor(String(outputRigourPct), "confidence", c) }}>{outputRigourDisplay}</Text></View>
+            </>
+          ) : isS1 ? (
+            <>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>INPUT QUALITY</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{coverageDisplaySpaced}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>TCO SAVINGS</Text><Text style={{ ...s.kpiValue, color: s1SavingsLabel ? c.success : c.textMuted }}>{s1SavingsLabel ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>BEST OPTION</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s1BestLabel ?? "—"}</Text></View>
+              <View style={s.kpiCell}><Text style={s.kpiLabel}>WACC</Text><Text style={{ ...s.kpiValue, color: c.primary }}>{s1Wacc ?? "—"}</Text></View>
               <View style={{ ...s.kpiCell, ...s.kpiCellLast }}><Text style={s.kpiLabel}>OUTPUT RIGOUR</Text><Text style={{ ...s.kpiValue, color: outputRigourPct == null ? c.textMuted : kpiColor(String(outputRigourPct), "confidence", c) }}>{outputRigourDisplay}</Text></View>
             </>
           ) : (
