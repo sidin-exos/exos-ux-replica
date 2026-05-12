@@ -26,8 +26,6 @@ import { generateExcelBuffer } from "./excel-document.ts";
 import { trackEvent } from "../_shared/track.ts";
 import type { GenerateExcelPayload } from "./types.ts";
 
-let authResult: { user: { userId: string } } | { error: { status: number; message: string } };
-
 serve(async (req) => {
   // CORS preflight
   if (req.method === "OPTIONS") {
@@ -41,6 +39,14 @@ serve(async (req) => {
       { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
+  // Request-local: must NOT be module-scoped — Deno serves concurrent
+  // requests on a single isolate, so module state would cross-contaminate
+  // user identity between in-flight requests.
+  let authResult:
+    | { user: { userId: string } }
+    | { error: { status: number; message: string } }
+    | undefined;
 
   try {
     // 1. Authenticate

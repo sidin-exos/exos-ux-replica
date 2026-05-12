@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { authenticateRequest } from "../_shared/auth.ts";
 import { callGoogleAI } from "../_shared/google-ai.ts";
 import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
 import { estimateCost } from "../_shared/ai-pricing.ts";
@@ -23,6 +24,19 @@ interface RequestBody {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Authenticate: this function calls Gemini Pro and was previously
+  // reachable anonymously due to verify_jwt = false in config.toml.
+  const authResult = await authenticateRequest(req);
+  if ("error" in authResult) {
+    return new Response(
+      JSON.stringify({ error: authResult.error.message }),
+      {
+        status: authResult.error.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   try {
