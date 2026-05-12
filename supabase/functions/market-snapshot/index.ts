@@ -60,13 +60,16 @@ serve(async (req) => {
     );
   }
 
-  const userOrgId = await getUserOrgId(authResult.user.userId);
-  if (!userOrgId) {
+  const orgResult = await getUserOrgId(authResult.user.userId);
+  if (!("orgId" in orgResult)) {
+    const message =
+      "error" in orgResult ? orgResult.error : "Operation requires a concrete organization context";
     return new Response(
-      JSON.stringify({ error: "User has no organization" }),
+      JSON.stringify({ error: message }),
       { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+  const userOrgId = orgResult.orgId;
 
   let tracer: LangSmithTracer | undefined;
   let parentRunId: string | undefined;

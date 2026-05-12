@@ -111,11 +111,15 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Only organization admins can manage invitations" }, 403);
   }
 
-  // 3. Org lookup
-  const orgId = await getUserOrgId(userId);
-  if (!orgId) {
-    return jsonResponse({ error: "User has no organization" }, 403);
+  // 3. Org lookup — invitations require a concrete org context; a
+  // super-admin without a personal org cannot manage org invitations.
+  const orgResult = await getUserOrgId(userId);
+  if (!("orgId" in orgResult)) {
+    const message =
+      "error" in orgResult ? orgResult.error : "User has no organization";
+    return jsonResponse({ error: message }, 403);
   }
+  const orgId = orgResult.orgId;
 
   // 4. Parse body
   let body: Record<string, unknown>;

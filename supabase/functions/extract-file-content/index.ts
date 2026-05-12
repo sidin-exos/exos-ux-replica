@@ -16,7 +16,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { authenticateRequest } from "../_shared/auth.ts";
+import { authenticateRequest, getUserOrgId } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import {
@@ -32,6 +32,11 @@ import { extractText } from "npm:unpdf@0.12.1";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_EXTRACTED_CHARS = 100_000;
+// Hard cap on the raw file size we are willing to load into memory
+// and feed to the XLSX/DOCX/PDF parsers. A small (e.g. 10 KB) zip
+// archive can decompress into multiple gigabytes; checking blob.size
+// BEFORE parsing prevents the parser from doing the decompression.
+const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
 
 // ── Extractors ──────────────────────────────────────────────────────
 
@@ -122,10 +127,10 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // 5. Fetch file metadata
+  // 5. Fetch file metadata (including organization_id for the org check)
   const { data: file, error: fileError } = await serviceClient
     .from("user_files")
-    .select("id, user_id, storage_path, file_name, file_type, extraction_status")
+    .select("id, user_id, organization_id, storage_path, file_name, file_type, extraction_status")
     .eq("id", fileId)
     .single();
 
@@ -136,9 +141,24 @@ serve(async (req) => {
     );
   }
 
-  // 6. Access: any authenticated user can trigger extraction.
-  // File visibility is controlled by RLS on the frontend queries.
-  // Extraction is a harmless operation (populates extracted_text in the same row).
+  // 6. Org-membership check (audit issue #10).
+  // Extraction mutates extracted_text, extraction_status, extracted_at,
+  // and token_estimate on the target row — so it is NOT a harmless
+  // operation. Without this check, any authenticated user could
+  // corrupt another org's file metadata or cost-amplify by forcing
+  // re-extraction of unrelated files. Super-admins are permitted to
+  // operate cross-org (mirrors file-download and storage policies).
+  const orgResult = await getUserOrgId(userId);
+  const isSuperAdminContext = "superAdmin" in orgResult;
+  const userOrgId: string | null = "orgId" in orgResult ? orgResult.orgId : null;
+  const orgMatches = userOrgId !== null && userOrgId === file.organization_id;
+
+  if (!isSuperAdminContext && !orgMatches) {
+    return new Response(
+      JSON.stringify({ error: "Access denied" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   // 7. Skip if already done or currently processing
   if (file.extraction_status === "processing") {
@@ -162,6 +182,16 @@ serve(async (req) => {
 
     if (downloadError || !blob) {
       throw new Error(`Storage download failed: ${downloadError?.message || "empty response"}`);
+    }
+
+    // Pre-parse size cap (audit issue #10, zip-bomb mitigation).
+    // We check blob.size BEFORE allocating an ArrayBuffer or invoking
+    // the format parsers — ExcelJS / mammoth / unpdf are not
+    // zip-bomb resistant and will happily decompress to GBs.
+    if (blob.size > MAX_FILE_BYTES) {
+      throw new Error(
+        `File too large for extraction: ${blob.size} bytes (max ${MAX_FILE_BYTES} bytes)`,
+      );
     }
 
     const buffer = await blob.arrayBuffer();

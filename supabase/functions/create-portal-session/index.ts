@@ -37,13 +37,16 @@ Deno.serve(async (req) => {
     }
 
     const userId = userData.user.id;
-    const userEmail = userData.user.email ?? undefined;
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
       apiVersion: "2024-06-20",
     });
 
-    // Look up the user's Stripe customer by stored ID (profile) or by email fallback.
+    // Look up the user's Stripe customer strictly via the binding
+    // stored on their profile. The previous email-based fallback
+    // (audit issue #11) could attach a foreign Stripe customer when
+    // two records shared an address (email change, prior account),
+    // leading to cross-account billing access via the portal.
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -51,20 +54,18 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await admin
       .from("profiles")
-      .select("stripe_customer_id, email")
+      .select("stripe_customer_id")
       .eq("id", userId)
       .maybeSingle();
 
-    let customerId: string | null = profile?.stripe_customer_id ?? null;
-
-    if (!customerId && userEmail) {
-      const list = await stripe.customers.list({ email: userEmail, limit: 1 });
-      customerId = list.data[0]?.id ?? null;
-    }
+    const customerId: string | null = profile?.stripe_customer_id ?? null;
 
     if (!customerId) {
       return new Response(
-        JSON.stringify({ error: "No Stripe customer found for this account." }),
+        JSON.stringify({
+          error:
+            "No Stripe customer is linked to this account. Please start a checkout to set up billing first.",
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }

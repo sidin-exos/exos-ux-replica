@@ -115,13 +115,18 @@ serve(async (req) => {
     return rateLimitResponse(rateCheck, corsHeaders, "Market intelligence rate limit reached. Please wait before sending another query.");
   }
 
-  const userOrgId = await getUserOrgId(authResult.user.userId);
-  if (!userOrgId) {
+  const orgResult = await getUserOrgId(authResult.user.userId);
+  if (!("orgId" in orgResult)) {
+    // A super-admin without a concrete org cannot attribute writes to
+    // an organization — reject. Errors are surfaced as 403 too.
+    const message =
+      "error" in orgResult ? orgResult.error : "Operation requires a concrete organization context";
     return new Response(
-      JSON.stringify({ error: "User has no organization" }),
+      JSON.stringify({ error: message }),
       { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+  const userOrgId = orgResult.orgId;
 
   try {
     const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");

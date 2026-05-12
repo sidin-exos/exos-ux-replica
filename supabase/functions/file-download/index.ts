@@ -107,9 +107,15 @@ serve(async (req) => {
     );
   }
 
-  // 5. Verify org membership — critical security check
-  const userOrgId = await getUserOrgId(userId);
-  if (!userOrgId || userOrgId !== file.organization_id) {
+  // 5. Verify org membership — critical security check.
+  // Super-admins (no concrete org) can download any org's files;
+  // every other caller MUST match the file's organization_id.
+  const orgResult = await getUserOrgId(userId);
+  const isSuperAdminContext = "superAdmin" in orgResult;
+  const userOrgId: string | null = "orgId" in orgResult ? orgResult.orgId : null;
+  const orgMatches = userOrgId !== null && userOrgId === file.organization_id;
+
+  if (!isSuperAdminContext && !orgMatches) {
     // Log denied access attempt (fail-open for audit)
     try {
       await serviceClient.from("file_access_audit").insert({

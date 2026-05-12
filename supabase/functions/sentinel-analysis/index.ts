@@ -681,7 +681,19 @@ serve(async (req) => {
     );
   }
   const { userId } = authResult.user;
-  const userOrgId = await getUserOrgId(userId);
+
+  // Resolve org context. The discriminated union forces us to be
+  // explicit about super-admin bypass (audit issue #9): we MUST NOT
+  // treat a missing org as "no filter needed".
+  const orgResult = await getUserOrgId(userId);
+  if ("error" in orgResult) {
+    return new Response(
+      JSON.stringify({ error: orgResult.error }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+  const isSuperAdminContext = "superAdmin" in orgResult;
+  const userOrgId: string | null = "orgId" in orgResult ? orgResult.orgId : null;
 
   // Rate limit: 10 requests/hour per user (expensive multi-cycle endpoint)
   const rateCheck = await checkRateLimit(userId, "sentinel-analysis", 30, 60, { failClosed: true });
@@ -811,9 +823,19 @@ serve(async (req) => {
             .select("id, file_name, file_type, extracted_text, extraction_status, token_estimate")
             .in("id", fileIds);
 
-          // Org isolation — super admins (userOrgId=null) can access any org's files
+          // Org isolation: only EXPLICIT super-admin context may skip
+          // the filter. A regular user without an org (orgResult.error)
+          // never reaches this code — they were rejected above. This
+          // closes the IDOR identified in audit issue #9.
           if (userOrgId) {
             filesQuery = filesQuery.eq("organization_id", userOrgId);
+          } else if (!isSuperAdminContext) {
+            // Defense-in-depth: if neither flag is set, refuse rather
+            // than fetch unfiltered.
+            return new Response(
+              JSON.stringify({ error: "Missing org context" }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
           }
 
           const { data: files } = await filesQuery;
