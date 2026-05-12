@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useShareableMode } from "@/hooks/useShareableMode";
+import { estimateCostUsd } from "@/lib/ai-pricing";
 
 interface TokenUsage {
   prompt_tokens: number;
@@ -57,12 +58,9 @@ const OutputFeedback = ({
     return "Excellent!";
   };
 
-  // Estimate cost based on Gemini 3 Flash pricing ($0.50/1M input, $3.00/1M output)
-  const estimateCost = (usage: TokenUsage): number => {
-    const inputCost = (usage.prompt_tokens / 1_000_000) * 0.50;
-    const outputCost = (usage.completion_tokens / 1_000_000) * 3.00;
-    return inputCost + outputCost;
-  };
+  // Model-aware cost estimate (standard ≤200K context tier).
+  const estimateCost = (usage: TokenUsage): number =>
+    estimateCostUsd(model, usage.prompt_tokens, usage.completion_tokens);
 
   const displayRating = hoveredRating ?? rating;
 
