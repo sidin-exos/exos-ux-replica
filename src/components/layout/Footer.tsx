@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Linkedin } from "lucide-react";
 
 const footerColumns = [
   {
@@ -68,9 +69,20 @@ const Footer = () => {
           <span className="font-display text-lg font-bold text-foreground tracking-tight">
             EXOS
           </span>
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} EXOS. All rights reserved.
-          </p>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://www.linkedin.com/company/exosproc/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="EXOS on LinkedIn"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Linkedin className="w-4 h-4" />
+            </a>
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} EXOS. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
     </footer>
