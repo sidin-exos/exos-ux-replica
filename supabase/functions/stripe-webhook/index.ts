@@ -42,6 +42,34 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Idempotency: insert event.id BEFORE applying side effects.
+  // Stripe retries failed deliveries and the signature toleration
+  // window also permits short replay, so without this check a
+  // `subscription.updated` retry can re-apply state after a
+  // `subscription.deleted`. The PRIMARY KEY on stripe_events.id
+  // raises 23505 (unique_violation) on replay; we short-circuit
+  // with 200 OK so Stripe stops retrying.
+  const { error: idempotencyError } = await admin
+    .from("stripe_events")
+    .insert({ id: event.id });
+
+  if (idempotencyError) {
+    if (idempotencyError.code === "23505") {
+      console.log("[stripe-webhook] Event already processed", {
+        id: event.id,
+        type: event.type,
+      });
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    console.error("[stripe-webhook] idempotency insert failed", idempotencyError);
+    return new Response(JSON.stringify({ error: "Idempotency check failed" }), {
+      status: 500,
+    });
+  }
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {

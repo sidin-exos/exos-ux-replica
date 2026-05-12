@@ -30,36 +30,71 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Server configuration error' }, 500)
   }
 
-  // Extract token from query params (GET) or body (POST)
+  // Extract token. GET is read-only (validation); POST is state-changing.
+  //
+  // CSRF model:
+  //   - GET takes token from the query string and only ever returns whether
+  //     the token is valid. No mutation is performed, so cross-site reads are
+  //     harmless.
+  //   - POST is destructive (stamps `used_at`). To prevent cross-site forms
+  //     from triggering an unsubscribe we accept ONLY two payload shapes:
+  //       (a) RFC 8058 One-Click: content-type
+  //           `application/x-www-form-urlencoded` with a body that explicitly
+  //           contains `List-Unsubscribe=One-Click`. The token MUST come from
+  //           the form body, not the query string — a third-party form can
+  //           set the action URL freely but cannot construct a body with the
+  //           required `List-Unsubscribe` field without the recipient's
+  //           consent in their mail client.
+  //       (b) App JSON: content-type `application/json` from our own
+  //           unsubscribe page. Browsers cannot issue cross-site
+  //           `application/json` POSTs without triggering a CORS preflight,
+  //           so this content-type is CSRF-safe on its own.
+  //     Any other content-type (text/plain, multipart/form-data, etc.) is
+  //     rejected — those are the shapes a cross-site `<form>` can produce.
   const url = new URL(req.url)
-  let token: string | null = url.searchParams.get('token')
+  let token: string | null = null
 
-  if (req.method === 'POST') {
-    // Detect RFC 8058 one-click unsubscribe: POST with form-encoded body
-    // containing "List-Unsubscribe=One-Click". Email clients (Gmail, Apple Mail,
-    // etc.) send this when the user clicks "Unsubscribe" in the mail UI.
+  if (req.method === 'GET') {
+    token = url.searchParams.get('token')
+  } else {
+    // req.method === 'POST'
     const contentType = req.headers.get('content-type') ?? ''
+
     if (contentType.includes('application/x-www-form-urlencoded')) {
       const formText = await req.text()
       const params = new URLSearchParams(formText)
-      // For one-click, token comes from query param (already set above).
-      // Otherwise, token may be in the form body.
-      if (!params.get('List-Unsubscribe')) {
-        const formToken = params.get('token')
-        if (formToken) {
-          token = formToken
-        }
+
+      // RFC 8058: the One-Click marker MUST be present in the body.
+      if (params.get('List-Unsubscribe') !== 'One-Click') {
+        return jsonResponse(
+          {
+            error:
+              'One-Click unsubscribe required: body must include List-Unsubscribe=One-Click',
+          },
+          400,
+        )
       }
-    } else {
-      // JSON body (from the app's unsubscribe page)
+
+      // Token MUST come from the body. We deliberately ignore any
+      // query-string token here — that path was the CSRF vector.
+      token = params.get('token')
+    } else if (contentType.includes('application/json')) {
       try {
         const body = await req.json()
-        if (body.token) {
+        if (typeof body?.token === 'string') {
           token = body.token
         }
       } catch {
-        // Fall through — token stays from query param
+        return jsonResponse({ error: 'Invalid JSON body' }, 400)
       }
+    } else {
+      return jsonResponse(
+        {
+          error:
+            'Unsupported content-type. Use application/x-www-form-urlencoded (RFC 8058 One-Click) or application/json.',
+        },
+        415,
+      )
     }
   }
 
