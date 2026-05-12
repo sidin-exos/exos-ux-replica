@@ -1897,6 +1897,39 @@ const COVERAGE_RULES: Record<string, CoverageRule[]> = {
       },
     },
   ],
+  S1: [
+    {
+      key: 'vendor_options',
+      label: 'Vendor / option comparison (≥2 with TCO totals)',
+      check: (ss) => Array.isArray(ss?.vendor_options) && ss.vendor_options.length >= 2
+        && ss.vendor_options.filter((o: any) => Number.isFinite(Number(o?.total_tco))).length >= 2,
+    },
+    {
+      key: 'cost_breakdown',
+      label: 'Categorical cost breakdown (≥3 components)',
+      check: (_ss, payload) => {
+        const cb = payload?.financial_model?.cost_breakdown;
+        return Array.isArray(cb) && cb.length >= 3;
+      },
+    },
+    {
+      key: 'year_breakdown',
+      label: 'Year-by-year cost trajectory (≥2 years)',
+      check: (ss) => {
+        const opts: any[] = Array.isArray(ss?.vendor_options) ? ss.vendor_options : [];
+        return opts.some((o: any) => Array.isArray(o?.year_breakdown) && o.year_breakdown.length >= 2);
+      },
+    },
+    {
+      key: 'recommendation',
+      label: 'Decision recommendation (verdict + rationale)',
+      check: (_ss, payload) => {
+        const r = payload?.recommendation;
+        return !!r && typeof r === 'object'
+          && (typeof (r as any).primary_recommendation === 'string' || typeof (r as any).verdict === 'string');
+      },
+    },
+  ],
 };
 
 export function evaluateOutputCoverage(
