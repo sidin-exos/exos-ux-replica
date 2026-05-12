@@ -58,10 +58,35 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Audit M7 — sanitize values before they are interpolated into a
+// <style> block via dangerouslySetInnerHTML. Reject anything that
+// is not a Hex, rgb()/rgba(), or hsl()/hsla() literal so an attacker
+// cannot break out of the CSS variable declaration and inject
+// arbitrary rules (e.g., `red; } body { background:url(...) `).
+const SAFE_COLOR_REGEX =
+  /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$|^rgba?\(\s*[\d\s,.%/]+\)$|^hsla?\(\s*[\d\s,.%/]+\)$/;
+
+const SAFE_KEY_REGEX = /^[a-zA-Z0-9_-]+$/;
+
+const FALLBACK_COLOR = "#000000";
+
+function sanitizeColor(value: unknown): string {
+  return typeof value === "string" && SAFE_COLOR_REGEX.test(value.trim())
+    ? value.trim()
+    : FALLBACK_COLOR;
+}
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
   if (!colorConfig.length) {
+    return null;
+  }
+
+  // The `id` arrives from React.useId or a caller-supplied prop. If
+  // it ever contains characters outside [a-zA-Z0-9_-] we refuse to
+  // render rather than splice it into the selector unsanitized.
+  if (!SAFE_KEY_REGEX.test(id)) {
     return null;
   }
 
@@ -74,9 +99,13 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    if (!SAFE_KEY_REGEX.test(key)) return null;
+    const rawColor = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+    if (!rawColor) return null;
+    const safeColor = sanitizeColor(rawColor);
+    return `  --color-${key}: ${safeColor};`;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `,

@@ -666,7 +666,7 @@ async function callLLM(
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   // Hard auth: require authentication
@@ -676,7 +676,7 @@ serve(async (req) => {
       JSON.stringify({ error: authResult.error.message }),
       {
         status: authResult.error.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -689,7 +689,7 @@ serve(async (req) => {
   if ("error" in orgResult) {
     return new Response(
       JSON.stringify({ error: orgResult.error }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
   const isSuperAdminContext = "superAdmin" in orgResult;
@@ -698,7 +698,7 @@ serve(async (req) => {
   // Rate limit: 10 requests/hour per user (expensive multi-cycle endpoint)
   const rateCheck = await checkRateLimit(userId, "sentinel-analysis", 30, 60, { failClosed: true });
   if (!rateCheck.allowed) {
-    return rateLimitResponse(rateCheck, corsHeaders,
+    return rateLimitResponse(rateCheck, corsHeaders(req),
       "Analysis rate limit reached. Please wait before submitting another analysis."
     );
   }
@@ -785,7 +785,7 @@ serve(async (req) => {
           message: "Unable to process your request safely. Please try again.",
           stage: "anonymization",
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
     const anonymizedUserPrompt = anonymizationResult.anonymizedText;
@@ -834,7 +834,7 @@ serve(async (req) => {
             // than fetch unfiltered.
             return new Response(
               JSON.stringify({ error: "Missing org context" }),
-              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
             );
           }
 
@@ -1057,7 +1057,7 @@ serve(async (req) => {
     if (!userPrompt) {
       return new Response(
         JSON.stringify({ error: "Missing userPrompt" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -1100,7 +1100,7 @@ serve(async (req) => {
           error: "Local model endpoint not yet implemented",
           message: "Configure your Mistral model endpoint and uncomment the local model logic"
         }),
-        { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 501, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -1248,7 +1248,7 @@ serve(async (req) => {
             nebiusCycleCount: nebiusCycles.length,
           },
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -1439,7 +1439,7 @@ serve(async (req) => {
               modelUsed: provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : modelForAttempt,
             },
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       } catch (aiError) {
         const status = (aiError as Error & { status?: number }).status;
@@ -1464,7 +1464,7 @@ serve(async (req) => {
           tracer.patchRun(inferenceRunId, { errorType: "rate_limited" }, "Rate limit exceeded (429)");
           return new Response(
             JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 429, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
           );
         }
 
@@ -1482,7 +1482,7 @@ serve(async (req) => {
           tracer.patchRun(inferenceRunId, { errorType: classifyError(aiError) }, errorMessage);
           return new Response(
             JSON.stringify({ error: "AI service error", details: "The AI service encountered an error processing your request" }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
           );
         }
       }
@@ -1492,7 +1492,7 @@ serve(async (req) => {
     tracer.patchRun(inferenceRunId, { errorType: "provider_unavailable" }, "All retry attempts exhausted");
     return new Response(
       JSON.stringify({ error: "AI service unavailable after retries" }),
-      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 503, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
 
   } catch (error) {
@@ -1504,7 +1504,7 @@ serve(async (req) => {
     try { tracer?.patchRun(parentRunId!, { errorType: classifyError(error) }, error instanceof Error ? error.message : "Unknown error"); } catch (_) { /* noop */ }
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

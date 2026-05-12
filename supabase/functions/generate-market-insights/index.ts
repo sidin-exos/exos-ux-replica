@@ -286,7 +286,7 @@ function extractInsightArrays(content: string): { trends: string[]; risks: strin
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   const startTime = Date.now();
@@ -296,7 +296,7 @@ serve(async (req) => {
   if ("error" in authResult) {
     return new Response(
       JSON.stringify({ error: authResult.error.message }),
-      { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: authResult.error.status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
@@ -304,14 +304,14 @@ serve(async (req) => {
   if (!isAdmin) {
     return new Response(
       JSON.stringify({ error: "Admin access required" }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
   // Rate limit: 10 requests/hour per admin user
   const rateCheck = await checkRateLimit(authResult.user.userId, "generate-market-insights", 10, 60, { failClosed: true });
   if (!rateCheck.allowed) {
-    return rateLimitResponse(rateCheck, corsHeaders);
+    return rateLimitResponse(rateCheck, corsHeaders(req));
   }
 
   let tracer: LangSmithTracer | undefined;
@@ -527,7 +527,7 @@ serve(async (req) => {
         },
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
 
@@ -551,7 +551,7 @@ serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

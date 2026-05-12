@@ -146,7 +146,7 @@ function buildToolSchema(
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   const tracer = new LangSmithTracer({
@@ -165,7 +165,7 @@ serve(async (req) => {
         JSON.stringify({ error: authResult.error.message }),
         {
           status: authResult.error.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -173,7 +173,7 @@ serve(async (req) => {
     // Rate limit: 20 requests/hour per user
     const rateCheck = await checkRateLimit(authResult.user.userId, "scenario-chat-assistant", 20, 60);
     if (!rateCheck.allowed) {
-      return rateLimitResponse(rateCheck, corsHeaders);
+      return rateLimitResponse(rateCheck, corsHeaders(req));
     }
 
     // Parse & validate
@@ -278,7 +278,7 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     } catch (aiError) {
       const status = (aiError as Error & { status?: number }).status;
@@ -287,7 +287,7 @@ serve(async (req) => {
           JSON.stringify({
             error: "The AI service is currently busy. Please wait a moment and try again.",
           }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 429, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       throw aiError;
@@ -318,7 +318,7 @@ serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

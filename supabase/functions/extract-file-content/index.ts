@@ -87,7 +87,7 @@ function truncate(text: string): string {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   // 1. Authenticate (same proven pattern as sentinel-analysis)
@@ -95,7 +95,7 @@ serve(async (req) => {
   if ("error" in authResult) {
     return new Response(
       JSON.stringify({ error: authResult.error.message }),
-      { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: authResult.error.status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
   const userId = authResult.user.userId;
@@ -103,7 +103,7 @@ serve(async (req) => {
   // 2. Rate limit
   const rateCheck = await checkRateLimit(userId, "extract-file-content", 200, 60, { failClosed: true });
   if (!rateCheck.allowed) {
-    return rateLimitResponse(rateCheck, corsHeaders, "Extraction rate limit exceeded. Please try again later.");
+    return rateLimitResponse(rateCheck, corsHeaders(req), "Extraction rate limit exceeded. Please try again later.");
   }
 
   // 3. Parse and validate fileId
@@ -137,7 +137,7 @@ serve(async (req) => {
   if (fileError || !file) {
     return new Response(
       JSON.stringify({ error: "File not found" }),
-      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 404, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
@@ -156,7 +156,7 @@ serve(async (req) => {
   if (!isSuperAdminContext && !orgMatches) {
     return new Response(
       JSON.stringify({ error: "Access denied" }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
@@ -164,7 +164,7 @@ serve(async (req) => {
   if (file.extraction_status === "processing") {
     return new Response(
       JSON.stringify({ status: "processing", message: "Extraction already in progress" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
@@ -245,7 +245,7 @@ serve(async (req) => {
         charCount: extractedText.length,
         truncated: rawText.length > MAX_EXTRACTED_CHARS,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (err) {
     // Mark as failed
@@ -262,7 +262,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ status: "failed", error: errorMessage }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

@@ -28,7 +28,7 @@ const ALLOWED_ACTIONS = ["send", "resend", "revoke"] as const;
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 }
 
@@ -91,7 +91,7 @@ async function sendInviteEmail(params: {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   if (req.method !== "POST") {
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
   if (action === "send" || action === "resend") {
     const rateCheck = await checkRateLimit(userId, "send-team-invite", 20, 60);
     if (!rateCheck.allowed) {
-      return rateLimitResponse(rateCheck, corsHeaders, "Invite rate limit reached. Try again later.");
+      return rateLimitResponse(rateCheck, corsHeaders(req), "Invite rate limit reached. Try again later.");
     }
   }
 

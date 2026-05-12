@@ -3,6 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
+// Helper: typed `.rpc()` shim. The auto-generated Database types do
+// not yet include the SECURITY DEFINER admin wrappers introduced for
+// audit issue #17, so we narrow the call shape manually here.
+type AdminRpc = {
+  rpc: (
+    name: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: Error | null }>;
+};
+const adminRpc = supabase as unknown as AdminRpc;
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -22,13 +33,10 @@ export function useCoachingCards() {
   return useQuery({
     queryKey: ["methodology", "coaching-cards"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("coaching_cards")
-        .select("*")
-        .order("scenario_id");
-
+      // SECURITY DEFINER RPC enforces super_admin check (audit #17).
+      const { data, error } = await adminRpc.rpc("get_coaching_cards");
       if (error) throw error;
-      return data as CoachingCard[];
+      return (data ?? []) as CoachingCard[];
     },
   });
 }
@@ -71,13 +79,10 @@ export function useMethodologyConfigs() {
   return useQuery({
     queryKey: ["methodology", "config"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("methodology_config")
-        .select("*")
-        .order("key");
-
+      // SECURITY DEFINER RPC enforces super_admin check (audit #17).
+      const { data, error } = await adminRpc.rpc("get_methodology_configs");
       if (error) throw error;
-      return data as MethodologyConfig[];
+      return (data ?? []) as MethodologyConfig[];
     },
   });
 }
@@ -86,17 +91,18 @@ export function useMethodologyChangeLog(page: number, pageSize = 20) {
   return useQuery({
     queryKey: ["methodology", "change-log", page],
     queryFn: async () => {
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-
-      const { data, error, count } = await supabase
-        .from("methodology_change_log")
-        .select("*", { count: "exact" })
-        .order("changed_at", { ascending: false })
-        .range(from, to);
-
+      const offset = (page - 1) * pageSize;
+      // SECURITY DEFINER RPC enforces super_admin check (audit #17).
+      // Returns rows shaped as { entry: <row>, total_count: bigint }.
+      const { data, error } = await adminRpc.rpc("get_methodology_change_log", {
+        p_offset: offset,
+        p_limit: pageSize,
+      });
       if (error) throw error;
-      return { entries: data as ChangeLogEntry[], totalCount: count ?? 0 };
+      const rows = (data ?? []) as Array<{ entry: ChangeLogEntry; total_count: number }>;
+      const entries = rows.map((r) => r.entry);
+      const totalCount = rows[0]?.total_count ?? 0;
+      return { entries, totalCount: Number(totalCount) };
     },
   });
 }

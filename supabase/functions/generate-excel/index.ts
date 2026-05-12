@@ -35,14 +35,14 @@ const MAX_PAYLOAD_BYTES = 500 * 1024;
 serve(async (req) => {
   // CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   // Only POST
   if (req.method !== "POST") {
     return new Response(
       JSON.stringify({ error: "Method not allowed" }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 405, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
 
@@ -60,14 +60,14 @@ serve(async (req) => {
     if ("error" in authResult) {
       return new Response(
         JSON.stringify({ error: authResult.error.message }),
-        { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: authResult.error.status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
     // 2. Rate limit: 120 requests/hour per user
     const rateCheck = await checkRateLimit(authResult.user.userId, "generate-excel", 120, 60);
     if (!rateCheck.allowed) {
-      return rateLimitResponse(rateCheck, corsHeaders, "Excel generation rate limit reached. Please wait before generating another report.");
+      return rateLimitResponse(rateCheck, corsHeaders(req), "Excel generation rate limit reached. Please wait before generating another report.");
     }
 
     // 3. Reject oversize payloads before parsing (audit issue #15).
@@ -75,7 +75,7 @@ serve(async (req) => {
     if (Number.isFinite(contentLength) && contentLength > MAX_PAYLOAD_BYTES) {
       return new Response(
         JSON.stringify({ error: "Payload too large" }),
-        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 413, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -112,7 +112,7 @@ serve(async (req) => {
     return new Response(xlsxBytes, {
       status: 200,
       headers: {
-        ...corsHeaders,
+        ...corsHeaders(req),
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${fileName}"`,
         "Cache-Control": "no-store",
@@ -128,7 +128,7 @@ serve(async (req) => {
     });
     return new Response(
       JSON.stringify({ error: "Excel generation failed" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
 });

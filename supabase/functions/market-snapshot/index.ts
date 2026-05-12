@@ -38,7 +38,7 @@ function mapTimeframeToRecency(timeframe: string): string | undefined {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   const startTime = Date.now();
@@ -48,14 +48,14 @@ serve(async (req) => {
   if ("error" in authResult) {
     return new Response(
       JSON.stringify({ error: authResult.error.message }),
-      { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: authResult.error.status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
   // Rate limit: 15 requests/hour per user (calls Perplexity + Google AI)
   const rateCheck = await checkRateLimit(authResult.user.userId, "market-snapshot", 15, 60, { failClosed: true });
   if (!rateCheck.allowed) {
-    return rateLimitResponse(rateCheck, corsHeaders,
+    return rateLimitResponse(rateCheck, corsHeaders(req),
       "Market snapshot rate limit reached. Please wait before requesting another snapshot."
     );
   }
@@ -66,7 +66,7 @@ serve(async (req) => {
       "error" in orgResult ? orgResult.error : "Operation requires a concrete organization context";
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
   const userOrgId = orgResult.orgId;
@@ -345,7 +345,7 @@ OUTPUT FORMAT (use these exact headings):
           qualityGate: { completenessScore, processingTimeMs: phase2TimeMs },
         },
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
 
   } catch (error) {
@@ -384,7 +384,7 @@ OUTPUT FORMAT (use these exact headings):
 
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

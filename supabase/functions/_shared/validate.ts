@@ -13,11 +13,19 @@ export class ValidationError extends Error {
   }
 }
 
-/** Return a 400 response with a safe validation message */
-export function validationErrorResponse(message: string): Response {
+/**
+ * Return a 400 response with a safe validation message.
+ *
+ * The optional `req` argument lets the response carry an origin-
+ * matched Access-Control-Allow-Origin (audit issue M3). When the
+ * caller doesn't pass req we fall back to the production origin —
+ * the body is still gated by CORS in the browser for any other
+ * origin, which is the desired denial.
+ */
+export function validationErrorResponse(message: string, req?: Request): Response {
   return new Response(
     JSON.stringify({ error: message }),
-    { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
   );
 }
 

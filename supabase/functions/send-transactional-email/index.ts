@@ -3,6 +3,7 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { sendResendEmail } from '../_shared/resend.ts'
+import { corsHeaders } from '../_shared/cors.ts'
 
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
@@ -15,12 +16,6 @@ const SENDER_DOMAIN = "notify.exosproc.com"
 // When display_from_root is enabled, this can be the root domain for cleaner branding,
 // even though actual sending uses the subdomain above.
 const FROM_DOMAIN = "exosproc.com"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-}
 
 // Generate a cryptographically random 32-byte hex token
 function generateToken(): string {
@@ -58,7 +53,7 @@ function isValidEmail(email: string): boolean {
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders(req) })
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -70,7 +65,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Server configuration error' }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -95,7 +90,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Invalid JSON in request body' }),
       {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -105,7 +100,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'templateName is required and must be a short string' }),
       {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -117,7 +112,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: `templateData must have at most ${MAX_TEMPLATE_DATA_KEYS} keys` }),
       {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -127,7 +122,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: `templateData.${key} exceeds maximum length` }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         }
       )
     }
@@ -142,7 +137,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Template not found' }),
       {
         status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -159,7 +154,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -170,7 +165,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Invalid recipient email address' }),
       {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -187,7 +182,7 @@ Deno.serve(async (req) => {
       if (!authHeader?.startsWith('Bearer ')) {
         return new Response(
           JSON.stringify({ error: 'Authentication required for this template' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 401, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
       const token = authHeader.replace('Bearer ', '')
@@ -196,7 +191,7 @@ Deno.serve(async (req) => {
       if (authError) {
         return new Response(
           JSON.stringify({ error: 'Invalid or expired token' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 401, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
     }
@@ -221,7 +216,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Failed to verify suppression status' }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -240,7 +235,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: false, reason: 'email_suppressed' }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -272,7 +267,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Failed to prepare email' }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -305,7 +300,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Failed to prepare email' }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         }
       )
     }
@@ -334,7 +329,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Failed to prepare email' }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         }
       )
     }
@@ -357,7 +352,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: false, reason: 'email_suppressed' }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     )
   }
@@ -402,7 +397,7 @@ Deno.serve(async (req) => {
       .eq('message_id', messageId)
     return new Response(
       JSON.stringify({ error: 'Email service not configured' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 
@@ -426,7 +421,7 @@ Deno.serve(async (req) => {
       .eq('message_id', messageId)
     return new Response(
       JSON.stringify({ error: 'Failed to send email', detail: sendResult.error }),
-      { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 502, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 
@@ -445,7 +440,7 @@ Deno.serve(async (req) => {
     JSON.stringify({ success: true, sent: true, resendId: sendResult.id }),
     {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     }
   )
 })

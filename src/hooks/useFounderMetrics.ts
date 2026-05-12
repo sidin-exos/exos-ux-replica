@@ -15,14 +15,18 @@ export function useFounderMetrics() {
   return useQuery({
     queryKey: QUERY_KEY,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("founder_metrics")
-        .select("*")
-        .limit(1)
-        .maybeSingle();
+      // Route through the SECURITY DEFINER RPC so the super-admin
+      // check is enforced server-side regardless of RLS state on
+      // the underlying founder_metrics table (audit issue #17).
+      // The RPC returns SETOF founder_metrics; the table has a
+      // single row, so we take the first entry.
+      const { data, error } = await (supabase as unknown as {
+        rpc: (name: string) => Promise<{ data: unknown[] | null; error: Error | null }>;
+      }).rpc("get_founder_metrics");
 
       if (error) throw error;
-      return data;
+      const rows = (data ?? []) as Array<Record<string, unknown>>;
+      return rows[0] ?? null;
     },
   });
 }

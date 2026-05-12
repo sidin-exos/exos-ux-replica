@@ -3,6 +3,11 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
 // Webhook must NOT verify JWT — it is called by Stripe.
 // Configure verify_jwt = false in supabase/config.toml.
+//
+// CORS: intentionally absent (audit issue M3). This is a server-to-
+// server webhook called by Stripe's backend, never by a browser.
+// Adding Access-Control-Allow-* headers would only widen the
+// attack surface.
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2024-06-20",
