@@ -70,15 +70,18 @@ const Footer = () => {
             EXOS
           </span>
           <div className="flex items-center gap-4">
-            <a
-              href="https://www.linkedin.com/company/exosproc/"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="EXOS on LinkedIn"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Linkedin className="w-4 h-4" />
-            </a>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-foreground">Follow us</span>
+              <a
+                href="https://www.linkedin.com/company/exosproc/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="EXOS on LinkedIn"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-border text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+              >
+                <Linkedin className="w-5 h-5" />
+              </a>
+            </div>
             <p className="text-xs text-muted-foreground">
               © {new Date().getFullYear()} EXOS. All rights reserved.
             </p>
