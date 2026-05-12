@@ -1939,12 +1939,13 @@ export function evaluateOutputCoverage(
   const sid = String(envelope.scenario_id ?? '').toUpperCase();
   const rules = COVERAGE_RULES[sid];
   if (!rules || rules.length === 0) return null;
-  const ss = (envelope.payload?.scenario_specific ?? {}) as Record<string, any>;
+  const payload = (envelope.payload ?? {}) as Record<string, any>;
+  const ss = (payload?.scenario_specific ?? {}) as Record<string, any>;
   const missing: string[] = [];
   let delivered = 0;
   for (const r of rules) {
     try {
-      if (r.check(ss)) delivered++;
+      if (r.check(ss, payload)) delivered++;
       else missing.push(r.label);
     } catch {
       missing.push(r.label);
