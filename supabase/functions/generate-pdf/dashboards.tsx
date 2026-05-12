@@ -22,25 +22,30 @@ import type {
 
 // ── Helpers ──
 
-const formatAmount = (value: number, currency: string = "$"): string => {
-  const sign = value < 0 ? "-" : "";
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${sign}${currency} ${(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1000) return `${sign}${currency} ${(abs / 1000).toFixed(0)}K`;
-  const rounded = Math.round(abs * 100) / 100;
-  const display = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
-  return `${sign}${currency} ${display}`;
+const currencySymbol = (code?: string): string => {
+  if (!code) return "$";
+  const c = String(code).trim().toUpperCase();
+  if (c === "EUR" || c === "€") return "€";
+  if (c === "USD" || c === "$") return "$";
+  if (c === "GBP" || c === "£") return "£";
+  if (c === "JPY" || c === "¥") return "¥";
+  if (c === "CHF") return "CHF ";
+  // Already a symbol or unknown code → pass through with trailing space if alpha.
+  return /^[A-Z]+$/.test(c) ? `${c} ` : c;
 };
 
-const formatCurrency = (value: number, currency: string = "$"): string => {
+const formatAmount = (value: number, currency: string = "$"): string => {
+  const sym = currencySymbol(currency);
   const sign = value < 0 ? "-" : "";
   const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${sign}${currency} ${(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1000) return `${sign}${currency} ${(abs / 1000).toFixed(0)}K`;
+  if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1000) return `${sign}${sym}${(abs / 1000).toFixed(0)}K`;
   const rounded = Math.round(abs * 100) / 100;
   const display = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
-  return `${sign}${currency} ${display}`;
+  return `${sign}${sym}${display}`;
 };
+
+const formatCurrency = formatAmount;
 
 // ══════════════════════════════════════════
 // 1. Cost Waterfall
