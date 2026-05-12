@@ -1795,7 +1795,7 @@ interface CoverageRule {
   key: string;
   label: string;
   /** Returns true if the block is satisfied. */
-  check: (ss: Record<string, any>) => boolean;
+  check: (ss: Record<string, any>, payload?: Record<string, any>) => boolean;
 }
 
 const COVERAGE_RULES: Record<string, CoverageRule[]> = {
