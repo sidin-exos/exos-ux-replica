@@ -110,10 +110,13 @@ export const PDFScenarioComparison = ({ data, themeMode }: { data: ScenarioCompa
         </View>
       </View>
 
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-          <Text style={styles.legendText}>Higher score wins per criterion</Text>
+      <View style={[styles.legend, { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 6, marginTop: 6 }]}>
+        <View style={[styles.legendItem, { flex: 1 }]}>
+          <View style={[styles.legendDot, { backgroundColor: winnerId.color }]} />
+          <Text style={[styles.legendText, { color: colors.text }]}>
+            <Text style={{ fontWeight: 700, color: winnerId.color }}>Recommended: </Text>
+            {winnerId.name} scores {(weightedScores[winnerId.id] ?? 0).toFixed(1)}/100 — best balance across the weighted criteria.
+          </Text>
         </View>
       </View>
     </View>

@@ -1795,7 +1795,7 @@ interface CoverageRule {
   key: string;
   label: string;
   /** Returns true if the block is satisfied. */
-  check: (ss: Record<string, any>) => boolean;
+  check: (ss: Record<string, any>, payload?: Record<string, any>) => boolean;
 }
 
 const COVERAGE_RULES: Record<string, CoverageRule[]> = {
@@ -1897,6 +1897,39 @@ const COVERAGE_RULES: Record<string, CoverageRule[]> = {
       },
     },
   ],
+  S1: [
+    {
+      key: 'vendor_options',
+      label: 'Vendor / option comparison (≥2 with TCO totals)',
+      check: (ss) => Array.isArray(ss?.vendor_options) && ss.vendor_options.length >= 2
+        && ss.vendor_options.filter((o: any) => Number.isFinite(Number(o?.total_tco))).length >= 2,
+    },
+    {
+      key: 'cost_breakdown',
+      label: 'Categorical cost breakdown (≥3 components)',
+      check: (_ss, payload) => {
+        const cb = payload?.financial_model?.cost_breakdown;
+        return Array.isArray(cb) && cb.length >= 3;
+      },
+    },
+    {
+      key: 'year_breakdown',
+      label: 'Year-by-year cost trajectory (≥2 years)',
+      check: (ss) => {
+        const opts: any[] = Array.isArray(ss?.vendor_options) ? ss.vendor_options : [];
+        return opts.some((o: any) => Array.isArray(o?.year_breakdown) && o.year_breakdown.length >= 2);
+      },
+    },
+    {
+      key: 'recommendation',
+      label: 'Decision recommendation (verdict + rationale)',
+      check: (_ss, payload) => {
+        const r = payload?.recommendation;
+        return !!r && typeof r === 'object'
+          && (typeof (r as any).primary_recommendation === 'string' || typeof (r as any).verdict === 'string');
+      },
+    },
+  ],
 };
 
 export function evaluateOutputCoverage(
@@ -1906,12 +1939,13 @@ export function evaluateOutputCoverage(
   const sid = String(envelope.scenario_id ?? '').toUpperCase();
   const rules = COVERAGE_RULES[sid];
   if (!rules || rules.length === 0) return null;
-  const ss = (envelope.payload?.scenario_specific ?? {}) as Record<string, any>;
+  const payload = (envelope.payload ?? {}) as Record<string, any>;
+  const ss = (payload?.scenario_specific ?? {}) as Record<string, any>;
   const missing: string[] = [];
   let delivered = 0;
   for (const r of rules) {
     try {
-      if (r.check(ss)) delivered++;
+      if (r.check(ss, payload)) delivered++;
       else missing.push(r.label);
     } catch {
       missing.push(r.label);
