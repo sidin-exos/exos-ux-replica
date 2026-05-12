@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://qczblwoaiuxgesjzxjvu.supabase.co wss://qczblwoaiuxgesjzxjvu.supabase.co https://*.ingest.de.sentry.io https://www.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://qczblwoaiuxgesjzxjvu.supabase.co; object-src 'none'; base-uri 'self';" />
+    <!--
+      Production CSP is delivered via Vercel response header (vercel.json) so
+      that frame-ancestors takes effect (meta CSP cannot set frame-ancestors).
+      No meta CSP is shipped on purpose — the Vercel header is authoritative.
+    -->
+
     <title>EXOS — Agentic AI Procurement Platform | No Implementation</title>
     <meta name="description" content="Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed." />
     <meta name="author" content="EXOS" />
@@ -30,14 +35,11 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" /></noscript>
 
-    <!-- Google tag (gtag.js) -->
+    <!-- Google tag (gtag.js). The bootstrap was moved out of an inline
+         <script> block into /gtag-init.js so that script-src no longer
+         needs 'unsafe-inline'. -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-NVGRVHZCWE"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-NVGRVHZCWE');
-    </script>
+    <script src="/gtag-init.js"></script>
 
     <script type="application/ld+json">
       {

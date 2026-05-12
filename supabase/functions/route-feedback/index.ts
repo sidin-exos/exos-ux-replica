@@ -54,15 +54,21 @@ const FEEDBACK_TYPE_LABELS: Record<string, string> = {
   feature: "lt_01KN214CJVMEX679PQFMGVPTXQ",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(async (req, info) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Derive the true client IP from the Deno runtime connection info
+  // (audit issue #14). The previous implementation read x-forwarded-for,
+  // which any caller can forge per request, defeating the rate limit.
+  // Deno.serve exposes the real peer address via the second arg.
+  const remoteAddr = info?.remoteAddr;
   const clientIp =
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    req.headers.get("cf-connecting-ip") ||
-    "unknown";
+    remoteAddr && "hostname" in remoteAddr && typeof remoteAddr.hostname === "string"
+      ? remoteAddr.hostname
+      : "unknown";
+
   const rateCheck = await checkRateLimit(clientIp, "route-feedback", 20, 60);
   if (!rateCheck.allowed) {
     return rateLimitResponse(rateCheck, corsHeaders);

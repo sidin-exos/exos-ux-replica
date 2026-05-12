@@ -26,6 +26,12 @@ import { generateExcelBuffer } from "./excel-document.ts";
 import { trackEvent } from "../_shared/track.ts";
 import type { GenerateExcelPayload } from "./types.ts";
 
+// Memory protection (audit issue #15).
+// Invocation limit is left generous per Product Owner constraint;
+// instead, cap the raw request payload at 500 KB so a single caller
+// cannot OOM the Deno isolate by submitting a multi-MB body.
+const MAX_PAYLOAD_BYTES = 500 * 1024;
+
 serve(async (req) => {
   // CORS preflight
   if (req.method === "OPTIONS") {
@@ -64,7 +70,16 @@ serve(async (req) => {
       return rateLimitResponse(rateCheck, corsHeaders, "Excel generation rate limit reached. Please wait before generating another report.");
     }
 
-    // 3. Parse and validate body
+    // 3. Reject oversize payloads before parsing (audit issue #15).
+    const contentLength = Number(req.headers.get("content-length") ?? "0");
+    if (Number.isFinite(contentLength) && contentLength > MAX_PAYLOAD_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "Payload too large" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // 4. Parse and validate body
     const body = await parseBody(req);
 
     const scenarioTitle = requireString(body.scenarioTitle, "scenarioTitle", { maxLength: 500 })!;
