@@ -776,6 +776,34 @@ const PDFReportDocument = ({
   })();
   const s3CfoPickLabel = s3Verdict ?? (s3NpvAdvantage?.winner ?? null);
 
+  // S1 (TCO Analysis) cover KPIs: TCO SAVINGS · BEST OPTION · WACC · OUTPUT RIGOUR
+  const isS1 = envelope?.scenario_id === "S1" || /tco|total\s*cost\s*of\s*ownership/i.test(scenarioTitle);
+  const s1Specific: any = isS1 ? (envelope?.payload?.scenario_specific ?? {}) : {};
+  const s1FinModel: any = isS1 ? (envelope?.payload?.financial_model ?? {}) : {};
+  const s1CurrencySym = (() => {
+    const code = String(parsedData?.tcoComparison?.currency ?? s1FinModel?.currency ?? "EUR").toUpperCase();
+    if (code === "EUR") return "€";
+    if (code === "USD") return "$";
+    if (code === "GBP") return "£";
+    return code === "JPY" ? "¥" : `${code} `;
+  })();
+  const s1FmtMoney = (n: any) => {
+    const v = Number(n);
+    if (!Number.isFinite(v) || v === 0) return null;
+    const abs = Math.abs(v);
+    if (abs >= 1_000_000) return `${s1CurrencySym}${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1000) return `${s1CurrencySym}${Math.round(abs / 1000)}K`;
+    return `${s1CurrencySym}${Math.round(abs)}`;
+  };
+  const s1Tco = isS1 ? parsedData?.tcoComparison : undefined;
+  const s1Best = s1Tco?.options?.length ? s1Tco.options.reduce((m, o) => o.totalTCO < m.totalTCO ? o : m, s1Tco.options[0]) : null;
+  const s1Worst = s1Tco?.options?.length ? s1Tco.options.reduce((m, o) => o.totalTCO > m.totalTCO ? o : m, s1Tco.options[0]) : null;
+  const s1SavingsLabel = s1Best && s1Worst && s1Worst.totalTCO > s1Best.totalTCO ? s1FmtMoney(s1Worst.totalTCO - s1Best.totalTCO) : null;
+  const s1BestLabel = s1Best ? (s1Best.name.length > 22 ? `${s1Best.name.slice(0, 20)}…` : s1Best.name) : null;
+  const s1Wacc = (() => {
+    const w = Number(s1FinModel?.wacc_pct ?? s1FinModel?.discount_rate_pct ?? s1Specific?.wacc_pct);
+    return Number.isFinite(w) && w > 0 ? `${w.toFixed(1)}%` : null;
+  })();
 
   const reportHash = generateReportHash(scenarioTitle, timestamp);
   const formattedDate = formatDate(timestamp);
