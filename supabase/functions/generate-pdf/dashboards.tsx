@@ -701,13 +701,50 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
   const colors = getPdfColors(themeMode);
   const styles = getPdfStyles(themeMode);
   const currency = data.currency || "$";
-  const options = data.options || [];
-  if (options.length === 0) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>TCO Comparison: insufficient data (missing options)</Text></View>;
-  const chartData = data.data ? data.data.map(row => { const values = options.map(opt => { const key = ("id" in opt && typeof opt.id === "string") ? opt.id : opt.name; const val = row[key]; return typeof val === "number" ? val : 0; }); return { year: row.year as string, values }; }) : [];
-  const lowestTCO = options.reduce((min, opt) => opt.totalTCO < min.totalTCO ? opt : min, options[0]);
-  const highestTCO = options.reduce((max, opt) => opt.totalTCO > max.totalTCO ? opt : max, options[0]);
+  const rawOptions = data.options || [];
+  if (rawOptions.length === 0) return <View style={styles.dashboardCard}><Text style={{ fontSize: 9, color: colors.textMuted, textAlign: "center", padding: 20 }}>TCO Comparison: insufficient data (missing options)</Text></View>;
+
+  // Rank-based palette (matches web): best=teal, mid=amber, worst=plum.
+  const PALETTE_BY_RANK = ["#3a8c82", "#a37937", "#a04545", "#5e7187"];
+  const ranked = [...rawOptions].sort((a, b) => a.totalTCO - b.totalTCO);
+  const colorById = new Map(ranked.map((opt, i) => [(opt as any).id ?? opt.name, PALETTE_BY_RANK[Math.min(i, PALETTE_BY_RANK.length - 1)]]));
+  const options = rawOptions.map((opt) => ({ ...opt, color: colorById.get((opt as any).id ?? opt.name) || opt.color }));
+
+  const chartData = data.data ? data.data.map(row => { const values = options.map(opt => { const key = ("id" in opt && typeof (opt as any).id === "string") ? (opt as any).id : opt.name; const val = row[key]; return typeof val === "number" ? val : 0; }); return { year: row.year as string, values }; }) : [];
+  const sorted = [...options].sort((a, b) => a.totalTCO - b.totalTCO);
+  const lowestTCO = sorted[0];
+  const runnerUp = sorted[1];
+  const highestTCO = sorted[sorted.length - 1];
   const savings = highestTCO.totalTCO - lowestTCO.totalTCO;
   const maxValue = Math.max(1, ...chartData.flatMap(d => d.values));
+
+  // Crossover detection (matches web)
+  const yearOf = (label: string): number => { const m = String(label).match(/(\d+(?:\.\d+)?)/); return m ? parseFloat(m[1]) : 0; };
+  const findCrossover = (): { years: number; months: number } | null => {
+    if (!runnerUp || !data.data) return null;
+    const aKey: any = (lowestTCO as any).id ?? lowestTCO.name;
+    const bKey: any = (runnerUp as any).id ?? runnerUp.name;
+    for (let i = 1; i < data.data.length; i++) {
+      const prev: any = data.data[i - 1]; const curr: any = data.data[i];
+      const prevA = Number(prev[aKey] ?? 0), prevB = Number(prev[bKey] ?? 0);
+      const currA = Number(curr[aKey] ?? 0), currB = Number(curr[bKey] ?? 0);
+      if (prevA > prevB && currA <= currB) {
+        const t = (prevA - prevB) / ((prevA - prevB) - (currA - currB));
+        const y0 = yearOf(prev.year), y1 = yearOf(curr.year);
+        const exact = y0 + t * (y1 - y0);
+        const years = Math.floor(exact);
+        const months = Math.round((exact - years) * 12);
+        return months === 12 ? { years: years + 1, months: 0 } : { years, months };
+      }
+    }
+    return null;
+  };
+  const crossover = findCrossover();
+  const conclusion = crossover
+    ? `${lowestTCO.name} becomes the cheapest option after ${crossover.years} year${crossover.years === 1 ? "" : "s"}${crossover.months > 0 ? ` and ${crossover.months} month${crossover.months === 1 ? "" : "s"}` : ""}, saving ${formatCurrency(savings, currency)} over ${runnerUp ? runnerUp.name : highestTCO.name} across the full horizon.`
+    : `${lowestTCO.name} is the cheapest option from day one, saving ${formatCurrency(savings, currency)} versus ${highestTCO.name} across the full horizon.`;
+
+  const tealAccent = "#3a8c82";
 
   return (
     <View style={styles.dashboardCard}>
@@ -718,22 +755,33 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
           <Text style={styles.dashboardSubtitle}>Cumulative cost over time</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 15, fontFamily: "Inter", fontWeight: 700, color: colors.primary }}>{formatCurrency(savings, currency)}</Text>
-          <Text style={{ fontSize: 8, color: colors.textMuted }}>potential savings</Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: tealAccent }}>{formatCurrency(savings, currency)}</Text>
+          <Text style={{ fontSize: 7, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.8 }}>potential savings</Text>
         </View>
       </View>
-      <View style={{ flexDirection: "row", marginTop: 6, marginBottom: 10 }}>
-        {options.map((opt, i) => (<View key={i} style={{ flexDirection: "row", alignItems: "center", marginRight: 12 }}><View style={{ width: 9, height: 9, backgroundColor: opt.color, marginRight: 4 }} /><Text style={{ fontSize: 9, color: colors.textMuted }}>{opt.name}</Text></View>))}
+
+      {/* Conclusion call-out */}
+      <View style={{ borderWidth: 1, borderColor: `${tealAccent}40`, backgroundColor: `${tealAccent}0F`, padding: 6, marginTop: 4, marginBottom: 8 }}>
+        <Text style={{ fontSize: 7, color: tealAccent, fontFamily: "Inter", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 2 }}>Conclusion</Text>
+        <Text style={{ fontSize: 8.5, color: colors.text, lineHeight: 1.35 }}>{conclusion}</Text>
       </View>
+
+      <View style={{ flexDirection: "row", marginBottom: 10, flexWrap: "wrap" }}>
+        {options.map((opt, i) => (<View key={i} style={{ flexDirection: "row", alignItems: "center", marginRight: 12, marginBottom: 2 }}><View style={{ width: 9, height: 9, backgroundColor: opt.color, marginRight: 4 }} /><Text style={{ fontSize: 9, color: colors.textMuted }}>{opt.name}</Text></View>))}
+      </View>
+
       {chartData.length > 0 && (
         <View style={{ marginBottom: 10 }}>
           {chartData.map((point, i) => (
-            <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
-              <Text style={{ width: 24, fontSize: 9, color: colors.textMuted }}>{point.year}</Text>
+            <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 5 }}>
+              <Text style={{ width: 22, fontSize: 9, color: colors.textMuted }}>{point.year}</Text>
               <View style={{ flex: 1, marginLeft: 6 }}>
                 {point.values.map((val, j) => (
-                  <View key={j} style={{ flexDirection: "row", alignItems: "center", marginBottom: j < point.values.length - 1 ? 2 : 0 }}>
-                    <View style={{ width: `${(val / maxValue) * 100}%`, height: 6, backgroundColor: options[j]?.color || colors.textMuted }} />
+                  <View key={j} style={{ flexDirection: "row", alignItems: "center", marginBottom: 1 }}>
+                    <View style={{ flex: 1, height: 5, backgroundColor: colors.surfaceLight }}>
+                      <View style={{ width: `${(val / maxValue) * 100}%`, height: 5, backgroundColor: options[j]?.color || colors.textMuted }} />
+                    </View>
+                    <Text style={{ width: 50, fontSize: 7, color: colors.textMuted, textAlign: "right" }}>{formatCurrency(val, currency)}</Text>
                   </View>
                 ))}
               </View>
@@ -741,6 +789,7 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
           ))}
         </View>
       )}
+
       <View style={styles.matrixContainer}>
         <View style={[styles.matrixRow, styles.matrixHeader]}>
           <Text style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.5, color: colors.badgeText, fontFamily: "Inter", fontWeight: 700 }]}>Option</Text>
@@ -749,20 +798,21 @@ export const PDFTCOComparison = ({ data, themeMode }: { data: TCOComparisonData;
         </View>
         {options.map((opt, i) => {
           const diff = opt.totalTCO - lowestTCO.totalTCO;
+          const isBest = diff === 0;
           return (
-            <View key={i} style={[styles.matrixRow, diff === 0 ? { borderLeftWidth: 4, borderLeftColor: colors.success } : {}]}>
+            <View key={i} style={styles.matrixRow}>
               <View style={[styles.matrixCell, styles.matrixCellLeft, { flex: 1.5, flexDirection: "row", alignItems: "center" }]}>
                 <View style={{ width: 7, height: 7, backgroundColor: opt.color, marginRight: 4 }} />
                 <Text style={{ fontSize: 9, color: colors.text }}>{opt.name}</Text>
               </View>
               <Text style={[styles.matrixCell, { fontFamily: "Inter", fontWeight: 700 }]}>{formatCurrency(opt.totalTCO, currency)}</Text>
-              <Text style={[styles.matrixCell, { color: diff === 0 ? colors.success : colors.textMuted, fontFamily: "Inter", fontWeight: diff === 0 ? 700 : 400 }]}>{diff === 0 ? "★ Best" : `+${formatCurrency(diff, currency)}`}</Text>
+              <Text style={[styles.matrixCell, { color: isBest ? tealAccent : colors.textMuted, fontFamily: "Inter", fontWeight: isBest ? 700 : 400 }]}>{isBest ? "Best" : `+${formatCurrency(diff, currency)}`}</Text>
             </View>
           );
         })}
       </View>
       <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: colors.primary, fontFamily: "Inter", fontWeight: 700 }}>Recommendation: </Text>{lowestTCO.name} offers the lowest total cost of ownership</Text>
+        <Text style={{ fontSize: 9, color: colors.textMuted }}><Text style={{ color: tealAccent, fontFamily: "Inter", fontWeight: 700 }}>Recommendation: </Text>{lowestTCO.name} offers the lowest total cost of ownership.</Text>
       </View>
     </View>
   );
