@@ -33,7 +33,10 @@ export interface BlockGuidance {
   expectedDataType: 'narrative' | 'numeric' | 'structured' | 'document';
 }
 
-export type QualityTier = 'OPTIMAL' | 'MINIMUM' | 'DEGRADED' | 'GIBBERISH';
+// IRRELEVANT replaces the previous DEGRADED ("insufficient data") tier.
+// DEGRADED + GIBBERISH are kept in the union only for backwards compatibility
+// with historical logs; new generations never produce them.
+export type QualityTier = 'OPTIMAL' | 'MINIMUM' | 'IRRELEVANT' | 'DEGRADED' | 'GIBBERISH';
 
 /** Row shape from scenario_field_config table */
 export interface ScenarioFieldConfigRow {
