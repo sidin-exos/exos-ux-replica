@@ -340,10 +340,17 @@ export const TRICK_LIBRARY: TrickLibrary = {
  * Returns both the resolved TrickDefinition and the source template.
  */
 export function selectRandomTrick(
-  scenarioType: string
+  scenarioType: string,
+  excludeCategories: string[] = []
 ): { trick: TrickDefinition; template: TrickTemplate } | null {
-  const tricks = TRICK_LIBRARY[scenarioType];
-  if (!tricks || tricks.length === 0) return null;
+  const all = TRICK_LIBRARY[scenarioType];
+  if (!all || all.length === 0) return null;
+
+  // Filter out recently-used trick categories (rotation buffer). If the
+  // exclusion list would empty the pool, fall back to the full pool.
+  const excluded = new Set(excludeCategories);
+  let tricks = all.filter((t) => !excluded.has(t.category));
+  if (tricks.length === 0) tricks = all;
 
   const template = tricks[Math.floor(Math.random() * tricks.length)];
   const description =
