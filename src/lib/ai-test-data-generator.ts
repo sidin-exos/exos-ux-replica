@@ -8,14 +8,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { pickWithRotation, pairKey, ROTATION_BUFFER } from "@/lib/test-rotation-memory";
 
-const PERSONA_IDS = [
-  "rushed-junior",
-  "methodical-manager",
-  "cfo-finance",
-  "frustrated-stakeholder",
-  "lost-user",
-] as const;
-
 /**
  * Pick an industry+category pair using the rotation buffer to avoid
  * the same pair appearing twice in a row. Honours user-provided
@@ -53,10 +45,6 @@ function pickRotatedPair(
   return { industry: ind, category: cat };
 }
 
-function pickRotatedPersona(scenarioType: string): string {
-  return pickWithRotation(PERSONA_IDS, `persona:${scenarioType}`, ROTATION_BUFFER.persona);
-}
-
 export interface AIGeneratedTestData {
   success: boolean;
   data: Record<string, string>;
@@ -74,7 +62,6 @@ interface GenerateOptions {
   scenarioType: string;
   industry?: string;
   category?: string;
-  persona?: string;
   mctsIterations?: number;
 }
 
@@ -228,7 +215,6 @@ export async function generateAITestData(
         scenarioType: options.scenarioType,
         industry: options.industry,
         category: options.category,
-        persona: options.persona,
         mctsIterations: options.mctsIterations || 3,
       },
     });
@@ -318,12 +304,11 @@ export async function generateTestDataHybrid(
 }> {
   const { preferAI = true, industry, category, mctsIterations } = options || {};
 
-  // Pre-pick industry/category/persona using the rotation buffer so the same
+  // Pre-pick industry/category using the rotation buffer so the same
   // combination doesn't repeat back-to-back. The edge function still rolls
-  // its own trick + content randomly — we just stop it from re-rolling pair
-  // and persona on its own.
+  // its own trick + content randomly — we just stop it from re-rolling the
+  // pair on its own.
   const pickedPair = pickRotatedPair(scenarioType, industry, category);
-  const pickedPersona = pickRotatedPersona(scenarioType);
 
   if (preferAI) {
     try {
@@ -331,7 +316,6 @@ export async function generateTestDataHybrid(
         scenarioType,
         industry: pickedPair.industry,
         category: pickedPair.category,
-        persona: pickedPersona,
         mctsIterations,
       });
 

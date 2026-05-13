@@ -163,7 +163,7 @@ export interface ExperiencePoolSummary {
 /** A single item in a generated/approved test plan */
 export interface TestPlanItem {
   scenarioId: string;
-  persona: BuyerPersona;
+  persona?: BuyerPersona;
   industrySlug: string;
   categorySlug: string;
   entropyLevel: EntropyLevel;

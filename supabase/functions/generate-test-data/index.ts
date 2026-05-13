@@ -763,11 +763,9 @@ Deliberately trigger the common failure mode for this scenario.`;
     userPrompt += `Generate obviously unusable GIBBERISH content for ALL THREE BLOCKS. Keyboard mash, lorem ipsum, completely irrelevant text. All three blocks must fail basic quality checks.`;
   }
 
-  userPrompt += `\n\nUse the persona writing style: ${personaStyle}`;
-
   const user = userPrompt;
 
-  console.log(`[TestDataGen] Generate mode - QualityTier: ${qualityTier}, DeviationType: ${deviationType}, Trick: ${trick?.category || 'none'}, Persona: ${selectedPersona.id}`);
+  console.log(`[TestDataGen] Generate mode - QualityTier: ${qualityTier}, DeviationType: ${deviationType}, Trick: ${trick?.category || 'none'}`);
 
   // LangSmith tracing
   const tracer = new LangSmithTracer({ env: "production", feature: "test-data-gen" });
@@ -776,11 +774,10 @@ Deliberately trigger the common failure mode for this scenario.`;
     scenarioType,
     qualityTier,
     deviationType,
-    persona: selectedPersona.id,
     trick: trick?.category || "none",
   }, {
     tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`, "model:gemini-3.1-pro-preview"],
-    metadata: { qualityTier, deviationType, persona: selectedPersona.id },
+    metadata: { qualityTier, deviationType },
   });
 
   const response = await callAI(system, user, temperature);
@@ -856,8 +853,6 @@ Deliberately trigger the common failure mode for this scenario.`;
     generatedAt: new Date().toISOString(),
     metadata: {
       trickValidation: trickScore,
-      persona: selectedPersona.id,
-      personaName: selectedPersona.name,
       requiredFieldCount: fieldGroups.required.length,
       optionalFieldCount: fieldGroups.optional.length,
       deviationType,
@@ -924,7 +919,6 @@ const HIGH_FRICTION_SCENARIOS = [
 async function handleMessyMode(
   scenarioType: string,
   temperature: number,
-  selectedPersona: typeof BUYER_PERSONAS[number],
   supabase: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
   // Default to a random high-friction scenario if the provided one isn't in the list
@@ -936,12 +930,7 @@ async function handleMessyMode(
   const fieldGroups = getFieldGroups(messyFieldConfigs);
   const fields = fieldGroups.all;
 
-  // Messy mode defaults to frustrated-stakeholder but can be overridden
-  const messyPersona = selectedPersona.id === "frustrated-stakeholder" || selectedPersona
-    ? selectedPersona
-    : BUYER_PERSONAS.find(p => p.id === "frustrated-stakeholder")!;
-
-  console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}, Persona: ${messyPersona.id}`);
+  console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}`);
 
   // Inject GIBBERISH tier instructions
   const gibberishInstructions = QUALITY_TIER_INSTRUCTIONS['GIBBERISH'];
@@ -950,15 +939,11 @@ async function handleMessyMode(
 
 ${gibberishInstructions}
 
-BUYER PERSONA:
-You are generating this messy data from the perspective of: "${messyPersona.name}"
-${messyPersona.description}
-
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST be filled, even if messily):
 ${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
-OPTIONAL FIELDS (fill chaotically per persona, some blank):
+OPTIONAL FIELDS (fill chaotically, some blank):
 ${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 OUTPUT FORMAT:
@@ -1005,8 +990,6 @@ Return ONLY the JSON object.`;
       targetScenario,
       fieldsGenerated: Object.keys(data).length,
       fieldsExpected: fields.length,
-      persona: messyPersona.id,
-      personaName: messyPersona.name,
       requiredFieldCount: fieldGroups.required.length,
       optionalFieldCount: fieldGroups.optional.length,
     }
@@ -1095,7 +1078,6 @@ function buildGenerationPrompt(
   category: string,
   fieldGroups: ScenarioFieldGroups,
   seed: number,
-  selectedPersona: typeof BUYER_PERSONAS[number],
   fieldConfigs: ScenarioFieldConfigRow[],
   industryCtx: { kpis: string[]; constraints: string[] } | null,
   categoryCtx: {
@@ -1124,19 +1106,11 @@ function buildGenerationPrompt(
   const system = `You are an expert procurement consultant generating realistic test data for procurement analysis software.
 ${dbContextBlock}
 
-BUYER PERSONA:
-You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
-${selectedPersona.description}
-
-Adjust your output accordingly:
-- Tone and verbosity of text fields should match this persona
-- Optional field fill rate should be approximately ${selectedPersona.optionalFillRate}
-
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST always be filled):
 ${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
-OPTIONAL FIELDS (fill according to persona behavior — leave some as empty strings):
+OPTIONAL FIELDS (fill realistically — leave some as empty strings to reflect real-world inputs):
 ${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 ${blockInstructions}
 
@@ -1146,7 +1120,7 @@ CRITICAL RULES:
 3. ALL blocks must be populated — do not stop after Block 1
 4. All numeric values must be plausible for the industry scale
 5. DO NOT generate illogical combinations (e.g., pharmaceutical procurement for a software company)
-6. ALWAYS fill all REQUIRED fields. For OPTIONAL fields, follow the persona fill rate — include unfilled optional fields as empty strings.
+6. ALWAYS fill all REQUIRED fields. Include unfilled optional fields as empty strings.
 7. You MUST generate content for Block 1, Block 2, AND Block 3 fields.
 
 OUTPUT FORMAT:
