@@ -65,9 +65,13 @@ export function useAccountData() {
   const usageQuery = useQuery({
     queryKey: ["account-usage", user?.id],
     queryFn: async () => {
+      // Defense-in-depth (audit issue #17): explicit user_id filter
+      // rather than relying solely on RLS. A regressed user_files
+      // policy would otherwise count every org's files.
       const { count } = await supabase
         .from("user_files")
-        .select("id", { count: "exact", head: true });
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id);
       return { fileCount: count ?? 0 } as UsageStats;
     },
     enabled: !!user,

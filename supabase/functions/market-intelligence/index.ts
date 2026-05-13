@@ -95,7 +95,7 @@ Prioritize risks by severity and provide early warning indicators to monitor.`
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   const startTime = Date.now();
@@ -105,23 +105,28 @@ serve(async (req) => {
   if ("error" in authResult) {
     return new Response(
       JSON.stringify({ error: authResult.error.message }),
-      { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: authResult.error.status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
   // Rate limit: 20 requests/hour per user (calls paid Perplexity API)
   const rateCheck = await checkRateLimit(authResult.user.userId, "market-intelligence", 20, 60, { failClosed: true });
   if (!rateCheck.allowed) {
-    return rateLimitResponse(rateCheck, corsHeaders, "Market intelligence rate limit reached. Please wait before sending another query.");
+    return rateLimitResponse(rateCheck, corsHeaders(req), "Market intelligence rate limit reached. Please wait before sending another query.");
   }
 
-  const userOrgId = await getUserOrgId(authResult.user.userId);
-  if (!userOrgId) {
+  const orgResult = await getUserOrgId(authResult.user.userId);
+  if (!("orgId" in orgResult)) {
+    // A super-admin without a concrete org cannot attribute writes to
+    // an organization — reject. Errors are surfaced as 403 too.
+    const message =
+      "error" in orgResult ? orgResult.error : "Operation requires a concrete organization context";
     return new Response(
-      JSON.stringify({ error: "User has no organization" }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: message }),
+      { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
+  const userOrgId = orgResult.orgId;
 
   try {
     const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
@@ -325,7 +330,7 @@ serve(async (req) => {
         structured,
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
 
@@ -376,7 +381,7 @@ serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

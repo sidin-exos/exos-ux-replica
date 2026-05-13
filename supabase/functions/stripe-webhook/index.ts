@@ -3,6 +3,11 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
 // Webhook must NOT verify JWT — it is called by Stripe.
 // Configure verify_jwt = false in supabase/config.toml.
+//
+// CORS: intentionally absent (audit issue M3). This is a server-to-
+// server webhook called by Stripe's backend, never by a browser.
+// Adding Access-Control-Allow-* headers would only widen the
+// attack surface.
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2024-06-20",
@@ -39,6 +44,34 @@ Deno.serve(async (req) => {
     console.error("[stripe-webhook] signature verification failed", err);
     return new Response(JSON.stringify({ error: "Invalid signature" }), {
       status: 400,
+    });
+  }
+
+  // Idempotency: insert event.id BEFORE applying side effects.
+  // Stripe retries failed deliveries and the signature toleration
+  // window also permits short replay, so without this check a
+  // `subscription.updated` retry can re-apply state after a
+  // `subscription.deleted`. The PRIMARY KEY on stripe_events.id
+  // raises 23505 (unique_violation) on replay; we short-circuit
+  // with 200 OK so Stripe stops retrying.
+  const { error: idempotencyError } = await admin
+    .from("stripe_events")
+    .insert({ id: event.id });
+
+  if (idempotencyError) {
+    if (idempotencyError.code === "23505") {
+      console.log("[stripe-webhook] Event already processed", {
+        id: event.id,
+        type: event.type,
+      });
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    console.error("[stripe-webhook] idempotency insert failed", idempotencyError);
+    return new Response(JSON.stringify({ error: "Idempotency check failed" }), {
+      status: 500,
     });
   }
 

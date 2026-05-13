@@ -16,4 +16,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-window['supabase'] = supabase;
+if (import.meta.env.DEV) {
+  // @ts-ignore - dev-only debug handle
+  window.supabase = supabase;
+}

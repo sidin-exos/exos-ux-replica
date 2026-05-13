@@ -1,6 +1,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { WebhookError, verifyWebhookRequest } from 'npm:@lovable.dev/webhooks-js'
 
+// CORS: intentionally absent (audit issue M3). This is a
+// server-to-server webhook called by the Go API after Mailgun
+// reports a bounce/complaint/unsubscribe — never invoked by a
+// browser. Authentication is enforced via HMAC signature
+// (verifyWebhookRequest) below.
+
 // Suppression event payload sent by the Go API when Mailgun reports
 // a bounce, complaint, or unsubscribe.
 interface SuppressionPayload {

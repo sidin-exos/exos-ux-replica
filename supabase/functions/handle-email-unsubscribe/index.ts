@@ -1,70 +1,100 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-}
-
-function jsonResponse(data: Record<string, unknown>, status = 200): Response {
+function jsonResponse(req: Request, data: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
   })
 }
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders(req) })
   }
 
   if (req.method !== 'GET' && req.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405)
+    return jsonResponse(req, { error: 'Method not allowed' }, 405)
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    return jsonResponse({ error: 'Server configuration error' }, 500)
+    return jsonResponse(req, { error: 'Server configuration error' }, 500)
   }
 
-  // Extract token from query params (GET) or body (POST)
+  // Extract token. GET is read-only (validation); POST is state-changing.
+  //
+  // CSRF model:
+  //   - GET takes token from the query string and only ever returns whether
+  //     the token is valid. No mutation is performed, so cross-site reads are
+  //     harmless.
+  //   - POST is destructive (stamps `used_at`). To prevent cross-site forms
+  //     from triggering an unsubscribe we accept ONLY two payload shapes:
+  //       (a) RFC 8058 One-Click: content-type
+  //           `application/x-www-form-urlencoded` with a body that explicitly
+  //           contains `List-Unsubscribe=One-Click`. The token MUST come from
+  //           the form body, not the query string — a third-party form can
+  //           set the action URL freely but cannot construct a body with the
+  //           required `List-Unsubscribe` field without the recipient's
+  //           consent in their mail client.
+  //       (b) App JSON: content-type `application/json` from our own
+  //           unsubscribe page. Browsers cannot issue cross-site
+  //           `application/json` POSTs without triggering a CORS preflight,
+  //           so this content-type is CSRF-safe on its own.
+  //     Any other content-type (text/plain, multipart/form-data, etc.) is
+  //     rejected — those are the shapes a cross-site `<form>` can produce.
   const url = new URL(req.url)
-  let token: string | null = url.searchParams.get('token')
+  let token: string | null = null
 
-  if (req.method === 'POST') {
-    // Detect RFC 8058 one-click unsubscribe: POST with form-encoded body
-    // containing "List-Unsubscribe=One-Click". Email clients (Gmail, Apple Mail,
-    // etc.) send this when the user clicks "Unsubscribe" in the mail UI.
+  if (req.method === 'GET') {
+    token = url.searchParams.get('token')
+  } else {
+    // req.method === 'POST'
     const contentType = req.headers.get('content-type') ?? ''
+
     if (contentType.includes('application/x-www-form-urlencoded')) {
       const formText = await req.text()
       const params = new URLSearchParams(formText)
-      // For one-click, token comes from query param (already set above).
-      // Otherwise, token may be in the form body.
-      if (!params.get('List-Unsubscribe')) {
-        const formToken = params.get('token')
-        if (formToken) {
-          token = formToken
-        }
+
+      // RFC 8058: the One-Click marker MUST be present in the body.
+      if (params.get('List-Unsubscribe') !== 'One-Click') {
+        return jsonResponse(req, 
+          {
+            error:
+              'One-Click unsubscribe required: body must include List-Unsubscribe=One-Click',
+          },
+          400,
+        )
       }
-    } else {
-      // JSON body (from the app's unsubscribe page)
+
+      // Token MUST come from the body. We deliberately ignore any
+      // query-string token here — that path was the CSRF vector.
+      token = params.get('token')
+    } else if (contentType.includes('application/json')) {
       try {
         const body = await req.json()
-        if (body.token) {
+        if (typeof body?.token === 'string') {
           token = body.token
         }
       } catch {
-        // Fall through — token stays from query param
+        return jsonResponse(req, { error: 'Invalid JSON body' }, 400)
       }
+    } else {
+      return jsonResponse(req, 
+        {
+          error:
+            'Unsupported content-type. Use application/x-www-form-urlencoded (RFC 8058 One-Click) or application/json.',
+        },
+        415,
+      )
     }
   }
 
   if (!token) {
-    return jsonResponse({ error: 'Token is required' }, 400)
+    return jsonResponse(req, { error: 'Token is required' }, 400)
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -77,16 +107,16 @@ Deno.serve(async (req) => {
     .maybeSingle()
 
   if (lookupError || !tokenRecord) {
-    return jsonResponse({ error: 'Invalid or expired token' }, 404)
+    return jsonResponse(req, { error: 'Invalid or expired token' }, 404)
   }
 
   if (tokenRecord.used_at) {
-    return jsonResponse({ valid: false, reason: 'already_unsubscribed' })
+    return jsonResponse(req, { valid: false, reason: 'already_unsubscribed' })
   }
 
   // GET: Validate token (the app's unsubscribe page calls this on load)
   if (req.method === 'GET') {
-    return jsonResponse({ valid: true })
+    return jsonResponse(req, { valid: true })
   }
 
   // POST: Process the unsubscribe
@@ -101,11 +131,11 @@ Deno.serve(async (req) => {
 
   if (updateError) {
     console.error('Failed to mark token as used', { error: updateError, token })
-    return jsonResponse({ error: 'Failed to process unsubscribe' }, 500)
+    return jsonResponse(req, { error: 'Failed to process unsubscribe' }, 500)
   }
 
   if (!updated) {
-    return jsonResponse({ success: false, reason: 'already_unsubscribed' })
+    return jsonResponse(req, { success: false, reason: 'already_unsubscribed' })
   }
 
   // Add email to suppressed list (upsert to handle duplicates)
@@ -121,10 +151,10 @@ Deno.serve(async (req) => {
       error: suppressError,
       email: tokenRecord.email,
     })
-    return jsonResponse({ error: 'Failed to process unsubscribe' }, 500)
+    return jsonResponse(req, { error: 'Failed to process unsubscribe' }, 500)
   }
 
   console.log('Email unsubscribed', { email: tokenRecord.email })
 
-  return jsonResponse({ success: true })
+  return jsonResponse(req, { success: true })
 })
