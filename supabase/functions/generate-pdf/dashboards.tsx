@@ -1336,8 +1336,12 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
             {options.map((opt, i) => {
               const isPreferred = opt.id === preferred.id;
               const components: { label: string; value: number; type: "cost" | "credit" | "result" }[] = [
-                { label: "CAPEX (nominal)", value: opt.capexNominal || 0, type: "cost" },
-                { label: "OPEX (nominal)", value: opt.opexNominal || 0, type: "cost" },
+                ...((opt.capexNominal || 0) > 0
+                  ? [{ label: "CAPEX (nominal)", value: opt.capexNominal || 0, type: "cost" as const }]
+                  : []),
+                ...((opt.opexNominal || 0) > 0
+                  ? [{ label: "OPEX (nominal)", value: opt.opexNominal || 0, type: "cost" as const }]
+                  : []),
                 ...((opt.residualValue || 0) > 0
                   ? [{ label: "Residual value", value: opt.residualValue || 0, type: "credit" as const }]
                   : []),
