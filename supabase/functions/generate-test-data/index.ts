@@ -191,48 +191,13 @@ function buildDBContextBlock(
 
 
 // =============================================
-// BUYER PERSONAS
+// BUYER PERSONAS — REMOVED
 // =============================================
-const BUYER_PERSONAS = [
-  {
-    id: "rushed-junior",
-    name: "The Rushed Junior Buyer",
-    description: "A junior procurement specialist who is short on time. Provides minimal, vague context. Uses informal language, abbreviations, and often leaves optional fields blank.",
-    optionalFillRate: "30-40%"
-  },
-  {
-    id: "methodical-manager",
-    name: "The Methodical Category Manager",
-    description: "An experienced category manager. Provides highly detailed, structured, and strategic context. Fills out almost all optional fields with precise industry terminology.",
-    optionalFillRate: "85-95%"
-  },
-  {
-    id: "cfo-finance",
-    name: "The CFO / Finance Leader",
-    description: "A senior finance executive focused purely on numbers, risk, and ROI. Provides very short text context but is extremely precise with financial figures (currencies, percentages). Often ignores technical or operational optional fields.",
-    optionalFillRate: "40-60% (financial fields prioritized)"
-  },
-  {
-    id: "frustrated-stakeholder",
-    name: "The Frustrated Stakeholder (Business Unit)",
-    description: "A non-procurement user (e.g., Marketing or IT Director) forced to use the system. Complains in the text fields, provides messy narrative data instead of structured facts, and misunderstands procurement terminology.",
-    optionalFillRate: "50-70% (filled but often with wrong format)"
-  },
-  {
-    id: "lost-user",
-    name: "The Lost User (Out-of-Scope)",
-    description: "A user who completely misunderstands what this procurement system is for. They ask completely irrelevant questions like 'What is the weather in London?', 'Write a python script for a calculator', or 'How to bake a chocolate cake'. They dump this random question into the main text field and ignore all other fields.",
-    optionalFillRate: "0%"
-  }
-];
+// The persona parameter has been removed from the test-data engine.
+// Industry relevance and information quality are the primary signals;
+// persona writing styles added noise without measurable evaluation value.
+// Historical DB rows that still reference `persona_source` remain valid.
 
-function selectPersona(requestedPersona?: string) {
-  if (requestedPersona) {
-    const found = BUYER_PERSONAS.find(p => p.id === requestedPersona);
-    if (found) return found;
-  }
-  return BUYER_PERSONAS[Math.floor(Math.random() * BUYER_PERSONAS.length)];
-}
 
 function secureRandom(): number {
   const values = new Uint32Array(1);
