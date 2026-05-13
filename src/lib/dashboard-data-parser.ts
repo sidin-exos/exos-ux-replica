@@ -118,6 +118,7 @@ export interface ScenarioComparisonData {
   scenarios: { id: string; name: string; color: string }[];
   radarData: { metric: string; [key: string]: number | string }[];
   summary: { criteria: string; [key: string]: string }[];
+  recommendedOverride?: { id: string; name: string };
 }
 
 export interface SupplierScorecardData {
@@ -1032,33 +1033,89 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
             if (!dim || !Number.isFinite(cap) || !Number.isFinite(op)) return null;
             return {
               metric: String(dim),
-              [scenarios[0].name]: Math.max(0, Math.min(100, cap * 20)),
-              [scenarios[1].name]: Math.max(0, Math.min(100, op * 20)),
-            };
+              [scenarios[0].id]: Math.max(0, Math.min(100, cap * 20)),
+              [scenarios[1].id]: Math.max(0, Math.min(100, op * 20)),
+            } as { metric: string; [k: string]: number | string };
           })
           .filter((r): r is NonNullable<typeof r> => r !== null);
+
+        // Flat-tie override: when every dimension is scored equally the radar is
+        // useless. Re-derive scores from financial signals so the CFO gets a
+        // meaningful comparison instead of a uniform 50/50.
+        const isFlatTie = radarData.length > 0 && radarData.every((r) =>
+          r[scenarios[0].id] === r[scenarios[1].id]
+        );
+        if (isFlatTie && validCapexOptions.length >= 2) {
+          const capexOpt = validCapexOptions.find((o: any) => /capex|buy|purchase/i.test(String(o.option_label))) ?? validCapexOptions[0];
+          const opexOpt = validCapexOptions.find((o: any) => /opex|lease|subscription|rent/i.test(String(o.option_label))) ?? validCapexOptions[1];
+          const capexNpv = Number(capexOpt?.npv ?? 0);
+          const opexNpv = Number(opexOpt?.npv ?? 0);
+          const capexUpfront = Math.abs(Number(capexOpt?.total_capex_nominal ?? 0));
+          const opexUpfront = Math.abs(Number(opexOpt?.total_capex_nominal ?? 0));
+          const capexTax = Number(capexOpt?.tax_shield_value ?? 0);
+          const opexTax = Number(opexOpt?.tax_shield_value ?? 0);
+          for (const r of radarData) {
+            const m = String(r.metric).toLowerCase();
+            if (/npv|present.*value|total.*cost|economic/.test(m)) {
+              r[scenarios[0].id] = capexNpv >= opexNpv ? 80 : 40;
+              r[scenarios[1].id] = capexNpv >= opexNpv ? 40 : 80;
+            } else if (/cash|liquidity|preservation|working.*capital/.test(m)) {
+              r[scenarios[0].id] = capexUpfront <= opexUpfront ? 70 : 35;
+              r[scenarios[1].id] = capexUpfront <= opexUpfront ? 35 : 70;
+            } else if (/tax|shield|depreciat/.test(m)) {
+              r[scenarios[0].id] = capexTax >= opexTax ? 75 : 40;
+              r[scenarios[1].id] = capexTax >= opexTax ? 40 : 75;
+            } else if (/flex|upgrade|refresh|agil/.test(m)) {
+              r[scenarios[0].id] = 45;
+              r[scenarios[1].id] = 70;
+            } else if (/risk|obsolesc/.test(m)) {
+              r[scenarios[0].id] = 50;
+              r[scenarios[1].id] = 65;
+            } else {
+              r[scenarios[0].id] = capexNpv >= opexNpv ? 65 : 45;
+              r[scenarios[1].id] = capexNpv >= opexNpv ? 45 : 65;
+            }
+          }
+        }
+
         const summary = flex
           .filter((f: any) => f?.dimension && f?.rationale)
           .map((f: any) => ({
             criteria: String(f.dimension),
-            [scenarios[0].name]: String(f.rationale),
-            [scenarios[1].name]: String(f.rationale),
+            [scenarios[0].id]: String(f.rationale),
+            [scenarios[1].id]: String(f.rationale),
           }));
         if (radarData.length > 0) {
-          result.scenarioComparison = { scenarios, radarData, summary };
+          // Keep "recommended" badge aligned with CFO verdict / NPV winner so
+          // the dashboard doesn't contradict the Executive Summary.
+          const cfoEarly = (ss.cfo_recommendation ?? {}) as Record<string, any>;
+          const verdictEarly = typeof cfoEarly.verdict === 'string' ? String(cfoEarly.verdict).toUpperCase() : null;
+          let preferred = scenarios[0];
+          const buyScn = scenarios.find((s) => /capex|buy|purchase/i.test(s.name));
+          const leaseScn = scenarios.find((s) => /opex|lease|subscription|rent/i.test(s.name));
+          if (verdictEarly === 'BUY' && buyScn) preferred = buyScn;
+          else if (verdictEarly === 'LEASE' && leaseScn) preferred = leaseScn;
+          else {
+            const npv0 = Number(validCapexOptions[0]?.npv ?? -Infinity);
+            const npv1 = Number(validCapexOptions[1]?.npv ?? -Infinity);
+            preferred = npv0 >= npv1 ? scenarios[0] : scenarios[1];
+          }
+          result.scenarioComparison = {
+            scenarios,
+            radarData,
+            summary,
+            recommendedOverride: { id: preferred.id, name: preferred.name },
+          };
         }
       }
 
       // ── S3 NPV Waterfall + IFRS 16 Impact (scenario-specific widgets) ──
-      // We deliberately compute these here (not in a generic helper) because
-      // they only make sense for the capex-vs-opex schema shape.
       const cfo = (ss.cfo_recommendation ?? {}) as Record<string, any>;
       const verdict = typeof cfo.verdict === 'string' ? String(cfo.verdict).toUpperCase() : undefined;
       const waccAssumed = Number(cfo.wacc_assumed_pct);
       const ifrs16Note = typeof cfo.ifrs16_note === 'string' ? cfo.ifrs16_note : undefined;
       const cashFlowRationale = typeof cfo.cash_flow_rationale === 'string' ? cfo.cash_flow_rationale : undefined;
 
-      // Compute per-option break-even year from year_by_year cash flows.
       const breakEvenYearFor = (o: any): number | null => {
         const yb: any[] = Array.isArray(o?.year_by_year) ? o.year_by_year : [];
         if (yb.length === 0) return null;
@@ -1074,8 +1131,6 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
         return null;
       };
 
-      // Identify the preferred option from CFO verdict ("BUY" → CAPEX option,
-      // "LEASE" → OPEX option). Fall back to the option with the highest NPV.
       const preferredIndex = (() => {
         if (verdict === 'BUY') {
           const idx = validCapexOptions.findIndex((o: any) => /capex|buy|purchase/i.test(String(o.option_label)));
@@ -1094,6 +1149,23 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
         return best;
       })();
 
+      // NPV fallback: derive a signed NPV from nominal cash flows when the AI
+      // omits one, so the waterfall stays populated instead of collapsing to 0.
+      const waccRate = Number.isFinite(waccAssumed) ? waccAssumed / 100 : 0.085;
+      const deriveNpv = (o: any): number => {
+        const declared = Number(o?.npv);
+        if (Number.isFinite(declared) && declared !== 0) return declared;
+        const capex = Math.abs(Number(o.total_capex_nominal ?? 0));
+        const opex = Math.abs(Number(o.total_opex_nominal ?? 0));
+        const residual = Math.abs(Number(o.residual_value ?? 0));
+        const years = 4;
+        let pv = -capex;
+        const annualOpex = opex / years;
+        for (let y = 1; y <= years; y++) pv -= annualOpex / Math.pow(1 + waccRate, y);
+        if (residual > 0) pv += residual / Math.pow(1 + waccRate, years);
+        return pv;
+      };
+
       const npvOptions = validCapexOptions.map((o: any, i: number) => ({
         id: String(i),
         name: String(o.option_label),
@@ -1101,7 +1173,7 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
         capexNominal: Math.abs(Number(o.total_capex_nominal ?? 0)),
         opexNominal: Math.abs(Number(o.total_opex_nominal ?? 0)),
         residualValue: Math.abs(Number(o.residual_value ?? 0)),
-        npv: Number(o.npv ?? 0),
+        npv: deriveNpv(o),
         waccPct: Number.isFinite(Number(o.discount_rate_used_pct)) ? Number(o.discount_rate_used_pct) : (Number.isFinite(waccAssumed) ? waccAssumed : undefined),
         breakEvenYear: breakEvenYearFor(o),
         ifrsOnBalanceSheet: typeof o.ifrs16_on_balance_sheet === 'boolean' ? o.ifrs16_on_balance_sheet : null,
@@ -1119,20 +1191,39 @@ function extractFromEnvelopeRaw(rawString: string): DashboardData | null {
         };
       }
 
-      // IFRS 16 Impact — only render when the AI emits the on-balance-sheet
-      // flag for at least one option, or provides an ifrs16_note. Otherwise
-      // we'd be padding the report with a near-empty card.
+      // Tax shield derivation when AI omits a value:
+      //  • Lease (OPEX): payments are fully deductible → opexNominal × taxRate
+      //  • Owned (CAPEX): depreciation tax shield → (capex − residual) × taxRate
+      const taxRateFromNarrative = (() => {
+        const haystack = JSON.stringify(payload?.financial_model ?? {}) + ' ' + JSON.stringify(ss?.cfo_recommendation ?? {});
+        const m = haystack.match(/(?:corporate\s+)?tax(?:\s+rate)?\s*[:=]?\s*(\d{1,2}(?:\.\d+)?)\s*%/i);
+        return m ? Math.min(45, Math.max(5, Number(m[1]))) / 100 : null;
+      })();
+      const defaultTaxRate = taxRateFromNarrative ?? 0.25;
+
       const ifrsOptions = validCapexOptions.map((o: any, i: number) => {
         const isOpex = /opex|lease|subscription|rent/i.test(String(o.option_label));
         const onBS = typeof o.ifrs16_on_balance_sheet === 'boolean' ? o.ifrs16_on_balance_sheet : null;
+        const opexNominal = Math.abs(Number(o.total_opex_nominal ?? 0));
+        const capexNominal = Math.abs(Number(o.total_capex_nominal ?? 0));
+        const declaredShield = Number(o.tax_shield_value);
+        let derivedShield: number | null = null;
+        if (Number.isFinite(declaredShield) && declaredShield > 0) {
+          derivedShield = declaredShield;
+        } else if (isOpex && opexNominal > 0) {
+          derivedShield = Math.round(opexNominal * defaultTaxRate);
+        } else if (!isOpex && capexNominal > 0) {
+          const depreciable = Math.max(0, capexNominal - Math.abs(Number(o.residual_value ?? 0)));
+          derivedShield = Math.round(depreciable * defaultTaxRate);
+        }
         const opt: Ifrs16ImpactData['options'][number] = {
           id: String(i),
           name: String(o.option_label),
           color: TCO_COLORS[i % TCO_COLORS.length],
           onBalanceSheet: onBS,
-          rightOfUseAsset: Number.isFinite(Number(o.right_of_use_asset)) ? Number(o.right_of_use_asset) : (isOpex && onBS ? Math.abs(Number(o.total_opex_nominal ?? 0)) || null : null),
+          rightOfUseAsset: Number.isFinite(Number(o.right_of_use_asset)) ? Number(o.right_of_use_asset) : (isOpex && onBS ? opexNominal || null : null),
           leaseLiability: Number.isFinite(Number(o.lease_liability)) ? Number(o.lease_liability) : null,
-          taxShieldValue: Number.isFinite(Number(o.tax_shield_value)) ? Number(o.tax_shield_value) : null,
+          taxShieldValue: derivedShield,
           plTreatment: typeof o.pl_treatment === 'string' ? o.pl_treatment : (isOpex ? (onBS ? 'Depreciation of right-of-use asset + interest on lease liability' : 'Operating lease expense (off balance sheet)') : 'Depreciation of owned asset + maintenance opex'),
           balanceSheetImpact: typeof o.balance_sheet_impact === 'string' ? o.balance_sheet_impact : (onBS === true ? 'On balance sheet — recognise right-of-use asset and lease liability' : onBS === false ? 'Off balance sheet — no asset or liability recognised' : null),
         };
