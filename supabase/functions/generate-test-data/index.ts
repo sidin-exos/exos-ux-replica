@@ -381,12 +381,11 @@ serve(async (req) => {
         selectedCategory,
         fieldGroups,
         iteration,
-        selectedPersona,
         fieldConfigs,
         industryCtx,
         categoryCtx
       );
-      
+
       const generationResponse = await callAI(generationPrompt.system, generationPrompt.user, temperature);
 
       if (!generationResponse.success) {
