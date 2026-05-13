@@ -89,26 +89,33 @@ INSTRUCTIONS:
 - Missing some supporting details but core request is clear
 - Expected Input Evaluator result: IMPROVABLE`,
 
-  DEGRADED: `DATA QUALITY TIER: DEGRADED (Missing Critical Data)
+  IRRELEVANT: `DATA QUALITY TIER: IRRELEVANT (Wrong-Scenario Data)
+${GDPR_GUARDRAIL}
+
+INSTRUCTIONS:
+- Generate WELL-FORMED, REALISTIC, FULLY POPULATED procurement data — but for a DIFFERENT procurement category than the one the test is targeting.
+- Pick a category from a clearly different procurement domain (e.g. if the requested category is "cloud-infrastructure-iaas-paas" write content for "raw-materials-steel-metals"; if the requested category is "logistics-road-freight" write content for "professional-services").
+- Every block (1, 2, 3) must be filled with internally-consistent, plausible content for the OTHER category. Do NOT use gibberish, lorem ipsum, or empty fields.
+- All numeric values, KPIs, and supplier references must match the OTHER category's domain — not the requested one.
+- Goal: test whether the system detects industry/category mismatch between the user's selected scenario context and the actual content of the input.
+- Expected Input Evaluator result: IMPROVABLE or INSUFFICIENT (off-topic), with no gibberish flags.`,
+
+  DEGRADED: `DATA QUALITY TIER: DEGRADED (Legacy — kept for backwards compatibility, do not use for new generations)
 ${GDPR_GUARDRAIL}
 
 INSTRUCTIONS:
 - Block 1 (Context): Generic, 15-25 words, could apply to any industry
-- Block 2 (Core Data): Qualitative descriptions only — NO specific numbers, percentages, or EUR values. Use phrases like "significant amount", "competitive rate", "industry standard"
+- Block 2 (Core Data): Qualitative descriptions only — NO specific numbers
 - Block 3 (Parameters): Empty string ""
-- For Type 1H scenarios: DELIBERATELY OMIT all fields marked as isCritical (e.g. WACC, tax rate, KPI percentages, legal entity specifics)
-- Overall tone: vague, non-committal, uses filler phrases
 - Expected Input Evaluator result: INSUFFICIENT`,
 
-  GIBBERISH: `DATA QUALITY TIER: GIBBERISH (Invalid Input)
+  GIBBERISH: `DATA QUALITY TIER: GIBBERISH (Legacy stress-test path — only invoked from messy mode)
 ${GDPR_GUARDRAIL}
 
 INSTRUCTIONS:
-- Block 1 (Context): Random characters, keyboard mash, or completely irrelevant content (e.g. "asdf jkl; what is the weather in London?" or "hjkl 1234 test test")
-- Block 2 (Core Data): Lorem ipsum, single repeated word, or copy-paste of unrelated text. May contain a real-looking number but in wrong context
-- Block 3 (Parameters): Empty string ""
-- The data should trigger UNIVERSAL_GIBBERISH detection in the Input Evaluator
-- Do NOT make it subtly wrong — make it obviously garbage input
+- Block 1: Random characters or completely irrelevant content
+- Block 2: Lorem ipsum or copy-paste of unrelated text
+- Block 3: Empty string ""
 - Expected Input Evaluator result: INSUFFICIENT with gibberish flags`,
 };
 
