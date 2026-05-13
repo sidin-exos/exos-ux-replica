@@ -436,8 +436,6 @@ serve(async (req) => {
           score: bestCandidate.score,
           iterations: mctsIterations,
           reasoning: bestCandidate.reasoning,
-          persona: selectedPersona.id,
-          personaName: selectedPersona.name,
           requiredFieldCount: fieldGroups.required.length,
           optionalFieldCount: fieldGroups.optional.length,
         }
