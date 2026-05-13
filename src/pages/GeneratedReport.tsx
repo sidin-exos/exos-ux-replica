@@ -329,15 +329,39 @@ const GeneratedReport = () => {
                   Executive Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <ul className="space-y-3">
-                  {keyPoints.map((point, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                      <span className="text-foreground">{point}</span>
-                    </li>
-                  ))}
-                </ul>
+              <CardContent className="pt-6 space-y-6">
+                {summaryFindings.length > 0 && (
+                  <div>
+                    <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                      Key Findings
+                    </h3>
+                    <ul className="space-y-3">
+                      {summaryFindings.map((point, i) => (
+                        <li key={`f-${i}`} className="flex items-start gap-3">
+                          <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                          <span className="text-foreground">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {summaryRecommendations.length > 0 && (
+                  <div>
+                    <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                      Recommended Actions
+                    </h3>
+                    <ol className="space-y-3 list-decimal list-inside">
+                      {summaryRecommendations.map((point, i) => (
+                        <li key={`r-${i}`} className="text-foreground">
+                          <span className="ml-1">{point}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {summaryFindings.length === 0 && summaryRecommendations.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No executive summary available.</p>
+                )}
               </CardContent>
             </Card>
 
