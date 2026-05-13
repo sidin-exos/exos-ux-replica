@@ -1397,11 +1397,21 @@ const PDFReportDocument = ({
               </>
             )}
 
-        {/* Risk Register — heading and body render together; both hide when there's no content */}
+        {/* Risk Register — heading and body render together; both hide when there's no content.
+            When the analysis is an EXOS envelope we ALWAYS prefer structured risks (same source
+            as the page-2 Risk Matrix). The plain-text fallback is only used for legacy
+            non-envelope analyses — otherwise it surfaced executive-summary text as a fake
+            "MEDIUM" risk row, duplicating page-1 content. */}
         {(() => {
           const structuredRisks = extractRiskRegisterItems(analysisResult);
+          const isEnvelope = (() => {
+            try {
+              const p = JSON.parse(analysisResult);
+              return p && ['1.0', '2.0'].includes(p.schema_version);
+            } catch { return false; }
+          })();
           const sections = categorizeAnalysisSections(analysisLines);
-          const riskLines = sections.filter(s => s.type === "risks").flatMap(s => s.lines);
+          const riskLines = isEnvelope ? [] : sections.filter(s => s.type === "risks").flatMap(s => s.lines);
           const useStructured = structuredRisks.length > 0;
           if (!useStructured && riskLines.length === 0) return null;
 
@@ -1416,7 +1426,7 @@ const PDFReportDocument = ({
             return (
               <>
                 {heading}
-                {structuredRisks.slice(0, 5).map((item, i) => {
+                {structuredRisks.slice(0, 10).map((item, i) => {
                   const sevColor = riskSeverityColor(item.severity, c);
                   return (
                     <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
