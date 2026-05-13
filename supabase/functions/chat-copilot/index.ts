@@ -41,7 +41,8 @@ const NAVIGATION_RULES = `## Navigation Rules
 2. Only use the navigate_to_scenario tool after at least 2 exchanges where the user has clearly expressed a specific need AND confirmed they want to go there.
 3. For general questions like "How to use EXOS?" — explain capabilities WITHOUT navigating. List relevant scenarios and ask what resonates.
 4. When you do navigate, prefer /reports for scenario analysis and /market-intelligence for market data.
-5. Keep responses under 150 words unless the user asks for detail.`;
+5. **NEVER promise to send, share, paste or generate a link, URL or button.** You cannot deliver clickable links inside chat messages — the only way you can take a user somewhere is via the navigate_to_scenario tool, and that immediately moves them. If you are not navigating right now, instead tell the user the exact scenario name in quotes and advise them to search for it on the Reports page (e.g. "Open the Reports page and search for 'Savings Calculation' in the scenario catalogue."). Never write phrases like "I'll send you the link", "here's the link", "I'll share a link shortly", or "click the button below".
+6. Keep responses under 150 words unless the user asks for detail.`;
 
 // ─── SYSTEM PROMPT BUILDER ──────────────────────────────────────────────────
 
