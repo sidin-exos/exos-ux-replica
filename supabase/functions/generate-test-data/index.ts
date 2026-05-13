@@ -278,6 +278,7 @@ interface GenerateRequest {
   mctsIterations?: number;
   temperature?: number;
   persona?: string;
+  excludeTrickCategories?: string[];
 }
 
 interface MCTSNode {
@@ -332,6 +333,9 @@ serve(async (req) => {
     const category = requireString(body.category, "category", { optional: true, maxLength: 200 });
     const parameters = optionalRecord(body.parameters, "parameters", 30) as DraftedParameters | undefined;
     const persona = requireString(body.persona, "persona", { optional: true, maxLength: 100 });
+    const excludeTrickCategories = Array.isArray(body.excludeTrickCategories)
+      ? body.excludeTrickCategories.filter((c: unknown): c is string => typeof c === "string").slice(0, 30)
+      : [];
     const mctsIterations = typeof body.mctsIterations === "number" && body.mctsIterations >= 1 && body.mctsIterations <= 10
       ? body.mctsIterations : 1;
     const temperature = typeof body.temperature === "number" && body.temperature >= 0 && body.temperature <= 2
@@ -344,7 +348,7 @@ serve(async (req) => {
 
     // === DRAFT MODE: Propose random consistent parameters ===
     if (mode === "draft") {
-      const draftResult = await handleDraftMode(scenarioType, temperature);
+      const draftResult = await handleDraftMode(scenarioType, temperature, excludeTrickCategories);
       return new Response(
         JSON.stringify(draftResult),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -504,13 +508,14 @@ serve(async (req) => {
 // === DRAFT MODE HANDLER ===
 async function handleDraftMode(
   scenarioType: string,
-  temperature: number
+  temperature: number,
+  excludeTrickCategories: string[] = []
 ): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
   const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
   const randomPair = selectRandomIndustryCategoryPair();
   
   // Select a random trick and persona for this scenario type
-  const trickResult = selectRandomTrick(scenarioType);
+  const trickResult = selectRandomTrick(scenarioType, excludeTrickCategories);
   const persona = selectPersona();
   const trick = trickResult?.trick || null;
 

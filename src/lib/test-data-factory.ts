@@ -10,13 +10,41 @@
  * @module test-data-factory
  */
 
+import { pickWithRotation } from "@/lib/test-rotation-memory";
+
 type TestDataGenerator = () => Record<string, string>;
 
-// Utility functions for random data generation
-const randomChoice = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const randomNumber = (min: number, max: number): number => 
+/**
+ * Hash an option array into a stable, short rotation key.
+ * Uses the length + first 24 chars of each option so two arrays that
+ * differ in content get different buffers, and identical arrays
+ * across calls share one buffer (so the same field rotates).
+ */
+function arrayKey(arr: readonly string[]): string {
+  const sample = arr.map((s) => String(s).slice(0, 24)).join("|");
+  let h = 0;
+  for (let i = 0; i < sample.length; i++) {
+    h = (h * 31 + sample.charCodeAt(i)) | 0;
+  }
+  return `static:${arr.length}:${h.toString(36)}`;
+}
+
+// Utility functions for random data generation. randomChoice now uses
+// the rotation buffer so the same option doesn't reappear back-to-back.
+// Rotation buffer is sized to ~half the pool (min 2) so most picks are
+// fresh while still allowing repetition once the pool is exhausted.
+const randomChoice = <T>(arr: T[]): T => {
+  if (arr.length === 0) throw new Error("randomChoice: empty array");
+  if (arr.length === 1) return arr[0];
+  // Stringify each option for the key; we re-map back via index.
+  const stringPool = arr.map((v, i) => `${i}`);
+  const buffer = Math.max(2, Math.floor(arr.length / 2));
+  const idx = pickWithRotation(stringPool, arrayKey(arr.map((v) => String(v))), buffer);
+  return arr[Number(idx)];
+};
+const randomNumber = (min: number, max: number): number =>
   Math.floor(Math.random() * (max - min + 1)) + min;
-const randomCurrency = (min: number, max: number): string => 
+const randomCurrency = (min: number, max: number): string =>
   randomNumber(min, max).toString();
 
 // Industry context templates for realistic business descriptions (100+ words each)

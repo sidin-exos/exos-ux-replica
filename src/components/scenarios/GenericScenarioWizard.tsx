@@ -373,23 +373,14 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     setCategoryOverrides(getDefaultCategoryOverrides());
   };
 
-  // Restore draft on mount / scenario switch
-  useEffect(() => {
-    const restore = async () => {
-      const draft = await loadDraft();
-      if (!draft) return;
-      setFormData(prev => {
-        const merged: Record<string, string> = { ...prev };
-        Object.entries(draft).forEach(([key, value]) => {
-          if (value && value.trim() !== '') {
-            merged[key] = value;
-          }
-        });
-        return merged;
-      });
-    };
-    restore();
-  }, [scenario.id, user?.id]);
+  // Draft restoration on mount has been intentionally disabled.
+  // Per UX decision: opening a scenario should always show an empty
+  // form so the next "Generate" produces a visibly fresh example
+  // (the previous behaviour pre-filled the form with the last draft,
+  // which made the test data engine feel like it was repeating the
+  // same case until you clicked refresh). Drafts are still saved on
+  // every field change for crash recovery, just not auto-restored.
+  // To re-enable, restore the previous loadDraft() effect here.
 
   const handleFieldChange = (fieldId: string, value: string) => {
     setFormData((prev) => {
