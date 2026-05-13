@@ -576,7 +576,6 @@ async function handleGenerateMode(
   scenarioType: string,
   parameters: DraftedParameters,
   temperature: number,
-  selectedPersona: typeof BUYER_PERSONAS[number],
   fieldConfigs: ScenarioFieldConfigRow[],
   supabase: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
