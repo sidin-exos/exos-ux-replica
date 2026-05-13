@@ -221,8 +221,9 @@ export function buildBlockInstructions(
     instructions += `Required: ${block.is_required ? 'YES' : 'NO'}\n`;
     instructions += `Guidance: ${block.block_guidance || ''}\n`;
 
+    // IRRELEVANT tier uses optimal guidance for shape, but content targets a different category.
     const tierGuidance =
-      qualityTier === 'OPTIMAL' ? block.optimal_guidance :
+      qualityTier === 'OPTIMAL' || qualityTier === 'IRRELEVANT' ? block.optimal_guidance :
       qualityTier === 'MINIMUM' ? block.minimum_guidance :
       block.degraded_guidance;
     if (tierGuidance) {
