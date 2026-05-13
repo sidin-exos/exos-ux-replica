@@ -1135,7 +1135,11 @@ export function getScenarioSchema(group: string | null | undefined, scenarioId: 
   const full = group ? GROUP_SCHEMAS[group] : '';
   if (!full) return '';
 
-  const code = scenarioId ? SCENARIO_ID_TO_CODE[scenarioId] : null;
+  // Resolve scenario code: prefer the explicit slicer map (Group A/D), otherwise
+  // fall back to the canonical registry so Group B/C slicing works for every scenario.
+  const code = scenarioId
+    ? (SCENARIO_ID_TO_CODE[scenarioId] || SCENARIO_ID_REGISTRY[scenarioId] || null)
+    : null;
 
   // ── Group A slicing (S1–S8) ────────────────────────────────────────
   if (group === 'A') {
