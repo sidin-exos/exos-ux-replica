@@ -36,7 +36,7 @@ type Complexity = "simple" | "standard" | "complex" | "edge-case";
 type FinancialPressure = "comfortable" | "moderate" | "tight" | "crisis";
 type StrategicPriority = "cost" | "risk" | "speed" | "quality" | "innovation" | "sustainability";
 type MarketConditions = "stable" | "growing" | "volatile" | "disrupted";
-type DataQuality = "excellent" | "good" | "partial" | "poor";
+type DataQuality = "excellent" | "good" | "partial" | "irrelevant";
 type TrickSubtlety = "obvious" | "moderate" | "subtle" | "expert-level";
 
 interface DraftedParameters {
@@ -50,8 +50,6 @@ interface DraftedParameters {
   dataQuality: DataQuality;
   reasoning: string;
   trick?: TrickDefinition;
-  persona?: string;
-  personaName?: string;
 }
 
 // Field groups type (returned by getFieldGroups from block-guidance.ts)
