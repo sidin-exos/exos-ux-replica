@@ -73,8 +73,12 @@ const NPVWaterfallDashboard = ({ parsedData }: Props) => {
         {opts.map((o) => {
           const isPreferred = o.id === preferred?.id;
           const components: { label: string; value: number; type: "cost" | "credit" | "result" }[] = [
-            { label: "CAPEX (nominal)", value: o.capexNominal, type: "cost" },
-            { label: "OPEX (nominal)", value: o.opexNominal, type: "cost" },
+            ...(o.capexNominal > 0
+              ? ([{ label: "CAPEX (nominal)", value: o.capexNominal, type: "cost" }] as const)
+              : []),
+            ...(o.opexNominal > 0
+              ? ([{ label: "OPEX (nominal)", value: o.opexNominal, type: "cost" }] as const)
+              : []),
             ...(o.residualValue > 0
               ? ([{ label: "Residual value", value: o.residualValue, type: "credit" }] as const)
               : []),
@@ -87,7 +91,7 @@ const NPVWaterfallDashboard = ({ parsedData }: Props) => {
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: o.color }} />
                   <span className="text-sm font-semibold text-foreground">{o.name}</span>
-                  {isPreferred && (
+                  {isPreferred && opts.length > 1 && (
                     <span
                       className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded"
                       style={{ color: o.color, backgroundColor: `${o.color}1A` }}
@@ -117,6 +121,14 @@ const NPVWaterfallDashboard = ({ parsedData }: Props) => {
                           ? "hsl(var(--destructive))"
                           : o.color
                         : o.color;
+                  // Use 2-decimal precision for NPV result so small deltas stay visible
+                  const decimals = c.type === "result" ? 2 : 1;
+                  const displayValue =
+                    c.type === "credit"
+                      ? `−${formatCurrency(Math.abs(c.value), currency, decimals)}`
+                      : c.type === "result"
+                        ? formatCurrency(c.value, currency, decimals) // signed
+                        : formatCurrency(Math.abs(c.value), currency, decimals);
                   return (
                     <div key={c.label} className="flex items-center gap-2 text-xs">
                       <div className="w-32 text-muted-foreground">{c.label}</div>
@@ -127,8 +139,7 @@ const NPVWaterfallDashboard = ({ parsedData }: Props) => {
                         />
                       </div>
                       <div className="w-24 text-right tabular-nums font-medium text-foreground">
-                        {c.type === "credit" ? "−" : ""}
-                        {formatCurrency(Math.abs(c.value), currency)}
+                        {displayValue}
                       </div>
                     </div>
                   );
