@@ -143,72 +143,88 @@ const GeneratedReport = () => {
       .trim();
   };
 
-  // Heuristic: drop lines that look like AI guidance/instructions rather than findings
-  // (e.g. "Supply an estimate of …", "Provide …", "Specify …" — these are data-gap prompts).
-  const INSTRUCTION_PREFIX_RE = /^\s*[-•*]?\s*(supply|provide|specify|enter|input|complete|fill in|add|please|to enable|to allow|to support)\b/i;
+  // Mirror supabase/functions/generate-pdf/pdf-document.tsx so the on-screen
+  // Executive Summary matches the exported PDF exactly.
+  const INSTRUCTION_PREFIX_RE = /^\s*[-•*]?\s*(supply|provide|specify|enter|input|complete|fill in|add|please|to enable|to allow|to support|to strengthen)\b/i;
   const isInstructionLine = (line: string) => INSTRUCTION_PREFIX_RE.test(line) || /\(e\.g\.,/i.test(line);
+  const isPlaybookPhase = (line: string) => /^\s*phase\s+\d+\s*[—\-:]\s*(detect|activate|contain|recover|learn)/i.test(line);
+  const isTableLine = (line: string) => /^\s*\|.*\|\s*$/.test(line) || /^\s*[-:|\s]+$/.test(line);
+  const looksLikeFinding = (line: string): boolean => {
+    if (!line || line.length < 15) return false;
+    if (isInstructionLine(line) || isPlaybookPhase(line) || isTableLine(line)) return false;
+    return true;
+  };
 
-  // Pull a real Executive Summary from the envelope when available; fall back to
-  // the prose-line heuristic only when no structured summary exists.
-  const extractKeyPoints = (text: string | null | undefined): string[] => {
-    if (!text) return [];
-    const lines = text.split("\n").filter((line) => line.trim());
-    const keyPoints: string[] = [];
+  const extractEnvelopeSummary = (raw?: string): { findings: string[]; recommendations: string[] } => {
+    if (!raw) return { findings: [], recommendations: [] };
+    let env: any;
+    try { env = JSON.parse(raw); } catch { return { findings: [], recommendations: [] }; }
+    if (!env || typeof env !== 'object') return { findings: [], recommendations: [] };
+
+    const findings: string[] = [];
+    const recommendations: string[] = [];
+
+    const exec = env.executive_summary ?? env.payload?.executive_summary ?? {};
+    const headline = exec.headline ?? exec.summary ?? env.headline;
+    if (typeof headline === 'string' && headline.trim() && looksLikeFinding(headline)) {
+      findings.push(headline.trim());
+    }
+    const findingsArr = exec.key_findings ?? env.key_findings ?? exec.findings ?? [];
+    if (Array.isArray(findingsArr)) {
+      for (const f of findingsArr) {
+        const t = typeof f === 'string' ? f : (f?.finding ?? f?.text ?? f?.title ?? '');
+        const s = String(t).trim();
+        if (s && looksLikeFinding(s)) findings.push(s);
+        if (findings.length >= 3) break;
+      }
+    }
+
+    const recsArr = env.recommendations ?? env.payload?.recommendations ?? exec.recommendations ?? [];
+    if (Array.isArray(recsArr)) {
+      for (const r of recsArr) {
+        let t: string;
+        if (typeof r === 'string') t = r;
+        else {
+          const action = r?.action ?? r?.recommendation ?? r?.text ?? r?.title ?? '';
+          const priority = r?.priority ? `[${String(r.priority)}] ` : '';
+          const rationaleRaw = r?.rationale ?? r?.benefit ?? r?.expected_value ?? '';
+          const rationaleStr = String(rationaleRaw ?? '').trim();
+          const rationale = /^\d[\d,. ]*$/.test(rationaleStr) ? '' : rationaleStr;
+          t = `${priority}${action}${rationale ? ` — ${rationale}` : ''}`;
+        }
+        const s = String(t).trim().replace(/\s+—\s+\d[\d,. ]*\s*$/, '');
+        if (s && looksLikeFinding(s)) recommendations.push(s);
+        if (recommendations.length >= 4) break;
+      }
+    }
+
+    return { findings, recommendations };
+  };
+
+  const extractProseSummary = (text: string): { findings: string[]; recommendations: string[] } => {
+    const lines = text.split('\n').map(cleanMarkdown).filter((l) => looksLikeFinding(l));
+    const findingPattern = /(\$|€|%|found|indicates?|presents?|analysis|current(ly)?|total|average|estimated|reveals?|shows?)/i;
+    const recommendPattern = /\b(target|aim to|recommend|should|negotiate|consider|implement|prioritize|pursue|establish|ensure|leverage|explore)\b/i;
+    const findings: string[] = [];
+    const recommendations: string[] = [];
     for (const line of lines) {
-      const cleanLine = cleanMarkdown(line);
-      if (!cleanLine) continue;
-      if (isInstructionLine(cleanLine)) continue;
-      if (
-        cleanLine.includes("recommend") ||
-        cleanLine.includes("suggest") ||
-        cleanLine.includes("should") ||
-        cleanLine.includes("%") ||
-        cleanLine.includes("$")
-      ) {
-        keyPoints.push(cleanLine);
-        if (keyPoints.length >= 5) break;
-      }
+      if (recommendations.length < 4 && recommendPattern.test(line)) recommendations.push(line);
+      else if (findings.length < 3 && findingPattern.test(line)) findings.push(line);
+      if (findings.length >= 3 && recommendations.length >= 4) break;
     }
-    return keyPoints.length > 0
-      ? keyPoints
-      : lines.map(cleanMarkdown).filter(Boolean).filter((l) => !isInstructionLine(l)).slice(0, 5);
+    if (findings.length === 0 || recommendations.length === 0) {
+      const pool = lines.slice(0, 7);
+      const mid = Math.ceil(pool.length / 2);
+      if (findings.length === 0) findings.push(...pool.slice(0, mid).slice(0, 3));
+      if (recommendations.length === 0) recommendations.push(...pool.slice(mid).slice(0, 4));
+    }
+    return { findings, recommendations };
   };
 
-  const extractEnvelopeSummary = (raw?: string): string[] => {
-    if (!raw) return [];
-    try {
-      const env = JSON.parse(raw);
-      if (!env || typeof env !== 'object') return [];
-      const points: string[] = [];
-      const exec = env.executive_summary ?? env.payload?.executive_summary;
-      const headline = exec?.headline ?? exec?.summary ?? env.headline;
-      if (typeof headline === 'string' && headline.trim()) points.push(headline.trim());
-      const findings = exec?.key_findings ?? env.key_findings ?? exec?.findings;
-      if (Array.isArray(findings)) {
-        for (const f of findings) {
-          const t = typeof f === 'string' ? f : f?.finding ?? f?.text ?? f?.title;
-          if (t && String(t).trim() && !isInstructionLine(String(t))) {
-            points.push(String(t).trim());
-          }
-          if (points.length >= 5) break;
-        }
-      }
-      const recs: any[] = env.recommendations ?? env.payload?.recommendations ?? [];
-      if (points.length < 5 && Array.isArray(recs)) {
-        for (const r of recs) {
-          const t = typeof r === 'string' ? r : r?.action ?? r?.recommendation ?? r?.text;
-          if (t && String(t).trim()) points.push(String(t).trim());
-          if (points.length >= 5) break;
-        }
-      }
-      return points;
-    } catch {
-      return [];
-    }
-  };
-
-  const envelopePoints = extractEnvelopeSummary(structuredData);
-  const keyPoints = envelopePoints.length > 0 ? envelopePoints : extractKeyPoints(displayAnalysis);
+  const envelopeSummary = extractEnvelopeSummary(structuredData);
+  const proseSummary = extractProseSummary(displayAnalysis);
+  const summaryFindings = envelopeSummary.findings.length > 0 ? envelopeSummary.findings : proseSummary.findings;
+  const summaryRecommendations = envelopeSummary.recommendations.length > 0 ? envelopeSummary.recommendations : proseSummary.recommendations;
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -313,15 +329,39 @@ const GeneratedReport = () => {
                   Executive Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <ul className="space-y-3">
-                  {keyPoints.map((point, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                      <span className="text-foreground">{point}</span>
-                    </li>
-                  ))}
-                </ul>
+              <CardContent className="pt-6 space-y-6">
+                {summaryFindings.length > 0 && (
+                  <div>
+                    <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                      Key Findings
+                    </h3>
+                    <ul className="space-y-3">
+                      {summaryFindings.map((point, i) => (
+                        <li key={`f-${i}`} className="flex items-start gap-3">
+                          <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                          <span className="text-foreground">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {summaryRecommendations.length > 0 && (
+                  <div>
+                    <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                      Recommended Actions
+                    </h3>
+                    <ol className="space-y-3 list-decimal list-inside">
+                      {summaryRecommendations.map((point, i) => (
+                        <li key={`r-${i}`} className="text-foreground">
+                          <span className="ml-1">{point}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {summaryFindings.length === 0 && summaryRecommendations.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No executive summary available.</p>
+                )}
               </CardContent>
             </Card>
 
