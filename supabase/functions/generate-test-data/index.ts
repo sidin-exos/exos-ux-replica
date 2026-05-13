@@ -551,11 +551,7 @@ Return ONLY a valid JSON object with these exact keys:
     if (trick) {
       parsed.trick = trick;
     }
-    
-    // Attach the selected persona
-    parsed.persona = persona.id;
-    parsed.personaName = persona.name;
-    
+
     // Hard-enforce the pre-sampled distribution in case the LLM drifted
     if (parsed.dataQuality !== presetDataQuality) {
       console.warn(`[TestDataGen] LLM returned dataQuality="${parsed.dataQuality}", overriding to preset "${presetDataQuality}"`);
