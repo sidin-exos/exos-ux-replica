@@ -1392,7 +1392,11 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
                           <View style={{ width: `${width}%`, height: 7, backgroundColor: fill, opacity: c.type === "result" ? 1 : 0.75 }} />
                         </View>
                         <Text style={{ width: 64, textAlign: "right", fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: colors.text, marginLeft: 4 }}>
-                          {c.type === "credit" ? "−" : ""}{formatCurrency(Math.abs(c.value), currency)}
+                          {c.type === "credit"
+                            ? `−${formatCurrency(Math.abs(c.value), currency, 1)}`
+                            : c.type === "result"
+                              ? formatCurrency(c.value, currency, 2)
+                              : formatCurrency(Math.abs(c.value), currency, 1)}
                         </Text>
                       </View>
                     );
