@@ -336,7 +336,6 @@ serve(async (req) => {
       const messyResult = await handleMessyMode(
         scenarioType,
         temperature > 0 ? Math.max(temperature, 0.9) : 0.9,
-        selectedPersona,
         supabase
       );
       return new Response(
