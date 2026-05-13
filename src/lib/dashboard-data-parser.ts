@@ -2356,28 +2356,50 @@ export function extractRiskRegisterItems(text: string): RiskRegisterItem[] {
 
   const payload: Record<string, any> = envelope.payload ?? {};
   const ss: Record<string, any> = payload.scenario_specific ?? {};
-  const raw: any[] =
-    Array.isArray(ss.risk_register) && ss.risk_register.length > 0 ? ss.risk_register :
-    Array.isArray(ss.risk_items) && ss.risk_items.length > 0 ? ss.risk_items :
-    Array.isArray(payload.risk_summary?.risks) ? payload.risk_summary.risks : [];
+
+  // Reuse the broad risk-source collector (same path as the Risk Matrix on
+  // page 2) so the Risk Register section finds the same items the matrix
+  // shows — covers all 29 scenarios + S27 supply_chain_nodes + key_findings
+  // severity-prefixed strings. Previously this only checked 3 keys, leaving
+  // the section empty for many envelopes.
+  const raw: any[] = collectRiskSource(payload, ss);
+  if (raw.length === 0) return [];
 
   return raw
-    .filter((r: any) => r && typeof r === 'object')
     .map((r: any): RiskRegisterItem | null => {
-      const description = String(
-        r.risk_description ?? r.description ?? r.label ?? r.risk ?? ''
+      // String entries ("Critical: …") — surface as-is.
+      if (typeof r === 'string') {
+        const t = r.trim();
+        if (!t) return null;
+        const m = t.match(SEVERITY_PREFIX_RE);
+        const sev = m ? normaliseSeverityLabel(m[1]) : 'Medium';
+        const desc = m ? t.replace(SEVERITY_PREFIX_RE, '').trim() : t;
+        return { description: desc || t, severity: sev };
+      }
+      if (!r || typeof r !== 'object') return null;
+
+      const name = String(
+        r.name ?? r.title ?? r.label ?? r.risk ?? r.dimension ??
+        r.node_name ?? r.node ?? r.threat ?? r.hazard ?? r.issue ?? ''
       ).trim();
-      const category = r.category ? String(r.category).trim() : undefined;
+      const description = String(
+        r.risk_description ?? r.description ?? r.consequence ??
+        r.business_impact ?? r.factor ?? ''
+      ).trim();
+      const category = r.category ?? r.risk_category ?? r.type ?? r.node_type;
       const severity = normaliseSeverityLabel(
-        r.severity ?? r.impact ?? r.likelihood ?? r.probability
+        r.severity ?? r.impact ?? r.severity_if_triggered ?? r.criticality ??
+        r.rag_status ?? r.likelihood ?? r.probability
       );
-      const finalDescription = description || category || '';
+
+      // Prefer description; fall back to name; finally to category.
+      const finalDescription = description || name || (category ? String(category).trim() : '');
       if (!finalDescription) return null;
       return {
-        name: category,
+        name: name && name !== finalDescription ? name : (category ? String(category).trim() : undefined),
         description: finalDescription,
         severity,
-        category,
+        category: category ? String(category).trim() : undefined,
       };
     })
     .filter((r): r is RiskRegisterItem => r !== null);
