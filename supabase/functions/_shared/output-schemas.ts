@@ -1205,6 +1205,43 @@ export function getScenarioSchema(group: string | null | undefined, scenarioId: 
     return `${preambleMatch[1]}\n${blockMatch[1].trim()}\n\n${footerMatch[1]}`;
   }
 
+  // ── Group B slicing (S9–S15) ───────────────────────────────────────
+  // Layout:
+  //   <preamble through "Never fabricate document sections.">
+  //   <S9 RFP Generator block — only one Group B scenario with detailed guidance>
+  // For S10–S15, return preamble only (≈1.4k tokens saved).
+  if (group === 'B' && code) {
+    const preambleMatch = full.match(/^([\s\S]*?Never fabricate document sections\.\s*\n)/);
+    if (!preambleMatch) return full;
+    // Per-scenario block: starts with "S## " heading, ends at next "S## " heading or EOS
+    const blockRe = new RegExp(`(\\n${code} [A-Z][\\s\\S]*?)(?=\\nS\\d+ [A-Z]|$)`);
+    const blockMatch = full.match(blockRe);
+    if (!blockMatch) {
+      // Scenario has no dedicated block — preamble alone is the contract.
+      return preambleMatch[1].trimEnd();
+    }
+    return `${preambleMatch[1]}${blockMatch[1].trimEnd()}`;
+  }
+
+  // ── Group C slicing (S16–S20) ──────────────────────────────────────
+  // Layout:
+  //   <preamble through "Use RAG status consistently.">
+  //   <S18 Risk Matrix block>
+  //   <S20 Category Risk Evaluator block>
+  //   <footer: "Recommendations array MUST follow ...">
+  // For S16/S17/S19, return preamble + footer (≈1.8k tokens saved).
+  if (group === 'C' && code) {
+    const preambleMatch = full.match(/^([\s\S]*?Use RAG status consistently\.\s*\n)/);
+    const footerMatch = full.match(/\n(Recommendations array MUST follow[\s\S]*)$/);
+    if (!preambleMatch || !footerMatch) return full;
+    const blockRe = new RegExp(`(\\n${code} [A-Z][\\s\\S]*?)(?=\\nS\\d+ [A-Z]|\\nRecommendations array MUST follow)`);
+    const blockMatch = full.match(blockRe);
+    if (!blockMatch) {
+      return `${preambleMatch[1]}\n${footerMatch[1]}`;
+    }
+    return `${preambleMatch[1]}${blockMatch[1].trimEnd()}\n\n${footerMatch[1]}`;
+  }
+
   return full;
 }
 
