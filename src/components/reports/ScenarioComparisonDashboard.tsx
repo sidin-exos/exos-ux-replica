@@ -80,11 +80,15 @@ const ScenarioComparisonDashboard = ({ parsedData }: ScenarioComparisonDashboard
   }, [scenarios, radarData, weights]);
 
   const winnerId = useMemo(() => {
+    if (parsedData?.recommendedOverride?.id) {
+      const match = scenarios.find((s) => s.id === parsedData.recommendedOverride!.id);
+      if (match) return match.id;
+    }
     return Object.entries(weightedTotals).reduce(
       (best, [id, score]) => (score > best.score ? { id, score } : best),
       { id: scenarios[0]?.id ?? "", score: -Infinity }
     ).id;
-  }, [weightedTotals, scenarios]);
+  }, [weightedTotals, scenarios, parsedData?.recommendedOverride]);
 
   const [activeId, setActiveId] = useState<string>(winnerId);
   const active = scenarios.find((s) => s.id === activeId) ?? scenarios[0];
