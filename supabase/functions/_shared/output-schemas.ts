@@ -167,9 +167,58 @@ FINANCIAL_MODEL IS ALWAYS REQUIRED (independent of scenario_specific):
 
 Then ALSO populate scenario_specific with the per-scenario structure below — this is in ADDITION to financial_model, never instead of it:
 
-- tco-analysis (S1): scenario_specific.vendor_options MUST be an array of AT LEAST 2 objects, each with vendor_label (string), total_tco (number), year_breakdown (array of { year: number, cost: number }). If the user provided only one option to analyse, generate the comparison against a clearly-labelled status-quo / do-nothing / industry-benchmark alternative. Never return fewer than 2 vendor_options for tco-analysis. The financial_model.cost_breakdown for tco-analysis represents the categorical decomposition of the PRIMARY (recommended) option's total_tco.
-- cost-breakdown (S2): use financial_model.cost_breakdown as the primary source. scenario_specific can stay empty {} or hold optional commentary.
+- tco-analysis (S1): scenario_specific MUST contain:
+  {
+    "vendor_options": [
+      { "vendor_label": "string", "total_tco": null, "year_breakdown": [{ "year": 1, "cost": null }],
+        "scoring": { "price": null, "quality": null, "delivery": null, "risk": null, "support": null, "weighted_total": null }, "recommended": false }
+    ],
+    "lifecycle_cost_waterfall": [
+      { "phase": "Acquisition | Operation | Maintenance | Disposal", "amount": null, "cumulative": null, "notes": null }
+    ],
+    "sensitivity_analysis": {
+      "wacc_sensitivity": [{ "wacc_pct": null, "npv_delta": null }],
+      "cost_escalation_sensitivity": [{ "escalation_pct": null, "npv_delta": null }],
+      "most_sensitive_assumption": null
+    }
+  }
+  vendor_options MUST contain AT LEAST 2 entries. If the user provided only one option, compare against a clearly-labelled status-quo / do-nothing / industry-benchmark alternative. Apply multi-criteria scoring (price, quality, delivery, risk, support) across all options and flag the recommended pick. lifecycle_cost_waterfall MUST cover acquisition, operation, maintenance, and disposal phases (baseline-to-final). sensitivity_analysis MUST vary WACC and operating cost escalation rates and identify which assumption most changes the verdict. The financial_model.cost_breakdown for tco-analysis represents the categorical decomposition of the PRIMARY (recommended) option's total_tco.
+- cost-breakdown (S2): scenario_specific MUST contain:
+  {
+    "should_cost_gap": { "bottom_up_estimate": null, "supplier_quote": null, "gap_value": null, "gap_pct": null, "negotiation_headroom": null },
+    "negotiation_leverage_points": [
+      { "cost_line": null, "supplier_value": null, "should_cost_value": null, "inflation_risk": "HIGH | MEDIUM | LOW", "leverage_argument": null }
+    ],
+    "market_benchmark_comparison": [
+      { "cost_line": null, "market_reference_value": null, "source": null, "source_recency": null, "premium_or_discount_pct": null }
+    ]
+  }
+  Per-line confidence (HIGH/MEDIUM/LOW) on financial_model.cost_breakdown items doubles as the Input Confidence Report — flag every LOW-confidence line for human review. market_benchmark_comparison values MUST be sourced via real-time grounding (cite the source).
 - savings-calculation (S4): scenario_specific.savings_breakdown — array of { lever (string), annual_savings (number), one_off_savings (number), confidence (HIGH|MEDIUM|LOW) }.
+  ADDITIONALLY for S4, you MUST populate scenario_specific.savings_waterfall and scenario_specific.finance_rejection_risk:
+  {
+    "savings_waterfall": [
+      { "step": "baseline | negotiated_price | volume_adjustment | inflation_protection | fx_adjustment | annualised_saving", "value": null, "cumulative": null, "notes": null }
+    ],
+    "baseline_validation": {
+      "baseline_type": "VERIFIED | ESTIMATED | BENCHMARKED",
+      "source": null,
+      "confidence_rating": "HIGH | MEDIUM | LOW",
+      "documentation_reference": null
+    },
+    "finance_audit_pack": {
+      "cips_classification_evidence": null,
+      "baseline_to_new_price_comparison": null,
+      "inflation_adjustment": null,
+      "fx_adjustment": null,
+      "confidence_markers": [],
+      "submission_ready": false
+    },
+    "finance_rejection_risk": [
+      { "risk_type": "CATEGORISATION_ERROR | UNVERIFIED_BASELINE | FX_EXPOSURE | DOUBLE_COUNTING | TIMING_MISMATCH | OTHER", "description": null, "severity": "HIGH | MEDIUM | LOW", "mitigation": null }
+    ]
+  }
+  savings_waterfall MUST visually trace baseline → negotiated price → annualised saving, with each lever (volume, inflation, FX) as a discrete step. baseline_validation MUST classify the basis as Verified (from contract), Estimated (from market data), or Benchmarked (from indices). finance_audit_pack consolidates the evidence Finance needs to accept the saving — only set submission_ready=true if every dependent field is populated. finance_rejection_risk MUST surface any risk that could invalidate the savings claim with a mitigation per item.
   ADDITIONALLY for S4, you MUST populate scenario_specific.savings_classification with the following structure (every field initialised to null when unknown):
   {
     "savings_classification": {
@@ -190,8 +239,97 @@ Then ALSO populate scenario_specific with the per-scenario structure below — t
     }
   }
   Classify every savings figure into exactly one of three CIPS categories: HARD (direct P&L impact — price reduction on confirmed volume), SOFT (cost avoidance — benefit not reflected in P&L, e.g. scope reduction), or AVOIDED (inflation-adjusted baseline protection). Do not aggregate across categories. If the user has not specified a category, default to SOFT and add a data_gaps[] entry requesting classification confirmation. Set baseline_verified=true ONLY if the user provided a documented historical baseline, not an estimate.
-- capex-vs-opex (S3): scenario_specific.options — array of >= 2 { option_label, total_capex, total_opex, year_by_year } entries.
-- For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
+- capex-vs-opex (S3): scenario_specific MUST contain:
+  {
+    "options": [
+      { "option_label": "string", "total_capex": null, "total_opex": null, "year_by_year": [{ "year": 1, "cost": null }], "npv": null }
+    ],
+    "flexibility_matrix": [
+      { "option_label": null, "upgrade_path": null, "exit_clause": null, "ownership_lock_in": "HIGH | MEDIUM | LOW", "tech_refresh_freedom": "HIGH | MEDIUM | LOW" }
+    ],
+    "cfo_recommendation": { "verdict": "LEASE | BUY | HYBRID", "cash_flow_rationale": null, "ifrs16_note": null },
+    "sensitivity_tornado": [
+      { "driver": "WACC | residual_value | lease_rate", "low_value": null, "base_value": null, "high_value": null, "npv_delta_at_low": null, "npv_delta_at_high": null }
+    ],
+    "ifrs16_impact_summary": { "balance_sheet_treatment": null, "pnl_treatment": null, "right_of_use_asset_estimate": null, "lease_liability_estimate": null }
+  }
+  options array MUST contain AT LEAST 2 entries (lease vs buy minimum). sensitivity_tornado MUST cover WACC, residual value, and lease rate impact on the NPV delta. ifrs16_impact_summary is mandatory whenever a lease option is on the table.
+- spend-analysis-categorization (S5): scenario_specific MUST contain:
+  {
+    "spend_taxonomy": [
+      { "category": null, "subcategory": null, "unspsc_code": null, "spend_value": null, "line_count": null, "confidence": "HIGH | MEDIUM | LOW", "flagged_for_review": false }
+    ],
+    "tail_spend": { "threshold_value": null, "tail_share_pct": null, "tail_transaction_count": null, "tail_value": null, "tail_categories": [] },
+    "vendor_consolidation": [
+      { "category": null, "current_supplier_count": null, "preferred_supplier_recommended": null, "estimated_saving_value": null, "estimated_saving_pct": null }
+    ],
+    "quick_wins": [
+      { "rank": 1, "action": null, "estimated_saving_value": null, "ease_of_execution": "HIGH | MEDIUM | LOW", "recommended_owner": "Role-based reference", "timeframe": null }
+    ],
+    "maverick_spend_heatmap": [
+      { "category": null, "off_contract_value": null, "off_contract_transaction_count": null, "policy_compliance_rate_pct": null, "heat_level": "RED | AMBER | GREEN" }
+    ],
+    "top_supplier_concentration": [
+      { "supplier_label": "Supplier_001", "total_spend": null, "share_of_total_pct": null, "cumulative_share_pct": null, "single_supplier_category_risk": false }
+    ]
+  }
+  Apply UNSPSC / eCl@ss classification per line. tail_spend MUST follow the 80/20 distribution. quick_wins MUST surface AT LEAST 5 entries ranked by savings × ease. top_supplier_concentration MUST cover the suppliers accounting for at least 80% of spend (Pareto). Flag any single-supplier category exposure.
+- forecasting-budgeting (S6): scenario_specific MUST contain:
+  {
+    "baseline_trend": { "method": "internal extrapolation", "yoy_change_pct": null, "seasonality_detected": false, "anomaly_flags": [], "series": [{ "period": null, "value": null }] },
+    "market_intelligence_overlay": { "cpi_index_pct": null, "ppi_index_pct": null, "commodity_index_pct": null, "fx_factor_pct": null, "grounding_sources": [] },
+    "scenarios": {
+      "base_case": { "narrative": null, "projected_spend": null, "assumptions": [] },
+      "stress_test": { "narrative": null, "projected_spend": null, "triggers": [], "early_warning_signals": [] },
+      "upside_case": { "narrative": null, "projected_spend": null, "required_conditions": [] }
+    },
+    "budget_optimization_steps": [
+      { "rank": 1, "action": null, "category": "cost_reduction | risk_management", "estimated_impact": null, "owner": "Role-based reference" }
+    ],
+    "assumptions_register": [
+      { "assumption": null, "scenario_applicability": ["base_case", "stress_test", "upside_case"], "macro_factor": null, "volume_driver": null, "data_source": null }
+    ],
+    "macro_sensitivity_ranking": [
+      { "rank": 1, "factor": "inflation | fx | commodity_price | other", "sensitivity_score": null, "impact_direction": "increase | decrease", "rationale": null }
+    ]
+  }
+  ALL three scenarios (base_case, stress_test, upside_case) are mandatory. Market overlay MUST be grounded via real-time search. assumptions_register MUST capture every assumption driving the three scenarios.
+- saas-optimization (S7): scenario_specific MUST contain:
+  {
+    "kill_list": [
+      { "tool_label": null, "annual_cost": null, "active_users": null, "license_count": null, "utilisation_pct": null, "annual_saving_if_cancelled": null, "cancellation_risk": "HIGH | MEDIUM | LOW", "rationale": null }
+    ],
+    "tier_mismatch": [
+      { "tool_label": null, "contracted_tier": null, "actual_usage_tier": null, "annual_overpayment": null, "recommended_tier": null }
+    ],
+    "duplicate_matrix": [
+      { "function": null, "tools_overlapping": [], "annual_combined_spend": null, "recommended_consolidation": null }
+    ],
+    "portfolio_health_scorecard": { "overall_utilisation_pct": null, "feature_overlap_score": null, "spend_efficiency_rating": "A | B | C | D | F", "tool_count": null, "shadow_it_exposure": "HIGH | MEDIUM | LOW" },
+    "renewal_calendar": [
+      { "tool_label": null, "renewal_date": null, "days_to_renewal": null, "auto_renewal": true, "action_required_by": null, "recommended_pre_renewal_decision": "RENEW | RENEGOTIATE | CANCEL | DOWNGRADE" }
+    ],
+    "total_recoverable_spend": { "kill_value": null, "optimise_value": null, "renegotiate_value": null, "total_value": null, "implementation_priority_sequence": [] }
+  }
+  renewal_calendar MUST include every tool renewing within 90 days. total_recoverable_spend MUST aggregate Kill + Optimise + Renegotiate values and propose a sequenced action plan. Never recommend cancellation without an active-user count check.
+- specification-optimizer (S8): scenario_specific MUST contain:
+  {
+    "gold_plating_report": [
+      { "specification": null, "current_value": null, "industry_standard_value": null, "cost_impact_estimate": null, "over_specification_severity": "HIGH | MEDIUM | LOW" }
+    ],
+    "market_comparison": [
+      { "specification": null, "industry_standard": null, "source": null, "deviation": null }
+    ],
+    "cost_reduction_opportunities": [
+      { "change": null, "estimated_saving_pct": null, "estimated_saving_value": null, "implementation_effort": "HIGH | MEDIUM | LOW" }
+    ],
+    "alternative_specification": { "summary": null, "function_preserved": true, "lower_cost_value": null, "trade_offs": [] },
+    "supplier_market_expansion": { "current_qualifying_supplier_count": null, "post_change_qualifying_supplier_count": null, "expansion_pct": null, "new_geographies_unlocked": [] },
+    "spec_change_risk_register": [
+      { "parameter_changed": null, "quality_risk": "HIGH | MEDIUM | LOW", "compliance_risk": "HIGH | MEDIUM | LOW", "performance_risk": "HIGH | MEDIUM | LOW", "what_you_lose": null, "what_you_gain": null }
+    ]
+  }
+  market_comparison MUST cite sources (Perplexity grounding). spec_change_risk_register MUST quantify quality, compliance, and performance risk per proposed parameter change.
 
 WORKING CAPITAL (financial_model.working_capital) — OPTIONAL:
 Populate working_capital ONLY if the user has provided payment terms data (e.g. NET 30, supplier payment schedules, DPO figures, or equivalent). Do not invent payment terms. If no terms data is present in the input, leave working_capital = null and do NOT add to data_gaps[] (this is optional, not mandatory).
@@ -212,8 +350,181 @@ Every numeric field must be derived from user inputs. Use null + confidence_flag
     "scenario_specific": {}
   }
 }
-Populate scenario_specific based on the scenario (e.g. evaluation_criteria for RFP, metrics for SLA, requirements for BRD, scorecard for Supplier Performance, phases for Project Planning, etc.).
-Mark incomplete sections with [DATA NEEDED: description] in the content. Never fabricate document sections.`,
+Populate scenario_specific using the per-scenario structures below verbatim. Mark incomplete sections with [DATA NEEDED: description] in the content. Never fabricate document sections.
+
+— S9 RFP Generator (Tender Package):
+{
+  "scenario_specific": {
+    "extracted_brief_summary": {
+      "objective": null,
+      "scope": null,
+      "timeline": null,
+      "budget_range": null,
+      "key_requirements": [],
+      "auto_extracted_from_raw_input": true
+    },
+    "tender_documents": [
+      { "package_type": "RFI | RFP | RFQ", "title": null, "structured_sections": [{ "heading": null, "content": null }] }
+    ],
+    "evaluation_matrix": [
+      { "criterion": null, "weight_pct": null, "scoring_scale": "1-5 | 1-10 | pass-fail", "rationale": null }
+    ],
+    "clarifications_and_recommendations": [
+      { "missing_data_flag": null, "recommendation": null, "action_before_issue": null }
+    ],
+    "suggested_attachments": [
+      { "template_type": "NDA | GDPR_DPA | INSURANCE_CERTIFICATE | CODE_OF_CONDUCT | OTHER", "purpose": null, "required": true }
+    ]
+  }
+}
+Tender documents MUST follow the package type selected by the user (RFI / RFP / RFQ). Evaluation matrix weights MUST sum to 100. GDPR DPA annex MUST be suggested whenever personal data processing is in scope.
+
+— S10 SLA Definition:
+{
+  "scenario_specific": {
+    "sla_table": [
+      { "metric_name": null, "target_threshold": null, "measurement_period": null, "measurement_method": null, "penalty_mechanism": null }
+    ],
+    "decision_tree": [
+      { "severity_tier": "P1 | P2 | P3 | P4", "trigger_criteria": null, "response_time": null, "escalation_step": null, "responsible_role": "Role-based reference" }
+    ],
+    "draft_agreement": { "title": null, "sections": [{ "heading": null, "content": null }] },
+    "service_credits_framework": [
+      { "severity_tier": "P1 | P2 | P3 | P4", "breach_condition": null, "service_credit_pct_of_mrc": null, "cap_pct": null, "calculation_basis": "monthly contract value" }
+    ],
+    "reporting_governance_schedule": {
+      "measurement_frequency": null,
+      "reporting_cadence": "weekly | monthly | quarterly",
+      "review_cycle": "monthly | quarterly | annual",
+      "governance_forum": null,
+      "escalation_path": []
+    }
+  }
+}
+SLA table metrics MUST be measurable and time-bound. Decision tree MUST cover every severity tier with role-based escalation. service_credits_framework MUST tie financial remedy to monthly contract value.
+
+— S11 Tail Spend Rapid Sourcing:
+{
+  "scenario_specific": {
+    "action_plan": {
+      "verdict": "BUY_HERE | LAUNCH_MINI_TENDER",
+      "recommended_supplier": null,
+      "rationale": null,
+      "next_steps": []
+    },
+    "compliance_alert": {
+      "policy_breach_detected": false,
+      "eu_threshold_violation": false,
+      "alert_details": null,
+      "recommended_remediation": null
+    }
+  }
+}
+Always evaluate EU procurement threshold rules (Directive 2014/24/EU) when the buyer is a public-sector body.
+
+— S12 Contract Template Generator:
+{
+  "scenario_specific": {
+    "legal_disclaimer": { "limitation_of_liability": null, "scope_boundary": null, "jurisdiction": null },
+    "contract_structure": [
+      { "section_number": null, "heading": null, "mandatory": true, "cross_references": [] }
+    ],
+    "drafted_template": {
+      "country": null,
+      "governing_law_clause": null,
+      "gdpr_provisions_included": true,
+      "sections": [{ "heading": null, "content": null }]
+    },
+    "clause_guidance": [
+      { "clause_reference": null, "what_it_protects_against": null, "recommended_negotiation_stance": null, "fallback_position": null }
+    ],
+    "gdpr_dpa_assessment": {
+      "dpa_required": false,
+      "art28_trigger": null,
+      "dpa_template_attached": false,
+      "data_categories_in_scope": []
+    },
+    "high_risk_clause_summary": [
+      { "clause_reference": null, "risk_type": "LIABILITY_CAP | IP_OWNERSHIP | AUTO_RENEWAL | INDEMNITY | TERMINATION | OTHER", "severity": "HIGH | MEDIUM | LOW", "current_language": null, "recommended_safer_alternative": null }
+    ]
+  }
+}
+Country-specific language is mandatory. Set gdpr_dpa_assessment.dpa_required=true whenever the supplier processes personal data on behalf of the buyer (GDPR Art. 28).
+
+— S13 Requirements Gathering:
+{
+  "scenario_specific": {
+    "moscow_matrix": [
+      { "requirement": null, "priority": "MUST | SHOULD | COULD | WONT", "rationale": null }
+    ],
+    "user_stories": [
+      { "role": null, "capability": null, "outcome": null, "acceptance_criteria": [] }
+    ],
+    "market_scan": [
+      { "solution_label": null, "capability_fit_pct": null, "strengths": [], "weaknesses": [], "indicative_pricing": null }
+    ],
+    "dependency_map": [
+      { "requirement_a": null, "requirement_b": null, "relationship": "DEPENDS_ON | CONFLICTS_WITH | ENABLES", "prioritisation_rationale": null }
+    ],
+    "constraints_assumptions_register": {
+      "constraints": [{ "constraint": null, "rationale": null }],
+      "assumptions": [{ "assumption": null, "rationale": null }],
+      "out_of_scope": [{ "exclusion": null, "rationale": null }],
+      "acceptance_criteria_summary": []
+    }
+  }
+}
+market_scan MUST return 3–5 candidate solutions. Every MUST-have requirement MUST have an acceptance criterion.
+
+— S14 Supplier Review:
+{
+  "scenario_specific": {
+    "supplier_scorecard": {
+      "supplier_label": "Supplier_001",
+      "dimensions": [
+        { "dimension": "Quality | Delivery | Cost | Risk | Relationship", "score": null, "weight_pct": null, "evidence": null }
+      ],
+      "weighted_total": null,
+      "rag_status": "RED | AMBER | GREEN"
+    },
+    "pip_plan": {
+      "duration_days": 90,
+      "targets": [{ "kpi": null, "current_value": null, "target_value": null, "checkpoint_dates": [] }],
+      "exit_criteria": null,
+      "consequence_if_failed": null
+    },
+    "qbr_script": {
+      "agenda_items": [],
+      "kpi_talking_points": [],
+      "escalation_prompts": [],
+      "success_criteria": []
+    },
+    "kpi_trend_analysis": [
+      { "kpi": null, "series": [{ "period": null, "value": null }], "trajectory": "IMPROVING | FLAT | DECLINING", "early_warning_signal": false, "predicted_breach_period": null }
+    ]
+  }
+}
+Scorecard MUST cover quality, delivery, cost, risk, and relationship. kpi_trend_analysis MUST flag early warning signals before SLA breach.
+
+— S15 Procurement Project Planning:
+{
+  "scenario_specific": {
+    "swot_analysis": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
+    "priority_matrix": [
+      { "activity": null, "effort": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "quadrant": "QUICK_WIN | BIG_BET | FILL_IN | THANKLESS" }
+    ],
+    "stakeholder_map": [
+      { "stakeholder_group": null, "influence": "HIGH | MEDIUM | LOW", "interest": "HIGH | MEDIUM | LOW", "engagement_strategy": null }
+    ],
+    "critical_path": [
+      { "milestone": null, "target_date": null, "decision_point": false, "dependencies": [], "owner": "Role-based reference" }
+    ],
+    "risk_register": [
+      { "risk": null, "probability": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": null, "owner": "Role-based reference" }
+    ]
+  }
+}
+Use role-based references only (never named individuals).`,
 
   C: `GROUP C PAYLOAD SCHEMA (Reliability & Compliance — S16–S20):
 {
@@ -226,11 +537,118 @@ Mark incomplete sections with [DATA NEEDED: description] in the content. Never f
     "scenario_specific": {}
   }
 }
-Populate scenario_specific based on the scenario (e.g. issues/missing_clauses for SOW Critic, risk_register for Risk Assessment, risk items with rag_status for Risk Matrix, entitlements/compliance_gaps for Licensing Audit, risk_dimensions for Category Risk).
-Every risk must reference a regulatory standard or contractual clause. Use RAG status consistently.
+Populate scenario_specific using the per-scenario structures below verbatim. Every risk must reference a regulatory standard or contractual clause. Use RAG status consistently.
 
-S20 Category Risk Evaluation — additionally populate scenario_specific.concentration when supplier-to-category spend data is available (per §5.5 of the schema):
-${CONCENTRATION_SCHEMA_FRAGMENT}`,
+— S16 SOW Critic:
+{
+  "scenario_specific": {
+    "redlining": [
+      { "clause_reference": null, "severity": "CRITICAL | HIGH | MEDIUM", "gap_identified": null, "financial_exposure": null, "regulatory_reference": null }
+    ],
+    "scorecard": {
+      "enforceability_pct": null,
+      "completeness_pct": null,
+      "compliance_pct": null,
+      "overall_protection_score_pct": null
+    },
+    "checklist": [
+      { "question": null, "grey_area_or_missing_provision": null, "ask_before_signature": true }
+    ],
+    "remediation_language": [
+      { "clause_reference": null, "current_language": null, "recommended_replacement_language": null, "legal_team_review_required": true }
+    ]
+  }
+}
+Categorise every finding by severity (Critical / High / Medium). Quantify financial exposure for every Critical/High finding. remediation_language MUST be ready-to-paste replacement text for legal team redline.
+
+— S17 Risk Assessment:
+{
+  "scenario_specific": {
+    "risk_prioritisation_summary": {
+      "framework": "ISO 31000",
+      "tiers": [{ "tier": "CRITICAL | HIGH | MEDIUM | LOW", "risk_count": null }],
+      "overall_rag": "RED | AMBER | GREEN"
+    },
+    "current_situation_summary": { "narrative": null, "key_risk_factors": [], "exposure_value": null },
+    "mitigation_roadmap": [
+      { "action": null, "severity_tag": "CRITICAL | HIGH | MEDIUM | LOW", "impact_estimate": null, "owner": "Role-based reference", "target_date": null }
+    ],
+    "risk_register": [
+      { "risk_id": "RISK-001", "category": null, "severity": "CRITICAL | HIGH | MEDIUM | LOW", "probability": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "owner_role": "Role-based reference" }
+    ],
+    "residual_risk_assessment": [
+      { "risk_id": "RISK-001", "residual_rating": "CRITICAL | HIGH | MEDIUM | LOW", "post_mitigation_severity": "CRITICAL | HIGH | MEDIUM | LOW", "governance_escalation_required": false }
+    ]
+  }
+}
+Use ISO 31000 impact × probability ranking. residual_risk_assessment MUST flag governance escalation for any Critical residual remaining after mitigation.
+
+— S18 Risk Matrix:
+{
+  "scenario_specific": {
+    "risk_heatmap": [
+      { "risk_id": "RISK-001", "label": null, "probability_score": null, "impact_score": null, "quadrant": "TOLERATE | TREAT | TRANSFER | TERMINATE", "severity_zone": "RED | AMBER | GREEN" }
+    ],
+    "mitigation_plan": [
+      { "risk_id": "RISK-001", "action": null, "owner": "Role-based reference", "target_date": null, "expected_severity_post_mitigation": "RED | AMBER | GREEN" }
+    ],
+    "quadrant_response_strategy": [
+      { "quadrant": "TOLERATE | TREAT | TRANSFER | TERMINATE", "recommended_response": null, "rationale": null, "risk_ids_in_quadrant": [] }
+    ]
+  }
+}
+risk_heatmap MUST be a 5×5 probability × impact grid; place each risk by ID. quadrant_response_strategy MUST map every quadrant to one of Tolerate / Treat / Transfer / Terminate with rationale.
+
+— S19 Software Licensing Audit:
+{
+  "scenario_specific": {
+    "license_tier_optimization": [
+      { "tier": null, "current_users": null, "recommended_users": null, "annual_saving_value": null }
+    ],
+    "tco_comparison": [
+      { "scenario_label": "monthly | annual | enterprise", "year_breakdown": [{ "year": 1, "cost": null }], "total_tco": null }
+    ],
+    "contract_term_analysis": { "short_term_flexibility_score": null, "long_term_savings_value": null, "trade_off_summary": null },
+    "vendor_lock_in_score": { "score": null, "rating": "HIGH | MEDIUM | LOW", "lock_in_factors": [], "mitigation_strategies": [] },
+    "negotiation_playbook": { "leverage_points": [], "counter_proposals": [], "concession_priorities": [] },
+    "break_even_analysis": { "commitment_period_years": null, "break_even_year": null, "rationale": null },
+    "scenario_comparison_table": [
+      { "scenario_label": null, "year_1_cost": null, "year_3_cost": null, "year_5_cost": null, "flexibility_score": null }
+    ],
+    "risk_adjusted_recommendation": { "verdict": null, "rationale": null, "residual_risks": [] }
+  }
+}
+TCO comparison MUST cover monthly vs annual vs enterprise tiers. Vendor lock-in MUST list concrete mitigation strategies.
+
+— S20 Category Risk Evaluator:
+{
+  "scenario_specific": {
+    "category_risk_score": { "overall": null, "supply_risk": null, "financial_risk": null, "regulatory_risk": null, "operational_risk": null },
+    "sow_ambiguity_report": [
+      { "term_or_clause": null, "ambiguity": null, "potential_overrun_value": null }
+    ],
+    "market_intelligence_brief": { "dynamics": null, "trends": [], "pricing_outlook": null, "sources": [] },
+    "supply_risk_assessment": { "market_health": null, "availability_rating": "HIGH | MEDIUM | LOW", "supplier_count": null },
+    "budget_risk_forecast": { "estimated_variance_pct": null, "estimated_variance_value": null, "drivers": [] },
+    "risk_mitigation_strategy": [
+      { "stage": "TENDER | CONTRACT | EXECUTION", "action": null, "expected_risk_reduction": null }
+    ],
+    "recommended_contract_terms": [
+      { "clause": null, "purpose": null, "risk_addressed": null }
+    ],
+    "decision_readiness_score": { "score": null, "verdict": "PROCEED | HOLD | DO_NOT_PROCEED", "rationale": null },
+    "eu_regulatory_exposure": {
+      "gdpr_applicable": false,
+      "nis2_applicable": false,
+      "csrd_applicable": false,
+      "other_frameworks": [],
+      "compliance_risk_indicators": [],
+      "remediation_required": false
+    },
+    ${CONCENTRATION_SCHEMA_FRAGMENT}
+  }
+}
+eu_regulatory_exposure MUST assess GDPR (personal data), NIS2 (essential / important entities), and CSRD (sustainability reporting) applicability and surface compliance risk indicators. Populate concentration when supplier-to-category spend data is available.`,
 
   D: `GROUP D PAYLOAD SCHEMA (Strategic Mentorship — S21–S27):
 {
@@ -535,8 +953,82 @@ All framework outputs must reference the user's specific inputs. Never produce g
     "scenario_specific": {}
   }
 }
-Populate scenario_specific based on the scenario (e.g. intelligence_blocks/key_market_signals for Market Intelligence, audit_dimensions/entity_verified/proceed_recommendation for Pre-Flight Supplier Audit).
-Every factual claim must reference a source_id. Use null for any field where search returned no reliable result.`,
+Populate scenario_specific using the per-scenario structures below verbatim. Every factual claim must reference a source_id. Use null for any field where search returned no reliable result.
+
+— S28 Market Snapshot:
+{
+  "scenario_specific": {
+    "regional_competitive_landscape": {
+      "region": null,
+      "major_players": [
+        { "player": null, "estimated_market_share_pct": null, "recent_moves": [], "source_id": "SRC-001" }
+      ]
+    },
+    "player_profiles": [
+      { "player": null, "strengths": [], "weaknesses": [], "pricing_strategy": null, "recent_strategic_activity": [], "source_id": "SRC-001" }
+    ],
+    "completeness_scorecard": {
+      "coverage_pct": null,
+      "benchmark_pct": null,
+      "verdict": "COMPLETE | PARTIAL | INSUFFICIENT",
+      "missing_coverage_dimensions": []
+    },
+    "gap_analysis_and_clarifications": [
+      { "gap": null, "ambiguous_finding": null, "clarification_question": null }
+    ],
+    "recommended_sources_for_further_discovery": [
+      { "source_type": "DATABASE | ANALYST_REPORT | TRADE_BODY | OTHER", "name": null, "rationale": null }
+    ],
+    "market_pricing_benchmark": {
+      "category": null,
+      "price_range_low": null,
+      "price_range_high": null,
+      "currency": "EUR",
+      "confidence_rating": "HIGH | MEDIUM | LOW",
+      "premium_or_discount_drivers": [],
+      "source_ids": []
+    },
+    "category_market_trend_analysis": {
+      "direction": "GROWTH | CONTRACTION | FLAT",
+      "growth_rate_pct": null,
+      "demand_drivers": [],
+      "supply_drivers": [],
+      "procurement_timing_implication": null,
+      "source_ids": []
+    }
+  }
+}
+Every market_pricing_benchmark and trend value MUST reference at least one source_id from sources_consulted. Confidence rating MUST be LOW whenever fewer than 2 independent sources corroborate the value.
+
+— S29 Pre-Flight Supplier Audit:
+{
+  "scenario_specific": {
+    "supplier_dossier": {
+      "supplier_label": "Supplier_001",
+      "background": null,
+      "ownership": null,
+      "financial_indicators": { "revenue": null, "profitability": null, "credit_rating": null },
+      "verified_facts": [],
+      "source_ids": []
+    },
+    "news_digest": [
+      { "category": "NEWS | LAWSUIT | M&A | LEADERSHIP_CHANGE | FINANCIAL_UPDATE", "headline": null, "published_date": null, "source_id": "SRC-001", "recency_flag": "CURRENT | RECENT | DATED" }
+    ],
+    "risk_flags": [
+      { "pattern": "FINANCIAL_DISTRESS | LITIGATION | SANCTIONS | ESG_ISSUE | CYBER_INCIDENT | OTHER", "evidence": null, "severity": "HIGH | MEDIUM | LOW", "source_id": "SRC-001" }
+    ],
+    "negotiation_brief": {
+      "leverage_points": [],
+      "talking_points": [],
+      "intelligence_summary": null
+    },
+    "due_diligence_checklist": [
+      { "item": null, "priority": "HIGH | MEDIUM | LOW", "verification_method": null }
+    ],
+    "proceed_recommendation": { "verdict": "PROCEED | PROCEED_WITH_CAUTION | DO_NOT_PROCEED", "rationale": null }
+  }
+}
+risk_flags MUST match the standard procurement risk pattern taxonomy. due_diligence_checklist items MUST be prioritised.`,
 };
 
 // ── AI Prompt Contract ──────────────────────────────────────────────
