@@ -70,11 +70,11 @@ Deno.serve(async (req) => {
       "im-driver-propose",
       "llm",
       {
-        model: "gemini-2.5-pro",
+        model: "gemini-3.1-pro-preview",
         goodsDefinitionLength: goodsDefinition.length,
         driverCountTarget,
       },
-      { tags: ["model:gemini-2.5-pro"] }
+      { tags: ["model:gemini-3.1-pro-preview"] }
     );
 
     // Call Gemini 3.1 Pro with tool calling for structured output
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
           promptTokens,
           completionTokens,
           totalTokens: response.usageMetadata?.totalTokenCount,
-          estimatedCostUsd: estimateCost("gemini-2.5-pro", promptTokens, completionTokens),
+          estimatedCostUsd: estimateCost("gemini-3.1-pro-preview", promptTokens, completionTokens),
         });
 
         return new Response(JSON.stringify({ drivers, source: "ai" }), {
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
         promptTokens: fbPromptTokens,
         completionTokens: fbCompletionTokens,
         totalTokens: response.usageMetadata?.totalTokenCount,
-        estimatedCostUsd: estimateCost("gemini-2.5-pro", fbPromptTokens, fbCompletionTokens),
+        estimatedCostUsd: estimateCost("gemini-3.1-pro-preview", fbPromptTokens, fbCompletionTokens),
       });
       return new Response(JSON.stringify({ drivers: FALLBACK_DRIVERS.slice(0, driverCountTarget), source: "fallback" }), {
         status: 200,

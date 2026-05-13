@@ -227,7 +227,7 @@ serve(async (req) => {
       messageCount: messages.length,
       scenarioCount: parsedScenarios?.length || 0,
       hasContext: !!currentPath && currentPath !== "/",
-    }, { tags: ["chat", "model:gemini-2.5-pro"] });
+    }, { tags: ["chat", "model:gemini-3.1-pro-preview"] });
 
     // Convert messages to Google format (frontend sends user/assistant roles)
     const typedMessages = messages as Array<{ role: string; content: string }>;
@@ -268,7 +268,7 @@ serve(async (req) => {
         promptTokens,
         completionTokens,
         totalTokens: aiResponse.usageMetadata?.totalTokenCount,
-        estimatedCostUsd: estimateCost("gemini-2.5-pro", promptTokens, completionTokens),
+        estimatedCostUsd: estimateCost("gemini-3.1-pro-preview", promptTokens, completionTokens),
         responseLength: content.length,
         processingTimeMs: Date.now() - startTime,
       });

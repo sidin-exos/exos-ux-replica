@@ -62,15 +62,7 @@ export interface GoogleAIResponse {
 
 // ─── Main API call ──────────────────────────────────────────────────────────
 
-export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIResponse> {
-  const apiKey = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
-  if (!apiKey) {
-    throw new Error("GOOGLE_AI_STUDIO_KEY is not configured");
-  }
-
-  const model = request.model || DEFAULT_MODEL;
-  const endpoint = `${BASE_URL}/${model}:generateContent?key=${apiKey}`;
-
+function buildGoogleAIRequestBody(request: GoogleAIRequest): Record<string, unknown> {
   const body: Record<string, unknown> = {
     contents: request.contents,
     generationConfig: {
@@ -96,6 +88,54 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
   if (request.tools && request.tools.length > 0) {
     body.tools = request.tools;
   }
+
+  return body;
+}
+
+function parseGoogleAIResponse(data: any): GoogleAIResponse {
+  const candidate = data.candidates?.[0];
+
+  if (candidate?.finishReason === "SAFETY") {
+    const error = new Error("Response blocked by safety filter") as Error & { status: number };
+    error.status = 400;
+    throw error;
+  }
+
+  const parts = candidate?.content?.parts || [];
+
+  let text = "";
+  let functionCall: { name: string; args: Record<string, unknown> } | undefined;
+
+  for (const part of parts) {
+    if (part.text) {
+      text += part.text;
+    }
+    if (part.functionCall) {
+      functionCall = {
+        name: part.functionCall.name,
+        args: part.functionCall.args || {},
+      };
+    }
+  }
+
+  return {
+    text,
+    functionCall,
+    usageMetadata: data.usageMetadata,
+    provider: "google_ai_studio",
+  };
+}
+
+export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIResponse> {
+  const apiKey = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
+  if (!apiKey) {
+    throw new Error("GOOGLE_AI_STUDIO_KEY is not configured");
+  }
+
+  const model = request.model || DEFAULT_MODEL;
+  const endpoint = `${BASE_URL}/${model}:generateContent?key=${apiKey}`;
+
+  const body = buildGoogleAIRequestBody(request);
 
   const timeoutMs = request.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const contentsLen = JSON.stringify(request.contents).length;
@@ -168,9 +208,20 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
     // Pro→Flash escalation only fires for the default Pro caller. Flash-variant
     // callers (e.g. scenario-tutorial uses gemini-3.1-flash-lite-preview) skip
     // straight to Nebius rather than getting silently upgraded to a costlier model.
+    // Flash gets ONE attempt — if it fails, fall through to Nebius immediately.
+    // Re-entering the full retry loop would stack another ~31s of backoff on top
+    // of the Pro retries, blowing the 150s edge budget.
     if (attempt === MAX_ATTEMPTS && overloaded && model === DEFAULT_MODEL) {
-      console.warn(`[GoogleAI] ${res.status} exhausted on ${model}, falling back to ${OVERLOAD_FALLBACK_MODEL}`);
-      return callGoogleAI({ ...request, model: OVERLOAD_FALLBACK_MODEL });
+      console.warn(`[GoogleAI] ${res.status} exhausted on ${model}, single attempt on ${OVERLOAD_FALLBACK_MODEL} before Nebius`);
+      try {
+        return await callGoogleAISingleAttempt({ ...request, model: OVERLOAD_FALLBACK_MODEL });
+      } catch (flashErr) {
+        return await maybeNebiusFallback(
+          request,
+          flashErr as Error & { status?: number },
+          `flash_fallback_failed_after_pro_${res.status}`,
+        );
+      }
     }
 
     if (isAuthFailure) {
@@ -197,38 +248,68 @@ export async function callGoogleAI(request: GoogleAIRequest): Promise<GoogleAIRe
   }
 
   const data = await res.json();
-  const candidate = data.candidates?.[0];
+  return parseGoogleAIResponse(data);
+}
 
-  // Handle safety blocks
-  if (candidate?.finishReason === "SAFETY") {
-    const error = new Error("Response blocked by safety filter") as Error & { status: number };
-    error.status = 400;
+// Single-shot Google AI call with no retry loop. Used only by the Pro→Flash
+// fallback path so flash doesn't get its own 5-attempt exp-backoff loop stacked
+// on top of the Pro retries. Any non-2xx response or thrown error propagates
+// to the caller, which routes to Nebius.
+async function callGoogleAISingleAttempt(request: GoogleAIRequest): Promise<GoogleAIResponse> {
+  const apiKey = Deno.env.get("GOOGLE_AI_STUDIO_KEY");
+  if (!apiKey) {
+    throw new Error("GOOGLE_AI_STUDIO_KEY is not configured");
+  }
+
+  const model = request.model || DEFAULT_MODEL;
+  const endpoint = `${BASE_URL}/${model}:generateContent?key=${apiKey}`;
+  const body = buildGoogleAIRequestBody(request);
+  const timeoutMs = request.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+  console.log("[GoogleAI] → single-attempt", JSON.stringify({ model, timeoutMs }));
+
+  const startTime = performance.now();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    const elapsedMs = Math.round(performance.now() - startTime);
+    if (err instanceof Error && err.name === "AbortError") {
+      console.error("[GoogleAI] TIMEOUT (single)", JSON.stringify({ model, elapsedMs, timeoutMs }));
+      const timeoutError = new Error(`Google AI Studio request timed out after ${timeoutMs}ms`) as Error & { status: number };
+      timeoutError.status = 504;
+      throw timeoutError;
+    }
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[GoogleAI] NETWORK ERR (single)", JSON.stringify({ model, elapsedMs, errMsg }));
+    const networkError = (err instanceof Error ? err : new Error(errMsg)) as Error & { status?: number };
+    networkError.status = networkError.status ?? 502;
+    throw networkError;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  const elapsedMs = Math.round(performance.now() - startTime);
+  console.log("[GoogleAI] ← single HTTP", res.status, "in", elapsedMs, "ms");
+
+  if (!res.ok) {
+    const errText = await res.text();
+    const error = new Error(`Google AI Studio error ${res.status}: ${errText}`) as Error & { status: number; body: string };
+    error.status = res.status;
+    error.body = errText;
     throw error;
   }
 
-  const parts = candidate?.content?.parts || [];
-
-  let text = "";
-  let functionCall: { name: string; args: Record<string, unknown> } | undefined;
-
-  for (const part of parts) {
-    if (part.text) {
-      text += part.text;
-    }
-    if (part.functionCall) {
-      functionCall = {
-        name: part.functionCall.name,
-        args: part.functionCall.args || {},
-      };
-    }
-  }
-
-  return {
-    text,
-    functionCall,
-    usageMetadata: data.usageMetadata,
-    provider: "google_ai_studio",
-  };
+  const data = await res.json();
+  return parseGoogleAIResponse(data);
 }
 
 // ─── Nebius / Nemotron fallback ─────────────────────────────────────────────
