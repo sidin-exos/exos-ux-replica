@@ -163,8 +163,10 @@ export function mapDataQualityToTier(dataQuality: string): QualityTier {
       return 'OPTIMAL';
     case 'partial':
       return 'MINIMUM';
-    case 'poor':
-      return 'DEGRADED';
+    case 'irrelevant':
+      return 'IRRELEVANT';
+    case 'poor': // legacy alias — old "poor/insufficient" path is now "irrelevant"
+      return 'IRRELEVANT';
     default:
       return 'OPTIMAL';
   }
