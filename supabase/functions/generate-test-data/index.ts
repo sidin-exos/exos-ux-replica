@@ -278,6 +278,7 @@ interface GenerateRequest {
   mctsIterations?: number;
   temperature?: number;
   persona?: string;
+  excludeTrickCategories?: string[];
 }
 
 interface MCTSNode {
