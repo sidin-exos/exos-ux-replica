@@ -318,12 +318,20 @@ export async function generateTestDataHybrid(
 }> {
   const { preferAI = true, industry, category, mctsIterations } = options || {};
 
+  // Pre-pick industry/category/persona using the rotation buffer so the same
+  // combination doesn't repeat back-to-back. The edge function still rolls
+  // its own trick + content randomly — we just stop it from re-rolling pair
+  // and persona on its own.
+  const pickedPair = pickRotatedPair(scenarioType, industry, category);
+  const pickedPersona = pickRotatedPersona(scenarioType);
+
   if (preferAI) {
     try {
       const result = await generateAITestData({
         scenarioType,
-        industry,
-        category,
+        industry: pickedPair.industry,
+        category: pickedPair.category,
+        persona: pickedPersona,
         mctsIterations,
       });
 
