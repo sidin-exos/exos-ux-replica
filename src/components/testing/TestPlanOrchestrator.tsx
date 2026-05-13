@@ -106,10 +106,6 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
       plan.push({ scenarioId, industrySlug, categorySlug, entropyLevel });
     }
 
-      const entropyLevel = randomChoice([1, 2, 3]) as EntropyLevel;
-      plan.push({ scenarioId, persona, industrySlug, categorySlug, entropyLevel });
-    }
-
     setGeneratedPlan(plan);
     toast({ title: "Draft plan generated", description: "15 random combinations ready for review." });
   }, [scenarioId]);
