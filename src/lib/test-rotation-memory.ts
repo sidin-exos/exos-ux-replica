@@ -3,13 +3,12 @@
  *
  * Both static and AI engines use Math.random() — that's truly random
  * but memoryless, so it readily picks the same industry / category /
- * persona / trick twice in a row. This module keeps a small "recently
+ * trick twice in a row. This module keeps a small "recently
  * used" buffer per key in localStorage and excludes those items from
  * the next pick. When everything is exhausted the buffer resets.
  *
  * Standard buffer sizes (per user choice):
  *   - industry+category pair: last 8
- *   - persona:                last 3
  *   - trick template:         last 10
  */
 
@@ -17,7 +16,6 @@ const STORAGE_PREFIX = "exos:test-rotation:";
 
 export const ROTATION_BUFFER = {
   pair: 8,
-  persona: 3,
   trick: 10,
 } as const;
 
