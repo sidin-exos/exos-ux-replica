@@ -626,15 +626,6 @@ EMBEDDING RULES:
 6. Embed the trick primarily in the "${trick.targetField}" field
 7. The rest of the data should appear normal and professional` : '';
 
-  // ── PERSONA STYLE INSTRUCTIONS ──
-  const PERSONA_STYLE_INSTRUCTIONS: Record<string, string> = {
-    "rushed-junior": "Write minimally and vaguely. Use abbreviations freely. Fill only 30-40% of optional fields. Skip details a junior wouldn't know.",
-    "methodical-manager": "Write in detailed, structured prose with precise industry terminology. Fill 85-95% of optional fields. Include strategic rationale.",
-    "cfo-finance": "Focus exclusively on numbers, risk metrics, and ROI. Keep text fields extremely short. Prioritize financial fields. Fill 40-60% of optional fields.",
-    "frustrated-stakeholder": "Mix complaints into data fields. Use narrative paragraphs instead of structured facts. Misuse procurement terminology. Fill 50-70% of optional fields but often in wrong format.",
-    "lost-user": "Write completely irrelevant content with no procurement context. Ask random unrelated questions. Fill 0% of optional fields meaningfully.",
-  };
-
   // ── COMPANY SIZE FINANCIAL SCALES ──
   const COMPANY_SIZE_SCALES: Record<string, string> = {
     "startup": "contract values €5K-€50K, WACC 15-25%, limited leverage",
@@ -647,7 +638,6 @@ EMBEDDING RULES:
     "Large Enterprise": "contract values €500K-€20M, WACC 6-9%",
   };
 
-  const personaStyle = PERSONA_STYLE_INSTRUCTIONS[selectedPersona.id] || PERSONA_STYLE_INSTRUCTIONS["methodical-manager"];
   const financialScale = COMPANY_SIZE_SCALES[parameters.companySize] || "contract values €100K-€2M, WACC 7-11%";
 
   // ── SYSTEM PROMPT ──
