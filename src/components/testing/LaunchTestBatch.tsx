@@ -35,7 +35,6 @@ interface LaunchTestBatchProps {
 }
 
 const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps) => {
-  const [persona, setPersona] = useState<BuyerPersona>("rushed-junior");
   const [entropy, setEntropy] = useState<string>("2");
   const [industry, setIndustry] = useState("");
   const [category, setCategory] = useState("");
@@ -65,7 +64,6 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
         scenarioType: scenarioId,
         industry: industry || undefined,
         category: category || undefined,
-        persona,
         mctsIterations: entropyLevel === 3 ? 1 : 3,
       });
 
@@ -175,24 +173,6 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
               {availableScenarios.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   {s.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Persona */}
-        <div className="space-y-2">
-          <Label>Buyer Persona</Label>
-          <Select value={persona} onValueChange={(v) => setPersona(v as BuyerPersona)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PERSONAS.map((p) => (
-                <SelectItem key={p.value} value={p.value}>
-                  <span>{p.label}</span>
-                  <span className="text-xs text-muted-foreground ml-2">— {p.desc}</span>
                 </SelectItem>
               ))}
             </SelectContent>
