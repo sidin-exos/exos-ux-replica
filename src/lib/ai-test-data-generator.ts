@@ -6,6 +6,56 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { pickWithRotation, pairKey, ROTATION_BUFFER } from "@/lib/test-rotation-memory";
+
+const PERSONA_IDS = [
+  "rushed-junior",
+  "methodical-manager",
+  "cfo-finance",
+  "frustrated-stakeholder",
+  "lost-user",
+] as const;
+
+/**
+ * Pick an industry+category pair using the rotation buffer to avoid
+ * the same pair appearing twice in a row. Honours user-provided
+ * overrides when supplied.
+ */
+function pickRotatedPair(
+  scenarioType: string,
+  industryOverride?: string,
+  categoryOverride?: string,
+): { industry: string; category: string } {
+  const industries = Object.keys(INDUSTRY_CATEGORY_COMPATIBILITY);
+  // Build flat pool of valid "industry::category" pair keys.
+  const allPairs: string[] = [];
+  for (const ind of industries) {
+    for (const cat of INDUSTRY_CATEGORY_COMPATIBILITY[ind]) {
+      allPairs.push(pairKey(ind, cat));
+    }
+  }
+  if (industryOverride && categoryOverride) {
+    return { industry: industryOverride, category: categoryOverride };
+  }
+  if (industryOverride) {
+    const cats = INDUSTRY_CATEGORY_COMPATIBILITY[industryOverride] || [];
+    if (cats.length > 0) {
+      const cat = pickWithRotation(
+        cats.map((c) => pairKey(industryOverride, c)),
+        `pair:${scenarioType}`,
+        ROTATION_BUFFER.pair,
+      );
+      return { industry: industryOverride, category: cat.split("::")[1] };
+    }
+  }
+  const chosen = pickWithRotation(allPairs, `pair:${scenarioType}`, ROTATION_BUFFER.pair);
+  const [ind, cat] = chosen.split("::");
+  return { industry: ind, category: cat };
+}
+
+function pickRotatedPersona(scenarioType: string): string {
+  return pickWithRotation(PERSONA_IDS, `persona:${scenarioType}`, ROTATION_BUFFER.persona);
+}
 
 export interface AIGeneratedTestData {
   success: boolean;
