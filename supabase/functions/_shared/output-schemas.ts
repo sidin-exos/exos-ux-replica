@@ -1111,8 +1111,14 @@ export const SCENARIO_ID_TO_CODE: Record<string, string> = {
   // Group A — only entries listed here get the per-scenario slicer in
   // getScenarioSchema(). Add a slug only after confirming its block is
   // self-contained (preamble + S## block + footer is enough for the model).
+  'tco-analysis': 'S1',
+  'cost-breakdown': 'S2',
+  'capex-vs-opex': 'S3',
   'savings-calculation': 'S4', // ~14 KB saved vs. full Group A schema
+  'spend-analysis-categorization': 'S5',
   'forecasting-budgeting': 'S6',
+  'saas-optimization': 'S7',
+  'specification-optimizer': 'S8', // no dedicated block — falls back to preamble + catch-all
   'negotiation-preparation': 'S21',
   'category-strategy': 'S22',
   'make-vs-buy': 'S23',
