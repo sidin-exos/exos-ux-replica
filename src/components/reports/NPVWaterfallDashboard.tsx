@@ -6,10 +6,10 @@ interface Props {
   parsedData?: NpvWaterfallData;
 }
 
-const formatCurrency = (value: number, currency = "€"): string => {
-  const sign = value < 0 ? "-" : "";
+const formatCurrency = (value: number, currency = "€", decimals = 1): string => {
+  const sign = value < 0 ? "−" : "";
   const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${sign}${currency}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000_000) return `${sign}${currency}${(abs / 1_000_000).toFixed(decimals)}M`;
   if (abs >= 1_000) return `${sign}${currency}${(abs / 1_000).toFixed(0)}K`;
   return `${sign}${currency}${abs.toFixed(0)}`;
 };
