@@ -3,12 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 import { LangSmithTracer, classifyError } from "../_shared/langsmith.ts";
 import { estimateCost } from "../_shared/ai-pricing.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 const FALLBACK_DRIVERS = [
   { name: "Crude Oil Price", rationale: "Primary energy input affecting logistics, packaging, and petrochemical-derived materials." },
@@ -20,7 +15,7 @@ const FALLBACK_DRIVERS = [
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   try {
@@ -29,7 +24,7 @@ Deno.serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -44,14 +39,14 @@ Deno.serve(async (req) => {
     if (authError || !data?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
     const userId = data.claims.sub as string;
     const rateCheck = await checkRateLimit(userId, "im-driver-propose", 30, 60, { failClosed: true });
     if (!rateCheck.allowed) {
-      return rateLimitResponse(rateCheck, corsHeaders);
+      return rateLimitResponse(rateCheck, corsHeaders(req));
     }
 
     const body = await req.json();
@@ -61,7 +56,7 @@ Deno.serve(async (req) => {
     if (!goodsDefinition || typeof goodsDefinition !== "string") {
       return new Response(JSON.stringify({ error: "goods_definition is required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -138,7 +133,7 @@ Deno.serve(async (req) => {
 
         return new Response(JSON.stringify({ drivers, source: "ai" }), {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         });
       }
 
@@ -156,7 +151,7 @@ Deno.serve(async (req) => {
       });
       return new Response(JSON.stringify({ drivers: FALLBACK_DRIVERS.slice(0, driverCountTarget), source: "fallback" }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     } catch (aiError) {
       console.error("Gemini API error, using fallback:", aiError);
@@ -167,14 +162,14 @@ Deno.serve(async (req) => {
       );
       return new Response(JSON.stringify({ drivers: FALLBACK_DRIVERS.slice(0, driverCountTarget), source: "fallback" }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
   } catch (err) {
     console.error("im-driver-propose error:", err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

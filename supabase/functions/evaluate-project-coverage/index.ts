@@ -23,7 +23,20 @@ interface RequestBody {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
+  }
+
+  // Authenticate: this function calls Gemini Pro and was previously
+  // reachable anonymously due to verify_jwt = false in config.toml.
+  const authResult = await authenticateRequest(req);
+  if ("error" in authResult) {
+    return new Response(
+      JSON.stringify({ error: authResult.error.message }),
+      {
+        status: authResult.error.status,
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+      },
+    );
   }
 
   try {
@@ -41,7 +54,7 @@ serve(async (req) => {
     if (!Array.isArray(sections) || sections.length === 0) {
       return new Response(JSON.stringify({ error: "sections required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -155,7 +168,7 @@ IMPORTANT — predictive calibration: this score must correlate with the post-ru
         );
         return new Response(JSON.stringify({ error: "No structured response" }), {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         });
       }
 
@@ -187,7 +200,7 @@ IMPORTANT — predictive calibration: this score must correlate with the post-ru
       });
 
       return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     } catch (aiError) {
       tracer.patchRun(
@@ -201,7 +214,7 @@ IMPORTANT — predictive calibration: this score must correlate with the post-ru
     console.error("evaluate-project-coverage error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
 });

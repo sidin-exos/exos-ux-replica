@@ -54,18 +54,24 @@ const FEEDBACK_TYPE_LABELS: Record<string, string> = {
   feature: "lt_01KN214CJVMEX679PQFMGVPTXQ",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(async (req, info) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
+  // Derive the true client IP from the Deno runtime connection info
+  // (audit issue #14). The previous implementation read x-forwarded-for,
+  // which any caller can forge per request, defeating the rate limit.
+  // Deno.serve exposes the real peer address via the second arg.
+  const remoteAddr = info?.remoteAddr;
   const clientIp =
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    req.headers.get("cf-connecting-ip") ||
-    "unknown";
+    remoteAddr && "hostname" in remoteAddr && typeof remoteAddr.hostname === "string"
+      ? remoteAddr.hostname
+      : "unknown";
+
   const rateCheck = await checkRateLimit(clientIp, "route-feedback", 20, 60);
   if (!rateCheck.allowed) {
-    return rateLimitResponse(rateCheck, corsHeaders);
+    return rateLimitResponse(rateCheck, corsHeaders(req));
   }
 
   try {
@@ -161,19 +167,19 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ plain: plainResult, resend: resendResult }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (err) {
     if (err instanceof ValidationError) {
       return new Response(
         JSON.stringify({ error: err.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
     console.error("[route-feedback] Unexpected error:", err);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

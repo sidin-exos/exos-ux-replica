@@ -10,7 +10,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   try {
@@ -18,14 +18,14 @@ serve(async (req) => {
     if ("error" in authResult) {
       return new Response(
         JSON.stringify({ error: authResult.error.message }),
-        { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: authResult.error.status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
     // Rate limit: 30 requests/hour per user
     const rateCheck = await checkRateLimit(authResult.user.userId, "scenario-tutorial", 30, 60, { failClosed: true });
     if (!rateCheck.allowed) {
-      return rateLimitResponse(rateCheck, corsHeaders);
+      return rateLimitResponse(rateCheck, corsHeaders(req));
     }
 
     const body = await parseBody(req);
@@ -37,7 +37,7 @@ serve(async (req) => {
     // Guard: no context = no AI call
     if (!industryName && !categoryName) {
       return new Response(JSON.stringify({ content: null }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -88,7 +88,7 @@ serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ content }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     } catch (aiError) {
       tracer.patchRun(
@@ -100,7 +100,7 @@ serve(async (req) => {
       if (status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again shortly." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 429, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       throw aiError;
@@ -112,7 +112,7 @@ serve(async (req) => {
     console.error("scenario-tutorial error:", e);
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

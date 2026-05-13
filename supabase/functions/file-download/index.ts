@@ -29,7 +29,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   // 1. Authenticate — extract JWT and validate via auth.getUser(token)
@@ -39,7 +39,7 @@ serve(async (req) => {
       JSON.stringify({ error: "Missing authorization header" }),
       {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -57,7 +57,7 @@ serve(async (req) => {
       JSON.stringify({ error: "Invalid or expired token" }),
       {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -67,7 +67,7 @@ serve(async (req) => {
   // 2. Rate limit — 30 requests/hour, fail-closed
   const rateCheck = await checkRateLimit(userId, "file-download", 30, 60, { failClosed: true });
   if (!rateCheck.allowed) {
-    return rateLimitResponse(rateCheck, corsHeaders, "Download rate limit exceeded. Please try again later.");
+    return rateLimitResponse(rateCheck, corsHeaders(req), "Download rate limit exceeded. Please try again later.");
   }
 
   // 3. Parse and validate file_id
@@ -102,14 +102,20 @@ serve(async (req) => {
       JSON.stringify({ error: "File not found" }),
       {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
 
-  // 5. Verify org membership — critical security check
-  const userOrgId = await getUserOrgId(userId);
-  if (!userOrgId || userOrgId !== file.organization_id) {
+  // 5. Verify org membership — critical security check.
+  // Super-admins (no concrete org) can download any org's files;
+  // every other caller MUST match the file's organization_id.
+  const orgResult = await getUserOrgId(userId);
+  const isSuperAdminContext = "superAdmin" in orgResult;
+  const userOrgId: string | null = "orgId" in orgResult ? orgResult.orgId : null;
+  const orgMatches = userOrgId !== null && userOrgId === file.organization_id;
+
+  if (!isSuperAdminContext && !orgMatches) {
     // Log denied access attempt (fail-open for audit)
     try {
       await serviceClient.from("file_access_audit").insert({
@@ -128,7 +134,7 @@ serve(async (req) => {
       JSON.stringify({ error: "Access denied" }),
       {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -145,7 +151,7 @@ serve(async (req) => {
       JSON.stringify({ error: "Failed to generate download URL" }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -170,7 +176,7 @@ serve(async (req) => {
     {
       status: 200,
       headers: {
-        ...corsHeaders,
+        ...corsHeaders(req),
         "Content-Type": "application/json",
         "Cache-Control": "no-store",
       },

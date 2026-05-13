@@ -251,7 +251,7 @@ interface MCTSNode {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   // Authenticate request - admin only
@@ -259,7 +259,7 @@ serve(async (req) => {
   if ("error" in authResult) {
     return new Response(
       JSON.stringify({ error: authResult.error.message }),
-      { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: authResult.error.status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
@@ -267,7 +267,7 @@ serve(async (req) => {
   if (!isAdmin) {
     return new Response(
       JSON.stringify({ error: "Admin access required" }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 
@@ -276,7 +276,7 @@ serve(async (req) => {
   // count as separate calls so the legacy 10/hour was too tight for active testing.
   const rateCheck = await checkRateLimit(authResult.user.userId, "generate-test-data", 30, 60, { failClosed: true });
   if (!rateCheck.allowed) {
-    return rateLimitResponse(rateCheck, corsHeaders);
+    return rateLimitResponse(rateCheck, corsHeaders(req));
   }
 
   // Create supabase client for DB reads
@@ -312,7 +312,7 @@ serve(async (req) => {
       const draftResult = await handleDraftMode(scenarioType, temperature, excludeTrickCategories);
       return new Response(
         JSON.stringify(draftResult),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -327,7 +327,7 @@ serve(async (req) => {
       );
       return new Response(
         JSON.stringify(generateResult),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -340,7 +340,7 @@ serve(async (req) => {
       );
       return new Response(
         JSON.stringify(messyResult),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -417,7 +417,7 @@ serve(async (req) => {
     if (candidates.length === 0) {
       return new Response(
         JSON.stringify({ error: "Failed to generate valid test data" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -440,7 +440,7 @@ serve(async (req) => {
           optionalFieldCount: fieldGroups.optional.length,
         }
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
 
   } catch (error) {
@@ -452,7 +452,7 @@ serve(async (req) => {
       JSON.stringify({ 
         error: error instanceof Error ? error.message : "Unknown error" 
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

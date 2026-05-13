@@ -7,7 +7,7 @@ import { estimateCost } from "../_shared/ai-pricing.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   let tracer: LangSmithTracer | undefined;
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -38,20 +38,20 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
     const rateCheck = await checkRateLimit(user.id, "run-monitor-scan", 10, 60, { failClosed: true });
     if (!rateCheck.allowed) {
-      return rateLimitResponse(rateCheck, corsHeaders);
+      return rateLimitResponse(rateCheck, corsHeaders(req));
     }
 
     const { tracker_id } = await req.json();
     if (!tracker_id) {
       return new Response(JSON.stringify({ error: "tracker_id required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     if (trackerError || !tracker) {
       return new Response(JSON.stringify({ error: "Tracker not found" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     if (!profile || profile.organization_id !== tracker.organization_id) {
       return new Response(JSON.stringify({ error: "Access denied" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -199,7 +199,7 @@ Be factual, cite sources where possible. Flag direction of change (improving/sta
 
     return new Response(JSON.stringify({ success: true, report }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("run-monitor-scan error:", error);
@@ -212,7 +212,7 @@ Be factual, cite sources where possible. Flag direction of change (improving/sta
     });
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

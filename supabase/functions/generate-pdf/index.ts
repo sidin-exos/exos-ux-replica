@@ -28,20 +28,26 @@ import { generatePdfBuffer } from "./pdf-document.tsx";
 import { trackEvent } from "../_shared/track.ts";
 import type { GeneratePdfPayload } from "./types.ts";
 
+// Memory protection (audit issue #15).
+// Invocation limit is left generous per Product Owner constraint;
+// instead, cap the raw request payload at 500 KB so a single caller
+// cannot OOM the Deno isolate by submitting a multi-MB body.
+const MAX_PAYLOAD_BYTES = 500 * 1024;
+
 serve(async (req) => {
   // Hoisted so it is reachable inside the catch block for Sentry reporting
   let authResult: Awaited<ReturnType<typeof authenticateRequest>> | undefined;
 
   // CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   // Only POST
   if (req.method !== "POST") {
     return new Response(
       JSON.stringify({ error: "Method not allowed" }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 405, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
 
@@ -51,17 +57,29 @@ serve(async (req) => {
     if ("error" in authResult) {
       return new Response(
         JSON.stringify({ error: authResult.error.message }),
-        { status: authResult.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: authResult.error.status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
     // 2. Rate limit: 120 requests/hour per user
     const rateCheck = await checkRateLimit(authResult.user.userId, "generate-pdf", 120, 60);
     if (!rateCheck.allowed) {
-      return rateLimitResponse(rateCheck, corsHeaders, "PDF generation rate limit reached. Please wait before generating another report.");
+      return rateLimitResponse(rateCheck, corsHeaders(req), "PDF generation rate limit reached. Please wait before generating another report.");
     }
 
-    // 3. Parse and validate body
+    // 3. Reject oversize payloads before parsing.
+    // Use Content-Length when present; otherwise fall back to the byte
+    // length of the body after read. Most clients send Content-Length, so
+    // this rejects the request without ever materialising the body.
+    const contentLength = Number(req.headers.get("content-length") ?? "0");
+    if (Number.isFinite(contentLength) && contentLength > MAX_PAYLOAD_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "Payload too large" }),
+        { status: 413, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    // 4. Parse and validate body
     const body = await parseBody(req);
 
     const scenarioTitle = requireString(body.scenarioTitle, "scenarioTitle", { maxLength: 500 })!;
@@ -114,7 +132,7 @@ serve(async (req) => {
     return new Response(pdfBytes, {
       status: 200,
       headers: {
-        ...corsHeaders,
+        ...corsHeaders(req),
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${fileName}"`,
         "Cache-Control": "no-store",
@@ -130,7 +148,7 @@ serve(async (req) => {
     });
     return new Response(
       JSON.stringify({ error: "PDF generation failed" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
 });

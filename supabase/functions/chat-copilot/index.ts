@@ -150,7 +150,7 @@ const TOOLS = [
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   // Authenticate
@@ -160,7 +160,7 @@ serve(async (req) => {
       JSON.stringify({ error: authResult.error.message }),
       {
         status: authResult.error.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -176,7 +176,7 @@ serve(async (req) => {
       {
         status: 200,
         headers: {
-          ...corsHeaders,
+          ...corsHeaders(req),
           "Content-Type": "application/json",
           "X-RateLimit-Remaining": "0",
           "X-RateLimit-Reset": rateCheck.resetAt,
@@ -274,7 +274,7 @@ serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ content, action }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     } catch (aiError) {
       const status = (aiError as Error & { status?: number }).status;
@@ -286,7 +286,7 @@ serve(async (req) => {
           }),
           {
             status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders(req), "Content-Type": "application/json" },
           }
         );
       }
@@ -312,7 +312,7 @@ serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
