@@ -769,7 +769,7 @@ const PDFReportDocument = ({
     // NPV here is signed (negative = net cost). "Advantage" is the absolute
     // delta favouring the better option; sign indicates which option wins.
     const delta = a - b;
-    const currencyCode = String(payload?.financial_model?.currency ?? "EUR").toUpperCase();
+    const currencyCode = String(envelope?.payload?.financial_model?.currency ?? "EUR").toUpperCase();
     const sym = currencyCode === "USD" ? "$" : currencyCode === "GBP" ? "£" : currencyCode === "JPY" ? "¥" : "€";
     const abs = Math.abs(delta);
     const fmt = abs >= 1_000_000 ? `${sym}${(abs / 1_000_000).toFixed(2)}M` : abs >= 1_000 ? `${sym}${Math.round(abs / 1_000)}K` : `${sym}${Math.round(abs)}`;
