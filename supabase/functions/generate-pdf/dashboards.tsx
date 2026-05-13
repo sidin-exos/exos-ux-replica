@@ -34,11 +34,11 @@ const currencySymbol = (code?: string): string => {
   return /^[A-Z]+$/.test(c) ? `${c} ` : c;
 };
 
-const formatAmount = (value: number, currency: string = "$"): string => {
+const formatAmount = (value: number, currency: string = "$", decimals: number = 1): string => {
   const sym = currencySymbol(currency);
-  const sign = value < 0 ? "-" : "";
+  const sign = value < 0 ? "−" : "";
   const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(decimals)}M`;
   if (abs >= 1000) return `${sign}${sym}${(abs / 1000).toFixed(0)}K`;
   const rounded = Math.round(abs * 100) / 100;
   const display = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
@@ -1336,8 +1336,12 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
             {options.map((opt, i) => {
               const isPreferred = opt.id === preferred.id;
               const components: { label: string; value: number; type: "cost" | "credit" | "result" }[] = [
-                { label: "CAPEX (nominal)", value: opt.capexNominal || 0, type: "cost" },
-                { label: "OPEX (nominal)", value: opt.opexNominal || 0, type: "cost" },
+                ...((opt.capexNominal || 0) > 0
+                  ? [{ label: "CAPEX (nominal)", value: opt.capexNominal || 0, type: "cost" as const }]
+                  : []),
+                ...((opt.opexNominal || 0) > 0
+                  ? [{ label: "OPEX (nominal)", value: opt.opexNominal || 0, type: "cost" as const }]
+                  : []),
                 ...((opt.residualValue || 0) > 0
                   ? [{ label: "Residual value", value: opt.residualValue || 0, type: "credit" as const }]
                   : []),
@@ -1388,7 +1392,11 @@ export const PDFNpvWaterfall = ({ data, themeMode }: { data: NpvWaterfallData; t
                           <View style={{ width: `${width}%`, height: 7, backgroundColor: fill, opacity: c.type === "result" ? 1 : 0.75 }} />
                         </View>
                         <Text style={{ width: 64, textAlign: "right", fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: colors.text, marginLeft: 4 }}>
-                          {c.type === "credit" ? "−" : ""}{formatCurrency(Math.abs(c.value), currency)}
+                          {c.type === "credit"
+                            ? `−${formatCurrency(Math.abs(c.value), currency, 1)}`
+                            : c.type === "result"
+                              ? formatCurrency(c.value, currency, 2)
+                              : formatCurrency(Math.abs(c.value), currency, 1)}
                         </Text>
                       </View>
                     );

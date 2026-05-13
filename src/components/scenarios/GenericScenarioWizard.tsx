@@ -1069,6 +1069,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   </li>
                 ))}
               </ul>
+              <p className="mt-3 text-[11px] text-muted-foreground/80 italic">
+                Visual dashboards appear in the report only when ticked in the sidebar; narrative findings always render.
+              </p>
             </div>
 
             {/* Draft status indicator */}
