@@ -1108,6 +1108,10 @@ Every factual claim must reference a source_id. Use null for any field where sea
 // shared financial_model contract.
 
 export const SCENARIO_ID_TO_CODE: Record<string, string> = {
+  // Group A — only entries listed here get the per-scenario slicer in
+  // getScenarioSchema(). Add a slug only after confirming its block is
+  // self-contained (preamble + S## block + footer is enough for the model).
+  'savings-calculation': 'S4', // ~14 KB saved vs. full Group A schema
   'forecasting-budgeting': 'S6',
   'negotiation-preparation': 'S21',
   'category-strategy': 'S22',
