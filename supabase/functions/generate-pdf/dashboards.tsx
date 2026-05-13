@@ -34,11 +34,11 @@ const currencySymbol = (code?: string): string => {
   return /^[A-Z]+$/.test(c) ? `${c} ` : c;
 };
 
-const formatAmount = (value: number, currency: string = "$"): string => {
+const formatAmount = (value: number, currency: string = "$", decimals: number = 1): string => {
   const sym = currencySymbol(currency);
-  const sign = value < 0 ? "-" : "";
+  const sign = value < 0 ? "−" : "";
   const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(decimals)}M`;
   if (abs >= 1000) return `${sign}${sym}${(abs / 1000).toFixed(0)}K`;
   const rounded = Math.round(abs * 100) / 100;
   const display = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
