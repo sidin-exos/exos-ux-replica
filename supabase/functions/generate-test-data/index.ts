@@ -466,24 +466,25 @@ async function handleDraftMode(
   const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
   const randomPair = selectRandomIndustryCategoryPair();
   
-  // Select a random trick and persona for this scenario type
+  // Select a random trick for this scenario type
   const trickResult = selectRandomTrick(scenarioType, excludeTrickCategories);
-  const persona = selectPersona();
   const trick = trickResult?.trick || null;
 
-  // Weighted dataQuality distribution — bias the engine toward good-quality
-  // inputs so most tests exercise the happy path. Poor/partial cases still
-  // appear so we keep coverage of degraded-input handling, just at a much
-  // lower frequency.
-  //   excellent: 40%  (OPTIMAL)
-  //   good:      40%  (OPTIMAL)   → 80% OPTIMAL total
-  //   partial:   15%  (MINIMUM)
-  //   poor:       5%  (DEGRADED)
+  // Weighted dataQuality distribution — strongly biased toward
+  // good-quality, scenario-relevant inputs. The previous "poor" tier
+  // ("insufficient data") was replaced by "irrelevant" (well-formed
+  // data for a DIFFERENT procurement category) at low frequency,
+  // because insufficient inputs gave little evaluation signal beyond
+  // the input evaluator simply rejecting them.
+  //   excellent:  45%  (OPTIMAL)
+  //   good:       45%  (OPTIMAL)   → 90% OPTIMAL total
+  //   partial:     8%  (MINIMUM)
+  //   irrelevant:  2%  (IRRELEVANT — wrong-scenario data)
   const presetDataQuality = pickWeighted<DataQuality>([
-    { value: "excellent", weight: 40 },
-    { value: "good", weight: 40 },
-    { value: "partial", weight: 15 },
-    { value: "poor", weight: 5 },
+    { value: "excellent", weight: 45 },
+    { value: "good", weight: 45 },
+    { value: "partial", weight: 8 },
+    { value: "irrelevant", weight: 2 },
   ]);
 
   console.log(`[TestDataGen] Draft mode - Selected trick: ${trick?.category || 'none'}, presetDataQuality: ${presetDataQuality}`);
