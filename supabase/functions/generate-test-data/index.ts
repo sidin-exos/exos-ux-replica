@@ -294,7 +294,6 @@ serve(async (req) => {
     const industry = requireString(body.industry, "industry", { optional: true, maxLength: 200 });
     const category = requireString(body.category, "category", { optional: true, maxLength: 200 });
     const parameters = optionalRecord(body.parameters, "parameters", 30) as DraftedParameters | undefined;
-    const persona = requireString(body.persona, "persona", { optional: true, maxLength: 100 });
     const excludeTrickCategories = Array.isArray(body.excludeTrickCategories)
       ? body.excludeTrickCategories.filter((c: unknown): c is string => typeof c === "string").slice(0, 30)
       : [];
@@ -317,17 +316,12 @@ serve(async (req) => {
       );
     }
 
-    // Select persona for generate/messy/full modes
-    const selectedPersona = selectPersona(persona);
-    console.log(`[TestDataGen] Persona: ${selectedPersona.id} (${selectedPersona.name})`);
-
     // === GENERATE MODE: Single-pass with pre-approved parameters ===
     if (mode === "generate" && parameters) {
       const generateResult = await handleGenerateMode(
         scenarioType,
         parameters,
         temperature,
-        selectedPersona,
         fieldConfigs,
         supabase
       );
