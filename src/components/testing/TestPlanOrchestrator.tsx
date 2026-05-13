@@ -10,15 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { generateAITestData, INDUSTRY_CATEGORY_COMPATIBILITY } from "@/lib/ai-test-data-generator";
 import { supabase } from "@/integrations/supabase/client";
 import { isDeepAnalyticsScenario, detectPromptLeakage, LATENCY_BENCHMARKS } from "@/lib/ai/graph";
-import type { BuyerPersona, EntropyLevel, TestPlanItem } from "@/lib/testing/types";
-
-const PERSONAS: BuyerPersona[] = [
-  "rushed-junior",
-  "methodical-manager",
-  "cfo-finance",
-  "frustrated-stakeholder",
-  "lost-user",
-];
+import type { EntropyLevel, TestPlanItem } from "@/lib/testing/types";
 
 function randomChoice<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -97,9 +89,8 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
     const plan: TestPlanItem[] = [];
 
     // Local in-batch rotation: ensures the 15 generated items don't
-    // duplicate the same industry+category+persona on consecutive rows.
+    // duplicate the same industry+category on consecutive rows.
     const usedPairs = new Set<string>();
-    const usedPersonas: string[] = [];
 
     for (let i = 0; i < 15; i++) {
       let industrySlug = randomChoice(industries);
@@ -111,13 +102,9 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
       }
       usedPairs.add(`${industrySlug}::${categorySlug}`);
 
-      // Avoid the same persona twice in a row.
-      let persona = randomChoice(PERSONAS);
-      const recent = usedPersonas.slice(-2);
-      for (let attempt = 0; attempt < 5 && recent.includes(persona); attempt++) {
-        persona = randomChoice(PERSONAS);
-      }
-      usedPersonas.push(persona);
+      const entropyLevel = randomChoice([1, 2, 3]) as EntropyLevel;
+      plan.push({ scenarioId, industrySlug, categorySlug, entropyLevel });
+    }
 
       const entropyLevel = randomChoice([1, 2, 3]) as EntropyLevel;
       plan.push({ scenarioId, persona, industrySlug, categorySlug, entropyLevel });
@@ -172,7 +159,6 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
         // Phase 1: Generate synthetic data
         const genResult = await generateAITestData({
           scenarioType: item.scenarioId,
-          persona: item.persona,
           industry: item.industrySlug,
           category: item.categorySlug,
           mctsIterations: item.entropyLevel === 3 ? 1 : 3,
