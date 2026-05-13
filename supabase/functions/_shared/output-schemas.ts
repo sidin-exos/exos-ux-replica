@@ -1135,10 +1135,13 @@ export function getScenarioSchema(group: string | null | undefined, scenarioId: 
   const full = group ? GROUP_SCHEMAS[group] : '';
   if (!full) return '';
 
-  // Resolve scenario code: prefer the explicit slicer map (Group A/D), otherwise
-  // fall back to the canonical registry so Group B/C slicing works for every scenario.
+  // Group A/D rely on SCENARIO_ID_TO_CODE as a vetted allow-list (see comment above).
+  // Group B/C slicing below is safe for every scenario (preamble is self-contained),
+  // so we fall back to the full registry for those groups.
   const code = scenarioId
-    ? (SCENARIO_ID_TO_CODE[scenarioId] || SCENARIO_ID_REGISTRY[scenarioId] || null)
+    ? (SCENARIO_ID_TO_CODE[scenarioId]
+        || ((group === 'B' || group === 'C') ? SCENARIO_ID_REGISTRY[scenarioId] : null)
+        || null)
     : null;
 
   // ── Group A slicing (S1–S8) ────────────────────────────────────────
