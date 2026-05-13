@@ -662,11 +662,11 @@ OUTPUT FORMAT (strict): You must return a valid JSON object with exactly this st
 
 Do not include markdown, code fences, or any text outside the JSON object.`;
 
-  // ── USER PROMPT (6 layers) ──
+  // ── USER PROMPT ──
   // LAYER 1 — Scenario context
   let userPrompt = `SCENARIO: ${scenarioType} (Group: ${deviationType})
 QUALITY TIER: ${qualityTier}
-PERSONA: ${selectedPersona.id} (${selectedPersona.name})
+PRIORITY SIGNALS: industry relevance + information quality (no persona styling)
 
 `;
 
