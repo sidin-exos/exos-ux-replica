@@ -63,7 +63,7 @@ const NPVWaterfallDashboard = ({ parsedData }: Props) => {
               <p className="text-sm font-semibold tabular-nums" style={{ color: preferred.color }}>
                 {preferred.name}
               </p>
-              <p className="text-xs text-muted-foreground tabular-nums">NPV {formatCurrency(preferred.npv, currency)}</p>
+              <p className="text-xs text-muted-foreground tabular-nums">NPV {formatCurrency(preferred.npv, currency, 2)}</p>
             </div>
           )}
         </div>
