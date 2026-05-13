@@ -1190,7 +1190,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   <div className="flex items-center gap-3 mb-4">
                     <Sparkles className="w-8 h-8 text-primary" />
                     <h3 className="font-display text-xl font-semibold">
-                      Analysis Complete
+                      Report Preview
                     </h3>
                   </div>
 
