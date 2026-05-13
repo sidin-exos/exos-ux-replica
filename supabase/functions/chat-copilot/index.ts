@@ -101,7 +101,25 @@ ${configMap["quick_references"] || ""}`;
     scenarioBlock = "\n\n## Scenarios\nNo scenario catalog was provided. Direct users to /reports to browse the full list.";
   }
 
-  return `${systemPromptBase}${scenarioBlock}\n\nThe user is currently on: ${currentPath || "/"}`;
+  // Build procurement category catalogue with aliases (search guidance)
+  const { data: catRows, error: catError } = await supabase
+    .from("procurement_categories")
+    .select("name, aliases")
+    .order("name");
+
+  if (catError) {
+    console.error("chat-copilot: Failed to fetch procurement categories:", catError);
+  }
+
+  const categoryBlock = catRows && catRows.length > 0
+    ? "\n\n## Procurement Category Catalogue (with search aliases)\n" +
+      "Use these to advise users how to search in the category selector. Match user terms against canonical names AND aliases.\n" +
+      (catRows as Array<{ name: string; aliases: string[] | null }>)
+        .map((c) => `- "${c.name}" — aliases: ${(c.aliases || []).join(", ") || "(none)"}`)
+        .join("\n")
+    : "";
+
+  return `${systemPromptBase}${scenarioBlock}${categoryBlock}\n\nThe user is currently on: ${currentPath || "/"}`;
 }
 
 // ─── TOOLS ──────────────────────────────────────────────────────────────────
