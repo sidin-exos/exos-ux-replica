@@ -508,13 +508,14 @@ serve(async (req) => {
 // === DRAFT MODE HANDLER ===
 async function handleDraftMode(
   scenarioType: string,
-  temperature: number
+  temperature: number,
+  excludeTrickCategories: string[] = []
 ): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
   const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
   const randomPair = selectRandomIndustryCategoryPair();
   
   // Select a random trick and persona for this scenario type
-  const trickResult = selectRandomTrick(scenarioType);
+  const trickResult = selectRandomTrick(scenarioType, excludeTrickCategories);
   const persona = selectPersona();
   const trick = trickResult?.trick || null;
 
