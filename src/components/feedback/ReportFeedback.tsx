@@ -17,6 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -131,27 +138,24 @@ const ReportFeedback = ({ scenarioId }: ReportFeedbackProps) => {
                 <Label className="text-sm font-medium">
                   Feedback type (optional)
                 </Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {FEEDBACK_TYPES.map(({ value, label, icon: Icon }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() =>
-                        setFeedbackType(feedbackType === value ? "" : value)
-                      }
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
-                        "border border-border hover:border-primary/50",
-                        feedbackType === value
-                          ? "bg-primary text-primary-foreground border-primary shadow-md"
-                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
-                      )}
-                    >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      {label}
-                    </button>
-                  ))}
-                </div>
+                <Select
+                  value={feedbackType}
+                  onValueChange={(v) => setFeedbackType(v)}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select a category…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FEEDBACK_TYPES.map(({ value, label, icon: Icon }) => (
+                      <SelectItem key={value} value={value}>
+                        <span className="flex items-center gap-2">
+                          <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                          {label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Comments */}
