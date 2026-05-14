@@ -180,9 +180,9 @@ const SensitivitySpiderDashboard = ({
                     </div>
                     <div className="relative h-6 flex-1">
                       {/* Center axis */}
-                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border" />
-                      {/* Left (low) bar */}
-                      <div className="absolute right-1/2 top-1/2 -translate-y-1/2 h-4 flex items-center justify-end">
+                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border z-10" />
+                      {/* Left (low) half — anchored 0 → 50%, bar grows from right edge */}
+                      <div className="absolute left-0 right-1/2 top-1/2 -translate-y-1/2 h-4 flex items-center justify-end">
                         <div
                           className="h-full rounded-l"
                           style={{
@@ -193,8 +193,8 @@ const SensitivitySpiderDashboard = ({
                           }}
                         />
                       </div>
-                      {/* Right (high) bar */}
-                      <div className="absolute left-1/2 top-1/2 -translate-y-1/2 h-4 flex items-center">
+                      {/* Right (high) half — anchored 50% → 100%, bar grows from left edge */}
+                      <div className="absolute left-1/2 right-0 top-1/2 -translate-y-1/2 h-4 flex items-center">
                         <div
                           className="h-full rounded-r"
                           style={{
