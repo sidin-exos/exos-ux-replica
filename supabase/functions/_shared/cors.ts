@@ -2,7 +2,7 @@
  * Shared CORS and security headers for all edge functions.
  *
  * Origin model (audit issue M3):
- *   - Production:     https://exosproc.com
+ *   - Production:     https://exosproc.com  AND  https://www.exosproc.com
  *   - Vercel preview: https://*.vercel.app
  *   - Local dev:      http://localhost:<port>  /  http://127.0.0.1:<port>
  *
@@ -17,7 +17,7 @@
  */
 
 const ALLOWED_ORIGIN_REGEX =
-  /^https:\/\/exosproc\.com$|^https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.vercel\.app$|^http:\/\/localhost(?::\d+)?$|^http:\/\/127\.0\.0\.1(?::\d+)?$/;
+  /^https:\/\/(?:www\.)?exosproc\.com$|^https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.vercel\.app$|^http:\/\/localhost(?::\d+)?$|^http:\/\/127\.0\.0\.1(?::\d+)?$/;
 
 const DEFAULT_ORIGIN = "https://exosproc.com";
 
