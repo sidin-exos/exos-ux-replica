@@ -102,7 +102,7 @@ const faqData = [
   {
     id: "tariff",
     question: "What is the right plan for me?",
-    answer: `Pick the SMB (small and medium-sized business) option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
+    answer: `Pick the Starter option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Professional option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Professional for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
   },
   {
     id: "data-privacy",
