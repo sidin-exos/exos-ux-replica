@@ -93,7 +93,6 @@ const pricingTiers: PricingTier[] = [
       "Dedicated success manager",
       "Users training and coaching",
       "Custom enterprise Risk and Inflation analytics",
-      "Custom API integrations",
     ],
     cta: "Contact Sales",
   },
