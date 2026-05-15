@@ -28,7 +28,7 @@ export default function NegotiationPrep() {
       relatedScenarios={[
         { name: "Total Cost of Ownership Analysis", path: "/scenarios/tco-analysis", description: "Build your cost position before negotiation with full lifecycle cost visibility." },
         { name: "Category Strategy", path: "/features", description: "Three-year category roadmap using Kraljic Matrix and Porter's Five Forces." },
-        { name: "Pre-Flight Audit", path: "/features", description: "Supplier intelligence dossier — know your counterpart before the meeting starts." }
+        { name: "Supplier Snapshot", path: "/features", description: "Supplier intelligence dossier — know your counterpart before the meeting starts." }
       ]}
     />
   );

@@ -36,7 +36,7 @@ type Complexity = "simple" | "standard" | "complex" | "edge-case";
 type FinancialPressure = "comfortable" | "moderate" | "tight" | "crisis";
 type StrategicPriority = "cost" | "risk" | "speed" | "quality" | "innovation" | "sustainability";
 type MarketConditions = "stable" | "growing" | "volatile" | "disrupted";
-type DataQuality = "excellent" | "good" | "partial" | "poor";
+type DataQuality = "excellent" | "good" | "partial" | "irrelevant";
 type TrickSubtlety = "obvious" | "moderate" | "subtle" | "expert-level";
 
 interface DraftedParameters {
@@ -50,8 +50,6 @@ interface DraftedParameters {
   dataQuality: DataQuality;
   reasoning: string;
   trick?: TrickDefinition;
-  persona?: string;
-  personaName?: string;
 }
 
 // Field groups type (returned by getFieldGroups from block-guidance.ts)
@@ -193,47 +191,44 @@ function buildDBContextBlock(
 
 
 // =============================================
-// BUYER PERSONAS
+// BUYER PERSONAS — REMOVED
 // =============================================
-const BUYER_PERSONAS = [
-  {
-    id: "rushed-junior",
-    name: "The Rushed Junior Buyer",
-    description: "A junior procurement specialist who is short on time. Provides minimal, vague context. Uses informal language, abbreviations, and often leaves optional fields blank.",
-    optionalFillRate: "30-40%"
-  },
-  {
-    id: "methodical-manager",
-    name: "The Methodical Category Manager",
-    description: "An experienced category manager. Provides highly detailed, structured, and strategic context. Fills out almost all optional fields with precise industry terminology.",
-    optionalFillRate: "85-95%"
-  },
-  {
-    id: "cfo-finance",
-    name: "The CFO / Finance Leader",
-    description: "A senior finance executive focused purely on numbers, risk, and ROI. Provides very short text context but is extremely precise with financial figures (currencies, percentages). Often ignores technical or operational optional fields.",
-    optionalFillRate: "40-60% (financial fields prioritized)"
-  },
-  {
-    id: "frustrated-stakeholder",
-    name: "The Frustrated Stakeholder (Business Unit)",
-    description: "A non-procurement user (e.g., Marketing or IT Director) forced to use the system. Complains in the text fields, provides messy narrative data instead of structured facts, and misunderstands procurement terminology.",
-    optionalFillRate: "50-70% (filled but often with wrong format)"
-  },
-  {
-    id: "lost-user",
-    name: "The Lost User (Out-of-Scope)",
-    description: "A user who completely misunderstands what this procurement system is for. They ask completely irrelevant questions like 'What is the weather in London?', 'Write a python script for a calculator', or 'How to bake a chocolate cake'. They dump this random question into the main text field and ignore all other fields.",
-    optionalFillRate: "0%"
-  }
-];
+// The persona parameter has been removed from the test-data engine.
+// Industry relevance and information quality are the primary signals;
+// persona writing styles added noise without measurable evaluation value.
+// Historical DB rows that still reference `persona_source` remain valid.
 
-function selectPersona(requestedPersona?: string) {
-  if (requestedPersona) {
-    const found = BUYER_PERSONAS.find(p => p.id === requestedPersona);
-    if (found) return found;
+
+function secureRandom(): number {
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return values[0] / 0x100000000;
+}
+
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(secureRandom() * items.length)];
+}
+
+function pickWeighted<T>(options: Array<{ value: T; weight: number }>): T {
+  const total = options.reduce((sum, option) => sum + option.weight, 0);
+  let roll = secureRandom() * total;
+
+  for (const option of options) {
+    roll -= option.weight;
+    if (roll <= 0) return option.value;
   }
-  return BUYER_PERSONAS[Math.floor(Math.random() * BUYER_PERSONAS.length)];
+
+  return options[options.length - 1].value;
+}
+
+function selectRandomIndustryCategoryPair(): { industry: string; category: string } {
+  const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX).filter(
+    (industry) => (INDUSTRY_CATEGORY_MATRIX[industry] || []).length > 0
+  );
+  const industry = pickRandom(industries);
+  const category = pickRandom(INDUSTRY_CATEGORY_MATRIX[industry]);
+
+  return { industry, category };
 }
 
 
@@ -245,7 +240,7 @@ interface GenerateRequest {
   parameters?: DraftedParameters;
   mctsIterations?: number;
   temperature?: number;
-  persona?: string;
+  excludeTrickCategories?: string[];
 }
 
 interface MCTSNode {
@@ -299,7 +294,9 @@ serve(async (req) => {
     const industry = requireString(body.industry, "industry", { optional: true, maxLength: 200 });
     const category = requireString(body.category, "category", { optional: true, maxLength: 200 });
     const parameters = optionalRecord(body.parameters, "parameters", 30) as DraftedParameters | undefined;
-    const persona = requireString(body.persona, "persona", { optional: true, maxLength: 100 });
+    const excludeTrickCategories = Array.isArray(body.excludeTrickCategories)
+      ? body.excludeTrickCategories.filter((c: unknown): c is string => typeof c === "string").slice(0, 30)
+      : [];
     const mctsIterations = typeof body.mctsIterations === "number" && body.mctsIterations >= 1 && body.mctsIterations <= 10
       ? body.mctsIterations : 1;
     const temperature = typeof body.temperature === "number" && body.temperature >= 0 && body.temperature <= 2
@@ -312,16 +309,12 @@ serve(async (req) => {
 
     // === DRAFT MODE: Propose random consistent parameters ===
     if (mode === "draft") {
-      const draftResult = await handleDraftMode(scenarioType, temperature);
+      const draftResult = await handleDraftMode(scenarioType, temperature, excludeTrickCategories);
       return new Response(
         JSON.stringify(draftResult),
         { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
-
-    // Select persona for generate/messy/full modes
-    const selectedPersona = selectPersona(persona);
-    console.log(`[TestDataGen] Persona: ${selectedPersona.id} (${selectedPersona.name})`);
 
     // === GENERATE MODE: Single-pass with pre-approved parameters ===
     if (mode === "generate" && parameters) {
@@ -329,7 +322,6 @@ serve(async (req) => {
         scenarioType,
         parameters,
         temperature,
-        selectedPersona,
         fieldConfigs,
         supabase
       );
@@ -344,7 +336,6 @@ serve(async (req) => {
       const messyResult = await handleMessyMode(
         scenarioType,
         temperature > 0 ? Math.max(temperature, 0.9) : 0.9,
-        selectedPersona,
         supabase
       );
       return new Response(
@@ -358,14 +349,17 @@ serve(async (req) => {
     const fields = fieldGroups.all;
     const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
     
+    const randomPair = selectRandomIndustryCategoryPair();
     const selectedIndustry = industry && industries.includes(industry) 
       ? industry 
-      : industries[Math.floor(Math.random() * industries.length)];
+      : randomPair.industry;
     
     const validCategories = INDUSTRY_CATEGORY_MATRIX[selectedIndustry] || [];
     const selectedCategory = category && validCategories.includes(category)
       ? category
-      : validCategories[Math.floor(Math.random() * validCategories.length)];
+      : industry && industries.includes(industry)
+        ? pickRandom(validCategories)
+        : randomPair.category;
 
     console.log(`[TestDataGen] Full mode - Industry: ${selectedIndustry}, Category: ${selectedCategory}`);
     console.log(`[TestDataGen] MCTS iterations: ${mctsIterations}`);
@@ -387,12 +381,11 @@ serve(async (req) => {
         selectedCategory,
         fieldGroups,
         iteration,
-        selectedPersona,
         fieldConfigs,
         industryCtx,
         categoryCtx
       );
-      
+
       const generationResponse = await callAI(generationPrompt.system, generationPrompt.user, temperature);
 
       if (!generationResponse.success) {
@@ -443,8 +436,6 @@ serve(async (req) => {
           score: bestCandidate.score,
           iterations: mctsIterations,
           reasoning: bestCandidate.reasoning,
-          persona: selectedPersona.id,
-          personaName: selectedPersona.name,
           requiredFieldCount: fieldGroups.required.length,
           optionalFieldCount: fieldGroups.optional.length,
         }
@@ -469,32 +460,53 @@ serve(async (req) => {
 // === DRAFT MODE HANDLER ===
 async function handleDraftMode(
   scenarioType: string,
-  temperature: number
+  temperature: number,
+  excludeTrickCategories: string[] = []
 ): Promise<{ success: boolean; parameters?: DraftedParameters; error?: string }> {
   const industries = Object.keys(INDUSTRY_CATEGORY_MATRIX);
+  const randomPair = selectRandomIndustryCategoryPair();
   
-  // Select a random trick and persona for this scenario type
-  const trickResult = selectRandomTrick(scenarioType);
-  const persona = selectPersona();
+  // Select a random trick for this scenario type
+  const trickResult = selectRandomTrick(scenarioType, excludeTrickCategories);
   const trick = trickResult?.trick || null;
-  
-  console.log(`[TestDataGen] Draft mode - Selected trick: ${trick?.category || 'none'}`);
-  
+
+  // Weighted dataQuality distribution — strongly biased toward
+  // good-quality, scenario-relevant inputs. The previous "poor" tier
+  // ("insufficient data") was replaced by "irrelevant" (well-formed
+  // data for a DIFFERENT procurement category) at low frequency,
+  // because insufficient inputs gave little evaluation signal beyond
+  // the input evaluator simply rejecting them.
+  //   excellent:  45%  (OPTIMAL)
+  //   good:       45%  (OPTIMAL)   → 90% OPTIMAL total
+  //   partial:     8%  (MINIMUM)
+  //   irrelevant:  2%  (IRRELEVANT — wrong-scenario data)
+  const presetDataQuality = pickWeighted<DataQuality>([
+    { value: "excellent", weight: 45 },
+    { value: "good", weight: 45 },
+    { value: "partial", weight: 8 },
+    { value: "irrelevant", weight: 2 },
+  ]);
+
+  console.log(`[TestDataGen] Draft mode - Selected trick: ${trick?.category || 'none'}, presetDataQuality: ${presetDataQuality}`);
+
   const system = `You are a procurement test case designer. Generate a random but internally-consistent set of parameters for a test case.
 
 AVAILABLE OPTIONS:
 - Industries: ${industries.join(", ")}
+- Pre-selected Industry: ${randomPair.industry}
+- Compatible Pre-selected Category: ${randomPair.category}
 - Company Sizes: startup, smb, mid-market, enterprise, large-enterprise
 - Complexity: simple, standard, complex, edge-case
 - Financial Pressure: comfortable, moderate, tight, crisis
 - Strategic Priority: cost, risk, speed, quality, innovation, sustainability
 - Market Conditions: stable, growing, volatile, disrupted
-- Data Quality: excellent, good, partial, poor
+- Data Quality: MUST be exactly "${presetDataQuality}" (pre-selected — do not change)
 
 RULES:
-1. Pick a RANDOM industry and a COMPATIBLE category from that industry
+1. Use the pre-selected industry and compatible category exactly as provided
 2. All parameters should form a COHERENT business scenario
 3. Write a 1-2 sentence "reasoning" explaining the case
+4. The "dataQuality" field MUST equal "${presetDataQuality}" exactly
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with these exact keys:
@@ -526,22 +538,26 @@ Return ONLY a valid JSON object with these exact keys:
     if (jsonStr.endsWith("```")) jsonStr = jsonStr.slice(0, -3);
     
     const parsed = JSON.parse(jsonStr.trim()) as DraftedParameters;
+    parsed.industry = randomPair.industry;
+    parsed.category = randomPair.category;
     
     // Validate the category is compatible with industry
     const validCategories = INDUSTRY_CATEGORY_MATRIX[parsed.industry] || [];
     if (!validCategories.includes(parsed.category)) {
-      parsed.category = validCategories[0] || "professional-services";
+      parsed.category = pickRandom(validCategories) || "professional-services";
     }
     
     // Attach the selected trick
     if (trick) {
       parsed.trick = trick;
     }
-    
-    // Attach the selected persona
-    parsed.persona = persona.id;
-    parsed.personaName = persona.name;
-    
+
+    // Hard-enforce the pre-sampled distribution in case the LLM drifted
+    if (parsed.dataQuality !== presetDataQuality) {
+      console.warn(`[TestDataGen] LLM returned dataQuality="${parsed.dataQuality}", overriding to preset "${presetDataQuality}"`);
+      parsed.dataQuality = presetDataQuality;
+    }
+
     // Compute and attach qualityTier
     const qualityTier = mapDataQualityToTier(parsed.dataQuality);
     (parsed as any).qualityTier = qualityTier;
@@ -560,7 +576,6 @@ async function handleGenerateMode(
   scenarioType: string,
   parameters: DraftedParameters,
   temperature: number,
-  selectedPersona: typeof BUYER_PERSONAS[number],
   fieldConfigs: ScenarioFieldConfigRow[],
   supabase: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
@@ -611,15 +626,6 @@ EMBEDDING RULES:
 6. Embed the trick primarily in the "${trick.targetField}" field
 7. The rest of the data should appear normal and professional` : '';
 
-  // ── PERSONA STYLE INSTRUCTIONS ──
-  const PERSONA_STYLE_INSTRUCTIONS: Record<string, string> = {
-    "rushed-junior": "Write minimally and vaguely. Use abbreviations freely. Fill only 30-40% of optional fields. Skip details a junior wouldn't know.",
-    "methodical-manager": "Write in detailed, structured prose with precise industry terminology. Fill 85-95% of optional fields. Include strategic rationale.",
-    "cfo-finance": "Focus exclusively on numbers, risk metrics, and ROI. Keep text fields extremely short. Prioritize financial fields. Fill 40-60% of optional fields.",
-    "frustrated-stakeholder": "Mix complaints into data fields. Use narrative paragraphs instead of structured facts. Misuse procurement terminology. Fill 50-70% of optional fields but often in wrong format.",
-    "lost-user": "Write completely irrelevant content with no procurement context. Ask random unrelated questions. Fill 0% of optional fields meaningfully.",
-  };
-
   // ── COMPANY SIZE FINANCIAL SCALES ──
   const COMPANY_SIZE_SCALES: Record<string, string> = {
     "startup": "contract values €5K-€50K, WACC 15-25%, limited leverage",
@@ -632,7 +638,6 @@ EMBEDDING RULES:
     "Large Enterprise": "contract values €500K-€20M, WACC 6-9%",
   };
 
-  const personaStyle = PERSONA_STYLE_INSTRUCTIONS[selectedPersona.id] || PERSONA_STYLE_INSTRUCTIONS["methodical-manager"];
   const financialScale = COMPANY_SIZE_SCALES[parameters.companySize] || "contract values €100K-€2M, WACC 7-11%";
 
   // ── SYSTEM PROMPT ──
@@ -657,11 +662,11 @@ OUTPUT FORMAT (strict): You must return a valid JSON object with exactly this st
 
 Do not include markdown, code fences, or any text outside the JSON object.`;
 
-  // ── USER PROMPT (6 layers) ──
+  // ── USER PROMPT ──
   // LAYER 1 — Scenario context
   let userPrompt = `SCENARIO: ${scenarioType} (Group: ${deviationType})
 QUALITY TIER: ${qualityTier}
-PERSONA: ${selectedPersona.id} (${selectedPersona.name})
+PRIORITY SIGNALS: industry relevance + information quality (no persona styling)
 
 `;
 
@@ -758,11 +763,9 @@ Deliberately trigger the common failure mode for this scenario.`;
     userPrompt += `Generate obviously unusable GIBBERISH content for ALL THREE BLOCKS. Keyboard mash, lorem ipsum, completely irrelevant text. All three blocks must fail basic quality checks.`;
   }
 
-  userPrompt += `\n\nUse the persona writing style: ${personaStyle}`;
-
   const user = userPrompt;
 
-  console.log(`[TestDataGen] Generate mode - QualityTier: ${qualityTier}, DeviationType: ${deviationType}, Trick: ${trick?.category || 'none'}, Persona: ${selectedPersona.id}`);
+  console.log(`[TestDataGen] Generate mode - QualityTier: ${qualityTier}, DeviationType: ${deviationType}, Trick: ${trick?.category || 'none'}`);
 
   // LangSmith tracing
   const tracer = new LangSmithTracer({ env: "production", feature: "test-data-gen" });
@@ -771,11 +774,10 @@ Deliberately trigger the common failure mode for this scenario.`;
     scenarioType,
     qualityTier,
     deviationType,
-    persona: selectedPersona.id,
     trick: trick?.category || "none",
   }, {
     tags: [`tier:${qualityTier}`, `deviation:${deviationType}`, `scenario:${scenarioType}`, "model:gemini-3.1-pro-preview"],
-    metadata: { qualityTier, deviationType, persona: selectedPersona.id },
+    metadata: { qualityTier, deviationType },
   });
 
   const response = await callAI(system, user, temperature);
@@ -851,8 +853,6 @@ Deliberately trigger the common failure mode for this scenario.`;
     generatedAt: new Date().toISOString(),
     metadata: {
       trickValidation: trickScore,
-      persona: selectedPersona.id,
-      personaName: selectedPersona.name,
       requiredFieldCount: fieldGroups.required.length,
       optionalFieldCount: fieldGroups.optional.length,
       deviationType,
@@ -919,7 +919,6 @@ const HIGH_FRICTION_SCENARIOS = [
 async function handleMessyMode(
   scenarioType: string,
   temperature: number,
-  selectedPersona: typeof BUYER_PERSONAS[number],
   supabase: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; data?: Record<string, string>; metadata?: object; error?: string }> {
   // Default to a random high-friction scenario if the provided one isn't in the list
@@ -931,12 +930,7 @@ async function handleMessyMode(
   const fieldGroups = getFieldGroups(messyFieldConfigs);
   const fields = fieldGroups.all;
 
-  // Messy mode defaults to frustrated-stakeholder but can be overridden
-  const messyPersona = selectedPersona.id === "frustrated-stakeholder" || selectedPersona
-    ? selectedPersona
-    : BUYER_PERSONAS.find(p => p.id === "frustrated-stakeholder")!;
-
-  console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}, Persona: ${messyPersona.id}`);
+  console.log(`[TestDataGen] Messy mode - Target: ${targetScenario}, Fields: ${fields.length}`);
 
   // Inject GIBBERISH tier instructions
   const gibberishInstructions = QUALITY_TIER_INSTRUCTIONS['GIBBERISH'];
@@ -945,15 +939,11 @@ async function handleMessyMode(
 
 ${gibberishInstructions}
 
-BUYER PERSONA:
-You are generating this messy data from the perspective of: "${messyPersona.name}"
-${messyPersona.description}
-
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST be filled, even if messily):
 ${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
-OPTIONAL FIELDS (fill chaotically per persona, some blank):
+OPTIONAL FIELDS (fill chaotically, some blank):
 ${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 
 OUTPUT FORMAT:
@@ -1000,8 +990,6 @@ Return ONLY the JSON object.`;
       targetScenario,
       fieldsGenerated: Object.keys(data).length,
       fieldsExpected: fields.length,
-      persona: messyPersona.id,
-      personaName: messyPersona.name,
       requiredFieldCount: fieldGroups.required.length,
       optionalFieldCount: fieldGroups.optional.length,
     }
@@ -1090,7 +1078,6 @@ function buildGenerationPrompt(
   category: string,
   fieldGroups: ScenarioFieldGroups,
   seed: number,
-  selectedPersona: typeof BUYER_PERSONAS[number],
   fieldConfigs: ScenarioFieldConfigRow[],
   industryCtx: { kpis: string[]; constraints: string[] } | null,
   categoryCtx: {
@@ -1119,19 +1106,11 @@ function buildGenerationPrompt(
   const system = `You are an expert procurement consultant generating realistic test data for procurement analysis software.
 ${dbContextBlock}
 
-BUYER PERSONA:
-You are generating test data from the perspective of this user persona: "${selectedPersona.name}"
-${selectedPersona.description}
-
-Adjust your output accordingly:
-- Tone and verbosity of text fields should match this persona
-- Optional field fill rate should be approximately ${selectedPersona.optionalFillRate}
-
 FIELD REQUIREMENTS:
 REQUIRED FIELDS (MUST always be filled):
 ${fieldGroups.required.map(f => `- ${f}`).join('\n')}
 
-OPTIONAL FIELDS (fill according to persona behavior — leave some as empty strings):
+OPTIONAL FIELDS (fill realistically — leave some as empty strings to reflect real-world inputs):
 ${fieldGroups.optional.length > 0 ? fieldGroups.optional.map(f => `- ${f}`).join('\n') : '(none)'}
 ${blockInstructions}
 
@@ -1141,7 +1120,7 @@ CRITICAL RULES:
 3. ALL blocks must be populated — do not stop after Block 1
 4. All numeric values must be plausible for the industry scale
 5. DO NOT generate illogical combinations (e.g., pharmaceutical procurement for a software company)
-6. ALWAYS fill all REQUIRED fields. For OPTIONAL fields, follow the persona fill rate — include unfilled optional fields as empty strings.
+6. ALWAYS fill all REQUIRED fields. Include unfilled optional fields as empty strings.
 7. You MUST generate content for Block 1, Block 2, AND Block 3 fields.
 
 OUTPUT FORMAT:

@@ -35,6 +35,9 @@ import type { GeneratePdfPayload } from "./types.ts";
 const MAX_PAYLOAD_BYTES = 500 * 1024;
 
 serve(async (req) => {
+  // Hoisted so it is reachable inside the catch block for Sentry reporting
+  let authResult: Awaited<ReturnType<typeof authenticateRequest>> | undefined;
+
   // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders(req) });
@@ -50,7 +53,7 @@ serve(async (req) => {
 
   try {
     // 1. Authenticate
-    const authResult = await authenticateRequest(req);
+    authResult = await authenticateRequest(req);
     if ("error" in authResult) {
       return new Response(
         JSON.stringify({ error: authResult.error.message }),
@@ -85,7 +88,7 @@ serve(async (req) => {
     const formData = (optionalRecord(body.formData, "formData", 100) ?? {}) as Record<string, string>;
     const structuredData = typeof body.structuredData === "string" ? body.structuredData.slice(0, 500000) : undefined;
     const selectedDashboards = body.selectedDashboards !== undefined
-      ? requireArray(body.selectedDashboards, "selectedDashboards", { maxLength: 20 }) as string[]
+      ? requireArray(body.selectedDashboards, "selectedDashboards", { maxLength: 25 }) as string[]
       : undefined;
     const pdfTheme = body.pdfTheme !== undefined
       ? requireStringEnum(body.pdfTheme, "pdfTheme", ["light", "dark"] as const)
@@ -95,6 +98,9 @@ serve(async (req) => {
       : undefined;
     const evaluationConfidence = typeof body.evaluationConfidence === "string"
       ? body.evaluationConfidence.slice(0, 10)
+      : undefined;
+    const coverageStars = typeof body.coverageStars === "number"
+      ? Math.max(0, Math.min(5, body.coverageStars))
       : undefined;
 
     const payload: GeneratePdfPayload = {
@@ -107,6 +113,7 @@ serve(async (req) => {
       pdfTheme: pdfTheme as GeneratePdfPayload["pdfTheme"],
       evaluationScore,
       evaluationConfidence,
+      coverageStars,
     };
 
     // 4. Generate PDF

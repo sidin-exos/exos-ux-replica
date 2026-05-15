@@ -10,15 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { generateAITestData, INDUSTRY_CATEGORY_COMPATIBILITY } from "@/lib/ai-test-data-generator";
 import { supabase } from "@/integrations/supabase/client";
 import { isDeepAnalyticsScenario, detectPromptLeakage, LATENCY_BENCHMARKS } from "@/lib/ai/graph";
-import type { BuyerPersona, EntropyLevel, TestPlanItem } from "@/lib/testing/types";
-
-const PERSONAS: BuyerPersona[] = [
-  "rushed-junior",
-  "methodical-manager",
-  "cfo-finance",
-  "frustrated-stakeholder",
-  "lost-user",
-];
+import type { EntropyLevel, TestPlanItem } from "@/lib/testing/types";
 
 function randomChoice<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -96,14 +88,22 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
     const industries = Object.keys(INDUSTRY_CATEGORY_COMPATIBILITY);
     const plan: TestPlanItem[] = [];
 
-    for (let i = 0; i < 15; i++) {
-      const industrySlug = randomChoice(industries);
-      const categories = INDUSTRY_CATEGORY_COMPATIBILITY[industrySlug];
-      const categorySlug = randomChoice(categories);
-      const persona = randomChoice(PERSONAS);
-      const entropyLevel = randomChoice([1, 2, 3]) as EntropyLevel;
+    // Local in-batch rotation: ensures the 15 generated items don't
+    // duplicate the same industry+category on consecutive rows.
+    const usedPairs = new Set<string>();
 
-      plan.push({ scenarioId, persona, industrySlug, categorySlug, entropyLevel });
+    for (let i = 0; i < 15; i++) {
+      let industrySlug = randomChoice(industries);
+      let categorySlug = randomChoice(INDUSTRY_CATEGORY_COMPATIBILITY[industrySlug]);
+      // Try up to 5 times to find an unused pair this batch.
+      for (let attempt = 0; attempt < 5 && usedPairs.has(`${industrySlug}::${categorySlug}`); attempt++) {
+        industrySlug = randomChoice(industries);
+        categorySlug = randomChoice(INDUSTRY_CATEGORY_COMPATIBILITY[industrySlug]);
+      }
+      usedPairs.add(`${industrySlug}::${categorySlug}`);
+
+      const entropyLevel = randomChoice([1, 2, 3]) as EntropyLevel;
+      plan.push({ scenarioId, industrySlug, categorySlug, entropyLevel });
     }
 
     setGeneratedPlan(plan);
@@ -155,7 +155,6 @@ const TestPlanOrchestrator = ({ scenarioId, model }: TestPlanOrchestratorProps) 
         // Phase 1: Generate synthetic data
         const genResult = await generateAITestData({
           scenarioType: item.scenarioId,
-          persona: item.persona,
           industry: item.industrySlug,
           category: item.categorySlug,
           mctsIterations: item.entropyLevel === 3 ? 1 : 3,

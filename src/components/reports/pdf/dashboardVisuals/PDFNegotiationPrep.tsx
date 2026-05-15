@@ -14,8 +14,15 @@ export const PDFNegotiationPrep = ({ data, themeMode }: { data: NegotiationPrepD
       }))
     : [];
 
+  // BATNA strength normalised to a 0–10 scale. Inputs may be 0–1, 0–5, or 0–10.
+  const rawStrength = Number(data.batna?.strength ?? 0);
+  const strength10 = rawStrength <= 1
+    ? Math.max(0, Math.min(10, rawStrength * 10))
+    : rawStrength <= 5
+      ? Math.max(0, Math.min(10, rawStrength * 2))
+      : Math.max(0, Math.min(10, rawStrength));
   const keyMetrics = [
-    { label: "BATNA Score", value: `${data.batna?.strength || 0}/100` },
+    { label: "BATNA Score", value: `${strength10.toFixed(1).replace(/\.0$/, '')}/10` },
     { label: "Leverage", value: data.leveragePoints?.[0]?.point || "—" },
     { label: "Supplier Power", value: data.leveragePoints?.[1]?.point || "—" },
   ];

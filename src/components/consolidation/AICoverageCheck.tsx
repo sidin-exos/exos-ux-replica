@@ -42,6 +42,10 @@ interface AICoverageCheckProps {
   fileNames?: string[];
   /** "What data do I need to prepare?" sections. */
   sections: { heading: string; description: string }[];
+  /** Optional scenarioId / S## code. When provided, the pre-evaluator anchors
+   * its rubric to SCENARIO_INSTRUCTION_ADDENDA so it stops penalising
+   * tutorial-only sections that the post-run analysis never enforces. */
+  scenarioId?: string;
   /**
    * Optional: scenario required-field specs. When provided, a second
    * "Draft fields with AI" button lets the user auto-generate the 3-field
@@ -51,6 +55,10 @@ interface AICoverageCheckProps {
   /** Visual label/CTA copy. */
   title?: string;
   subtitle?: string;
+  /** Fired whenever the LLM coverage result changes. Lets parents
+   * persist the 0–5 star score so it can drive downstream KPIs (e.g. the
+   * PDF "Input Quality" score) — keeping a single source of truth. */
+  onResult?: (result: CoverageResult | null) => void;
 }
 
 /**
@@ -65,9 +73,11 @@ export function AICoverageCheck({
   description,
   fileNames = [],
   sections,
+  scenarioId,
   draftableFields,
-  title = "AI coverage check",
-  subtitle = "Score your context against the recommended data sections.",
+  title = "Input coverage check",
+  subtitle = "Are the required topics present in your input? (separate from output rigour, scored after the run.)",
+  onResult,
 }: AICoverageCheckProps) {
   const [coverage, setCoverage] = useState<CoverageResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,16 +89,19 @@ export function AICoverageCheck({
   const runCheck = async () => {
     setLoading(true);
     setCoverage(null);
+    onResult?.(null);
     try {
       const { data, error } = await supabase.functions.invoke(
         "evaluate-project-coverage",
         {
-          body: { scenarioTitle, description, fileNames, sections },
+          body: { scenarioTitle, description, fileNames, sections, scenarioId },
         },
       );
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      setCoverage(data as CoverageResult);
+      const result = data as CoverageResult;
+      setCoverage(result);
+      onResult?.(result);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "Failed to evaluate coverage",
@@ -152,7 +165,7 @@ export function AICoverageCheck({
             ) : (
               <>
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Check data quality
+                Check coverage
               </>
             )}
           </Button>
@@ -220,6 +233,40 @@ function CoverageResults({ result }: { result: CoverageResult }) {
       ? "text-amber-600"
       : "text-destructive";
 
+  // Predicted post-run "rigour" band. Calibrated against observed runs:
+  //   - "partial" usually means a key number is implied not quantified → −15 pts
+  //   - "missing" means the section isn't covered at all → −30 pts
+  //   - any partial/missing on a financial/cost/savings section caps the
+  //     predicted rigour at 55, because the post-run scorer penalises
+  //     missing numerical evidence the hardest.
+  const partialCount = result.sections.filter((s) => s.status === "partial").length;
+  const missingCount = result.sections.filter((s) => s.status === "missing").length;
+  const FINANCIAL_RE = /(cost|financial|savings|spend|price|budget|tco|roi|margin)/i;
+  const financialSections = result.sections.filter((s) => FINANCIAL_RE.test(s.heading));
+  const financialCovered = financialSections.filter((s) => s.status === "covered").length;
+  const financialGaps = financialSections.filter((s) => s.status !== "covered").length;
+  // Cap only when there is meaningful financial weakness:
+  // ALL financial sections gappy → hard cap 55 (no quantified spend/savings at all)
+  // SOME financial gaps but at least one fully covered → softer cap 70
+  // No financial gaps → no cap.
+  let predictedRigour = Math.max(
+    20,
+    Math.min(95, 95 - partialCount * 15 - missingCount * 30),
+  );
+  if (financialSections.length > 0 && financialCovered === 0) {
+    predictedRigour = Math.min(predictedRigour, 55);
+  } else if (financialGaps > 0) {
+    predictedRigour = Math.min(predictedRigour, 70);
+  }
+  const predictedBand =
+    predictedRigour >= 80
+      ? { label: "High (80+)", color: "text-emerald-600" }
+      : predictedRigour >= 60
+      ? { label: "Medium (60–79)", color: "text-amber-600" }
+      : { label: "Low (<60)", color: "text-destructive" };
+
+  const gaps = result.sections.filter((s) => s.status !== "covered");
+
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">
       <div className="flex items-center justify-between">
@@ -259,6 +306,39 @@ function CoverageResults({ result }: { result: CoverageResult }) {
           );
         })}
       </ul>
+
+      {/* Predictive rigour band — links coverage to the post-run rigour score */}
+      <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Predicted output rigour
+          </span>
+          <span className={`text-sm font-semibold ${predictedBand.color}`}>
+            {predictedBand.label}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Coverage measures whether topics are present. Output rigour (scored
+          after the run) measures numerical precision and evidence depth.
+          {financialSections.length > 0 && financialCovered === 0
+            ? " No financial section is fully quantified — the post-run rigour score will be capped until you add explicit € figures."
+            : financialGaps > 0
+            ? " Some financial detail is partial — adding explicit € figures will lift the post-run rigour score."
+            : gaps.length > 0
+            ? ` Closing the ${gaps.length} gap${gaps.length > 1 ? "s" : ""} below typically lifts the rigour score by 15–30 points each.`
+            : " Your input looks complete — expect a high rigour score."}
+        </p>
+        {gaps.length > 0 && (
+          <ul className="mt-1 space-y-0.5">
+            {gaps.slice(0, 4).map((g, i) => (
+              <li key={i} className="text-xs text-foreground">
+                <span className="font-medium">{g.heading}:</span>{" "}
+                <span className="text-muted-foreground">add explicit numbers, sources, or calculated totals.</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

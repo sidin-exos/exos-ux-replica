@@ -6,6 +6,44 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { pickWithRotation, pairKey, ROTATION_BUFFER } from "@/lib/test-rotation-memory";
+
+/**
+ * Pick an industry+category pair using the rotation buffer to avoid
+ * the same pair appearing twice in a row. Honours user-provided
+ * overrides when supplied.
+ */
+function pickRotatedPair(
+  scenarioType: string,
+  industryOverride?: string,
+  categoryOverride?: string,
+): { industry: string; category: string } {
+  const industries = Object.keys(INDUSTRY_CATEGORY_COMPATIBILITY);
+  // Build flat pool of valid "industry::category" pair keys.
+  const allPairs: string[] = [];
+  for (const ind of industries) {
+    for (const cat of INDUSTRY_CATEGORY_COMPATIBILITY[ind]) {
+      allPairs.push(pairKey(ind, cat));
+    }
+  }
+  if (industryOverride && categoryOverride) {
+    return { industry: industryOverride, category: categoryOverride };
+  }
+  if (industryOverride) {
+    const cats = INDUSTRY_CATEGORY_COMPATIBILITY[industryOverride] || [];
+    if (cats.length > 0) {
+      const cat = pickWithRotation(
+        cats.map((c) => pairKey(industryOverride, c)),
+        `pair:${scenarioType}`,
+        ROTATION_BUFFER.pair,
+      );
+      return { industry: industryOverride, category: cat.split("::")[1] };
+    }
+  }
+  const chosen = pickWithRotation(allPairs, `pair:${scenarioType}`, ROTATION_BUFFER.pair);
+  const [ind, cat] = chosen.split("::");
+  return { industry: ind, category: cat };
+}
 
 export interface AIGeneratedTestData {
   success: boolean;
@@ -24,7 +62,6 @@ interface GenerateOptions {
   scenarioType: string;
   industry?: string;
   category?: string;
-  persona?: string;
   mctsIterations?: number;
 }
 
@@ -178,7 +215,6 @@ export async function generateAITestData(
         scenarioType: options.scenarioType,
         industry: options.industry,
         category: options.category,
-        persona: options.persona,
         mctsIterations: options.mctsIterations || 3,
       },
     });
@@ -268,12 +304,18 @@ export async function generateTestDataHybrid(
 }> {
   const { preferAI = true, industry, category, mctsIterations } = options || {};
 
+  // Pre-pick industry/category using the rotation buffer so the same
+  // combination doesn't repeat back-to-back. The edge function still rolls
+  // its own trick + content randomly — we just stop it from re-rolling the
+  // pair on its own.
+  const pickedPair = pickRotatedPair(scenarioType, industry, category);
+
   if (preferAI) {
     try {
       const result = await generateAITestData({
         scenarioType,
-        industry,
-        category,
+        industry: pickedPair.industry,
+        category: pickedPair.category,
         mctsIterations,
       });
 

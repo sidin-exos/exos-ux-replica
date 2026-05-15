@@ -221,7 +221,11 @@ const TOKEN_PREFIXES: Record<EntityType, string> = {
   custom: "ENTITY",
 };
 
-// Common business terms that should never be masked (false positive protection)
+// Common business terms that should never be masked (false positive protection).
+// Includes regulatory/compliance standards, currencies, and common acronyms that
+// the all-caps regex (line ~156) would otherwise treat as supplier names — e.g.
+// "ISO 27001" rendering as "[SUPPLIER_C] 27001" in the output. The deanonymizer
+// has no way to recover these because they were never real PII to begin with.
 const COMMON_BUSINESS_TERMS = new Set([
   "invoice", "contract", "agreement", "total", "subtotal",
   "date", "vendor", "supplier", "client", "manager",
@@ -234,6 +238,24 @@ const COMMON_BUSINESS_TERMS = new Set([
   "july", "august", "september", "october", "november", "december",
   "monday", "tuesday", "wednesday", "thursday", "friday",
   "saturday", "sunday",
+  // Regulatory standards & compliance frameworks (NEVER tokenise)
+  "iso", "gdpr", "soc2", "soc", "hipaa", "pci", "pci-dss", "dss",
+  "nis2", "nis", "tupe", "ccpa", "fcpa", "sox", "ferpa", "glba",
+  "iec", "ansi", "nist", "fedramp", "itar", "ear", "rohs", "reach",
+  "cmmc", "fips", "csa", "owasp", "cis", "cobit", "itil", "togaf",
+  "asme", "din", "bs", "en", "ul", "ce", "fcc", "etsi", "ieee",
+  // Common business acronyms
+  "rfp", "rfi", "rfq", "sow", "sla", "kpi", "mou", "nda", "lol",
+  "tco", "roi", "npv", "irr", "ebitda", "capex", "opex", "p&l",
+  "msp", "mssp", "saas", "paas", "iaas", "iot", "ai", "ml", "api",
+  "ceo", "cto", "cfo", "coo", "cio", "ciso", "vp", "svp", "evp",
+  // Currencies & units (caught by all-caps regex)
+  "eur", "usd", "gbp", "chf", "jpy", "cny", "cad", "aud", "nok", "sek",
+  "ltd", "llc", "inc", "gmbh", "ag", "plc", "sa", "bv", "nv", "spa",
+  // EXOS/internal placeholders & dimensions
+  "kg", "mt", "tco", "tb", "gb", "mb", "ghz", "mhz", "dpo", "dso", "dio",
+  // Geographic regions/blocs commonly all-caps
+  "eu", "us", "uk", "uae", "apac", "emea", "latam", "asean", "mena",
 ]);
 
 /** Generate a unique masked token for an entity */
@@ -420,8 +442,10 @@ export function deanonymizeText(
   const unmappedTokens: string[] = [];
   let entitiesRestored = 0;
 
-  // Find all tokens in the text
-  const tokenPattern = /\[[A-Z_]+_[A-Z]\d*\]/g;
+  // Find all tokens in the text. Two suffix shapes are valid:
+  //   - Original anonymiser: [SUPPLIER_A], [COMPANY_B2]    → _<LETTER><digits?>
+  //   - AI-introduced [ALT_*] namespace: [ALT_SUPPLIER_1]  → _<digits>
+  const tokenPattern = /\[[A-Z][A-Z_]*_(?:[A-Z]\d*|\d+)\]/g;
   const foundTokens = anonymizedText.match(tokenPattern) || [];
   const uniqueTokens = [...new Set(foundTokens)];
 
@@ -434,6 +458,38 @@ export function deanonymizeText(
       unmappedTokens.push(token);
     }
   }
+
+  // Friendly fallback for the AI-generated [ALT_*] namespace and any other
+  // unmapped tokens. Without this, alternative-sourcing sections would render
+  // raw brackets like "[ALT_SUPPLIER_1]" which look like a leaked placeholder.
+  // We convert them to readable labels: "[ALT_SUPPLIER_1]" → "Alternative Supplier 1".
+  for (const token of unmappedTokens) {
+    const inner = token.slice(1, -1); // strip [ ]
+    // Match patterns like ALT_SUPPLIER_1, ALT_PARTNER_2, ALT_VENDOR_3 …
+    const altMatch = inner.match(/^ALT_([A-Z]+)_(\d+)$/);
+    if (altMatch) {
+      const noun = altMatch[1].charAt(0) + altMatch[1].slice(1).toLowerCase();
+      const friendly = `Alternative ${noun} ${altMatch[2]}`;
+      restoredText = restoredText.split(token).join(friendly);
+      continue;
+    }
+    // Generic single-letter unmapped token (e.g. [SUPPLIER_Z] the AI invented)
+    // Convert "[SUPPLIER_Z]" → "Supplier Z" so the report stays readable.
+    const generic = inner.match(/^([A-Z]+)_([A-Z]\d*)$/);
+    if (generic) {
+      const noun = generic[1].charAt(0) + generic[1].slice(1).toLowerCase().replace(/_/g, " ");
+      restoredText = restoredText.split(token).join(`${noun} ${generic[2]}`);
+    }
+  }
+
+  // Final pass: collapse immediate duplicate phrase repetitions like
+  // "EU MDR EU MDR" or "GmbH GmbH" that the model occasionally emits when
+  // expanding aliases inside text that already contained the expansion.
+  // Conservative: 2–40 char phrase, word-boundary anchored, single repetition.
+  restoredText = restoredText.replace(
+    /\b([\w&./-]{2,40}(?:\s+[\w&./-]{2,40}){0,4})\s+\1\b/g,
+    "$1",
+  );
 
   return {
     restoredText,

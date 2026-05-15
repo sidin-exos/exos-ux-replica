@@ -19,17 +19,9 @@ import { generateAITestData } from "@/lib/ai-test-data-generator";
 import { supabase } from "@/integrations/supabase/client";
 import { useModelConfig } from "@/contexts/ModelConfigContext";
 import { useIndustryContexts, useProcurementCategories } from "@/hooks/useContextData";
-import type { BuyerPersona, EntropyLevel } from "@/lib/testing/types";
+import type { EntropyLevel } from "@/lib/testing/types";
 
 type Phase = "idle" | "generating" | "analyzing";
-
-const PERSONAS: { value: BuyerPersona; label: string; desc: string }[] = [
-  { value: "rushed-junior", label: "Rushed Junior Buyer", desc: "Minimal context, informal language" },
-  { value: "methodical-manager", label: "Methodical Category Manager", desc: "Highly detailed, structured input" },
-  { value: "cfo-finance", label: "CFO / Finance Leader", desc: "Financial precision, high-level summaries" },
-  { value: "frustrated-stakeholder", label: "Frustrated Stakeholder", desc: "Messy narratives, ad-hoc usage" },
-  { value: "lost-user", label: "Lost User (Out-of-Scope)", desc: "Irrelevant queries, zero procurement context" },
-];
 
 const ENTROPY_LEVELS: { value: string; level: EntropyLevel; label: string; desc: string }[] = [
   { value: "1", level: 1, label: "L1 — Structured", desc: "80% structured data" },
@@ -43,7 +35,6 @@ interface LaunchTestBatchProps {
 }
 
 const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps) => {
-  const [persona, setPersona] = useState<BuyerPersona>("rushed-junior");
   const [entropy, setEntropy] = useState<string>("2");
   const [industry, setIndustry] = useState("");
   const [category, setCategory] = useState("");
@@ -73,7 +64,6 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
         scenarioType: scenarioId,
         industry: industry || undefined,
         category: category || undefined,
-        persona,
         mctsIterations: entropyLevel === 3 ? 1 : 3,
       });
 
@@ -183,24 +173,6 @@ const LaunchTestBatch = ({ scenarioId, onScenarioChange }: LaunchTestBatchProps)
               {availableScenarios.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   {s.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Persona */}
-        <div className="space-y-2">
-          <Label>Buyer Persona</Label>
-          <Select value={persona} onValueChange={(v) => setPersona(v as BuyerPersona)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PERSONAS.map((p) => (
-                <SelectItem key={p.value} value={p.value}>
-                  <span>{p.label}</span>
-                  <span className="text-xs text-muted-foreground ml-2">— {p.desc}</span>
                 </SelectItem>
               ))}
             </SelectContent>

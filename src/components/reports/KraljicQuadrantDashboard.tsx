@@ -1,4 +1,4 @@
-import { Grid3X3, Shield, Filter, ClipboardList, Zap } from "lucide-react";
+import { Grid3X3, Shield, Filter, ClipboardList, Zap, Star } from "lucide-react";
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { KraljicData } from "@/lib/dashboard-data-parser";
@@ -133,7 +133,7 @@ const KraljicQuadrantDashboard = ({
 
   return (
     <Card className="card-elevated h-full">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
@@ -218,21 +218,26 @@ const KraljicQuadrantDashboard = ({
                         {qItems.length} · {sharePct}%
                       </span>
                     </div>
-                    {/* Items */}
-                    <div className="flex flex-wrap gap-1 p-2 flex-1 content-start">
+                    {/* Items — bold star markers (replaces tiny numeric pills) */}
+                    <div className="flex flex-wrap gap-1.5 p-2 flex-1 content-start">
                       {qItems.map((item) => (
-                        <span
+                        <div
                           key={item.id}
-                          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold tabular-nums"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-full transition-transform hover:scale-110"
                           style={{
-                            backgroundColor: `${meta.color}25`,
-                            color: meta.color,
-                            border: `1px solid ${meta.color}55`,
+                            backgroundColor: `${meta.color}1f`,
+                            border: `1.5px solid ${meta.color}`,
+                            boxShadow: `0 1px 4px ${meta.color}33`,
                           }}
-                          title={item.name}
+                          title={`${item.name}${item.spend ? ` · ${item.spend}` : ""}`}
+                          aria-label={item.name}
                         >
-                          {item.id}
-                        </span>
+                          <Star
+                            className="w-4 h-4"
+                            style={{ color: meta.color, fill: meta.color }}
+                            strokeWidth={1.5}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -307,50 +312,6 @@ const KraljicQuadrantDashboard = ({
           </div>
         </div>
 
-        {/* Item legend grouped by quadrant */}
-        <div className="rounded-md border border-border overflow-hidden">
-          <div className="px-2.5 py-1.5 bg-muted/40 border-b border-border">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Item legend
-            </span>
-          </div>
-          <div className="p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5">
-            {QUADRANT_ORDER.flatMap((q) =>
-              (groupedItems[q] || []).map((item) => {
-                const meta = QUADRANT_META[q];
-                return (
-                  <div key={item.id} className="flex items-center gap-2 text-xs">
-                    <div
-                      className="w-0.5 self-stretch rounded-full flex-shrink-0"
-                      style={{ backgroundColor: meta.color }}
-                      aria-hidden
-                    />
-                    <span
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold tabular-nums flex-shrink-0"
-                      style={{
-                        backgroundColor: `${meta.color}25`,
-                        color: meta.color,
-                        border: `1px solid ${meta.color}55`,
-                      }}
-                    >
-                      {item.id}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-foreground truncate text-[11px] leading-tight">
-                        {item.name}
-                      </p>
-                      {item.spend && (
-                        <p className="text-muted-foreground text-[10px] leading-tight">
-                          {item.spend}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
       </CardContent>
     </Card>
   );

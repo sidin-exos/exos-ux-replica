@@ -211,7 +211,7 @@ serve(async (req) => {
           messageCount: messages.length,
           filledCount: Object.keys(extractedSoFar).length,
         },
-        { tags: ["scenario-chat", `scenario:${scenarioId}`, "model:gemini-2.5-pro"] }
+        { tags: ["scenario-chat", `scenario:${scenarioId}`, "model:gemini-3.1-pro-preview"] }
       );
     }
 
@@ -266,7 +266,7 @@ serve(async (req) => {
           promptTokens,
           completionTokens,
           totalTokens: aiResponse.usageMetadata?.totalTokenCount,
-          estimatedCostUsd: estimateCost("gemini-2.5-pro", promptTokens, completionTokens),
+          estimatedCostUsd: estimateCost("gemini-3.1-pro-preview", promptTokens, completionTokens),
           responseLength: content?.length ?? 0,
           processingTimeMs: Date.now() - startTime,
         });

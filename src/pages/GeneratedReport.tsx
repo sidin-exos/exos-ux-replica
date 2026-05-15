@@ -13,6 +13,7 @@ import {
   BarChart3,
   Loader2,
   AlertCircle,
+  Pencil,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import ReportExportButtons from "@/components/reports/ReportExportButtons";
 import DashboardRenderer, { dashboardHasRealData } from "@/components/reports/DashboardRenderer";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import ReportFeedback from "@/components/feedback/ReportFeedback";
 import { DashboardType, dashboardConfigs } from "@/lib/dashboard-mappings";
 import { useShareableReport } from "@/hooks/useShareableReport";
 import { stripDashboardData } from "@/lib/dashboard-data-parser";
@@ -35,6 +38,7 @@ interface ReportState {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  coverageStars?: number | null;
 }
 
 const GeneratedReport = () => {
@@ -113,7 +117,7 @@ const GeneratedReport = () => {
     );
   }
 
-  const { scenarioTitle, scenarioId, analysisResult, structuredData, formData, timestamp, selectedDashboards = [], evaluationScore, evaluationConfidence } = state;
+  const { scenarioTitle, scenarioId, analysisResult, structuredData, formData, timestamp, selectedDashboards = [], evaluationScore, evaluationConfidence, coverageStars } = state;
   
   // Ensure analysisResult is never null for rendering
   const safeAnalysisResult = analysisResult ?? '';
@@ -140,33 +144,88 @@ const GeneratedReport = () => {
       .trim();
   };
 
-  // Parse key metrics from analysis (simple extraction)
-  const extractKeyPoints = (text: string | null | undefined): string[] => {
-    if (!text) return [];
-    
-    const lines = text.split("\n").filter((line) => line.trim());
-    const keyPoints: string[] = [];
-    
-    for (const line of lines) {
-      const cleanLine = cleanMarkdown(line);
-      if (!cleanLine) continue;
-      
-      if (
-        cleanLine.includes("recommend") ||
-        cleanLine.includes("suggest") ||
-        cleanLine.includes("should") ||
-        cleanLine.includes("%") ||
-        cleanLine.includes("$")
-      ) {
-        keyPoints.push(cleanLine);
-        if (keyPoints.length >= 5) break;
-      }
-    }
-    
-    return keyPoints.length > 0 ? keyPoints : lines.slice(0, 5).map(cleanMarkdown).filter(Boolean);
+  // Mirror supabase/functions/generate-pdf/pdf-document.tsx so the on-screen
+  // Executive Summary matches the exported PDF exactly.
+  const INSTRUCTION_PREFIX_RE = /^\s*[-•*]?\s*(supply|provide|specify|enter|input|complete|fill in|add|please|to enable|to allow|to support|to strengthen)\b/i;
+  const isInstructionLine = (line: string) => INSTRUCTION_PREFIX_RE.test(line) || /\(e\.g\.,/i.test(line);
+  const isPlaybookPhase = (line: string) => /^\s*phase\s+\d+\s*[—\-:]\s*(detect|activate|contain|recover|learn)/i.test(line);
+  const isTableLine = (line: string) => /^\s*\|.*\|\s*$/.test(line) || /^\s*[-:|\s]+$/.test(line);
+  const looksLikeFinding = (line: string): boolean => {
+    if (!line || line.length < 15) return false;
+    if (isInstructionLine(line) || isPlaybookPhase(line) || isTableLine(line)) return false;
+    return true;
   };
 
-  const keyPoints = extractKeyPoints(safeAnalysisResult);
+  const extractEnvelopeSummary = (raw?: string): { findings: string[]; recommendations: string[] } => {
+    if (!raw) return { findings: [], recommendations: [] };
+    let env: any;
+    try { env = JSON.parse(raw); } catch { return { findings: [], recommendations: [] }; }
+    if (!env || typeof env !== 'object') return { findings: [], recommendations: [] };
+
+    const findings: string[] = [];
+    const recommendations: string[] = [];
+
+    const exec = env.executive_summary ?? env.payload?.executive_summary ?? {};
+    const headline = exec.headline ?? exec.summary ?? env.headline;
+    if (typeof headline === 'string' && headline.trim() && looksLikeFinding(headline)) {
+      findings.push(headline.trim());
+    }
+    const findingsArr = exec.key_findings ?? env.key_findings ?? exec.findings ?? [];
+    if (Array.isArray(findingsArr)) {
+      for (const f of findingsArr) {
+        const t = typeof f === 'string' ? f : (f?.finding ?? f?.text ?? f?.title ?? '');
+        const s = String(t).trim();
+        if (s && looksLikeFinding(s)) findings.push(s);
+        if (findings.length >= 3) break;
+      }
+    }
+
+    const recsArr = env.recommendations ?? env.payload?.recommendations ?? exec.recommendations ?? [];
+    if (Array.isArray(recsArr)) {
+      for (const r of recsArr) {
+        let t: string;
+        if (typeof r === 'string') t = r;
+        else {
+          const action = r?.action ?? r?.recommendation ?? r?.text ?? r?.title ?? '';
+          const priority = r?.priority ? `[${String(r.priority)}] ` : '';
+          const rationaleRaw = r?.rationale ?? r?.benefit ?? r?.expected_value ?? '';
+          const rationaleStr = String(rationaleRaw ?? '').trim();
+          const rationale = /^\d[\d,. ]*$/.test(rationaleStr) ? '' : rationaleStr;
+          t = `${priority}${action}${rationale ? ` — ${rationale}` : ''}`;
+        }
+        const s = String(t).trim().replace(/\s+—\s+\d[\d,. ]*\s*$/, '');
+        if (s && looksLikeFinding(s)) recommendations.push(s);
+        if (recommendations.length >= 4) break;
+      }
+    }
+
+    return { findings, recommendations };
+  };
+
+  const extractProseSummary = (text: string): { findings: string[]; recommendations: string[] } => {
+    const lines = text.split('\n').map(cleanMarkdown).filter((l) => looksLikeFinding(l));
+    const findingPattern = /(\$|€|%|found|indicates?|presents?|analysis|current(ly)?|total|average|estimated|reveals?|shows?)/i;
+    const recommendPattern = /\b(target|aim to|recommend|should|negotiate|consider|implement|prioritize|pursue|establish|ensure|leverage|explore)\b/i;
+    const findings: string[] = [];
+    const recommendations: string[] = [];
+    for (const line of lines) {
+      if (recommendations.length < 4 && recommendPattern.test(line)) recommendations.push(line);
+      else if (findings.length < 3 && findingPattern.test(line)) findings.push(line);
+      if (findings.length >= 3 && recommendations.length >= 4) break;
+    }
+    if (findings.length === 0 || recommendations.length === 0) {
+      const pool = lines.slice(0, 7);
+      const mid = Math.ceil(pool.length / 2);
+      if (findings.length === 0) findings.push(...pool.slice(0, mid).slice(0, 3));
+      if (recommendations.length === 0) recommendations.push(...pool.slice(mid).slice(0, 4));
+    }
+    return { findings, recommendations };
+  };
+
+  const envelopeSummary = extractEnvelopeSummary(structuredData);
+  const proseSummary = extractProseSummary(displayAnalysis);
+  const summaryFindings = envelopeSummary.findings.length > 0 ? envelopeSummary.findings : proseSummary.findings;
+  const summaryRecommendations = envelopeSummary.recommendations.length > 0 ? envelopeSummary.recommendations : proseSummary.recommendations;
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -178,14 +237,28 @@ const GeneratedReport = () => {
       <Header />
 
       <main className="container py-8 relative">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Analysis
-        </button>
+        {/* Back + Refine actions */}
+        <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Analysis
+          </button>
+          {!isSharedView && scenarioId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/analyse/${scenarioId}`)}
+              className="gap-2"
+              title="Open the wizard with your previous inputs preserved so you can refine them and re-run the analysis."
+            >
+              <Pencil className="w-4 h-4" />
+              Refine inputs &amp; re-run
+            </Button>
+          )}
+        </div>
 
         {/* Report Header */}
         <motion.div
@@ -235,6 +308,7 @@ const GeneratedReport = () => {
               selectedDashboards={selectedDashboards}
               evaluationScore={evaluationScore}
               evaluationConfidence={evaluationConfidence}
+              coverageStars={coverageStars}
             />
           </div>
         </motion.div>
@@ -249,22 +323,46 @@ const GeneratedReport = () => {
             className="lg:col-span-2 space-y-6"
           >
             {/* Executive Summary */}
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle className="font-display flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
+            <Card className="card-elevated border-t-2 border-t-primary/60">
+              <CardHeader className="bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
+                <CardTitle className="font-display text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+                  <Target className="w-6 h-6 text-primary" />
                   Executive Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  {keyPoints.map((point, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                      <span className="text-foreground">{point}</span>
-                    </li>
-                  ))}
-                </ul>
+              <CardContent className="pt-6 space-y-6">
+                {summaryFindings.length > 0 && (
+                  <div>
+                    <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                      Key Findings
+                    </h3>
+                    <ul className="space-y-3">
+                      {summaryFindings.map((point, i) => (
+                        <li key={`f-${i}`} className="flex items-start gap-3">
+                          <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                          <span className="text-foreground">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {summaryRecommendations.length > 0 && (
+                  <div>
+                    <h3 className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                      Recommended Actions
+                    </h3>
+                    <ol className="space-y-3 list-decimal list-inside">
+                      {summaryRecommendations.map((point, i) => (
+                        <li key={`r-${i}`} className="text-foreground">
+                          <span className="ml-1">{point}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {summaryFindings.length === 0 && summaryRecommendations.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No executive summary available.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -321,59 +419,24 @@ const GeneratedReport = () => {
             })()}
 
             {/* Full Analysis */}
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle className="font-display">Detailed Analysis</CardTitle>
+            <Card className="card-elevated border-t-2 border-t-accent/60">
+              <CardHeader className="bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
+                <CardTitle className="font-display text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+                  <BarChart3 className="w-6 h-6 text-accent" />
+                  Detailed Analysis
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <div className="text-foreground bg-secondary/30 rounded-lg p-5 border border-border space-y-4">
-                    {displayAnalysis.split('\n').map((line, i) => {
-                      // Check if line starts with hash headers (###, ####, etc.)
-                      const hashMatch = line.match(/^(#{1,4})\s*(.*)$/);
-                      const isHashHeader = !!hashMatch;
-                      
-                      // Clean all markdown formatting
-                      const cleanLine = cleanMarkdown(line);
-                      
-                      if (!cleanLine) {
-                        return <div key={i} className="h-2" />;
-                      }
-                      
-                      // Hash headers get largest styling
-                      if (isHashHeader) {
-                        const headerLevel = hashMatch[1].length;
-                        const fontSize = headerLevel <= 2 ? 'text-lg' : 'text-base';
-                        return (
-                          <h3 key={i} className={`${fontSize} font-bold text-foreground mt-4 first:mt-0`}>
-                            {cleanLine}
-                          </h3>
-                        );
-                      }
-                      
-                      // Check if line looks like a section header (ends with colon or is all caps/title case short line)
-                      const isSectionHeader = 
-                        (cleanLine.endsWith(':') && cleanLine.length < 80) ||
-                        (cleanLine.length > 0 && cleanLine.length < 60 && /^[A-Z]/.test(cleanLine) && !cleanLine.includes('.'));
-                      
-                      if (isSectionHeader) {
-                        return (
-                          <p key={i} className="font-semibold text-foreground text-base mt-3">
-                            {cleanLine}
-                          </p>
-                        );
-                      }
-                      
-                      return (
-                        <p key={i} className="text-foreground/90">
-                          {cleanLine}
-                        </p>
-                      );
-                    })}
-                  </div>
+                  <MarkdownRenderer content={displayAnalysis} />
                 </div>
               </CardContent>
             </Card>
+
+            {/* Report quality feedback — hidden in shared/public view */}
+            {!isSharedView && (
+              <ReportFeedback scenarioId={scenarioId} />
+            )}
           </motion.div>
 
           {/* Sidebar */}
@@ -385,7 +448,7 @@ const GeneratedReport = () => {
           >
             {/* Input Summary */}
             <Card className="card-elevated">
-              <CardHeader>
+              <CardHeader className="bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
                 <CardTitle className="font-display text-base">Analysis Inputs</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

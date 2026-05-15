@@ -24,6 +24,13 @@ import { PDFSupplierScorecard } from "./dashboardVisuals/PDFSupplierScorecard";
 import { PDFSOWAnalysis } from "./dashboardVisuals/PDFSOWAnalysis";
 import { PDFNegotiationPrep } from "./dashboardVisuals/PDFNegotiationPrep";
 import { PDFDataQuality } from "./dashboardVisuals/PDFDataQuality";
+import { PDFRfpPackage } from "./dashboardVisuals/PDFRfpPackage";
+import { PDFShouldCostGap } from "./dashboardVisuals/PDFShouldCostGap";
+import { PDFSavingsRealizationFunnel } from "./dashboardVisuals/PDFSavingsRealizationFunnel";
+import { PDFWorkingCapitalDpo } from "./dashboardVisuals/PDFWorkingCapitalDpo";
+import { PDFSupplierConcentrationMap } from "./dashboardVisuals/PDFSupplierConcentrationMap";
+import { PDFNPVWaterfall } from "./dashboardVisuals/PDFNPVWaterfall";
+import { PDFIFRS16Impact } from "./dashboardVisuals/PDFIFRS16Impact";
 
 // ── Enterprise print colors ──
 
@@ -43,7 +50,7 @@ const pageStyle = {
   paddingLeft: 48,
   paddingRight: 48,
   paddingBottom: 64,
-  fontFamily: "Helvetica" as const,
+  fontFamily: "Inter" as const,
   color: C.text,
 };
 
@@ -81,48 +88,9 @@ const sectionTitleWrapperStyle = {
   paddingBottom: 4,
 };
 
-export const PDFDashboardPlaceholder = ({ name }: { name: string; themeMode?: PdfThemeMode }) => {
-  const s = getPdfStyles();
-  const c = getPdfColors();
-  return (
-    <View style={s.dashboardCard}>
-      <View style={s.dashboardHeader}>
-        <View style={s.dashboardIcon} />
-        <View>
-          <Text style={s.dashboardTitle}>{name}</Text>
-          <Text style={s.dashboardSubtitle}>Visualization unavailable</Text>
-        </View>
-      </View>
-      <View style={{ padding: 12, alignItems: "center" }}>
-        <Text style={{ fontSize: 9, color: c.textMuted, textAlign: "center" }}>
-          This dashboard doesn't have a PDF visual yet.
-        </Text>
-      </View>
-    </View>
-  );
-};
+export const PDFDashboardPlaceholder = (_props: { name: string; themeMode?: PdfThemeMode }) => null;
 
-const PDFNoDataPlaceholder = ({ name }: { name: string; themeMode?: PdfThemeMode }) => {
-  return (
-    <View style={{
-      backgroundColor: "#F9FAFB",
-      padding: 24,
-      alignItems: "center",
-      justifyContent: "center",
-      minHeight: 150,
-      borderWidth: 1,
-      borderStyle: "dashed",
-      borderColor: "#D1D5DB",
-    }}>
-      <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: C.text, marginBottom: 8 }}>
-        {name}
-      </Text>
-      <Text style={{ fontSize: 10, fontFamily: "Helvetica", color: C.muted, textAlign: "center", lineHeight: 1.5 }}>
-        Visualization data could not be extracted automatically.{"\n"}Please refer to the detailed analysis section.
-      </Text>
-    </View>
-  );
-};
+const PDFNoDataPlaceholder = (_props: { name: string; themeMode?: PdfThemeMode }) => null;
 
 /** Map dashboard type to the corresponding key in DashboardData */
 const dashboardDataKey: Record<string, keyof DashboardData> = {
@@ -140,6 +108,13 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "sow-analysis": "sowAnalysis",
   "negotiation-prep": "negotiationPrep",
   "data-quality": "dataQuality",
+  "rfp-package": "rfpPackage",
+  "should-cost-gap": "shouldCostGap",
+  "savings-realization-funnel": "savingsRealizationFunnel",
+  "working-capital-dpo": "workingCapitalDpo",
+  "supplier-concentration-map": "supplierConcentrationMap",
+  "npv-waterfall": "npvWaterfall",
+  "ifrs16-impact": "ifrs16Impact",
 };
 
 /** Render a single dashboard by type */
@@ -206,6 +181,34 @@ const renderDashboard = (dashboardType: DashboardType, parsedData?: DashboardDat
       const data = parsedData?.dataQuality;
       return data ? <PDFDataQuality data={data} themeMode={themeMode} /> : placeholder();
     }
+    case "rfp-package": {
+      const data = parsedData?.rfpPackage;
+      return data ? <PDFRfpPackage data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "should-cost-gap": {
+      const data = parsedData?.shouldCostGap;
+      return data ? <PDFShouldCostGap data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "savings-realization-funnel": {
+      const data = parsedData?.savingsRealizationFunnel;
+      return data ? <PDFSavingsRealizationFunnel data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "working-capital-dpo": {
+      const data = parsedData?.workingCapitalDpo;
+      return data ? <PDFWorkingCapitalDpo data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "supplier-concentration-map": {
+      const data = parsedData?.supplierConcentrationMap;
+      return data ? <PDFSupplierConcentrationMap data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "npv-waterfall": {
+      const data = parsedData?.npvWaterfall;
+      return data ? <PDFNPVWaterfall data={data} themeMode={themeMode} /> : placeholder();
+    }
+    case "ifrs16-impact": {
+      const data = parsedData?.ifrs16Impact;
+      return data ? <PDFIFRS16Impact data={data} themeMode={themeMode} /> : placeholder();
+    }
     default: {
       const config = dashboardConfigs[dashboardType as DashboardType];
       return <PDFDashboardPlaceholder name={config?.name || String(dashboardType)} themeMode={themeMode} />;
@@ -235,10 +238,23 @@ interface PDFDashboardVisualsProps {
  * Returns an array of <Page> elements, each containing 1-2 dashboards.
  * Must be rendered as direct children of <Document>.
  */
+const hasDashboardData = (dashboardType: DashboardType, parsedData?: DashboardData | null): boolean => {
+  if (!parsedData) return false;
+  const key = dashboardDataKey[dashboardType as string];
+  if (!key) return false;
+  const value = parsedData[key];
+  return value !== undefined && value !== null;
+};
+
 export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, reportDate }: PDFDashboardVisualsProps) => {
   if (!selectedDashboards || selectedDashboards.length === 0) return null;
 
-  const pairs = chunkPairs(selectedDashboards);
+  const available = selectedDashboards.filter((d) => hasDashboardData(d, parsedData));
+  const skipped = selectedDashboards.filter((d) => !hasDashboardData(d, parsedData));
+
+  if (available.length === 0 && skipped.length === 0) return null;
+
+  const pairs = chunkPairs(available);
 
   return (
     <>
@@ -246,13 +262,13 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, re
         <Page key={`dash-page-${pairIdx}`} size="A4" style={pageStyle}>
           {/* Running header */}
           <View style={runningHeaderStyle} fixed>
-            <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: C.heading }}>EXOS</Text>
+            <Text style={{ fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: C.heading }}>EXOS</Text>
             <Text style={{ fontSize: 8, color: C.muted }}>PROCUREMENT ANALYSIS REPORT</Text>
           </View>
 
           {pairIdx === 0 && (
             <View style={sectionTitleWrapperStyle} id="section-visualizations">
-              <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: C.heading }}>
+              <Text style={{ fontSize: 16, fontFamily: "Inter", fontWeight: 700, color: C.heading }}>
                 Analysis Visualizations
               </Text>
             </View>
@@ -269,6 +285,22 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, re
             </View>
           ))}
 
+          {pairIdx === pairs.length - 1 && skipped.length > 0 && (
+            <View style={{ marginTop: 16, padding: 12, borderWidth: 1, borderColor: C.border, backgroundColor: "#F9FAFB" }} wrap={false}>
+              <Text style={{ fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: C.heading, marginBottom: 4 }}>
+                {skipped.length} dashboard{skipped.length > 1 ? "s" : ""} skipped — insufficient AI data
+              </Text>
+              {skipped.map((d) => {
+                const config = dashboardConfigs[d as DashboardType];
+                return (
+                  <Text key={d} style={{ fontSize: 9, color: C.muted, marginTop: 2 }}>
+                    • {config?.name || String(d)}
+                  </Text>
+                );
+              })}
+            </View>
+          )}
+
           <View style={footerStyle} fixed>
             <Text style={{ fontSize: 8, color: C.muted }}>Confidential — EXOS</Text>
             <Text style={{ fontSize: 8, color: C.muted }} render={({ pageNumber }) => `Page ${pageNumber}`} />
@@ -276,6 +308,41 @@ export const PDFDashboardPages = ({ selectedDashboards, parsedData, pdfTheme, re
           </View>
         </Page>
       ))}
+
+      {available.length === 0 && skipped.length > 0 && (
+        <Page size="A4" style={pageStyle}>
+          <View style={runningHeaderStyle} fixed>
+            <Text style={{ fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: C.heading }}>EXOS</Text>
+            <Text style={{ fontSize: 8, color: C.muted }}>PROCUREMENT ANALYSIS REPORT</Text>
+          </View>
+
+          <View style={sectionTitleWrapperStyle}>
+            <Text style={{ fontSize: 16, fontFamily: "Inter", fontWeight: 700, color: C.heading }}>
+              Analysis Visualizations
+            </Text>
+          </View>
+
+          <View style={{ padding: 12, borderWidth: 1, borderColor: C.border, backgroundColor: "#F9FAFB" }}>
+            <Text style={{ fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: C.heading, marginBottom: 4 }}>
+              {skipped.length} dashboard{skipped.length > 1 ? "s" : ""} skipped — insufficient AI data
+            </Text>
+            {skipped.map((d) => {
+              const config = dashboardConfigs[d as DashboardType];
+              return (
+                <Text key={d} style={{ fontSize: 9, color: C.muted, marginTop: 2 }}>
+                  • {config?.name || String(d)}
+                </Text>
+              );
+            })}
+          </View>
+
+          <View style={footerStyle} fixed>
+            <Text style={{ fontSize: 8, color: C.muted }}>Confidential — EXOS</Text>
+            <Text style={{ fontSize: 8, color: C.muted }} render={({ pageNumber }) => `Page ${pageNumber}`} />
+            <Text style={{ fontSize: 8, color: C.muted }}>{reportDate || ""}</Text>
+          </View>
+        </Page>
+      )}
     </>
   );
 };

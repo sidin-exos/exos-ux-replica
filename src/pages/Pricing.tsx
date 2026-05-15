@@ -255,6 +255,20 @@ const Pricing = () => {
                       if (!variant) return null;
                       return (
                         <div>
+                          <div className="flex justify-center mb-4">
+                            <Tabs
+                              value={billingInterval}
+                              onValueChange={(v) => setBillingInterval(v as BillingInterval)}
+                            >
+                              <TabsList className="h-8">
+                                <TabsTrigger value="monthly" className="text-xs px-2 py-1">Monthly</TabsTrigger>
+                                <TabsTrigger value="quarterly" className="text-xs px-2 py-1">
+                                  Quarterly
+                                  <span className="ml-1 text-[10px] text-success">−33%</span>
+                                </TabsTrigger>
+                              </TabsList>
+                            </Tabs>
+                          </div>
                           <div className="flex items-baseline justify-center gap-1">
                             <span className="text-4xl font-display font-bold text-foreground">
                               €{variant.displayPerMonth}
@@ -305,7 +319,7 @@ const Pricing = () => {
 
         {/* Trial disclaimer */}
         <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
-          30-day free trial. Cancel anytime before the trial ends to avoid being charged.
+          30-day free trial, 30 AI reports maximum.
         </p>
 
 

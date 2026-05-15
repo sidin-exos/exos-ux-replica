@@ -16,7 +16,8 @@ import ConsolidationWizard from "@/components/consolidation/ConsolidationWizard"
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import GenericScenarioWizard from "@/components/scenarios/GenericScenarioWizard";
 import ScenarioPreviewPanel from "@/components/scenarios/ScenarioPreviewPanel";
-import { scenarios, getCategoryLabel, Scenario } from "@/lib/scenarios";
+import { scenarios, getCategoryLabel, filterVisibleScenarios, Scenario } from "@/lib/scenarios";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { UseCaseShowcase } from "@/components/enterprise/UseCaseShowcase";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 
@@ -47,6 +48,8 @@ const CATEGORY_BADGE_COLOR: Record<Scenario["category"], string> = {
 
 const Index = () => {
   const { user, isLoading: isUserLoading } = useUser();
+  const { isAdmin } = useAdminAuth();
+  const visibleScenarios = filterVisibleScenarios(scenarios, isAdmin);
   const { scenarioSlug } = useParams<{ scenarioSlug: string }>();
   const [activeView, setActiveView] = useState<ActiveView>("dashboard");
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
@@ -99,18 +102,18 @@ const Index = () => {
       setSelectedScenario(null);
       return;
     }
-    const matched = scenarios.find((s) => s.id === scenarioSlug);
+    const matched = visibleScenarios.find((s) => s.id === scenarioSlug);
     if (matched && matched.status === "available") {
       setSelectedScenario(matched);
       setActiveView("scenario");
     } else {
-      // Unknown slug — redirect to home
+      // Unknown or hidden slug — redirect to home
       navigate("/", { replace: true });
     }
-  }, [scenarioSlug, navigate]);
+  }, [scenarioSlug, navigate, visibleScenarios]);
 
   const handleScenarioClick = (scenarioId: string) => {
-    const scenario = scenarios.find((s) => s.id === scenarioId);
+    const scenario = visibleScenarios.find((s) => s.id === scenarioId);
     if (scenario && scenario.status === "available") {
       navigate(`/analyse/${scenario.id}`);
     }
@@ -120,8 +123,8 @@ const Index = () => {
     navigate("/");
   };
 
-  // Group scenarios by category
-  const scenariosByCategory = scenarios.reduce((acc, scenario) => {
+  // Group scenarios by category (admin-filtered)
+  const scenariosByCategory = visibleScenarios.reduce((acc, scenario) => {
     const category = scenario.category;
     if (!acc[category]) acc[category] = [];
     acc[category].push(scenario);

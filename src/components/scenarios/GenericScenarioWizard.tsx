@@ -195,6 +195,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
 
   // File attachment state
   const [attachedFileIds, setAttachedFileIds] = useState<string[]>([]);
+  // LLM coverage stars (0–5) from AICoverageCheck — single source of truth
+  // for the PDF "Input Quality" KPI. Set when the user runs the pre-check.
+  const [coverageStars, setCoverageStars] = useState<number | null>(null);
   const scenarioRunId = useRef(crypto.randomUUID()).current;
   const { attachFiles } = useScenarioFileAttachments();
 
@@ -251,6 +254,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     confidenceScore: number;
     validationStatus: 'pending' | 'approved' | 'rejected';
     retryCount: number;
+    failureReason: string | null;
   } | null>(null);
   const [deepAnalysisError, setDeepAnalysisError] = useState<string | null>(null);
 
@@ -369,23 +373,14 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
     setCategoryOverrides(getDefaultCategoryOverrides());
   };
 
-  // Restore draft on mount / scenario switch
-  useEffect(() => {
-    const restore = async () => {
-      const draft = await loadDraft();
-      if (!draft) return;
-      setFormData(prev => {
-        const merged: Record<string, string> = { ...prev };
-        Object.entries(draft).forEach(([key, value]) => {
-          if (value && value.trim() !== '') {
-            merged[key] = value;
-          }
-        });
-        return merged;
-      });
-    };
-    restore();
-  }, [scenario.id, user?.id]);
+  // Draft restoration on mount has been intentionally disabled.
+  // Per UX decision: opening a scenario should always show an empty
+  // form so the next "Generate" produces a visibly fresh example
+  // (the previous behaviour pre-filled the form with the last draft,
+  // which made the test data engine feel like it was repeating the
+  // same case until you clicked refresh). Drafts are still saved on
+  // every field change for crash recovery, just not auto-restored.
+  // To re-enable, restore the previous loadDraft() effect here.
 
   const handleFieldChange = (fieldId: string, value: string) => {
     setFormData((prev) => {
@@ -608,6 +603,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
         selectedDashboards: selectedDashboards,
         evaluationScore: evaluation?.score ?? null,
         evaluationConfidence: evaluation?.confidenceFlag ?? null,
+        coverageStars: coverageStars,
       },
     });
   };
@@ -1038,16 +1034,6 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               </p>
             </div>
 
-            <DataRequirementsAlert
-              missingRequired={missingRequired}
-              missingOptional={missingOptional}
-              evaluation={evaluation}
-              onFieldClick={(fieldId) => {
-                setStep("input");
-                setTimeout(() => handleFieldClick(fieldId), 100);
-              }}
-            />
-
             {scenario.dataRequirements && (
               <div className="rounded-lg border border-border bg-card p-4">
                 <AICoverageCheck
@@ -1057,12 +1043,14 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                     .map(([k, v]) => `${k}: ${v}`)
                     .join("\n\n")}
                   sections={scenario.dataRequirements.sections}
+                  scenarioId={scenario.id}
                   subtitle='Score your input against "What data do I need to prepare?".'
+                  onResult={(r) => setCoverageStars(r?.overallScore ?? null)}
                 />
               </div>
             )}
             {/* Expected Outputs */}
-            <div className="rounded-lg border border-border bg-card p-4">
+            <div className="rounded-lg border border-border bg-card bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 p-4">
               <h4 className="font-medium mb-3">Analysis Will Generate:</h4>
               <ul className="space-y-2">
                 {scenario.outputs.map((output, i) => (
@@ -1072,6 +1060,9 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   </li>
                 ))}
               </ul>
+              <p className="mt-3 text-[11px] text-muted-foreground/80 italic">
+                Visual dashboards appear in the report only when ticked in the sidebar; narrative findings always render.
+              </p>
             </div>
 
             {/* Draft status indicator */}
@@ -1193,30 +1184,40 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
               />
             ) : (
               <>
-                {fallbackMeta?.fallbackUsed && !fallbackBannerDismissed && (
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/30 p-3 mb-4 flex items-start gap-3">
-                    <Info className="w-5 h-5 text-blue-700 dark:text-blue-300 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 text-sm text-blue-900 dark:text-blue-100">
-                      Analysis completed using a backup AI system. Results may vary slightly from standard output.
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setFallbackBannerDismissed(true)}
-                      aria-label="Dismiss"
-                      className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+                {/* Fallback model usage is intentionally not surfaced — backup system delivers equivalent quality. */}
 
                 <div className="rounded-lg border border-primary/30 bg-primary/10 p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Sparkles className="w-8 h-8 text-primary" />
                     <h3 className="font-display text-xl font-semibold">
-                      Analysis Complete
+                      Report Preview
                     </h3>
                   </div>
+
+                  {deepAnalysisResult?.failureReason && (
+                    <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-4 flex items-start gap-3">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm text-destructive mb-1">
+                          {deepAnalysisResult.failureReason === 'json_parse_failed'
+                            ? 'AI response was incomplete'
+                            : deepAnalysisResult.failureReason === 'incomplete_response'
+                              ? 'Response missing key sections'
+                              : 'Partial response received'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          The fallback model returned a truncated or unparseable response. Regenerating usually resolves this.
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={handleDeepAnalysis}
+                        disabled={isDeepAnalysisRunning}
+                      >
+                        Regenerate
+                      </Button>
+                    </div>
+                  )}
 
                   {analysisResult ? (
                     <div className="bg-card rounded-lg p-4 border border-border max-h-[500px] overflow-y-auto">

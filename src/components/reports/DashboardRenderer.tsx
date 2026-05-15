@@ -22,6 +22,9 @@ import ShouldCostGapDashboard from "./ShouldCostGapDashboard";
 import SavingsRealizationFunnelDashboard from "./SavingsRealizationFunnelDashboard";
 import WorkingCapitalDpoDashboard from "./WorkingCapitalDpoDashboard";
 import SupplierConcentrationMapDashboard from "./SupplierConcentrationMapDashboard";
+import RfpPackageDashboard from "./RfpPackageDashboard";
+import NPVWaterfallDashboard from "./NPVWaterfallDashboard";
+import IFRS16ImpactDashboard from "./IFRS16ImpactDashboard";
 
 /** Map dashboard type slug to the corresponding key in DashboardData */
 const dashboardDataKey: Record<string, keyof DashboardData> = {
@@ -43,6 +46,9 @@ const dashboardDataKey: Record<string, keyof DashboardData> = {
   "savings-realization-funnel": "savingsRealizationFunnel",
   "working-capital-dpo": "workingCapitalDpo",
   "supplier-concentration-map": "supplierConcentrationMap",
+  "rfp-package": "rfpPackage",
+  "npv-waterfall": "npvWaterfall",
+  "ifrs16-impact": "ifrs16Impact",
 };
 
 /**
@@ -56,9 +62,10 @@ export function dashboardHasRealData(
   structuredData?: string,
 ): boolean {
   let parsed: DashboardData | null = null;
+  let envelope: any = null;
   if (structuredData) {
     try {
-      const envelope = JSON.parse(structuredData);
+      envelope = JSON.parse(structuredData);
       if (['1.0', '2.0'].includes(envelope?.schema_version)) {
         parsed = extractFromEnvelope(envelope);
       }
@@ -68,7 +75,24 @@ export function dashboardHasRealData(
     parsed = extractDashboardData(analysisResult || '');
   }
   const key = dashboardDataKey[dashboardType];
-  return !!(parsed && key && parsed[key]);
+  if (parsed && key && parsed[key]) return true;
+
+  // S27 Black Swan: accept dashboards when the envelope has the source data,
+  // even if the parser hasn't produced the camelCase summary yet.
+  const ss = envelope?.payload?.scenario_specific ?? {};
+  const isS27 = envelope?.scenario_id === 'S27';
+  if (isS27) {
+    if (dashboardType === 'risk-heatmap' && Array.isArray(ss.supply_chain_nodes) && ss.supply_chain_nodes.length > 0) {
+      return true;
+    }
+    if (dashboardType === 'sensitivity-spider') {
+      const inv = Array.isArray(ss.resilience_investments) ? ss.resilience_investments : [];
+      const cas = Array.isArray(envelope?.payload?.impact_model?.cascade_effects)
+        ? envelope.payload.impact_model.cascade_effects : [];
+      if (inv.length > 0 || cas.length > 0) return true;
+    }
+  }
+  return false;
 }
 
 interface DashboardRendererProps {
@@ -176,6 +200,16 @@ const DashboardRenderer = ({
 
     case "supplier-concentration-map":
       return wrapWithFallbackBanner(<SupplierConcentrationMapDashboard parsedData={parsedData?.supplierConcentrationMap} />);
+
+    case "rfp-package":
+      // No sample fallback — component renders its own empty state.
+      return <RfpPackageDashboard parsedData={parsedData?.rfpPackage} />;
+
+    case "npv-waterfall":
+      return <NPVWaterfallDashboard parsedData={parsedData?.npvWaterfall} />;
+
+    case "ifrs16-impact":
+      return <IFRS16ImpactDashboard parsedData={parsedData?.ifrs16Impact} />;
 
     default:
       return (

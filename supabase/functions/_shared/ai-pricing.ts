@@ -4,13 +4,14 @@
  * Update when provider prices change.
  */
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  "gemini-2.5-pro": { input: 1.25, output: 5.00 },
-  "gemini-2.5-flash": { input: 0.15, output: 0.60 },
+  // Google standard (≤200K context) tier. >200K context is ~2x — we under-estimate large calls.
+  "gemini-2.5-pro": { input: 1.25, output: 10.00 },
+  "gemini-2.5-flash": { input: 0.30, output: 2.50 },
   // Google tiered pricing: ≤200K context $2/$12, >200K context $4/$18.
   // We use the standard tier — under-estimates large-context cost slightly,
   // but estimateCost feeds LangSmith dashboards only, not billing.
   "gemini-3.1-pro-preview": { input: 2.00, output: 12.00 },
-  "gemini-3.1-flash-lite-preview": { input: 0.075, output: 0.30 },
+  "gemini-3.1-flash-lite-preview": { input: 0.10, output: 0.40 },
   "gemini-3-flash-preview": { input: 0.50, output: 3.00 },
   "nvidia/nemotron-3-super-120b-a12b": { input: 0.30, output: 0.90 },
   "sonar": { input: 1.00, output: 1.00 },

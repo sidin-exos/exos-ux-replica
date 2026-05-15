@@ -34,7 +34,7 @@ export default function SupplierRisk() {
       relatedScenarios={[
         { name: "Black Swan Scenario Simulator", path: "/scenarios/black-swan-simulation", description: "Simulate catastrophic supply chain disruptions and build proactive mitigation roadmaps." },
         { name: "Supplier Dependency & Exit Planner", path: "/features", description: "Assess concentration risk and build diversification or exit roadmaps for critical suppliers." },
-        { name: "Pre-Flight Audit", path: "/features", description: "Comprehensive supplier intelligence dossier before entering any negotiation." }
+        { name: "Supplier Snapshot", path: "/features", description: "Comprehensive supplier intelligence dossier before entering any negotiation." }
       ]}
     />
   );

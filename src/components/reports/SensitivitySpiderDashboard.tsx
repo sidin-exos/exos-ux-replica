@@ -34,16 +34,31 @@ const COLOR_TIER_HIGH = "hsl(358, 38%, 48%)";
 const COLOR_TIER_MED = "hsl(35, 28%, 45%)";
 const COLOR_TIER_LOW = "hsl(174, 35%, 38%)";
 
-const formatCurrency = (value: number, currency: string = "$"): string => {
-  if (value >= 1000000) return `${currency}${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `${currency}${(value / 1000).toFixed(0)}K`;
-  return `${currency}${value}`;
+const currencySymbol = (currency: string): string => {
+  if (!currency) return "$";
+  if (currency === "EUR" || currency === "€") return "€";
+  if (currency === "USD" || currency === "$") return "$";
+  if (currency === "GBP" || currency === "£") return "£";
+  // Already a symbol or unknown code → keep with trailing space for legibility
+  return currency.length <= 1 ? currency : `${currency} `;
 };
 
-const formatValue = (value: number, unit?: string): string => {
-  if (unit === "$") return formatCurrency(value);
+const formatCurrency = (value: number, currency: string = "$"): string => {
+  if (!Number.isFinite(value)) return `${currencySymbol(currency)}0`;
+  const sym = currencySymbol(currency);
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${sym}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${sym}${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}${sym}${abs.toFixed(0)}`;
+};
+
+const formatValue = (value: number, unit?: string, currency?: string): string => {
+  if (unit === "$" || unit === "€" || unit === "£") return formatCurrency(value, unit);
   if (unit === "%") return `${value}%`;
   if (unit === "units") return `${(value / 1000).toFixed(0)}K`;
+  // Unit-less large number → treat as monetary base in the report's currency
+  if (!unit && Math.abs(value) >= 1000) return formatCurrency(value, currency ?? "$");
   return value.toFixed(2);
 };
 
@@ -95,7 +110,7 @@ const SensitivitySpiderDashboard = ({
 
   return (
     <Card className="card-elevated h-full">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-4 bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
@@ -246,10 +261,10 @@ const SensitivitySpiderDashboard = ({
                       </span>
                     </div>
                     <p className="text-[10px] text-muted-foreground tabular-nums">
-                      Base {formatValue(v.baseCase, v.unit)}
+                      Base {formatValue(v.baseCase, v.unit, effectiveCurrency)}
                     </p>
                     <p className="text-[10px] text-muted-foreground tabular-nums">
-                      Range {formatValue(v.lowCase, v.unit)} – {formatValue(v.highCase, v.unit)}
+                      Range {formatValue(v.lowCase, v.unit, effectiveCurrency)} – {formatValue(v.highCase, v.unit, effectiveCurrency)}
                     </p>
                   </div>
                 </div>
@@ -258,35 +273,52 @@ const SensitivitySpiderDashboard = ({
           </div>
         </div>
 
-        {/* Range Summary */}
-        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/30">
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Best Case</p>
-            <p className="text-sm font-semibold" style={{ color: COLOR_FAVORABLE }}>
-              {formatCurrency(
-                effectiveBaseCaseTotal -
-                  sortedImpacts.reduce((sum, v) => sum + Math.abs(v.lowImpact < 0 ? v.lowImpact : 0), 0),
-                effectiveCurrency,
-              )}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Base Case</p>
-            <p className="text-sm font-semibold text-foreground">
-              {formatCurrency(effectiveBaseCaseTotal, effectiveCurrency)}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Worst Case</p>
-            <p className="text-sm font-semibold" style={{ color: COLOR_UNFAVORABLE }}>
-              {formatCurrency(
-                effectiveBaseCaseTotal +
-                  sortedImpacts.reduce((sum, v) => sum + Math.abs(v.highImpact > 0 ? v.highImpact : 0), 0),
-                effectiveCurrency,
-              )}
-            </p>
-          </div>
-        </div>
+        {/* Range Summary — applies % deviations to the monetary base */}
+        {(() => {
+          // For each variable, treat the negative-direction % as savings and the
+          // positive-direction % as a cost increase, regardless of whether it
+          // came from the "low" or "high" leg. This avoids unit-mixing (the
+          // raw lowImpact/highImpact may be in non-EUR units).
+          const favorablePctSum = sortedImpacts.reduce((sum, v) => {
+            const best = Math.min(v.lowPct, v.highPct, 0); // most negative → cost down
+            return sum + Math.abs(best);
+          }, 0);
+          const unfavorablePctSum = sortedImpacts.reduce((sum, v) => {
+            const worst = Math.max(v.lowPct, v.highPct, 0); // most positive → cost up
+            return sum + worst;
+          }, 0);
+          const bestCase = effectiveBaseCaseTotal * (1 - favorablePctSum / 100);
+          const worstCase = effectiveBaseCaseTotal * (1 + unfavorablePctSum / 100);
+          return (
+            <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/30">
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Best Case</p>
+                <p className="text-sm font-semibold" style={{ color: COLOR_FAVORABLE }}>
+                  {formatCurrency(Math.max(0, bestCase), effectiveCurrency)}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-0.5 tabular-nums">
+                  −{favorablePctSum.toFixed(1)}%
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Base Case</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {formatCurrency(effectiveBaseCaseTotal, effectiveCurrency)}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">reference</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Worst Case</p>
+                <p className="text-sm font-semibold" style={{ color: COLOR_UNFAVORABLE }}>
+                  {formatCurrency(worstCase, effectiveCurrency)}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-0.5 tabular-nums">
+                  +{unfavorablePctSum.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );

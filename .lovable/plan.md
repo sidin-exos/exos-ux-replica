@@ -1,69 +1,115 @@
-# SEO + Homepage Copy Update
+## Goal
 
-Scope: exactly 5 files. No new dependencies. No build config or backend changes.
+Two changes to the AI test-data engine:
 
-Note on existing build error: the reported errors are pre-existing in unrelated edge functions (`generate-test-data`, `generate-market-insights`, `create-checkout-session`, `create-portal-session`) and are not caused by — and will not be touched by — this task. They concern the Supabase types regeneration done in the prior category-YAML task. They do not affect frontend compilation. Out of scope here per the hard constraint "Modify ONLY the 5 files listed".
+1. **Replace "insufficient data" generation with "wrong data"** (irrelevant for the requested scenario), and significantly reduce its frequency.
+2. **Remove the buyer persona parameter** entirely — industry/category fit and information quality matter more.
 
-## File 1 — `index.html`
-Four string replacements only. CSP, og:image, og:url, og:locale, og:site_name, twitter:*, fonts, GA, viewport: untouched.
+---
 
-- `<title>` → `EXOS — Agentic AI Procurement Platform | No Implementation`
-- `<meta name="description">` content → `Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 29 expert scenarios. No implementation needed.` (154 chars)
-- `<meta property="og:title">` content → same as new title
-- `<meta property="og:description">` content → same as new description
+## What "wrong data" means
 
-## File 2 — `src/pages/Welcome.tsx`
-1. Add `import { Helmet } from "react-helmet-async";` at top.
-2. Insert `<Helmet>` block as first child inside the outer wrapper, before `<Header />` (around line 90):
-   - title, meta description (same string), `<link rel="canonical" href="https://exosproc.com/" />`, `<meta name="robots" content="index, follow" />`.
-3. Badge (line 101): replace text with `✦ Agentic AI procurement — works alongside Zip, Coupa, and SAP Ariba`. Preserve all classes.
-4. H1 (lines 103–108): replace two-line H1 with single line. Keep existing `font-display ...` classes on `<h1>`. Apply existing italic primary span styling to "No Implementation. No Wait.":
-   ```tsx
-   <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.1] tracking-tight">
-     Agentic AI Procurement Analysis.{" "}
-     <span className="italic" style={{ color: "hsl(var(--primary))" }}>
-       No Implementation. No Wait.
-     </span>
-   </h1>
-   ```
-5. Hero paragraph (lines 109–118): collapse the existing two `<p>` tags into the wrapper div with one `<p>` containing the new copy. Keep wrapper `<div className="text-muted-foreground text-base leading-relaxed space-y-3">` and `<p className="text-base leading-relaxed text-muted-foreground">` classes intact.
-6. Do NOT touch CTAs, ROI line, stats row, or right-hand pipeline diagram.
+Generated data is **well-formed and realistic** (so the input evaluator and downstream pipeline both run normally), but the content describes a **different procurement category / scenario** than the one the user is testing. This exercises:
 
-## File 3 — `src/pages/Index.tsx`
-Update Helmet fallback strings only (lines 140–159). Per-scenario `currentMeta?.title` / `currentMeta?.description` override logic preserved. Add `<meta name="robots" content="index, follow" />` to match spec.
+- Input evaluator's ability to flag off-topic input
+- Sentinel orchestrator's behaviour when industry/category context contradicts the body text
+- Whether category methodology grounding still produces a coherent (or correctly degraded) report
 
-- Title fallback → `'EXOS — Agentic AI Procurement Platform | No Implementation'`
-- Description fallback → new 154-char string
-- Canonical: keep existing scenario-aware logic
-- Add `<meta name="robots" content="index, follow" />`
+The previous "DEGRADED → INSUFFICIENT" tier (vague/missing values) gave little signal because the input evaluator simply rejected it before any meaningful pipeline behaviour could be observed.
 
-## File 4 — `src/pages/Features.tsx`
-1. Add `import { Helmet } from "react-helmet-async";` at top (after existing imports).
-2. Insert `<Helmet>` as first child of the JSX returned (line 292, just inside the outer `<div className="min-h-screen gradient-hero">`):
-   ```tsx
-   <Helmet>
-     <title>29 AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS</title>
-     <link rel="canonical" href="https://exosproc.com/features" />
-   </Helmet>
-   ```
-3. No description meta added (per spec — supplied by prerender).
+---
 
-## File 5 — `scripts/postbuild-seo.mjs`
-Update exactly two route entries; all other 9 routes untouched.
+## Frequency change
 
-- `/welcome` entry:
-  - `title` → `EXOS — Agentic AI Procurement Platform | No Implementation`
-  - `description` → new 154-char string
-  - `h1` → `Agentic AI Procurement Analysis. No Implementation. No Wait.`
-- `/features` entry:
-  - `title` → `29 AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS`
-  - description and h1 unchanged
+Current draft-mode weighted `dataQuality` distribution:
 
-## Verification
-- 5 files modified, no others
-- index.html unchanged outside the 4 specified tags
-- Welcome.tsx: Helmet present, badge/H1/paragraph updated, all surrounding hero structure preserved
-- Index.tsx: only fallback strings + robots meta changed; per-scenario override intact
-- Features.tsx: minimal Helmet (title + canonical only)
-- postbuild-seo.mjs: only `/welcome` and `/features` entries changed
-- Zero new TS errors introduced by this change
+```text
+excellent 40 | good 40 | partial 15 | poor 5     → 80% OPTIMAL, 15% MINIMUM, 5% DEGRADED
+```
+
+New distribution (significantly reduce the low-quality path, replace `poor` with `irrelevant`):
+
+```text
+excellent 45 | good 45 | partial 8 | irrelevant 2  → 90% OPTIMAL, 8% MINIMUM, 2% IRRELEVANT
+```
+
+The `GIBBERISH` tier and the `messy` mode handler are kept as-is (separate stress-test path triggered manually).
+
+---
+
+## Persona removal
+
+Persona is dropped from:
+
+- Edge function request body, draft output, generate-mode prompt, metadata
+- `ai-test-data-generator.ts` client (no more `pickRotatedPersona`)
+- `LaunchTestBatch` UI (persona `Select` removed)
+- `TestPlanOrchestrator` plan items (persona dropped from rows)
+- `test-rotation-memory.ts` (persona buffer removed)
+- `BuyerPersona` type kept only where historical DB rows still reference it (read-only legacy)
+
+Industry + category remain the primary diversity drivers.
+
+---
+
+## Files to change
+
+```text
+supabase/functions/generate-test-data/index.ts
+supabase/functions/generate-test-data/block-guidance.ts
+src/lib/ai-test-data-generator.ts
+src/lib/test-rotation-memory.ts
+src/lib/testing/types.ts
+src/components/testing/LaunchTestBatch.tsx
+src/components/testing/TestPlanOrchestrator.tsx
+src/components/scenarios/DraftedParametersCard.tsx   (hide persona row)
+src/lib/drafted-parameters.ts                         (mark persona deprecated, keep type)
+```
+
+---
+
+## Technical detail
+
+### `block-guidance.ts`
+
+- Add new `QualityTier = 'IRRELEVANT'` alongside existing tiers.
+- `IRRELEVANT` instructions: pick a category from a *different* procurement domain than the requested one and write Block 1–3 for that other category, but keep the response shape valid. No gibberish, no missing fields. Expected evaluator result: `IMPROVABLE` or `INSUFFICIENT` depending on category contradiction strength.
+- Update `mapDataQualityToTier`: `poor` → `IRRELEVANT` (was `DEGRADED`). `DEGRADED` removed from the public mapping but kept in the `QualityTier` union for backwards compatibility with any historical logs.
+
+### `generate-test-data/index.ts`
+
+- `DataQuality` union: replace `'poor'` with `'irrelevant'`.
+- `pickWeighted` distribution updated as above.
+- Strip `persona` / `personaName` from `DraftedParameters`, request validation, draft-mode return, generate-mode prompt, generate-mode metadata, and full-mode metadata.
+- `BUYER_PERSONAS`, `selectPersona`, `PERSONA_STYLE_INSTRUCTIONS` deleted.
+- Generate-mode prompt: replace persona block with an explicit reminder that *industry relevance and information quality* drive the test, plus the tier instruction (OPTIMAL / MINIMUM / IRRELEVANT).
+- Messy mode keeps its own internal "frustrated" tone in the system prompt directly (no `selectedPersona` argument required).
+
+### `ai-test-data-generator.ts`
+
+- Drop `pickRotatedPersona` and the `persona` arg from `generateAITestData` / `generateTestDataHybrid`.
+- Drop `persona` from the edge function invoke body.
+
+### Rotation memory
+
+- Remove `persona` buffer from `ROTATION_BUFFER`; drop the `pickRotatedPersona` export. Pair + trick rotation kept.
+
+### UI
+
+- `LaunchTestBatch.tsx`: remove the "Buyer Persona" `Select` and the `persona` state. Keep entropy + industry + category.
+- `TestPlanOrchestrator.tsx`: remove `PERSONAS` array, persona randomisation, and the `persona` field from generated `TestPlanItem`s. Plan rows still rotate industry+category and entropy.
+- `DraftedParametersCard.tsx`: hide the persona row when no persona is present (the field becomes legacy/optional).
+
+### Type compatibility
+
+- `BuyerPersona` left in `testing/types.ts` so existing DB rows / saved logs still type-check, but new generations no longer write it.
+- `TestPlanItem.persona` becomes optional.
+
+---
+
+## Out of scope
+
+- Database schema (no migration; legacy `persona_source` columns untouched).
+- Static `test-data-factory.ts` generator (unchanged — it never used persona).
+- `messy` and `GIBBERISH` paths beyond removing the persona argument.
+- Input evaluator and sentinel-analysis (no changes; they will simply see industry-mismatched content for the 2% IRRELEVANT cases).

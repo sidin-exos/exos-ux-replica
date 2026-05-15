@@ -91,16 +91,81 @@ export const GROUP_AI_INSTRUCTIONS: Record<string, string> = {
   A: `You are a deterministic financial calculation engine. Every numerical output must be derived from the user's inputs, not estimated. Where inputs are missing, return null for the affected field and add an entry to confidence_flags. Never invent financial figures.`,
   B: `You are a procurement document generation engine. Output structured, ready-to-use documents. Every section must be explicitly labelled. Mark any section where insufficient input was provided with [DATA NEEDED: description] rather than fabricating content.`,
   C: `You are a procurement risk and compliance auditor. Every identified issue must be explicitly referenced to the relevant regulatory standard or contractual clause. Never omit a risk. Use RAG status consistently.`,
-  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces, TCO, Make vs. Buy, RTO/RPO) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions. Quantify financial impact wherever possible. Flag inside information risks (MAR) when strategy documents contain unannounced business plans. When supplier and category spend data are available, populate concentration using the HHI formula: sum of (supplier_spend_share_pct)² per category.
-
-S21 Negotiation Preparation — SPECIFIC RULES:
-1. Populate batna with buyer_batna (the specific best alternative identified), buyer_batna_value (its quantified value where possible), and supplier_batna_estimated (estimate of the supplier's best alternative).
-2. Populate zopa with buyer_walk_away (kept confidential and masked in shared exports), buyer_target, supplier_likely_floor, and zopa_exists (boolean — true only if a positive zone exists).
-3. leverage_analysis: list buyer_leverage_factors[] and supplier_leverage_factors[] referencing the user's specific inputs; set power_balance to BUYER_ADVANTAGE | BALANCED | SUPPLIER_ADVANTAGE.
-4. negotiation_tactics[]: 3–6 tactical steps tailored to the user's situation — never generic advice.
-5. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data.`,
+  D: `You are a senior procurement strategist applying academic frameworks (BATNA, Kraljic, Porter's Five Forces, TCO, Make vs. Buy, RTO/RPO) to real commercial situations. Every framework output must reference the user's specific inputs — never produce generic textbook descriptions. Quantify financial impact wherever possible. Flag inside information risks (MAR) when strategy documents contain unannounced business plans. When supplier and category spend data are available, populate concentration using the HHI formula: sum of (supplier_spend_share_pct)² per category.`,
   E: `You are a market intelligence analyst powered by real-time web search. Every factual claim must be grounded in a cited source. Never state market data without a citation. Use null for any field where live search returned no reliable result.`,
 };
+
+// Scenario-specific instruction addenda (loaded ONLY for the active scenario
+// to keep token budget tight). Add new entries keyed by S## code.
+export const SCENARIO_INSTRUCTION_ADDENDA: Record<string, string> = {
+  S21: `
+S21 Negotiation Preparation — SPECIFIC RULES:
+1. Populate batna with buyer_batna (specific best alternative identified), buyer_batna_value (quantified value where possible), supplier_batna_estimated, batna_strength_pct (0–100 integer reflecting how credible/ready the buyer's BATNA is), and batna_improvement_actions[] (2–4 concrete steps to strengthen BATNA — e.g. "Pre-qualify second alternative supplier", "Run sample pilot to validate quality").
+2. Populate zopa with buyer_walk_away (kept confidential and masked in shared exports), buyer_target, supplier_likely_floor, and zopa_exists (boolean — true only if a positive zone exists).
+3. leverage_analysis: list buyer_leverage_factors[] and supplier_leverage_factors[] referencing the user's specific inputs; set power_balance to BUYER_ADVANTAGE | BALANCED | SUPPLIER_ADVANTAGE.
+4. negotiation_tactics[]: 3–6 tactical steps tailored to the user's situation — never generic advice. Each item: { "title": "...", "description": "..." }.
+5. negotiation_sequence[]: REQUIRED. Provide exactly 3–5 ordered tactical moves covering opening / anchoring / value exchange / concession / closing. Each item: { "step": "Opening | Anchor | Value Exchange | Concession | Walk-away Trigger | Close", "detail": "specific action tied to the user's case" }.
+6. counter_arguments[]: REQUIRED. 3–5 anticipated supplier objections with prepared responses. Each item: { "supplier_position": "what the supplier is likely to say", "buyer_response": "how to counter", "evidence": "fact / data point that supports the response" }.
+7. walk_away_plan: REQUIRED. { "trigger_conditions": ["specific thresholds, e.g. price increase >3%, refusal to remove volume floor"], "exit_steps": ["sequenced actions if BATNA activates"], "communication_script": "one short paragraph the buyer can use to walk away professionally" }.
+8. value_creation[]: REQUIRED. 3–4 win-win opportunities to expand the pie. Each item: { "opportunity": "...", "buyer_benefit": "...", "supplier_benefit": "..." }. At least one entry MUST be a non-financial trade-off (payment terms, exclusivity, joint forecasting, scope flexibility, multi-year lock-in, capacity priority).
+9. strategy_playbook: REQUIRED. { "situation_read": "1–2 sentence diagnosis of the buyer-supplier dynamic from leverage_analysis + BATNA + ZOPA", "recommended_approach": "COLLABORATIVE | COMPETITIVE | ACCOMMODATIVE | COMPROMISING — pick the one that fits the situation_read", "approach_rationale": "why this approach beats the other three given the user's specific inputs", "key_moves": ["3–5 concrete moves the buyer should execute consistent with the chosen approach — must reference the user's actual numbers, suppliers, terms"] }. Never emit "Conservative | Aggressive | Hybrid" placeholders.
+10. financial_outcome_range: optimistic / realistic / pessimistic monetary outcomes derived from the user's data. Emit numeric values when at least buyer_target and one of (supplier_likely_floor | buyer_walk_away) are known; otherwise leave as null and add to data_gaps[].
+11. NUMERIC EXTRACTION (HARD RULE): when the user input contains explicit currency figures for buyer target, supplier proposal, supplier floor, BATNA value, or walk-away point — you MUST populate batna.buyer_batna_value, zopa.buyer_target, zopa.supplier_likely_floor and zopa.buyer_walk_away as JSON NUMBERS (not strings, not null). Do not silently drop a number the user provided. Currency goes in scenario_specific.currency (or batna_currency / zopa_currency if it differs).
+12. ALL SEVEN WIZARD DELIVERABLES ARE MANDATORY: (1) leverage_analysis with non-empty buyer_leverage_factors[], supplier_leverage_factors[] and a non-template power_balance value; (2) batna with batna_strength_pct AND batna_improvement_actions[] (>=2); (3) strategy_playbook with all four sub-fields populated; (4) opening_position + negotiation_sequence[] (>=4 steps); (5) counter_arguments[] (>=3); (6) walk_away_plan with all three sub-fields populated; (7) value_creation[] (>=3). financial_outcome_range is encouraged but optional when input lacks numeric anchors. An empty array or a literal "Conservative | Aggressive | Hybrid" placeholder is treated as a report failure.
+13. LEVERAGE FACTOR HYGIENE: never emit literal strings "Not provided", "N/A", "None", "TBD" or empty placeholders inside buyer_leverage_factors[] or supplier_leverage_factors[]. If a side has fewer real factors, just emit a shorter array. Asymmetric arrays (e.g. 3 buyer / 1 supplier) are EXPECTED and correct.
+14. KEY FINDINGS vs RECOMMENDATIONS: Findings = observations about the current situation (what the data shows). Recommendations = forward-looking actions (what to do). NEVER copy the same sentence into both arrays. If a recommendation belongs in findings, rewrite the finding as a passive observation.
+15. TEXT FORMATTING: Use ASCII-safe comparators ("<=", ">=", "<", ">") in every text field — do NOT use the Unicode glyphs ≤ ≥ which fail to render in some PDF fonts.
+16. THIN-DATA FALLBACK (CRITICAL — applies when supplier financial information is partial, opaque, or one-sided, e.g. emergency negotiations or first-time engagements):
+    a. DO NOT fabricate supplier_likely_floor, supplier BATNA, or financial_outcome_range numbers. Set the unknown numeric fields to null and explicitly flag the gap in data_gaps[] with what would unlock a sharper estimate (e.g. "Last 2 years of supplier audited financials", "Cost-breakdown per shift / per kg of input").
+    b. PIVOT the strategy toward RELATIONSHIP-PRESERVING TRADE-OFFS: in negotiation_tactics[] and value_creation[], add at least 2 trade-off levers that do NOT require supplier financial transparency — e.g. payment-term extension in exchange for price hold, volume commitment in exchange for service-level uplift, multi-year lock-in in exchange for exception clauses, joint-forecasting in exchange for capacity priority, scope flexibility in exchange for fee structure changes.
+    c. counter_arguments[] MUST include at least ONE entry framed as a non-financial concession the buyer can offer (e.g. faster payment, exclusivity window, joint marketing) when the supplier resists price discussion.
+    d. walk_away_plan.trigger_conditions[] MUST be expressed as relationship and operational thresholds (delivery SLA, response time, single-sourcing risk) when price floors are unknown — not only price percentages.
+    e. Set batna_strength_pct conservatively (default 30–50) and explain the reduction in batna_improvement_actions[] when the supplier landscape is unmapped.
+17. JSON STRUCTURE — CRITICAL: scenario_specific MUST be a single JSON OBJECT (open with { and close with }), never an array. Each sub-key (batna, zopa, leverage_analysis, walk_away_plan, strategy_playbook, financial_outcome_range) is a single OBJECT closed with }. Only counter_arguments, value_creation, negotiation_tactics, negotiation_sequence, batna_improvement_actions, buyer_leverage_factors, supplier_leverage_factors, key_moves, trigger_conditions and exit_steps are ARRAYS closed with ]. Match every opening { with } and every opening [ with ] — mismatched closers (e.g. closing scenario_specific or payload with ]) will fail validation.`,
+  S6: `
+S6 Predictive Budgeting & Forecasting — SPECIFIC RULES:
+1. scenario_specific MUST contain a non-empty "scenarios" array AND a non-empty "sensitivity" array. Both feed dashboards (Scenario Comparison + Sensitivity Spider). Without them the report renders empty placeholders.
+2. scenarios[]: emit EXACTLY 3 entries with label values "Base", "Downside", "Upside" (in that order). Each item:
+   { "label": "Base | Downside | Upside",
+     "total_spend": <number — annual or full-period spend in scenario_specific.currency>,
+     "delta_pct_vs_base": <number — 0 for Base, negative for savings, positive for cost increase>,
+     "drivers": ["short driver phrases — e.g. 'Diesel +6.5%', 'Driver scarcity', 'Consolidation hub uplift'"],
+     "rationale": "1 sentence explaining the assumptions" }
+   total_spend for Base MUST equal financial_model.totals.total_cost when both are present.
+3. sensitivity[]: 3–6 entries, one per material driver (inflation index, FX, volume, labour, fuel, regulatory, etc.). Each item:
+   { "variable": "string — e.g. 'Diesel index'",
+     "low_impact_pct": <negative number, e.g. -3>,
+     "base_impact_pct": 0,
+     "high_impact_pct": <positive number, e.g. +6.5>,
+     "unit": "pct" }
+   The values are % impact on base-case total_spend. Order from highest absolute high_impact_pct to lowest.
+4. scenario_specific.currency MUST mirror financial_model.currency.
+5. financial_model.analysis_period_years MUST be set (default 1 for annual budgets).`,
+  S22: `
+S22 Category Strategy — SPECIFIC RULES (all seven wizard deliverables are MANDATORY; an empty array or single-row placeholder is treated as a report failure):
+1. kraljic_position: emit BOTH categorical placement (current, recommended ∈ {STRATEGIC, LEVERAGE, BOTTLENECK, NON_CRITICAL}) AND numeric coordinates supply_risk (0-10) and business_impact (0-10) so the Kraljic Matrix dashboard can render. NUMERIC COORDS ARE MANDATORY — null/0/0 is a report failure. movement_rationale = 1-2 sentences anchored to the user's specific spend / supplier / risk inputs. EXAMPLE shape (copy verbatim, replace values): { "current": "NON_CRITICAL", "recommended": "BOTTLENECK", "supply_risk": 8.5, "business_impact": 7.0, "movement_rationale": "Only 3 DAkkS-accredited vendors and 7% OOT rate force reclassification from non-critical to bottleneck." }. The 0-10 scale: 0-3 = LOW, 4-6 = MEDIUM, 7-10 = HIGH. Always anchor to user-supplied numbers (suppliers, spend, regulation).
+2. porters_five_forces: populate ALL FIVE forces with rating + key_driver tied to the user's market structure (number of suppliers, switching cost, substitute availability, regulatory barriers, internal rivalry). Never leave key_driver null when a rating is set.
+3. market_intelligence: key_trends[] (3-5 short bullet phrases — demand, pricing, technology, regulation), supply_dynamics (1-2 sentences on consolidation / capacity / lead-time), regulatory_outlook (1 sentence referencing applicable rules — e.g. EU Data Act, NIS2, CSRD), innovation_signals[] (2-4 short phrases). This block IS the "Market Intelligence Brief" promised in the wizard.
+4. best_practices[]: 3-5 entries drawn from comparable categories or industries, each with practice (specific play), source_category (where it was proven), expected_benefit (quantified where possible).
+5. strategic_options[]: REQUIRED. Provide EXACTLY 3-5 ordered options spanning short/medium/long horizons. Each item: { "label": "concise name (e.g. 'Consolidate to 2-vendor frame agreement')", "horizon": "SHORT | MEDIUM | LONG", "pros": ["3-4 bullets"], "cons": ["2-3 bullets"], "investment_required": "<€ or relative size>", "expected_value": "<€ savings or strategic benefit>" }. This is the "Strategic Options Matrix".
+6. quick_wins[]: REQUIRED. 3-5 items executable within 12 weeks, each: { "action": "specific imperative", "value_eur": <number when quantifiable>, "weeks_to_value": <integer 1-12>, "owner": "role (e.g. 'Category Manager')" }.
+7. cross_category_analogies[]: REQUIRED. 2-4 cross-industry/category lessons, each: { "industry": "...", "category": "...", "lesson": "what was done", "applicability": "why it transfers to the user's situation" }.
+8. three_year_roadmap[]: REQUIRED. EXACTLY 3 entries (year 1, 2, 3). Each: { "year": 1|2|3, "objectives": ["2-4 objectives"], "kpis": ["2-4 measurable KPIs with target values"], "milestones": ["2-3 dated milestones"] }. The PDF roadmap dashboard reads from this array.
+9. KEY FINDINGS vs RECOMMENDATIONS: Findings = current-state observations; Recommendations = forward actions. Never duplicate the same sentence into both.
+10. NUMERIC HYGIENE: when the user supplies annual_spend, spend per supplier, waste %, or commitment-coverage %, those numbers MUST appear verbatim in the analysis text and in any derived savings figures. Never silently round or drop them.
+11. TEXT FORMATTING: ASCII-safe comparators only ("<=", ">=", "<", ">"); no Unicode glyphs ≤ ≥.
+12. JSON STRUCTURE: scenario_specific is a single OBJECT; only kraljic_position, porters_five_forces, market_intelligence are nested OBJECTS. best_practices, strategic_options, quick_wins, cross_category_analogies, three_year_roadmap are ARRAYS. Match every { with } and every [ with ].`,
+};
+
+/** Return group instruction + only the active scenario's addendum (token-efficient). */
+export function getScenarioInstructions(group: string | null | undefined, scenarioId: string | null | undefined): string {
+  const base = group ? GROUP_AI_INSTRUCTIONS[group] || '' : '';
+  if (!scenarioId) return base;
+  const code = SCENARIO_ID_TO_CODE[scenarioId] || scenarioId;
+  const addendum = SCENARIO_INSTRUCTION_ADDENDA[code];
+  return addendum ? `${base}\n${addendum}` : base;
+}
+
 
 // ── Group Schemas ───────────────────────────────────────────────────
 // Full JSON schema templates from EXOS_AI_Output_Schema_v2.md Sections 3-7.
@@ -160,65 +225,33 @@ export const GROUP_SCHEMAS: Record<string, string> = {
   }
 }
 FINANCIAL_MODEL IS ALWAYS REQUIRED (independent of scenario_specific):
-- payload.financial_model.cost_breakdown MUST always contain at least 3 cost categories with non-null numeric "amount" values derived from the user's inputs. Do NOT leave amount as null when the user provided enough information to compute it. Do NOT skip this section — it powers the Cost Breakdown dashboard for every Group A scenario.
+- payload.financial_model.cost_breakdown MUST always contain at least 3 cost categories with non-null numeric "amount" values. When the user provided exact figures, derive amounts from them. When the user provided only partial figures (e.g. unit price + annual spend, or total spend only), you MUST still emit numeric amounts by applying defensible industry-typical percentage splits for the named product/category and flag each estimated entry with confidence: "LOW" plus a "notes" field explaining the assumption. NEVER emit cost_breakdown items with amount: null — an estimated low-confidence breakdown is more useful than a hidden dashboard. Do NOT skip this section — it powers the Cost Breakdown dashboard for every Group A scenario.
+- COST_BREAKDOWN LABEL HYGIENE (HARD RULE): each cost_breakdown[].category value MUST be a short noun phrase naming a cost CATEGORY (e.g. "Licences", "Implementation", "Support", "Training", "Materials", "Labour", "Tooling"). It MUST NOT be a sentence, recommendation, action, or verb phrase. NEVER emit values like "Issue RFP for...", "Renegotiate...", "Consolidate...", "Reduce...". Maximum 40 characters, no leading verb, no trailing punctuation. Recommendations belong in the recommendations[] array, not in cost_breakdown labels. The downstream Cost Breakdown chart will reject any cost item whose label looks like a recommendation.
 - payload.financial_model.totals.total_cost MUST be the sum of cost_breakdown amounts.
 - payload.financial_model.currency MUST be set (default "EUR").
 - payload.financial_model.analysis_period_years MUST be set when the scenario involves a time horizon (TCO, Capex/Opex, Forecasting).
 
 Then ALSO populate scenario_specific with the per-scenario structure below — this is in ADDITION to financial_model, never instead of it:
 
-- tco-analysis (S1): scenario_specific MUST contain:
+- tco-analysis (S1): scenario_specific.vendor_options MUST be an array of AT LEAST 2 objects, each with vendor_label (string), total_tco (number), year_breakdown (array of { year: number, cost: number }). If the user provided only one option to analyse, generate the comparison against a clearly-labelled status-quo / do-nothing / industry-benchmark alternative. Never return fewer than 2 vendor_options for tco-analysis. The financial_model.cost_breakdown for tco-analysis represents the categorical decomposition of the PRIMARY (recommended) option's total_tco.
+- cost-breakdown (S2): use financial_model.cost_breakdown as the primary source AND populate scenario_specific with the should-cost decomposition described below — both are mandatory deliverables for this scenario.
   {
-    "vendor_options": [
-      { "vendor_label": "string", "total_tco": null, "year_breakdown": [{ "year": 1, "cost": null }],
-        "scoring": { "price": null, "quality": null, "delivery": null, "risk": null, "support": null, "weighted_total": null }, "recommended": false }
-    ],
-    "lifecycle_cost_waterfall": [
-      { "phase": "Acquisition | Operation | Maintenance | Disposal", "amount": null, "cumulative": null, "notes": null }
-    ],
-    "sensitivity_analysis": {
-      "wacc_sensitivity": [{ "wacc_pct": null, "npv_delta": null }],
-      "cost_escalation_sensitivity": [{ "escalation_pct": null, "npv_delta": null }],
-      "most_sensitive_assumption": null
+    "scenario_specific": {
+      "cost_decomposition": [
+        { "component": "Material | Labour | Tooling/Setup | Overhead | Logistics | Margin | …", "estimated_pct": null, "benchmark_pct": null, "gap_pct": null, "confidence": "HIGH | MEDIUM | LOW", "rationale": "string" }
+      ],
+      "negotiation_anchor": {
+        "current_price": null,
+        "should_cost_target": null,
+        "headroom_pct": null,
+        "rationale": "string"
+      },
+      "estimated_supplier_margin_pct": null,
+      "top_cost_drivers_commentary": "string (optional)"
     }
   }
-  vendor_options MUST contain AT LEAST 2 entries. If the user provided only one option, compare against a clearly-labelled status-quo / do-nothing / industry-benchmark alternative. Apply multi-criteria scoring (price, quality, delivery, risk, support) across all options and flag the recommended pick. lifecycle_cost_waterfall MUST cover acquisition, operation, maintenance, and disposal phases (baseline-to-final). sensitivity_analysis MUST vary WACC and operating cost escalation rates and identify which assumption most changes the verdict. The financial_model.cost_breakdown for tco-analysis represents the categorical decomposition of the PRIMARY (recommended) option's total_tco.
-- cost-breakdown (S2): scenario_specific MUST contain:
-  {
-    "should_cost_gap": { "bottom_up_estimate": null, "supplier_quote": null, "gap_value": null, "gap_pct": null, "negotiation_headroom": null },
-    "negotiation_leverage_points": [
-      { "cost_line": null, "supplier_value": null, "should_cost_value": null, "inflation_risk": "HIGH | MEDIUM | LOW", "leverage_argument": null }
-    ],
-    "market_benchmark_comparison": [
-      { "cost_line": null, "market_reference_value": null, "source": null, "source_recency": null, "premium_or_discount_pct": null }
-    ]
-  }
-  Per-line confidence (HIGH/MEDIUM/LOW) on financial_model.cost_breakdown items doubles as the Input Confidence Report — flag every LOW-confidence line for human review. market_benchmark_comparison values MUST be sourced via real-time grounding (cite the source).
+  S2 AI guidance: cost_decomposition[] MUST contain at least 4 components summing to ~100%. When the user supplies only a unit price, target price and/or annual spend WITHOUT a cost-structure breakdown, you MUST still emit cost_decomposition[] using a defensible industry-typical split for the named product/process (e.g. injection moulding ≈ 45% material / 20% labour+machine / 15% tooling+setup / 10% overhead / 10% margin; machined parts ≈ 35/30/15/10/10; electronics assembly ≈ 55/15/10/10/10) and flag every estimated component with confidence: "LOW" plus a rationale citing the assumed benchmark. NEVER skip cost_decomposition[] for S2 — an estimated low-confidence decomposition is more useful to the user than a hidden dashboard. Same rule applies to financial_model.cost_breakdown: when only a unit price + annual spend are known, derive amounts by applying the estimated_pct splits to total_cost and mark each entry confidence: "LOW". negotiation_anchor.headroom_pct = (current_price - should_cost_target) / current_price * 100. Always include a benchmark_pct on each component when you can cite an industry norm; leave null only when no defensible benchmark exists.
 - savings-calculation (S4): scenario_specific.savings_breakdown — array of { lever (string), annual_savings (number), one_off_savings (number), confidence (HIGH|MEDIUM|LOW) }.
-  ADDITIONALLY for S4, you MUST populate scenario_specific.savings_waterfall and scenario_specific.finance_rejection_risk:
-  {
-    "savings_waterfall": [
-      { "step": "baseline | negotiated_price | volume_adjustment | inflation_protection | fx_adjustment | annualised_saving", "value": null, "cumulative": null, "notes": null }
-    ],
-    "baseline_validation": {
-      "baseline_type": "VERIFIED | ESTIMATED | BENCHMARKED",
-      "source": null,
-      "confidence_rating": "HIGH | MEDIUM | LOW",
-      "documentation_reference": null
-    },
-    "finance_audit_pack": {
-      "cips_classification_evidence": null,
-      "baseline_to_new_price_comparison": null,
-      "inflation_adjustment": null,
-      "fx_adjustment": null,
-      "confidence_markers": [],
-      "submission_ready": false
-    },
-    "finance_rejection_risk": [
-      { "risk_type": "CATEGORISATION_ERROR | UNVERIFIED_BASELINE | FX_EXPOSURE | DOUBLE_COUNTING | TIMING_MISMATCH | OTHER", "description": null, "severity": "HIGH | MEDIUM | LOW", "mitigation": null }
-    ]
-  }
-  savings_waterfall MUST visually trace baseline → negotiated price → annualised saving, with each lever (volume, inflation, FX) as a discrete step. baseline_validation MUST classify the basis as Verified (from contract), Estimated (from market data), or Benchmarked (from indices). finance_audit_pack consolidates the evidence Finance needs to accept the saving — only set submission_ready=true if every dependent field is populated. finance_rejection_risk MUST surface any risk that could invalidate the savings claim with a mitigation per item.
   ADDITIONALLY for S4, you MUST populate scenario_specific.savings_classification with the following structure (every field initialised to null when unknown):
   {
     "savings_classification": {
@@ -239,97 +272,178 @@ Then ALSO populate scenario_specific with the per-scenario structure below — t
     }
   }
   Classify every savings figure into exactly one of three CIPS categories: HARD (direct P&L impact — price reduction on confirmed volume), SOFT (cost avoidance — benefit not reflected in P&L, e.g. scope reduction), or AVOIDED (inflation-adjusted baseline protection). Do not aggregate across categories. If the user has not specified a category, default to SOFT and add a data_gaps[] entry requesting classification confirmation. Set baseline_verified=true ONLY if the user provided a documented historical baseline, not an estimate.
-- capex-vs-opex (S3): scenario_specific MUST contain:
+- capex-vs-opex (S3): scenario_specific MUST contain ALL of the following structures:
   {
     "options": [
-      { "option_label": "string", "total_capex": null, "total_opex": null, "year_by_year": [{ "year": 1, "cost": null }], "npv": null }
+      {
+        "option_label": "CAPEX (Buy) | OPEX (Lease) | string",
+        "total_capex_nominal": number,         // total upfront + maintenance over period (nominal €)
+        "total_opex_nominal": number,          // total lease/subscription + maintenance over period (nominal €)
+        "npv": number,                         // net present value at WACC; negative = net cost
+        "discount_rate_used_pct": number,      // WACC actually applied; if user gave none, use 8% and add data_gaps[] entry
+        "residual_value": number,              // 0 for OPEX
+        "ifrs16_on_balance_sheet": true | false,
+        "year_by_year": [
+          { "year": number, "capex_cf": number, "opex_cf": number, "discounted_capex": number, "discounted_opex": number }
+        ]
+      }
+    ],
+    "sensitivity": [
+      // 4–6 variables. Recompute the recommended option's NPV at low/high. Never invent variables outside user inputs.
+      { "variable": "WACC | Residual value | Lease rate | Maintenance inflation | Asset lifespan", "base": number, "low": number, "high": number, "unit": "% | € | years" }
     ],
     "flexibility_matrix": [
-      { "option_label": null, "upgrade_path": null, "exit_clause": null, "ownership_lock_in": "HIGH | MEDIUM | LOW", "tech_refresh_freedom": "HIGH | MEDIUM | LOW" }
+      // Score each dimension 1–5 for both options.
+      { "dimension": "Upgrade flexibility | Exit cost | Balance-sheet impact | Cash preservation | Tax shield", "capex_score": 1-5, "opex_score": 1-5, "rationale": "string" }
     ],
-    "cfo_recommendation": { "verdict": "LEASE | BUY | HYBRID", "cash_flow_rationale": null, "ifrs16_note": null },
-    "sensitivity_tornado": [
-      { "driver": "WACC | residual_value | lease_rate", "low_value": null, "base_value": null, "high_value": null, "npv_delta_at_low": null, "npv_delta_at_high": null }
-    ],
-    "ifrs16_impact_summary": { "balance_sheet_treatment": null, "pnl_treatment": null, "right_of_use_asset_estimate": null, "lease_liability_estimate": null }
+    "cfo_recommendation": {
+      "verdict": "BUY | LEASE | HYBRID",
+      "cash_flow_rationale": "string — refer to year-1 cash impact and payback",
+      "ifrs16_note": "string — on-balance-sheet vs off-balance-sheet implications",
+      "wacc_assumed_pct": number
+    }
   }
-  options array MUST contain AT LEAST 2 entries (lease vs buy minimum). sensitivity_tornado MUST cover WACC, residual value, and lease rate impact on the NPV delta. ifrs16_impact_summary is mandatory whenever a lease option is on the table.
-- spend-analysis-categorization (S5): scenario_specific MUST contain:
+  Recommendations array MUST follow {priority: HIGH|MEDIUM|LOW, action, financial_impact, next_scenario} contract — DO NOT pad with filler MEDIUM/LOW recommendations to reach a count. Emit only recommendations supported by user-provided data. Never write phrases like "from CAPEX" or "from OPEX" as if they were vendor names — these are option labels, not entities.
+- saas-optimization (S7): scenario_specific MUST contain ALL of the following structures. This is the ONLY way the SaaS dashboards (license-tier, kill list, duplicate matrix, tier mismatch) can render — narrative text alone will be discarded.
   {
-    "spend_taxonomy": [
-      { "category": null, "subcategory": null, "unspsc_code": null, "spend_value": null, "line_count": null, "confidence": "HIGH | MEDIUM | LOW", "flagged_for_review": false }
-    ],
-    "tail_spend": { "threshold_value": null, "tail_share_pct": null, "tail_transaction_count": null, "tail_value": null, "tail_categories": [] },
-    "vendor_consolidation": [
-      { "category": null, "current_supplier_count": null, "preferred_supplier_recommended": null, "estimated_saving_value": null, "estimated_saving_pct": null }
-    ],
-    "quick_wins": [
-      { "rank": 1, "action": null, "estimated_saving_value": null, "ease_of_execution": "HIGH | MEDIUM | LOW", "recommended_owner": "Role-based reference", "timeframe": null }
-    ],
-    "maverick_spend_heatmap": [
-      { "category": null, "off_contract_value": null, "off_contract_transaction_count": null, "policy_compliance_rate_pct": null, "heat_level": "RED | AMBER | GREEN" }
-    ],
-    "top_supplier_concentration": [
-      { "supplier_label": "Supplier_001", "total_spend": null, "share_of_total_pct": null, "cumulative_share_pct": null, "single_supplier_category_risk": false }
-    ]
+    "scenario_specific": {
+      "tools_inventory": [
+        {
+          "tool_name": "string (tokenised vendor label, e.g. SAAS_TOOL_A)",
+          "tier_label": "Enterprise | Business | Pro | Standard | Basic | string",
+          "licences_purchased": number,
+          "licences_active": number,
+          "annual_cost_eur": number,
+          "cost_per_user_eur": number,
+          "renewal_date": "YYYY-MM-DD or null",
+          "primary_use_case": "string (short)",
+          "utilisation_pct": number | null,
+          "recommended_licences": number,
+          "confidence": "HIGH | MEDIUM | LOW"
+        }
+      ],
+      "kill_list": [
+        {
+          "tool_name": "string (matches tools_inventory.tool_name)",
+          "reason": "UNUSED | DUPLICATE | LOW_UTILISATION | AUTO_RENEWAL_TRAP | OUT_OF_SCOPE",
+          "annual_savings_eur": number,
+          "cancellation_deadline": "YYYY-MM-DD or null",
+          "evidence": "string — one sentence citing the user's data"
+        }
+      ],
+      "duplicate_matrix": [
+        {
+          "feature_area": "e.g. Project Management | File Storage | Video Conferencing",
+          "tools": ["tool_name_a", "tool_name_b"],
+          "overlap_pct": number,
+          "consolidation_recommendation": "KEEP_A | KEEP_B | KEEP_BOTH | EVALUATE_THIRD",
+          "annual_savings_eur": number
+        }
+      ],
+      "tier_mismatch": [
+        {
+          "tool_name": "string",
+          "current_tier": "string",
+          "recommended_tier": "string",
+          "reason": "string — feature usage gap",
+          "monthly_savings_per_user_eur": number,
+          "users_to_downgrade": number,
+          "annual_savings_eur": number
+        }
+      ],
+      "savings_summary": {
+        "identified_annual_savings_eur": number,   // sum of kill_list + duplicate_matrix + tier_mismatch
+        "target_annual_savings_eur": number,        // user-stated target if provided, else 25% of total spend (Gartner benchmark)
+        "current_total_annual_spend_eur": number,
+        "savings_pct_of_spend": number,
+        "confidence": "HIGH | MEDIUM | LOW"
+      }
+    }
   }
-  Apply UNSPSC / eCl@ss classification per line. tail_spend MUST follow the 80/20 distribution. quick_wins MUST surface AT LEAST 5 entries ranked by savings × ease. top_supplier_concentration MUST cover the suppliers accounting for at least 80% of spend (Pareto). Flag any single-supplier category exposure.
-- forecasting-budgeting (S6): scenario_specific MUST contain:
+  S7 AI guidance:
+  • tools_inventory[] MUST contain one entry per SaaS tool the user listed in subscriptionDetails — do not collapse, summarise or drop tools.
+  • For each tool, set licences_active from the user's data; if only utilisation % is given, derive licences_active = round(licences_purchased * utilisation_pct/100).
+  • cost_per_user_eur = annual_cost_eur / licences_purchased.
+  • recommended_licences = max(licences_active, ceil(licences_purchased * 0.85)) when utilisation is unknown; otherwise = licences_active rounded up to nearest 5.
+  • kill_list[] MUST include every tool with utilisation_pct < 30% OR flagged as duplicate by the user. Set reason precisely.
+  • duplicate_matrix[] is REQUIRED whenever the user mentions overlap or two tools share a primary_use_case — if no overlaps exist, emit an empty array, never omit the key.
+  • tier_mismatch[] MUST flag every tool where users on Enterprise/Business tiers don't use tier-exclusive features. If the user did not provide feature data, emit an empty array — do not invent.
+  • savings_summary.identified_annual_savings_eur MUST equal the sum of all kill_list[].annual_savings_eur + duplicate_matrix[].annual_savings_eur + tier_mismatch[].annual_savings_eur. Reconcile or the dashboard will flag inconsistency.
+  • financial_model.cost_breakdown for S7 MUST list TOOL CATEGORIES (e.g. "CRM", "Collaboration", "Security", "Analytics", "DevOps") with the summed annual_cost_eur per category — NOT individual tool names and NEVER recommendation strings.
+- spend-analysis-categorization (S5): scenario_specific MUST contain ALL of the following structures. This is the ONLY way the Spend Analysis dashboard (taxonomy, tail spend, vendor consolidation, quick wins) can render — narrative text alone will be discarded.
   {
-    "baseline_trend": { "method": "internal extrapolation", "yoy_change_pct": null, "seasonality_detected": false, "anomaly_flags": [], "series": [{ "period": null, "value": null }] },
-    "market_intelligence_overlay": { "cpi_index_pct": null, "ppi_index_pct": null, "commodity_index_pct": null, "fx_factor_pct": null, "grounding_sources": [] },
-    "scenarios": {
-      "base_case": { "narrative": null, "projected_spend": null, "assumptions": [] },
-      "stress_test": { "narrative": null, "projected_spend": null, "triggers": [], "early_warning_signals": [] },
-      "upside_case": { "narrative": null, "projected_spend": null, "required_conditions": [] }
-    },
-    "budget_optimization_steps": [
-      { "rank": 1, "action": null, "category": "cost_reduction | risk_management", "estimated_impact": null, "owner": "Role-based reference" }
-    ],
-    "assumptions_register": [
-      { "assumption": null, "scenario_applicability": ["base_case", "stress_test", "upside_case"], "macro_factor": null, "volume_driver": null, "data_source": null }
-    ],
-    "macro_sensitivity_ranking": [
-      { "rank": 1, "factor": "inflation | fx | commodity_price | other", "sensitivity_score": null, "impact_direction": "increase | decrease", "rationale": null }
-    ]
+    "scenario_specific": {
+      "taxonomy_breakdown": [
+        {
+          "level1": "string (top-level category, e.g. 'Direct Materials', 'IT Services', 'Professional Services')",
+          "level2": "string or null (sub-category, e.g. 'APIs', 'Cloud Hosting', 'Legal Counsel')",
+          "taxonomy_code": "string or null (e.g. UNSPSC '51171500' or eCl@ss code if user-provided taxonomy used)",
+          "annual_spend_eur": number,
+          "spend_share_pct": number,
+          "supplier_count": number,
+          "sample_skus": ["string"],
+          "confidence": "HIGH | MEDIUM | LOW"
+        }
+      ],
+      "tail_spend": {
+        "threshold_pct_of_total": number,
+        "spend_in_tail_eur": number,
+        "spend_in_tail_pct": number,
+        "suppliers_in_tail": number,
+        "transactions_in_tail": number,
+        "addressable_savings_eur": number,
+        "candidates": [
+          {
+            "category": "string",
+            "supplier_count": number,
+            "annual_spend_eur": number,
+            "consolidation_action": "AGGREGATE | CATALOGUE | P_CARD | ELIMINATE | string"
+          }
+        ]
+      },
+      "vendor_consolidation": [
+        {
+          "category": "string",
+          "current_suppliers": number,
+          "target_suppliers": number,
+          "current_spend_eur": number,
+          "estimated_savings_eur": number,
+          "savings_pct": number,
+          "rationale": "string — why these suppliers are consolidation candidates",
+          "preferred_supplier": "string or null (tokenised label)"
+        }
+      ],
+      "quick_wins": [
+        {
+          "action": "string — short imperative (e.g. 'Move office supplies to P-card')",
+          "owner_role": "Procurement | Finance | IT | Legal | Operations | string",
+          "weeks_to_value": number,
+          "estimated_savings_eur": number,
+          "effort": "LOW | MEDIUM | HIGH",
+          "priority": "HIGH | MEDIUM | LOW"
+        }
+      ],
+      "savings_summary": {
+        "total_addressable_spend_eur": number,
+        "identified_savings_eur": number,
+        "savings_pct_of_addressable": number,
+        "confidence": "HIGH | MEDIUM | LOW"
+      }
+    }
   }
-  ALL three scenarios (base_case, stress_test, upside_case) are mandatory. Market overlay MUST be grounded via real-time search. assumptions_register MUST capture every assumption driving the three scenarios.
-- saas-optimization (S7): scenario_specific MUST contain:
-  {
-    "kill_list": [
-      { "tool_label": null, "annual_cost": null, "active_users": null, "license_count": null, "utilisation_pct": null, "annual_saving_if_cancelled": null, "cancellation_risk": "HIGH | MEDIUM | LOW", "rationale": null }
-    ],
-    "tier_mismatch": [
-      { "tool_label": null, "contracted_tier": null, "actual_usage_tier": null, "annual_overpayment": null, "recommended_tier": null }
-    ],
-    "duplicate_matrix": [
-      { "function": null, "tools_overlapping": [], "annual_combined_spend": null, "recommended_consolidation": null }
-    ],
-    "portfolio_health_scorecard": { "overall_utilisation_pct": null, "feature_overlap_score": null, "spend_efficiency_rating": "A | B | C | D | F", "tool_count": null, "shadow_it_exposure": "HIGH | MEDIUM | LOW" },
-    "renewal_calendar": [
-      { "tool_label": null, "renewal_date": null, "days_to_renewal": null, "auto_renewal": true, "action_required_by": null, "recommended_pre_renewal_decision": "RENEW | RENEGOTIATE | CANCEL | DOWNGRADE" }
-    ],
-    "total_recoverable_spend": { "kill_value": null, "optimise_value": null, "renegotiate_value": null, "total_value": null, "implementation_priority_sequence": [] }
-  }
-  renewal_calendar MUST include every tool renewing within 90 days. total_recoverable_spend MUST aggregate Kill + Optimise + Renegotiate values and propose a sequenced action plan. Never recommend cancellation without an active-user count check.
-- specification-optimizer (S8): scenario_specific MUST contain:
-  {
-    "gold_plating_report": [
-      { "specification": null, "current_value": null, "industry_standard_value": null, "cost_impact_estimate": null, "over_specification_severity": "HIGH | MEDIUM | LOW" }
-    ],
-    "market_comparison": [
-      { "specification": null, "industry_standard": null, "source": null, "deviation": null }
-    ],
-    "cost_reduction_opportunities": [
-      { "change": null, "estimated_saving_pct": null, "estimated_saving_value": null, "implementation_effort": "HIGH | MEDIUM | LOW" }
-    ],
-    "alternative_specification": { "summary": null, "function_preserved": true, "lower_cost_value": null, "trade_offs": [] },
-    "supplier_market_expansion": { "current_qualifying_supplier_count": null, "post_change_qualifying_supplier_count": null, "expansion_pct": null, "new_geographies_unlocked": [] },
-    "spec_change_risk_register": [
-      { "parameter_changed": null, "quality_risk": "HIGH | MEDIUM | LOW", "compliance_risk": "HIGH | MEDIUM | LOW", "performance_risk": "HIGH | MEDIUM | LOW", "what_you_lose": null, "what_you_gain": null }
-    ]
-  }
-  market_comparison MUST cite sources (Perplexity grounding). spec_change_risk_register MUST quantify quality, compliance, and performance risk per proposed parameter change.
+  S5 AI guidance:
+  • taxonomy_breakdown[] MUST contain at least 3 level1 categories whose annual_spend_eur sums to ~100% of the user's total addressable spend. Use UNSPSC if the user nominated it; otherwise use clear English category names.
+  • tail_spend.threshold_pct_of_total defaults to 80 (Pareto rule — bottom 20% of spend across the long tail of suppliers/transactions).
+  • tail_spend.candidates[] MUST list at least 3 entries when total spend > 0; if the dataset has no clear tail (e.g. <10 suppliers), set suppliers_in_tail=0 and emit candidates: [].
+  • vendor_consolidation[] MUST flag every category where the user has 3+ suppliers spending on the same level1/level2 category. estimated_savings_eur should be 5–12% of current_spend_eur depending on category leverage; never invent figures above 15% without explicit user evidence.
+  • quick_wins[] MUST contain 3–6 actions, each with a quantified estimated_savings_eur and weeks_to_value <= 12. Quick wins are tactical (P-card moves, catalogue uploads, supplier consolidations), NOT strategic re-sourcing.
+  • savings_summary.identified_savings_eur MUST equal sum(vendor_consolidation[].estimated_savings_eur) + sum(quick_wins[].estimated_savings_eur) + tail_spend.addressable_savings_eur. Reconcile or the dashboard will flag inconsistency.
+  • financial_model.cost_breakdown for S5 MUST mirror taxonomy_breakdown[] — one entry per level1 category with the summed annual_spend_eur. Do NOT emit supplier names or recommendation strings as cost categories.
+  • CONCRETENESS — recommendations MUST be industry-specific and actionable. Every entry in quick_wins[], vendor_consolidation[].rationale, and tail_spend.candidates[].consolidation_action MUST include at least ONE concrete example tied to the user's industry/category (a named tactic, lever, vendor archetype, contract clause, payment instrument, regulation, or measurable threshold). EXAMPLES of acceptable specificity: "Switch tail-end stationery suppliers to a P-card programme via Amazon Business / Office Depot punchout" (not "use a P-card"); "Initiate R&D tax credit recovery under HMRC RDEC Scheme for the solar PV install — typical recovery 8–11% of qualifying CAPEX" (not "tax incentive recovery"); "Consolidate 14 SaaS vendors onto a 3-year MSA with quarterly true-up clauses" (not "consolidate vendors"). REJECT vague generic phrases such as "review billing", "optimise spend", "engage stakeholders" without a named instrument or quantified target.
+  • Each quick_wins[].action MUST contain (a) a named instrument or vendor type relevant to the industry, AND (b) a measurable target (£/€/$ amount, % saving, or weeks-to-value). Generic verbs alone ("review", "consider", "evaluate") are insufficient.
+  • Where industry grounding is provided in <grounding-context>, mine it for category-specific levers (regulatory programmes, common framework agreements, typical payment instruments, sector benchmarks) and reference them by name in recommendations.
+- For other Group A scenarios, populate scenario_specific with the most directly relevant structured data the dashboards can render.
+
 
 WORKING CAPITAL (financial_model.working_capital) — OPTIONAL:
 Populate working_capital ONLY if the user has provided payment terms data (e.g. NET 30, supplier payment schedules, DPO figures, or equivalent). Do not invent payment terms. If no terms data is present in the input, leave working_capital = null and do NOT add to data_gaps[] (this is optional, not mandatory).
@@ -350,181 +464,65 @@ Every numeric field must be derived from user inputs. Use null + confidence_flag
     "scenario_specific": {}
   }
 }
-Populate scenario_specific using the per-scenario structures below verbatim. Mark incomplete sections with [DATA NEEDED: description] in the content. Never fabricate document sections.
+Populate scenario_specific based on the scenario (e.g. evaluation_criteria for RFP, metrics for SLA, requirements for BRD, scorecard for Supplier Performance, phases for Project Planning, etc.).
+Mark incomplete sections with [DATA NEEDED: description] in the content. Never fabricate document sections.
 
-— S9 RFP Generator (Tender Package):
+S9 RFP Generator — scenario_specific MUST contain ALL of the following structures (the five promised deliverables: Extracted Brief, Tender Document, Evaluation Matrix, Clarifications, Suggested Attachments):
 {
-  "scenario_specific": {
-    "extracted_brief_summary": {
-      "objective": null,
-      "scope": null,
-      "timeline": null,
-      "budget_range": null,
-      "key_requirements": [],
-      "auto_extracted_from_raw_input": true
-    },
-    "tender_documents": [
-      { "package_type": "RFI | RFP | RFQ", "title": null, "structured_sections": [{ "heading": null, "content": null }] }
-    ],
-    "evaluation_matrix": [
-      { "criterion": null, "weight_pct": null, "scoring_scale": "1-5 | 1-10 | pass-fail", "rationale": null }
-    ],
-    "clarifications_and_recommendations": [
-      { "missing_data_flag": null, "recommendation": null, "action_before_issue": null }
-    ],
-    "suggested_attachments": [
-      { "template_type": "NDA | GDPR_DPA | INSURANCE_CERTIFICATE | CODE_OF_CONDUCT | OTHER", "purpose": null, "required": true }
-    ]
-  }
-}
-Tender documents MUST follow the package type selected by the user (RFI / RFP / RFQ). Evaluation matrix weights MUST sum to 100. GDPR DPA annex MUST be suggested whenever personal data processing is in scope.
-
-— S10 SLA Definition:
-{
-  "scenario_specific": {
-    "sla_table": [
-      { "metric_name": null, "target_threshold": null, "measurement_period": null, "measurement_method": null, "penalty_mechanism": null }
-    ],
-    "decision_tree": [
-      { "severity_tier": "P1 | P2 | P3 | P4", "trigger_criteria": null, "response_time": null, "escalation_step": null, "responsible_role": "Role-based reference" }
-    ],
-    "draft_agreement": { "title": null, "sections": [{ "heading": null, "content": null }] },
-    "service_credits_framework": [
-      { "severity_tier": "P1 | P2 | P3 | P4", "breach_condition": null, "service_credit_pct_of_mrc": null, "cap_pct": null, "calculation_basis": "monthly contract value" }
-    ],
-    "reporting_governance_schedule": {
-      "measurement_frequency": null,
-      "reporting_cadence": "weekly | monthly | quarterly",
-      "review_cycle": "monthly | quarterly | annual",
-      "governance_forum": null,
-      "escalation_path": []
+  "extracted_brief": {
+    "summary": "string — 2–3 sentences capturing the essence of the requirement",
+    "scope_type": "GOODS | SERVICES | MIXED | WORKS",
+    "package_type": "RFP | RFI | RFQ",
+    "volume": "string | null — e.g. '450 users across 3 offices', '12,000 units/year'",
+    "locations": ["string"],
+    "annual_budget_eur": null,
+    "incumbent_status": "string | null — e.g. 'In-house team of 6', 'Currently with [SUPPLIER_A]', 'No incumbent'",
+    "mandatory_compliance": ["string — e.g. 'ISO 27001', 'GDPR', 'SOC2 Type 2'"],
+    "deadlines": {
+      "rfp_issue": "string | null",
+      "questions_due": "string | null",
+      "submission_due": "string | null",
+      "award_target": "string | null",
+      "go_live_target": "string | null"
     }
-  }
-}
-SLA table metrics MUST be measurable and time-bound. Decision tree MUST cover every severity tier with role-based escalation. service_credits_framework MUST tie financial remedy to monthly contract value.
-
-— S11 Tail Spend Rapid Sourcing:
-{
-  "scenario_specific": {
-    "action_plan": {
-      "verdict": "BUY_HERE | LAUNCH_MINI_TENDER",
-      "recommended_supplier": null,
-      "rationale": null,
-      "next_steps": []
-    },
-    "compliance_alert": {
-      "policy_breach_detected": false,
-      "eu_threshold_violation": false,
-      "alert_details": null,
-      "recommended_remediation": null
-    }
-  }
-}
-Always evaluate EU procurement threshold rules (Directive 2014/24/EU) when the buyer is a public-sector body.
-
-— S12 Contract Template Generator:
-{
-  "scenario_specific": {
-    "legal_disclaimer": { "limitation_of_liability": null, "scope_boundary": null, "jurisdiction": null },
-    "contract_structure": [
-      { "section_number": null, "heading": null, "mandatory": true, "cross_references": [] }
-    ],
-    "drafted_template": {
-      "country": null,
-      "governing_law_clause": null,
-      "gdpr_provisions_included": true,
-      "sections": [{ "heading": null, "content": null }]
-    },
-    "clause_guidance": [
-      { "clause_reference": null, "what_it_protects_against": null, "recommended_negotiation_stance": null, "fallback_position": null }
-    ],
-    "gdpr_dpa_assessment": {
-      "dpa_required": false,
-      "art28_trigger": null,
-      "dpa_template_attached": false,
-      "data_categories_in_scope": []
-    },
-    "high_risk_clause_summary": [
-      { "clause_reference": null, "risk_type": "LIABILITY_CAP | IP_OWNERSHIP | AUTO_RENEWAL | INDEMNITY | TERMINATION | OTHER", "severity": "HIGH | MEDIUM | LOW", "current_language": null, "recommended_safer_alternative": null }
+  },
+  "tender_document": {
+    "type": "RFP | RFI | RFQ",
+    "title": "string",
+    "sections": [
+      { "heading": "string — e.g. 'Scope of Services', 'SLA Requirements', 'Pricing Schedule', 'Terms & Conditions'", "content": "string — full body text, not bullets", "mandatory": true | false }
     ]
-  }
+  },
+  "evaluation_matrix": {
+    "scoring_scale": "1-5 | 1-10 | 0-100",
+    "criteria": [
+      {
+        "name": "string — e.g. 'Quality', 'Price', 'Sustainability', 'References'",
+        "weight_pct": 0-100,
+        "sub_criteria": [
+          { "name": "string", "weight_pct": 0-100, "scoring_guidance": "string — what earns max score" }
+        ]
+      }
+    ],
+    "total_weight_check": 100,
+    "minimum_qualifying_score": null
+  },
+  "clarifications": [
+    { "question": "string — what the buyer must clarify before issuing", "why_it_matters": "string — risk if unresolved", "severity": "HIGH | MEDIUM | LOW", "field": "string — which input field is incomplete" }
+  ],
+  "suggested_attachments": [
+    { "name": "string — e.g. 'Pricing Schedule Template', 'Supplier Questionnaire', 'NDA Template', 'Reference Form'", "purpose": "string", "template_available": true | false }
+  ]
 }
-Country-specific language is mandatory. Set gdpr_dpa_assessment.dpa_required=true whenever the supplier processes personal data on behalf of the buyer (GDPR Art. 28).
-
-— S13 Requirements Gathering:
-{
-  "scenario_specific": {
-    "moscow_matrix": [
-      { "requirement": null, "priority": "MUST | SHOULD | COULD | WONT", "rationale": null }
-    ],
-    "user_stories": [
-      { "role": null, "capability": null, "outcome": null, "acceptance_criteria": [] }
-    ],
-    "market_scan": [
-      { "solution_label": null, "capability_fit_pct": null, "strengths": [], "weaknesses": [], "indicative_pricing": null }
-    ],
-    "dependency_map": [
-      { "requirement_a": null, "requirement_b": null, "relationship": "DEPENDS_ON | CONFLICTS_WITH | ENABLES", "prioritisation_rationale": null }
-    ],
-    "constraints_assumptions_register": {
-      "constraints": [{ "constraint": null, "rationale": null }],
-      "assumptions": [{ "assumption": null, "rationale": null }],
-      "out_of_scope": [{ "exclusion": null, "rationale": null }],
-      "acceptance_criteria_summary": []
-    }
-  }
-}
-market_scan MUST return 3–5 candidate solutions. Every MUST-have requirement MUST have an acceptance criterion.
-
-— S14 Supplier Review:
-{
-  "scenario_specific": {
-    "supplier_scorecard": {
-      "supplier_label": "Supplier_001",
-      "dimensions": [
-        { "dimension": "Quality | Delivery | Cost | Risk | Relationship", "score": null, "weight_pct": null, "evidence": null }
-      ],
-      "weighted_total": null,
-      "rag_status": "RED | AMBER | GREEN"
-    },
-    "pip_plan": {
-      "duration_days": 90,
-      "targets": [{ "kpi": null, "current_value": null, "target_value": null, "checkpoint_dates": [] }],
-      "exit_criteria": null,
-      "consequence_if_failed": null
-    },
-    "qbr_script": {
-      "agenda_items": [],
-      "kpi_talking_points": [],
-      "escalation_prompts": [],
-      "success_criteria": []
-    },
-    "kpi_trend_analysis": [
-      { "kpi": null, "series": [{ "period": null, "value": null }], "trajectory": "IMPROVING | FLAT | DECLINING", "early_warning_signal": false, "predicted_breach_period": null }
-    ]
-  }
-}
-Scorecard MUST cover quality, delivery, cost, risk, and relationship. kpi_trend_analysis MUST flag early warning signals before SLA breach.
-
-— S15 Procurement Project Planning:
-{
-  "scenario_specific": {
-    "swot_analysis": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
-    "priority_matrix": [
-      { "activity": null, "effort": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "quadrant": "QUICK_WIN | BIG_BET | FILL_IN | THANKLESS" }
-    ],
-    "stakeholder_map": [
-      { "stakeholder_group": null, "influence": "HIGH | MEDIUM | LOW", "interest": "HIGH | MEDIUM | LOW", "engagement_strategy": null }
-    ],
-    "critical_path": [
-      { "milestone": null, "target_date": null, "decision_point": false, "dependencies": [], "owner": "Role-based reference" }
-    ],
-    "risk_register": [
-      { "risk": null, "probability": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "mitigation": null, "owner": "Role-based reference" }
-    ]
-  }
-}
-Use role-based references only (never named individuals).`,
+S9 AI guidance — MANDATORY rules:
+- extracted_brief MUST be populated by parsing the user's raw_brief verbatim. Do NOT invent volume/locations/budget — if absent, use null and add to clarifications[] with severity HIGH.
+- tender_document.sections MUST contain at least 6 sections covering: Background & Context, Scope, Mandatory Requirements (compliance), Service Levels / Deliverables, Pricing Structure, Evaluation Process, Timeline, Terms & Conditions. Do not output single-line bullets — each section.content is a buyer-ready paragraph (3–8 sentences).
+- evaluation_matrix.criteria[].weight_pct MUST sum to exactly 100. If the user supplied weighting in compliance_evaluation, use it verbatim. Otherwise propose a defensible split based on package_type (RFI = quality-heavy, RFQ = price-heavy, RFP = balanced) and flag confidence: "LOW" in a clarification.
+- evaluation_matrix.total_weight_check MUST equal sum(criteria[].weight_pct). Server reconciles.
+- clarifications[] MUST contain at least one entry per missing/null field in extracted_brief.
+- suggested_attachments[] MUST contain 3–6 entries appropriate to package_type.
+- Use tokenised supplier labels ([SUPPLIER_A], etc.) — never emit legal entity names. NEVER tokenise compliance standards (ISO, GDPR, SOC2, NIS2, TUPE, HIPAA, PCI-DSS) — these are framework names, not PII.
+- Recommendations[] in the envelope MUST use a separate concise title (≤8 words) and body — do NOT prefix titles with "[High]" / "[Medium]"; severity belongs in the structured priority field.`,
 
   C: `GROUP C PAYLOAD SCHEMA (Reliability & Compliance — S16–S20):
 {
@@ -537,118 +535,103 @@ Use role-based references only (never named individuals).`,
     "scenario_specific": {}
   }
 }
-Populate scenario_specific using the per-scenario structures below verbatim. Every risk must reference a regulatory standard or contractual clause. Use RAG status consistently.
+Populate scenario_specific based on the scenario (e.g. issues/missing_clauses for SOW Critic, risk_register for Risk Assessment, risk items with rag_status for Risk Matrix, entitlements/compliance_gaps for Licensing Audit, risk_dimensions for Category Risk).
+Every risk must reference a regulatory standard or contractual clause. Use RAG status consistently.
 
-— S16 SOW Critic:
+S18 Risk Matrix — scenario_specific MUST contain the following structure (the three promised deliverables: Risk Heatmap, Mitigation Plan, Traffic Light Status):
 {
-  "scenario_specific": {
-    "redlining": [
-      { "clause_reference": null, "severity": "CRITICAL | HIGH | MEDIUM", "gap_identified": null, "financial_exposure": null, "regulatory_reference": null }
-    ],
-    "scorecard": {
-      "enforceability_pct": null,
-      "completeness_pct": null,
-      "compliance_pct": null,
-      "overall_protection_score_pct": null
-    },
+  "risk_register": [
+    {
+      "id": "R1",
+      "risk": "string — concise risk description",
+      "category": "Operational | Financial | Compliance | Strategic | Reputational | Cyber | Supply | Commercial",
+      "probability": 1-5,                          // 1 = rare, 5 = almost certain
+      "impact": 1-5,                               // 1 = negligible, 5 = catastrophic
+      "score": null,                               // = probability * impact (server reconciles)
+      "current_control": "string",
+      "owner_role": "string — role/function (never a person name)",
+      "mitigation": "string — concrete next action",
+      "target_residual_rag": "RED | AMBER | GREEN",
+      "financial_impact_eur": null,                // single-loss exposure estimate
+      "rag_status": "RED | AMBER | GREEN",
+      "regulatory_reference": "string — e.g. GDPR Art. 32, NIS2 Art. 21, SOC2 CC6.1",
+      "confidence": "HIGH | MEDIUM | LOW"
+    }
+  ],
+  "mitigation_plan": [
+    { "risk_id": "R1", "action": "string", "priority": "CRITICAL | HIGH | MEDIUM | LOW", "owner_role": "string", "target_date": "string | null", "expected_residual_rag": "RED | AMBER | GREEN" }
+  ],
+  "traffic_light_status": {
+    "rag": "RED | AMBER | GREEN",
+    "rationale": "string — 1–2 sentences citing the worst-scoring risks",
+    "board_notification_required": true
+  }
+}
+S18 AI guidance — MANDATORY rules:
+- risk_register[] MUST contain AT LEAST 5 items. If the user supplied fewer than 5 explicit risks, infer additional plausible risks from the industry/category context (cyber, supply continuity, commercial stability, regulatory, reputational, geopolitical) and flag each inferred item with confidence: "LOW".
+- probability and impact MUST be numeric 1–5 integers, NEVER all identical across the register. A degenerate matrix (every item scored the same) is a failure mode — spread the distribution to reflect real differentiation. If the user did not provide H/M/L ratings, infer them from the risk descriptions and benchmark prevalence, marking confidence: "LOW".
+- score = probability * impact. The server will recompute and overwrite this field; emit your best estimate.
+- rag_status MUST be derived from score: GREEN ≤ 6, AMBER 7–14, RED ≥ 15. Do not contradict the score with the label.
+- traffic_light_status.rag MUST equal the highest rag_status in the register. Do not emit "RED" overall when no individual item is RED.
+- owner_role MUST be a role/function ("Head of IT Security", "Procurement Director"), NEVER a personal name (GDPR Art. 5(1)(c) data minimisation).
+- financial_impact_eur is OPTIONAL but strongly preferred — use industry benchmarks (e.g. GDPR fines up to 4% global turnover, average data breach cost €4.5M per IBM Cost of a Data Breach Report) when the user did not quantify exposure, and flag confidence: "LOW".
+- mitigation_plan[] MUST contain at least one action per CRITICAL or HIGH risk; LOW/MEDIUM may be grouped.
+
+
+
+S20 Category Risk Evaluator — scenario_specific MUST contain ALL of the following structures (eight promised deliverables):
+{
+  "category_risk_score": {
+    "overall": 0-100,
+    "rag": "RED | AMBER | GREEN",
+    "decision": "PROCEED | PROCEED_WITH_CAUTION | HALT"
+  },
+  "score_breakdown": [
+    // 5 dimensions, each scored 0-100. Always include all five.
+    { "dimension": "Supply | Regulatory | Financial | Geopolitical | Demand", "score": 0-100, "rag": "RED|AMBER|GREEN", "rationale": "string" }
+  ],
+  "market_brief": {
+    "dynamics": "string — 2-3 sentences on supply/demand balance",
+    "price_outlook_pct": number,                       // expected 12-month price change %
+    "key_trends": ["string", "..."]                     // 3-5 bullets
+  },
+  "supply_health": {
+    "supplier_count": number | null,
+    "top3_share_pct": number | null,
+    "hhi": number | null,
+    "single_point_failures": ["string", "..."]
+  },
+  "budget_risk_forecast": {
+    "p10_pct": number,                                  // best-case variance vs budget
+    "p50_pct": number,                                  // median variance
+    "p90_pct": number,                                  // worst-case variance
+    "drivers": ["string", "..."]
+  },
+  "sow_ambiguity_findings": [
+    { "clause": "string", "severity": "CRITICAL|HIGH|MEDIUM|LOW", "recommended_fix": "string" }
+  ],
+  "recommended_contract_terms": [
+    { "clause_type": "DPA | NIS2 compliance | AI Act | Exit | Audit | Price cap | SLA | Indexation", "rationale": "string", "priority": "MUST|SHOULD|NICE_TO_HAVE" }
+  ],
+  "kraljic_position": {
+    "supply_risk": 1-5,                                 // 1 = abundant, 5 = scarce
+    "business_impact": 1-5,                             // 1 = low spend/criticality, 5 = critical
+    "quadrant": "Strategic | Leverage | Bottleneck | Routine"
+  },
+  "decision_readiness": {
+    "score": 0-100,                                     // overall tender-readiness score
+    "verdict": "GO | GO_WITH_CONDITIONS | HOLD | NO_GO",
+    "rationale": "string — 1-2 sentences",
     "checklist": [
-      { "question": null, "grey_area_or_missing_provision": null, "ask_before_signature": true }
-    ],
-    "remediation_language": [
-      { "clause_reference": null, "current_language": null, "recommended_replacement_language": null, "legal_team_review_required": true }
+      // 4-6 yes/no readiness items, e.g. tooling ownership clarified, alt source qualified, budget contingency set
+      { "item": "string", "status": "READY | PARTIAL | NOT_READY", "owner_role": "string" }
     ]
-  }
+  },
+  // Concentration — see fragment below; populate even when only relative shares are known.
+  ${CONCENTRATION_SCHEMA_FRAGMENT}
 }
-Categorise every finding by severity (Critical / High / Medium). Quantify financial exposure for every Critical/High finding. remediation_language MUST be ready-to-paste replacement text for legal team redline.
 
-— S17 Risk Assessment:
-{
-  "scenario_specific": {
-    "risk_prioritisation_summary": {
-      "framework": "ISO 31000",
-      "tiers": [{ "tier": "CRITICAL | HIGH | MEDIUM | LOW", "risk_count": null }],
-      "overall_rag": "RED | AMBER | GREEN"
-    },
-    "current_situation_summary": { "narrative": null, "key_risk_factors": [], "exposure_value": null },
-    "mitigation_roadmap": [
-      { "action": null, "severity_tag": "CRITICAL | HIGH | MEDIUM | LOW", "impact_estimate": null, "owner": "Role-based reference", "target_date": null }
-    ],
-    "risk_register": [
-      { "risk_id": "RISK-001", "category": null, "severity": "CRITICAL | HIGH | MEDIUM | LOW", "probability": "HIGH | MEDIUM | LOW", "impact": "HIGH | MEDIUM | LOW", "owner_role": "Role-based reference" }
-    ],
-    "residual_risk_assessment": [
-      { "risk_id": "RISK-001", "residual_rating": "CRITICAL | HIGH | MEDIUM | LOW", "post_mitigation_severity": "CRITICAL | HIGH | MEDIUM | LOW", "governance_escalation_required": false }
-    ]
-  }
-}
-Use ISO 31000 impact × probability ranking. residual_risk_assessment MUST flag governance escalation for any Critical residual remaining after mitigation.
-
-— S18 Risk Matrix:
-{
-  "scenario_specific": {
-    "risk_heatmap": [
-      { "risk_id": "RISK-001", "label": null, "probability_score": null, "impact_score": null, "quadrant": "TOLERATE | TREAT | TRANSFER | TERMINATE", "severity_zone": "RED | AMBER | GREEN" }
-    ],
-    "mitigation_plan": [
-      { "risk_id": "RISK-001", "action": null, "owner": "Role-based reference", "target_date": null, "expected_severity_post_mitigation": "RED | AMBER | GREEN" }
-    ],
-    "quadrant_response_strategy": [
-      { "quadrant": "TOLERATE | TREAT | TRANSFER | TERMINATE", "recommended_response": null, "rationale": null, "risk_ids_in_quadrant": [] }
-    ]
-  }
-}
-risk_heatmap MUST be a 5×5 probability × impact grid; place each risk by ID. quadrant_response_strategy MUST map every quadrant to one of Tolerate / Treat / Transfer / Terminate with rationale.
-
-— S19 Software Licensing Audit:
-{
-  "scenario_specific": {
-    "license_tier_optimization": [
-      { "tier": null, "current_users": null, "recommended_users": null, "annual_saving_value": null }
-    ],
-    "tco_comparison": [
-      { "scenario_label": "monthly | annual | enterprise", "year_breakdown": [{ "year": 1, "cost": null }], "total_tco": null }
-    ],
-    "contract_term_analysis": { "short_term_flexibility_score": null, "long_term_savings_value": null, "trade_off_summary": null },
-    "vendor_lock_in_score": { "score": null, "rating": "HIGH | MEDIUM | LOW", "lock_in_factors": [], "mitigation_strategies": [] },
-    "negotiation_playbook": { "leverage_points": [], "counter_proposals": [], "concession_priorities": [] },
-    "break_even_analysis": { "commitment_period_years": null, "break_even_year": null, "rationale": null },
-    "scenario_comparison_table": [
-      { "scenario_label": null, "year_1_cost": null, "year_3_cost": null, "year_5_cost": null, "flexibility_score": null }
-    ],
-    "risk_adjusted_recommendation": { "verdict": null, "rationale": null, "residual_risks": [] }
-  }
-}
-TCO comparison MUST cover monthly vs annual vs enterprise tiers. Vendor lock-in MUST list concrete mitigation strategies.
-
-— S20 Category Risk Evaluator:
-{
-  "scenario_specific": {
-    "category_risk_score": { "overall": null, "supply_risk": null, "financial_risk": null, "regulatory_risk": null, "operational_risk": null },
-    "sow_ambiguity_report": [
-      { "term_or_clause": null, "ambiguity": null, "potential_overrun_value": null }
-    ],
-    "market_intelligence_brief": { "dynamics": null, "trends": [], "pricing_outlook": null, "sources": [] },
-    "supply_risk_assessment": { "market_health": null, "availability_rating": "HIGH | MEDIUM | LOW", "supplier_count": null },
-    "budget_risk_forecast": { "estimated_variance_pct": null, "estimated_variance_value": null, "drivers": [] },
-    "risk_mitigation_strategy": [
-      { "stage": "TENDER | CONTRACT | EXECUTION", "action": null, "expected_risk_reduction": null }
-    ],
-    "recommended_contract_terms": [
-      { "clause": null, "purpose": null, "risk_addressed": null }
-    ],
-    "decision_readiness_score": { "score": null, "verdict": "PROCEED | HOLD | DO_NOT_PROCEED", "rationale": null },
-    "eu_regulatory_exposure": {
-      "gdpr_applicable": false,
-      "nis2_applicable": false,
-      "csrd_applicable": false,
-      "other_frameworks": [],
-      "compliance_risk_indicators": [],
-      "remediation_required": false
-    },
-    ${CONCENTRATION_SCHEMA_FRAGMENT}
-  }
-}
-eu_regulatory_exposure MUST assess GDPR (personal data), NIS2 (essential / important entities), and CSRD (sustainability reporting) applicability and surface compliance risk indicators. Populate concentration when supplier-to-category spend data is available.`,
+Recommendations array MUST follow {priority: HIGH|MEDIUM|LOW, action, financial_impact, next_scenario}. Do NOT pad with filler MEDIUM/LOW items — emit only recommendations supported by user-provided data.`,
 
   D: `GROUP D PAYLOAD SCHEMA (Strategic Mentorship — S21–S27):
 {
@@ -667,7 +650,10 @@ Populate scenario_specific based on the scenario, using the structures below ver
     "batna": {
       "buyer_batna": null,
       "buyer_batna_value": null,
-      "supplier_batna_estimated": null
+      "supplier_batna_estimated": null,
+      "batna_strength_pct": null,
+      "buyer_batna_description": null,
+      "batna_improvement_actions": []
     },
     "zopa": {
       "buyer_walk_away": "[CONFIDENTIAL — MASK IN SHARED EXPORTS]",
@@ -676,12 +662,40 @@ Populate scenario_specific based on the scenario, using the structures below ver
       "zopa_exists": true
     },
     "opening_position": null,
-    "negotiation_tactics": [],
+    "negotiation_tactics": [
+      { "title": null, "description": null }
+    ],
+    "negotiation_sequence": [
+      { "step": "Opening | Anchor | Value Exchange | Concession | Walk-away Trigger | Close", "detail": null }
+    ],
+    "counter_arguments": [
+      { "supplier_position": null, "buyer_response": null, "evidence": null }
+    ],
+    "walk_away_plan": {
+      "trigger_conditions": [],
+      "exit_steps": [],
+      "communication_script": null
+    },
+    "value_creation": [
+      { "opportunity": null, "buyer_benefit": null, "supplier_benefit": null }
+    ],
+    "strategy_playbook": {
+      "situation_read": null,
+      "recommended_approach": "COLLABORATIVE | COMPETITIVE | ACCOMMODATIVE | COMPROMISING",
+      "approach_rationale": null,
+      "key_moves": []
+    },
     "leverage_analysis": {
       "buyer_leverage_factors": [],
       "supplier_leverage_factors": [],
       "power_balance": "BUYER_ADVANTAGE | BALANCED | SUPPLIER_ADVANTAGE"
     },
+    "leverage_points": [
+      { "title": null, "description": null }
+    ],
+    "negotiation_scenarios": [
+      { "name": "Conservative | Aggressive | Hybrid", "expected_savings_pct": null, "estimated_timeline_months": null, "risk_level": "LOW | MEDIUM | HIGH" }
+    ],
     "financial_outcome_range": {
       "optimistic": null,
       "realistic": null,
@@ -700,6 +714,8 @@ Populate scenario_specific based on the scenario, using the structures below ver
     "kraljic_position": {
       "current": "STRATEGIC | LEVERAGE | BOTTLENECK | NON_CRITICAL",
       "recommended": "STRATEGIC | LEVERAGE | BOTTLENECK | NON_CRITICAL",
+      "supply_risk": null,
+      "business_impact": null,
       "movement_rationale": null
     },
     "porters_five_forces": {
@@ -709,8 +725,26 @@ Populate scenario_specific based on the scenario, using the structures below ver
       "threat_of_new_entrants": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null },
       "competitive_rivalry": { "rating": "HIGH | MEDIUM | LOW", "key_driver": null }
     },
+    "market_intelligence": {
+      "key_trends": [],
+      "supply_dynamics": null,
+      "regulatory_outlook": null,
+      "innovation_signals": []
+    },
+    "best_practices": [
+      { "practice": null, "source_category": null, "expected_benefit": null }
+    ],
+    "strategic_options": [
+      { "label": null, "horizon": "SHORT | MEDIUM | LONG", "pros": [], "cons": [], "investment_required": null, "expected_value": null }
+    ],
+    "quick_wins": [
+      { "action": null, "value_eur": null, "weeks_to_value": null, "owner": null }
+    ],
+    "cross_category_analogies": [
+      { "industry": null, "category": null, "lesson": null, "applicability": null }
+    ],
     "three_year_roadmap": [
-      { "year": 1, "objectives": [], "kpis": [] }
+      { "year": 1, "objectives": [], "kpis": [], "milestones": [] }
     ],
     "esg_considerations": null,
     "mar_flag": false
@@ -814,7 +848,7 @@ Populate scenario_specific based on the scenario, using the structures below ver
 }
 S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switching cost appears more than 3× below the industry benchmark of 300–500% underestimation (per CIPS/Gartner). Never emit specific API keys, integration credentials, or internal system architecture details beyond what is necessary for dependency assessment (GDPR Art. 5(1)(c) + commercial sensitivity).
 
-— S26 Disruption Management (§6.6):
+— S26 Disruption Management (§6.6) — MUST contain ALL of the following structures (the eight promised deliverables):
 {
   "scenario_specific": {
     "disruption_type": "SUPPLIER_FAILURE | LOGISTICS | GEOPOLITICAL | FORCE_MAJEURE | CYBER | NATURAL_DISASTER | OTHER",
@@ -826,14 +860,14 @@ S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switchi
     "overall_urgency": "CRITICAL | HIGH | MEDIUM | LOW",
     "response_plan": {
       "stage_1_assess": {
-        "actions": [],
+        "actions": ["At least 2 specific assessment actions"],
         "owner": "Role-based reference",
         "target_duration_hours": null
       },
       "stage_2_contain": {
-        "immediate_actions": [],
-        "customer_communication_template": null,
-        "internal_communication_template": null,
+        "immediate_actions": ["At least 2 containment actions"],
+        "customer_communication_template": "Full ready-to-send message body (>= 60 words) addressed to customers",
+        "internal_communication_template": "Full ready-to-send message body (>= 60 words) addressed to internal stakeholders",
         "owner": "Role-based reference",
         "target_duration_hours": null
       },
@@ -852,11 +886,17 @@ S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switchi
         "target_duration_days": null
       },
       "stage_4_prevent": {
-        "recurrence_prevention_checklist": [],
-        "process_changes": [],
+        "recurrence_prevention_checklist": ["At least 2 prevention items"],
+        "process_changes": ["At least 1 process change"],
         "owner": "Role-based reference"
       }
     },
+    "impact_scenarios": [
+      { "delay_label": "1 week",   "delay_weeks": 1,  "revenue_loss": null, "cumulative_loss": null, "mitigation_cost": null, "net_impact": null },
+      { "delay_label": "2 weeks",  "delay_weeks": 2,  "revenue_loss": null, "cumulative_loss": null, "mitigation_cost": null, "net_impact": null },
+      { "delay_label": "4 weeks",  "delay_weeks": 4,  "revenue_loss": null, "cumulative_loss": null, "mitigation_cost": null, "net_impact": null },
+      { "delay_label": "8 weeks",  "delay_weeks": 8,  "revenue_loss": null, "cumulative_loss": null, "mitigation_cost": null, "net_impact": null }
+    ],
     "stakeholder_comms": [
       {
         "stakeholder_group": "Customers | Finance | Operations | Board | Regulator",
@@ -865,10 +905,55 @@ S25 AI guidance: flag hidden_switching_cost_alert when the user-provided switchi
         "timing": null
       }
     ],
+    "claim_letter_template": {
+      "addressee": "Counterparty / supplier name placeholder",
+      "subject": "Formal subject line",
+      "body": "Full ready-to-send claim or partner-assistance letter (>= 120 words) referencing the contractual basis, the disruption event, the financial exposure, the requested remedy and the response deadline",
+      "cc": []
+    },
+    "root_cause_analysis": {
+      "primary_cause": "string — single-sentence root cause hypothesis",
+      "contributing_factors": ["3-5 contributing factors (process, supplier, external, internal control)"],
+      "five_whys": ["Why 1: ...", "Why 2: ...", "Why 3: ...", "Why 4: ...", "Why 5: ..."],
+      "evidence_quality": "STRONG | MODERATE | WEAK"
+    },
+    "blast_radius": {
+      "directly_affected": ["operational areas, product lines or customers hit immediately"],
+      "second_order_impacts": ["downstream P&L, working-capital, brand or compliance impacts within 30 days"],
+      "third_order_impacts": ["strategic / multi-quarter consequences such as customer churn, covenant breach, audit findings"],
+      "estimated_customers_affected": null,
+      "estimated_revenue_at_risk": null,
+      "geographic_spread": ["country / region codes"]
+    },
+    "recovery_probability": {
+      "p_full_recovery_30d_pct": null,
+      "p_full_recovery_90d_pct": null,
+      "p_partial_recovery_30d_pct": null,
+      "key_assumptions": ["3-4 assumptions the probabilities are conditioned on"],
+      "confidence": "HIGH | MEDIUM | LOW"
+    },
+    "regulatory_exposure": [
+      { "regime": "NIS2 | DORA | GDPR | CSRD | Sector-specific", "obligation": "specific clause or duty triggered", "deadline_hours": null, "notification_required": true, "potential_penalty": "string — fine band or sanction", "owner_role": "string" }
+    ],
+    "lessons_learned_for_playbook": [
+      { "lesson": "string — observation we want institutional memory to capture", "playbook_change": "string — concrete update to standard operating procedure", "owner_role": "string", "due_in_days": null }
+    ],
     "bridge_to_scenario": "S27"
   }
 }
-S26 AI guidance: speed of output is the value — prioritise completeness of the 4 stages over depth of any single stage. Mask exact inventory depletion dates (commercially sensitive with customers) and specific emergency cash reserves (financially sensitive with lenders). If the user has not provided an inventory buffer, flag current_inventory_buffer_days = null and add to data_gaps[] — the response plan urgency cannot be calibrated without it.
+S26 AI guidance: this scenario has THREE headline deliverables that the UI promises and you MUST emit:
+  (a) "Emergency Map" — the 4-stage response_plan with at least 2 concrete actions per stage and a target_duration on each stage. EVERY stage (including Stage 3 — Recover) MUST contain ≥2 specific actions; an empty stage breaks the visualization. Stage 4 (Prevent) MUST contain at least 2 recurrence_prevention_checklist items AND at least 1 process_change — never leave Stage 4 empty. For stage_3_recover, in addition to actions[], populate alternative_supply_options[] (this is separate from actions, not a substitute).
+  (b) "Impact Table" — impact_scenarios[] MUST contain the four delay buckets (1/2/4/8 weeks) with numeric revenue_loss values; if estimated_revenue_impact_per_day is known, derive cumulative_loss = revenue_loss * delay_weeks * 7.
+  (c) "Draft Letter" — claim_letter_template.body MUST be a full, sendable letter the user can copy-paste; never leave it null. Also fill stage_2_contain.customer_communication_template AND internal_communication_template as ready-to-send messages. NEVER use vague filler placeholders like "[Agreement portfolios]", "[Contract reference]", "the relevant portfolios" or "[X]". If a specific reference is unknown, use a concrete bracketed cue the user fills in (e.g. "[insert MSA dated YYYY-MM-DD]" or "[insert SLA section number]") — but never invent the word "portfolios" or other generic nouns as a stand-in.
+Supporting tables — emit AT LEAST 3 rows in stage_3_recover.alternative_supply_options[] (mix of internal redeploy / partner / emergency-spot / new-qualification options where plausible) and AT LEAST 4 rows in stakeholder_comms[] covering Customers, Board, Operations and one of Finance/Regulator. Single-row supporting tables defeat the deliverable promise.
+Owners (response_plan.stage_*.owner) MUST be the FULL role title — e.g. "Chief Information Security Officer (CISO)" not "CISO Chief Information"; "VP Procurement & Supply Chain" not "Procurement Director" alone. Never truncate role names mid-word.
+Speed of output is the value — prioritise completeness of all three deliverables over depth of any single stage. Mask exact inventory depletion dates (commercially sensitive with customers) and specific emergency cash reserves (financially sensitive with lenders). If the user has not provided an inventory buffer, flag current_inventory_buffer_days = null and add to data_gaps[] — the response plan urgency cannot be calibrated without it. DO NOT emit kraljic_position for S26 — portfolio positioning is not relevant during a live crisis.
+Analytical depth — in addition to the 3 headline deliverables, emit ALL FIVE analytical dimensions (root_cause_analysis, blast_radius, recovery_probability, regulatory_exposure[], lessons_learned_for_playbook[]). These dimensions transform the report from an operational checklist into a board-grade incident analysis. Specifically:
+  - root_cause_analysis.five_whys MUST contain exactly 5 progressively deeper "Why" questions/answers — never fewer.
+  - blast_radius MUST distinguish first / second / third-order impacts (operational → financial → strategic). Never collapse into a single list.
+  - recovery_probability percentages MUST sum coherently (p_full_recovery_30d_pct ≤ p_partial_recovery_30d_pct ≤ 100). If insufficient data, emit confidence: "LOW" rather than null arrays.
+  - regulatory_exposure[] MUST contain AT LEAST 1 entry when disruption_type ∈ {CYBER, SUPPLIER_FAILURE for critical infrastructure, FORCE_MAJEURE affecting EU operations}. Reference NIS2 (24h notification), DORA (4h for financial entities), GDPR Art. 33 (72h personal data breach) where applicable.
+  - lessons_learned_for_playbook[] MUST contain AT LEAST 2 entries with concrete playbook_change strings — vague "improve monitoring" lessons are unacceptable.
 
 — S27 Black Swan Scenario Simulation (§6.7) — includes concentration:
 {
@@ -928,11 +1013,64 @@ S26 AI guidance: speed of output is the value — prioritise completeness of the
       }
     ],
     "overall_resilience_rag": "RED | AMBER | GREEN",
+    "early_warning_indicators": [
+      {
+        "indicator": null,
+        "data_source": null,
+        "threshold": null,
+        "lead_time_days": null,
+        "monitored_node": "NODE-001",
+        "owner_role": null
+      }
+    ],
+    "response_playbook": {
+      "phase_1_detect":   { "owner_role": null, "trigger_signal": null, "actions": [], "target_duration_hours": null },
+      "phase_2_activate": { "owner_role": null, "decision_authority": null, "actions": [], "target_duration_hours": null },
+      "phase_3_contain":  { "owner_role": null, "actions": [], "alternative_supply_options": [], "target_duration_hours": null },
+      "phase_4_recover":  { "owner_role": null, "actions": [], "rto_target_hours": null, "target_duration_hours": null },
+      "phase_5_learn":    { "owner_role": null, "post_mortem_checklist": [], "process_changes": [] }
+    },
+    "diversification_strategy": {
+      "current_concentration_summary": null,
+      "target_state": null,
+      "actions": [
+        { "action": null, "category_id": "CAT-001", "horizon_months": null, "estimated_cost": null, "concentration_reduction_pct": null }
+      ]
+    },
+    "monitoring_dashboard": {
+      "kris": [
+        { "kri_name": null, "current_value": null, "amber_threshold": null, "red_threshold": null, "owner_role": null, "review_frequency": "DAILY | WEEKLY | MONTHLY" }
+      ],
+      "trigger_points": [
+        { "trigger": null, "automated_response": null, "escalation_path": null }
+      ]
+    },
     "bridge_to_scenario": "S26",
     ${CONCENTRATION_SCHEMA_FRAGMENT}
   }
 }
-S27 AI guidance: financial impact modelling accuracy depends on the user providing RTO/RPO targets and recovery cost estimates — if absent, leave rto_rpo_analysis fields as null and flag in data_gaps[]. Never emit exact critical cash reserve amounts or specific banking / credit facility details — use liquidity tier references ("Tier 1 reserve: 3 months OPEX") instead.
+S27 AI guidance: financial impact modelling accuracy depends on the user providing RTO/RPO targets and recovery cost estimates — if these are absent BUT a monetary anchor exists (annual_spend, category_spend, revenue_exposed, contract_value, or any € / $ / £ figure in user inputs), you MUST DERIVE quantitative estimates rather than emit null. Never emit exact critical cash reserve amounts or specific banking / credit facility details — use liquidity tier references ("Tier 1 reserve: 3 months OPEX") instead.
+
+S27 COST DERIVATION RULES (D1) — when the user provides ANY monetary anchor (call it SPEND), you MUST populate the following with derived figures and add a "derived_from: <anchor>" note in roi_rationale / gap_commentary:
+  • impact_model.direct_impact_estimate → SPEND × disruption_duration_share (e.g. 30-day outage on annual SPEND ≈ SPEND × 30/365). Express as a € / $ / £ range.
+  • impact_model.total_impact_estimate → direct_impact + Σ cascade_effects.revenue_at_risk. Never leave null when SPEND is known.
+  • impact_model.cascade_effects[].revenue_at_risk → derive per-node share of SPEND scaled by criticality (SINGLE_POINT_OF_FAILURE = 60–100%, HIGH = 30–60%, MEDIUM = 10–30%, LOW = <10%) × delay_days/30.
+  • resilience_investments[].estimated_cost → benchmark to 1–8% of SPEND for tactical mitigations, 8–20% for structural redesigns; never null when SPEND is known.
+  • diversification_strategy.actions[].estimated_cost → 0.5–5% of category SPEND per dual-sourcing / qualification action.
+Only fall back to null + data_gaps[] when NO monetary anchor of any kind appears in user inputs.
+
+S27 DELIVERABLE COVERAGE — populate ALL of the following structures (these are the ten promised deliverables surfaced in the user-facing report). Items marked [MANDATORY] must NEVER be empty arrays — derive from scenario_type, supply_chain_nodes, and industry norms if user input is sparse:
+1. Black Swan Risk Map → supply_chain_nodes[] (5–10 entries with criticality + alternative_available). [MANDATORY]
+2. Scenario Simulation Results → impact_model.direct_impact_estimate + total_impact_estimate (apply D1 derivation when SPEND known).
+3. Vulnerability Assessment → prioritised_vulnerabilities[] (3–6 ranked items, each tied to a node). [MANDATORY]
+4. Cascading Failure Analysis → impact_model.cascade_effects[] (3–6 entries with delay_days + revenue_at_risk; apply D1 derivation).
+5. Early Warning Indicators → early_warning_indicators[] (4–8 measurable signals with thresholds, lead_time_days, owner_role). [MANDATORY — derive from scenario_type if user did not specify: e.g. PANDEMIC → WHO outbreak alerts, supplier absenteeism %, port throughput; CYBER_ATTACK → CVE feeds, anomalous auth attempts, SOC tickets; GEOPOLITICAL → sanctions watchlist, FX volatility, shipping insurance premia].
+6. Response Playbook → response_playbook (all five phases populated, 2–5 actions each). [MANDATORY]
+7. Mitigation Roadmap → resilience_investments[] (4–8 prioritised investments with estimated_cost via D1). [MANDATORY]
+8. Diversification Strategy → diversification_strategy.actions[] + concentration block.
+9. Investment Recommendation → resilience_investments[] (each with estimated_cost + risk_reduction_pct + roi_rationale referencing the anchor used).
+10. Monitoring Dashboard → monitoring_dashboard.kris[] (4–8 KRIs with current_value, amber_threshold, red_threshold, owner_role, review_frequency) + trigger_points[] (3–5 triggers with automated_response + escalation_path). [MANDATORY — derive industry-standard KRIs from scenario_type if user did not specify].
+Emit null + a data_gaps[] entry ONLY for individual field values genuinely unknowable — never omit structural keys, and never return an empty array for [MANDATORY] deliverables.
 
 CONCENTRATION RULES (S20, S24, S25, S27):
 Populate concentration when supplier and category spend data is available. Calculate HHI per category as sum of (supplier_spend_share_pct)^2.
@@ -953,137 +1091,165 @@ All framework outputs must reference the user's specific inputs. Never produce g
     "scenario_specific": {}
   }
 }
-Populate scenario_specific using the per-scenario structures below verbatim. Every factual claim must reference a source_id. Use null for any field where search returned no reliable result.
-
-— S28 Market Snapshot:
-{
-  "scenario_specific": {
-    "regional_competitive_landscape": {
-      "region": null,
-      "major_players": [
-        { "player": null, "estimated_market_share_pct": null, "recent_moves": [], "source_id": "SRC-001" }
-      ]
-    },
-    "player_profiles": [
-      { "player": null, "strengths": [], "weaknesses": [], "pricing_strategy": null, "recent_strategic_activity": [], "source_id": "SRC-001" }
-    ],
-    "completeness_scorecard": {
-      "coverage_pct": null,
-      "benchmark_pct": null,
-      "verdict": "COMPLETE | PARTIAL | INSUFFICIENT",
-      "missing_coverage_dimensions": []
-    },
-    "gap_analysis_and_clarifications": [
-      { "gap": null, "ambiguous_finding": null, "clarification_question": null }
-    ],
-    "recommended_sources_for_further_discovery": [
-      { "source_type": "DATABASE | ANALYST_REPORT | TRADE_BODY | OTHER", "name": null, "rationale": null }
-    ],
-    "market_pricing_benchmark": {
-      "category": null,
-      "price_range_low": null,
-      "price_range_high": null,
-      "currency": "EUR",
-      "confidence_rating": "HIGH | MEDIUM | LOW",
-      "premium_or_discount_drivers": [],
-      "source_ids": []
-    },
-    "category_market_trend_analysis": {
-      "direction": "GROWTH | CONTRACTION | FLAT",
-      "growth_rate_pct": null,
-      "demand_drivers": [],
-      "supply_drivers": [],
-      "procurement_timing_implication": null,
-      "source_ids": []
-    }
-  }
-}
-Every market_pricing_benchmark and trend value MUST reference at least one source_id from sources_consulted. Confidence rating MUST be LOW whenever fewer than 2 independent sources corroborate the value.
-
-— S29 Pre-Flight Supplier Audit:
-{
-  "scenario_specific": {
-    "supplier_dossier": {
-      "supplier_label": "Supplier_001",
-      "background": null,
-      "ownership": null,
-      "financial_indicators": { "revenue": null, "profitability": null, "credit_rating": null },
-      "verified_facts": [],
-      "source_ids": []
-    },
-    "news_digest": [
-      { "category": "NEWS | LAWSUIT | M&A | LEADERSHIP_CHANGE | FINANCIAL_UPDATE", "headline": null, "published_date": null, "source_id": "SRC-001", "recency_flag": "CURRENT | RECENT | DATED" }
-    ],
-    "risk_flags": [
-      { "pattern": "FINANCIAL_DISTRESS | LITIGATION | SANCTIONS | ESG_ISSUE | CYBER_INCIDENT | OTHER", "evidence": null, "severity": "HIGH | MEDIUM | LOW", "source_id": "SRC-001" }
-    ],
-    "negotiation_brief": {
-      "leverage_points": [],
-      "talking_points": [],
-      "intelligence_summary": null
-    },
-    "due_diligence_checklist": [
-      { "item": null, "priority": "HIGH | MEDIUM | LOW", "verification_method": null }
-    ],
-    "proceed_recommendation": { "verdict": "PROCEED | PROCEED_WITH_CAUTION | DO_NOT_PROCEED", "rationale": null }
-  }
-}
-risk_flags MUST match the standard procurement risk pattern taxonomy. due_diligence_checklist items MUST be prioritised.`,
+Populate scenario_specific based on the scenario (e.g. intelligence_blocks/key_market_signals for Market Intelligence, audit_dimensions/entity_verified/proceed_recommendation for Pre-Flight Supplier Audit).
+Every factual claim must reference a source_id. Use null for any field where search returned no reliable result.`,
 };
+
+// ── Scenario-sliced schema (token optimisation) ─────────────────────
+//
+// Group D ships 7 sub-schemas (S21–S27) totalling ~10k chars. The model
+// only needs the one matching the active scenario. This helper returns
+// the group preamble + the matching sub-section + the shared footer
+// (concentration rules + closing line). Saves ~2k input tokens per call
+// for Group D scenarios with no quality loss.
+//
+// Group A's per-scenario rules are short bullets and are kept intact —
+// slicing them yielded < 200 token savings and risked breaking the
+// shared financial_model contract.
+
+export const SCENARIO_ID_TO_CODE: Record<string, string> = {
+  // Group A — only entries listed here get the per-scenario slicer in
+  // getScenarioSchema(). Add a slug only after confirming its block is
+  // self-contained (preamble + S## block + footer is enough for the model).
+  'savings-calculation': 'S4', // ~14 KB saved vs. full Group A schema
+  'forecasting-budgeting': 'S6',
+  'negotiation-preparation': 'S21',
+  'category-strategy': 'S22',
+  'make-vs-buy': 'S23',
+  'volume-consolidation': 'S24',
+  'supplier-dependency-planner': 'S25',
+  'disruption-management': 'S26',
+  'black-swan-scenario': 'S27',
+};
+
+/**
+ * Returns a scenario-specific slice of GROUP_SCHEMAS for the active scenario.
+ * Falls back to the full group schema if slicing is not supported for the
+ * group/scenario or if the regex match fails (defensive — never strip blindly).
+ *
+ * Token impact:
+ *   • Group A full schema ~26 KB → sliced ~3–6 KB depending on scenario.
+ *   • Group D full schema ~22 KB → sliced ~4–7 KB.
+ */
+export function getScenarioSchema(group: string | null | undefined, scenarioId: string | null | undefined): string {
+  const full = group ? GROUP_SCHEMAS[group] : '';
+  if (!full) return '';
+
+  const code = scenarioId ? SCENARIO_ID_TO_CODE[scenarioId] : null;
+
+  // ── Group A slicing (S1–S8) ────────────────────────────────────────
+  if (group === 'A') {
+    if (!code) return full;
+    // Group A layout:
+    //   <preamble + financial_model JSON template + FINANCIAL_MODEL rules>
+    //   "Then ALSO populate scenario_specific..." line
+    //   <per-scenario blocks: "- <slug> (S#): ...">
+    //   "- For other Group A scenarios, ..." catch-all
+    //   WORKING CAPITAL + closing rules
+    const preambleMatch = full.match(/^([\s\S]*?Then ALSO populate scenario_specific[^\n]*\n)/);
+    const footerMatch = full.match(/\n(- For other Group A scenarios[\s\S]*)$/);
+    if (!preambleMatch || !footerMatch) return full;
+
+    const A_SLUGS: Record<string, string> = {
+      S1: 'tco-analysis',
+      S2: 'cost-breakdown',
+      S3: 'capex-vs-opex',
+      S4: 'savings-calculation',
+      S5: 'spend-analysis-categorization',
+      S7: 'saas-optimization',
+      // S6 (forecasting-budgeting) and S8 (specification-optimizer) have no
+      // dedicated block — they rely on the addendum + catch-all line.
+    };
+
+    const slug = A_SLUGS[code];
+    if (!slug) {
+      // Preamble + catch-all + working capital only.
+      return `${preambleMatch[1]}\n${footerMatch[1]}`;
+    }
+
+    const escSlug = slug.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const blockRe = new RegExp(
+      `(- ${escSlug} \\(${code}\\):[\\s\\S]*?)(?=\\n- [a-z][\\w-]* \\(S\\d+\\):|\\n- For other Group A)`,
+      'm'
+    );
+    const blockMatch = full.match(blockRe);
+    if (!blockMatch) return `${preambleMatch[1]}\n${footerMatch[1]}`;
+
+    return `${preambleMatch[1]}\n${blockMatch[1].trim()}\n\n${footerMatch[1]}`;
+  }
+
+  // ── Group D slicing (S21–S27) ──────────────────────────────────────
+  if (group === 'D' && code) {
+    // Group D layout:
+    //   <preamble through "structures below verbatim.">
+    //   — S21 ... { ... }
+    //   — S22 ... { ... }
+    //   ...
+    //   — S27 ... { ... }
+    //   <CONCENTRATION RULES + closing line>
+    const preambleMatch = full.match(/^([\s\S]*?structures below verbatim\.\s*\n)/);
+    const footerMatch = full.match(/\n(CONCENTRATION RULES[\s\S]*)$/);
+    if (!preambleMatch || !footerMatch) return full;
+
+    const blockRe = new RegExp(`(— ${code}\\b[\\s\\S]*?)(?=\\n— S\\d+\\b|\\nCONCENTRATION RULES)`, 'm');
+    const blockMatch = full.match(blockRe);
+    if (!blockMatch) return full;
+
+    return `${preambleMatch[1]}\n${blockMatch[1].trim()}\n\n${footerMatch[1]}`;
+  }
+
+  return full;
+}
 
 // ── AI Prompt Contract ──────────────────────────────────────────────
 
 export const AI_PROMPT_CONTRACT = `
 CRITICAL OUTPUT INSTRUCTION:
-Your response MUST be a single valid JSON object. No prose before or after it.
-Do not use markdown code fences. Return only the raw JSON.
+Return a single valid JSON object. No prose, no markdown fences.
 
-You MUST use the following schema structure:
-- Universal envelope fields: schema_version, scenario_id, scenario_name, group, group_label,
-  confidence_level, low_confidence_watermark, confidence_flags, summary, executive_bullets,
-  data_gaps, recommendations, gdpr_flags, export_metadata, payload.
-- payload must contain the group-specific structure defined below.
-- Every defined field must be present. Use null for missing values — never omit a field.
-- Set schema_version to "2.0".
-- Set low_confidence_watermark to true if confidence_level is LOW.
-- Add an entry to data_gaps for every null field that is null due to missing user input,
-  EXCEPT for these optional fields which do not require a data_gaps entry when absent:
-  financial_model.working_capital (optional, populated only when payment terms provided).
-- data_gaps RULES (strict):
-  1. Maximum 3 entries. Pick the ones with the highest analytical impact.
-  2. Each entry MUST name a specific field from the user's input form (e.g. "annual_spend", "contract_end_date"), not generic labels like "Unknown field".
-  3. "impact" MUST describe the concrete analytical consequence (e.g. "Cannot calculate NPV without discount rate"), never "Impact not specified".
-  4. "resolution" MUST be a specific, actionable coaching tip (e.g. "Add your annual spend figure to unlock cost-per-unit calculations"), never "Provide missing data".
-  5. FORBIDDEN placeholder values: "Unknown field", "Impact not specified", "Provide missing data", "Not available", "N/A". If you cannot write a specific entry, omit it entirely.
-  6. Tone: helpful coaching, not punitive. Frame as "Add [specific field] to unlock [specific benefit]" rather than "Missing: [field]". Do NOT start resolutions with "To strengthen this analysis" — the UI already provides that heading.
-- Add an entry to gdpr_flags if any field you are about to write appears to contain
-  unanonymised personal data (real names, email addresses, phone numbers, salary amounts).
-  Set that field to null and explain in gdpr_flags instead.
+ENVELOPE (required top-level keys): schema_version="2.0", scenario_id, scenario_name, group, group_label, confidence_level, low_confidence_watermark, summary, executive_bullets, recommendations, payload.
+OPTIONAL top-level keys (include ONLY if non-empty): confidence_flags, data_gaps, gdpr_flags, export_metadata.
 
-DASHBOARD-SUPPORTING FIELD RULES:
-- For S4 (Savings Calculation): you MUST populate both savings_breakdown and
-  savings_classification. Classify every savings figure into exactly one of hard, soft,
-  or avoided. Set baseline_verified=true only if a documented historical baseline was
-  provided — never for estimates. If the user has not specified a category, default to
-  soft and add a data_gaps[] entry requesting classification confirmation.
-- For any Group A scenario: populate financial_model.working_capital ONLY when the user
-  provides payment-terms data (DPO figures, NET terms, supplier payment schedules).
-  Compute working_capital_delta_eur = annual_spend × (target_dpo - current_dpo) / 365.
-  Flag late_payment_directive_risk=true for any supplier with payment_terms_days > 60
-  (EU Late Payment Directive 2011/7 statutory B2B limit).
-- For S20, S24, S25, S27: populate scenario_specific.concentration when supplier-to-
-  category spend data is available. Compute HHI per category as sum of
-  (supplier_spend_share_pct)^2. Interpret HHI:
-    <1500 = LOW (competitive)
-    1500-2500 = MODERATE
-    2500-5000 = HIGH
-    >5000 = EXTREME (monopolistic or near-sole-source)
-  Set single_source_flag=true for any supplier holding >70% of a single category's
-  spend. Use tokenised supplier_label references only — never legal entity names.
-  Use ISO 3166-1 alpha-2 country codes.
+PAYLOAD OMISSION RULES (token-efficiency):
+- Within payload (and any nested object), OMIT any leaf field whose value would be null, empty string, empty array, or empty object. Do NOT emit "field": null placeholders.
+- KEEP a field whenever you have a real value (number, non-empty string, non-empty array/object, or boolean).
+- KEEP arrays only when they contain at least one populated row.
+- Exceptions (always emit, even if empty): currency, scenario_id, scenario_name, group, group_label, schema_version, confidence_level, summary.
+- low_confidence_watermark = true if confidence_level == "LOW".
+
+DATA_GAPS (omit array entirely when empty; otherwise max 3 entries):
+- Each entry: { "field": "<exact form-field name>", "impact": "<concrete analytical consequence>", "resolution": "<specific actionable tip>" }.
+- FORBIDDEN values: "Unknown field", "Impact not specified", "Provide missing data", "Not available", "N/A". Omit the entry instead.
+- Tone: coaching ("Add X to unlock Y"), never punitive. Do NOT prefix with "To strengthen this analysis".
+
+GDPR_FLAGS: include only when real PII slipped in; otherwise omit. Set the offending field to nothing (omit) and document in gdpr_flags.
+
+RECOMMENDATIONS (always required, ≥1 entry):
+- Each entry: { "priority": "CRITICAL|HIGH|MEDIUM|LOW", "action": "<specific imperative>", "financial_impact": "<quantified delta>"|null, "next_scenario": "S##"|null }.
+- Calibrate priorities honestly:
+  - CRITICAL = act this week; contract loss / compliance breach / supply outage / >10% margin hit.
+  - HIGH = act within 30 days; >5% spend impact or hard quarterly deadline.
+  - MEDIUM = act this quarter; meaningful improvement, no cliff.
+  - LOW = nice-to-have / opportunistic / dependent.
+- Mix priorities — flagging every item MEDIUM is a calibration failure.
+- action = specific imperative ("Issue RFP to 3 vendors by 15 May"), not generic theme.
+- financial_impact = quantified € delta when spend/budget data exists; null only when no numeric basis.
+
+DASHBOARD-SUPPORTING FIELDS:
+- S4: populate savings_breakdown + savings_classification (hard|soft|avoided). baseline_verified=true only with documented baseline; default unspecified categories to "soft" with a data_gaps entry.
+- Group A: populate financial_model.working_capital ONLY when payment-terms data given. Compute working_capital_delta_eur = annual_spend × (target_dpo - current_dpo) / 365. Flag late_payment_directive_risk=true for payment_terms_days > 60 (EU 2011/7).
+- S20/S24/S25/S27: populate scenario_specific.concentration when supplier-spend data given. HHI = Σ(supplier_spend_share_pct)². Bands: <1500 LOW, 1500–2500 MODERATE, 2500–5000 HIGH, >5000 EXTREME. single_source_flag=true when one supplier holds >70% of a category. Use tokenised supplier_label, ISO-3166-1 alpha-2 country codes.
+
+ENTITY TOKEN INTEGRITY (anonymisation contract — applies to ALL scenarios):
+- The user input may contain bracketed tokens like [SUPPLIER_A], [COMPANY_B], [EMAIL], [SUPPLIER_C2], etc. These are placeholders for real entities; a downstream layer restores them.
+- PRESERVE every token EXACTLY as received — same brackets, same suffix letter/number. Never rename [SUPPLIER_A] to "Supplier A", "Vendor 1", "the incumbent", or any free-text label, and never swap one token for another.
+- When you need to reference a NEW hypothetical entity the user did NOT provide (e.g. an alternative supplier proposed in stage_3_recover.alternative_supply_options, a candidate vendor in an RFP shortlist, a fallback partner), use the dedicated namespace [ALT_SUPPLIER_1], [ALT_SUPPLIER_2], … (or [ALT_PARTNER_1], [ALT_VENDOR_1] when semantically clearer). Never reuse a token already present in the input for a different entity.
+- Be consistent within a single response: the same alternative entity must keep the same [ALT_*] token across every section, table row, draft letter and recommendation it appears in. Inconsistent labelling breaks the deliverable.
+- In draft letters, addressee fields, and supporting tables, refer to entities by their token only (e.g. "Dear [SUPPLIER_A] team,") — never substitute a generic noun.
 
 GROUP INSTRUCTION AND SCHEMA:
 `;
+
 
 // ── Defensive JSON Parser ───────────────────────────────────────────
 
@@ -1110,6 +1276,84 @@ export interface ExosOutputParsed {
   payload: Record<string, unknown>;
 }
 
+/**
+ * Brace-balance scanner: walks the string tracking string-literal state and
+ * brace depth, returning the largest valid JSON object substring (closing braces
+ * appended if the source was truncated mid-object). Used to salvage partial
+ * envelopes when a fallback model truncated output mid-payload.
+ */
+function salvageTruncatedJson(raw: string): string | null {
+  const start = raw.indexOf('{');
+  if (start < 0) return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let lastValidEnd = -1;
+  for (let i = start; i < raw.length; i++) {
+    const ch = raw[i];
+    if (escape) { escape = false; continue; }
+    if (inString) {
+      if (ch === '\\') { escape = true; continue; }
+      if (ch === '"') { inString = false; }
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) lastValidEnd = i;
+    }
+  }
+  if (lastValidEnd > 0) return raw.slice(start, lastValidEnd + 1);
+  // Truncated mid-object: try padding closing braces (drop trailing partial token)
+  if (depth > 0 && !inString) {
+    // Trim trailing comma or partial token
+    let end = raw.length - 1;
+    while (end > start && /[,\s:"]/.test(raw[end])) end--;
+    const padded = raw.slice(start, end + 1).replace(/,\s*$/, '') + '}'.repeat(depth);
+    try { JSON.parse(padded); return padded; } catch { /* give up */ }
+  }
+  return null;
+}
+
+/**
+ * Repair bracket-TYPE mismatches in malformed JSON envelopes. Gemini occasionally
+ * closes an object with `]` or an array with `}` — particularly in deeply nested
+ * S21 / S26 schemas. We walk the bracket stack and rewrite each mismatched
+ * closer to the type that the matching opener expects. Strings are skipped.
+ */
+function repairBracketTypes(raw: string): string | null {
+  const start = raw.indexOf('{');
+  if (start < 0) return null;
+  const chars = raw.split('');
+  const stack: Array<'{' | '['> = [];
+  let inString = false;
+  let escape = false;
+  let mutated = false;
+  for (let i = start; i < chars.length; i++) {
+    const ch = chars[i];
+    if (escape) { escape = false; continue; }
+    if (inString) {
+      if (ch === '\\') { escape = true; continue; }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === '{' || ch === '[') { stack.push(ch); continue; }
+    if (ch === '}' || ch === ']') {
+      const opener = stack.pop();
+      if (!opener) continue;
+      const expected = opener === '{' ? '}' : ']';
+      if (ch !== expected) {
+        chars[i] = expected;
+        mutated = true;
+      }
+    }
+  }
+  if (!mutated) return null;
+  return chars.join('');
+}
+
 export function parseAIResponse(raw: string): ExosOutputParsed | null {
   // Attempt 1: direct JSON parse
   try {
@@ -1124,19 +1368,732 @@ export function parseAIResponse(raw: string): ExosOutputParsed | null {
     } catch (_) { /* fall through */ }
   }
 
-  // Attempt 3: log and return null for retry
+  // Attempt 3: bracket-TYPE repair for envelopes where the model closed an
+  // object with `]` or vice versa. Common in deeply nested S21/S26 schemas.
+  const bracketFixed = repairBracketTypes(raw);
+  if (bracketFixed) {
+    try {
+      const parsed = JSON.parse(bracketFixed);
+      console.warn('[EXOS] AI response salvaged via bracket-type repair');
+      return parsed;
+    } catch (_) { /* fall through */ }
+    // Try the regex-extracted slice of the fixed string too
+    const fixedMatch = bracketFixed.match(/\{[\s\S]*\}/);
+    if (fixedMatch) {
+      try {
+        const parsed = JSON.parse(fixedMatch[0]);
+        console.warn('[EXOS] AI response salvaged via bracket-type repair + slice');
+        return parsed;
+      } catch (_) { /* fall through */ }
+    }
+  }
+
+  // Attempt 4: brace-balance salvage for truncated/malformed envelopes
+  const salvaged = salvageTruncatedJson(raw);
+  if (salvaged) {
+    try {
+      const parsed = JSON.parse(salvaged);
+      console.warn('[EXOS] AI response salvaged via brace-balance scanner');
+      return parsed;
+    } catch (_) { /* fall through */ }
+  }
+
+  // Attempt 5: log and return null for retry
   console.error('[EXOS] AI response failed JSON parsing — triggering retry');
   return null;
+}
+
+/**
+ * Recursively strip null, undefined, empty string, empty array, and empty object
+ * leaves from an envelope payload. Models inconsistently emit `"field": null`
+ * placeholders despite prompt instructions; this is the deterministic enforcement.
+ *
+ * Preserves: false, 0, and structural top-level keys of the envelope itself
+ * (so the schema shape stays stable for downstream consumers).
+ */
+const ENVELOPE_TOP_KEYS_PRESERVE = new Set([
+  'schema_version', 'scenario_id', 'scenario_name', 'group', 'group_label',
+  'confidence_level', 'low_confidence_watermark', 'summary', 'export_metadata',
+]);
+
+/**
+ * Server-side defensive synthesis. Models inconsistently leave optional
+ * tables and arrays empty even when enough adjacent data exists to derive a
+ * sensible value. This pass backfills the most painful gaps (S26 impact_scenarios,
+ * S26 actions, S20 score_breakdown) so the report never ships hollow.
+ *
+ * IDEMPOTENT: re-running the function on already-populated payloads is a no-op.
+ * NEVER overwrites AI-emitted content; only fills `null`, `undefined`, `[]`.
+ */
+export function synthesizeMissingContent<T extends ExosOutputParsed | null | undefined>(envelope: T): T {
+  if (!envelope || typeof envelope !== 'object') return envelope;
+  const env = envelope as ExosOutputParsed;
+  const ss = (env.payload?.scenario_specific ?? {}) as Record<string, any>;
+
+  // ── S26 Disruption Management ────────────────────────────────────────────
+  if (env.scenario_id === 'S26' && ss && typeof ss === 'object') {
+    // Backfill impact_scenarios from estimated_revenue_impact_per_day
+    const dailyImpact = Number(ss.estimated_revenue_impact_per_day);
+    const hasDailyImpact = Number.isFinite(dailyImpact) && dailyImpact > 0;
+    if (hasDailyImpact) {
+      const buckets = [1, 2, 4, 8];
+      const existing = Array.isArray(ss.impact_scenarios) ? ss.impact_scenarios : [];
+      const byWeeks = new Map<number, any>();
+      existing.forEach((row: any) => {
+        const w = Number(row?.delay_weeks);
+        if (Number.isFinite(w)) byWeeks.set(w, row);
+      });
+      ss.impact_scenarios = buckets.map(weeks => {
+        const row = byWeeks.get(weeks) ?? { delay_label: `${weeks} week${weeks > 1 ? 's' : ''}`, delay_weeks: weeks };
+        if (row.revenue_loss == null) row.revenue_loss = dailyImpact * weeks * 7;
+        if (row.cumulative_loss == null) row.cumulative_loss = row.revenue_loss;
+        if (row.net_impact == null && row.mitigation_cost != null) {
+          row.net_impact = Number(row.revenue_loss) + Number(row.mitigation_cost);
+        }
+        return row;
+      });
+    }
+
+    // Backfill empty Stage 3 actions from alternative_supply_options
+    const rp = (ss.response_plan ?? {}) as Record<string, any>;
+    const stage3 = rp.stage_3_recover as Record<string, any> | undefined;
+    if (stage3 && (!Array.isArray(stage3.actions) || stage3.actions.length === 0)) {
+      const opts = Array.isArray(stage3.alternative_supply_options) ? stage3.alternative_supply_options : [];
+      if (opts.length > 0) {
+        stage3.actions = opts.slice(0, 3).map((o: any) => {
+          const name = o?.option_label ?? o?.supplier_label ?? 'alternative supplier';
+          const lt = o?.lead_time_days != null ? ` (lead time ${o.lead_time_days}d)` : '';
+          return `Fast-track qualification and emergency PO with ${name}${lt}.`;
+        });
+      }
+    }
+
+    // Backfill regulatory_exposure for cyber/critical-infra disruptions
+    const dt = String(ss.disruption_type ?? '').toUpperCase();
+    if ((!Array.isArray(ss.regulatory_exposure) || ss.regulatory_exposure.length === 0) && dt === 'CYBER') {
+      ss.regulatory_exposure = [
+        { regime: 'NIS2', obligation: 'Significant incident notification to competent authority', deadline_hours: 24, notification_required: true, potential_penalty: 'Up to €10M or 2% global turnover (essential entities)', owner_role: 'Chief Information Security Officer (CISO)' },
+        { regime: 'GDPR Art. 33', obligation: 'Personal data breach notification to supervisory authority (where personal data implicated)', deadline_hours: 72, notification_required: true, potential_penalty: 'Up to €20M or 4% global turnover', owner_role: 'Data Protection Officer (DPO)' },
+      ];
+    }
+
+    // Backfill recovery_probability if entirely empty (low-confidence default)
+    if (!ss.recovery_probability || (typeof ss.recovery_probability === 'object' && Object.keys(ss.recovery_probability).length === 0)) {
+      const buffer = Number(ss.current_inventory_buffer_days);
+      if (Number.isFinite(buffer) && buffer > 0) {
+        const p30 = Math.min(95, Math.max(20, Math.round((buffer / 30) * 60)));
+        ss.recovery_probability = {
+          p_full_recovery_30d_pct: p30,
+          p_partial_recovery_30d_pct: Math.min(99, p30 + 25),
+          p_full_recovery_90d_pct: Math.min(99, p30 + 35),
+          key_assumptions: [
+            `Inventory buffer of ${buffer} days holds with no further disruption.`,
+            'Alternative supply options qualify within stated lead times.',
+            'No second-order disruption (logistics, geopolitical) compounds the event.',
+          ],
+          confidence: 'LOW',
+        };
+      }
+    }
+
+    env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
+  }
+
+  // ── S20 Category Risk Evaluator ──────────────────────────────────────────
+  if (env.scenario_id === 'S20' && ss && typeof ss === 'object') {
+    // Derive helpers from existing structures so backfills are data-aware
+    const crs = (ss.category_risk_score ?? null) as Record<string, any> | null;
+    const overall = Number(crs?.overall);
+    const overallScore = Number.isFinite(overall) ? overall : null;
+    const ragFromScore = (n: number | null): string =>
+      n == null ? 'AMBER' : n >= 70 ? 'RED' : n >= 40 ? 'AMBER' : 'GREEN';
+
+    const concCats: any[] = Array.isArray(ss?.concentration?.categories) ? ss.concentration!.categories : [];
+    const topHHI = concCats.reduce((m, c) => Math.max(m, Number(c?.hhi) || 0), 0);
+    const supplyRiskFromHHI = topHHI >= 5000 ? 85 : topHHI >= 2500 ? 65 : topHHI >= 1500 ? 45 : 25;
+
+    // 1) score_breakdown — ensure all 5 dimensions, with data-aware defaults
+    const requiredDims = ['Supply', 'Regulatory', 'Financial', 'Geopolitical', 'Demand'];
+    const existing = Array.isArray(ss.score_breakdown) ? ss.score_breakdown : [];
+    const byDim = new Map<string, any>();
+    existing.forEach((d: any) => {
+      const key = String(d?.dimension ?? '').trim();
+      if (key) byDim.set(key, d);
+    });
+    if (existing.length < 5) {
+      const baseScore = overallScore ?? 50;
+      const dimDefault = (dim: string): number => {
+        if (dim === 'Supply') return Math.max(supplyRiskFromHHI, baseScore);
+        return baseScore;
+      };
+      ss.score_breakdown = requiredDims.map(dim => {
+        const found = byDim.get(dim);
+        if (found && (found.score != null || found.rationale)) return found;
+        const score = dimDefault(dim);
+        return {
+          dimension: dim,
+          score,
+          rag: ragFromScore(score),
+          rationale: dim === 'Supply' && topHHI > 0
+            ? `Derived from supplier concentration (HHI ${topHHI}). Validate with category specialists.`
+            : `Default rating — no explicit ${dim.toLowerCase()} signal in input. Treat as provisional.`,
+        };
+      });
+    }
+
+    // 2) budget_risk_forecast — backfill P10/P50/P90 from overall risk if absent
+    const brf = (ss.budget_risk_forecast ?? null) as Record<string, any> | null;
+    const hasForecast = brf && (brf.p10_pct != null || brf.p50_pct != null || brf.p90_pct != null);
+    if (!hasForecast) {
+      const sev = overallScore ?? 50;
+      // Higher overall risk → wider variance band
+      const p50 = Math.round(sev / 10);              // e.g. score 80 → +8% median
+      const p90 = Math.round(sev / 4);               // e.g. score 80 → +20% worst case
+      const p10 = -Math.max(2, Math.round(sev / 20)); // mild best-case savings
+      ss.budget_risk_forecast = {
+        p10_pct: p10,
+        p50_pct: p50,
+        p90_pct: p90,
+        drivers: Array.isArray(brf?.drivers) && brf.drivers.length > 0
+          ? brf.drivers
+          : ['Commodity / energy price volatility', 'Single-source supplier pricing power', 'FX & logistics exposure'],
+        confidence: 'LOW',
+      };
+    }
+
+    // 3) decision_readiness — backfill if absent so the 8th deliverable always renders
+    const dr = (ss.decision_readiness ?? null) as Record<string, any> | null;
+    const hasReadiness = dr && (dr.score != null || dr.verdict || (Array.isArray(dr.checklist) && dr.checklist.length > 0));
+    if (!hasReadiness) {
+      const sev = overallScore ?? 50;
+      // Inverse of risk — high risk = low readiness
+      const readinessScore = Math.max(0, 100 - sev);
+      const verdict = readinessScore >= 70 ? 'GO'
+        : readinessScore >= 50 ? 'GO_WITH_CONDITIONS'
+        : readinessScore >= 30 ? 'HOLD'
+        : 'NO_GO';
+      ss.decision_readiness = {
+        score: readinessScore,
+        verdict,
+        rationale: `Readiness derived from overall risk score (${sev}/100). ${
+          verdict === 'GO' ? 'Tender may proceed with standard controls.'
+          : verdict === 'GO_WITH_CONDITIONS' ? 'Proceed only after listed mitigations are in place.'
+          : verdict === 'HOLD' ? 'Defer tender until critical risks are addressed.'
+          : 'Do not proceed until structural risks are resolved.'
+        }`,
+        checklist: [
+          { item: 'Tooling & IP ownership clarified in SOW', status: 'NOT_READY', owner_role: 'Legal / Category Lead' },
+          { item: 'At least one alternative supplier qualified', status: topHHI >= 2500 ? 'NOT_READY' : 'PARTIAL', owner_role: 'Sourcing Manager' },
+          { item: 'Budget contingency reserved (≥ P50 variance)', status: 'PARTIAL', owner_role: 'Finance Business Partner' },
+          { item: 'Regulatory compliance evidence on file (REACH / CSDDD / NIS2 as applicable)', status: 'PARTIAL', owner_role: 'Compliance Officer' },
+          { item: 'Exit / step-in clauses drafted', status: 'NOT_READY', owner_role: 'Legal' },
+        ],
+      };
+    }
+
+    env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
+  }
+
+  // ── S21 Preparing for Negotiation ────────────────────────────────────────
+  if (env.scenario_id === 'S21' && ss && typeof ss === 'object') {
+    const batna = (ss.batna ?? {}) as Record<string, any>;
+    const zopa = (ss.zopa ?? {}) as Record<string, any>;
+    const lev = (ss.leverage_analysis ?? {}) as Record<string, any>;
+    const buyerTarget = Number(zopa.buyer_target);
+    const supplierFloor = Number(zopa.supplier_likely_floor);
+    const buyerWalkAway = Number(zopa.buyer_walk_away);
+    const batnaStrength = Number(batna.batna_strength_pct);
+    const buyerFactors: any[] = Array.isArray(lev.buyer_leverage_factors) ? lev.buyer_leverage_factors : [];
+    const supplierFactors: any[] = Array.isArray(lev.supplier_leverage_factors) ? lev.supplier_leverage_factors : [];
+
+    // 1) batna_improvement_actions — guarantee 2 generic if empty
+    if (!Array.isArray(batna.batna_improvement_actions) || batna.batna_improvement_actions.length === 0) {
+      batna.batna_improvement_actions = [
+        'Pre-qualify a second alternative supplier so the BATNA is operationally ready, not just theoretical.',
+        'Run a small pilot or sample order with the alternative to validate quality, lead time, and total cost.',
+      ];
+    }
+    ss.batna = batna;
+
+    // 2) leverage_analysis.power_balance — derive from BATNA strength + factor counts
+    if (!lev.power_balance || lev.power_balance.includes('|')) {
+      const buyerScore = (Number.isFinite(batnaStrength) ? batnaStrength : 50) + buyerFactors.length * 5 - supplierFactors.length * 5;
+      lev.power_balance = buyerScore >= 60 ? 'BUYER_ADVANTAGE' : buyerScore <= 40 ? 'SUPPLIER_ADVANTAGE' : 'BALANCED';
+    }
+    ss.leverage_analysis = lev;
+
+    // 3) counter_arguments — backfill 3 standard objections if empty
+    const ca: any[] = Array.isArray(ss.counter_arguments) ? ss.counter_arguments : [];
+    if (ca.filter(c => c && (c.supplier_position || c.buyer_response)).length === 0) {
+      ss.counter_arguments = [
+        {
+          supplier_position: 'Our cost base does not allow a price reduction at your target level.',
+          buyer_response: 'Share our internal benchmark and at least one competing quote, then ask the supplier to open the cost structure on the 2–3 largest line items.',
+          evidence: 'Independent market benchmark and quoted alternative supplier prices.',
+        },
+        {
+          supplier_position: 'Volume is not large enough to justify a discount.',
+          buyer_response: 'Re-frame around multi-year committed volume and a pipeline of additional sites/SKUs that the alternative supplier would otherwise win.',
+          evidence: 'Forecast of committed volume over the contract term and BATNA value.',
+        },
+        {
+          supplier_position: 'Removing auto-renewal and adding penalties is non-standard.',
+          buyer_response: 'Offer to extend the contract length in exchange for explicit exit rights, KPI-linked pricing, and a capped escalation clause.',
+          evidence: 'Standard buyer-side clauses in comparable enterprise contracts.',
+        },
+      ];
+    }
+
+    // 4) walk_away_plan — backfill all three sub-fields when empty
+    const wap = (ss.walk_away_plan ?? {}) as Record<string, any>;
+    const triggers: any[] = Array.isArray(wap.trigger_conditions) ? wap.trigger_conditions : [];
+    const exitSteps: any[] = Array.isArray(wap.exit_steps) ? wap.exit_steps : [];
+    if (triggers.length === 0) {
+      wap.trigger_conditions = [
+        Number.isFinite(buyerWalkAway) ? `Total contract value exceeds ${formatCurrencyEUR(buyerWalkAway)} (the buyer walk-away threshold).` : 'Supplier refuses to move below the buyer walk-away threshold.',
+        'Supplier refuses to remove auto-renewal escalation or accept KPI-linked penalties.',
+        'Supplier cannot commit to the required compliance / SLA evidence within the negotiation window.',
+      ];
+    }
+    if (exitSteps.length === 0) {
+      wap.exit_steps = [
+        'Notify the supplier in writing that the proposal is outside the approved envelope and pause further sessions.',
+        'Activate the qualified BATNA: issue an emergency RFQ to the pre-qualified alternative supplier(s).',
+        'Brief internal stakeholders (Finance, Legal, Operations) on the switch plan and timeline.',
+        'Communicate transition risk and mitigation to affected business units before any operational impact.',
+      ];
+    }
+    if (!wap.communication_script) {
+      wap.communication_script = 'Thank you for the discussions to date. The latest proposal sits outside the parameters we are able to approve internally, and we are not in a position to close on these terms. We will be pausing the negotiation and progressing our alternative options. Please let us know in writing within 5 working days if there is a materially revised offer; otherwise, we will move to award elsewhere.';
+    }
+    ss.walk_away_plan = wap;
+
+    // 5) value_creation — ensure at least 3 win-wins (top up rather than replace)
+    const vcExisting: any[] = Array.isArray(ss.value_creation)
+      ? ss.value_creation.filter((v: any) => v && (v.opportunity || v.buyer_benefit))
+      : [];
+    const vcDefaults = [
+      {
+        opportunity: 'Extend contract length in exchange for a price lock and KPI-linked rebate.',
+        buyer_benefit: 'Predictable cost base and protection from market price increases.',
+        supplier_benefit: 'Longer guaranteed revenue stream supporting capacity planning and investment.',
+      },
+      {
+        opportunity: 'Joint operational improvement programme (e.g. demand forecasting, packaging, logistics).',
+        buyer_benefit: 'Lower total cost of ownership beyond unit price.',
+        supplier_benefit: 'Reduced cost-to-serve and a stronger reference case for similar accounts.',
+      },
+      {
+        opportunity: 'Accelerated payment terms in exchange for a price hold or volume rebate.',
+        buyer_benefit: 'Captures early-payment discount without compromising relationship.',
+        supplier_benefit: 'Improved working capital and reduced financing cost.',
+      },
+    ];
+    const merged = [...vcExisting];
+    for (const d of vcDefaults) {
+      if (merged.length >= 3) break;
+      const dupe = merged.some(m => String(m.opportunity ?? '').toLowerCase().slice(0, 30) === d.opportunity.toLowerCase().slice(0, 30));
+      if (!dupe) merged.push(d);
+    }
+    ss.value_creation = merged;
+
+    // 6) financial_outcome_range — derive from ZOPA when numbers are present
+    const fr = (ss.financial_outcome_range ?? {}) as Record<string, any>;
+    const hasFr = fr.optimistic != null || fr.realistic != null || fr.pessimistic != null;
+    if (!hasFr && Number.isFinite(buyerTarget) && (Number.isFinite(supplierFloor) || Number.isFinite(buyerWalkAway))) {
+      const realistic = Number.isFinite(supplierFloor)
+        ? (buyerTarget + supplierFloor) / 2
+        : buyerTarget;
+      ss.financial_outcome_range = {
+        optimistic: Number.isFinite(supplierFloor) ? supplierFloor : buyerTarget,
+        realistic,
+        pessimistic: Number.isFinite(buyerWalkAway) ? buyerWalkAway : buyerTarget * 1.1,
+      };
+    }
+
+    // 7) strategy_playbook — backfill from leverage + tactics when missing
+    const sp = (ss.strategy_playbook ?? {}) as Record<string, any>;
+    const hasSp = sp.situation_read || sp.approach_rationale || (Array.isArray(sp.key_moves) && sp.key_moves.length > 0);
+    if (!hasSp) {
+      const pb = String(lev.power_balance ?? '').toUpperCase();
+      const approach = pb === 'BUYER_ADVANTAGE' ? 'COMPETITIVE' : pb === 'SUPPLIER_ADVANTAGE' ? 'ACCOMMODATIVE' : 'COLLABORATIVE';
+      const tactics: any[] = Array.isArray(ss.negotiation_tactics) ? ss.negotiation_tactics : [];
+      const moves = tactics.slice(0, 5).map((t: any) => t?.title ? `${t.title}: ${t.description ?? ''}`.trim().replace(/:\s*$/, '') : String(t?.description ?? '')).filter(Boolean);
+      ss.strategy_playbook = {
+        situation_read: `Power balance reads as ${pb.replace(/_/g, ' ') || 'BALANCED'} with BATNA strength ${Number.isFinite(batnaStrength) ? batnaStrength + '%' : 'unquantified'}; ${buyerFactors.length} buyer leverage factor(s) versus ${supplierFactors.length} supplier factor(s).`,
+        recommended_approach: approach,
+        approach_rationale: approach === 'COMPETITIVE'
+          ? 'Buyer holds the stronger hand; press for price and terms concessions while keeping the relationship professional.'
+          : approach === 'ACCOMMODATIVE'
+          ? 'Supplier leverage is high; protect operational continuity and trade non-price concessions to preserve the relationship.'
+          : 'Power is balanced; expand the pie via joint value creation rather than zero-sum price moves.',
+        key_moves: moves.length > 0 ? moves : [
+          'Open with the buyer target anchored on a credible BATNA reference.',
+          'Use multi-issue trade-offs (term length, payment terms, volume) before discounting on unit price.',
+          'Hold the walk-away threshold internally and rehearse the exit script with the cross-functional team.',
+        ],
+      };
+    }
+
+    env.payload = { ...(env.payload ?? {}), scenario_specific: ss };
+  }
+
+  return env as T;
+}
+
+function formatCurrencyEUR(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+  if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+  return `€${n.toFixed(0)}`;
+}
+
+export function pruneEmptyBranches<T>(input: T, isTopLevel = true): T {
+  if (input === null || input === undefined) return input;
+  if (Array.isArray(input)) {
+    const cleaned = input
+      .map((item) => pruneEmptyBranches(item, false))
+      .filter((item) => {
+        if (item === null || item === undefined || item === '') return false;
+        if (Array.isArray(item) && item.length === 0) return false;
+        if (typeof item === 'object' && item !== null && Object.keys(item).length === 0) return false;
+        return true;
+      });
+    return cleaned as unknown as T;
+  }
+  if (typeof input === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
+      const pruned = pruneEmptyBranches(v, false);
+      const isEmpty =
+        pruned === null ||
+        pruned === undefined ||
+        pruned === '' ||
+        (Array.isArray(pruned) && pruned.length === 0) ||
+        (typeof pruned === 'object' && pruned !== null && !Array.isArray(pruned) && Object.keys(pruned).length === 0);
+      if (isEmpty && !(isTopLevel && ENVELOPE_TOP_KEYS_PRESERVE.has(k))) continue;
+      out[k] = pruned;
+    }
+    return out as T;
+  }
+  return input;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Output coverage evaluator — closes the pre-eval ↔ output-promise gap.
+// For scenarios that promise N specific deliverables (currently S22), this
+// counts what the model actually delivered (respecting min item counts) and
+// returns: { promised, delivered, missing[], suggestedConfidence }.
+// Caller (sentinel-analysis) uses this to downgrade confidence_level and
+// surface missing blocks in data_gaps[] so the report header shows reality
+// instead of the static "HIGH" we used to ship.
+// ─────────────────────────────────────────────────────────────────────────────
+export interface OutputCoverageResult {
+  promised: number;
+  delivered: number;
+  missing: string[];
+  suggestedConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+interface CoverageRule {
+  key: string;
+  label: string;
+  /** Returns true if the block is satisfied. */
+  check: (ss: Record<string, any>, payload?: Record<string, any>) => boolean;
+}
+
+const COVERAGE_RULES: Record<string, CoverageRule[]> = {
+  S22: [
+    {
+      key: 'kraljic_position',
+      label: 'Kraljic Positioning (numeric coordinates)',
+      check: (ss) => {
+        const kp = ss?.kraljic_position;
+        if (!kp || typeof kp !== 'object') return false;
+        const sr = Number((kp as any).supply_risk);
+        const bi = Number((kp as any).business_impact);
+        return Number.isFinite(sr) && Number.isFinite(bi) && (sr > 0 || bi > 0);
+      },
+    },
+    {
+      key: 'market_intelligence',
+      label: 'Market Intelligence Brief',
+      check: (ss) => {
+        const mi = ss?.market_intelligence;
+        if (!mi || typeof mi !== 'object') return false;
+        const trends = Array.isArray((mi as any).key_trends) ? (mi as any).key_trends.length : 0;
+        return trends >= 2 || !!(mi as any).supply_dynamics || !!(mi as any).regulatory_outlook;
+      },
+    },
+    {
+      key: 'best_practices',
+      label: 'Best Practices (≥2 entries)',
+      check: (ss) => Array.isArray(ss?.best_practices) && ss.best_practices.length >= 2,
+    },
+    {
+      key: 'strategic_options',
+      label: 'Strategic Options Matrix (≥3 entries)',
+      check: (ss) => Array.isArray(ss?.strategic_options) && ss.strategic_options.length >= 3,
+    },
+    {
+      key: 'quick_wins',
+      label: 'Quick Wins (≥2 entries)',
+      check: (ss) => Array.isArray(ss?.quick_wins) && ss.quick_wins.length >= 2,
+    },
+    {
+      key: 'cross_category_analogies',
+      label: 'Cross-Category Analogies (≥2 entries)',
+      check: (ss) => Array.isArray(ss?.cross_category_analogies) && ss.cross_category_analogies.length >= 2,
+    },
+    {
+      key: 'three_year_roadmap',
+      label: '3-Year Roadmap with milestones',
+      check: (ss) => {
+        const r = ss?.three_year_roadmap;
+        if (!Array.isArray(r) || r.length < 3) return false;
+        const withMilestones = r.filter((y: any) => Array.isArray(y?.milestones) && y.milestones.length > 0).length;
+        return withMilestones >= 2;
+      },
+    },
+  ],
+  S3: [
+    {
+      key: 'options',
+      label: 'CAPEX vs OPEX options with NPV',
+      check: (ss) => Array.isArray(ss?.options) && ss.options.length >= 2
+        && ss.options.filter((o: any) => Number.isFinite(Number(o?.npv))).length >= 2,
+    },
+    {
+      key: 'sensitivity',
+      label: 'Sensitivity Analysis (≥3 variables)',
+      check: (ss) => Array.isArray(ss?.sensitivity) && ss.sensitivity.length >= 3,
+    },
+    {
+      key: 'flexibility_matrix',
+      label: 'Flexibility Matrix (≥3 dimensions)',
+      check: (ss) => Array.isArray(ss?.flexibility_matrix) && ss.flexibility_matrix.length >= 3,
+    },
+    {
+      key: 'cfo_recommendation',
+      label: 'CFO Recommendation (verdict + rationale)',
+      check: (ss) => {
+        const c = ss?.cfo_recommendation;
+        return !!c && typeof c === 'object'
+          && typeof (c as any).verdict === 'string'
+          && (typeof (c as any).cash_flow_rationale === 'string' || typeof (c as any).ifrs16_note === 'string');
+      },
+    },
+    {
+      key: 'year_by_year_cashflow',
+      label: 'Year-by-year cash flow (per option)',
+      check: (ss) => {
+        const opts: any[] = Array.isArray(ss?.options) ? ss.options : [];
+        const withYbY = opts.filter((o: any) => Array.isArray(o?.year_by_year) && o.year_by_year.length >= 2).length;
+        return withYbY >= 1;
+      },
+    },
+    {
+      key: 'ifrs16_classification',
+      label: 'IFRS 16 on/off balance-sheet classification',
+      check: (ss) => {
+        const opts: any[] = Array.isArray(ss?.options) ? ss.options : [];
+        return opts.some((o: any) => typeof o?.ifrs16_on_balance_sheet === 'boolean');
+      },
+    },
+  ],
+  S1: [
+    {
+      key: 'vendor_options',
+      label: 'Vendor / option comparison (≥2 with TCO totals)',
+      check: (ss) => Array.isArray(ss?.vendor_options) && ss.vendor_options.length >= 2
+        && ss.vendor_options.filter((o: any) => Number.isFinite(Number(o?.total_tco))).length >= 2,
+    },
+    {
+      key: 'cost_breakdown',
+      label: 'Categorical cost breakdown (≥3 components)',
+      check: (_ss, payload) => {
+        const cb = payload?.financial_model?.cost_breakdown;
+        return Array.isArray(cb) && cb.length >= 3;
+      },
+    },
+    {
+      key: 'year_breakdown',
+      label: 'Year-by-year cost trajectory (≥2 years)',
+      check: (ss) => {
+        const opts: any[] = Array.isArray(ss?.vendor_options) ? ss.vendor_options : [];
+        return opts.some((o: any) => Array.isArray(o?.year_breakdown) && o.year_breakdown.length >= 2);
+      },
+    },
+    {
+      key: 'recommendation',
+      label: 'Decision recommendation (verdict + rationale)',
+      check: (_ss, payload) => {
+        const r = payload?.recommendation;
+        return !!r && typeof r === 'object'
+          && (typeof (r as any).primary_recommendation === 'string' || typeof (r as any).verdict === 'string');
+      },
+    },
+  ],
+};
+
+export function evaluateOutputCoverage(
+  envelope: ExosOutputParsed | null | undefined,
+): OutputCoverageResult | null {
+  if (!envelope || typeof envelope !== 'object') return null;
+  const sid = String(envelope.scenario_id ?? '').toUpperCase();
+  const rules = COVERAGE_RULES[sid];
+  if (!rules || rules.length === 0) return null;
+  const payload = (envelope.payload ?? {}) as Record<string, any>;
+  const ss = (payload?.scenario_specific ?? {}) as Record<string, any>;
+  const missing: string[] = [];
+  let delivered = 0;
+  for (const r of rules) {
+    try {
+      if (r.check(ss, payload)) delivered++;
+      else missing.push(r.label);
+    } catch {
+      missing.push(r.label);
+    }
+  }
+  const promised = rules.length;
+  const ratio = delivered / promised;
+  const suggestedConfidence: 'HIGH' | 'MEDIUM' | 'LOW' =
+    ratio >= 0.85 ? 'HIGH' : ratio >= 0.65 ? 'MEDIUM' : 'LOW';
+  return { promised, delivered, missing, suggestedConfidence };
+}
+
+/**
+ * Apply a coverage report onto an envelope: downgrade confidence_level if the
+ * coverage suggests so, and merge missing blocks into data_gaps[]. Idempotent.
+ */
+export function applyCoverageToEnvelope<T extends ExosOutputParsed | null | undefined>(
+  envelope: T,
+  coverage: OutputCoverageResult | null,
+): T {
+  if (!envelope || !coverage) return envelope;
+  const env = envelope as ExosOutputParsed;
+  const order = { HIGH: 3, MEDIUM: 2, LOW: 1 } as const;
+  const current = (env.confidence_level ?? 'HIGH').toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW';
+  const suggested = coverage.suggestedConfidence;
+  const next = (order[suggested] < order[current] ? suggested : current);
+  if (next !== current) env.confidence_level = next;
+  if (coverage.missing.length > 0) {
+    const existing: any[] = Array.isArray(env.data_gaps) ? env.data_gaps : [];
+    const seen = new Set(existing.map((g: any) => String(g?.gap ?? g ?? '').toLowerCase()));
+    for (const m of coverage.missing) {
+      const key = `output coverage: ${m}`.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      existing.push({
+        gap: `Output coverage: ${m}`,
+        impact: 'Promised deliverable was missing or under-specified — confidence downgraded.',
+        unlock_with: 'Re-run the analysis; if it persists, tighten scenario inputs or escalate the schema rule.',
+      });
+    }
+    env.data_gaps = existing;
+  }
+  // Persist the coverage report on the envelope so PDF/UI can surface a real
+  // "Output Rigour" score next to the static "Confidence" indicator.
+  // ratio: delivered / promised (0–1) — caller can scale to %.
+  (env as any).output_coverage = {
+    promised: coverage.promised,
+    delivered: coverage.delivered,
+    ratio: coverage.promised > 0 ? coverage.delivered / coverage.promised : 0,
+    missing: coverage.missing,
+    suggested_confidence: coverage.suggestedConfidence,
+  };
+  return envelope;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Kraljic single-source-of-truth reconciliation (P0).
+//
+// Three independent surfaces in the report read three different fields:
+//   1. Executive KPI cell  ← scenario_specific.kraljic_position.recommended (string)
+//   2. Matrix dashboard    ← supply_risk / business_impact (numeric coords)
+//   3. Narrative prose     ← model free text
+//
+// When the model emits coords at e.g. (8.5, 7.0) but writes "BOTTLENECK" in the
+// recommended string, the same report shows three different positions. We
+// derive the canonical quadrant from the coords (the dashboard's source of
+// truth) and overwrite the categorical strings so KPI + dashboard agree.
+//
+// Coords use the 0–10 model scale (matches S22 schema rules).
+// Quadrant rule: high = >= 5 on the 0–10 scale.
+// ─────────────────────────────────────────────────────────────────────────────
+function quadrantFromCoords(supplyRisk: number, businessImpact: number): 'STRATEGIC' | 'LEVERAGE' | 'BOTTLENECK' | 'NON_CRITICAL' {
+  // Normalise: accept 0–5, 0–10 or 0–100 just in case (matches dashboard-extractor scale()).
+  const norm = (v: number) => (v <= 5 ? v * 2 : v <= 10 ? v : v / 10); // → 0–10
+  const sr = norm(supplyRisk);
+  const bi = norm(businessImpact);
+  const HIGH = 5;
+  if (sr >= HIGH && bi >= HIGH) return 'STRATEGIC';
+  if (sr < HIGH && bi >= HIGH) return 'LEVERAGE';
+  if (sr >= HIGH && bi < HIGH) return 'BOTTLENECK';
+  return 'NON_CRITICAL';
+}
+
+export function reconcileKraljic<T extends ExosOutputParsed | null | undefined>(envelope: T): T {
+  if (!envelope || typeof envelope !== 'object') return envelope;
+  const env = envelope as ExosOutputParsed;
+  const sid = String(env.scenario_id ?? '').toUpperCase();
+  // Only S22 ships the categorical KPI cell that drives the mismatch.
+  if (sid !== 'S22') return envelope;
+  const ss = (env.payload?.scenario_specific ?? null) as Record<string, any> | null;
+  const kp = ss?.kraljic_position;
+  if (!kp || typeof kp !== 'object') return envelope;
+  const sr = Number((kp as any).supply_risk ?? (kp as any).supplyRisk);
+  const bi = Number((kp as any).business_impact ?? (kp as any).businessImpact);
+  if (!Number.isFinite(sr) || !Number.isFinite(bi) || (sr <= 0 && bi <= 0)) return envelope;
+  const canonical = quadrantFromCoords(sr, bi);
+  const recRaw = String((kp as any).recommended ?? '').toUpperCase().replace(/[-\s]/g, '_');
+  const curRaw = String((kp as any).current ?? '').toUpperCase().replace(/[-\s]/g, '_');
+  if (recRaw !== canonical) {
+    console.warn(`[Sentinel] Kraljic reconcile: model emitted recommended="${recRaw || 'null'}" but coords (sr=${sr}, bi=${bi}) → "${canonical}". Overwriting.`);
+    (kp as any).recommended = canonical;
+    (kp as any).reconciled_from = recRaw || null;
+  }
+  // Only overwrite "current" if it's also clearly inconsistent with coords AND
+  // matches the (now-overwritten) recommended — i.e. the model conflated the two.
+  if (curRaw && curRaw === recRaw && curRaw !== canonical) {
+    (kp as any).current = canonical;
+  }
+  return envelope;
 }
 
 /**
  * Build a backward-compatible markdown summary from the structured output.
  * Used to populate the `content` field for existing UI rendering.
  */
+// Convert slug-style scenario names ("capex-vs-opex") into a readable title
+// ("CAPEX vs OPEX"), preserving common procurement acronyms.
+function formatScenarioHeading(name: string): string {
+  if (!name) return '';
+  // Already contains spaces or capitals beyond the first char — assume the
+  // upstream label is human-readable and leave it alone.
+  if (/\s/.test(name) || /[A-Z]/.test(name.slice(1))) return name;
+  const ACRONYMS = new Set([
+    'capex', 'opex', 'npv', 'tco', 'rfp', 'rfi', 'rfq', 'sla', 'kpi',
+    'saas', 'ifrs', 'esg', 'eu', 'us', 'uk', 'roi', 'wacc', 'batna',
+    'ai', 'b2b', 'b2c', 'sku', 'po', 'ppe', 'qbr',
+  ]);
+  const LOWER_WORDS = new Set(['vs', 'and', 'or', 'the', 'a', 'of', 'for', 'to', 'in']);
+  return name
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((w, i) => {
+      const lw = w.toLowerCase();
+      if (ACRONYMS.has(lw)) return lw.toUpperCase();
+      if (i > 0 && LOWER_WORDS.has(lw)) return lw;
+      return lw.charAt(0).toUpperCase() + lw.slice(1);
+    })
+    .join(' ');
+}
+
 export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
   const parts: string[] = [];
 
-  parts.push(`## ${parsed.scenario_name}\n`);
+  parts.push(`## ${formatScenarioHeading(parsed.scenario_name)}\n`);
   parts.push(parsed.summary);
   parts.push('');
 
@@ -1155,32 +2112,938 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
     return String(v);
   };
 
+  // Replace Unicode comparators that some PDF fonts cannot render reliably.
+  // Em/en dashes and × are intentionally NOT touched — they are part of the brand voice.
+  const sanitiseAscii = (s: string): string =>
+    s.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=');
+
   if (parsed.executive_bullets?.length > 0) {
-    parts.push('### Key Findings');
+    // B1 fix: drop bullets that duplicate any recommendation. We tokenise both
+    // sides, strip stop-words/punctuation, and treat ≥70% Jaccard overlap as a
+    // duplicate. Prevents Key Finding #N from echoing Recommendation #N.
+    const STOP = new Set(['the','a','an','and','or','of','to','for','in','on','with','by','at','from','is','are','be','as','that','this','it','will','should','must','their','our','your']);
+    const tokenise = (s: string): Set<string> => new Set(
+      s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length > 2 && !STOP.has(w))
+    );
+    const recTokens = (parsed.recommendations ?? []).map(r => {
+      const action = r && typeof r === 'object' ? coerceToString((r as any).action ?? r) : coerceToString(r);
+      return tokenise(action);
+    }).filter(t => t.size > 0);
+    const isDuplicate = (bulletTokens: Set<string>): boolean => {
+      if (bulletTokens.size === 0) return false;
+      for (const rt of recTokens) {
+        const inter = [...bulletTokens].filter(t => rt.has(t)).length;
+        const union = new Set([...bulletTokens, ...rt]).size;
+        if (union > 0 && inter / union >= 0.7) return true;
+      }
+      return false;
+    };
+    const findingLines: string[] = [];
     parsed.executive_bullets.forEach(b => {
-      const text = coerceToString(b).trim();
-      if (text && text !== '[object Object]') parts.push(`- ${text}`);
+      const text = sanitiseAscii(coerceToString(b).trim());
+      if (!text || text === '[object Object]') return;
+      if (isDuplicate(tokenise(text))) return;
+      findingLines.push(`- ${text}`);
     });
-    parts.push('');
+    if (findingLines.length > 0) {
+      parts.push('### Key Findings');
+      findingLines.forEach(l => parts.push(l));
+      parts.push('');
+    }
   }
 
   if (parsed.recommendations?.length > 0) {
     parts.push('### Recommendations');
+    const normalisePriority = (raw: unknown): string => {
+      if (typeof raw !== 'string') return '';
+      const v = raw.trim().toLowerCase();
+      if (!v) return '';
+      if (/(critical|p0|urgent|immediate|blocker|severe)/.test(v)) return 'Critical';
+      if (/(high|mandatory|must|p1|important)/.test(v)) return 'High';
+      if (/(low|nice[- ]?to[- ]?have|optional|p3|minor)/.test(v)) return 'Low';
+      if (/(medium|moderate|should|p2)/.test(v)) return 'Medium';
+      // Numeric scales: 1 = highest
+      const n = Number(v);
+      if (!Number.isNaN(n)) {
+        if (n <= 1) return 'Critical';
+        if (n === 2) return 'High';
+        if (n === 3) return 'Medium';
+        return 'Low';
+      }
+      // Unknown label: title-case it rather than discarding
+      return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+    };
+    // Heuristic priority inference for plain-string recommendations.
+    const inferPriority = (action: string): string => {
+      const a = action.toLowerCase();
+      if (/(immediately|halt|stop|urgent|critical|breach|before .* (deadline|expir)|by next week|this week)/.test(a)) return 'High';
+      if (/(must|required|mandatory|do not|cannot|avoid|prevent|eliminate|prior to)/.test(a)) return 'High';
+      if (/(consider|explore|investigate|evaluate|review|assess|nice[- ]to[- ]have|where possible|opportunistic)/.test(a)) return 'Low';
+      return 'Medium';
+    };
     let idx = 0;
     parsed.recommendations.forEach((r) => {
       const isObj = r && typeof r === 'object';
-      const priority = (isObj && typeof (r as { priority?: unknown }).priority === 'string')
-        ? (r as { priority: string }).priority
-        : 'Medium';
+      const rawPriority = isObj ? (r as { priority?: unknown }).priority : undefined;
       const actionRaw = isObj ? (r as { action?: unknown }).action : r;
       const action = (coerceToString(actionRaw).trim() || coerceToString(r).trim());
       if (!action || action === '[object Object]' || action === 'See details') return;
+      const normalised = normalisePriority(rawPriority);
+      const priority = normalised || inferPriority(action);
       const fi = isObj ? (r as { financial_impact?: unknown }).financial_impact : null;
       const impact = fi ? ` — ${coerceToString(fi)}` : '';
       idx += 1;
-      parts.push(`${idx}. **[${priority}]** ${action}${impact}`);
+      parts.push(`${idx}. **[${priority}]** ${sanitiseAscii(action)}${sanitiseAscii(impact)}`);
     });
     parts.push('');
+  }
+
+  // ── S26 Disruption Management — render the three promised deliverables.
+  // (Emergency Map / Impact Table / Draft Letter + alt sourcing & comms matrices.)
+  if (parsed.scenario_id === 'S26') {
+    const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, unknown>;
+    const fmtMoney = (v: unknown): string => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+      if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+      return `€${n.toFixed(0)}`;
+    };
+    const rp = (ss.response_plan ?? {}) as Record<string, any>;
+    const stages: Array<{ key: string; label: string; iconWords: string }> = [
+      { key: 'stage_1_assess', label: 'Stage 1 — Assess', iconWords: 'actions' },
+      { key: 'stage_2_contain', label: 'Stage 2 — Contain', iconWords: 'immediate_actions' },
+      { key: 'stage_3_recover', label: 'Stage 3 — Recover', iconWords: 'actions' },
+      { key: 'stage_4_prevent', label: 'Stage 4 — Prevent', iconWords: 'recurrence_prevention_checklist' },
+    ];
+    const stagesPresent = stages.some(s => rp[s.key]);
+    if (stagesPresent) {
+      parts.push('### Emergency Map — 4-Stage Response Plan');
+      stages.forEach(s => {
+        const stage = rp[s.key] as Record<string, any> | undefined;
+        if (!stage) return;
+        const owner = stage.owner ? ` _(Owner: ${stage.owner})_` : '';
+        const dur = stage.target_duration_hours
+          ? ` _(Target: ${stage.target_duration_hours}h)_`
+          : stage.target_duration_days
+            ? ` _(Target: ${stage.target_duration_days}d)_`
+            : '';
+        parts.push(`**${s.label}**${owner}${dur}`);
+        let actions: unknown[] = Array.isArray(stage.actions) ? stage.actions
+          : Array.isArray(stage.immediate_actions) ? stage.immediate_actions
+          : Array.isArray(stage.recurrence_prevention_checklist) ? stage.recurrence_prevention_checklist
+          : [];
+        // Stage 3 fallback: if AI emitted no actions[], derive procurement
+        // actions from the alternative_supply_options shortlist so the stage
+        // never renders as a header with no body content.
+        if (s.key === 'stage_3_recover' && actions.length === 0 && Array.isArray(stage.alternative_supply_options)) {
+          const opts = stage.alternative_supply_options as any[];
+          actions = opts.slice(0, 3).map((o) => {
+            const name = o.option_label ?? o.supplier_label ?? 'alternative supplier';
+            const lt = o.lead_time_days != null ? ` (lead time ${o.lead_time_days}d)` : '';
+            return `Fast-track qualification and emergency PO with ${name}${lt}.`;
+          });
+        }
+        actions.slice(0, 6).forEach(a => {
+          const t = sanitiseAscii(coerceToString(a).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+        if (s.key === 'stage_4_prevent' && Array.isArray(stage.process_changes)) {
+          stage.process_changes.slice(0, 4).forEach((p: unknown) => {
+            const t = sanitiseAscii(coerceToString(p).trim());
+            if (t) parts.push(`- _Process change:_ ${t}`);
+          });
+        }
+        parts.push('');
+      });
+    }
+
+    // Alternative supply shortlist
+    const altOptions: any[] = Array.isArray(rp.stage_3_recover?.alternative_supply_options)
+      ? rp.stage_3_recover.alternative_supply_options
+      : [];
+    const validAlts = altOptions.filter(o => o && (o.supplier_label || o.option_label));
+    if (validAlts.length > 0) {
+      parts.push('### Alternative Sourcing Shortlist');
+      parts.push('| Option | Lead time | Cost premium | Capacity | Readiness |');
+      parts.push('|---|---|---|---|---|');
+      validAlts.slice(0, 8).forEach(o => {
+        const name = sanitiseAscii(coerceToString(o.option_label ?? o.supplier_label));
+        const lt = o.lead_time_days != null ? `${o.lead_time_days}d` : '—';
+        const cp = o.cost_premium_pct != null ? `+${o.cost_premium_pct}%` : '—';
+        const cap = o.capacity_available != null ? sanitiseAscii(coerceToString(o.capacity_available)) : '—';
+        const rd = o.contractual_readiness ? sanitiseAscii(coerceToString(o.contractual_readiness)).replace(/_/g, ' ') : '—';
+        parts.push(`| ${name} | ${lt} | ${cp} | ${cap} | ${rd} |`);
+      });
+      parts.push('');
+    }
+
+    // Impact Table
+    const impactRows: any[] = Array.isArray(ss.impact_scenarios) ? ss.impact_scenarios : [];
+    const validImpact = impactRows.filter(r => r && (r.delay_label || r.delay_weeks != null));
+    if (validImpact.length > 0) {
+      parts.push('### Impact Table — Financial Loss by Delay Scenario');
+      parts.push('| Delay | Revenue loss | Cumulative loss | Mitigation cost | Net impact |');
+      parts.push('|---|---|---|---|---|');
+      validImpact.slice(0, 8).forEach(r => {
+        const label = sanitiseAscii(coerceToString(r.delay_label ?? `${r.delay_weeks}w`));
+        parts.push(`| ${label} | ${fmtMoney(r.revenue_loss)} | ${fmtMoney(r.cumulative_loss)} | ${fmtMoney(r.mitigation_cost)} | ${fmtMoney(r.net_impact)} |`);
+      });
+      parts.push('');
+    }
+
+    // Stakeholder communications matrix
+    const comms: any[] = Array.isArray(ss.stakeholder_comms) ? ss.stakeholder_comms : [];
+    const validComms = comms.filter(c => c && (c.stakeholder_group || c.key_message));
+    if (validComms.length > 0) {
+      parts.push('### Stakeholder Communications Matrix');
+      parts.push('| Stakeholder | Key message | Channel | Timing |');
+      parts.push('|---|---|---|---|');
+      validComms.slice(0, 8).forEach(c => {
+        const sg = sanitiseAscii(coerceToString(c.stakeholder_group ?? '—'));
+        const km = sanitiseAscii(coerceToString(c.key_message ?? '—'));
+        const ch = sanitiseAscii(coerceToString(c.delivery_channel ?? '—'));
+        const tm = sanitiseAscii(coerceToString(c.timing ?? '—'));
+        parts.push(`| ${sg} | ${km} | ${ch} | ${tm} |`);
+      });
+      parts.push('');
+    }
+
+    // Draft Letters — claim letter + customer + internal comms templates
+    const claim = (ss.claim_letter_template ?? null) as Record<string, any> | null;
+    const custTpl = sanitiseAscii(coerceToString(rp.stage_2_contain?.customer_communication_template ?? ''));
+    const intTpl = sanitiseAscii(coerceToString(rp.stage_2_contain?.internal_communication_template ?? ''));
+    const claimBody = sanitiseAscii(coerceToString(claim?.body ?? ''));
+    if (claimBody || custTpl || intTpl) {
+      parts.push('### Draft Letters & Communications');
+      if (claimBody) {
+        parts.push(`**Claim / Partner-Assistance Letter**`);
+        if (claim?.addressee) parts.push(`_Addressee: ${sanitiseAscii(coerceToString(claim.addressee))}_`);
+        if (claim?.subject) parts.push(`_Subject: ${sanitiseAscii(coerceToString(claim.subject))}_`);
+        parts.push('');
+        parts.push(claimBody);
+        parts.push('');
+      }
+      if (custTpl) {
+        parts.push('**Customer Communication Template**');
+        parts.push('');
+        parts.push(custTpl);
+        parts.push('');
+      }
+      if (intTpl) {
+        parts.push('**Internal Communication Template**');
+        parts.push('');
+        parts.push(intTpl);
+        parts.push('');
+      }
+    }
+
+    // ── S26 analytical depth — 5 new dimensions ─────────────────────────────
+    const rca = (ss.root_cause_analysis ?? null) as Record<string, any> | null;
+    if (rca && (rca.primary_cause || (Array.isArray(rca.five_whys) && rca.five_whys.length > 0))) {
+      parts.push('### Root Cause Analysis');
+      if (rca.primary_cause) parts.push(`**Primary cause:** ${sanitiseAscii(coerceToString(rca.primary_cause))}`);
+      if (rca.evidence_quality) parts.push(`_Evidence quality: ${sanitiseAscii(coerceToString(rca.evidence_quality))}_`);
+      if (Array.isArray(rca.contributing_factors) && rca.contributing_factors.length > 0) {
+        parts.push('');
+        parts.push('**Contributing factors:**');
+        rca.contributing_factors.slice(0, 6).forEach((f: unknown) => {
+          const t = sanitiseAscii(coerceToString(f).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      if (Array.isArray(rca.five_whys) && rca.five_whys.length > 0) {
+        parts.push('');
+        parts.push('**Five Whys:**');
+        rca.five_whys.slice(0, 5).forEach((w: unknown, i: number) => {
+          const t = sanitiseAscii(coerceToString(w).trim());
+          if (t) parts.push(`${i + 1}. ${t.replace(/^why\s*\d+\s*:\s*/i, '')}`);
+        });
+      }
+      parts.push('');
+    }
+
+    const br = (ss.blast_radius ?? null) as Record<string, any> | null;
+    const hasBlast = br && (
+      (Array.isArray(br.directly_affected) && br.directly_affected.length > 0) ||
+      (Array.isArray(br.second_order_impacts) && br.second_order_impacts.length > 0) ||
+      (Array.isArray(br.third_order_impacts) && br.third_order_impacts.length > 0)
+    );
+    if (hasBlast) {
+      parts.push('### Blast Radius');
+      if (br!.estimated_revenue_at_risk != null) {
+        parts.push(`- **Revenue at risk:** ${fmtMoney(br!.estimated_revenue_at_risk)}`);
+      }
+      if (br!.estimated_customers_affected != null) {
+        parts.push(`- **Customers affected:** ${sanitiseAscii(coerceToString(br!.estimated_customers_affected))}`);
+      }
+      if (Array.isArray(br!.geographic_spread) && br!.geographic_spread.length > 0) {
+        parts.push(`- **Geographic spread:** ${br!.geographic_spread.map((g: unknown) => sanitiseAscii(coerceToString(g))).join(', ')}`);
+      }
+      const tiers: Array<[string, unknown]> = [
+        ['Directly affected (now)', br!.directly_affected],
+        ['Second-order impacts (<=30 days)', br!.second_order_impacts],
+        ['Third-order impacts (strategic)', br!.third_order_impacts],
+      ];
+      tiers.forEach(([label, arr]) => {
+        if (Array.isArray(arr) && arr.length > 0) {
+          parts.push('');
+          parts.push(`**${label}:**`);
+          arr.slice(0, 6).forEach((x: unknown) => {
+            const t = sanitiseAscii(coerceToString(x).trim());
+            if (t) parts.push(`- ${t}`);
+          });
+        }
+      });
+      parts.push('');
+    }
+
+    const rp2 = (ss.recovery_probability ?? null) as Record<string, any> | null;
+    if (rp2 && (rp2.p_full_recovery_30d_pct != null || rp2.p_full_recovery_90d_pct != null || rp2.p_partial_recovery_30d_pct != null)) {
+      parts.push('### Recovery Probability');
+      parts.push('| Outcome | Probability |');
+      parts.push('|---|---|');
+      const fmtPct = (v: unknown) => v == null ? '—' : `${v}%`;
+      parts.push(`| Full recovery within 30 days | ${fmtPct(rp2.p_full_recovery_30d_pct)} |`);
+      parts.push(`| Partial recovery within 30 days | ${fmtPct(rp2.p_partial_recovery_30d_pct)} |`);
+      parts.push(`| Full recovery within 90 days | ${fmtPct(rp2.p_full_recovery_90d_pct)} |`);
+      if (rp2.confidence) {
+        parts.push('');
+        parts.push(`_Confidence: ${sanitiseAscii(coerceToString(rp2.confidence))}_`);
+      }
+      if (Array.isArray(rp2.key_assumptions) && rp2.key_assumptions.length > 0) {
+        parts.push('');
+        parts.push('**Key assumptions:**');
+        rp2.key_assumptions.slice(0, 5).forEach((a: unknown) => {
+          const t = sanitiseAscii(coerceToString(a).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    const reg: any[] = Array.isArray(ss.regulatory_exposure) ? ss.regulatory_exposure : [];
+    const validReg = reg.filter(r => r && (r.regime || r.obligation));
+    if (validReg.length > 0) {
+      parts.push('### Regulatory Exposure');
+      parts.push('| Regime | Obligation | Deadline | Penalty | Owner |');
+      parts.push('|---|---|---|---|---|');
+      validReg.slice(0, 8).forEach(r => {
+        const dl = r.deadline_hours != null ? `${r.deadline_hours}h` : '—';
+        parts.push(`| ${sanitiseAscii(coerceToString(r.regime ?? '—'))} | ${sanitiseAscii(coerceToString(r.obligation ?? '—'))} | ${dl} | ${sanitiseAscii(coerceToString(r.potential_penalty ?? '—'))} | ${sanitiseAscii(coerceToString(r.owner_role ?? '—'))} |`);
+      });
+      parts.push('');
+    }
+
+    const lessons: any[] = Array.isArray(ss.lessons_learned_for_playbook) ? ss.lessons_learned_for_playbook : [];
+    const validLessons = lessons.filter(l => l && (l.lesson || l.playbook_change));
+    if (validLessons.length > 0) {
+      parts.push('### Lessons Learned for Playbook');
+      parts.push('| Lesson | Playbook change | Owner | Due |');
+      parts.push('|---|---|---|---|');
+      validLessons.slice(0, 8).forEach(l => {
+        const due = l.due_in_days != null ? `${l.due_in_days}d` : '—';
+        parts.push(`| ${sanitiseAscii(coerceToString(l.lesson ?? '—'))} | ${sanitiseAscii(coerceToString(l.playbook_change ?? '—'))} | ${sanitiseAscii(coerceToString(l.owner_role ?? '—'))} | ${due} |`);
+      });
+      parts.push('');
+    }
+  }
+
+  // ── S21 Preparing for Negotiation — render the eight promised deliverables.
+  if (parsed.scenario_id === 'S21') {
+    const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, any>;
+    const fmtMoney = (v: unknown): string => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+      if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+      return `€${n.toFixed(0)}`;
+    };
+    const fmtCell = (v: unknown): string => {
+      if (v == null || v === '') return '—';
+      return sanitiseAscii(coerceToString(v)).replace(/\|/g, '\\|');
+    };
+
+    // Helper: drop placeholder leverage strings emitted by some models
+    const isPlaceholder = (v: unknown): boolean => {
+      const s = String(v ?? '').trim().toLowerCase();
+      return s === '' || s === '—' || s === '-' || s === 'n/a' || s === 'na' || s === 'none' || s === 'tbd' || s === 'not provided' || s === 'not applicable';
+    };
+
+    // 1. Power Balance Analysis
+    const lev = (ss.leverage_analysis ?? {}) as Record<string, any>;
+    const pb = String(lev.power_balance ?? '').toUpperCase();
+    if (pb && !pb.includes('|')) {
+      parts.push('### Power Balance Analysis');
+      parts.push(`- **Verdict:** ${pb.replace(/_/g, ' ')}`);
+      const buyerFactors: any[] = (Array.isArray(lev.buyer_leverage_factors) ? lev.buyer_leverage_factors : []).filter((x: unknown) => !isPlaceholder(x));
+      const supplierFactors: any[] = (Array.isArray(lev.supplier_leverage_factors) ? lev.supplier_leverage_factors : []).filter((x: unknown) => !isPlaceholder(x));
+      if (buyerFactors.length > 0 || supplierFactors.length > 0) {
+        const rows = Math.max(buyerFactors.length, supplierFactors.length);
+        parts.push('');
+        parts.push('| Buyer leverage | Supplier leverage |');
+        parts.push('|---|---|');
+        for (let i = 0; i < rows; i++) {
+          // When one column is exhausted, leave the cell blank instead of "—"
+          const b = buyerFactors[i] != null ? fmtCell(buyerFactors[i]) : '';
+          const sp = supplierFactors[i] != null ? fmtCell(supplierFactors[i]) : '';
+          parts.push(`| ${b || ' '} | ${sp || ' '} |`);
+        }
+      }
+      parts.push('');
+    }
+
+    // 1b. Strategy Playbook (NEW deliverable)
+    const sp = (ss.strategy_playbook ?? {}) as Record<string, any>;
+    const spMoves: any[] = Array.isArray(sp.key_moves) ? sp.key_moves.filter(Boolean) : [];
+    if (sp.situation_read || sp.recommended_approach || sp.approach_rationale || spMoves.length > 0) {
+      parts.push('### Negotiation Strategy Playbook');
+      if (sp.situation_read) parts.push(`- **Situation read:** ${fmtCell(sp.situation_read)}`);
+      const ra = String(sp.recommended_approach ?? '').toUpperCase();
+      if (ra && !ra.includes('|')) parts.push(`- **Recommended approach:** ${ra}`);
+      if (sp.approach_rationale) parts.push(`- **Why this approach:** ${fmtCell(sp.approach_rationale)}`);
+      if (spMoves.length > 0) {
+        parts.push('');
+        parts.push('**Key moves:**');
+        spMoves.slice(0, 6).forEach((m: unknown) => {
+          const t = sanitiseAscii(coerceToString(m).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 2. BATNA & ZOPA
+    const batna = (ss.batna ?? {}) as Record<string, any>;
+    const zopa = (ss.zopa ?? {}) as Record<string, any>;
+    const hasBatna = batna.buyer_batna || batna.batna_strength_pct != null || batna.supplier_batna_estimated;
+    const hasZopa = zopa.buyer_target != null || zopa.supplier_likely_floor != null || zopa.zopa_exists != null;
+    if (hasBatna || hasZopa) {
+      parts.push('### BATNA & ZOPA');
+      if (batna.buyer_batna) parts.push(`- **Buyer BATNA:** ${fmtCell(batna.buyer_batna)}`);
+      if (batna.buyer_batna_value != null) parts.push(`- **Buyer BATNA value:** ${fmtMoney(batna.buyer_batna_value)}`);
+      if (batna.batna_strength_pct != null) parts.push(`- **BATNA strength:** ${batna.batna_strength_pct}%`);
+      if (batna.supplier_batna_estimated) parts.push(`- **Supplier BATNA (estimated):** ${fmtCell(batna.supplier_batna_estimated)}`);
+      if (zopa.buyer_target != null) parts.push(`- **Buyer target:** ${fmtMoney(zopa.buyer_target)}`);
+      if (zopa.supplier_likely_floor != null) parts.push(`- **Supplier likely floor:** ${fmtMoney(zopa.supplier_likely_floor)}`);
+      if (typeof zopa.buyer_walk_away === 'number') {
+        parts.push(`- **Buyer walk-away:** ${fmtMoney(zopa.buyer_walk_away)} _(confidential — masked in shared exports)_`);
+      }
+      if (zopa.zopa_exists != null) parts.push(`- **Positive ZOPA exists:** ${zopa.zopa_exists ? 'Yes' : 'No'}`);
+      const actions: any[] = Array.isArray(batna.batna_improvement_actions) ? batna.batna_improvement_actions : [];
+      if (actions.length > 0) {
+        parts.push('');
+        parts.push('**BATNA improvement actions:**');
+        actions.slice(0, 6).forEach((a: unknown) => {
+          const t = sanitiseAscii(coerceToString(a).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 3. Counter-Argument Preparation
+    const counters: any[] = Array.isArray(ss.counter_arguments) ? ss.counter_arguments : [];
+    const validCounters = counters.filter(c => c && (c.supplier_position || c.buyer_response));
+    if (validCounters.length > 0) {
+      parts.push('### Counter-Argument Preparation');
+      parts.push('| Supplier position | Buyer response | Evidence |');
+      parts.push('|---|---|---|');
+      validCounters.slice(0, 6).forEach(c => {
+        parts.push(`| ${fmtCell(c.supplier_position)} | ${fmtCell(c.buyer_response)} | ${fmtCell(c.evidence)} |`);
+      });
+      parts.push('');
+    }
+
+    // 4. Walk-Away Plan
+    const wap = (ss.walk_away_plan ?? null) as Record<string, any> | null;
+    if (wap && (wap.trigger_conditions || wap.exit_steps || wap.communication_script)) {
+      parts.push('### Walk-Away Plan');
+      const triggers: any[] = Array.isArray(wap.trigger_conditions) ? wap.trigger_conditions : [];
+      if (triggers.length > 0) {
+        parts.push('**Trigger conditions:**');
+        triggers.slice(0, 6).forEach((t: unknown) => {
+          const txt = sanitiseAscii(coerceToString(t).trim());
+          if (txt) parts.push(`- ${txt}`);
+        });
+        parts.push('');
+      }
+      const exitSteps: any[] = Array.isArray(wap.exit_steps) ? wap.exit_steps : [];
+      if (exitSteps.length > 0) {
+        parts.push('**Exit steps:**');
+        exitSteps.slice(0, 6).forEach((s: unknown, i: number) => {
+          const txt = sanitiseAscii(coerceToString(s).trim());
+          if (txt) parts.push(`${i + 1}. ${txt}`);
+        });
+        parts.push('');
+      }
+      if (wap.communication_script) {
+        parts.push('**Walk-away script:**');
+        parts.push('');
+        parts.push(`> ${sanitiseAscii(coerceToString(wap.communication_script))}`);
+        parts.push('');
+      }
+    }
+
+    // 5. Value Creation Opportunities
+    const vc: any[] = Array.isArray(ss.value_creation) ? ss.value_creation : [];
+    const validVc = vc.filter(v => v && (v.opportunity || v.buyer_benefit));
+    if (validVc.length > 0) {
+      parts.push('### Value Creation Opportunities');
+      parts.push('| Opportunity | Buyer benefit | Supplier benefit |');
+      parts.push('|---|---|---|');
+      validVc.slice(0, 6).forEach(v => {
+        parts.push(`| ${fmtCell(v.opportunity)} | ${fmtCell(v.buyer_benefit)} | ${fmtCell(v.supplier_benefit)} |`);
+      });
+      parts.push('');
+    }
+
+    // 6. Financial Outcome Range — only render when at least one finite numeric is present
+    const fr = (ss.financial_outcome_range ?? null) as Record<string, any> | null;
+    const frNums = fr ? [fr.optimistic, fr.realistic, fr.pessimistic].map((v: unknown) => Number(v)).filter((n: number) => Number.isFinite(n)) : [];
+    if (fr && frNums.length > 0) {
+      parts.push('### Financial Outcome Range');
+      parts.push('| Scenario | Outcome |');
+      parts.push('|---|---|');
+      parts.push(`| Optimistic | ${fmtMoney(fr.optimistic)} |`);
+      parts.push(`| Realistic | ${fmtMoney(fr.realistic)} |`);
+      parts.push(`| Pessimistic | ${fmtMoney(fr.pessimistic)} |`);
+      parts.push('');
+    }
+
+    // 7. Negotiation Scenario Comparison
+    const negSc: any[] = Array.isArray(ss.negotiation_scenarios) ? ss.negotiation_scenarios : [];
+    const validNegSc = negSc.filter(n => n && n.name && n.expected_savings_pct != null);
+    if (validNegSc.length > 0) {
+      parts.push('### Negotiation Scenario Comparison');
+      parts.push('| Strategy | Expected savings | Timeline | Risk |');
+      parts.push('|---|---|---|---|');
+      validNegSc.slice(0, 6).forEach(n => {
+        const sav = n.expected_savings_pct != null ? `${n.expected_savings_pct}%` : '—';
+        const tl = n.estimated_timeline_months != null ? `${n.estimated_timeline_months} months` : '—';
+        parts.push(`| ${fmtCell(n.name)} | ${sav} | ${tl} | ${fmtCell(n.risk_level)} |`);
+      });
+      parts.push('');
+    }
+  }
+
+  // ── S20 Category Risk Evaluator — render the eight promised deliverables.
+  if (parsed.scenario_id === 'S20') {
+    const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, any>;
+    const fmtMoney = (v: unknown): string => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+      if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+      return `€${n.toFixed(0)}`;
+    };
+    const fmtCell = (v: unknown): string => {
+      if (v == null || v === '') return '—';
+      return sanitiseAscii(coerceToString(v)).replace(/\|/g, '\\|');
+    };
+
+    // 1. Headline Category Risk Score
+    const crs = (ss.category_risk_score ?? null) as Record<string, any> | null;
+    if (crs && (crs.overall != null || crs.rag || crs.decision)) {
+      parts.push('### Category Risk Score');
+      if (crs.overall != null) parts.push(`- **Overall score:** ${crs.overall} / 100`);
+      if (crs.rag) parts.push(`- **RAG status:** ${sanitiseAscii(coerceToString(crs.rag))}`);
+      if (crs.decision) parts.push(`- **Decision recommendation:** ${sanitiseAscii(coerceToString(crs.decision)).replace(/_/g, ' ')}`);
+      parts.push('');
+    }
+
+    // 2. Score Breakdown — 5 dimensions
+    const breakdown: any[] = Array.isArray(ss.score_breakdown) ? ss.score_breakdown : [];
+    const validBreakdown = breakdown.filter(b => b && b.dimension);
+    if (validBreakdown.length > 0) {
+      parts.push('### Risk Dimensions');
+      parts.push('| Dimension | Score | RAG | Rationale |');
+      parts.push('|---|---|---|---|');
+      validBreakdown.slice(0, 5).forEach(b => {
+        const score = b.score != null ? `${b.score} / 100` : '—';
+        parts.push(`| ${fmtCell(b.dimension)} | ${score} | ${fmtCell(b.rag)} | ${fmtCell(b.rationale)} |`);
+      });
+      parts.push('');
+    }
+
+    // 3. Market Brief
+    const mb = (ss.market_brief ?? null) as Record<string, any> | null;
+    if (mb && (mb.dynamics || mb.price_outlook_pct != null || (Array.isArray(mb.key_trends) && mb.key_trends.length > 0))) {
+      parts.push('### Market Brief');
+      if (mb.dynamics) parts.push(sanitiseAscii(coerceToString(mb.dynamics)));
+      if (mb.price_outlook_pct != null) {
+        const sign = Number(mb.price_outlook_pct) >= 0 ? '+' : '';
+        parts.push('');
+        parts.push(`- **12-month price outlook:** ${sign}${mb.price_outlook_pct}%`);
+      }
+      if (Array.isArray(mb.key_trends) && mb.key_trends.length > 0) {
+        parts.push('');
+        parts.push('**Key trends:**');
+        mb.key_trends.slice(0, 5).forEach((t: unknown) => {
+          const txt = sanitiseAscii(coerceToString(t).trim());
+          if (txt) parts.push(`- ${txt}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 4. Supply Health
+    const sh = (ss.supply_health ?? null) as Record<string, any> | null;
+    if (sh && (sh.supplier_count != null || sh.top3_share_pct != null || sh.hhi != null || (Array.isArray(sh.single_point_failures) && sh.single_point_failures.length > 0))) {
+      parts.push('### Supply Health');
+      if (sh.supplier_count != null) parts.push(`- **Supplier count:** ${sh.supplier_count}`);
+      if (sh.top3_share_pct != null) parts.push(`- **Top-3 supplier share:** ${sh.top3_share_pct}%`);
+      if (sh.hhi != null) parts.push(`- **HHI:** ${sh.hhi}`);
+      if (Array.isArray(sh.single_point_failures) && sh.single_point_failures.length > 0) {
+        parts.push('');
+        parts.push('**Single points of failure:**');
+        sh.single_point_failures.slice(0, 6).forEach((f: unknown) => {
+          const t = sanitiseAscii(coerceToString(f).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 5. Budget Risk Forecast
+    const brf = (ss.budget_risk_forecast ?? null) as Record<string, any> | null;
+    if (brf && (brf.p10_pct != null || brf.p50_pct != null || brf.p90_pct != null)) {
+      parts.push('### Budget Risk Forecast');
+      parts.push('| Scenario | Variance vs budget |');
+      parts.push('|---|---|');
+      const fmtPct = (v: unknown) => v == null ? '—' : `${Number(v) >= 0 ? '+' : ''}${v}%`;
+      parts.push(`| P10 (best case) | ${fmtPct(brf.p10_pct)} |`);
+      parts.push(`| P50 (median) | ${fmtPct(brf.p50_pct)} |`);
+      parts.push(`| P90 (worst case) | ${fmtPct(brf.p90_pct)} |`);
+      if (Array.isArray(brf.drivers) && brf.drivers.length > 0) {
+        parts.push('');
+        parts.push('**Variance drivers:**');
+        brf.drivers.slice(0, 5).forEach((d: unknown) => {
+          const t = sanitiseAscii(coerceToString(d).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 6. SOW Ambiguity Findings
+    const sow: any[] = Array.isArray(ss.sow_ambiguity_findings) ? ss.sow_ambiguity_findings : [];
+    const validSow = sow.filter(s => s && (s.clause || s.recommended_fix));
+    if (validSow.length > 0) {
+      parts.push('### SOW Ambiguity Findings');
+      parts.push('| Clause | Severity | Recommended fix |');
+      parts.push('|---|---|---|');
+      validSow.slice(0, 8).forEach(s => {
+        parts.push(`| ${fmtCell(s.clause)} | ${fmtCell(s.severity)} | ${fmtCell(s.recommended_fix)} |`);
+      });
+      parts.push('');
+    }
+
+    // 7. Recommended Contract Terms
+    const terms: any[] = Array.isArray(ss.recommended_contract_terms) ? ss.recommended_contract_terms : [];
+    const validTerms = terms.filter(t => t && (t.clause_type || t.rationale));
+    if (validTerms.length > 0) {
+      parts.push('### Recommended Contract Terms');
+      parts.push('| Clause type | Priority | Rationale |');
+      parts.push('|---|---|---|');
+      const priorityOrder: Record<string, number> = { MUST: 0, SHOULD: 1, NICE_TO_HAVE: 2 };
+      const sortedTerms = [...validTerms].sort((a, b) =>
+        (priorityOrder[String(a.priority ?? '').toUpperCase()] ?? 3) -
+        (priorityOrder[String(b.priority ?? '').toUpperCase()] ?? 3)
+      );
+      sortedTerms.slice(0, 10).forEach(t => {
+        parts.push(`| ${fmtCell(t.clause_type)} | ${fmtCell(String(t.priority ?? '').replace(/_/g, ' '))} | ${fmtCell(t.rationale)} |`);
+      });
+      parts.push('');
+    }
+
+    // 8. Kraljic Position
+    const kp = (ss.kraljic_position ?? null) as Record<string, any> | null;
+    if (kp && (kp.quadrant || kp.supply_risk != null || kp.business_impact != null)) {
+      parts.push('### Kraljic Position');
+      if (kp.quadrant) parts.push(`- **Quadrant:** ${sanitiseAscii(coerceToString(kp.quadrant))}`);
+      if (kp.supply_risk != null) parts.push(`- **Supply risk:** ${kp.supply_risk} / 5`);
+      if (kp.business_impact != null) parts.push(`- **Business impact:** ${kp.business_impact} / 5`);
+      parts.push('');
+    }
+
+    // 9. Decision Readiness — promised deliverable, always rendered when present
+    const dr = (ss.decision_readiness ?? null) as Record<string, any> | null;
+    if (dr && (dr.score != null || dr.verdict || (Array.isArray(dr.checklist) && dr.checklist.length > 0))) {
+      parts.push('### Decision Readiness');
+      if (dr.score != null) parts.push(`- **Readiness score:** ${dr.score} / 100`);
+      if (dr.verdict) parts.push(`- **Verdict:** ${sanitiseAscii(coerceToString(dr.verdict)).replace(/_/g, ' ')}`);
+      if (dr.rationale) {
+        parts.push('');
+        parts.push(sanitiseAscii(coerceToString(dr.rationale)));
+      }
+      const checklist: any[] = Array.isArray(dr.checklist) ? dr.checklist : [];
+      const validChecklist = checklist.filter(c => c && c.item);
+      if (validChecklist.length > 0) {
+        parts.push('');
+        parts.push('| Readiness item | Status | Owner |');
+        parts.push('|---|---|---|');
+        validChecklist.slice(0, 8).forEach(c => {
+          parts.push(`| ${fmtCell(c.item)} | ${fmtCell(String(c.status ?? '').replace(/_/g, ' '))} | ${fmtCell(c.owner_role)} |`);
+        });
+      }
+      parts.push('');
+    }
+
+    // Concentration shared block
+    const conc = (ss.concentration ?? null) as Record<string, any> | null;
+    const concCats: any[] = Array.isArray(conc?.categories) ? conc!.categories : [];
+    if (concCats.length > 0) {
+      parts.push('### Supplier Concentration');
+      parts.push('| Category | HHI | Concentration | Annual spend |');
+      parts.push('|---|---|---|---|');
+      concCats.slice(0, 8).forEach(c => {
+        parts.push(`| ${fmtCell(c.category_name ?? c.category_id)} | ${fmtCell(c.hhi)} | ${fmtCell(c.hhi_interpretation)} | ${fmtMoney(c.annual_spend)} |`);
+      });
+      parts.push('');
+    }
+  }
+
+  // ── S27 Black Swan Scenario Simulation — render the ten promised deliverables.
+  if (parsed.scenario_id === 'S27') {
+    const ss = (parsed.payload?.scenario_specific ?? {}) as Record<string, any>;
+    const fmtMoney = (v: unknown): string => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      if (Math.abs(n) >= 1_000_000) return `€${(n / 1_000_000).toFixed(2)}M`;
+      if (Math.abs(n) >= 1_000) return `€${(n / 1_000).toFixed(0)}K`;
+      return `€${n.toFixed(0)}`;
+    };
+    const fmtCell = (v: unknown, suffix = ''): string => {
+      if (v == null || v === '') return '—';
+      const s = sanitiseAscii(coerceToString(v)).replace(/\|/g, '\\|');
+      return s + suffix;
+    };
+
+    // 1. Black Swan Risk Map — supply chain nodes & criticality
+    const nodes: any[] = Array.isArray(ss.supply_chain_nodes) ? ss.supply_chain_nodes : [];
+    const validNodes = nodes.filter(n => n && (n.node_label || n.node_id));
+    if (validNodes.length > 0) {
+      parts.push('### Black Swan Risk Map');
+      parts.push('| Node | Type | Criticality | Geography | Alternative |');
+      parts.push('|---|---|---|---|---|');
+      validNodes.slice(0, 12).forEach(n => {
+        parts.push(`| ${fmtCell(n.node_label ?? n.node_id)} | ${fmtCell(String(n.node_type ?? '').replace(/_/g, ' '))} | ${fmtCell(String(n.criticality ?? '').replace(/_/g, ' '))} | ${fmtCell(n.geography)} | ${n.alternative_available ? 'Yes' : 'No'} |`);
+      });
+      parts.push('');
+    }
+
+    // 2. Scenario Simulation Results — impact model
+    const im = (ss.impact_model ?? {}) as Record<string, any>;
+    if (im.direct_impact_estimate != null || im.total_impact_estimate != null) {
+      parts.push('### Scenario Simulation Results');
+      if (im.direct_impact_estimate != null) parts.push(`- **Direct impact estimate:** ${fmtMoney(im.direct_impact_estimate)}`);
+      if (im.total_impact_estimate != null)  parts.push(`- **Total impact estimate (incl. cascades):** ${fmtMoney(im.total_impact_estimate)}`);
+      if (ss.scenario_description) parts.push(`- **Scenario:** ${sanitiseAscii(coerceToString(ss.scenario_description))}`);
+      if (ss.overall_resilience_rag) parts.push(`- **Overall resilience posture:** ${sanitiseAscii(coerceToString(ss.overall_resilience_rag))}`);
+      parts.push('');
+    }
+
+    // 3. Vulnerability Assessment — single points of failure
+    const vulns: any[] = Array.isArray(ss.prioritised_vulnerabilities) ? ss.prioritised_vulnerabilities : [];
+    const validVulns = vulns.filter(v => v && v.vulnerability);
+    if (validVulns.length > 0) {
+      parts.push('### Vulnerability Assessment');
+      parts.push('| Vulnerability | Node | Severity if triggered | Mitigation available |');
+      parts.push('|---|---|---|---|');
+      validVulns.slice(0, 10).forEach(v => {
+        parts.push(`| ${fmtCell(v.vulnerability)} | ${fmtCell(v.associated_node)} | ${fmtCell(String(v.severity_if_triggered ?? '').replace(/_/g, ' '))} | ${fmtCell(v.mitigation_available)} |`);
+      });
+      parts.push('');
+    }
+
+    // 4. Cascading Failure Analysis
+    const cascades: any[] = Array.isArray(im.cascade_effects) ? im.cascade_effects : [];
+    const validCascades = cascades.filter(c => c && (c.triggered_node || c.delay_days != null));
+    if (validCascades.length > 0) {
+      parts.push('### Cascading Failure Analysis');
+      parts.push('| Triggered node | Delay | Revenue at risk | Confidence |');
+      parts.push('|---|---|---|---|');
+      validCascades.slice(0, 10).forEach(c => {
+        const delay = c.delay_days != null ? `${c.delay_days}d` : '—';
+        parts.push(`| ${fmtCell(c.triggered_node)} | ${delay} | ${fmtMoney(c.revenue_at_risk)} | ${fmtCell(c.cascade_confidence)} |`);
+      });
+      parts.push('');
+    }
+
+    // 5. Early Warning Indicators
+    const ewis: any[] = Array.isArray(ss.early_warning_indicators) ? ss.early_warning_indicators : [];
+    const validEwis = ewis.filter(e => e && e.indicator);
+    if (validEwis.length > 0) {
+      parts.push('### Early Warning Indicators');
+      parts.push('| Indicator | Data source | Threshold | Lead time | Owner |');
+      parts.push('|---|---|---|---|---|');
+      validEwis.slice(0, 10).forEach(e => {
+        const lt = e.lead_time_days != null ? `${e.lead_time_days}d` : '—';
+        parts.push(`| ${fmtCell(e.indicator)} | ${fmtCell(e.data_source)} | ${fmtCell(e.threshold)} | ${lt} | ${fmtCell(e.owner_role)} |`);
+      });
+      parts.push('');
+    }
+
+    // 6. Response Playbook — 5 phases
+    const rp = (ss.response_playbook ?? {}) as Record<string, any>;
+    const phases: Array<{ key: string; label: string }> = [
+      { key: 'phase_1_detect',   label: 'Phase 1 — Detect' },
+      { key: 'phase_2_activate', label: 'Phase 2 — Activate' },
+      { key: 'phase_3_contain',  label: 'Phase 3 — Contain' },
+      { key: 'phase_4_recover',  label: 'Phase 4 — Recover' },
+      { key: 'phase_5_learn',    label: 'Phase 5 — Learn' },
+    ];
+    const phasesPresent = phases.some(p => rp[p.key]);
+    if (phasesPresent) {
+      parts.push('### Response Playbook');
+      phases.forEach(ph => {
+        const phase = rp[ph.key] as Record<string, any> | undefined;
+        if (!phase) return;
+        const owner = phase.owner_role ? ` _(Owner: ${sanitiseAscii(coerceToString(phase.owner_role))})_` : '';
+        const dur = phase.target_duration_hours
+          ? ` _(Target: ${phase.target_duration_hours}h)_`
+          : phase.rto_target_hours
+            ? ` _(RTO target: ${phase.rto_target_hours}h)_`
+            : '';
+        parts.push(`**${ph.label}**${owner}${dur}`);
+        if (phase.trigger_signal) parts.push(`- _Trigger:_ ${sanitiseAscii(coerceToString(phase.trigger_signal))}`);
+        if (phase.decision_authority) parts.push(`- _Decision authority:_ ${sanitiseAscii(coerceToString(phase.decision_authority))}`);
+        const acts: unknown[] = Array.isArray(phase.actions) ? phase.actions : [];
+        acts.slice(0, 6).forEach(a => {
+          const t = sanitiseAscii(coerceToString(a).trim());
+          if (t) parts.push(`- ${t}`);
+        });
+        if (Array.isArray(phase.post_mortem_checklist)) {
+          phase.post_mortem_checklist.slice(0, 4).forEach((p: unknown) => {
+            const t = sanitiseAscii(coerceToString(p).trim());
+            if (t) parts.push(`- _Post-mortem:_ ${t}`);
+          });
+        }
+        if (Array.isArray(phase.process_changes)) {
+          phase.process_changes.slice(0, 4).forEach((p: unknown) => {
+            const t = sanitiseAscii(coerceToString(p).trim());
+            if (t) parts.push(`- _Process change:_ ${t}`);
+          });
+        }
+        if (Array.isArray(phase.alternative_supply_options) && phase.alternative_supply_options.length > 0) {
+          parts.push(`- _Alternative supply options:_ ${phase.alternative_supply_options.length} identified (see Mitigation Roadmap)`);
+        }
+        parts.push('');
+      });
+    }
+
+    // 7 + 9. Mitigation Roadmap (prioritised) AND Investment Recommendation (cost-benefit)
+    const inv: any[] = Array.isArray(ss.resilience_investments) ? ss.resilience_investments : [];
+    const validInv = inv.filter(i => i && i.investment);
+    if (validInv.length > 0) {
+      const priorityOrder: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+      const sorted = [...validInv].sort((a, b) =>
+        (priorityOrder[String(a.priority ?? '').toUpperCase()] ?? 3) -
+        (priorityOrder[String(b.priority ?? '').toUpperCase()] ?? 3)
+      );
+      parts.push('### Mitigation Roadmap');
+      parts.push('| Priority | Investment | Est. cost | RTO improvement | Risk reduction |');
+      parts.push('|---|---|---|---|---|');
+      sorted.slice(0, 12).forEach(i => {
+        const rto = i.rto_improvement_hours != null ? `${i.rto_improvement_hours}h` : '—';
+        const rr  = i.risk_reduction_pct != null ? `${i.risk_reduction_pct}%` : '—';
+        parts.push(`| ${fmtCell(i.priority)} | ${fmtCell(i.investment)} | ${fmtMoney(i.estimated_cost)} | ${rto} | ${rr} |`);
+      });
+      parts.push('');
+
+      parts.push('### Investment Recommendation — Cost-Benefit');
+      parts.push('| Investment | Cost | Risk reduction | ROI rationale |');
+      parts.push('|---|---|---|---|');
+      sorted.slice(0, 10).forEach(i => {
+        const rr = i.risk_reduction_pct != null ? `${i.risk_reduction_pct}%` : '—';
+        parts.push(`| ${fmtCell(i.investment)} | ${fmtMoney(i.estimated_cost)} | ${rr} | ${fmtCell(i.roi_rationale)} |`);
+      });
+      parts.push('');
+    }
+
+    // 8. Diversification Strategy
+    const ds = (ss.diversification_strategy ?? {}) as Record<string, any>;
+    const dsActions: any[] = Array.isArray(ds.actions) ? ds.actions : [];
+    const conc = (ss.concentration ?? {}) as Record<string, any>;
+    const concCats: any[] = Array.isArray(conc.categories) ? conc.categories : [];
+    const concSuppliers: any[] = Array.isArray(conc.suppliers) ? conc.suppliers : [];
+    if (dsActions.length > 0 || concCats.length > 0 || ds.current_concentration_summary || ds.target_state) {
+      parts.push('### Diversification Strategy');
+      if (ds.current_concentration_summary) parts.push(`- **Current state:** ${sanitiseAscii(coerceToString(ds.current_concentration_summary))}`);
+      if (ds.target_state)                  parts.push(`- **Target state:** ${sanitiseAscii(coerceToString(ds.target_state))}`);
+      if (concCats.length > 0) {
+        parts.push('');
+        parts.push('| Category | HHI | Concentration | Annual spend |');
+        parts.push('|---|---|---|---|');
+        concCats.slice(0, 8).forEach(c => {
+          parts.push(`| ${fmtCell(c.category_name ?? c.category_id)} | ${fmtCell(c.hhi)} | ${fmtCell(c.hhi_interpretation)} | ${fmtMoney(c.annual_spend)} |`);
+        });
+      }
+      const flows: any[] = Array.isArray(conc.flows) ? conc.flows : [];
+      const singleSource = flows.filter(f => f?.single_source_flag);
+      if (singleSource.length > 0) {
+        parts.push('');
+        parts.push(`**⚠ Single-source dependencies:** ${singleSource.length} flow(s) flagged. Suppliers: ${singleSource.slice(0, 5).map(f => sanitiseAscii(coerceToString(f.target))).join(', ')}.`);
+      }
+      if (dsActions.length > 0) {
+        parts.push('');
+        parts.push('**Diversification actions:**');
+        dsActions.slice(0, 8).forEach(a => {
+          const horizon = a.horizon_months != null ? ` _(${a.horizon_months}mo)_` : '';
+          const reduction = a.concentration_reduction_pct != null ? ` — reduces concentration by ${a.concentration_reduction_pct}%` : '';
+          const cost = a.estimated_cost != null ? ` (cost: ${fmtMoney(a.estimated_cost)})` : '';
+          parts.push(`- ${sanitiseAscii(coerceToString(a.action))}${horizon}${reduction}${cost}`);
+        });
+      }
+      parts.push('');
+    }
+
+    // 10. Monitoring Dashboard — KRIs and trigger points
+    const md = (ss.monitoring_dashboard ?? {}) as Record<string, any>;
+    const kris: any[] = Array.isArray(md.kris) ? md.kris : [];
+    const triggers: any[] = Array.isArray(md.trigger_points) ? md.trigger_points : [];
+    const validKris = kris.filter(k => k && k.kri_name);
+    const validTriggers = triggers.filter(t => t && t.trigger);
+    if (validKris.length > 0 || validTriggers.length > 0) {
+      parts.push('### Monitoring Dashboard');
+      if (validKris.length > 0) {
+        parts.push('**Key Risk Indicators**');
+        parts.push('');
+        parts.push('| KRI | Current | Amber | Red | Owner | Frequency |');
+        parts.push('|---|---|---|---|---|---|');
+        validKris.slice(0, 10).forEach(k => {
+          parts.push(`| ${fmtCell(k.kri_name)} | ${fmtCell(k.current_value)} | ${fmtCell(k.amber_threshold)} | ${fmtCell(k.red_threshold)} | ${fmtCell(k.owner_role)} | ${fmtCell(k.review_frequency)} |`);
+        });
+        parts.push('');
+      }
+      if (validTriggers.length > 0) {
+        parts.push('**Trigger Points & Escalation**');
+        parts.push('');
+        parts.push('| Trigger | Automated response | Escalation path |');
+        parts.push('|---|---|---|');
+        validTriggers.slice(0, 8).forEach(t => {
+          parts.push(`| ${fmtCell(t.trigger)} | ${fmtCell(t.automated_response)} | ${fmtCell(t.escalation_path)} |`);
+        });
+        parts.push('');
+      }
+    }
+
+    // RTO/RPO gap callout (supports Scenario Simulation Results)
+    const rr = (ss.rto_rpo_analysis ?? {}) as Record<string, any>;
+    if (rr.target_rto_hours != null || rr.target_rpo_hours != null || rr.gap_commentary) {
+      parts.push('### RTO / RPO Gap Analysis');
+      parts.push('| Metric | Target | Current | Gap |');
+      parts.push('|---|---|---|---|');
+      const fmtH = (v: unknown) => v == null ? '—' : `${v}h`;
+      parts.push(`| RTO | ${fmtH(rr.target_rto_hours)} | ${fmtH(rr.current_rto_estimate_hours)} | ${fmtH(rr.rto_gap_hours)} |`);
+      parts.push(`| RPO | ${fmtH(rr.target_rpo_hours)} | ${fmtH(rr.current_rpo_estimate_hours)} | ${fmtH(rr.rpo_gap_hours)} |`);
+      if (rr.gap_commentary) {
+        parts.push('');
+        parts.push(sanitiseAscii(coerceToString(rr.gap_commentary)));
+      }
+      parts.push('');
+    }
   }
 
   const GENERIC_PHRASES = ['not specified', 'unknown', 'provide missing data', 'not available', 'n/a'];
@@ -1192,10 +3055,10 @@ export function buildMarkdownFromEnvelope(parsed: ExosOutputParsed): string {
 
   if (validGaps.length > 0) {
     parts.push('');
-    parts.push('💡 **To strengthen this analysis:**');
+    parts.push('**To strengthen this analysis:**');
     validGaps.slice(0, 3).forEach(g => {
       // Strip redundant prefix that duplicates the heading
-      const cleaned = g.resolution.replace(/^To strengthen this analysis,?\s*/i, '');
+      const cleaned = sanitiseAscii(g.resolution.replace(/^To strengthen this analysis,?\s*/i, ''));
       // Capitalise the first letter after stripping
       const resolution = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
       parts.push(`- ${resolution}`);

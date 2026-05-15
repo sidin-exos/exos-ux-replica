@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Building2, Plus, X, Shield, Target, AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ChevronDown, ChevronUp, Building2, Plus, X, Shield, Target, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useIndustryContext } from "@/hooks/useContextData";
 import type { IndustryContext, ConstraintV2, KpiV2 } from "@/lib/ai-context-templates";
 
@@ -75,6 +75,9 @@ function TierBadge({ tier }: { tier?: string }) {
     T1: "bg-destructive/15 text-destructive",
     T2: "bg-warning/15 text-warning",
     T3: "bg-info/15 text-info",
+    HIGH: "bg-destructive/15 text-destructive",
+    MODERATE: "bg-warning/15 text-warning",
+    LOW: "bg-info/15 text-info",
   };
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${colors[tier] || colors.T3}`}>
@@ -195,14 +198,6 @@ export function IndustryContextEditor({
     return overrides.enabledKpis[key] !== false;
   }).length + overrides.customKpis.length;
 
-  const blockerCount = hasV2Constraints
-    ? industry.constraints_v2!.filter((c, i) => {
-        const legacyText = industry.constraints[i] || c.label;
-        const key = `${i}-${legacyText.slice(0, 20)}`;
-        return c.blocker && overrides.enabledConstraints[key] !== false;
-      }).length
-    : 0;
-
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card className="border-primary/20 bg-primary/5">
@@ -214,11 +209,6 @@ export function IndustryContextEditor({
                 AI Settings: {industry.name}
               </span>
               <div className="flex items-center gap-2">
-                {blockerCount > 0 && (
-                  <Badge variant="destructive" className="text-xs">
-                    {blockerCount} Blocker{blockerCount > 1 ? 's' : ''}
-                  </Badge>
-                )}
                 <Badge variant="secondary" className="text-xs">
                   {activeConstraints} constraints
                 </Badge>
@@ -260,7 +250,7 @@ export function IndustryContextEditor({
                         key={key}
                         className={`flex items-start gap-3 p-2 rounded-md transition-colors ${
                           isEnabled ? "bg-background" : "bg-muted/50 opacity-60"
-                        } ${cv2.blocker ? "ring-1 ring-destructive/30" : ""}`}
+                        }`}
                       >
                         <Switch
                           checked={isEnabled}
@@ -269,13 +259,7 @@ export function IndustryContextEditor({
                         />
                         <div className="flex-1 space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <TierBadge tier={cv2.tier} />
-                            {cv2.blocker && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-destructive/10 text-destructive">
-                                <AlertTriangle className="h-3 w-3" />
-                                Blocker
-                              </span>
-                            )}
+                            <TierBadge tier={cv2.blocker ? "HIGH" : cv2.tier} />
                             <span className="text-sm">{cv2.label}</span>
                           </div>
                           {cv2.eu_ref && (

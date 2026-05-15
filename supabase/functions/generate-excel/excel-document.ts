@@ -275,6 +275,46 @@ function applySummaryStyles(ws: Worksheet, range: SheetRange) {
   }
 }
 
+// ─── Cost Breakdown helpers (mirrors splitCostComponents) ───────────
+
+function formatMoney(value: number, currency = "$"): string {
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${currency}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${currency}${(abs / 1_000).toFixed(0)}K`;
+  const r = Math.round(abs * 100) / 100;
+  return `${sign}${currency}${Number.isInteger(r) ? String(r) : r.toFixed(2)}`;
+}
+
+interface SplitCost {
+  costs: { name: string; value: number }[];
+  reductions: { name: string; value: number }[];
+  gross: number;
+  totalReductions: number;
+  net: number;
+  reductionPercent: number;
+  currency: string;
+}
+
+function splitCostBreakdown(
+  data: { components: { name: string; value: number; type: "cost" | "reduction" }[]; currency?: string },
+): SplitCost {
+  const currency = data.currency || "$";
+  const costs = data.components
+    .filter((c) => c.type === "cost")
+    .map((c) => ({ name: c.name, value: c.value }))
+    .sort((a, b) => b.value - a.value);
+  const reductions = data.components
+    .filter((c) => c.type === "reduction")
+    .map((c) => ({ name: c.name, value: Math.abs(c.value) }))
+    .sort((a, b) => b.value - a.value);
+  const gross = costs.reduce((s, c) => s + c.value, 0);
+  const totalReductions = reductions.reduce((s, c) => s + c.value, 0);
+  const net = gross - totalReductions;
+  const reductionPercent = gross > 0 ? Math.round((totalReductions / gross) * 100) : 0;
+  return { costs, reductions, gross, totalReductions, net, reductionPercent, currency };
+}
+
 // ─── dashboard → rows converters ──────────────────────────────────────
 
 function dashboardToSheets(data: DashboardData): { name: string; rows: Record<string, unknown>[] }[] {
@@ -294,11 +334,8 @@ function dashboardToSheets(data: DashboardData): { name: string; rows: Record<st
       return row;
     }) });
   }
-  if (data.costWaterfall?.components?.length) {
-    sheets.push({ name: "Cost Waterfall", rows: data.costWaterfall.components.map((c) => ({
-      Component: c.name, Value: c.value, Type: c.type,
-    })) });
-  }
+  // Cost Breakdown is rendered with a custom layout in the main loop — skip generic mapping here.
+
   if (data.timelineRoadmap?.phases?.length) {
     sheets.push({ name: "Timeline Roadmap", rows: data.timelineRoadmap.phases.map((p) => ({
       Phase: p.name, "Start Week": p.startWeek, "End Week": p.endWeek, Status: p.status, Milestones: p.milestones?.join("; ") ?? "",
@@ -484,6 +521,11 @@ export async function generateExcelBuffer(payload: GenerateExcelPayload): Promis
   // Prefer structured envelope, fall back to legacy XML parsing
   const parsedData = (structuredData ? extractFromEnvelope(structuredData) : null) ?? extractDashboardData(analysisResult);
   if (parsedData) {
+    // Custom Cost Breakdown section (mirrors PDF: KPI header + cost/savings sub-tables + footer)
+    if (parsedData.costWaterfall?.components?.length) {
+      writeCostBreakdownSection(parsedData.costWaterfall);
+      addSpacing(3);
+    }
     for (const { name, rows } of dashboardToSheets(parsedData)) {
       if (rows.length === 0) continue;
       writeSectionTitle(name);
@@ -492,6 +534,128 @@ export async function generateExcelBuffer(payload: GenerateExcelPayload): Promis
       addSpacing(3);
     }
   }
+
+  // ─── Custom Cost Breakdown writer (closure over ws + currentRow) ───
+  function writeCostBreakdownSection(
+    cw: { components: { name: string; value: number; type: "cost" | "reduction" }[]; currency?: string },
+  ) {
+    const split = splitCostBreakdown(cw);
+    const { costs, reductions, gross, totalReductions, net, reductionPercent, currency } = split;
+    const TEAL = "FF28716a";
+
+    // Branded header row spanning A:D, with KPI on the right (cols C–D)
+    const headerRow = ws.getRow(currentRow);
+    headerRow.getCell(1).value = "Cost Breakdown";
+    headerRow.getCell(1).font = { name: "Inter", family: 2, size: 14, bold: true, color: { argb: COLORS.white } };
+    headerRow.getCell(2).value = "Maximum cost vs. potential improvements";
+    headerRow.getCell(2).font = { name: "Inter", family: 2, size: 11, italic: true, color: { argb: COLORS.white } };
+    headerRow.getCell(3).value = `Net: ${formatMoney(net, currency)}`;
+    headerRow.getCell(3).font = { name: "Inter", family: 2, size: 13, bold: true, color: { argb: COLORS.white } };
+    headerRow.getCell(3).alignment = { vertical: "middle", horizontal: "right" };
+    headerRow.getCell(4).value = totalReductions > 0
+      ? `−${formatMoney(totalReductions, currency)} saved (${reductionPercent}%)`
+      : "Savings not quantified";
+    headerRow.getCell(4).font = { name: "Inter", family: 2, size: 10, color: { argb: COLORS.white } };
+    headerRow.getCell(4).alignment = { vertical: "middle", horizontal: "right" };
+    for (let c = 1; c <= 4; c++) {
+      headerRow.getCell(c).fill = { ...BRAND_TEAL_FILL };
+      headerRow.getCell(c).border = { ...THIN_BORDER };
+      if (c === 1 || c === 2) headerRow.getCell(c).alignment = { vertical: "middle" };
+    }
+    headerRow.height = 32;
+    currentRow++;
+
+    // Sub-table 1: Maximum Cost
+    const writeSubHeader = (label: string, color: string) => {
+      const r = ws.getRow(currentRow);
+      r.getCell(1).value = label;
+      r.getCell(1).font = { name: "Inter", family: 2, size: 11, bold: true, color: { argb: COLORS.white } };
+      r.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+      r.getCell(1).alignment = { vertical: "middle" };
+      for (let c = 2; c <= 4; c++) {
+        r.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+      }
+      r.height = 22;
+      currentRow++;
+    };
+
+    const writeMiniTable = (
+      items: { name: string; value: number }[],
+      total: number,
+      amountColor: string,
+    ) => {
+      // Column header
+      const hr = ws.getRow(currentRow);
+      ["Component", "Amount", "% of Total", ""].forEach((h, i) => {
+        const cell = hr.getCell(i + 1);
+        cell.value = h;
+        cell.font = { name: "Inter", family: 2, size: 10, bold: true, color: { argb: COLORS.muted } };
+        cell.border = { bottom: { style: "thin", color: { argb: COLORS.border } } };
+        cell.alignment = { horizontal: i === 0 ? "left" : "right", vertical: "middle" };
+      });
+      hr.height = 18;
+      currentRow++;
+
+      items.forEach((it, idx) => {
+        const r = ws.getRow(currentRow);
+        const pct = total > 0 ? Math.round((it.value / total) * 100) : 0;
+        r.getCell(1).value = it.name;
+        r.getCell(2).value = formatMoney(it.value, currency);
+        r.getCell(3).value = `${pct}%`;
+        r.getCell(1).font = { ...DATA_FONT };
+        r.getCell(2).font = { name: "Inter", family: 2, size: 13, bold: true, color: { argb: amountColor } };
+        r.getCell(3).font = { ...MUTED_FONT };
+        r.getCell(2).alignment = { horizontal: "right" };
+        r.getCell(3).alignment = { horizontal: "right" };
+        if (idx % 2 === 0) {
+          for (let c = 1; c <= 4; c++) r.getCell(c).fill = { ...PALE_TEAL_FILL };
+        }
+        for (let c = 1; c <= 4; c++) r.getCell(c).border = { ...THIN_BORDER };
+        currentRow++;
+      });
+    };
+
+    writeSubHeader("Maximum Cost — all cost components", "FF7d8696");
+    if (costs.length > 0) writeMiniTable(costs, gross, COLORS.foreground);
+    else {
+      const r = ws.getRow(currentRow); r.getCell(1).value = "No cost components";
+      r.getCell(1).font = { ...MUTED_FONT, italic: true } as never; currentRow++;
+    }
+
+    currentRow++; // blank spacer
+
+    writeSubHeader("Potential Improvements — identified savings levers", TEAL);
+    if (reductions.length > 0) writeMiniTable(reductions, totalReductions, TEAL);
+    else {
+      const r = ws.getRow(currentRow); r.getCell(1).value = "No reductions identified";
+      r.getCell(1).font = { ...MUTED_FONT, italic: true } as never; currentRow++;
+    }
+
+    currentRow++; // blank spacer
+
+    // Footer summary: Gross / Reductions / Net
+    const fr = ws.getRow(currentRow);
+    const cells: [string, string, string][] = [
+      ["Gross Costs", formatMoney(gross, currency), COLORS.foreground],
+      ["Reductions", `−${formatMoney(totalReductions, currency)}`, TEAL],
+      ["Net Total", formatMoney(net, currency), COLORS.foreground],
+    ];
+    cells.forEach(([label, value, color], i) => {
+      const labelCell = fr.getCell(i * 2 + 1);
+      const valueCell = fr.getCell(i * 2 + 2);
+      labelCell.value = label;
+      labelCell.font = { name: "Inter", family: 2, size: 10, color: { argb: COLORS.muted } };
+      labelCell.border = { top: { style: "medium", color: { argb: COLORS.brandTeal } } };
+      labelCell.alignment = { horizontal: "left", vertical: "middle" };
+      valueCell.value = value;
+      valueCell.font = { name: "Inter", family: 2, size: 13, bold: true, color: { argb: color } };
+      valueCell.border = { top: { style: "medium", color: { argb: COLORS.brandTeal } } };
+      valueCell.alignment = { horizontal: "right", vertical: "middle" };
+    });
+    fr.height = 26;
+    currentRow++;
+  }
+
 
   // Column widths
   ws.getColumn(1).width = 35;

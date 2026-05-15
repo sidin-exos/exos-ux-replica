@@ -41,7 +41,9 @@ const NAVIGATION_RULES = `## Navigation Rules
 2. Only use the navigate_to_scenario tool after at least 2 exchanges where the user has clearly expressed a specific need AND confirmed they want to go there.
 3. For general questions like "How to use EXOS?" — explain capabilities WITHOUT navigating. List relevant scenarios and ask what resonates.
 4. When you do navigate, prefer /reports for scenario analysis and /market-intelligence for market data.
-5. Keep responses under 150 words unless the user asks for detail.`;
+5. **NEVER promise to send, share, paste or generate a link, URL or button.** You cannot deliver clickable links inside chat messages — the only way you can take a user somewhere is via the navigate_to_scenario tool, and that immediately moves them. If you are not navigating right now, instead tell the user the exact scenario name in quotes and advise them to search for it on the Reports page (e.g. "Open the Reports page and search for 'Savings Calculation' in the scenario catalogue."). Never write phrases like "I'll send you the link", "here's the link", "I'll share a link shortly", or "click the button below".
+6. **Procurement category search guidance.** When a user describes a spend area, commodity or service, map it to the closest category in the Procurement Category Catalogue below (match against both the canonical name and its aliases). Then advise the user how to find it in the platform: tell them the EXACT canonical category name in quotes AND list 1–2 alternative search terms from the aliases, e.g. "In the category selector, search for 'IT Software (SaaS)' — you can also try 'SaaS subscriptions' or 'Cloud apps'." If the user's term is ambiguous, offer 2–3 candidate categories with their aliases and ask which fits best. Never invent categories that are not in the catalogue.
+7. Keep responses under 150 words unless the user asks for detail.`;
 
 // ─── SYSTEM PROMPT BUILDER ──────────────────────────────────────────────────
 
@@ -99,7 +101,25 @@ ${configMap["quick_references"] || ""}`;
     scenarioBlock = "\n\n## Scenarios\nNo scenario catalog was provided. Direct users to /reports to browse the full list.";
   }
 
-  return `${systemPromptBase}${scenarioBlock}\n\nThe user is currently on: ${currentPath || "/"}`;
+  // Build procurement category catalogue with aliases (search guidance)
+  const { data: catRows, error: catError } = await supabase
+    .from("procurement_categories")
+    .select("name, aliases")
+    .order("name");
+
+  if (catError) {
+    console.error("chat-copilot: Failed to fetch procurement categories:", catError);
+  }
+
+  const categoryBlock = catRows && catRows.length > 0
+    ? "\n\n## Procurement Category Catalogue (with search aliases)\n" +
+      "Use these to advise users how to search in the category selector. Match user terms against canonical names AND aliases.\n" +
+      (catRows as Array<{ name: string; aliases: string[] | null }>)
+        .map((c) => `- "${c.name}" — aliases: ${(c.aliases || []).join(", ") || "(none)"}`)
+        .join("\n")
+    : "";
+
+  return `${systemPromptBase}${scenarioBlock}${categoryBlock}\n\nThe user is currently on: ${currentPath || "/"}`;
 }
 
 // ─── TOOLS ──────────────────────────────────────────────────────────────────
@@ -207,7 +227,7 @@ serve(async (req) => {
       messageCount: messages.length,
       scenarioCount: parsedScenarios?.length || 0,
       hasContext: !!currentPath && currentPath !== "/",
-    }, { tags: ["chat", "model:gemini-2.5-pro"] });
+    }, { tags: ["chat", "model:gemini-3.1-pro-preview"] });
 
     // Convert messages to Google format (frontend sends user/assistant roles)
     const typedMessages = messages as Array<{ role: string; content: string }>;
@@ -248,7 +268,7 @@ serve(async (req) => {
         promptTokens,
         completionTokens,
         totalTokens: aiResponse.usageMetadata?.totalTokenCount,
-        estimatedCostUsd: estimateCost("gemini-2.5-pro", promptTokens, completionTokens),
+        estimatedCostUsd: estimateCost("gemini-3.1-pro-preview", promptTokens, completionTokens),
         responseLength: content.length,
         processingTimeMs: Date.now() - startTime,
       });

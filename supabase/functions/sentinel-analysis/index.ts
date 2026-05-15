@@ -13,7 +13,9 @@ import { trackEvent, trackOnceEvent, trackDailyEvent } from "../_shared/track.ts
 import {
   SCENARIO_GROUP_REGISTRY, SCENARIO_ID_REGISTRY, GROUP_LABELS,
   GROUP_AI_INSTRUCTIONS, GROUP_SCHEMAS, AI_PROMPT_CONTRACT,
-  parseAIResponse, buildMarkdownFromEnvelope,
+  getScenarioSchema, getScenarioInstructions,
+  parseAIResponse, buildMarkdownFromEnvelope, pruneEmptyBranches, synthesizeMissingContent,
+  evaluateOutputCoverage, applyCoverageToEnvelope, reconcileKraljic,
   type ExosOutputParsed,
 } from "../_shared/output-schemas.ts";
 
@@ -91,7 +93,7 @@ const AUDITOR_SYSTEM_PROMPT = `You are a Senior Financial Auditor specializing i
 
 ### 4. Unit Consistency
 - Check monthly vs. annual vs. multi-year alignment
-- Verify currency consistency throughout
+- Verify currency consistency throughout: detect the currency in the user's input (ISO code, symbol, or country signal) and confirm the analysis uses ONLY that currency. [FAIL] any silent conversion (e.g., ZAR inputs reported in EUR) or mismatched "n" fields.
 - Validate quantity units (per unit, per lot, per annum)
 
 ### 5. Logical Coherence
@@ -105,7 +107,7 @@ At the end, provide an overall AUDIT VERDICT: [APPROVED] or [REQUIRES CORRECTION
 function buildSynthesizerPrompt(scenarioGroup: string | null, scenarioId: string | null): string {
   // Synthesizer uses structured JSON output via schema injection
   const schemaInjection = scenarioGroup
-    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + GROUP_SCHEMAS[scenarioGroup]
+    ? AI_PROMPT_CONTRACT + getScenarioInstructions(scenarioGroup, scenarioId) + '\n\n' + getScenarioSchema(scenarioGroup, scenarioId)
     : '';
 
   const sid = scenarioId ? SCENARIO_ID_REGISTRY[scenarioId] || scenarioId : 'unknown';
@@ -226,10 +228,10 @@ ${body}
 
   const constraintsXML = hasV2C
     ? industry.constraints_v2!.map((c, i) => {
-        const attrs = [`priority="${i + 1}"`, c.tier ? `tier="${escapeXML(c.tier)}"` : '', c.blocker ? `blocker="true"` : '', c.eu_ref ? `eu-ref="${escapeXML(c.eu_ref)}"` : ''].filter(Boolean).join(' ');
+        const tier = c.blocker ? 'HIGH' : c.tier;
+        const attrs = [`priority="${i + 1}"`, tier ? `tier="${escapeXML(tier)}"` : '', c.eu_ref ? `eu-ref="${escapeXML(c.eu_ref)}"` : ''].filter(Boolean).join(' ');
         const impact = c.procurement_impact ? `\n        <procurement-impact>${escapeXML(c.procurement_impact)}</procurement-impact>` : '';
-        const blockerComment = c.blocker ? ' <!-- HARD GATE -->' : '';
-        return `      <constraint ${attrs}>${escapeXML(c.label)}${impact}\n      </constraint>${blockerComment}`;
+        return `      <constraint ${attrs}>${escapeXML(c.label)}${impact}\n      </constraint>`;
       }).join('\n')
     : industry.constraints.map((c, i) => `      <constraint priority="${i + 1}">${escapeXML(c)}</constraint>`).join('\n');
 
@@ -244,7 +246,7 @@ ${body}
   <industry-name>${escapeXML(industry.name)}</industry-name>
   <industry-id>${escapeXML(industry.slug)}</industry-id>
   <regulatory-constraints>
-    <description>Critical regulatory and operational constraints. All recommendations must account for these. Items flagged as blockers are hard decision gates.</description>
+    <description>Critical regulatory and operational constraints. All recommendations must account for these requirements.</description>
     <constraints>
 ${constraintsXML}
     </constraints>
@@ -332,7 +334,7 @@ ${enriched.length > 0 ? enriched.join('\n') + '\n' : ''}  <category-kpis>
 ${kpisXML}
     </kpis>
   </category-kpis>
-  <system-instruction>If an item is flagged as a blocker or price volatility is high, treat it as a hard constraint requiring mitigation.</system-instruction>
+  <system-instruction>If price volatility is high, treat it as a hard constraint requiring mitigation.</system-instruction>
 </category-context>`;
 }
 
@@ -522,7 +524,7 @@ function buildServerGroundedPrompts(
 
   // Build schema injection (replaces legacy <dashboard-data> XML instructions)
   const schemaInjection = scenarioGroup
-    ? AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[scenarioGroup] + '\n\n' + GROUP_SCHEMAS[scenarioGroup]
+    ? AI_PROMPT_CONTRACT + getScenarioInstructions(scenarioGroup, scenarioType) + '\n\n' + getScenarioSchema(scenarioGroup, scenarioType)
     : '';
 
   const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
@@ -536,6 +538,12 @@ IMPORTANT RULES:
 6. Flag uncertainty explicitly with confidence levels
 7. Err on cautious side for savings projections
 8. ATTACHED DOCUMENTS: If <attached-documents> is present in the analysis request, treat the document content as primary source material. Reference specific sections, clauses, data points, or figures from the documents in your analysis. If the documents contain data that contradicts the user's text input, flag the discrepancy.
+9. CURRENCY DETECTION (CRITICAL):
+   - Before any financial output, detect the currency from the user's input. Look for: ISO codes (ZAR, EUR, USD, GBP, CHF, AUD, BRL, INR, JPY, CNY, NGN, etc.), symbols ($, €, £, ¥, ₹, R, R$), and country/locale signals (e.g., "South Africa" → ZAR).
+   - Use that exact currency for ALL monetary values in your output (KPIs, savings, NPV, cost ranges, narrative). Format with the correct ISO code or native symbol.
+   - DO NOT convert, normalise, or silently substitute another currency (e.g., never convert ZAR to EUR/USD). If multiple currencies appear in the input, use the dominant one and explicitly flag the mix in a note.
+   - If no currency is detectable, state "currency not specified" rather than defaulting to EUR or USD.
+   - The dashboard "n" field (currency code) MUST match the detected currency.
 
 Use scenario_id "${scenarioCode}", scenario_name based on the analysis type, group "${scenarioGroup || 'A'}", and group_label "${groupLabel}" in the envelope.
 
@@ -613,7 +621,7 @@ async function callLLM(
         systemPrompt: sysPrompt,
         contents: [{ role: "user", parts: [{ text: usrPrompt }] }],
         temperature: 0.4,
-        maxOutputTokens: 8192,
+        maxOutputTokens: 9216,
         model: googleModel,
         // Outer retries here re-enter callGoogleAI; on attempt > 0 we suppress
         // the Nebius branch so we do not stack a 90s Nebius timeout on top of
@@ -739,17 +747,27 @@ serve(async (req) => {
 
     // Validate inputs
     const rawUserPrompt = requireString(body.userPrompt, "userPrompt", { minLength: 1, maxLength: 50000 })!;
+    // Per-scenario default model: rapid-response scenarios (S26 disruption,
+    // S17 risk-screen) use flash for ~50% cost cut and 2-3x faster latency
+    // — they don't benefit from pro's deeper reasoning.
+    const FLASH_DEFAULT_SCENARIOS = new Set(["disruption-management", "risk-screening"]);
+    const scenarioDefaultModel = (typeof body.scenarioType === "string" && FLASH_DEFAULT_SCENARIOS.has(body.scenarioType))
+      ? "gemini-3-flash-preview"
+      : "gemini-3.1-pro-preview";
     // Accept model/useGoogleAIStudio/stream for backward compat but always use Google AI Studio directly
     const rawGoogleModel = (requireString(body.googleModel, "googleModel", { optional: true, maxLength: 100 })
       || requireString(body.model, "model", { optional: true, maxLength: 100 })
-      || "gemini-3.1-pro-preview").replace(/^google\//, "");
+      || scenarioDefaultModel).replace(/^google\//, "");
     // Server-side model whitelist — prevents cost amplification and model probing
     const ALLOWED_MODELS = [
       "gemini-3.1-pro-preview",
       "gemini-3-flash-preview",
-      "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
+      "gemini-3.1-flash-lite-preview",
     ];
-    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : "gemini-3.1-pro-preview";
+    const googleModel = ALLOWED_MODELS.includes(rawGoogleModel) ? rawGoogleModel : scenarioDefaultModel;
+    // Audit line: surface the resolved model per request so we can trace any
+    // 2.5-pro leakage from stale client preferences.
+    console.log(`[Sentinel] model_used=${googleModel} requested=${rawGoogleModel} scenario=${body.scenarioType ?? body.scenarioId ?? "n/a"}`);
     const useLocalModel = optionalBoolean(body.useLocalModel, "useLocalModel") ?? false;
     const localModelEndpoint = requireString(body.localModelEndpoint, "localModelEndpoint", { optional: true, maxLength: 500 });
     // Accept but ignore — always use Google AI Studio
@@ -1037,7 +1055,7 @@ serve(async (req) => {
       // Inject schema for structured output if scenario type is known
       const legacyGroup = scenarioType ? SCENARIO_GROUP_REGISTRY[scenarioType] : null;
       if (legacyGroup) {
-        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + GROUP_AI_INSTRUCTIONS[legacyGroup] + '\n\n' + GROUP_SCHEMAS[legacyGroup];
+        systemPrompt += '\n\n' + AI_PROMPT_CONTRACT + getScenarioInstructions(legacyGroup, scenarioType) + '\n\n' + getScenarioSchema(legacyGroup, scenarioType);
       }
       userPrompt = attachedDocumentsXml
         ? `${anonymizedUserPrompt}\n\n${attachedDocumentsXml}`
@@ -1124,8 +1142,18 @@ serve(async (req) => {
         ? userPrompt.replace(attachedDocumentsXml, "").replace(/\n\n\n+/g, "\n\n")
         : userPrompt;
 
+      // F2: Slim the Critic context further — the auditor only needs the
+      // anonymized query, not the full grounding-context block (which the
+      // analyst already consumed). This typically removes 2-4k tokens from
+      // the Stage-2 turn without changing analytical outcomes.
+      const userPromptForCritic = userPromptWithoutDocs
+        .replace(/<industry-context[\s\S]*?<\/industry-context>/g, "")
+        .replace(/<category-context[\s\S]*?<\/category-context>/g, "")
+        .replace(/<grounding-context[\s\S]*?<\/grounding-context>/g, "")
+        .replace(/\n\n\n+/g, "\n\n");
+
       // Cycle 2: Auditor Critique
-      const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPromptWithoutDocs}\n</original-request>`;
+      const critiquePrompt = `<draft>\n${draft}\n</draft>\n\n<original-request>\n${userPromptForCritic}\n</original-request>`;
       const critiqueResult = await callLLM(AUDITOR_SYSTEM_PROMPT, critiquePrompt, { ...llmOpts, spanName: "Auditor_Critique" });
       const critique = critiqueResult.content;
       console.log(`[Sentinel] Cycle 2 (Auditor Critique): ${critique.length} chars`);
@@ -1198,6 +1226,22 @@ serve(async (req) => {
       const parsedEnvelope = parseAIResponse(finalContent);
       let responseContent = multiDeanon.restoredText;
       let deanonEnvelopeObj = parsedEnvelope;
+      let mcFailureReason: string | null = null;
+      // Bulletproof raw-JSON detector (mirrors single-pass): never let raw or
+      // truncated JSON reach the UI when parsing failed.
+      const looksLikeRawJsonMc = (s: string): boolean => {
+        const trimmed = s.trim();
+        if (!trimmed) return false;
+        if (trimmed.startsWith('```') && /```\s*json/i.test(trimmed)) return true;
+        if (trimmed.startsWith('{')) return true;
+        if (/"schema_version"\s*:/.test(trimmed.slice(0, 500))) return true;
+        return false;
+      };
+      if (!parsedEnvelope && (looksLikeRawJsonMc(responseContent) || looksLikeRawJsonMc(finalContent))) {
+        console.warn('[Sentinel] Multi-cycle returned unparseable JSON-like content — surfacing friendly fallback to UI');
+        responseContent = 'The analysis completed but the model returned an incomplete response (likely truncated by a fallback model). Please retry to regenerate.';
+        mcFailureReason = 'json_parse_failed';
+      }
       if (['1.0','2.0'].includes(parsedEnvelope?.schema_version)) {
         // Deanonymize the envelope itself so structured data has real names.
         // Wrapped in try/catch because deanonymizeText does plain text replacement
@@ -1210,6 +1254,18 @@ serve(async (req) => {
           console.error("[Sentinel] Envelope deanonymization re-parse failed, falling back to anonymized envelope:", e);
           new SentryReporter("sentinel-analysis").captureException(e, { userId, tags: { stage: "envelope-deanon" } });
           deanonEnvelopeObj = parsedEnvelope;
+        }
+        // Server-side defensive synthesis (backfill empty tables) THEN prune.
+        deanonEnvelopeObj = synthesizeMissingContent(deanonEnvelopeObj);
+        deanonEnvelopeObj = pruneEmptyBranches(deanonEnvelopeObj);
+        // P0: Kraljic single-source-of-truth — derive categorical position from coords.
+        deanonEnvelopeObj = reconcileKraljic(deanonEnvelopeObj);
+        // Output coverage gate: downgrade confidence_level + log gaps when the
+        // model under-delivered on promised scenario blocks (S22 etc.).
+        const mcCoverage = evaluateOutputCoverage(deanonEnvelopeObj);
+        if (mcCoverage) {
+          deanonEnvelopeObj = applyCoverageToEnvelope(deanonEnvelopeObj, mcCoverage);
+          console.log(`[Sentinel] coverage scenario=${deanonEnvelopeObj?.scenario_id} delivered=${mcCoverage.delivered}/${mcCoverage.promised} suggested=${mcCoverage.suggestedConfidence} missing=${JSON.stringify(mcCoverage.missing)}`);
         }
         responseContent = buildMarkdownFromEnvelope(deanonEnvelopeObj);
         // GDPR flag logging
@@ -1246,6 +1302,7 @@ serve(async (req) => {
             modelUsed: fallbackUsed ? "nvidia/nemotron-3-super-120b-a12b" : googleModel,
             // Number of cycles (out of 3) that fell back to Nebius
             nebiusCycleCount: nebiusCycles.length,
+            failureReason: mcFailureReason,
           },
         }),
         { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
@@ -1269,6 +1326,16 @@ serve(async (req) => {
     const MAX_RETRIES = 2;
     const RETRY_DELAYS = [500];
 
+    // Heavy-grounding fast path: when the prompt is large (>5K tokens-ish),
+    // gemini-2.5-pro frequently 504s after the full 45s timeout. Skip directly
+    // to flash to keep total latency under ~30s on the first try.
+    const HEAVY_INPUT_CHAR_THRESHOLD = 20_000; // ~5K tokens of system+user prompt
+    const totalPromptChars = systemPrompt.length + userPrompt.length;
+    const useFastPath = totalPromptChars > HEAVY_INPUT_CHAR_THRESHOLD && googleModel === "gemini-2.5-pro";
+    if (useFastPath) {
+      console.warn(`[Sentinel] Heavy input (${totalPromptChars} chars) — bypassing 2.5-pro, starting on flash`);
+    }
+
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         if (attempt > 0) {
@@ -1276,16 +1343,16 @@ serve(async (req) => {
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt - 1]));
         }
 
-        // On retry, downshift to faster model to fit inside 150s edge timeout
-        const modelForAttempt = attempt === 0 ? googleModel : "gemini-3-flash-preview";
+        // On retry OR fast-path, downshift to faster model to fit inside 150s edge timeout
+        const modelForAttempt = (attempt === 0 && !useFastPath) ? googleModel : "gemini-3-flash-preview";
 
         const aiResponse = await callGoogleAI({
           systemPrompt,
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
           temperature: 0.4,
-          maxOutputTokens: 8192,
+          maxOutputTokens: 9216,
           model: modelForAttempt,
-          timeoutMs: 45_000,
+          timeoutMs: 50_000,
           skipNebiusFallback: attempt > 0,
         });
 
@@ -1339,15 +1406,20 @@ serve(async (req) => {
         const singleParsedEnvelope = parseAIResponse(content);
         let responseContent = singleDeanon.restoredText;
         let deanonSingleEnvelope = singleParsedEnvelope;
+        let failureReason: string | null = null;
 
-        // Defensive guard: detect when the deanonymized content is raw JSON
-        // (e.g. flash fallback returned envelope-only without prose). We must
-        // never leak raw JSON or any internal metadata (shadow_log, validation
-        // traces, payload internals) into the user-facing `content` string.
+        // Bulletproof raw-JSON detector: anything that looks even partially
+        // like a JSON envelope (starts with `{`, contains `schema_version`,
+        // wrapped in code fences, OR has the JSON-ish shape) must NOT reach
+        // the UI as raw text. Truncated envelopes that don't end with `}`
+        // are the most common leak source.
         const looksLikeRawJson = (s: string): boolean => {
           const trimmed = s.trim();
-          return (trimmed.startsWith('{') && trimmed.endsWith('}'))
-            || (trimmed.startsWith('```') && /```\s*json/i.test(trimmed));
+          if (!trimmed) return false;
+          if (trimmed.startsWith('```') && /```\s*json/i.test(trimmed)) return true;
+          if (trimmed.startsWith('{')) return true;
+          if (/"schema_version"\s*:/.test(trimmed.slice(0, 500))) return true;
+          return false;
         };
 
         if (['1.0','2.0'].includes(singleParsedEnvelope?.schema_version)) {
@@ -1363,14 +1435,27 @@ serve(async (req) => {
             new SentryReporter("sentinel-analysis").captureException(e, { userId, tags: { stage: "envelope-deanon" } });
             deanonSingleEnvelope = singleParsedEnvelope;
           }
+          // Server-side defensive synthesis THEN null/empty pruning — models
+          // inconsistently leave optional tables empty AND emit `null`
+          // placeholders despite prompt instructions. Deterministic enforcement.
+          deanonSingleEnvelope = synthesizeMissingContent(deanonSingleEnvelope);
+          deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
+          // P0: Kraljic single-source-of-truth — derive categorical position from coords.
+          deanonSingleEnvelope = reconcileKraljic(deanonSingleEnvelope);
+          // Output coverage gate (single-pass path).
+          const spCoverage = evaluateOutputCoverage(deanonSingleEnvelope);
+          if (spCoverage) {
+            deanonSingleEnvelope = applyCoverageToEnvelope(deanonSingleEnvelope, spCoverage);
+            console.log(`[Sentinel] coverage scenario=${deanonSingleEnvelope?.scenario_id} delivered=${spCoverage.delivered}/${spCoverage.promised} suggested=${spCoverage.suggestedConfidence} missing=${JSON.stringify(spCoverage.missing)}`);
+          }
           responseContent = buildMarkdownFromEnvelope(deanonSingleEnvelope);
           if (deanonSingleEnvelope.gdpr_flags?.length > 0) {
             console.warn('[SENTINEL] GDPR flags in AI output', { scenario_id: deanonSingleEnvelope.scenario_id, flag_count: deanonSingleEnvelope.gdpr_flags.length });
           }
         } else if (singleParsedEnvelope && typeof singleParsedEnvelope === 'object') {
           // AI returned a JSON object but without a recognised schema_version
-          // (e.g. flash fallback emitted a partial envelope). Render it through
-          // the defensive markdown builder rather than leaking raw JSON to the UI.
+          // (e.g. flash fallback emitted a partial/salvaged envelope). Render
+          // it through the defensive markdown builder rather than leaking JSON.
           try {
             const envelopeStr = JSON.stringify(singleParsedEnvelope);
             const deanonEnvelope = deanonymizeText(envelopeStr, anonymizationResult.entityMap);
@@ -1378,6 +1463,7 @@ serve(async (req) => {
           } catch (_e) {
             deanonSingleEnvelope = singleParsedEnvelope;
           }
+          deanonSingleEnvelope = pruneEmptyBranches(deanonSingleEnvelope);
           // Coerce to the shape buildMarkdownFromEnvelope expects, with safe defaults.
           const safe = {
             scenario_name: (deanonSingleEnvelope as Record<string, unknown>).scenario_name as string ?? 'Analysis',
@@ -1387,15 +1473,23 @@ serve(async (req) => {
             data_gaps: (deanonSingleEnvelope as Record<string, unknown>).data_gaps as unknown[] ?? [],
           } as unknown as Parameters<typeof buildMarkdownFromEnvelope>[0];
           const rendered = buildMarkdownFromEnvelope(safe);
-          // If the rendered markdown is essentially empty, surface a friendly fallback
-          // instead of the raw JSON string the user previously saw.
-          responseContent = rendered.replace(/\s+/g, '').length > 20
-            ? rendered
-            : 'The analysis completed but the model returned an incomplete response. Please retry — if the issue persists, regenerate the report.';
-        } else if (looksLikeRawJson(responseContent)) {
-          // Last-resort guard: never let raw JSON reach the UI.
-          responseContent = 'The analysis completed but the model returned an unparseable response. Please retry to regenerate.';
+          if (rendered.replace(/\s+/g, '').length > 20) {
+            responseContent = rendered;
+            failureReason = 'partial_envelope';
+          } else {
+            responseContent = 'The analysis completed but the model returned an incomplete response. Please retry — if the issue persists, regenerate the report.';
+            failureReason = 'incomplete_response';
+          }
+        } else if (looksLikeRawJson(responseContent) || looksLikeRawJson(content)) {
+          // Last-resort guard: never let raw/truncated JSON reach the UI.
+          console.error('[Sentinel] Raw JSON leak prevented — surfacing friendly fallback', {
+            previewStart: responseContent.slice(0, 80),
+            previewEnd: responseContent.slice(-80),
+          });
+          responseContent = 'The analysis completed but the model returned an unparseable response (likely truncated). Please regenerate to retry.';
+          failureReason = 'json_parse_failed';
         }
+
 
         const inferencePromptTokens = aiResponse.usageMetadata?.promptTokenCount;
         const inferenceCompletionTokens = aiResponse.usageMetadata?.candidatesTokenCount;
@@ -1437,6 +1531,7 @@ serve(async (req) => {
               fallbackUsed: provider === "nebius",
               fallbackReason: aiResponse.fallbackReason,
               modelUsed: provider === "nebius" ? "nvidia/nemotron-3-super-120b-a12b" : modelForAttempt,
+              failureReason,
             },
           }),
           { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }

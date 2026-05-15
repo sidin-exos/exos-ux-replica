@@ -3,12 +3,12 @@
  * Mirrors the frontend types from dashboard-data-parser.ts and dashboard-mappings.ts.
  */
 
-import { extractFromEnvelope } from '../_shared/dashboard-extractor.ts';
-import type { DashboardData } from '../_shared/dashboard-extractor.ts';
+import { extractFromEnvelope, extractRiskRegisterItems } from '../_shared/dashboard-extractor.ts';
+import type { DashboardData, RiskRegisterItem } from '../_shared/dashboard-extractor.ts';
 
 // Re-export for consumers
-export { extractFromEnvelope };
-export type { DashboardData };
+export { extractFromEnvelope, extractRiskRegisterItems };
+export type { DashboardData, RiskRegisterItem };
 
 // ── Dashboard type ──
 
@@ -26,7 +26,18 @@ export type DashboardType =
   | "supplier-scorecard"
   | "sow-analysis"
   | "negotiation-prep"
-  | "data-quality";
+  | "data-quality"
+  | "npv-waterfall"
+  | "ifrs16-impact"
+  // Wave 1/2 — additive S4/S5/S22 dashboards
+  | "savings-realization-funnel"
+  | "working-capital-dpo"
+  // Allowlisted but not yet rendered server-side (web-only); listing them
+  // prevents the F7 drift warning from firing for known-future ids.
+  | "should-cost-gap"
+  | "supplier-concentration-map"
+  | "risk-heatmap"
+  | "rfp-package";
 
 export interface DashboardConfig {
   id: DashboardType;
@@ -48,6 +59,14 @@ export const dashboardConfigs: Record<DashboardType, DashboardConfig> = {
   "sow-analysis": { id: "sow-analysis", name: "SOW Analysis" },
   "negotiation-prep": { id: "negotiation-prep", name: "Negotiation Prep" },
   "data-quality": { id: "data-quality", name: "Data Quality" },
+  "npv-waterfall": { id: "npv-waterfall", name: "NPV Waterfall" },
+  "ifrs16-impact": { id: "ifrs16-impact", name: "IFRS 16 Impact" },
+  "savings-realization-funnel": { id: "savings-realization-funnel", name: "Savings Realization Funnel" },
+  "working-capital-dpo": { id: "working-capital-dpo", name: "Working Capital & DPO" },
+  "should-cost-gap": { id: "should-cost-gap", name: "Should-Cost Gap" },
+  "supplier-concentration-map": { id: "supplier-concentration-map", name: "Supplier Concentration" },
+  "risk-heatmap": { id: "risk-heatmap", name: "Risk Heatmap" },
+  "rfp-package": { id: "rfp-package", name: "RFP Package" },
 };
 
 // ── Per-dashboard data interfaces ──
@@ -136,6 +155,10 @@ export interface ScenarioComparisonData {
   scenarios: { id: string; name: string; color: string }[];
   radarData: { metric: string; [key: string]: number | string }[];
   summary: { criteria: string; [key: string]: string }[];
+  /** Forces the "recommended" badge to a specific scenario id, overriding the
+   *  weighted-score derived winner. Used to keep page-3 in sync with the
+   *  Executive-Summary verdict (e.g. CFO BUY/LEASE). */
+  recommendedOverride?: { id?: string; name?: string };
 }
 
 export interface SupplierScorecardData {
@@ -170,6 +193,41 @@ export interface DataQualityData {
     coverage: number;
   }[];
   limitations?: { title: string; impact: string }[];
+}
+
+export interface NpvWaterfallData {
+  options: {
+    id: string;
+    name: string;
+    color: string;
+    capexNominal: number;
+    opexNominal: number;
+    residualValue: number;
+    npv: number;
+    waccPct?: number;
+    breakEvenYear?: number | null;
+    ifrsOnBalanceSheet?: boolean | null;
+  }[];
+  preferredOptionId?: string;
+  verdict?: string;
+  cashFlowRationale?: string;
+  currency?: string;
+}
+
+export interface Ifrs16ImpactData {
+  options: {
+    id: string;
+    name: string;
+    color: string;
+    onBalanceSheet: boolean | null;
+    rightOfUseAsset?: number | null;
+    leaseLiability?: number | null;
+    taxShieldValue?: number | null;
+    plTreatment?: string | null;
+    balanceSheetImpact?: string | null;
+  }[];
+  ifrs16Note?: string;
+  currency?: string;
 }
 
 // ── Extraction utilities (legacy XML fallback) ──
@@ -221,11 +279,28 @@ export function extractDashboardData(text: string): DashboardData | null {
   }
 }
 
+const SCENARIO_ACRONYMS = new Set([
+  "capex", "opex", "npv", "tco", "rfp", "rfi", "rfq", "sla", "kpi",
+  "saas", "ifrs", "esg", "eu", "us", "uk", "roi", "wacc", "batna",
+  "ai", "b2b", "b2c", "sku", "po", "ppe", "qbr",
+]);
+const HEADING_LOWER_WORDS = new Set(["vs", "and", "or", "the", "a", "of", "for", "to", "in"]);
+function formatSlugHeading(slug: string): string {
+  return slug.split(/[-_]+/).filter(Boolean).map((w, i) => {
+    const lw = w.toLowerCase();
+    if (SCENARIO_ACRONYMS.has(lw)) return lw.toUpperCase();
+    if (i > 0 && HEADING_LOWER_WORDS.has(lw)) return lw;
+    return lw.charAt(0).toUpperCase() + lw.slice(1);
+  }).join(" ");
+}
+const SLUG_HEADING_REGEX = /^(#{1,4}\s+)([a-z0-9]+(?:[-_][a-z0-9]+)+)\s*$/gm;
+
 export function stripDashboardData(text: string): string {
   if (!text) return text;
   return text
     .replace(DASHBOARD_DATA_REGEX, "")
     .replace(/```dashboard:\w+[\s\S]*?```/g, "") // strip ```dashboard:xxx...``` code blocks
+    .replace(SLUG_HEADING_REGEX, (_m, prefix, slug) => `${prefix}${formatSlugHeading(slug)}`)
     .trim();
 }
 
@@ -241,6 +316,8 @@ export interface GeneratePdfPayload {
   pdfTheme?: "light" | "dark";
   evaluationScore?: number;
   evaluationConfidence?: string;
+  /** LLM coverage 0–5 stars from the pre-run check. Drives "Input Quality". */
+  coverageStars?: number;
 }
 
 export type PdfThemeMode = "light" | "dark";

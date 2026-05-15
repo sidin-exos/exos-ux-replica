@@ -51,6 +51,7 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
       let query = supabase
         .from("user_files")
         .select("*", { count: "exact" })
+        .eq("user_id", currentUser.id)
         .order("created_at", { ascending: false });
 
       if (search) {
@@ -219,6 +220,7 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
         .from("user_files")
         .select("storage_path")
         .eq("id", fileId)
+        .eq("user_id", currentUser.id)
         .single();
 
       if (lookupError || !file) throw new Error("File not found");
@@ -234,7 +236,8 @@ export function useUserFiles(options: UseUserFilesOptions = {}) {
       const { error: deleteError } = await supabase
         .from("user_files")
         .delete()
-        .eq("id", fileId);
+        .eq("id", fileId)
+        .eq("user_id", currentUser.id);
 
       if (deleteError) throw deleteError;
     },

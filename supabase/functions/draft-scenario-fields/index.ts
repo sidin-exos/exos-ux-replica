@@ -40,6 +40,14 @@ serve(async (req) => {
   }
 
   try {
+    const authResult = await authenticateRequest(req);
+    if ("error" in authResult) {
+      return new Response(JSON.stringify({ error: authResult.error.message }), {
+        status: authResult.error.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = (await req.json()) as RequestBody;
     const { scenarioTitle, description, fileNames, fields, sections } = body;
 

@@ -64,6 +64,8 @@ export interface Scenario {
   outputs: string[];
   strategySelector?: StrategyPresetType;
   deviationType?: 0 | 1 | '1H' | 2;
+  /** When true, scenario is only visible to admins (org admins or super admins). */
+  hiddenForNonAdmins?: boolean;
   dataRequirements?: {
     title: string;
     sections: { heading: string; description: string }[];
@@ -71,6 +73,17 @@ export interface Scenario {
   scenario_id: string;
   group: 'A' | 'B' | 'C' | 'D' | 'E';
 }
+
+/**
+ * Filter helper: hides scenarios marked hiddenForNonAdmins from every user
+ * (including admins). The flag is kept for backward compatibility with the
+ * scenario definitions, but the filter no longer surfaces them anywhere.
+ */
+export const filterVisibleScenarios = <T extends { hiddenForNonAdmins?: boolean }>(
+  list: T[],
+  _isAdmin?: boolean,
+): T[] => list.filter((s) => !s.hiddenForNonAdmins);
+
 
 export const scenarios: Scenario[] = [
   // ═══════════════════════════════════════════════════════
@@ -103,14 +116,11 @@ export const scenarios: Scenario[] = [
       { id: "opexFinancials", label: "OPEX & Financial Parameters", description: "OPEX breakdown by category and financial modelling inputs", type: "textarea", required: true, placeholder: "• OPEX categories and estimated annual costs — list each:\n  e.g. Maintenance €X / Logistics €Y / Training €Z / Disposal €W\n• WACC or internal discount rate (%)\n• Annual inflation assumption (%)\n• Currency" },
     ],
     outputs: [
-      "TCO Waterfall Chart: Visual breakdown of all cost components",
-      "NPV Comparison: Present value across ownership period",
-      "Vendor Lock-in Score: Assessment with mitigation strategies",
-      "Risk-adjusted TCO: Costs including probability-weighted risks",
-      "Sensitivity Analysis: Impact of key variable changes",
-      "Market Scenario Modeling: Best/worst case projections",
-      "Break-even Analysis: When does ownership become cost-effective",
-      "Decision Recommendation: AI-powered buy/lease/defer guidance",
+      "Cost Breakdown: CAPEX/OPEX components with identified savings levers",
+      "TCO Comparison: Cumulative cost over the lifecycle, with break-even crossover",
+      "Scenario Comparison: Multi-criteria scoring of alternative options with recommended pick",
+      "Top Cost Drivers: Largest cost categories surfaced from the breakdown",
+      "Decision Recommendation: AI-powered guidance on the lowest-TCO option",
     ],
     scenario_id: "S1",
     group: "A",
@@ -141,7 +151,7 @@ export const scenarios: Scenario[] = [
       { id: "productSpecification", label: "Product or Service Specification", description: "Product description, material categories, manufacturing geography", type: "textarea", required: true, placeholder: "• Product / service name and description\n• Key material categories (e.g. stainless steel, injection-moulded polymer, SaaS software)\n• Estimated weight or volume per unit (if physical product)\n• Manufacturing geography and labour intensity (high / medium / low)" },
       { id: "supplierQuote", label: "Supplier Quote & Benchmark Reference", description: "Supplier pricing, your target, and known benchmarks", type: "textarea", required: true, placeholder: "• Supplier's quoted price per unit (€)\n• Your internal target price or budget (€)\n• Any known alternative quotes from other suppliers\n• Estimated margin the supplier is applying (if known)" },
     ],
-    outputs: ["Cost Waterfall: Visual breakdown of cost components", "Should-Cost Model: Bottom-up cost estimate with benchmarks", "Negotiation Leverage Points: Areas where supplier costs may be inflated", "Sensitivity Analysis: Impact of key cost driver changes"],
+    outputs: ["Cost Waterfall: Visual breakdown of cost components and identified savings levers", "Should-Cost Gap: Bottom-up estimate vs the supplier quote with negotiation headroom", "Data Quality Audit: Coverage and confidence of the inputs you provided", "Negotiation Leverage Points: Areas where supplier costs may be inflated"],
     scenario_id: "S2",
     group: "A",
   },
@@ -171,7 +181,13 @@ export const scenarios: Scenario[] = [
       { id: "assetFinancials", label: "Asset Financial Parameters", description: "Purchase price, lease cost, lifespan, depreciation, maintenance, and residual value", type: "textarea", required: true, placeholder: "• Asset description\n• Purchase price — CAPEX option (€)\n• Annual lease or subscription cost — OPEX option (€)\n• Asset financial lifespan (years)\n• Depreciation method: straight-line or declining balance\n• Estimated annual maintenance and insurance (€)\n• Estimated residual / salvage value at end of life (€)" },
       { id: "financialContext", label: "Financial Context & Tax Inputs", description: "WACC, tax rate, IFRS 16 applicability, and currency", type: "textarea", required: true, placeholder: "• WACC or internal hurdle rate (%)\n• Corporate tax rate for this entity (%)\n• IFRS 16 applicability: yes / no / unsure\n• Off-balance-sheet preference: yes / no\n• Currency" },
     ],
-    outputs: ["NPV Waterfall Graph: 5-year total cost comparison", "Flexibility Matrix: Upgrade options vs ownership", "CFO Recommendation: Cash flow preservation advice"],
+    outputs: [
+      "NPV Waterfall: Discounted total-cost comparison over the asset lifespan",
+      "Flexibility Matrix: Upgrade options vs ownership",
+      "CFO Recommendation: Verdict, cash-flow rationale, and IFRS 16 note",
+      "Sensitivity Tornado: WACC, residual value, and lease-rate impact",
+      "IFRS 16 Impact Summary: Balance-sheet and P&L treatment under lease accounting standard",
+    ],
     scenario_id: "S3",
     group: "A",
   },
@@ -266,6 +282,7 @@ export const scenarios: Scenario[] = [
       "Scenario 1: Base Case (Expected Spend)",
       "Scenario 2: Stress Test (Worst Case & Triggers)",
       "Actionable Budget Optimization Steps",
+      "Scenario 3: Upside Case (Best-case projections and triggering conditions)",
     ],
     scenario_id: "S6",
     group: "A",
@@ -417,6 +434,7 @@ export const scenarios: Scenario[] = [
     previewDescription: "Fast-track low-value purchases without bypassing compliance. The AI assesses your micro-purchase against procurement policy thresholds, recommends the fastest compliant route (direct buy, mini-RFQ, or catalogue order), and generates the necessary documentation. Tail spend represents 20% of addressable spend with 80% of supplier relationships — poorly managed, it multiplies transaction costs disproportionately.",
     icon: ShoppingCart,
     status: "available",
+    hiddenForNonAdmins: true,
     category: "planning",
     strategySelector: "speedVsQuality",
     deviationType: 0,
@@ -486,8 +504,7 @@ export const scenarios: Scenario[] = [
       "Legal Disclaimer & Scope Statement",
       "Contract Structure Overview (Clause Map)",
       "Drafted Contract Template (Country-Specific)",
-      "Clause-by-Clause Guidance & Risk Flags [REVIEW WITH LEGAL COUNSEL]",
-      "Recommended Next Steps & Legal Review Checklist",
+      "Clause-by-Clause Guidance: What each provision protects against and recommended negotiation stance",
     ],
     scenario_id: "S12",
     group: "B",
@@ -518,7 +535,12 @@ export const scenarios: Scenario[] = [
       { id: "stakeholderRequirements", label: "Stakeholder Requirements", description: "Raw stakeholder requirements — any format is acceptable", type: "textarea", required: true, placeholder: "Paste your raw stakeholder requirements here — any format is acceptable. Include wishlists, meeting notes, email threads, or bullet points. Unstructured input is fine. EXOS will structure it into a prioritised BRD.\n\nDo not over-curate — include everything you've been told." },
       { id: "constraintsPriority", label: "Constraints & Priority Context", description: "Budget, timeline, technical limitations, must-haves vs nice-to-haves", type: "textarea", required: false, placeholder: "Known constraints: budget ceiling, delivery timeline, technical platform limitations.\nPriority guidance: are there known must-haves vs. nice-to-haves?\nKnown dependencies on other projects or systems.\nRegulatory requirements that are non-negotiable." },
     ],
-    outputs: ["MoSCoW Matrix: Requirements prioritized by importance", "User Stories: Test scenarios for product validation", "Market Scan: 3-5 solutions matching requirements"],
+    outputs: [
+      "MoSCoW Matrix: Requirements prioritized by importance",
+      "User Stories: Test scenarios for product validation",
+      "Market Scan: 3-5 solutions matching requirements",
+      "Dependency Map: Requirement dependencies, conflicts, and prioritisation rationale",
+    ],
     scenario_id: "S13",
     group: "B",
   },
@@ -643,13 +665,10 @@ export const scenarios: Scenario[] = [
       { id: "existingControls", label: "Existing Controls & Financial Exposure", description: "Controls in place, financial exposure, BCP status, interdependencies", type: "textarea", required: false, placeholder: "What controls are already in place (insurance, BCP, dual-sourcing, contractual protections)?\nEstimated maximum financial exposure if the primary risk materialises (€ range).\nBusiness continuity plan status: in place / partial / none.\nInterdependencies with other categories, projects, or systems." },
     ],
     outputs: [
-      "Risk Heat Map: Visual probability vs impact assessment",
-      "Industry Risk Brief: Market dynamics and trend analysis",
-      "Contract Risk Score: Contractual protection assessment",
-      "Current Situation Summary: Real-time risk factors with source citations",
-      "Mitigation Roadmap: Prioritized actions to reduce exposure",
-      "Monitoring Dashboard: Key risk indicators to track",
-      "Scenario Analysis: Best/worst/likely case outcomes",
+      "Risk Matrix: Impact × probability heat map with action tiers",
+      "Current Situation Summary: Key risk factors and exposure narrative",
+      "Mitigation Roadmap: Prioritised actions with severity tags and impact estimates",
+      "Risk Register: Ranked list of risks with category and severity",
     ],
     scenario_id: "S17",
     group: "C",
@@ -793,14 +812,13 @@ export const scenarios: Scenario[] = [
       { id: "alternativesLeverage", label: "Alternatives & Leverage Factors", description: "BATNA, volume leverage, and supplier vulnerability", type: "textarea", required: true, placeholder: "Your realistic alternatives if this negotiation fails (BATNA) — be specific about what the alternative actually is and its cost/feasibility.\n\nWhat leverage do you hold? (volume, alternative suppliers qualified, contract timing, supplier dependency on your business).\n\nWhat do you know about the supplier's position (margin pressure, capacity, competitive threats)?" },
     ],
     outputs: [
-      "Power Balance Analysis: Visual assessment of negotiation leverage",
+      "Power Balance Analysis: Structured assessment of buyer vs supplier leverage",
       "BATNA Strength Score: Rating with improvement recommendations",
-      "Risk Assessment: What could go wrong and mitigation strategies",
-      "Negotiation Strategy Playbook: Recommended approach based on situation",
+      "Negotiation Strategy Playbook: Situation read, recommended approach, and rationale",
       "Tactical Move Sequence: Opening, anchoring, concession strategy",
       "Counter-argument Preparation: Anticipated supplier positions and responses",
-      "Walk-away Scenario Plan: When and how to exit negotiations",
-      "Value Creation Opportunities: Win-win options to explore",
+      "Walk-away Scenario Plan: Trigger conditions, exit steps, and a ready-to-send script",
+      "Value Creation Opportunities: Win-win trade-offs to expand the pie",
     ],
     scenario_id: "S21",
     group: "D",
@@ -870,7 +888,12 @@ export const scenarios: Scenario[] = [
       { id: "makeCosts", label: "Internal (Make) Cost & Capability", description: "Fully-loaded internal cost, capability assessment, IP risk, and build timeline", type: "textarea", required: true, placeholder: "• Description of what the internal option involves\n• Total internal annual cost — fully loaded (€): include direct labour + materials + overhead + management time\n• Internal capability assessment: full capability / partial capability (describe gap) / no current capability\n• IP and confidentiality risk if outsourced: high / medium / low — explain\n• Time to build internal capability if not currently in place" },
       { id: "buyCosts", label: "External (Buy) Cost & Contract Risk", description: "Vendor quote, transition cost, capability, contract flexibility, exit risk", type: "textarea", required: true, placeholder: "• External vendor quote or market rate (€ per year or per unit)\n• One-time integration and transition cost estimate (€)\n• Vendor capability and track record: proven / emerging / unknown\n• Contract flexibility: month-to-month / locked-in (term and notice period)\n• Exit risk: data portability / migration complexity / switching cost estimate (€)" },
     ],
-    outputs: ["Decision Matrix: Comparison across 5 criteria (Price, Speed, Quality, Risk, Control)", "Break-even Chart: Point where in-house becomes more cost-effective than outsourcing"],
+    outputs: [
+      "Decision Matrix: Comparison across 5 criteria (Price, Speed, Quality, Risk, Control)",
+      "Break-even Chart: Point where in-house becomes more cost-effective than outsourcing",
+      "Fully-Loaded Cost Comparison: Internal vs. external costs including hidden indirect costs",
+      "IP Risk & Exit Cost Assessment: Intellectual property exposure and cost of outsourcing reversal",
+    ],
     scenario_id: "S23",
     group: "D",
   },
@@ -884,6 +907,7 @@ export const scenarios: Scenario[] = [
     previewDescription: "Model optimal supplier ratios for maximum volume leverage with minimum supply risk. The AI analyses your current spend distribution, calculates consolidation savings at different split ratios (single-source, dual 70/30, triple 80/10/10), and factors in logistics costs, capacity constraints, and contract timelines. A dual-source 70/30 split achieves 90% of volume discount benefits while retaining full supply continuity.",
     icon: Layers,
     status: "available",
+    hiddenForNonAdmins: true,
     category: "analysis",
     strategySelector: "riskAppetite",
     deviationType: 1,
@@ -1062,24 +1086,24 @@ export const scenarios: Scenario[] = [
     group: "E",
   },
 
-  // ===== 29. PRE-FLIGHT AUDIT — TYPE 1H =====
+  // ===== 29. SUPPLIER SNAPSHOT (formerly Pre-flight Audit) — TYPE 1H =====
   {
     id: "pre-flight-audit",
-    title: "Pre-flight Audit",
+    title: "Supplier Snapshot",
     description: "Supplier intelligence gathering before negotiations. Get a comprehensive dossier on any supplier using just their website URL.",
     tags: ["Due Diligence", "Sanctions", "Supplier Intel"],
-    previewDescription: "Build a comprehensive supplier dossier in minutes. Provide the exact legal entity name and the AI scans financial health signals, litigation history, sanctions lists, ESG violations, M&A activity, and cybersecurity incidents — then produces a negotiation brief with leverage points and a due diligence checklist. A 10-minute pre-flight audit is the lowest-cost risk mitigation tool available, preventing onboarding risks that carry up to €5M in regulatory fines.",
+    previewDescription: "Build a comprehensive supplier dossier in minutes. Provide the exact legal entity name and the AI scans financial health signals, litigation history, sanctions lists, ESG violations, M&A activity, and cybersecurity incidents — then produces a negotiation brief with leverage points and a due diligence checklist. A 10-minute supplier snapshot is the lowest-cost risk mitigation tool available, preventing onboarding risks that carry up to €5M in regulatory fines.",
     icon: Radar,
     status: "available",
     category: "planning",
     strategySelector: "skepticism",
     deviationType: '1H',
     dataRequirements: {
-      title: "What data prevents Value Leakage in Pre-Flight Supplier Audits?",
+      title: "What data prevents Value Leakage in a Supplier Snapshot?",
       sections: [
         { heading: "Exact Legal Entity Name & Jurisdiction", description: "Provide the exact registered legal entity name (e.g. 'ACME Logistics GmbH', not just 'ACME'), primary jurisdiction (country of incorporation), and category of supply. Brand name vs. legal entity confusion pulls intelligence for the wrong company." },
         { heading: "Specific Risk Areas to Prioritise", description: "Include company registration number (for unambiguous matching), known subsidiary/trading name differences, and specific risk areas to prioritise (financial, ESG, cybersecurity, sanctions)." },
-        { heading: "Financial Impact", description: "Onboarding a sanctioned supplier carries up to €5M in regulatory fines (EU Sanctions Regulation). A 10-minute pre-flight audit is the lowest-cost risk mitigation tool available." },
+        { heading: "Financial Impact", description: "Onboarding a sanctioned supplier carries up to €5M in regulatory fines (EU Sanctions Regulation). A 10-minute supplier snapshot is the lowest-cost risk mitigation tool available." },
       ],
     },
     requiredFields: [

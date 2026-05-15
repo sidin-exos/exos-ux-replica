@@ -102,7 +102,11 @@ const TOKEN_PREFIXES: Record<SensitiveEntity['type'], string> = {
   custom: 'ENTITY',
 };
 
-// Common business terms that should never be masked (false positive protection)
+// Common business terms that should never be masked (false positive protection).
+// Mirrors supabase/functions/_shared/anonymizer.ts — keep in sync.
+// Includes regulatory standards (ISO, GDPR, SOC2, NIS2, …) which the all-caps
+// regex would otherwise tokenise as supplier names, producing artefacts like
+// "[SUPPLIER_C] 27001" in user-facing reports.
 const COMMON_BUSINESS_TERMS = new Set([
   'invoice', 'contract', 'agreement', 'total', 'subtotal',
   'date', 'vendor', 'supplier', 'client', 'manager',
@@ -114,7 +118,24 @@ const COMMON_BUSINESS_TERMS = new Set([
   'january', 'february', 'march', 'april', 'may', 'june',
   'july', 'august', 'september', 'october', 'november', 'december',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday',
-  'saturday', 'sunday'
+  'saturday', 'sunday',
+  // Regulatory standards & compliance frameworks
+  'iso', 'gdpr', 'soc2', 'soc', 'hipaa', 'pci', 'pci-dss', 'dss',
+  'nis2', 'nis', 'tupe', 'ccpa', 'fcpa', 'sox', 'ferpa', 'glba',
+  'iec', 'ansi', 'nist', 'fedramp', 'itar', 'ear', 'rohs', 'reach',
+  'cmmc', 'fips', 'csa', 'owasp', 'cis', 'cobit', 'itil', 'togaf',
+  'asme', 'din', 'bs', 'en', 'ul', 'ce', 'fcc', 'etsi', 'ieee',
+  // Common business acronyms
+  'rfp', 'rfi', 'rfq', 'sow', 'sla', 'kpi', 'mou', 'nda',
+  'tco', 'roi', 'npv', 'irr', 'ebitda', 'capex', 'opex',
+  'msp', 'mssp', 'saas', 'paas', 'iaas', 'iot', 'ai', 'ml', 'api',
+  'ceo', 'cto', 'cfo', 'coo', 'cio', 'ciso', 'vp', 'svp', 'evp',
+  // Currencies & legal entity suffixes
+  'eur', 'usd', 'gbp', 'chf', 'jpy', 'cny', 'cad', 'aud', 'nok', 'sek',
+  'ltd', 'llc', 'inc', 'gmbh', 'ag', 'plc', 'sa', 'bv', 'nv', 'spa',
+  // Units & geographic regions
+  'kg', 'mt', 'tb', 'gb', 'mb', 'ghz', 'mhz', 'dpo', 'dso', 'dio',
+  'eu', 'us', 'uk', 'uae', 'apac', 'emea', 'latam', 'asean', 'mena',
 ]);
 
 /**

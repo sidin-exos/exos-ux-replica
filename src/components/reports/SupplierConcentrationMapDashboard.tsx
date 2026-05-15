@@ -151,7 +151,7 @@ const SupplierConcentrationMapDashboard = ({ parsedData }: Props) => {
       data.suppliers?.[0]?.supplier_label ?? data.flows?.[0]?.target ?? "this supplier";
     return (
       <Card className="card-elevated h-full">
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-4 bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
               <Network className="w-4 h-4 text-foreground" />
@@ -178,7 +178,7 @@ const SupplierConcentrationMapDashboard = ({ parsedData }: Props) => {
 
   return (
     <Card className="card-elevated h-full">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-4 bg-gradient-to-r from-transparent via-transparent to-primary/[0.03] dark:to-primary/10 rounded-t-lg">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">

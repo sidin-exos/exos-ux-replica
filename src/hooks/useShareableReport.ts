@@ -13,6 +13,8 @@ interface ReportData {
   selectedDashboards?: DashboardType[];
   evaluationScore?: number | null;
   evaluationConfidence?: string | null;
+  /** LLM coverage score (0–5). Drives the PDF "Input Quality" KPI. */
+  coverageStars?: number | null;
 }
 
 interface ShareableReportReturn {
@@ -110,6 +112,7 @@ export function useShareableReport(): ShareableReportReturn {
           selectedDashboards: payload.selectedDashboards,
           evaluationScore: payload.evaluationScore,
           evaluationConfidence: payload.evaluationConfidence,
+          coverageStars: payload.coverageStars,
         };
       } catch (error) {
         console.error("Failed to load shared report:", error);

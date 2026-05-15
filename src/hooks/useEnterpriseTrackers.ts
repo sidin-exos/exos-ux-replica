@@ -106,6 +106,7 @@ export function useEnterpriseTrackers(trackerType: TrackerType) {
         .from("enterprise_trackers")
         .select("*")
         .eq("tracker_type", trackerType)
+        .eq("user_id", currentUser.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

@@ -95,15 +95,14 @@ export function generateIndustryContextXML(industry: IndustryContext): string {
 
   const constraintsXML = hasV2Constraints
     ? industry.constraints_v2!.map((c, i) => {
+        const tier = c.blocker ? 'HIGH' : c.tier;
         const attrs = [
           `priority="${i + 1}"`,
-          c.tier ? `tier="${escapeXML(c.tier)}"` : '',
-          c.blocker ? `blocker="true"` : '',
+          tier ? `tier="${escapeXML(tier)}"` : '',
           c.eu_ref ? `eu-ref="${escapeXML(c.eu_ref)}"` : '',
         ].filter(Boolean).join(' ');
         const impact = c.procurement_impact ? `\n        <procurement-impact>${escapeXML(c.procurement_impact)}</procurement-impact>` : '';
-        const blockerComment = c.blocker ? ' <!-- HARD GATE -->' : '';
-        return `      <constraint ${attrs}>${escapeXML(c.label)}${impact}\n      </constraint>${blockerComment}`;
+        return `      <constraint ${attrs}>${escapeXML(c.label)}${impact}\n      </constraint>`;
       }).join('\n')
     : industry.constraints.map((c, i) => `      <constraint priority="${i + 1}">${escapeXML(c)}</constraint>`).join('\n');
 
@@ -142,7 +141,7 @@ ${kpisXML}
     <instruction>Align savings opportunities with industry-standard KPIs</instruction>
     <instruction>Flag any recommendations that may conflict with industry regulations</instruction>
     <instruction>Use industry-specific terminology in responses</instruction>
-    <instruction>If a constraint is flagged as a blocker, treat it as a hard decision gate — never recommend actions that violate it</instruction>
+    <instruction>Treat high-tier constraints as critical requirements when forming recommendations</instruction>
   </grounding-instructions>
 </industry-context>`;
 }

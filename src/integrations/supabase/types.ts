@@ -1019,6 +1019,7 @@ export type Database = {
       }
       procurement_categories: {
         Row: {
+          aliases: string[]
           category_cold_yaml: string | null
           category_group: string | null
           category_hot_yaml: string | null
@@ -1046,6 +1047,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          aliases?: string[]
           category_cold_yaml?: string | null
           category_group?: string | null
           category_hot_yaml?: string | null
@@ -1073,6 +1075,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          aliases?: string[]
           category_cold_yaml?: string | null
           category_group?: string | null
           category_hot_yaml?: string | null

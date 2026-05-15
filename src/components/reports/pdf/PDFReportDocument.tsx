@@ -5,14 +5,54 @@ import {
   View,
   StyleSheet,
   Link,
+  Font,
+  Svg,
+  Polygon,
+  Defs,
+  LinearGradient,
+  Stop,
 } from "@react-pdf/renderer";
 import type { ReactElement } from "react";
 import { PDFDashboardPages } from "./PDFDashboardVisuals";
-import { extractDashboardData, stripDashboardData, isStructuredOutput } from "@/lib/dashboard-data-parser";
+import { extractDashboardData, extractRiskRegisterItems, stripDashboardData, isStructuredOutput } from "@/lib/dashboard-data-parser";
 import { DashboardType } from "@/lib/dashboard-mappings";
 import type { PdfThemeMode, PdfColorSet } from "./dashboardVisuals/theme";
 import { getPdfColors } from "./dashboardVisuals/theme";
 import type { ExosOutput } from "@/lib/sentinel/types";
+
+// ── Register Inter font for PDF rendering ──
+// The built-in Helvetica-Bold has a kerning regression that causes ghosted/double-stamped
+// characters on large headings (e.g. "Analysis Overview" rendered with wide gaps and offset glyphs).
+// Inter is the project's brand body font and renders cleanly at all sizes.
+let interFontRegistered = false;
+function ensureInterRegistered() {
+  if (interFontRegistered) return;
+  try {
+    Font.register({
+      family: "Inter",
+      fonts: [
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf", fontWeight: 400 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.ttf", fontWeight: 500 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.ttf", fontWeight: 600 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf", fontWeight: 700 },
+      ],
+    });
+    Font.register({
+      family: "Space Grotesk",
+      fonts: [
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-500-normal.ttf", fontWeight: 500 },
+        { src: "https://cdn.jsdelivr.net/fontsource/fonts/space-grotesk@latest/latin-700-normal.ttf", fontWeight: 700 },
+      ],
+    });
+    // Disable hyphenation which can also produce odd word-break artefacts
+    Font.registerHyphenationCallback((word) => [word]);
+    interFontRegistered = true;
+  } catch (e) {
+    console.warn("[PDF] Inter font registration failed, falling back to Helvetica", e);
+  }
+}
+ensureInterRegistered();
+
 
 // ── FIX 1: Strip ALL markdown from AI text ──
 
@@ -48,7 +88,7 @@ function renderBodyText(text: string, baseStyle: Record<string, unknown>): React
         const isValue = testRe.test(part);
         if (!isValue) return <Text key={i}>{part}</Text>;
         const spaced = part.replace(/([€$£])([\d])/g, "$1\u2009$2");
-        return <Text key={i} style={{ fontFamily: "Helvetica-Bold" }}>{spaced}</Text>;
+        return <Text key={i} style={{ fontFamily: "Inter", fontWeight: 700 }}>{spaced}</Text>;
       })}
     </Text>
   );
@@ -122,28 +162,13 @@ function parseNextStep(text: string): { title: string; description: string } {
   return { title: stripMarkdown(text), description: "" };
 }
 
-function summarizeParameter(value: string, maxWords = 30): string {
-  const words = value.trim().split(/\s+/);
-  if (words.length <= maxWords) return value.trim();
-  const fragments = value.split(/[.•\n]+/).map(s => s.trim()).filter(Boolean);
-  const scored = fragments.map(f => {
-    let score = 0;
-    if (/[\d€$£¥%]/.test(f)) score += 3;
-    if (/[A-Z]{2,}/.test(f)) score += 2;
-    if (/±|mm|kg|g\b|alloy|CNC|SOC|GDPR|ISO|SaaS|B2B/.test(f)) score += 2;
-    score += (f.match(/[A-Z][a-z]+/g) || []).length;
-    return { text: f, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  const result: string[] = [];
-  let wordCount = 0;
-  for (const { text } of scored) {
-    const tw = text.split(/\s+/).length;
-    if (wordCount + tw > maxWords && result.length > 0) break;
-    result.push(text);
-    wordCount += tw;
-  }
-  return result.join(", ");
+function summarizeParameter(value: string, maxWords = 60): string {
+  // B5 fix: preserve original phrasing/order; only truncate when over budget.
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const words = trimmed.split(/\s+/);
+  if (words.length <= maxWords) return trimmed;
+  return words.slice(0, maxWords).join(" ") + "…";
 }
 
 // ── Build branded styles ──
@@ -157,7 +182,7 @@ function buildStyles(c: PdfColorSet) {
       paddingLeft: SP.pageSideMargin,
       paddingRight: SP.pageSideMargin,
       paddingBottom: SP.pageBottomMargin,
-      fontFamily: "Helvetica",
+      fontFamily: "Inter",
       color: c.text,
     },
     pageWithHeader: {
@@ -166,7 +191,7 @@ function buildStyles(c: PdfColorSet) {
       paddingLeft: SP.pageSideMargin,
       paddingRight: SP.pageSideMargin,
       paddingBottom: SP.pageBottomMargin,
-      fontFamily: "Helvetica",
+      fontFamily: "Inter",
       color: c.text,
     },
 
@@ -189,13 +214,13 @@ function buildStyles(c: PdfColorSet) {
     },
     headerBarBrand: {
       fontSize: 12,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       marginRight: 12,
     },
     headerBarScenario: {
       fontSize: 8,
-      fontFamily: "Helvetica",
+      fontFamily: "Inter",
       color: c.textOnPrimary,
       opacity: 0.9,
       textTransform: "uppercase",
@@ -229,14 +254,14 @@ function buildStyles(c: PdfColorSet) {
     },
     coverScenarioBadgeText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       textTransform: "uppercase",
       letterSpacing: 1,
     },
     coverTitle: {
       fontSize: 22,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 12,
       lineHeight: 1.2,
@@ -255,7 +280,7 @@ function buildStyles(c: PdfColorSet) {
     },
     coverMetaLabel: {
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 1,
@@ -263,8 +288,75 @@ function buildStyles(c: PdfColorSet) {
     },
     coverMetaValue: {
       fontSize: 11,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
+    },
+
+    // ── Branded cover band (theme-aware) ──
+    coverBand: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 150,
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      paddingHorizontal: SP.pageSideMargin,
+      paddingTop: 18,
+      paddingBottom: 14,
+    },
+    coverBandAccent: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 3,
+      backgroundColor: c.primary,
+    },
+    coverBandWordmark: {
+      fontFamily: "Space Grotesk",
+      fontWeight: 700,
+      fontSize: 20,
+      color: c.text,
+      letterSpacing: 1,
+    },
+    coverBandDivider: {
+      width: 1,
+      height: 18,
+      backgroundColor: c.border,
+      marginHorizontal: 10,
+    },
+    coverBandSubtitle: {
+      fontFamily: "Inter",
+      fontWeight: 600,
+      fontSize: 9,
+      color: c.textMuted,
+      letterSpacing: 0.3,
+    },
+    coverBandEyebrow: {
+      fontFamily: "Inter",
+      fontWeight: 700,
+      fontSize: 7.5,
+      color: c.primary,
+      textTransform: "uppercase",
+      letterSpacing: 1.2,
+      marginTop: 12,
+    },
+    coverBandTitle: {
+      fontFamily: "Space Grotesk",
+      fontWeight: 700,
+      fontSize: 20,
+      color: c.text,
+      marginTop: 6,
+      lineHeight: 1.15,
+    },
+    coverBandMeta: {
+      fontFamily: "Inter",
+      fontWeight: 400,
+      fontSize: 8,
+      color: c.textMuted,
+      marginTop: 10,
     },
 
     // TOC box
@@ -277,7 +369,7 @@ function buildStyles(c: PdfColorSet) {
     },
     tocTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
       marginBottom: 8,
     },
@@ -288,7 +380,7 @@ function buildStyles(c: PdfColorSet) {
     },
     tocNumber: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
       width: 20,
     },
@@ -314,14 +406,14 @@ function buildStyles(c: PdfColorSet) {
     },
     coverBadgeLabel: {
       fontSize: 7,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 0.5,
     },
     coverBadgeValue: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
     },
 
     // Bottom color stripe
@@ -349,7 +441,7 @@ function buildStyles(c: PdfColorSet) {
     },
     sectionBadgeText: {
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       textTransform: "uppercase",
       letterSpacing: 0.8,
@@ -366,7 +458,7 @@ function buildStyles(c: PdfColorSet) {
     },
     sectionTitleText: {
       fontSize: 18,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
     },
     sectionTitleLine: {
@@ -400,12 +492,12 @@ function buildStyles(c: PdfColorSet) {
     },
     findingCardNumberText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
     },
     findingCardTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 4,
     },
@@ -436,7 +528,7 @@ function buildStyles(c: PdfColorSet) {
     },
     actionNumberText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
     },
     actionContent: {
@@ -444,7 +536,7 @@ function buildStyles(c: PdfColorSet) {
     },
     actionTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 3,
     },
@@ -475,7 +567,7 @@ function buildStyles(c: PdfColorSet) {
     },
     kpiLabel: {
       fontSize: 7,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 1,
@@ -483,7 +575,7 @@ function buildStyles(c: PdfColorSet) {
     },
     kpiValue: {
       fontSize: 11,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
     },
 
@@ -503,7 +595,7 @@ function buildStyles(c: PdfColorSet) {
     },
     analysisBlockBadgeText: {
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -533,7 +625,7 @@ function buildStyles(c: PdfColorSet) {
     },
     recoTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 4,
     },
@@ -559,14 +651,14 @@ function buildStyles(c: PdfColorSet) {
     },
     riskBadgeText: {
       fontSize: 7,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textOnPrimary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
     },
     riskTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 4,
     },
@@ -594,7 +686,7 @@ function buildStyles(c: PdfColorSet) {
     },
     paramLabelText: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -619,7 +711,7 @@ function buildStyles(c: PdfColorSet) {
     },
     methodologyTitle: {
       fontSize: 10,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 6,
     },
@@ -650,7 +742,7 @@ function buildStyles(c: PdfColorSet) {
     },
     statsLabel: {
       fontSize: 7,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -658,7 +750,7 @@ function buildStyles(c: PdfColorSet) {
     },
     statsValue: {
       fontSize: 9,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.primary,
     },
 
@@ -687,7 +779,7 @@ function buildStyles(c: PdfColorSet) {
       left: 10,
       transform: "rotate(-90deg)",
       fontSize: 8,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.textMuted,
       textTransform: "uppercase",
       letterSpacing: 2,
@@ -696,7 +788,7 @@ function buildStyles(c: PdfColorSet) {
     // Sub heading
     subHeading: {
       fontSize: 11,
-      fontFamily: "Helvetica-Bold",
+      fontFamily: "Inter", fontWeight: 700,
       color: c.text,
       marginBottom: 8,
     },
@@ -895,15 +987,83 @@ const BrandedHeaderBar = ({ scenarioLabel, dateStr, c }: { scenarioLabel: string
   );
 };
 
+// ── EXOS Mark (vector, mirrors src/assets/exos-mark-dark.svg) ──
+
+const ExosMark = ({ size = 38, mode = "light" }: { size?: number; mode?: PdfThemeMode }) => {
+  const w = size;
+  const h = (size * 110) / 100;
+  const isDark = mode === "dark";
+  const baseFill = isDark ? "#0A5550" : "#122F47";
+  const gradStart = isDark ? "#2BB8AF" : "#47DDD4";
+  const gradEnd = isDark ? "#178A83" : "#19A49C";
+  const strokeColor = isDark ? "#6DD5CC" : "#0C1D2E";
+  return (
+    <Svg width={w} height={h} viewBox="0 0 100 110">
+      <Defs>
+        <LinearGradient id="exosTeal" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0%" stopColor={gradStart} />
+          <Stop offset="100%" stopColor={gradEnd} />
+        </LinearGradient>
+      </Defs>
+      <Polygon points="50,53 76,79 50,105 24,79" fill={baseFill} />
+      <Polygon points="50,29 76,55 50,81 24,55" fill="url(#exosTeal)" />
+      <Polygon points="50,5 76,31 50,57 24,31" fill="none" stroke={strokeColor} strokeWidth={6} strokeLinejoin="round" />
+    </Svg>
+  );
+};
+
+// ── Branded Cover Band (Option B v3) ──
+
+const CoverBand = ({
+  scenarioLabel,
+  reportTitle,
+  dateStr,
+  reportHash,
+  c,
+  mode = "light",
+}: {
+  scenarioLabel: string;
+  reportTitle: string;
+  dateStr: string;
+  reportHash: string;
+  c: PdfColorSet;
+  mode?: PdfThemeMode;
+}) => {
+  const s = buildStyles(c);
+  return (
+    <View style={s.coverBand}>
+      {/* Top row: mark + wordmark + subtitle */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <ExosMark size={42} mode={mode} />
+        <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 12 }}>
+          <Text style={s.coverBandWordmark}>EXOS</Text>
+          <View style={s.coverBandDivider} />
+          <Text style={s.coverBandSubtitle}>Procurement Analytical Platform</Text>
+        </View>
+      </View>
+
+      {/* Eyebrow + title + meta — offset to the right of the mark */}
+      <View style={{ marginLeft: 54 }}>
+        <Text style={s.coverBandEyebrow}>{scenarioLabel}</Text>
+        <Text style={s.coverBandTitle}>{reportTitle}</Text>
+        <Text style={s.coverBandMeta}>Confidential  ·  {dateStr}  ·  Report {reportHash}</Text>
+      </View>
+
+      {/* Bottom teal accent line */}
+      <View style={s.coverBandAccent} />
+    </View>
+  );
+};
+
 // ── Branded Footer ──
 
 const BrandedFooter = ({ dateStr, orgName, c }: { dateStr: string; orgName: string; c: PdfColorSet }) => {
   const s = buildStyles(c);
   return (
     <View style={s.footer} fixed>
-      <Text style={s.footerText}>Confidential — {orgName}</Text>
+      <Text style={s.footerText} render={() => `Confidential — ${orgName}`} />
       <Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
-      <Text style={s.footerText}>EXOS-SENTINEL-PIPELINE</Text>
+      <Text style={s.footerText} render={() => `EXOS-SENTINEL-PIPELINE`} />
     </View>
   );
 };
@@ -965,31 +1125,57 @@ const PDFReportDocument = ({
   const allKeys = Object.keys(formData);
   const filledKeys = allKeys.filter(k => formData[k] && formData[k].trim() !== "");
   const coveragePct = evaluationScore ?? (allKeys.length > 0 ? Math.round((filledKeys.length / allKeys.length) * 100) : 0);
-  const confidenceLevel = structuredOutput
-    ? (structuredOutput.confidence_level === "HIGH" ? "High" : structuredOutput.confidence_level === "MEDIUM" ? "Medium" : "Low")
-    : evaluationConfidence
-      ? (evaluationConfidence === "HIGH" ? "High" : "Low")
-      : (coveragePct >= 80 ? "High" : coveragePct >= 50 ? "Medium" : "Low");
   const hasLowConfidenceWatermark = structuredOutput?.low_confidence_watermark === true;
   const isNegotiationPrep = /negotiat|preparing.*for.*negotiat/i.test(scenarioTitle);
   const batnaScore = parsedData?.negotiationPrep?.batna?.strength;
   const leverageLabel = parsedData?.negotiationPrep?.leveragePoints?.[0]?.point || (isNegotiationPrep ? "N/A" : "3-Year Commitment");
   const supplierPowerLabel = parsedData?.negotiationPrep?.leveragePoints?.[1]?.point;
 
+  // Confidence is derived from OUTPUT COHERENCE — presence of structured
+  // analytical signals — not from input rigour. Keeps a well-reasoned report
+  // from being mislabelled "Low confidence" because the input was thin.
+  const outputSignals: boolean[] = [
+    Array.isArray(findings) && findings.length >= 3,
+    Array.isArray(recommendations) && recommendations.length >= 3,
+    isNegotiationPrep ? batnaScore != null : true,
+    strippedAnalysis.length > 800,
+  ];
+  const coherenceCount = outputSignals.filter(Boolean).length;
+  const outputConfidence = coherenceCount >= 3 ? "High" : coherenceCount >= 2 ? "Medium" : "Low";
+  const confidenceLevel = structuredOutput
+    ? (structuredOutput.confidence_level === "HIGH" ? "High" : structuredOutput.confidence_level === "MEDIUM" ? "Medium" : "Low")
+    : evaluationConfidence === "HIGH"
+      ? "High"
+      : evaluationConfidence === "LOW"
+        ? "Low"
+        : outputConfidence;
+
   const allParamEntries = Object.entries(formData).filter(([_, v]) => v && v.trim() !== "");
 
   // Finding titles extracted from first sentence
   const parseFindingTitle = (text: string): { title: string; body: string } => {
-    const stripped = stripMarkdown(text);
-    const colonIdx = stripped.indexOf(":");
+    const stripped = stripMarkdown(text).trim();
+    // Strip leading severity tag like "[High]", "[Critical]" — keep it on the title only
+    const tagMatch = stripped.match(/^(\[[^\]]+\])\s*(.*)$/);
+    const tag = tagMatch ? tagMatch[1] + " " : "";
+    const rest = tagMatch ? tagMatch[2] : stripped;
+
+    const colonIdx = rest.indexOf(":");
     if (colonIdx > 0 && colonIdx < 60) {
-      return { title: stripped.slice(0, colonIdx).trim(), body: stripped.slice(colonIdx + 1).trim() };
+      return { title: tag + rest.slice(0, colonIdx).trim(), body: rest.slice(colonIdx + 1).trim() };
     }
-    const words = stripped.split(" ");
-    if (words.length > 6) {
-      return { title: words.slice(0, 4).join(" "), body: stripped };
+    // Short line — render as title only, no body (prevents duplicate stuttered output)
+    const words = rest.split(/\s+/);
+    if (words.length <= 14) {
+      return { title: tag + rest, body: "" };
     }
-    return { title: stripped, body: "" };
+    // Long line — split at first sentence end (. or ?) within the first ~80 chars
+    const sentenceMatch = rest.match(/^(.{20,90}?[.?!])\s+(.+)$/);
+    if (sentenceMatch) {
+      return { title: tag + sentenceMatch[1].replace(/[.?!]$/, ""), body: sentenceMatch[2] };
+    }
+    // Fallback: first 8 words as title, remainder as body
+    return { title: tag + words.slice(0, 8).join(" "), body: words.slice(8).join(" ") };
   };
 
   const findingColors = [c.accent1, c.accent2, c.accent4];
@@ -1002,73 +1188,58 @@ const PDFReportDocument = ({
     <Document>
       {/* ── Page 1: Cover + Executive Summary (merged) ── */}
       <Page size="A4" style={s.page} id="section-executive-summary">
-        {/* Teal header bar with confidence badge */}
-        <View style={{ ...s.headerBar, justifyContent: "space-between" }}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: c.textOnPrimary, marginRight: 10 }}>
-              EXOS · Confidential
-            </Text>
-            {structuredOutput && (
-              <View style={{ backgroundColor: confidenceBadgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: confidenceBadgeColor }}>
-                  {confidenceLevel.toUpperCase()} CONFIDENCE
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 8, color: c.textOnPrimary, opacity: 0.85 }}>
-              {structuredOutput?.export_metadata?.generated_at
-                ? `Generated ${new Date(structuredOutput.export_metadata.generated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`
-                : `Prepared for EXOS · ${formattedDate}`}
-            </Text>
-          </View>
-        </View>
+        {/* Branded cover band (Option B v3) */}
+        <CoverBand
+          scenarioLabel={scenarioLabel}
+          reportTitle={reportTitle}
+          dateStr={formattedDate}
+          reportHash={reportHash}
+          c={c}
+          mode={pdfTheme}
+        />
 
-        {/* Confidence guidance note */}
+        {/* Confidence badge — overlaid in top-right of band */}
+        {structuredOutput && (
+          <View style={{ position: "absolute", top: 22, right: SP.pageSideMargin, backgroundColor: confidenceBadgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+            <Text style={{ fontSize: 7, fontFamily: "Inter", fontWeight: 700, color: confidenceBadgeColor }}>
+              {confidenceLevel.toUpperCase()} CONFIDENCE
+            </Text>
+          </View>
+        )}
+
+        {/* Confidence guidance note — pushed below band */}
         {hasLowConfidenceWatermark && (
-          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
-            <Text style={{ fontSize: 8, color: "#856404", fontFamily: "Helvetica-Bold" }}>
+          <View style={{ position: "absolute", top: 158, right: SP.pageSideMargin, backgroundColor: "#fef3cd", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+            <Text style={{ fontSize: 8, color: "#856404", fontFamily: "Inter", fontWeight: 700 }}>
               This analysis is indicative — see improvement tips below
             </Text>
           </View>
         )}
         {!hasLowConfidenceWatermark && confidenceLevel === "Medium" && (
-          <View style={{ position: "absolute", top: 42, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
-            <Text style={{ fontSize: 8, color: "#1b4b47", fontFamily: "Helvetica-Bold" }}>
+          <View style={{ position: "absolute", top: 158, right: SP.pageSideMargin, backgroundColor: "#e8f4f8", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, maxWidth: 260 }}>
+            <Text style={{ fontSize: 8, color: "#1b4b47", fontFamily: "Inter", fontWeight: 700 }}>
               Good analysis — a few additions would sharpen the results
             </Text>
           </View>
         )}
 
-        {/* Left teal stripe */}
-        <View style={s.coverLeftStripe} />
+        {/* Push content below the 150pt band (page already has 52pt top padding) */}
+        <View style={{ height: 110 }} />
 
-        <View style={s.coverSpacer} />
-
-        {/* Title */}
-        <Text style={s.coverTitle}>{reportTitle}</Text>
-
-        {/* Divider */}
-        <View style={s.coverDivider} />
-
-        {/* Key Findings */}
+        {/* Executive Summary */}
         <View style={s.sectionTitleWrapperCompact}>
-          <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Key Findings</Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Executive Summary</Text>
           <View style={s.sectionTitleLine} />
         </View>
 
-        <View style={s.findingCardsRow}>
-          {findings.slice(0, 3).map((point, i) => {
-            const { title, body } = parseFindingTitle(point);
-            const borderColor = findingColors[i % findingColors.length];
+        <View style={{ marginBottom: 10 }}>
+          {findings.slice(0, 5).map((point, i) => {
+            const clean = stripMarkdown(String(point ?? "")).trim();
+            if (!clean) return null;
             return (
-              <View key={`f-${i}`} style={{ ...s.findingCard, borderLeftColor: borderColor, ...(i === Math.min(findings.length, 3) - 1 ? s.findingCardLast : {}) }}>
-                <View style={{ ...s.findingCardNumber, backgroundColor: borderColor }}>
-                  <Text style={s.findingCardNumberText}>{i + 1}</Text>
-                </View>
-                <Text style={s.findingCardTitle}>{title}</Text>
-                {body ? <Text style={s.findingCardBody}>{body}</Text> : null}
+              <View key={`f-${i}`} style={{ flexDirection: "row", marginBottom: 5, paddingRight: 4 }}>
+                <Text style={{ fontSize: 10, color: c.accent1, marginRight: 6, lineHeight: 1.5 }}>•</Text>
+                <Text style={{ flex: 1, fontSize: 10, color: c.text, lineHeight: 1.5 }}>{clean}</Text>
               </View>
             );
           })}
@@ -1076,7 +1247,7 @@ const PDFReportDocument = ({
 
         {/* Recommended Actions */}
         <View style={s.sectionTitleWrapperCompact}>
-          <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: c.text }}>Recommended Actions</Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter", fontWeight: 700, color: c.text }}>Recommended Actions</Text>
           <View style={s.sectionTitleLine} />
         </View>
 
@@ -1174,7 +1345,7 @@ const PDFReportDocument = ({
             <View style={s.confidenceBar} wrap={false}>
               {confidenceLines.map((line, i) => (
                 <Text key={i} style={{ fontSize: 9, color: c.text, lineHeight: 1.5 }}>
-                  <Text style={{ fontFamily: "Helvetica-Bold" }}>Confidence Level: </Text>
+                  <Text style={{ fontFamily: "Inter", fontWeight: 700 }}>Confidence Level: </Text>
                   {stripMarkdown(line.replace(/confidence\s*level[:\s]*/i, ""))}
                 </Text>
               ))}
@@ -1185,71 +1356,119 @@ const PDFReportDocument = ({
         <BrandedFooter dateStr={formattedDate} orgName={orgName} c={c} />
       </Page>
 
-      {/* ── Recommendations & Risks ── */}
-      <Page size="A4" style={s.pageWithHeader} id="section-recs-risks">
-        <BrandedHeaderBar scenarioLabel={scenarioLabel} dateStr={formattedDate} c={c} />
+      {/* ── Recommendations & Risks ──
+          Only render this page when there's content NOT already shown on page 1
+          (Recommended Actions shows the first 4) OR when a Risk Register exists. */}
+      {(() => {
+        const sections = categorizeAnalysisSections(analysisLines);
+        const recoSections = sections.filter(sec => sec.type === "recommendations");
+        const recoLines = recoSections.flatMap(sec => sec.lines);
+        const overflowRecos = (recoLines.length > 0 ? recoLines : recommendations).slice(4);
+        const structuredRisks = extractRiskRegisterItems(analysisResult);
+        const riskLines = sections.filter(sec => sec.type === "risks").flatMap(sec => sec.lines);
+        const hasRiskRegister = structuredRisks.length > 0 || riskLines.length > 0;
+        if (overflowRecos.length === 0 && !hasRiskRegister) return null;
 
-        <View style={s.sectionBadge}>
-          <Text style={s.sectionBadgeText}>RECOMMENDATIONS & RISKS</Text>
-        </View>
+        const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
 
-        {/* Recommendations */}
-        <View style={s.sectionTitleWrapper}>
-          <Text style={s.sectionTitleText}>Recommendations</Text>
-          <View style={s.sectionTitleLine} />
-        </View>
+        return (
+          <Page size="A4" style={s.pageWithHeader} id="section-recs-risks">
+            <BrandedHeaderBar scenarioLabel={scenarioLabel} dateStr={formattedDate} c={c} />
 
-        {(() => {
-          const sections = categorizeAnalysisSections(analysisLines);
-          const recoSections = sections.filter(s => s.type === "recommendations");
-          const recoLines = recoSections.flatMap(s => s.lines);
-          const displayLines = recoLines.length > 0 ? recoLines : recommendations;
-          const recoAccents = [c.primary, c.accent2, c.accent3, c.accent4];
+            <View style={s.sectionBadge}>
+              <Text style={s.sectionBadgeText}>{hasRiskRegister ? "RECOMMENDATIONS & RISKS" : "ADDITIONAL RECOMMENDATIONS"}</Text>
+            </View>
 
-          return displayLines.slice(0, 6).map((line, i) => {
-            const { title, body } = parseFindingTitle(line);
-            return (
-              <View key={`reco-${i}`} style={{ ...s.recoCard, borderLeftColor: recoAccents[i % recoAccents.length] }} wrap={false}>
-                <Text style={s.recoTitle}>{title}</Text>
-                {body ? <Text style={s.recoBody}>{body}</Text> : null}
-              </View>
-            );
-          });
-        })()}
-
-        {/* Risk Register */}
-        <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}>
-          <Text style={s.sectionTitleText}>Risk Register</Text>
-          <View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} />
-        </View>
-
-        {(() => {
-          const sections = categorizeAnalysisSections(analysisLines);
-          const riskSections = sections.filter(s => s.type === "risks");
-          const riskLines = riskSections.flatMap(s => s.lines);
-          if (riskLines.length === 0) return null;
-
-          return riskLines.slice(0, 5).map((line, i) => {
-            const { severity, cleanText } = parseRiskSeverity(line);
-            const colonIdx = cleanText.indexOf(":");
-            const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
-            const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
-            const sevColor = riskSeverityColor(severity, c);
-
-            return (
-              <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
-                <View style={{ ...s.riskBadge, backgroundColor: sevColor }}>
-                  <Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text>
+            {overflowRecos.length > 0 && (
+              <>
+                <View style={s.sectionTitleWrapper}>
+                  <Text style={s.sectionTitleText}>Additional Recommendations</Text>
+                  <View style={s.sectionTitleLine} />
                 </View>
-                {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
-                <Text style={s.riskDescription}>{riskDesc}</Text>
-              </View>
+                {overflowRecos.slice(0, 6).map((line, i) => {
+                  const { title, body } = parseFindingTitle(line);
+                  return (
+                    <View key={`reco-${i}`} style={{ ...s.recoCard, borderLeftColor: recoAccents[i % recoAccents.length] }} wrap={false}>
+                      <Text style={s.recoTitle}>{title}</Text>
+                      {body ? <Text style={s.recoBody}>{body}</Text> : null}
+                    </View>
+                  );
+                })}
+              </>
+            )}
+
+        {/* Risk Register — heading and body render together; both hide when there's no content.
+            When the analysis is an EXOS envelope we ALWAYS prefer structured risks (same source
+            as the page-2 Risk Matrix). The plain-text fallback is only used for legacy
+            non-envelope analyses — otherwise it surfaced executive-summary text as a fake
+            "MEDIUM" risk row, duplicating page-1 content. */}
+        {(() => {
+          const structuredRisks = extractRiskRegisterItems(analysisResult);
+          const isEnvelope = (() => {
+            try {
+              const p = JSON.parse(analysisResult);
+              return p && ['1.0', '2.0'].includes(p.schema_version);
+            } catch { return false; }
+          })();
+          const sections = categorizeAnalysisSections(analysisLines);
+          const riskLines = isEnvelope ? [] : sections.filter(s => s.type === "risks").flatMap(s => s.lines);
+          const useStructured = structuredRisks.length > 0;
+          if (!useStructured && riskLines.length === 0) return null;
+
+          const heading = (
+            <View style={{ ...s.sectionTitleWrapper, marginTop: 16 }}>
+              <Text style={s.sectionTitleText}>Risk Register</Text>
+              <View style={{ ...s.sectionTitleLine, backgroundColor: c.destructive }} />
+            </View>
+          );
+
+          if (useStructured) {
+            return (
+              <>
+                {heading}
+                {structuredRisks.slice(0, 10).map((item, i) => {
+                  const sevColor = riskSeverityColor(item.severity, c);
+                  return (
+                    <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                      <View style={{ ...s.riskBadge, backgroundColor: sevColor }}>
+                        <Text style={s.riskBadgeText}>{item.severity.toUpperCase()}</Text>
+                      </View>
+                      {item.name ? <Text style={s.riskTitle}>{item.name}</Text> : null}
+                      <Text style={s.riskDescription}>{item.description}</Text>
+                    </View>
+                  );
+                })}
+              </>
             );
-          });
+          }
+
+          return (
+            <>
+              {heading}
+              {riskLines.slice(0, 5).map((line, i) => {
+                const { severity, cleanText } = parseRiskSeverity(line);
+                const colonIdx = cleanText.indexOf(":");
+                const riskName = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(0, colonIdx)) : "";
+                const riskDesc = colonIdx > 0 && colonIdx < 50 ? stripMarkdown(cleanText.slice(colonIdx + 1)) : stripMarkdown(cleanText);
+                const sevColor = riskSeverityColor(severity, c);
+                return (
+                  <View key={`risk-${i}`} style={{ ...s.riskItem, borderLeftColor: sevColor }} wrap={false}>
+                    <View style={{ ...s.riskBadge, backgroundColor: sevColor }}>
+                      <Text style={s.riskBadgeText}>{severity.toUpperCase()}</Text>
+                    </View>
+                    {riskName ? <Text style={s.riskTitle}>{riskName}</Text> : null}
+                    <Text style={s.riskDescription}>{riskDesc}</Text>
+                  </View>
+                );
+              })}
+            </>
+          );
         })()}
 
         <BrandedFooter dateStr={formattedDate} orgName={orgName} c={c} />
       </Page>
+        );
+      })()}
 
       {/* ── Analysis Parameters ── */}
       {hasParams && (
