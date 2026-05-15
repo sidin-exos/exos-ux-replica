@@ -3,15 +3,6 @@ import { Linkedin } from "lucide-react";
 
 const footerColumns = [
   {
-    title: "Product",
-    links: [
-      { label: "Scenarios", to: "/" },
-      { label: "Market Intelligence", to: "/market-intelligence" },
-      { label: "Enterprise", to: "/enterprise/risk" },
-      { label: "My Account", to: "/account" },
-    ],
-  },
-  {
     title: "Company",
     links: [
       { label: "About EXOS", to: "#" },
