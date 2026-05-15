@@ -331,7 +331,7 @@ const Pricing = () => {
                   { feature: "AI Credits", smb: "100 / month", pro: "200 / month", enterprise: "Custom" },
                   { feature: "20+ procurement scenarios and Market Intelligence", smb: true, pro: true, enterprise: true },
                   { feature: "Risk and Inflation Platforms", smb: false, pro: true, enterprise: true },
-                  { feature: "Users Training", smb: false, pro: false, enterprise: true },
+                  { feature: "User training", smb: false, pro: false, enterprise: true },
                   { feature: "Custom integrations", smb: false, pro: false, enterprise: true },
                 ].map((row) => (
                   <TableRow key={row.feature}>
