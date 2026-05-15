@@ -148,6 +148,7 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
   const navigate = useNavigate();
   const { showTechnicalDetails } = useShareableMode();
   const { user } = useUser();
+  const { isAdmin } = useAdminAuth();
 
   const {
     saveDraft,
