@@ -34,6 +34,13 @@ function has25ProOptIn(): boolean {
 }
 
 function loadConfig(): ModelConfig {
+  let needs31ProMigration = false;
+  try {
+    needs31ProMigration = !localStorage.getItem(MIGRATION_31PRO_KEY);
+  } catch (_) {
+    // localStorage unavailable; skip migration logic
+  }
+
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -51,13 +58,20 @@ function loadConfig(): ModelConfig {
         model = DEFAULT_CONFIG.model;
       }
       const isValid = VALID_MODELS.includes(model);
-      return {
+      const finalConfig = {
         model: isValid ? model : DEFAULT_CONFIG.model,
         lastTested: parsed.lastTested || null,
       };
+      if (needs31ProMigration) {
+        try { localStorage.setItem(MIGRATION_31PRO_KEY, "1"); } catch (_) { /* ignore */ }
+      }
+      return finalConfig;
     }
   } catch (e) {
     // silently fall back to defaults
+  }
+  if (needs31ProMigration) {
+    try { localStorage.setItem(MIGRATION_31PRO_KEY, "1"); } catch (_) { /* ignore */ }
   }
   return DEFAULT_CONFIG;
 }
