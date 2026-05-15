@@ -43,7 +43,7 @@ type PricingTier = {
 const pricingTiers: PricingTier[] = [
   {
     id: "smb",
-    name: "Starter/SMB",
+    name: "Starter",
     subtitle: "For companies without a dedicated procurement function",
     icon: Zap,
     featured: false,
@@ -51,7 +51,7 @@ const pricingTiers: PricingTier[] = [
     quarterly: { priceId: "price_1TEPId34h5FyPJ35CAqDvL37", price: 72, displayPerMonth: 24 },
     features: [
       "Distilled procurement knowledge in one place",
-      "29 Analytical scanarios",
+      "29 analytical scenarios",
       "Market Intelligence",
       "Validated secure data protocols",
       "100 AI reports a month",
@@ -81,7 +81,7 @@ const pricingTiers: PricingTier[] = [
   {
     id: "enterprise",
     name: "Enterprise",
-    subtitle: "Custom solutions for large organizations",
+    subtitle: "Custom solutions for large organisations",
     icon: Building2,
     featured: false,
     comingSoon: false,
