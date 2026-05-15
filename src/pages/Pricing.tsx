@@ -209,13 +209,15 @@ const Pricing = () => {
               <Card
                 key={tier.id}
                 className={`card-elevated relative animate-fade-up flex flex-col ${
-                  tier.featured ? "border-primary/50 shadow-lg shadow-primary/10" : ""
+                  tier.featured
+                    ? "border-2 border-primary shadow-2xl shadow-primary/20 bg-primary/5 md:-mt-4 md:mb-4 md:scale-[1.03] z-10"
+                    : ""
                 }`}
                 style={{ animationDelay: `${100 + index * 100}ms` }}
               >
                 {tier.featured && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                    <Badge className="bg-primary text-primary-foreground shadow-md px-3 py-1">Most Popular</Badge>
                   </div>
                 )}
                 
