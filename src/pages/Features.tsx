@@ -317,6 +317,9 @@ const Features = () => {
           </p>
         </section>
 
+        {/* AI Guide — available to all visitors (anonymous + authenticated) */}
+        <ChatWidget />
+
         {/* Value Props */}
         <section className="mb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
