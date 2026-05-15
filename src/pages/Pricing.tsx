@@ -389,11 +389,22 @@ const Pricing = () => {
               </TableHeader>
               <TableBody>
                 {[
-                  { feature: "AI Credits", smb: "100 / month", pro: "200 / month", enterprise: "Custom" },
-                  { feature: "20+ procurement scenarios and Market Intelligence", smb: true, pro: true, enterprise: true },
-                  { feature: "Risk and Inflation Platforms", smb: false, pro: true, enterprise: true },
-                  { feature: "User training", smb: false, pro: false, enterprise: true },
-                  { feature: "Custom integrations", smb: false, pro: false, enterprise: true },
+                  { feature: "AI reports", smb: "100 / month", pro: "200 / month", enterprise: "Custom" },
+                  { feature: "Procurement scenarios", smb: "29", pro: "29", enterprise: "29 + custom" },
+                  { feature: "Market Intelligence", smb: true, pro: true, enterprise: true },
+                  { feature: "Risk Assessment Platform", smb: false, pro: true, enterprise: true },
+                  { feature: "Inflation Analysis Platform", smb: false, pro: true, enterprise: true },
+                  { feature: "Custom scenarios per month", smb: "—", pro: "1 / user", enterprise: "Unlimited" },
+                  { feature: "Multi-user collaboration", smb: false, pro: true, enterprise: true },
+                  { feature: "Exports (PDF · Excel · Word · Jira)", smb: true, pro: true, enterprise: true },
+                  { feature: "Semantic data anonymisation", smb: true, pro: true, enterprise: true },
+                  { feature: "Private knowledge base upload", smb: false, pro: false, enterprise: true },
+                  { feature: "SSO / SAML", smb: false, pro: false, enterprise: true },
+                  { feature: "Dedicated success manager", smb: false, pro: false, enterprise: true },
+                  { feature: "User training & coaching", smb: false, pro: false, enterprise: true },
+                  { feature: "Custom data integrations", smb: false, pro: false, enterprise: true },
+                  { feature: "SLA", smb: "—", pro: "Standard", enterprise: "Custom" },
+                  { feature: "Support", smb: "Email", pro: "Priority email", enterprise: "Dedicated" },
                 ].map((row) => (
                   <TableRow key={row.feature}>
                     <TableCell className="font-medium text-foreground">{row.feature}</TableCell>
