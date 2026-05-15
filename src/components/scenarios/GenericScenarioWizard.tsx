@@ -1118,17 +1118,19 @@ const GenericScenarioWizard = ({ scenario }: GenericScenarioWizardProps) => {
                   <Sparkles className="w-4 h-4" />
                   {canProceed ? "Analyze with AI" : "Complete Required Fields"}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={handleDeepAnalysis}
-                  disabled={!canProceed || isDeepAnalysisRunning}
-                  className="gap-2 border-iris/50 hover:bg-iris/10"
-                >
-                  <BrainCircuit className="w-4 h-4" />
-                  Deep Analysis
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 uppercase">Beta</Badge>
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleDeepAnalysis}
+                    disabled={!canProceed || isDeepAnalysisRunning}
+                    className="gap-2 border-iris/50 hover:bg-iris/10"
+                  >
+                    <BrainCircuit className="w-4 h-4" />
+                    Deep Analysis
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 uppercase">Beta</Badge>
+                  </Button>
+                )}
               </div>
             </div>
           </motion.div>
