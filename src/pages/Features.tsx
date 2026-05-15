@@ -10,6 +10,7 @@ import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 import exosMark from "@/assets/exos-mark.svg";
 import exosMarkDark from "@/assets/exos-mark-dark.svg";
@@ -315,6 +316,9 @@ const Features = () => {
             Critical procurement decisions are often made without adequate preparation — due to lack of time, knowledge, or a specialised procurement function. EXOS is a <strong className="font-semibold text-foreground">human-in-the-loop</strong> platform built to support your <strong className="font-semibold text-foreground">most valuable projects</strong>, where every decision matters, by adding multiple analytical dimensions to your decision-making. Procurement scenarios, risk assessments, inflation analytics and live market intelligence work together to sharpen your competitive edge.
           </p>
         </section>
+
+        {/* AI Guide — available to all visitors (anonymous + authenticated) */}
+        <ChatWidget />
 
         {/* Value Props */}
         <section className="mb-20">
