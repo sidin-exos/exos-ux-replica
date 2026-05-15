@@ -34,7 +34,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-border bg-muted/30 mt-auto">
       <div className="container py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
           {footerColumns.map((column) => (
             <div key={column.title}>
               <h3 className="font-semibold text-sm text-foreground mb-4">
