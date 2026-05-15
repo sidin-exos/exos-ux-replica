@@ -353,7 +353,7 @@ const Welcome = () => {
                       
                     </CardContent>
                   </Card>
-                  <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href)}>
+                  <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href === "/" ? "/?explore=1" : pillar.href)}>
                     {pillar.cta} <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
