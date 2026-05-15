@@ -427,7 +427,7 @@ const Welcome = () => {
               Join the world's most advanced procurement teams and start making high-confidence decisions today.
             </p>
             <div className="flex flex-wrap gap-3 mt-1">
-              <Button size="lg" variant="secondary" className="gap-2 px-6" onClick={() => navigate("/")}>
+              <Button size="lg" variant="secondary" className="gap-2 px-6" onClick={() => navigate("/auth")}>
                 Get Started Now
               </Button>
               <Button
