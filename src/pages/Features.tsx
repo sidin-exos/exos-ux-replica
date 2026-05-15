@@ -508,9 +508,6 @@ const Features = () => {
           <DataFlowDiagram />
         </section>
 
-        {/* AI Guide — available to all visitors */}
-        <ChatWidget />
-
 
         {/* Dashboards Section */}
         <section id="dashboards" className="mb-20 animate-fade-up" style={{ animationDelay: "450ms" }}>
