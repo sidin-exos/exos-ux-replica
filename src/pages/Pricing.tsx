@@ -437,8 +437,37 @@ const Pricing = () => {
                 <AccordionTrigger className="text-left text-foreground hover:no-underline py-6">
                   <span className="font-display font-medium text-lg md:text-xl">{faq.question}</span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-6 whitespace-pre-line text-base md:text-lg leading-relaxed">
-                  {faq.answer}
+                <AccordionContent className="text-muted-foreground pb-6 text-base md:text-lg leading-relaxed">
+                  {(() => {
+                    const lines = faq.answer.split("\n");
+                    const blocks: Array<{ type: "p" | "ul"; items: string[] }> = [];
+                    lines.forEach((raw) => {
+                      const line = raw.trim();
+                      if (!line) return;
+                      if (line.startsWith("- ")) {
+                        const last = blocks[blocks.length - 1];
+                        const item = line.slice(2).replace(/[;.]\s*$/, "");
+                        if (last && last.type === "ul") last.items.push(item);
+                        else blocks.push({ type: "ul", items: [item] });
+                      } else {
+                        blocks.push({ type: "p", items: [line] });
+                      }
+                    });
+                    return blocks.map((b, i) =>
+                      b.type === "p" ? (
+                        <p key={i} className={i > 0 ? "mt-4" : ""}>{b.items[0]}</p>
+                      ) : (
+                        <ul key={i} className="mt-4 space-y-2.5">
+                          {b.items.map((item, j) => (
+                            <li key={j} className="flex items-start gap-3">
+                              <Check className="w-4 h-4 md:w-5 md:h-5 text-primary mt-1 flex-shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )
+                    );
+                  })()}
                 </AccordionContent>
               </AccordionItem>
             ))}
