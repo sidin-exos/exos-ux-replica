@@ -16,6 +16,7 @@ import PageLoadingFallback from "./components/layout/PageLoadingFallback";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import SentryErrorFallback from "./components/SentryErrorFallback";
 import SentryUserSync from "./components/SentryUserSync";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Lazy-loaded page components
 const Index = lazy(() => import("./pages/Index"));
