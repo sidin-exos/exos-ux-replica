@@ -307,39 +307,28 @@ const Pricing = () => {
                   {/* Price */}
                   <div className="text-center mb-6">
                     {tier.id === "enterprise" ? (
-                      <div className="text-2xl font-display font-semibold text-muted-foreground">
-                        Custom Pricing
+                      <div>
+                        <div className="text-2xl font-display font-semibold text-muted-foreground">
+                          Custom Pricing
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">Tailored to your team size</p>
                       </div>
                     ) : (() => {
                       const variant = billingInterval === "quarterly" ? tier.quarterly : tier.monthly;
                       if (!variant) return null;
                       return (
                         <div>
-                          <div className="flex justify-center mb-4">
-                            <Tabs
-                              value={billingInterval}
-                              onValueChange={(v) => setBillingInterval(v as BillingInterval)}
-                            >
-                              <TabsList className="h-8">
-                                <TabsTrigger value="monthly" className="text-xs px-2 py-1">Monthly</TabsTrigger>
-                                <TabsTrigger value="quarterly" className="text-xs px-2 py-1">
-                                  Quarterly
-                                  <span className="ml-1 text-[10px] text-success">−33%</span>
-                                </TabsTrigger>
-                              </TabsList>
-                            </Tabs>
-                          </div>
                           <div className="flex items-baseline justify-center gap-1">
                             <span className="text-4xl font-display font-bold text-foreground">
                               €{variant.displayPerMonth}
                             </span>
                             <span className="text-muted-foreground">/month</span>
                           </div>
-                          {billingInterval === "quarterly" && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              €{variant.price} billed every 3 months
-                            </p>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {billingInterval === "quarterly"
+                              ? `€${variant.price} billed every 3 months · ex. VAT`
+                              : "ex. VAT · billed monthly"}
+                          </p>
                         </div>
                       );
                     })()}
@@ -371,16 +360,16 @@ const Pricing = () => {
                       tier.cta
                     )}
                   </Button>
+                  {tier.id !== "enterprise" && (
+                    <p className="text-xs text-muted-foreground text-center mt-3">
+                      30-day free trial · 30 reports included
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );
           })}
         </div>
-
-        {/* Trial disclaimer */}
-        <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
-          30-day free trial, 30 AI reports maximum.
-        </p>
 
 
         {/* Feature Comparison Table */}
