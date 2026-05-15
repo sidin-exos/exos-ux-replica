@@ -434,10 +434,10 @@ const Pricing = () => {
                 value={faq.id}
                 className="card-elevated border border-border/50 rounded-lg px-6 data-[state=open]:border-primary/30"
               >
-                <AccordionTrigger className="text-left text-foreground hover:no-underline py-5">
-                  <span className="font-display font-medium">{faq.question}</span>
+                <AccordionTrigger className="text-left text-foreground hover:no-underline py-6">
+                  <span className="font-display font-medium text-lg md:text-xl">{faq.question}</span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5 whitespace-pre-line">
+                <AccordionContent className="text-muted-foreground pb-6 whitespace-pre-line text-base md:text-lg leading-relaxed">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
