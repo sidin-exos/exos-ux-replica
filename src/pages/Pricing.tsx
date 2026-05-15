@@ -100,31 +100,6 @@ const pricingTiers: PricingTier[] = [
 
 const faqData = [
   {
-    id: "cancel",
-    question: "Can I cancel or downgrade at any time?",
-    answer: `Yes. You can cancel or change your plan from the Account page at any time. Cancellations stop the next billing cycle — you keep full access until the end of the period you've already paid for. Downgrades take effect at the start of the next cycle so you don't lose features mid-month.`,
-  },
-  {
-    id: "after-trial",
-    question: "What happens after the 30-day free trial?",
-    answer: `The trial gives you 30 AI reports across all paid features for 30 days. When it ends, your plan converts to the tier you selected at sign-up and your card is charged for the first cycle. We email you 3 days before the trial ends so there are no surprises. If you cancel before the trial ends, you're not charged.`,
-  },
-  {
-    id: "refunds",
-    question: "Do you offer refunds?",
-    answer: `If you cancel within 30 days of your first paid charge and have used fewer than 10 AI reports in that cycle, we'll issue a full prorated refund — just contact us. Beyond that window, cancellations stop future billing but past cycles aren't refunded.`,
-  },
-  {
-    id: "data-ownership",
-    question: "Who owns the data and reports I generate?",
-    answer: `You do. Your inputs, outputs, and uploaded files belong to you and are never used to train external AI models. Commercial data — supplier names, contract details, negotiation positions — is semantically anonymised before any external AI provider sees it. You can export or delete everything from the Account page at any time.`,
-  },
-  {
-    id: "sso",
-    question: "Do you support SSO and InfoSec reviews?",
-    answer: `SSO (SAML / Google / Microsoft) is included with the Enterprise plan. For InfoSec reviews, Enterprise customers get full visibility into outgoing API requests and we can deploy the engine on your own infrastructure. We can also provide our security questionnaire, DPA, and sub-processor list on request.`,
-  },
-  {
     id: "tariff",
     question: "What is the right plan for me?",
     answer: `Pick the Starter option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Professional option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Professional for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
