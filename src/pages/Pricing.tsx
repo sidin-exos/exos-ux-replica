@@ -100,6 +100,31 @@ const pricingTiers: PricingTier[] = [
 
 const faqData = [
   {
+    id: "cancel",
+    question: "Can I cancel or downgrade at any time?",
+    answer: `Yes. You can cancel or change your plan from the Account page at any time. Cancellations stop the next billing cycle — you keep full access until the end of the period you've already paid for. Downgrades take effect at the start of the next cycle so you don't lose features mid-month.`,
+  },
+  {
+    id: "after-trial",
+    question: "What happens after the 30-day free trial?",
+    answer: `The trial gives you 30 AI reports across all paid features for 30 days. When it ends, your plan converts to the tier you selected at sign-up and your card is charged for the first cycle. We email you 3 days before the trial ends so there are no surprises. If you cancel before the trial ends, you're not charged.`,
+  },
+  {
+    id: "refunds",
+    question: "Do you offer refunds?",
+    answer: `If you cancel within 30 days of your first paid charge and have used fewer than 10 AI reports in that cycle, we'll issue a full prorated refund — just contact us. Beyond that window, cancellations stop future billing but past cycles aren't refunded.`,
+  },
+  {
+    id: "data-ownership",
+    question: "Who owns the data and reports I generate?",
+    answer: `You do. Your inputs, outputs, and uploaded files belong to you and are never used to train external AI models. Commercial data — supplier names, contract details, negotiation positions — is semantically anonymised before any external AI provider sees it. You can export or delete everything from the Account page at any time.`,
+  },
+  {
+    id: "sso",
+    question: "Do you support SSO and InfoSec reviews?",
+    answer: `SSO (SAML / Google / Microsoft) is included with the Enterprise plan. For InfoSec reviews, Enterprise customers get full visibility into outgoing API requests and we can deploy the engine on your own infrastructure. We can also provide our security questionnaire, DPA, and sub-processor list on request.`,
+  },
+  {
     id: "tariff",
     question: "What is the right plan for me?",
     answer: `Pick the Starter option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Professional option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Professional for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
@@ -243,15 +268,33 @@ const Pricing = () => {
 
       <main className="container py-8 relative">
         {/* Hero Section */}
-        <section className="mb-12 text-center animate-fade-up">
+        <section className="mb-10 text-center animate-fade-up">
           <div className="flex justify-center mb-6">
-            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-24 md:h-32 w-auto object-contain" />
+            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-16 md:h-20 w-auto object-contain" />
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-            Procurement AI at a fraction of enterprise cost. No implementation.
-            No minimum seats. Cancel anytime.
+          <h1 className="font-display text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+            Plans that scale from one buyer to a global procurement team
           </h1>
+          <p className="text-muted-foreground text-base md:text-lg">
+            Procurement AI at a fraction of enterprise cost · No implementation · No minimum seats · Cancel anytime
+          </p>
         </section>
+
+        {/* Global billing toggle */}
+        <div className="flex justify-center mb-8 animate-fade-up" style={{ animationDelay: "80ms" }}>
+          <Tabs
+            value={billingInterval}
+            onValueChange={(v) => setBillingInterval(v as BillingInterval)}
+          >
+            <TabsList className="h-10">
+              <TabsTrigger value="monthly" className="px-4">Monthly</TabsTrigger>
+              <TabsTrigger value="quarterly" className="px-4">
+                Quarterly
+                <span className="ml-2 text-xs text-success font-semibold">−33%</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -289,39 +332,28 @@ const Pricing = () => {
                   {/* Price */}
                   <div className="text-center mb-6">
                     {tier.id === "enterprise" ? (
-                      <div className="text-2xl font-display font-semibold text-muted-foreground">
-                        Custom Pricing
+                      <div>
+                        <div className="text-2xl font-display font-semibold text-muted-foreground">
+                          Custom Pricing
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">Tailored to your team size</p>
                       </div>
                     ) : (() => {
                       const variant = billingInterval === "quarterly" ? tier.quarterly : tier.monthly;
                       if (!variant) return null;
                       return (
                         <div>
-                          <div className="flex justify-center mb-4">
-                            <Tabs
-                              value={billingInterval}
-                              onValueChange={(v) => setBillingInterval(v as BillingInterval)}
-                            >
-                              <TabsList className="h-8">
-                                <TabsTrigger value="monthly" className="text-xs px-2 py-1">Monthly</TabsTrigger>
-                                <TabsTrigger value="quarterly" className="text-xs px-2 py-1">
-                                  Quarterly
-                                  <span className="ml-1 text-[10px] text-success">−33%</span>
-                                </TabsTrigger>
-                              </TabsList>
-                            </Tabs>
-                          </div>
                           <div className="flex items-baseline justify-center gap-1">
                             <span className="text-4xl font-display font-bold text-foreground">
                               €{variant.displayPerMonth}
                             </span>
                             <span className="text-muted-foreground">/month</span>
                           </div>
-                          {billingInterval === "quarterly" && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              €{variant.price} billed every 3 months
-                            </p>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {billingInterval === "quarterly"
+                              ? `€${variant.price} billed every 3 months · ex. VAT`
+                              : "ex. VAT · billed monthly"}
+                          </p>
                         </div>
                       );
                     })()}
@@ -353,16 +385,16 @@ const Pricing = () => {
                       tier.cta
                     )}
                   </Button>
+                  {tier.id !== "enterprise" && (
+                    <p className="text-xs text-muted-foreground text-center mt-3">
+                      30-day free trial · 30 reports included
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );
           })}
         </div>
-
-        {/* Trial disclaimer */}
-        <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
-          30-day free trial, 30 AI reports maximum.
-        </p>
 
 
         {/* Feature Comparison Table */}
@@ -382,11 +414,22 @@ const Pricing = () => {
               </TableHeader>
               <TableBody>
                 {[
-                  { feature: "AI Credits", smb: "100 / month", pro: "200 / month", enterprise: "Custom" },
-                  { feature: "20+ procurement scenarios and Market Intelligence", smb: true, pro: true, enterprise: true },
-                  { feature: "Risk and Inflation Platforms", smb: false, pro: true, enterprise: true },
-                  { feature: "User training", smb: false, pro: false, enterprise: true },
-                  { feature: "Custom integrations", smb: false, pro: false, enterprise: true },
+                  { feature: "AI reports", smb: "100 / month", pro: "200 / month", enterprise: "Custom" },
+                  { feature: "Procurement scenarios", smb: "29", pro: "29", enterprise: "29 + custom" },
+                  { feature: "Market Intelligence", smb: true, pro: true, enterprise: true },
+                  { feature: "Risk Assessment Platform", smb: false, pro: true, enterprise: true },
+                  { feature: "Inflation Analysis Platform", smb: false, pro: true, enterprise: true },
+                  { feature: "Custom scenarios per month", smb: "—", pro: "1 / user", enterprise: "Unlimited" },
+                  { feature: "Multi-user collaboration", smb: false, pro: true, enterprise: true },
+                  { feature: "Exports (PDF · Excel · Word · Jira)", smb: true, pro: true, enterprise: true },
+                  { feature: "Semantic data anonymisation", smb: true, pro: true, enterprise: true },
+                  { feature: "Private knowledge base upload", smb: false, pro: false, enterprise: true },
+                  { feature: "SSO / SAML", smb: false, pro: false, enterprise: true },
+                  { feature: "Dedicated success manager", smb: false, pro: false, enterprise: true },
+                  { feature: "User training & coaching", smb: false, pro: false, enterprise: true },
+                  { feature: "Custom data integrations", smb: false, pro: false, enterprise: true },
+                  { feature: "SLA", smb: "—", pro: "Standard", enterprise: "Custom" },
+                  { feature: "Support", smb: "Email", pro: "Priority email", enterprise: "Dedicated" },
                 ].map((row) => (
                   <TableRow key={row.feature}>
                     <TableCell className="font-medium text-foreground">{row.feature}</TableCell>
