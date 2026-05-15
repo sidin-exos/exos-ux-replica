@@ -243,15 +243,33 @@ const Pricing = () => {
 
       <main className="container py-8 relative">
         {/* Hero Section */}
-        <section className="mb-12 text-center animate-fade-up">
+        <section className="mb-10 text-center animate-fade-up">
           <div className="flex justify-center mb-6">
-            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-24 md:h-32 w-auto object-contain" />
+            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-16 md:h-20 w-auto object-contain" />
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-            Procurement AI at a fraction of enterprise cost. No implementation.
-            No minimum seats. Cancel anytime.
+          <h1 className="font-display text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+            Plans that scale from one buyer to a global procurement team
           </h1>
+          <p className="text-muted-foreground text-base md:text-lg">
+            Procurement AI at a fraction of enterprise cost · No implementation · No minimum seats · Cancel anytime
+          </p>
         </section>
+
+        {/* Global billing toggle */}
+        <div className="flex justify-center mb-8 animate-fade-up" style={{ animationDelay: "80ms" }}>
+          <Tabs
+            value={billingInterval}
+            onValueChange={(v) => setBillingInterval(v as BillingInterval)}
+          >
+            <TabsList className="h-10">
+              <TabsTrigger value="monthly" className="px-4">Monthly</TabsTrigger>
+              <TabsTrigger value="quarterly" className="px-4">
+                Quarterly
+                <span className="ml-2 text-xs text-success font-semibold">−33%</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
