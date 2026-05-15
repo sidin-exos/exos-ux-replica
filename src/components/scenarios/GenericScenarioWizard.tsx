@@ -12,6 +12,7 @@ import { AnalysisPipelineAnimation } from "@/components/sentinel/AnalysisPipelin
 import { DeepAnalysisPipeline } from "@/components/analysis/DeepAnalysisPipeline";
 import { DeepAnalysisResult } from "@/components/analysis/DeepAnalysisResult";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { routeFeedback } from "@/lib/route-feedback";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
