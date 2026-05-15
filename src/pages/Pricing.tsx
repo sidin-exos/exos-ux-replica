@@ -82,7 +82,7 @@ const pricingTiers: PricingTier[] = [
   {
     id: "enterprise",
     name: "Enterprise",
-    subtitle: "Custom solutions for large organisations",
+    subtitle: "Customized solutions for 10+ user teams",
     icon: Building2,
     featured: false,
     comingSoon: false,
