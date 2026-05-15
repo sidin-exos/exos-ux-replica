@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText, Layers, TrendingUp, EyeOff, ShieldCheck } from "lucide-react";
-import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
