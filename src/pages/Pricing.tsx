@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail, Loader2 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -94,7 +95,7 @@ const pricingTiers: PricingTier[] = [
       "Custom enterprise Risk and Inflation analytics",
       "Custom API integrations",
     ],
-    cta: "Book a 15-min Demo",
+    cta: "Contact Sales",
   },
 ];
 
@@ -180,8 +181,60 @@ const Pricing = () => {
     }
   };
 
+  const productSchema = pricingTiers.map((tier) => {
+    const offer =
+      tier.id === "enterprise"
+        ? { "@type": "Offer", priceCurrency: "EUR", price: "0", availability: "https://schema.org/InStock", url: "https://ex-dev.lovable.app/pricing#contact" }
+        : {
+            "@type": "Offer",
+            priceCurrency: "EUR",
+            price: String(tier.monthly?.price ?? 0),
+            availability: "https://schema.org/InStock",
+            url: "https://ex-dev.lovable.app/pricing",
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: tier.monthly?.price ?? 0,
+              priceCurrency: "EUR",
+              referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
+            },
+          };
+    return {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: `EXOS ${tier.name}`,
+      description: tier.subtitle,
+      brand: { "@type": "Brand", name: "EXOS" },
+      offers: offer,
+    };
+  });
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqData.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+
   return (
     <div className="min-h-screen gradient-hero">
+      <Helmet>
+        <title>EXOS Pricing — Procurement AI plans from €24/month</title>
+        <meta
+          name="description"
+          content="Transparent EXOS pricing for procurement AI: Starter, Professional and Enterprise plans. 30-day free trial, no implementation, cancel anytime."
+        />
+        <link rel="canonical" href="https://ex-dev.lovable.app/pricing" />
+        {productSchema.map((schema, i) => (
+          <script key={`product-${i}`} type="application/ld+json">
+            {JSON.stringify(schema)}
+          </script>
+        ))}
+        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+      </Helmet>
+
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}
