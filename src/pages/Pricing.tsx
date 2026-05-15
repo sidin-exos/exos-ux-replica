@@ -43,7 +43,7 @@ type PricingTier = {
 const pricingTiers: PricingTier[] = [
   {
     id: "smb",
-    name: "Starter/SMB",
+    name: "Starter",
     subtitle: "For companies without a dedicated procurement function",
     icon: Zap,
     featured: false,
@@ -51,7 +51,7 @@ const pricingTiers: PricingTier[] = [
     quarterly: { priceId: "price_1TEPId34h5FyPJ35CAqDvL37", price: 72, displayPerMonth: 24 },
     features: [
       "Distilled procurement knowledge in one place",
-      "29 Analytical scanarios",
+      "29 analytical scenarios",
       "Market Intelligence",
       "Validated secure data protocols",
       "100 AI reports a month",
@@ -81,7 +81,7 @@ const pricingTiers: PricingTier[] = [
   {
     id: "enterprise",
     name: "Enterprise",
-    subtitle: "Custom solutions for large organizations",
+    subtitle: "Custom solutions for large organisations",
     icon: Building2,
     featured: false,
     comingSoon: false,
@@ -102,7 +102,7 @@ const faqData = [
   {
     id: "tariff",
     question: "What is the right plan for me?",
-    answer: `Pick the SMB (small and medium-sized business) option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
+    answer: `Pick the Starter option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Professional option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Professional for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
   },
   {
     id: "data-privacy",
@@ -209,13 +209,15 @@ const Pricing = () => {
               <Card
                 key={tier.id}
                 className={`card-elevated relative animate-fade-up flex flex-col ${
-                  tier.featured ? "border-primary/50 shadow-lg shadow-primary/10" : ""
+                  tier.featured
+                    ? "border-2 border-primary shadow-2xl shadow-primary/20 bg-primary/5 md:-mt-4 md:mb-4 md:scale-[1.03] z-10"
+                    : ""
                 }`}
                 style={{ animationDelay: `${100 + index * 100}ms` }}
               >
                 {tier.featured && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                    <Badge className="bg-primary text-primary-foreground shadow-md px-3 py-1">Most Popular</Badge>
                   </div>
                 )}
                 
@@ -321,7 +323,7 @@ const Pricing = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[200px]">Feature</TableHead>
-                  <TableHead className="text-center">Starter/SMB</TableHead>
+                  <TableHead className="text-center">Starter</TableHead>
                   <TableHead className="text-center font-semibold text-primary">Professional</TableHead>
                   <TableHead className="text-center">Enterprise</TableHead>
                 </TableRow>
@@ -331,7 +333,7 @@ const Pricing = () => {
                   { feature: "AI Credits", smb: "100 / month", pro: "200 / month", enterprise: "Custom" },
                   { feature: "20+ procurement scenarios and Market Intelligence", smb: true, pro: true, enterprise: true },
                   { feature: "Risk and Inflation Platforms", smb: false, pro: true, enterprise: true },
-                  { feature: "Users Training", smb: false, pro: false, enterprise: true },
+                  { feature: "User training", smb: false, pro: false, enterprise: true },
                   { feature: "Custom integrations", smb: false, pro: false, enterprise: true },
                 ].map((row) => (
                   <TableRow key={row.feature}>
