@@ -66,7 +66,7 @@ const pillars = [
     impact: "Generate fresh market insights or reuse existing ones on the platform to sharpen your Procurement Scenario results.",
     icon: Radar,
     cta: "Open Intelligence Hub",
-    href: "/market-intelligence",
+    href: "/features",
     useCaseType: "scenarios" as const,
     previewImage: undefined as string | undefined,
     showPipeline: false,
