@@ -94,7 +94,7 @@ const pricingTiers: PricingTier[] = [
       "Custom enterprise Risk and Inflation analytics",
       "Custom API integrations",
     ],
-    cta: "Book a 15-min Demo",
+    cta: "Contact Sales",
   },
 ];
 
