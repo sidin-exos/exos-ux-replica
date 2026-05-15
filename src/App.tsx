@@ -85,6 +85,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+          <ScrollToTop />
           <div className="pb-14 md:pb-0">
           <Suspense fallback={<PageLoadingFallback />}>
           <Routes>
