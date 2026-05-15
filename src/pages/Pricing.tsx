@@ -127,7 +127,7 @@ const faqData = [
   {
     id: "fine-tuning",
     question: "Can I get EXOS fine-tuned for my purposes?",
-    answer: `Absolutely. We can offer fine-tuning and customisation for Enterprise users. Pro users can request one custom scenarios and dashboard, (conditions apply, contact us for more details). Enterprise users get fully customised analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
+    answer: `Absolutely. We can offer fine-tuning and customisation for Enterprise users. Pro users can request custom scenarios and dashboards (conditions apply, contact us for more details). Enterprise users get fully customised analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
   },
 ];
 
