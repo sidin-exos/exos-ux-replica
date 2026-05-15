@@ -46,7 +46,7 @@ const pillars = [
     impact: "Continuous, AI-driven monitoring that surfaces risks and savings opportunities the moment they emerge.",
     icon: Building2,
     cta: "View Platforms",
-    href: "/enterprise/risk",
+    href: "/features",
     useCaseType: "risk" as const,
     previewImage: undefined as string | undefined,
     showPipeline: false,
