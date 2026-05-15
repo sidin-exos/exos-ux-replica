@@ -91,7 +91,7 @@ const pricingTiers: PricingTier[] = [
       "Custom data integrations",
       "Full InfoSec access to outgoing API requests",
       "Dedicated success manager",
-      "Custom AI models configuration",
+      "Users training and coaching",
       "Custom enterprise Risk and Inflation analytics",
       "Custom API integrations",
     ],
