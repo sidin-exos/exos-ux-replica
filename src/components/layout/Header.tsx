@@ -159,11 +159,11 @@ const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: s
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm text-foreground group-hover:text-primary transition-colors leading-tight">
+                    <div className="font-medium text-sm text-foreground group-hover:text-accent-foreground transition-colors leading-tight">
                       {item.label}
                     </div>
                     {item.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                      <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/80 mt-0.5 leading-snug">
                         {item.description}
                       </p>
                     )}
