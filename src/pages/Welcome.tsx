@@ -46,7 +46,7 @@ const pillars = [
     impact: "Continuous, AI-driven monitoring that surfaces risks and savings opportunities the moment they emerge.",
     icon: Building2,
     cta: "View Platforms",
-    href: "/enterprise/risk",
+    href: "/features",
     useCaseType: "risk" as const,
     previewImage: undefined as string | undefined,
     showPipeline: false,
@@ -66,7 +66,7 @@ const pillars = [
     impact: "Generate fresh market insights or reuse existing ones on the platform to sharpen your Procurement Scenario results.",
     icon: Radar,
     cta: "Open Intelligence Hub",
-    href: "/market-intelligence",
+    href: "/features",
     useCaseType: "scenarios" as const,
     previewImage: undefined as string | undefined,
     showPipeline: false,
@@ -353,7 +353,7 @@ const Welcome = () => {
                       
                     </CardContent>
                   </Card>
-                  <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href)}>
+                  <Button className="gap-2 w-fit" onClick={() => navigate(pillar.href === "/" ? "/?explore=1" : pillar.href)}>
                     {pillar.cta} <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -427,7 +427,7 @@ const Welcome = () => {
               Join the world's most advanced procurement teams and start making high-confidence decisions today.
             </p>
             <div className="flex flex-wrap gap-3 mt-1">
-              <Button size="lg" variant="secondary" className="gap-2 px-6" onClick={() => navigate("/")}>
+              <Button size="lg" variant="secondary" className="gap-2 px-6" onClick={() => navigate("/auth")}>
                 Get Started Now
               </Button>
               <Button

@@ -18,7 +18,7 @@ export interface BlogPost {
 export const blogPosts: BlogPost[] = [
   {
     slug: "the-efficiency-trap",
-    title: "The Efficiency Trap: Why Automating Your Tail Spend Won't Save Your Margin",
+    title: "Why Automating Your Tail Spend Won't Save Your Margin",
     subtitle: "Transactional speed vs. cognitive depth — why the next generation of procurement technology must augment strategic thinking, not just automate clicks.",
     date: "2026-04-05",
     readingTime: "12 min read",
@@ -166,7 +166,7 @@ Three capabilities, working together. A **Disruption Monitor** that tracks the s
   },
   {
     slug: "your-favorite-chatbot-for-everything",
-    title: "Your Favorite Chatbot for Everything: Rethinking Chatbots",
+    title: "Your Favorite Chatbot for Everything: Rethinking LLMs",
     subtitle: "Why relying on a general-purpose chatbot for strategic category management is a technological dead end — and what domain-specific AI agents do differently.",
     date: "2026-04-27",
     readingTime: "9 min read",

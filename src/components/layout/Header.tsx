@@ -153,9 +153,9 @@ const MegaDropdown = ({ group, navigate }: { group: NavGroup; navigate: (path: s
                 <button
                   onClick={() => navigateWithHash(item.path, navigate)}
                   type="button"
-                  className="group flex items-start gap-3 w-full rounded-lg p-2.5 hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground focus-visible:outline-none transition-colors text-left"
+                  className="group flex items-start gap-3 w-full rounded-lg p-2.5 hover:bg-primary/10 hover:ring-1 hover:ring-primary/30 focus-visible:bg-primary/10 focus-visible:ring-1 focus-visible:ring-primary/30 focus-visible:outline-none transition-colors text-left"
                 >
-                  <div className="shrink-0 w-9 h-9 rounded-md bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center text-primary group-hover:text-accent-foreground transition-colors">
+                  <div className="shrink-0 w-9 h-9 rounded-md bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center text-primary transition-colors">
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">

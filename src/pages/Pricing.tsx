@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Check, Minus, Zap, Shield, Building2, HelpCircle, Mail, Loader2 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -43,7 +44,7 @@ type PricingTier = {
 const pricingTiers: PricingTier[] = [
   {
     id: "smb",
-    name: "Starter/SMB",
+    name: "Starter",
     subtitle: "For companies without a dedicated procurement function",
     icon: Zap,
     featured: false,
@@ -51,7 +52,7 @@ const pricingTiers: PricingTier[] = [
     quarterly: { priceId: "price_1TEPId34h5FyPJ35CAqDvL37", price: 72, displayPerMonth: 24 },
     features: [
       "Distilled procurement knowledge in one place",
-      "29 Analytical scanarios",
+      "29 analytical scenarios",
       "Market Intelligence",
       "Validated secure data protocols",
       "100 AI reports a month",
@@ -81,7 +82,7 @@ const pricingTiers: PricingTier[] = [
   {
     id: "enterprise",
     name: "Enterprise",
-    subtitle: "Custom solutions for large organizations",
+    subtitle: "Customized solutions for 10+ user teams",
     icon: Building2,
     featured: false,
     comingSoon: false,
@@ -90,11 +91,10 @@ const pricingTiers: PricingTier[] = [
       "Custom data integrations",
       "Full InfoSec access to outgoing API requests",
       "Dedicated success manager",
-      "Custom AI models configuration",
+      "Users training and coaching",
       "Custom enterprise Risk and Inflation analytics",
-      "Custom API integrations",
     ],
-    cta: "Book a 15-min Demo",
+    cta: "Contact Sales",
   },
 ];
 
@@ -102,7 +102,7 @@ const faqData = [
   {
     id: "tariff",
     question: "What is the right plan for me?",
-    answer: `Pick the SMB (small and medium-sized business) option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Pro option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Pro for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
+    answer: `Pick the Starter option if you're in a small-to-medium-sized business, responsible for commercial transactions, and need distilled procurement best practices tailored to your business case each time.\n\nPick the Professional option if you're a full-time procurement professional who needs to run multiple simulations almost every day to improve decision-making and save significant time. We also recommend Professional for CFOs and business owners who are responsible for high-value decisions and need 24/7 analytical support.`,
   },
   {
     id: "data-privacy",
@@ -117,7 +117,7 @@ const faqData = [
   {
     id: "price-comparison",
     question: "How is EXOS different from ChatGPT, Claude or Gemini?",
-    answer: `EXOS is a specialised procurement tool, not a general-purpose chatbot. Three things set it apart: (1) it is purpose-built for procurement scenarios—sourcing, negotiation, supplier risk, TCO, should-cost—with category and industry expertise baked in; (2) every analysis goes through grounding, validation, and semantic anonymisation, so commercial data never leaks to external providers and outputs are checked against best-practice business cases rather than hallucinated; (3) it injects current market updates—live trends, risk signals, and pricing benchmarks from your private knowledge base—directly into every report. The result is a decision-ready procurement deliverable, not a generic AI answer.`,
+    answer: `EXOS is a specialised procurement tool, not a general-purpose chatbot. Three things set it apart: \n- It is purpose-built for procurement scenarios—sourcing, negotiation, supplier risk, TCO, should-cost—with category and industry expertise baked in \n- Every analysis goes through grounding, validation, and semantic anonymisation, so commercial data never leaks to external providers and outputs are checked against best-practice business cases rather than hallucinated; \n- It injects current market updates—live trends, risk signals, and pricing benchmarks from your private knowledge base—directly into every report. \nThe result is a decision-ready procurement deliverable, not a generic AI answer.`,
   },
   {
     id: "market-intelligence",
@@ -127,7 +127,7 @@ const faqData = [
   {
     id: "fine-tuning",
     question: "Can I get EXOS fine-tuned for my purposes?",
-    answer: `Absolutely. We can offer fine-tuning and customisation for Enterprise users. Pro users can request one custom scenario and one custom dashboard per month (conditions apply). Enterprise users get fully customised analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
+    answer: `Absolutely. We can offer fine-tuning and customisation for Enterprise users. Pro users can request custom scenarios and dashboards (conditions apply, contact us for more details). Enterprise users get fully customised analytics and dashboards, the ability to upload their company knowledge base into the system, and regular market intelligence reports configured to continuously improve analysis quality.`,
   },
 ];
 
@@ -180,8 +180,60 @@ const Pricing = () => {
     }
   };
 
+  const productSchema = pricingTiers.map((tier) => {
+    const offer =
+      tier.id === "enterprise"
+        ? { "@type": "Offer", priceCurrency: "EUR", price: "0", availability: "https://schema.org/InStock", url: "https://ex-dev.lovable.app/pricing#contact" }
+        : {
+            "@type": "Offer",
+            priceCurrency: "EUR",
+            price: String(tier.monthly?.price ?? 0),
+            availability: "https://schema.org/InStock",
+            url: "https://ex-dev.lovable.app/pricing",
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: tier.monthly?.price ?? 0,
+              priceCurrency: "EUR",
+              referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
+            },
+          };
+    return {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: `EXOS ${tier.name}`,
+      description: tier.subtitle,
+      brand: { "@type": "Brand", name: "EXOS" },
+      offers: offer,
+    };
+  });
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqData.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+
   return (
     <div className="min-h-screen gradient-hero">
+      <Helmet>
+        <title>EXOS Pricing — Procurement AI plans from €24/month</title>
+        <meta
+          name="description"
+          content="Transparent EXOS pricing for procurement AI: Starter, Professional and Enterprise plans. 30-day free trial, no implementation, cancel anytime."
+        />
+        <link rel="canonical" href="https://ex-dev.lovable.app/pricing" />
+        {productSchema.map((schema, i) => (
+          <script key={`product-${i}`} type="application/ld+json">
+            {JSON.stringify(schema)}
+          </script>
+        ))}
+        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+      </Helmet>
+
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}
@@ -191,23 +243,29 @@ const Pricing = () => {
 
       <main className="container py-8 relative">
         {/* Hero Section */}
-        <section className="mb-12 text-center animate-fade-up">
+        <section className="mb-10 text-center animate-fade-up">
           <div className="flex justify-center mb-6">
-            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-24 md:h-32 w-auto object-contain" />
+            <img src={exosLogo} alt="EXOS procurement platform logo" className="h-16 md:h-20 w-auto object-contain" />
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
-            Procurement AI at a fraction of enterprise cost. No implementation.
-            No minimum seats. Cancel anytime.
+          <h1 className="font-display text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+            Plans that scale from one buyer to a global procurement team
           </h1>
+          <p className="text-muted-foreground text-base md:text-lg">
+            Procurement AI at a fraction of enterprise cost · No implementation · No minimum seats · Cancel anytime
+          </p>
         </section>
 
-        {/* Billing interval toggle */}
-        <div className="flex justify-center mb-8">
-          <Tabs value={billingInterval} onValueChange={(v) => setBillingInterval(v as BillingInterval)}>
-            <TabsList>
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
-              <TabsTrigger value="quarterly">
-                Quarterly <span className="ml-2 text-xs text-success">Save up to 33%</span>
+        {/* Global billing toggle */}
+        <div className="flex justify-center mb-8 animate-fade-up" style={{ animationDelay: "80ms" }}>
+          <Tabs
+            value={billingInterval}
+            onValueChange={(v) => setBillingInterval(v as BillingInterval)}
+          >
+            <TabsList className="h-10">
+              <TabsTrigger value="monthly" className="px-4">Monthly</TabsTrigger>
+              <TabsTrigger value="quarterly" className="px-4">
+                Quarterly
+                <span className="ml-2 text-xs text-success font-semibold">−33%</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -221,13 +279,15 @@ const Pricing = () => {
               <Card
                 key={tier.id}
                 className={`card-elevated relative animate-fade-up flex flex-col ${
-                  tier.featured ? "border-primary/50 shadow-lg shadow-primary/10" : ""
+                  tier.featured
+                    ? "border-2 border-primary shadow-2xl shadow-primary/20 bg-primary/5 md:-mt-4 md:mb-4 md:scale-[1.03] z-10"
+                    : ""
                 }`}
                 style={{ animationDelay: `${100 + index * 100}ms` }}
               >
                 {tier.featured && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                    <Badge className="bg-primary text-primary-foreground shadow-md px-3 py-1">Most Popular</Badge>
                   </div>
                 )}
                 
@@ -247,8 +307,11 @@ const Pricing = () => {
                   {/* Price */}
                   <div className="text-center mb-6">
                     {tier.id === "enterprise" ? (
-                      <div className="text-2xl font-display font-semibold text-muted-foreground">
-                        Custom Pricing
+                      <div>
+                        <div className="text-2xl font-display font-semibold text-muted-foreground">
+                          Custom Pricing
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">Tailored to your team size</p>
                       </div>
                     ) : (() => {
                       const variant = billingInterval === "quarterly" ? tier.quarterly : tier.monthly;
@@ -275,11 +338,11 @@ const Pricing = () => {
                             </span>
                             <span className="text-muted-foreground">/month</span>
                           </div>
-                          {billingInterval === "quarterly" && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              €{variant.price} billed every 3 months
-                            </p>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {billingInterval === "quarterly"
+                              ? `€${variant.price} billed every 3 months · ex. VAT`
+                              : "ex. VAT · billed monthly"}
+                          </p>
                         </div>
                       );
                     })()}
@@ -311,16 +374,16 @@ const Pricing = () => {
                       tier.cta
                     )}
                   </Button>
+                  {tier.id !== "enterprise" && (
+                    <p className="text-xs text-muted-foreground text-center mt-3">
+                      30-day free trial · 30 reports included
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );
           })}
         </div>
-
-        {/* Trial disclaimer */}
-        <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
-          30-day free trial, 30 AI reports maximum.
-        </p>
 
 
         {/* Feature Comparison Table */}
@@ -333,7 +396,7 @@ const Pricing = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[200px]">Feature</TableHead>
-                  <TableHead className="text-center">Starter/SMB</TableHead>
+                  <TableHead className="text-center">Starter</TableHead>
                   <TableHead className="text-center font-semibold text-primary">Professional</TableHead>
                   <TableHead className="text-center">Enterprise</TableHead>
                 </TableRow>
@@ -343,7 +406,7 @@ const Pricing = () => {
                   { feature: "AI Credits", smb: "100 / month", pro: "200 / month", enterprise: "Custom" },
                   { feature: "20+ procurement scenarios and Market Intelligence", smb: true, pro: true, enterprise: true },
                   { feature: "Risk and Inflation Platforms", smb: false, pro: true, enterprise: true },
-                  { feature: "Users Training", smb: false, pro: false, enterprise: true },
+                  { feature: "User training", smb: false, pro: false, enterprise: true },
                   { feature: "Custom integrations", smb: false, pro: false, enterprise: true },
                 ].map((row) => (
                   <TableRow key={row.feature}>
@@ -392,11 +455,40 @@ const Pricing = () => {
                 value={faq.id}
                 className="card-elevated border border-border/50 rounded-lg px-6 data-[state=open]:border-primary/30"
               >
-                <AccordionTrigger className="text-left text-foreground hover:no-underline py-5">
-                  <span className="font-display font-medium">{faq.question}</span>
+                <AccordionTrigger className="text-left text-foreground hover:no-underline py-6">
+                  <span className="font-display font-medium text-lg md:text-xl">{faq.question}</span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5 whitespace-pre-line">
-                  {faq.answer}
+                <AccordionContent className="text-muted-foreground pb-6 text-base md:text-lg leading-relaxed">
+                  {(() => {
+                    const lines = faq.answer.split("\n");
+                    const blocks: Array<{ type: "p" | "ul"; items: string[] }> = [];
+                    lines.forEach((raw) => {
+                      const line = raw.trim();
+                      if (!line) return;
+                      if (line.startsWith("- ")) {
+                        const last = blocks[blocks.length - 1];
+                        const item = line.slice(2).replace(/[;.]\s*$/, "");
+                        if (last && last.type === "ul") last.items.push(item);
+                        else blocks.push({ type: "ul", items: [item] });
+                      } else {
+                        blocks.push({ type: "p", items: [line] });
+                      }
+                    });
+                    return blocks.map((b, i) =>
+                      b.type === "p" ? (
+                        <p key={i} className={i > 0 ? "mt-4" : ""}>{b.items[0]}</p>
+                      ) : (
+                        <ul key={i} className="mt-4 space-y-2.5">
+                          {b.items.map((item, j) => (
+                            <li key={j} className="flex items-start gap-3">
+                              <Check className="w-4 h-4 md:w-5 md:h-5 text-primary mt-1 flex-shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )
+                    );
+                  })()}
                 </AccordionContent>
               </AccordionItem>
             ))}
