@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Brain, Database, ArrowRight, Lock, Mail, Scale, DollarSign, ShieldAlert, CalendarClock, FileText, Layers, TrendingUp, EyeOff, ShieldCheck } from "lucide-react";
-import SiteFeedbackButton from "@/components/feedback/SiteFeedbackButton";
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { NavLink } from "@/components/NavLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DataFlowDiagram from "@/components/features/DataFlowDiagram";
+
 
 import exosMark from "@/assets/exos-mark.svg";
 import exosMarkDark from "@/assets/exos-mark-dark.svg";
@@ -635,7 +636,6 @@ const Features = () => {
         </section>
 
         <section className="text-center py-16 flex items-center justify-center gap-4 flex-wrap">
-          <SiteFeedbackButton scenarioId="features" />
           <a href="/pricing#contact">
             <Button size="lg" className="text-lg px-8 py-6 gap-2">
               Get in Touch

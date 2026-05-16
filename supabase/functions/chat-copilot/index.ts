@@ -150,24 +150,37 @@ const TOOLS = [
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
-  // Authenticate
-  const authResult = await authenticateRequest(req);
-  if ("error" in authResult) {
-    return new Response(
-      JSON.stringify({ error: authResult.error.message }),
-      {
-        status: authResult.error.status,
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      }
-    );
-  }
-  const { userId } = authResult.user;
+  // Authenticate (optional — chat is open to anonymous users on public pages
+  // such as /features so prospects can explore the platform).
+  const authHeader = req.headers.get("Authorization");
+  let userId: string;
+  let isAnonymous = false;
 
-  // Rate limit: 20 requests/hour per user
-  const rateCheck = await checkRateLimit(userId, "chat-copilot", 20, 60);
+  if (authHeader?.startsWith("Bearer ")) {
+    const authResult = await authenticateRequest(req);
+    if ("error" in authResult) {
+      return new Response(
+        JSON.stringify({ error: authResult.error.message }),
+        {
+          status: authResult.error.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    userId = authResult.user.userId;
+  } else {
+    // Anonymous: derive an identifier from the client IP for rate limiting.
+    const fwd = req.headers.get("x-forwarded-for") || "";
+    const ip = fwd.split(",")[0].trim() || req.headers.get("cf-connecting-ip") || "unknown";
+    userId = `anon:${ip}`;
+    isAnonymous = true;
+  }
+
+  // Rate limit: 20 req/hr authed, 10 req/hr anonymous (per IP) to limit abuse.
+  const rateCheck = await checkRateLimit(userId, "chat-copilot", isAnonymous ? 10 : 20, 60);
   if (!rateCheck.allowed) {
     return new Response(
       JSON.stringify({
@@ -176,7 +189,7 @@ serve(async (req) => {
       {
         status: 200,
         headers: {
-          ...corsHeaders(req),
+          ...corsHeaders,
           "Content-Type": "application/json",
           "X-RateLimit-Remaining": "0",
           "X-RateLimit-Reset": rateCheck.resetAt,
@@ -274,7 +287,7 @@ serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ content, action }), {
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (aiError) {
       const status = (aiError as Error & { status?: number }).status;
@@ -286,7 +299,7 @@ serve(async (req) => {
           }),
           {
             status: 200,
-            headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
@@ -312,7 +325,7 @@ serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }

@@ -1543,6 +1543,21 @@ export type Database = {
           },
         ]
       }
+      stripe_events: {
+        Row: {
+          created_at: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1896,6 +1911,35 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: undefined
       }
+      get_coaching_cards: {
+        Args: never
+        Returns: {
+          coaching_tips: string
+          common_failure: string
+          confidence_dependency: string
+          created_at: string
+          enhanced: string
+          example_prompt: string | null
+          financial_impact: string
+          gdpr_guardrail: string
+          id: string
+          min_required: string
+          navigation_guidance: string
+          purpose: string
+          scenario_group: string
+          scenario_id: number
+          scenario_name: string
+          scenario_slug: string
+          trigger_phrases: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "coaching_cards"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_evolutionary_directives: {
         Args: { limit_num?: number }
         Returns: {
@@ -1904,6 +1948,48 @@ export type Database = {
           source_field_action: string
           target_scenario: string
         }[]
+      }
+      get_founder_metrics: {
+        Args: never
+        Returns: {
+          active_users: number
+          burn_rate: number
+          created_at: string
+          id: string
+          mrr: number
+          organization_id: string
+          runway_months: number
+          strategic_hypothesis: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "founder_metrics"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_methodology_change_log: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          entry: Database["public"]["Tables"]["methodology_change_log"]["Row"]
+          total_count: number
+        }[]
+      }
+      get_methodology_configs: {
+        Args: never
+        Returns: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "methodology_config"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_shared_report: { Args: { p_share_id: string }; Returns: Json }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }

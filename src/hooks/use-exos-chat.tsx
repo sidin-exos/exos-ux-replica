@@ -30,7 +30,7 @@ export function useExosChat() {
     if (sessionIdRef.current) return sessionIdRef.current;
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) return null; // Anonymous users: skip session logging
       const { data, error } = await (supabase.from as any)('chatbot_sessions').insert({
         user_id: user.id,
         bot_type: 'guide',

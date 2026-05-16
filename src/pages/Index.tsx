@@ -113,6 +113,10 @@ const Index = () => {
   }, [scenarioSlug, navigate, visibleScenarios]);
 
   const handleScenarioClick = (scenarioId: string) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
     const scenario = visibleScenarios.find((s) => s.id === scenarioId);
     if (scenario && scenario.status === "available") {
       navigate(`/analyse/${scenario.id}`);
@@ -131,8 +135,10 @@ const Index = () => {
     return acc;
   }, {} as Record<Scenario["category"], Scenario[]>);
 
-  // Redirect unauthenticated users to /welcome
-  if (!isUserLoading && !user) {
+  // Redirect unauthenticated users to /welcome, unless they explicitly came
+  // from the welcome page to preview scenarios (?explore=1).
+  const isExplorePreview = new URLSearchParams(location.search).has("explore");
+  if (!isUserLoading && !user && !isExplorePreview) {
     return <Navigate to="/welcome" replace />;
   }
 
