@@ -980,6 +980,10 @@ serve(async (req) => {
     // --- Resolve prompts ---
     let systemPrompt = "";
     let userPrompt = "";
+    // Set by the server-grounded path so we can persist shell + grounding separately
+    // in test_prompts (Fix #3: honest token accounting).
+    let loggedSystemPrompt = "";
+    let renderedGroundingXml = "";
 
     if (serverSideGrounding && supabase) {
       // --- Child Run 1: fetch-context ---
