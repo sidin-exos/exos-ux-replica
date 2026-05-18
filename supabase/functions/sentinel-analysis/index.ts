@@ -199,10 +199,13 @@ interface CategoryRow {
 }
 
 // Scenarios that need full COLD-tier category context (truly risk-heavy only).
-// Narrowed from v3 spec (was S17/S20/S22/S25/S26/S27) to keep token budget aligned
-// with the ~2.3x reduction target. Strategy scenarios (S20/S22/S25) now use HOT-only.
+// Narrowed from v3 spec to keep token budget aligned with the ~2.3x reduction target.
+// Fix #4 (token outlier RCA): S27 (black-swan) removed — industry HOT+COLD already
+// covers macro-shock context; category COLD added ~5-8k chars per run with marginal
+// quality lift. S8 (specification-optimizer) has no comparable lever (already HOT-only);
+// the 25k-char shell guard now warns when it breaches budget.
 const CATEGORY_COLD_SCENARIOS = new Set([
-  "S17", "S26", "S27",
+  "S17", "S26",
 ]);
 
 function buildIndustryXML(industry: IndustryRow, scenarioCode?: string): string {
@@ -508,14 +511,20 @@ function buildServerGroundedPrompts(
   marketInsight: MarketInsightRow | null = null,
   _selectedDashboards: string[] = [],
   attachedDocumentsXml: string = ""
-): { systemPrompt: string; userPrompt: string } {
-  // Build system prompt with injected context
+): { systemPrompt: string; userPrompt: string; systemPromptShell: string; groundingXml: string } {
+  // Build grounding XML — kept separate from the methodology shell so it can
+  // be logged independently in test_prompts.grounding_context and (later)
+  // swapped for provider-side context caching.
   const contextParts: string[] = [];
 
   const _scenarioCodeForIndustry = SCENARIO_ID_REGISTRY[scenarioType] || scenarioType;
   if (industry) contextParts.push(buildIndustryXML(industry, _scenarioCodeForIndustry));
   if (category) contextParts.push(buildCategoryXML(category, _scenarioCodeForIndustry));
   if (marketInsight) contextParts.push(buildMarketIntelligenceXML(marketInsight));
+
+  const groundingXml = contextParts.length > 0
+    ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>`
+    : '';
 
   // Derive scenario group server-side
   const scenarioGroup = SCENARIO_GROUP_REGISTRY[scenarioType];
@@ -527,7 +536,7 @@ function buildServerGroundedPrompts(
     ? AI_PROMPT_CONTRACT + getScenarioInstructions(scenarioGroup, scenarioType) + '\n\n' + getScenarioSchema(scenarioGroup, scenarioType)
     : '';
 
-  const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
+  const systemPromptShell = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
 
 IMPORTANT RULES:
 1. Maintain all masked tokens exactly as provided (e.g., [SUPPLIER_A], [AMOUNT_B])
@@ -547,9 +556,22 @@ IMPORTANT RULES:
 
 Use scenario_id "${scenarioCode}", scenario_name based on the analysis type, group "${scenarioGroup || 'A'}", and group_label "${groupLabel}" in the envelope.
 
-${schemaInjection}
+${schemaInjection}`;
 
-${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
+  // Final system prompt sent to the model — shell + grounding + (optional) shadow log.
+  // The shell + shadow log alone is what gets persisted to test_prompts.system_prompt;
+  // groundingXml is persisted separately in test_prompts.grounding_context for honest
+  // token accounting and to unblock provider-side context caching later.
+  const systemPrompt = `${systemPromptShell}${groundingXml ? '\n\n' + groundingXml : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
+
+  // Soft guard: warn when the assembled prompt exceeds the 25k-char budget
+  // (≈ 6.3k tokens). See token outlier RCA — black-swan and specification-optimizer
+  // historically breach this. Logged only; does not block the call.
+  if (systemPrompt.length > 25_000) {
+    console.warn(
+      `[Sentinel] system_prompt exceeds 25k chars — scenario=${scenarioType} size=${systemPrompt.length} (shell=${systemPromptShell.length} grounding=${groundingXml.length})`
+    );
+  }
 
   // Build lean user prompt with scenario data + anonymized input
   const scenarioFields = Object.entries(scenarioData)
@@ -566,7 +588,7 @@ ${attachedDocumentsXml ? `  ${attachedDocumentsXml}\n` : ""}  <anonymized-query>
   </anonymized-query>
 </analysis-request>`;
 
-  return { systemPrompt, userPrompt };
+  return { systemPrompt, userPrompt, systemPromptShell, groundingXml };
 }
 
 // ============================================
@@ -961,6 +983,10 @@ serve(async (req) => {
     // --- Resolve prompts ---
     let systemPrompt = "";
     let userPrompt = "";
+    // Set by the server-grounded path so we can persist shell + grounding separately
+    // in test_prompts (Fix #3: honest token accounting).
+    let loggedSystemPrompt = "";
+    let renderedGroundingXml = "";
 
     if (serverSideGrounding && supabase) {
       // --- Child Run 1: fetch-context ---
@@ -1039,6 +1065,14 @@ serve(async (req) => {
 
         systemPrompt = grounded.systemPrompt;
         userPrompt = grounded.userPrompt;
+        renderedGroundingXml = grounded.groundingXml;
+        // Persist the shell (methodology + rules + schema) without the grounding XML,
+        // and re-append the shadow-log instruction since it was concatenated into the
+        // model-facing prompt above. Result: test_prompts.system_prompt no longer
+        // double-counts grounding context already stored in grounding_context.
+        loggedSystemPrompt = shouldInjectShadowLog
+          ? grounded.systemPromptShell + SHADOW_LOG_INSTRUCTION
+          : grounded.systemPromptShell;
       } finally {
         const _sp = systemPrompt as string | undefined;
         const _up = userPrompt as string | undefined;
@@ -1047,6 +1081,8 @@ serve(async (req) => {
           userPromptLength: _up?.length || 0,
           totalPromptLength: (_sp?.length || 0) + (_up?.length || 0),
           contextPartsCount: (industryResult.data ? 1 : 0) + (categoryResult.data ? 1 : 0),
+          shellLength: loggedSystemPrompt.length,
+          groundingLength: renderedGroundingXml.length,
         });
       }
     } else if (body.systemPrompt) {
@@ -1092,9 +1128,17 @@ serve(async (req) => {
             scenario_data: anonymizedScenarioData || {},
             industry_slug: industrySlug,
             category_slug: categorySlug,
-            system_prompt: systemPrompt,
+            // Fix #3: log methodology shell only; grounding XML moved to grounding_context
+            // so token analytics on test_prompts.system_prompt reflect the cacheable shell.
+            system_prompt: loggedSystemPrompt || systemPrompt,
             user_prompt: userPrompt,
-            grounding_context: groundingContext,
+            grounding_context: renderedGroundingXml
+              ? {
+                  rendered_xml: renderedGroundingXml,
+                  rendered_chars: renderedGroundingXml.length,
+                  ...(groundingContext ? { source: groundingContext } : {}),
+                }
+              : groundingContext,
             anonymization_metadata: anonymizationMetadata,
             ...(userOrgId ? { organization_id: userOrgId } : {}),
           })
