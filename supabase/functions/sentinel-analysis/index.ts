@@ -553,9 +553,22 @@ IMPORTANT RULES:
 
 Use scenario_id "${scenarioCode}", scenario_name based on the analysis type, group "${scenarioGroup || 'A'}", and group_label "${groupLabel}" in the envelope.
 
-${schemaInjection}
+${schemaInjection}`;
 
-${contextParts.length > 0 ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>` : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
+  // Final system prompt sent to the model — shell + grounding + (optional) shadow log.
+  // The shell + shadow log alone is what gets persisted to test_prompts.system_prompt;
+  // groundingXml is persisted separately in test_prompts.grounding_context for honest
+  // token accounting and to unblock provider-side context caching later.
+  const systemPrompt = `${systemPromptShell}${groundingXml ? '\n\n' + groundingXml : ''}${injectShadowLog ? SHADOW_LOG_INSTRUCTION : ''}`;
+
+  // Soft guard: warn when the assembled prompt exceeds the 25k-char budget
+  // (≈ 6.3k tokens). See token outlier RCA — black-swan and specification-optimizer
+  // historically breach this. Logged only; does not block the call.
+  if (systemPrompt.length > 25_000) {
+    console.warn(
+      `[Sentinel] system_prompt exceeds 25k chars — scenario=${scenarioType} size=${systemPrompt.length} (shell=${systemPromptShell.length} grounding=${groundingXml.length})`
+    );
+  }
 
   // Build lean user prompt with scenario data + anonymized input
   const scenarioFields = Object.entries(scenarioData)
@@ -572,7 +585,7 @@ ${attachedDocumentsXml ? `  ${attachedDocumentsXml}\n` : ""}  <anonymized-query>
   </anonymized-query>
 </analysis-request>`;
 
-  return { systemPrompt, userPrompt };
+  return { systemPrompt, userPrompt, systemPromptShell, groundingXml };
 }
 
 // ============================================
