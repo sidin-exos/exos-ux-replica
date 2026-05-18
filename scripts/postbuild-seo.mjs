@@ -67,24 +67,8 @@ const routes = [
     description: 'Why general-purpose chatbots are a dead end for strategic category management — and what domain-specific procurement AI agents do differently.',
     h1: 'Your Favorite Chatbot for Everything: Rethinking LLMs',
   },
-  {
-    path: '/faq',
-    title: 'FAQ | EXOS – AI Procurement Analysis',
-    description: 'Frequently asked questions about EXOS: data privacy, GDPR compliance, supported scenarios, pricing and how AI procurement analysis works.',
-    h1: 'Frequently Asked Questions',
-  },
-  {
-    path: '/enterprise/risk',
-    title: 'Supplier Risk Assessment Platform | EXOS',
-    description: 'Continuous monitoring of supplier financial health, geopolitical exposure and regulatory risk — built for EU procurement teams.',
-    h1: 'Supplier Risk Assessment Platform',
-  },
-  {
-    path: '/enterprise/inflation',
-    title: 'Inflation Monitoring | EXOS',
-    description: 'Track inflation drivers across your procurement categories with AI-powered market intelligence and early warning alerts.',
-    h1: 'Inflation Monitoring',
-  },
+  // Note: /faq, /enterprise/risk, /enterprise/inflation are ProtectedRoute —
+  // intentionally NOT pre-rendered and NOT in sitemap.xml.
   {
     path: '/scenarios/tco-analysis',
     title: 'Total Cost of Ownership Analysis Software | EXOS',
