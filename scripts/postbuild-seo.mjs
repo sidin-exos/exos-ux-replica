@@ -113,11 +113,63 @@ for (const r of routes) {
 
 const template = readFileSync(join(DIST, 'index.html'), 'utf-8');
 
+// Per-route JSON-LD builder. Returns a list of schema.org @graph entries
+// (BreadcrumbList for every route; Article for blog posts; Service for
+// scenario landing pages; FAQPage stub for /faq if it were public).
+function buildJsonLd(route) {
+  const ogUrl = `${BASE_URL}${route.path}`;
+  const parts = route.path.split('/').filter(Boolean);
+  const crumbs = [{ name: 'Home', url: `${BASE_URL}/` }];
+  let acc = '';
+  for (const p of parts) {
+    acc += `/${p}`;
+    crumbs.push({ name: p.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), url: `${BASE_URL}${acc}` });
+  }
+  const graph = [{
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((c, i) => ({
+      '@type': 'ListItem', position: i + 1, name: c.name, item: c.url,
+    })),
+  }];
+
+  if (route.path.startsWith('/blog/')) {
+    graph.push({
+      '@type': 'Article',
+      headline: route.h1,
+      description: route.description,
+      url: ogUrl,
+      author: { '@type': 'Organization', name: 'EXOS' },
+      publisher: { '@id': `${BASE_URL}/#organization` },
+      inLanguage: 'en-GB',
+      mainEntityOfPage: ogUrl,
+    });
+  } else if (route.path.startsWith('/scenarios/')) {
+    graph.push({
+      '@type': 'Service',
+      name: route.h1,
+      description: route.description,
+      url: ogUrl,
+      provider: { '@id': `${BASE_URL}/#organization` },
+      areaServed: 'EU',
+      serviceType: 'AI Procurement Analysis',
+    });
+  } else if (route.path === '/blog') {
+    graph.push({
+      '@type': 'Blog',
+      name: 'EXOS Blog',
+      url: ogUrl,
+      publisher: { '@id': `${BASE_URL}/#organization` },
+    });
+  }
+  return { '@context': 'https://schema.org', '@graph': graph };
+}
+
 for (const route of routes) {
   const dir = join(DIST, route.path);
   mkdirSync(dir, { recursive: true });
 
   const ogUrl = `${BASE_URL}${route.path}`;
+  const jsonLd = JSON.stringify(buildJsonLd(route));
 
   let html = template
     .replace(/<title>[^<]*<\/title>/, `<title>${route.title}</title>`)
@@ -148,6 +200,10 @@ for (const route of routes) {
     .replace(
       /<meta name="twitter:description" content="[^"]*"/,
       `<meta name="twitter:description" content="${route.description}"`
+    )
+    .replace(
+      '</head>',
+      `  <script type="application/ld+json">${jsonLd}</script>\n  </head>`
     )
     .replace(
       '</body>',
