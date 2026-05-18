@@ -1125,9 +1125,17 @@ serve(async (req) => {
             scenario_data: anonymizedScenarioData || {},
             industry_slug: industrySlug,
             category_slug: categorySlug,
-            system_prompt: systemPrompt,
+            // Fix #3: log methodology shell only; grounding XML moved to grounding_context
+            // so token analytics on test_prompts.system_prompt reflect the cacheable shell.
+            system_prompt: loggedSystemPrompt || systemPrompt,
             user_prompt: userPrompt,
-            grounding_context: groundingContext,
+            grounding_context: renderedGroundingXml
+              ? {
+                  rendered_xml: renderedGroundingXml,
+                  rendered_chars: renderedGroundingXml.length,
+                  ...(groundingContext ? { source: groundingContext } : {}),
+                }
+              : groundingContext,
             anonymization_metadata: anonymizationMetadata,
             ...(userOrgId ? { organization_id: userOrgId } : {}),
           })
