@@ -1062,6 +1062,14 @@ serve(async (req) => {
 
         systemPrompt = grounded.systemPrompt;
         userPrompt = grounded.userPrompt;
+        renderedGroundingXml = grounded.groundingXml;
+        // Persist the shell (methodology + rules + schema) without the grounding XML,
+        // and re-append the shadow-log instruction since it was concatenated into the
+        // model-facing prompt above. Result: test_prompts.system_prompt no longer
+        // double-counts grounding context already stored in grounding_context.
+        loggedSystemPrompt = shouldInjectShadowLog
+          ? grounded.systemPromptShell + SHADOW_LOG_INSTRUCTION
+          : grounded.systemPromptShell;
       } finally {
         const _sp = systemPrompt as string | undefined;
         const _up = userPrompt as string | undefined;
@@ -1070,6 +1078,8 @@ serve(async (req) => {
           userPromptLength: _up?.length || 0,
           totalPromptLength: (_sp?.length || 0) + (_up?.length || 0),
           contextPartsCount: (industryResult.data ? 1 : 0) + (categoryResult.data ? 1 : 0),
+          shellLength: loggedSystemPrompt.length,
+          groundingLength: renderedGroundingXml.length,
         });
       }
     } else if (body.systemPrompt) {
