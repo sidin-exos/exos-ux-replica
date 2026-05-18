@@ -281,7 +281,7 @@ const Header = () => {
       <div className="px-4 md:px-6 flex h-16 items-center justify-between">
         {/* Logo */}
         <NavLink to="/welcome" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <img src={exosLogo} alt="EXOS procurement platform logo" className="h-9 md:h-10 w-auto object-contain" />
+          <img src={exosLogo} alt="EXOS procurement platform logo" width={40} height={40} className="h-9 md:h-10 w-auto object-contain" decoding="async" />
           <div className="h-7 w-px bg-border/60" />
           <span className="font-display font-bold text-2xl md:text-[28px] tracking-[0.15em] text-foreground leading-none">
             EXOS

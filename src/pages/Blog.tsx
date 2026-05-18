@@ -45,7 +45,10 @@ const Blog = () => {
                     alt={post.title}
                     className="w-full h-full object-cover"
                     style={{ filter: "grayscale(100%) contrast(1.05) brightness(0.92)" }}
+                    width={800}
+                    height={450}
                     loading="lazy"
+                    decoding="async"
                   />
                   <div
                     className="absolute inset-0 bg-primary"
