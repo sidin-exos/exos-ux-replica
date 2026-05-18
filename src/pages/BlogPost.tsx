@@ -57,6 +57,10 @@ const BlogPost = () => {
             src={post.heroImage}
             alt={post.title}
             className="w-full h-full object-cover"
+            width={1600}
+            height={900}
+            fetchPriority="high"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         </div>
