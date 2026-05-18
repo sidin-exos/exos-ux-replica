@@ -152,6 +152,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen gradient-hero">
+      <NoIndex />
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}
