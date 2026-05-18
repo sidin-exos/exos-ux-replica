@@ -1,8 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 
 const QUERY_KEY = ["founder-metrics"];
+
+type FounderMetrics = Database["public"]["Tables"]["founder_metrics"]["Row"];
 
 interface MetricsUpdate {
   mrr: number;
@@ -20,12 +23,10 @@ export function useFounderMetrics() {
       // the underlying founder_metrics table (audit issue #17).
       // The RPC returns SETOF founder_metrics; the table has a
       // single row, so we take the first entry.
-      const { data, error } = await (supabase as unknown as {
-        rpc: (name: string) => Promise<{ data: unknown[] | null; error: Error | null }>;
-      }).rpc("get_founder_metrics");
+      const { data, error } = await supabase.rpc("get_founder_metrics");
 
       if (error) throw error;
-      const rows = (data ?? []) as Array<Record<string, unknown>>;
+      const rows = (data ?? []) as FounderMetrics[];
       return rows[0] ?? null;
     },
   });
