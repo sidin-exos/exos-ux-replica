@@ -18,9 +18,26 @@ const BlogPost = () => {
       <Helmet>
         <title>{post.title} — EXOS Blog</title>
         <meta name="description" content={post.excerpt} />
+        <link rel="canonical" href={`https://www.exosproc.com/blog/${post.slug}`} />
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:type" content="article" />
+        <meta property="og:url" content={`https://www.exosproc.com/blog/${post.slug}`} />
+        {post.heroImage && <meta property="og:image" content={post.heroImage} />}
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: post.title,
+          description: post.excerpt,
+          image: post.heroImage,
+          datePublished: post.date,
+          author: { "@type": "Person", name: post.author },
+          publisher: {
+            "@type": "Organization",
+            name: "EXOS",
+          },
+          mainEntityOfPage: `https://www.exosproc.com/blog/${post.slug}`,
+        })}</script>
       </Helmet>
       <Header />
 

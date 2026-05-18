@@ -88,12 +88,16 @@ const Welcome = () => {
   return (
     <div className="force-light min-h-screen flex flex-col bg-background text-foreground" data-force-light="true">
       <Helmet>
-        <title>EXOS — Agentic AI Procurement Platform | No Implementation</title>
+        <title>EXOS Welcome — Tour the Agentic AI Procurement Platform</title>
         <meta
           name="description"
-          content="Agentic AI procurement platform — negotiation preparation, supplier risk monitoring, TCO analysis, and inflation tracking. 20+ expert scenarios. No implementation needed."
+          content="Take a guided tour of EXOS: agentic scenarios, analytical platforms and live market intelligence built for procurement teams. No implementation required."
         />
-        <link rel="canonical" href="https://exosproc.com/" />
+        <link rel="canonical" href="https://www.exosproc.com/welcome" />
+        <meta property="og:title" content="EXOS Welcome — Tour the Agentic AI Procurement Platform" />
+        <meta property="og:description" content="Take a guided tour of EXOS: agentic scenarios, analytical platforms and live market intelligence built for procurement teams." />
+        <meta property="og:url" content="https://www.exosproc.com/welcome" />
+        <meta property="og:type" content="website" />
         <meta name="robots" content="index, follow" />
       </Helmet>
       <div className="contents text-foreground">

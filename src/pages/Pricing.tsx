@@ -225,7 +225,11 @@ const Pricing = () => {
           name="description"
           content="Transparent EXOS pricing for procurement AI: Starter, Professional and Enterprise plans. 30-day free trial, no implementation, cancel anytime."
         />
-        <link rel="canonical" href="https://ex-dev.lovable.app/pricing" />
+        <link rel="canonical" href="https://www.exosproc.com/pricing" />
+        <meta property="og:title" content="EXOS Pricing — Procurement AI plans from €24/month" />
+        <meta property="og:description" content="Transparent EXOS pricing for procurement AI: Starter, Professional and Enterprise plans. 30-day free trial, no implementation, cancel anytime." />
+        <meta property="og:url" content="https://www.exosproc.com/pricing" />
+        <meta property="og:type" content="website" />
         {productSchema.map((schema, i) => (
           <script key={`product-${i}`} type="application/ld+json">
             {JSON.stringify(schema)}
