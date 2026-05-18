@@ -508,14 +508,20 @@ function buildServerGroundedPrompts(
   marketInsight: MarketInsightRow | null = null,
   _selectedDashboards: string[] = [],
   attachedDocumentsXml: string = ""
-): { systemPrompt: string; userPrompt: string } {
-  // Build system prompt with injected context
+): { systemPrompt: string; userPrompt: string; systemPromptShell: string; groundingXml: string } {
+  // Build grounding XML — kept separate from the methodology shell so it can
+  // be logged independently in test_prompts.grounding_context and (later)
+  // swapped for provider-side context caching.
   const contextParts: string[] = [];
 
   const _scenarioCodeForIndustry = SCENARIO_ID_REGISTRY[scenarioType] || scenarioType;
   if (industry) contextParts.push(buildIndustryXML(industry, _scenarioCodeForIndustry));
   if (category) contextParts.push(buildCategoryXML(category, _scenarioCodeForIndustry));
   if (marketInsight) contextParts.push(buildMarketIntelligenceXML(marketInsight));
+
+  const groundingXml = contextParts.length > 0
+    ? `<grounding-context>\n${contextParts.join('\n\n')}\n</grounding-context>`
+    : '';
 
   // Derive scenario group server-side
   const scenarioGroup = SCENARIO_GROUP_REGISTRY[scenarioType];
@@ -527,7 +533,7 @@ function buildServerGroundedPrompts(
     ? AI_PROMPT_CONTRACT + getScenarioInstructions(scenarioGroup, scenarioType) + '\n\n' + getScenarioSchema(scenarioGroup, scenarioType)
     : '';
 
-  const systemPrompt = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
+  const systemPromptShell = `You are an expert procurement analyst. Analyze the provided context and generate actionable recommendations.
 
 IMPORTANT RULES:
 1. Maintain all masked tokens exactly as provided (e.g., [SUPPLIER_A], [AMOUNT_B])
