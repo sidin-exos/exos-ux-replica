@@ -3,29 +3,31 @@ import { Linkedin } from "lucide-react";
 
 const footerColumns = [
   {
+    title: "Product",
+    links: [
+      { label: "How EXOS Works", to: "/features" },
+      { label: "Sample Reports", to: "/reports" },
+      { label: "Pricing", to: "/pricing" },
+      { label: "Market Intelligence", to: "/welcome" },
+    ],
+  },
+  {
+    title: "Scenarios",
+    links: [
+      { label: "TCO Analysis", to: "/scenarios/tco-analysis" },
+      { label: "Supplier Risk Assessment", to: "/scenarios/supplier-risk-assessment" },
+      { label: "Negotiation Preparation", to: "/scenarios/negotiation-preparation" },
+      { label: "Make or Buy Analysis", to: "/scenarios/make-or-buy-analysis" },
+      { label: "Black Swan Simulation", to: "/scenarios/black-swan-simulation" },
+    ],
+  },
+  {
     title: "Company",
     links: [
-      { label: "About EXOS", to: "#" },
       { label: "Blog", to: "/blog" },
-      { label: "Careers", to: "#" },
-      { label: "Press", to: "#" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
+      { label: "Contact Us", to: "/pricing#contact" },
       { label: "Privacy Policy", to: "/privacy" },
       { label: "Terms of Service", to: "/terms" },
-      { label: "GDPR Compliance", to: "/privacy" },
-      { label: "Impressum", to: "#" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { label: "Help Center", to: "#" },
-      { label: "Contact Us", to: "/pricing#contact" },
-      { label: "System Status", to: "#" },
     ],
   },
 ];
