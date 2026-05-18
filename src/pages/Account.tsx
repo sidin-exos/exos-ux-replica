@@ -151,6 +151,7 @@ const Account = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <NoIndex />
       <Header />
 
       <main className="container mx-auto px-6 py-10 lg:py-12">
