@@ -60,6 +60,7 @@ const Unsubscribe = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <NoIndex />
       <Header />
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
