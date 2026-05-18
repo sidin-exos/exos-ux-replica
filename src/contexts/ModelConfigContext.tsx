@@ -11,6 +11,7 @@ interface ModelConfigContextType extends ModelConfig {
 }
 
 const STORAGE_KEY = "exos_model_config";
+const MIGRATION_31PRO_KEY = "exos_model_31pro_migrated";
 // Always normalise legacy gemini-2.5-pro selections back to the current default
 // (gemini-3.1-pro-preview). Users can still pick 2.5-pro explicitly via the
 // Settings UI by setting this opt-in flag — once set, no further rebasing.
