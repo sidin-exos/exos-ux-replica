@@ -13,7 +13,7 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-# Block admin and internal routes from all crawlers
+# Block admin, internal and authenticated-only routes from all crawlers
 Disallow: /admin/
 Disallow: /dashboards
 Disallow: /architecture
@@ -22,7 +22,19 @@ Disallow: /testing-pipeline
 Disallow: /org-chart
 Disallow: /pdf-test
 Disallow: /account
+Disallow: /auth
 Disallow: /reset-password
 Disallow: /unsubscribe
+Disallow: /report
+Disallow: /report/
+Disallow: /analyse/
+Disallow: /market-intelligence
+Disallow: /market-intelligence/
+Disallow: /projects
+Disallow: /projects/
+Disallow: /enterprise/inflation/setup
+Disallow: /enterprise/inflation/events
+Disallow: /enterprise/inflation/tracker/
+Disallow: /enterprise/risk/monitor/
 
-Sitemap: https://exosproc.com/sitemap.xml
+Sitemap: https://www.exosproc.com/sitemap.xml
