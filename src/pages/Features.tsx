@@ -294,7 +294,15 @@ const Features = () => {
     <div className="min-h-screen gradient-hero">
       <Helmet>
         <title>20+ AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS</title>
-        <link rel="canonical" href="https://exosproc.com/features" />
+        <meta
+          name="description"
+          content="Explore 20+ agentic AI procurement scenarios across risk, TCO, negotiation prep and supplier strategy — with interactive analytical dashboards."
+        />
+        <link rel="canonical" href="https://www.exosproc.com/features" />
+        <meta property="og:title" content="20+ AI Procurement Scenarios — Risk, TCO & Negotiation | EXOS" />
+        <meta property="og:description" content="Explore 20+ agentic AI procurement scenarios across risk, TCO, negotiation prep and supplier strategy — with interactive analytical dashboards." />
+        <meta property="og:url" content="https://www.exosproc.com/features" />
+        <meta property="og:type" content="website" />
       </Helmet>
       <div
         className="fixed inset-0 pointer-events-none"

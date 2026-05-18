@@ -1,0 +1,31 @@
+# EXOS
+
+> Agentic AI procurement platform — 20+ expert scenarios for negotiation prep, supplier risk monitoring, TCO analysis and inflation tracking. No implementation needed.
+
+EXOS is a B2B SaaS platform for procurement and category management teams. It combines agentic AI workflows with analytical dashboards (risk heatmaps, cost waterfalls, TCO comparisons, Kraljic quadrants, decision matrices) and live market intelligence grounded in real-time web data.
+
+The platform is browser-based, GDPR-native and runs on EU infrastructure. Users sign in with email and run scenarios against their own procurement context (industry, category, suppliers, blockers) without uploading sensitive commercial data.
+
+## Pages
+
+- [Welcome](/welcome): Guided tour of the EXOS platform, its three pillars (Scenarios, Analytical Platforms, Market Intelligence) and how teams adopt it.
+- [Features](/features): The full catalogue of 20+ procurement scenarios and analytical dashboards across risk, cost, negotiation and supplier strategy.
+- [Pricing](/pricing): Starter, Professional and Enterprise plans, billing options and the pricing FAQ.
+- [Reports](/reports): Sample procurement reports produced by EXOS scenarios.
+- [Blog](/blog): Articles on category engineering, AI-augmented procurement and margin protection.
+- [Privacy](/privacy): Privacy policy, data handling and GDPR posture.
+- [Terms](/terms): Terms of service.
+
+## Scenario landing pages
+
+- [Make-or-buy analysis](/scenarios/make-or-buy-analysis): Structured make-vs-buy framework with cost, risk and strategic-fit scoring.
+- [Negotiation preparation](/scenarios/negotiation-preparation): BATNA, leverage map and concession plan for supplier negotiations.
+- [Supplier risk monitoring](/scenarios/supplier-risk-monitoring): Continuous monitoring of supplier financial, operational and geopolitical risk signals.
+- [TCO analysis](/scenarios/tco-analysis): Five-year total cost of ownership modelling with sensitivity testing.
+- [Inflation monitor](/scenarios/inflation-monitor): Category-specific inflation tracking grounded in live market data.
+
+## Optional
+
+- [Blog: The efficiency trap](/blog/the-efficiency-trap)
+- [Blog: The noise problem](/blog/the-noise-problem)
+- [Blog: Your favourite chatbot for everything](/blog/your-favorite-chatbot-for-everything)
