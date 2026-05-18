@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader2, MailX } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { NoIndex } from "@/components/seo/NoIndex";
 
 const SUPABASE_URL = "https://qczblwoaiuxgesjzxjvu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjemJsd29haXV4Z2Vzanp4anZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2OTkzMDgsImV4cCI6MjA4ODI3NTMwOH0.8_WvREKiiHcwQ6wRrQRoDFSQEfGp8tnYtk3V4qdN2t8";
@@ -59,6 +60,7 @@ const Unsubscribe = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <NoIndex />
       <Header />
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">

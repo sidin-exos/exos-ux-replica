@@ -12,6 +12,7 @@ import Header from "@/components/layout/Header";
 import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { NoIndex } from "@/components/seo/NoIndex";
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -56,6 +57,7 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen gradient-hero">
+      <NoIndex />
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}

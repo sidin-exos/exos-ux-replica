@@ -15,6 +15,7 @@ import BillingSubscriptionCard from "@/components/account/BillingSubscriptionCar
 import { useAccountData } from "@/hooks/useAccountData";
 import { getPlanName } from "@/lib/stripe-plans";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { NoIndex } from "@/components/seo/NoIndex";
 
 type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | "incomplete" | "none";
 
@@ -150,6 +151,7 @@ const Account = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <NoIndex />
       <Header />
 
       <main className="container mx-auto px-6 py-10 lg:py-12">

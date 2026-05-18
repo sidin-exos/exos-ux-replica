@@ -13,30 +13,39 @@ const BlogPost = () => {
 
   if (!post) return <Navigate to="/blog" replace />;
 
+  const siteOrigin = "https://www.exosproc.com";
+  const pageUrl = `${siteOrigin}/blog/${post.slug}`;
+  // post.heroImage is a Vite-hashed asset (e.g. /assets/x-abc.jpg). Social
+  // crawlers require an absolute URL, so prefix with origin when present.
+  const absoluteImage = post.heroImage
+    ? (post.heroImage.startsWith("http") ? post.heroImage : `${siteOrigin}${post.heroImage}`)
+    : `${siteOrigin}/og-image-v2.png`;
+
   return (
     <>
       <Helmet>
         <title>{post.title} — EXOS Blog</title>
         <meta name="description" content={post.excerpt} />
-        <link rel="canonical" href={`https://www.exosproc.com/blog/${post.slug}`} />
+        <link rel="canonical" href={pageUrl} />
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={`https://www.exosproc.com/blog/${post.slug}`} />
-        {post.heroImage && <meta property="og:image" content={post.heroImage} />}
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content={absoluteImage} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.excerpt} />
+        <meta name="twitter:image" content={absoluteImage} />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Article",
           headline: post.title,
           description: post.excerpt,
-          image: post.heroImage,
+          image: absoluteImage,
           datePublished: post.date,
           author: { "@type": "Person", name: post.author },
-          publisher: {
-            "@type": "Organization",
-            name: "EXOS",
-          },
-          mainEntityOfPage: `https://www.exosproc.com/blog/${post.slug}`,
+          publisher: { "@type": "Organization", name: "EXOS" },
+          mainEntityOfPage: pageUrl,
         })}</script>
       </Helmet>
       <Header />

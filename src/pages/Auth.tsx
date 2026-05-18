@@ -15,6 +15,7 @@ import { useThemedLogo } from "@/hooks/useThemedLogo";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SignUpForm from "@/components/auth/SignUpForm";
+import { NoIndex } from "@/components/seo/NoIndex";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Please enter a valid email"),
@@ -151,6 +152,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen gradient-hero">
+      <NoIndex />
       <div
         className="fixed inset-0 pointer-events-none"
         style={{ background: "var(--gradient-glow)" }}
